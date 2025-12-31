@@ -1,0 +1,319 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// MODELOS PRINCIPALES
+// ========================================
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  plan      String   @default("free") // free, basic, premium
+  settings  Json?    // Configuraciones del tenant
+  status    String   @default("active") // active, blocked, suspended
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relaciones
+  users        User[]
+  restaurants  Restaurant[]
+  menus        Menu[]
+  menuSections MenuSection[]
+  menuItems    MenuItem[]
+  itemPrices   ItemPrice[]
+  mediaAssets  MediaAsset[]
+  translations Translation[]
+  auditLogs    AuditLog[]
+
+  @@map("tenants")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String?  @map("tenant_id") // null para super_admin
+  email        String
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(ADMIN)
+  firstName    String?  @map("first_name")
+  lastName     String?  @map("last_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  // Relaciones
+  tenant    Tenant?     @relation(fields: [tenantId], references: [id])
+  auditLogs AuditLog[]
+
+  // Índices y constraints
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+model Restaurant {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  slug        String   // URL amigable
+  description String?
+  timezone    String   @default("UTC")
+  template    String   @default("classic") // classic, modern, foodie - plantilla de diseño del restaurante
+  address     String?
+  phone       String?
+  email       String?
+  website     String?
+  logoUrl     String?  @map("logo_url")
+  coverUrl    String?  @map("cover_url")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relaciones
+  tenant Tenant    @relation(fields: [tenantId], references: [id])
+  menus  Menu[]
+
+  // Índices y constraints
+  @@unique([tenantId, slug])
+  @@map("restaurants")
+}
+
+model Menu {
+  id         String      @id @default(cuid())
+  tenantId   String      @map("tenant_id")
+  restaurantId String?   @map("restaurant_id") // Puede ser null para menús sin restaurante asignado
+  name       String
+  slug       String      // URL amigable único por restaurante
+  description String?
+  status     MenuStatus  @default(DRAFT)
+  validFrom  DateTime?   @map("valid_from")
+  validTo    DateTime?   @map("valid_to")
+  version    Int         @default(1)
+  sort       Int         @default(0) // Orden de visualización
+  isActive   Boolean     @default(true) @map("is_active")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  deletedAt  DateTime?   @map("deleted_at")
+
+  // Relaciones
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  restaurant  Restaurant?   @relation(fields: [restaurantId], references: [id])
+  sections    MenuSection[]
+  items       MenuItem[]
+  qrCodes     QRCode[]
+
+  // Índices y constraints
+  // El constraint único se maneja a nivel de base de datos con índices parciales
+  @@map("menus")
+}
+
+model MenuSection {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  menuId    String   @map("menu_id")
+  name      String
+  sort      Int      @default(0)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relaciones
+  tenant Tenant     @relation(fields: [tenantId], references: [id])
+  menu   Menu       @relation(fields: [menuId], references: [id])
+  items  MenuItem[]
+
+  // Índices y constraints
+  @@map("menu_sections")
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  menuId      String   @map("menu_id")
+  sectionId   String   @map("section_id")
+  name        String
+  description String?
+  sort        Int      @default(0) // Orden de visualización dentro de la sección
+  active      Boolean  @default(true)
+  extra       Json?    // Campos adicionales flexibles
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relaciones
+  tenant      Tenant        @relation(fields: [tenantId], references: [id])
+  menu        Menu          @relation(fields: [menuId], references: [id])
+  section     MenuSection   @relation(fields: [sectionId], references: [id])
+  prices      ItemPrice[]
+  mediaAssets MediaAsset[]
+  icons       ItemIcon[]
+
+  // Índices y constraints
+  @@map("menu_items")
+}
+
+model ItemPrice {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  itemId    String   @map("item_id")
+  currency  String   @default("USD")
+  label     String?  // "Regular", "Grande", etc.
+  amount    Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relaciones
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  item   MenuItem @relation(fields: [itemId], references: [id])
+
+  // Índices y constraints
+  @@unique([itemId, currency, label])
+  @@map("item_prices")
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  url       String
+  kind      String   // image, video, document
+  itemId    String?  @map("item_id") // null si es para restaurante
+  filename  String
+  mimeType  String   @map("mime_type")
+  size      Int
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relaciones
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  item   MenuItem? @relation(fields: [itemId], references: [id])
+
+  // Índices y constraints
+  @@map("media_assets")
+}
+
+model Icon {
+  id            String   @id @default(cuid())
+  code          String   @unique // celiaco, picante, vegano, etc.
+  labelI18nKey String   @map("label_i18n_key")
+  iconUrl       String?  @map("icon_url")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relaciones
+  items ItemIcon[]
+
+  // Índices y constraints
+  @@map("icons")
+}
+
+model ItemIcon {
+  id        String   @id @default(cuid())
+  itemId    String   @map("item_id")
+  iconId    String   @map("icon_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  item MenuItem @relation(fields: [itemId], references: [id])
+  icon Icon     @relation(fields: [iconId], references: [id])
+
+  // Índices y constraints
+  @@unique([itemId, iconId])
+  @@map("item_icons")
+}
+
+model QRCode {
+  id        String   @id @default(cuid())
+  menuId    String   @map("menu_id")
+  url       String   // URL corta
+  qrImageUrl String? @map("qr_image_url")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relaciones
+  menu Menu @relation(fields: [menuId], references: [id])
+
+  // Índices y constraints
+  @@map("qr_codes")
+}
+
+model Translation {
+  id         String   @id @default(cuid())
+  tenantId   String   @map("tenant_id")
+  entityType String   @map("entity_type") // restaurant, menu, item
+  entityId   String   @map("entity_id")
+  locale     String   @default("es-ES")
+  key        String
+  value      String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relaciones
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  // Índices y constraints
+  @@unique([tenantId, entityType, entityId, locale, key])
+  @@map("translations")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  tenantId     String?  @map("tenant_id") // null para acciones globales
+  actorUserId  String   @map("actor_user_id")
+  action       String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  entity       String   // Nombre de la entidad
+  entityId     String?  @map("entity_id") // null para acciones sin entidad
+  payload      Json?    // Datos adicionales
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  actor  User   @relation(fields: [actorUserId], references: [id])
+
+  // Índices y constraints
+  @@map("audit_logs")
+}
+
+// ========================================
+// ENUMS
+// ========================================
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+}
+
+enum MenuStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// ========================================
+// FUNCIONES Y POLÍTICAS RLS
+// ========================================
+
+// Esta función se ejecutará en cada request para setear el tenant_id
+// Se debe llamar después de validar el JWT
+// SELECT set_tenant_context('tenant-uuid-here');
+
