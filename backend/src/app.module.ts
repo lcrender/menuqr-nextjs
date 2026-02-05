@@ -18,6 +18,7 @@ import { MediaModule } from './media/media.module';
 import { QRModule } from './qr/qr.module';
 import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { TrackingModule } from './tracking/tracking.module';
 
 // Módulos comunes
 import { DatabaseModule } from './common/database/database.module';
@@ -96,6 +97,7 @@ import { validationSchema } from './common/config/validation.schema';
     QRModule,
     HealthModule,
     MetricsModule,
+    TrackingModule,
   ],
   controllers: [],
   providers: [],

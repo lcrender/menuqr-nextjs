@@ -49,15 +49,7 @@ export class QRService {
         },
       });
 
-      // Verificar si ya existe un QR para este menú
-      const existingQR = await this.postgres.queryRaw<any>(
-        `SELECT id, url, qr_image_url 
-         FROM qr_codes 
-         WHERE menu_id = $1 AND is_active = true 
-         LIMIT 1`,
-        [menuId]
-      );
-
+      // Reutilizar existingQR ya consultado arriba para actualizar o insertar
       if (existingQR[0]) {
         // Actualizar QR existente
         await this.postgres.executeRaw(
