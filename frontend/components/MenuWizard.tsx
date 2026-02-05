@@ -124,10 +124,12 @@ export default function MenuWizard({
 
     if (index !== -1) {
       const updated = [...sections];
+      const existing = updated[index];
       updated[index] = {
-        ...updated[index],
+        ...existing,
         name: sectionFormData.name.trim(),
         isActive: sectionFormData.isActive,
+        sort: existing.sort,
       };
       setSections(updated);
     }
