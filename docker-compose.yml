@@ -1,100 +1,109 @@
-version: '3.8'
+# ========================================
+# MenuQR - Docker Compose
+# ========================================
+# Sin ports: — acceso solo por Traefik (hostname).
+# Postgres, Redis y MinIO solo por red Docker (root_default).
+# No usar docker-compose.override.yml con ports.
+# ========================================
+
+version: "3.8"
 
 services:
-  # Base de datos PostgreSQL
   postgres:
     image: postgres:16-alpine
     container_name: menuqr_postgres
     environment:
       POSTGRES_DB: menuqr
       POSTGRES_USER: menuqr_user
-      POSTGRES_PASSWORD: menuqr_password
+      POSTGRES_PASSWORD: Pcchala31@
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U menuqr_user -d menuqr"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     networks:
-      - menuqr_network
+      - root_default
 
-  # Redis para cache
   redis:
     image: redis:7-alpine
     container_name: menuqr_redis
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     networks:
-      - menuqr_network
+      - root_default
 
-  # MinIO para storage de imágenes
   minio:
     image: minio/minio:latest
     container_name: menuqr_minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: admin123
-      MINIO_DEFAULT_BUCKETS: menuqr-assets
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
     volumes:
       - minio_data:/data
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
-      retries: 3
+      retries: 5
     networks:
-      - menuqr_network
+      - root_default
+    labels:
+      - "traefik.enable=true"
 
-  # Backend NestJS
+      # S3 API (9000)
+      - "traefik.http.routers.menuqr-s3.rule=Host(`s3.menuqr.72-60-133-229.nip.io`)"
+      - "traefik.http.routers.menuqr-s3.entrypoints=websecure"
+      - "traefik.http.routers.menuqr-s3.tls=true"
+      - "traefik.http.routers.menuqr-s3.tls.certresolver=letsencrypt"
+      - "traefik.http.services.menuqr-s3.loadbalancer.server.port=9000"
+
+      # Console (9001)
+      - "traefik.http.routers.menuqr-minio.rule=Host(`minio.menuqr.72-60-133-229.nip.io`)"
+      - "traefik.http.routers.menuqr-minio.entrypoints=websecure"
+      - "traefik.http.routers.menuqr-minio.tls=true"
+      - "traefik.http.routers.menuqr-minio.tls.certresolver=letsencrypt"
+      - "traefik.http.services.menuqr-minio.loadbalancer.server.port=9001"
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: development
+      target: production
     container_name: menuqr_backend
+    env_file:
+      - .env
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3001
+
+      # Sobrescribimos para asegurar internos en Docker
       DATABASE_URL: postgresql://menuqr_user:menuqr_password@postgres:5432/menuqr
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-key-for-development}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-super-secret-refresh-key-for-development}
-      JWT_EXPIRES_IN: 15m
-      JWT_REFRESH_EXPIRES_IN: 7d
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
-      MINIO_PUBLIC_URL: http://localhost:9000
-      MINIO_ACCESS_KEY: admin
-      MINIO_SECRET_KEY: admin123
-      MINIO_BUCKET: menuqr-assets
-      MINIO_USE_SSL: false
-      SMTP_HOST: ${SMTP_HOST:-localhost}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
-      FRONTEND_URL: http://localhost:3000
-      BACKEND_URL: http://localhost:3001
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    ports:
-      - "3001:3001"
+      MINIO_USE_SSL: "false"
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+
+      # URLs públicas
+      FRONTEND_URL: https://menuqr.72-60-133-229.nip.io
+      BACKEND_URL: https://api.menuqr.72-60-133-229.nip.io
+      CORS_ORIGIN: https://menuqr.72-60-133-229.nip.io
+      MINIO_PUBLIC_URL: https://s3.menuqr.72-60-133-229.nip.io
+
     depends_on:
       postgres:
         condition: service_healthy
@@ -102,60 +111,52 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    networks:
-      - menuqr_network
-    command: npm run start:dev
 
-  # Frontend Next.js
+    networks:
+      - root_default
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.menuqr-api.rule=Host(`api.menuqr.72-60-133-229.nip.io`)"
+      - "traefik.http.routers.menuqr-api.entrypoints=websecure"
+      - "traefik.http.routers.menuqr-api.tls=true"
+      - "traefik.http.routers.menuqr-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.menuqr-api.loadbalancer.server.port=3001"
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: development
+      target: production
     container_name: menuqr_frontend
+    env_file:
+      - .env
     environment:
-      NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:3001
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    networks:
-      - menuqr_network
-    command: npm run dev
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
 
-  # Nginx para proxy reverso (opcional para producción)
-  nginx:
-    image: nginx:alpine
-    container_name: menuqr_nginx
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/conf.d:/etc/nginx/conf.d
-    ports:
-      - "80:80"
-      - "443:443"
+      # Variables públicas para el front
+      NEXT_PUBLIC_API_URL: https://api.menuqr.72-60-133-229.nip.io
+      NEXT_PUBLIC_APP_URL: https://menuqr.72-60-133-229.nip.io
+
     depends_on:
-      - frontend
       - backend
     networks:
-      - menuqr_network
-    profiles:
-      - production
+      - root_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.menuqr-front.rule=Host(`menuqr.72-60-133-229.nip.io`)"
+      - "traefik.http.routers.menuqr-front.entrypoints=websecure"
+      - "traefik.http.routers.menuqr-front.tls=true"
+      - "traefik.http.routers.menuqr-front.tls.certresolver=letsencrypt"
+      - "traefik.http.services.menuqr-front.loadbalancer.server.port=3000"
 
 volumes:
   postgres_data:
-    driver: local
   redis_data:
-    driver: local
   minio_data:
-    driver: local
 
 networks:
-  menuqr_network:
-    driver: bridge
-
+  root_default:
+    external: true
