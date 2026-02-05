@@ -18,10 +18,26 @@ export class QRService {
   /**
    * Genera o actualiza el QR code para un menú
    */
-  async generateQRForMenu(menuId: string, restaurantSlug: string): Promise<{ url: string; qrImageUrl: string }> {
+  async generateQRForMenu(menuId: string, restaurantSlug: string, menuSlug?: string): Promise<{ url: string; qrImageUrl: string; qrCodeId?: string }> {
     try {
-      // URL pública del menú
-      const menuUrl = `${this.frontendUrl}/r/${restaurantSlug}`;
+      // Obtener el QR code existente para incluir su ID en la URL
+      const existingQR = await this.postgres.queryRaw<any>(
+        `SELECT id, url, qr_image_url 
+         FROM qr_codes 
+         WHERE menu_id = $1 AND is_active = true 
+         LIMIT 1`,
+        [menuId]
+      );
+
+      const qrCodeId = existingQR[0]?.id;
+      
+      // URL pública del menú con parámetros de tracking
+      let menuUrl = `${this.frontendUrl}/r/${restaurantSlug}`;
+      if (menuSlug) {
+        menuUrl = `${this.frontendUrl}/r/${restaurantSlug}/${menuSlug}`;
+      }
+      // Agregar parámetros para tracking de QR
+      menuUrl += `?qr=true${qrCodeId ? `&qrCodeId=${qrCodeId}` : ''}`;
       
       // Generar código QR como imagen base64
       const qrDataUrl = await QRCode.toDataURL(menuUrl, {

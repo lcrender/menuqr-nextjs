@@ -1796,3 +1796,48 @@ body {
   }
 }
 
+/* Estilos para botones de opciones de edición de menú */
+.modal .btn-outline-primary.btn-lg {
+  border-color: #0d6efd;
+  color: #0d6efd;
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.modal .btn-outline-primary.btn-lg .fw-bold {
+  color: #212529 !important;
+}
+
+.modal .btn-outline-primary.btn-lg .text-muted {
+  color: #6c757d !important;
+}
+
+.modal .btn-outline-primary.btn-lg:hover {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+  color: #ffffff !important;
+}
+
+.modal .btn-outline-primary.btn-lg:hover .fw-bold {
+  color: #ffffff !important;
+}
+
+.modal .btn-outline-primary.btn-lg:hover .text-muted {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.modal .btn-outline-primary.btn-lg:focus {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.modal .btn-outline-primary.btn-lg:focus .fw-bold {
+  color: #ffffff !important;
+}
+
+.modal .btn-outline-primary.btn-lg:focus .text-muted {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+

@@ -4,6 +4,9 @@ import { useRouter } from 'next/router';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
 import ProductWizard from '../../../components/ProductWizard';
+import MenuWizard from '../../../components/MenuWizard';
+import ConfirmModal from '../../../components/ConfirmModal';
+import AlertModal from '../../../components/AlertModal';
 
 export default function Menus() {
   const router = useRouter();
@@ -40,12 +43,27 @@ export default function Menus() {
   const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(50);
+  const [showMenuWizard, setShowMenuWizard] = useState(false);
+  const [tenantPlan, setTenantPlan] = useState<string | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitMessage, setLimitMessage] = useState({ limit: 0, current: 0, plan: '' });
+  const [showConfirmDeleteMenu, setShowConfirmDeleteMenu] = useState(false);
+  const [menuToDelete, setMenuToDelete] = useState<string | null>(null);
+  const [showConfirmDeleteSection, setShowConfirmDeleteSection] = useState(false);
+  const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertData, setAlertData] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
       try {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        // Obtener el plan del tenant desde el usuario
+        if (parsedUser?.tenant?.plan) {
+          setTenantPlan(parsedUser.tenant.plan);
+        }
       } catch (err) {
         console.error('Error parsing user data:', err);
       }
@@ -59,6 +77,29 @@ export default function Menus() {
   }, [user, filterMenuName, filterRestaurantName, filterTenantName, page, itemsPerPage]);
 
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  const getMenuLimit = () => {
+    if (isSuperAdmin) return -1; // SUPER_ADMIN puede crear ilimitados
+    
+    // Si no sabemos el plan, asumir 'free' por defecto
+    const plan = tenantPlan || 'free';
+    
+    const limits: Record<string, number> = {
+      free: 3,
+      basic: 20,
+      premium: -1, // Ilimitado
+    };
+    
+    return limits[plan] || 3;
+  };
+
+  const canCreateMenu = () => {
+    const limit = getMenuLimit();
+    if (limit === -1) return true; // Ilimitado
+    
+    // Verificar si se alcanzó el límite
+    return menus.length < limit;
+  };
 
   const loadData = async () => {
     try {
@@ -147,10 +188,20 @@ export default function Menus() {
         }
       } else {
         // Al crear, restaurantId puede ser null si no se asigna
-        const data = {
-          ...formData,
+        const data: any = {
           restaurantId: formData.restaurantId === '' ? null : formData.restaurantId,
+          name: formData.name,
+          description: formData.description || null,
         };
+        
+        // Solo incluir validFrom y validTo si tienen valores válidos (no vacíos)
+        if (formData.validFrom && formData.validFrom.trim() !== '') {
+          data.validFrom = formData.validFrom;
+        }
+        if (formData.validTo && formData.validTo.trim() !== '') {
+          data.validTo = formData.validTo;
+        }
+        
         const res = await api.post('/menus', data);
         const newMenu = res.data;
         
@@ -206,14 +257,28 @@ export default function Menus() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar este menú?')) return;
+  const handleDeleteClick = (id: string) => {
+    setMenuToDelete(id);
+    setShowConfirmDeleteMenu(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!menuToDelete) return;
     
     try {
-      await api.delete(`/menus/${id}`);
+      await api.delete(`/menus/${menuToDelete}`);
       loadData();
+      setShowConfirmDeleteMenu(false);
+      setMenuToDelete(null);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error eliminando menú');
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error eliminando menú',
+        variant: 'error',
+      });
+      setShowAlert(true);
+      setShowConfirmDeleteMenu(false);
+      setMenuToDelete(null);
     }
   };
 
@@ -221,8 +286,19 @@ export default function Menus() {
     try {
       await api.put(`/menus/${menu.id}/publish`);
       loadData();
+      setAlertData({
+        title: 'Éxito',
+        message: 'Menú publicado correctamente',
+        variant: 'success',
+      });
+      setShowAlert(true);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error publicando menú');
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error publicando menú',
+        variant: 'error',
+      });
+      setShowAlert(true);
     }
   };
 
@@ -230,8 +306,19 @@ export default function Menus() {
     try {
       await api.put(`/menus/${menu.id}/unpublish`);
       loadData();
+      setAlertData({
+        title: 'Éxito',
+        message: 'Menú despublicado correctamente',
+        variant: 'success',
+      });
+      setShowAlert(true);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error despublicando menú');
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error despublicando menú',
+        variant: 'error',
+      });
+      setShowAlert(true);
     }
   };
 
@@ -251,7 +338,12 @@ export default function Menus() {
   const handleSectionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editing || !editing.id) {
-      alert('Primero debes guardar el menú antes de agregar secciones');
+      setAlertData({
+        title: 'Validación',
+        message: 'Primero debes guardar el menú antes de agregar secciones',
+        variant: 'warning',
+      });
+      setShowAlert(true);
       return;
     }
 
@@ -272,8 +364,19 @@ export default function Menus() {
       setSectionFormData({ name: '', sort: 0, isActive: true });
       setEditingSection(null);
       await loadSections(editing.id);
+      setAlertData({
+        title: 'Éxito',
+        message: editingSection ? 'Sección actualizada correctamente' : 'Sección creada correctamente',
+        variant: 'success',
+      });
+      setShowAlert(true);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error guardando sección');
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error guardando sección',
+        variant: 'error',
+      });
+      setShowAlert(true);
     }
   };
 
@@ -286,16 +389,36 @@ export default function Menus() {
     });
   };
 
-  const handleDeleteSection = async (sectionId: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta sección?')) return;
+  const handleDeleteSectionClick = (sectionId: string) => {
+    setSectionToDelete(sectionId);
+    setShowConfirmDeleteSection(true);
+  };
+
+  const handleDeleteSectionConfirm = async () => {
+    if (!sectionToDelete) return;
     
     try {
-      await api.delete(`/menu-sections/${sectionId}`);
+      await api.delete(`/menu-sections/${sectionToDelete}`);
       if (editing?.id) {
         await loadSections(editing.id);
       }
+      setShowConfirmDeleteSection(false);
+      setSectionToDelete(null);
+      setAlertData({
+        title: 'Éxito',
+        message: 'Sección eliminada correctamente',
+        variant: 'success',
+      });
+      setShowAlert(true);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error eliminando sección');
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error eliminando sección',
+        variant: 'error',
+      });
+      setShowAlert(true);
+      setShowConfirmDeleteSection(false);
+      setSectionToDelete(null);
     }
   };
 
@@ -364,7 +487,12 @@ export default function Menus() {
       console.error('Detalles del error:', error.response?.data);
       // Recargar las secciones en caso de error para restaurar el estado
       await loadSections(editing.id);
-      alert('Error al guardar el orden de las secciones. Por favor, intenta nuevamente.');
+      setAlertData({
+        title: 'Error',
+        message: 'Error al guardar el orden de las secciones. Por favor, intenta nuevamente.',
+        variant: 'error',
+      });
+      setShowAlert(true);
     }
   };
 
@@ -425,7 +553,12 @@ export default function Menus() {
       const errorMessage = Array.isArray(error.response?.data?.message) 
         ? error.response.data.message.join(', ')
         : error.response?.data?.message || error.message || 'Error desconocido';
-      alert(`Error al guardar el orden de los menús: ${errorMessage}. Por favor, intenta nuevamente.`);
+      setAlertData({
+        title: 'Error',
+        message: `Error al guardar el orden de los menús: ${errorMessage}. Por favor, intenta nuevamente.`,
+        variant: 'error',
+      });
+      setShowAlert(true);
     }
   };
 
@@ -458,7 +591,12 @@ export default function Menus() {
     if (url) {
       window.open(url, '_blank');
     } else {
-      alert('No se puede generar la URL del menú. Asegúrate de que el menú tenga un slug y esté asociado a un restaurante.');
+      setAlertData({
+        title: 'Error',
+        message: 'No se puede generar la URL del menú. Asegúrate de que el menú tenga un slug y esté asociado a un restaurante.',
+        variant: 'error',
+      });
+      setShowAlert(true);
     }
   };
 
@@ -490,6 +628,13 @@ export default function Menus() {
               setSelectedMenuForEdit(null);
             }}
             onPublishMenu={() => {
+              setShowProductWizard(false);
+              setEditingMenuId(null);
+              setEditMode(null);
+              setSelectedMenuForEdit(null);
+              loadData();
+            }}
+            onUnpublishMenu={() => {
               setShowProductWizard(false);
               setEditingMenuId(null);
               setEditMode(null);
@@ -583,24 +728,43 @@ export default function Menus() {
 
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Menús</h1>
-        <button className="btn btn-primary" onClick={() => {
-          setEditing(null);
-          setActiveTab('info');
-          setFormData({
-            restaurantId: '',
-            name: '',
-            description: '',
-            validFrom: '',
-            validTo: '',
-          });
-          setSections([]);
-          setEditingSection(null);
-          setSectionFormData({ name: '', sort: 0, isActive: true });
-          setShowModal(true);
+        <button className="btn btn-primary" onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Verificar límite antes de abrir el wizard
+          const limit = getMenuLimit();
+          
+          // Si no es SUPER_ADMIN y se alcanzó el límite, mostrar modal
+          if (!isSuperAdmin && limit !== -1 && menus.length >= limit) {
+            const plan = tenantPlan || 'free';
+            setLimitMessage({
+              limit,
+              current: menus.length,
+              plan: plan === 'free' ? 'gratuito' : plan
+            });
+            setShowLimitModal(true);
+            return;
+          }
+          
+          setShowMenuWizard(true);
         }}>
           + Nuevo Menú
         </button>
       </div>
+
+      {user && user.role !== 'SUPER_ADMIN' && (
+        <div className="mb-3 p-3 bg-light rounded border">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <strong style={{ fontSize: '1.1rem' }}>
+              {total || menus.length}/{getMenuLimit() === -1 ? '∞' : getMenuLimit()} menús disponibles
+            </strong>
+          </div>
+          <p className="mb-0 text-muted" style={{ fontSize: '0.9rem' }}>
+            Puedes ampliar la cantidad de menús disponibles cambiando tu plan de suscripción.
+          </p>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center">
@@ -715,7 +879,7 @@ export default function Menus() {
                       )}
                       <button 
                         className="btn btn-sm btn-danger" 
-                        onClick={() => handleDelete(menu.id)}
+                        onClick={() => handleDeleteClick(menu.id)}
                       >
                         Eliminar
                       </button>
@@ -826,7 +990,12 @@ export default function Menus() {
                         setActiveTab('sections');
                         loadSections(editing.id);
                       } else {
-                        alert('Primero debes guardar el menú antes de agregar secciones');
+                        setAlertData({
+                          title: 'Validación',
+                          message: 'Primero debes guardar el menú antes de agregar secciones',
+                          variant: 'warning',
+                        });
+                        setShowAlert(true);
                       }
                     }}
                     type="button"
@@ -1188,7 +1357,7 @@ export default function Menus() {
                                   <button
                                     type="button"
                                     className="admin-btn admin-btn-sm admin-btn-danger"
-                                    onClick={() => handleDeleteSection(section.id)}
+                                    onClick={() => handleDeleteSectionClick(section.id)}
                                     style={{
                                       padding: '8px 16px',
                                       fontSize: '0.875rem',
@@ -1209,6 +1378,114 @@ export default function Menus() {
             </div>
           </div>
         </div>
+      )}
+
+      {showMenuWizard && (
+        <div className="restaurant-wizard-container">
+          <MenuWizard
+            restaurantId=""
+            restaurants={restaurants}
+            onComplete={() => {
+              setShowMenuWizard(false);
+              loadData();
+            }}
+            onCancel={() => {
+              setShowMenuWizard(false);
+            }}
+          />
+        </div>
+      )}
+
+      {/* Modal de límite alcanzado */}
+      {showLimitModal && (
+        <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setShowLimitModal(false)}>
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
+                <h5 className="modal-title" style={{ color: '#856404' }}>
+                  <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#ffc107' }}></i>
+                  Límite Alcanzado
+                </h5>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => setShowLimitModal(false)}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body" style={{ padding: '24px' }}>
+                <p style={{ marginBottom: '16px', fontSize: '16px' }}>
+                  Has alcanzado el límite de <strong>{limitMessage.limit} menú(s)</strong> para tu plan <strong>{limitMessage.plan}</strong>.
+                </p>
+                <p style={{ marginBottom: '16px', fontSize: '16px' }}>
+                  Actualmente tienes <strong>{limitMessage.current} menú(s)</strong> creado(s).
+                </p>
+                <div className="alert alert-warning mb-0" style={{ 
+                  backgroundColor: '#fff3cd', 
+                  border: '1px solid #ffc107',
+                  borderRadius: '4px',
+                  padding: '12px'
+                }}>
+                  <strong>¿Necesitas más menús?</strong><br />
+                  Por favor, amplía tu suscripción para crear más menús y aprovechar todas las funcionalidades de MenuQR.
+                </div>
+              </div>
+              <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={() => setShowLimitModal(false)}
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para eliminar menú */}
+      <ConfirmModal
+        show={showConfirmDeleteMenu}
+        title="Eliminar Menú"
+        message="¿Estás seguro de eliminar este menú? Esta acción no se puede deshacer y también se eliminarán todas las secciones y productos asociados."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          setShowConfirmDeleteMenu(false);
+          setMenuToDelete(null);
+        }}
+      />
+
+      {/* Modal de confirmación para eliminar sección */}
+      <ConfirmModal
+        show={showConfirmDeleteSection}
+        title="Eliminar Sección"
+        message="¿Estás seguro de eliminar esta sección? Esta acción no se puede deshacer y también se eliminarán todos los productos asociados a esta sección."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        onConfirm={handleDeleteSectionConfirm}
+        onCancel={() => {
+          setShowConfirmDeleteSection(false);
+          setSectionToDelete(null);
+        }}
+      />
+
+      {/* Modal de alerta */}
+      {alertData && (
+        <AlertModal
+          show={showAlert}
+          title={alertData.title}
+          message={alertData.message}
+          variant={alertData.variant}
+          onClose={() => {
+            setShowAlert(false);
+            setAlertData(null);
+          }}
+        />
       )}
     </AdminLayout>
   );

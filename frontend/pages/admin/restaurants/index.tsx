@@ -9,6 +9,8 @@ import CitySelector from '../../../components/CitySelector';
 import RestaurantWizard from '../../../components/RestaurantWizard';
 import MenuWizard from '../../../components/MenuWizard';
 import QRCode from 'react-qr-code';
+import ConfirmModal from '../../../components/ConfirmModal';
+import AlertModal from '../../../components/AlertModal';
 
 // Códigos de país comunes para WhatsApp
 const countryCodes: { [key: string]: string } = {
@@ -111,6 +113,13 @@ export default function Restaurants() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedRestaurantForQR, setSelectedRestaurantForQR] = useState<any>(null);
   const [filterName, setFilterName] = useState<string>('');
+  const [tenantPlan, setTenantPlan] = useState<string | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitMessage, setLimitMessage] = useState({ limit: 0, current: 0, plan: '' });
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [restaurantToDelete, setRestaurantToDelete] = useState<string | null>(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertData, setAlertData] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -126,14 +135,65 @@ export default function Restaurants() {
   useEffect(() => {
     if (user) {
       loadRestaurants();
+      loadTenantPlan();
     }
   }, [user, filterName, page, itemsPerPage]);
 
+  useEffect(() => {
+    loadTenantPlan();
+  }, [user]);
+
+  const loadTenantPlan = () => {
+    if (!user || isSuperAdmin) return;
+    
+    // El plan debería estar en user.tenant.plan después del login
+    // Si no está, asumimos 'free' por defecto
+    const plan = user.tenant?.plan || 'free';
+    setTenantPlan(plan);
+  };
+
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  // Actualizar moneda por defecto cuando cambia el país
+  // Calcular si el usuario puede crear más restaurantes
+  const getRestaurantLimit = () => {
+    if (isSuperAdmin) return -1; // SUPER_ADMIN puede crear ilimitados
+    if (!tenantPlan) return 1; // Por defecto
+    
+    const limits: Record<string, number> = {
+      free: 1,
+      basic: 5, // Plan básico: 5 restaurantes
+      premium: -1, // Ilimitado
+    };
+    
+    return limits[tenantPlan] || 1;
+  };
+
+  const canCreateRestaurant = () => {
+    const limit = getRestaurantLimit();
+    if (limit === -1) return true; // Ilimitado
+    
+    return restaurants.length < limit;
+  };
+
+  // Abrir wizard automáticamente si viene con parámetro wizard=true o si no hay restaurantes
   useEffect(() => {
-    if (formData.country && countryCurrencies[formData.country]) {
+    if (user && !loading && !isSuperAdmin) {
+      // Verificar si viene con parámetro wizard en la URL
+      if (router.query.wizard === 'true') {
+        setShowWizard(true);
+        // Limpiar el parámetro de la URL sin recargar la página
+        router.replace('/admin/restaurants', undefined, { shallow: true });
+      } else if (restaurants.length === 0 && !filterName) {
+        // Si no hay restaurantes y no hay filtro activo, abrir wizard automáticamente
+        setShowWizard(true);
+      }
+    }
+  }, [user, loading, restaurants.length, filterName, isSuperAdmin, router.query.wizard]);
+
+  // Actualizar moneda por defecto cuando cambia el país (solo al crear, no al editar)
+  useEffect(() => {
+    // Solo actualizar si NO estamos editando (editing es null) y si la moneda es USD o no hay moneda
+    if (!editing && formData.country && countryCurrencies[formData.country]) {
       const countryCurrency = countryCurrencies[formData.country];
       // Solo actualizar si la moneda actual es USD (por defecto) o si no hay moneda seleccionada
       // Esto evita sobrescribir si el usuario ya seleccionó una moneda manualmente
@@ -141,7 +201,7 @@ export default function Restaurants() {
         setFormData(prev => ({ ...prev, defaultCurrency: countryCurrency }));
       }
     }
-  }, [formData.country]);
+  }, [formData.country, editing]);
 
   const loadRestaurants = async () => {
     try {
@@ -296,7 +356,17 @@ export default function Restaurants() {
         loadRestaurants();
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error guardando restaurante');
+      const errorMessage = error.response?.data?.message || 'Error guardando restaurante';
+      setAlertData({
+        title: 'Error',
+        message: errorMessage,
+        variant: 'error',
+      });
+      setShowAlert(true);
+      // Si el error es por límite alcanzado, recargar restaurantes para actualizar el estado
+      if (errorMessage.includes('límite') || errorMessage.includes('limit')) {
+        loadRestaurants();
+      }
     }
   };
 
@@ -465,7 +535,11 @@ export default function Restaurants() {
         timezone: fullRestaurant.timezone || 'UTC',
         template: fullRestaurant.template || 'classic',
         defaultCurrency: fullRestaurant.defaultCurrency || 'USD',
-        additionalCurrencies: fullRestaurant.additionalCurrencies || [],
+        additionalCurrencies: Array.isArray(fullRestaurant.additionalCurrencies) 
+          ? fullRestaurant.additionalCurrencies 
+          : (typeof fullRestaurant.additionalCurrencies === 'string' 
+              ? JSON.parse(fullRestaurant.additionalCurrencies || '[]') 
+              : []),
         primaryColor: fullRestaurant.primaryColor || '#007bff',
         secondaryColor: fullRestaurant.secondaryColor || '#0056b3',
       });
@@ -474,6 +548,8 @@ export default function Restaurants() {
         country: addressParts.country,
         province: addressParts.province,
         city: addressParts.city,
+        defaultCurrency: fullRestaurant.defaultCurrency,
+        defaultCurrencyLoaded: fullRestaurant.defaultCurrency || 'USD',
       });
       setLogoPreview(fullRestaurant.logoUrl || null);
       setLogoFile(null);
@@ -482,7 +558,12 @@ export default function Restaurants() {
       setShowModal(true);
     } catch (error: any) {
       console.error('Error cargando datos del restaurante:', error);
-      alert(error.response?.data?.message || 'Error cargando datos del restaurante');
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error cargando datos del restaurante',
+        variant: 'error',
+      });
+      setShowAlert(true);
     }
   };
 
@@ -510,14 +591,34 @@ export default function Restaurants() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar este restaurante?')) return;
+  const handleDeleteClick = (id: string) => {
+    setRestaurantToDelete(id);
+    setShowConfirmDelete(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!restaurantToDelete) return;
     
     try {
-      await api.delete(`/restaurants/${id}`);
+      await api.delete(`/restaurants/${restaurantToDelete}`);
       loadRestaurants();
+      setShowConfirmDelete(false);
+      setRestaurantToDelete(null);
+      setAlertData({
+        title: 'Éxito',
+        message: 'Restaurante eliminado correctamente',
+        variant: 'success',
+      });
+      setShowAlert(true);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error eliminando restaurante');
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error eliminando restaurante',
+        variant: 'error',
+      });
+      setShowAlert(true);
+      setShowConfirmDelete(false);
+      setRestaurantToDelete(null);
     }
   };
 
@@ -538,7 +639,12 @@ export default function Restaurants() {
     
     const url = getRestaurantPublicUrl(selectedRestaurantForQR);
     if (!url) {
-      alert('No se puede generar la URL del restaurante.');
+      setAlertData({
+        title: 'Error',
+        message: 'No se puede generar la URL del restaurante.',
+        variant: 'error',
+      });
+      setShowAlert(true);
       return;
     }
 
@@ -596,7 +702,12 @@ export default function Restaurants() {
     } catch (error: any) {
       console.error('Error actualizando restaurante:', error);
       console.error('Detalles del error:', error.response?.data);
-      alert(error.response?.data?.message || error.message || 'Error actualizando restaurante');
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || error.message || 'Error actualizando restaurante',
+        variant: 'error',
+      });
+      setShowAlert(true);
     }
   };
 
@@ -608,6 +719,7 @@ export default function Restaurants() {
           <MenuWizard
             restaurantId={newRestaurantId}
             restaurants={restaurants}
+            fromRestaurantCreation={true}
             onComplete={() => {
               setShowMenuWizard(false);
               setNewRestaurantId(null);
@@ -664,21 +776,45 @@ export default function Restaurants() {
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h1 className="admin-title">Restaurantes</h1>
             <button className="admin-btn" onClick={() => {
-              setEditing(null);
-              setLogoFile(null);
-              setLogoPreview(null);
-              setCoverFile(null);
-              setCoverPreview(null);
-      setFormData({
-        name: '', description: '', street: '', city: '', province: '', postalCode: '', country: '',
-        phone: '', usePhoneForWhatsApp: false, whatsapp: '', email: '', website: '', timezone: 'UTC', template: 'classic',
-        defaultCurrency: 'USD', additionalCurrencies: [], primaryColor: '#007bff', secondaryColor: '#0056b3',
-      });
-              setShowWizard(true);
+              if (canCreateRestaurant()) {
+                setEditing(null);
+                setLogoFile(null);
+                setLogoPreview(null);
+                setCoverFile(null);
+                setCoverPreview(null);
+                setFormData({
+                  name: '', description: '', street: '', city: '', province: '', postalCode: '', country: '',
+                  phone: '', usePhoneForWhatsApp: false, whatsapp: '', email: '', website: '', timezone: 'UTC', template: 'classic',
+                  defaultCurrency: 'USD', additionalCurrencies: [], primaryColor: '#007bff', secondaryColor: '#0056b3',
+                });
+                setShowWizard(true);
+              } else {
+                const limit = getRestaurantLimit();
+                const plan = tenantPlan || 'free';
+                setLimitMessage({
+                  limit,
+                  current: restaurants.length,
+                  plan: plan === 'free' ? 'gratuito' : plan
+                });
+                setShowLimitModal(true);
+              }
             }}>
               + Nuevo Restaurante
             </button>
           </div>
+
+          {user && user.role !== 'SUPER_ADMIN' && (
+            <div className="mb-3 p-3 bg-light rounded border">
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <strong style={{ fontSize: '1.1rem' }}>
+                  {total || restaurants.length}/{getRestaurantLimit() === -1 ? '∞' : getRestaurantLimit()} restaurantes disponibles
+                </strong>
+              </div>
+              <p className="mb-0 text-muted" style={{ fontSize: '0.9rem' }}>
+                Puedes ampliar la cantidad de restaurantes disponibles cambiando tu plan de suscripción.
+              </p>
+            </div>
+          )}
 
           {isSuperAdmin && (
             <div className="mb-3">
@@ -801,7 +937,7 @@ export default function Restaurants() {
                     </button>
                     <button 
                       className="btn btn-sm btn-danger" 
-                      onClick={() => handleDelete(restaurant.id)}
+                      onClick={() => handleDeleteClick(restaurant.id)}
                     >
                       Eliminar
                     </button>
@@ -1186,6 +1322,89 @@ export default function Restaurants() {
                       Esta plantilla se aplicará a todos los menús de este restaurante
                     </small>
                   </div>
+
+                  <hr className="my-4" />
+                  <h6 className="mb-3">MEDIOS DE PAGO</h6>
+
+                  {/* Moneda por defecto */}
+                  <div className="mb-3">
+                    <label className="form-label">Moneda de pago por defecto *</label>
+                    <select
+                      className="form-select"
+                      value={formData.defaultCurrency || 'USD'}
+                      onChange={(e) => setFormData({ ...formData, defaultCurrency: e.target.value })}
+                      required
+                    >
+                      <option value="USD">USD - Dólar estadounidense</option>
+                      <option value="EUR">EUR - Euro</option>
+                      <option value="ARS">ARS - Peso argentino</option>
+                      <option value="MXN">MXN - Peso mexicano</option>
+                      <option value="CLP">CLP - Peso chileno</option>
+                      <option value="COP">COP - Peso colombiano</option>
+                      <option value="PEN">PEN - Sol peruano</option>
+                      <option value="BRL">BRL - Real brasileño</option>
+                      <option value="UYU">UYU - Peso uruguayo</option>
+                      <option value="PYG">PYG - Guaraní paraguayo</option>
+                      <option value="BOB">BOB - Boliviano</option>
+                      <option value="VES">VES - Bolívar venezolano</option>
+                    </select>
+                  </div>
+
+                  {/* Monedas adicionales */}
+                  <div className="mb-3">
+                    <label className="form-label">Monedas adicionales (opcional)</label>
+                    <p className="form-text text-muted" style={{ marginBottom: '16px', fontSize: '14px' }}>
+                      Haz clic en las monedas que deseas aceptar además de la moneda por defecto
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['USD', 'EUR', 'ARS', 'MXN', 'CLP', 'COP', 'PEN', 'BRL', 'UYU', 'PYG', 'BOB', 'VES']
+                        .filter(c => c !== formData.defaultCurrency)
+                        .map(currency => {
+                          const isSelected = formData.additionalCurrencies?.includes(currency) || false;
+                          const currencyLabels: { [key: string]: string } = {
+                            'USD': 'USD - Dólar estadounidense',
+                            'EUR': 'EUR - Euro',
+                            'ARS': 'ARS - Peso argentino',
+                            'MXN': 'MXN - Peso mexicano',
+                            'CLP': 'CLP - Peso chileno',
+                            'COP': 'COP - Peso colombiano',
+                            'PEN': 'PEN - Sol peruano',
+                            'BRL': 'BRL - Real brasileño',
+                            'UYU': 'UYU - Peso uruguayo',
+                            'PYG': 'PYG - Guaraní paraguayo',
+                            'BOB': 'BOB - Boliviano',
+                            'VES': 'VES - Bolívar venezolano',
+                          };
+                          
+                          return (
+                            <button
+                              key={currency}
+                              type="button"
+                              className={`btn ${isSelected ? 'btn-primary' : 'btn-outline-primary'}`}
+                              style={{ fontSize: '0.875rem', padding: '6px 12px' }}
+                              onClick={() => {
+                                const currentCurrencies = formData.additionalCurrencies || [];
+                                if (isSelected) {
+                                  // Remover la moneda
+                                  setFormData({
+                                    ...formData,
+                                    additionalCurrencies: currentCurrencies.filter(c => c !== currency),
+                                  });
+                                } else {
+                                  // Agregar la moneda
+                                  setFormData({
+                                    ...formData,
+                                    additionalCurrencies: [...currentCurrencies, currency],
+                                  });
+                                }
+                              }}
+                            >
+                              {currencyLabels[currency] || currency}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
@@ -1271,6 +1490,83 @@ export default function Restaurants() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de límite alcanzado */}
+      {showLimitModal && (
+        <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setShowLimitModal(false)}>
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
+                <h5 className="modal-title" style={{ color: '#856404' }}>
+                  <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#ffc107' }}></i>
+                  Límite Alcanzado
+                </h5>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => setShowLimitModal(false)}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body" style={{ padding: '24px' }}>
+                <p style={{ marginBottom: '16px', fontSize: '16px' }}>
+                  Has alcanzado el límite de <strong>{limitMessage.limit} restaurante(s)</strong> para tu plan <strong>{limitMessage.plan}</strong>.
+                </p>
+                <p style={{ marginBottom: '16px', fontSize: '16px' }}>
+                  Actualmente tienes <strong>{limitMessage.current} restaurante(s)</strong> creado(s).
+                </p>
+                <div className="alert alert-warning mb-0" style={{ 
+                  backgroundColor: '#fff3cd', 
+                  border: '1px solid #ffc107',
+                  borderRadius: '4px',
+                  padding: '12px'
+                }}>
+                  <strong>¿Necesitas más restaurantes?</strong><br />
+                  Por favor, amplía tu suscripción para crear más restaurantes y aprovechar todas las funcionalidades de MenuQR.
+                </div>
+              </div>
+              <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={() => setShowLimitModal(false)}
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para eliminar restaurante */}
+      <ConfirmModal
+        show={showConfirmDelete}
+        title="Eliminar Restaurante"
+        message="¿Estás seguro de eliminar este restaurante? Esta acción no se puede deshacer y también se eliminarán todos los menús y productos asociados."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          setShowConfirmDelete(false);
+          setRestaurantToDelete(null);
+        }}
+      />
+
+      {/* Modal de alerta */}
+      {alertData && (
+        <AlertModal
+          show={showAlert}
+          title={alertData.title}
+          message={alertData.message}
+          variant={alertData.variant}
+          onClose={() => {
+            setShowAlert(false);
+            setAlertData(null);
+          }}
+        />
       )}
     </AdminLayout>
   );

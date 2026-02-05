@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
 import ProductWizard from '../../../components/ProductWizard';
+import ConfirmModal from '../../../components/ConfirmModal';
+import AlertModal from '../../../components/AlertModal';
 
 export default function Products() {
   const router = useRouter();
@@ -19,6 +21,11 @@ export default function Products() {
   const [filterTenantName, setFilterTenantName] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
   const [showProductWizard, setShowProductWizard] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertData, setAlertData] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' | 'info' } | null>(null);
   const [editing, setEditing] = useState<any>(null);
   const [selectedMenu, setSelectedMenu] = useState<string>('');
   const [formData, setFormData] = useState({
@@ -34,12 +41,18 @@ export default function Products() {
   const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(50);
+  const [tenantPlan, setTenantPlan] = useState<string | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
       try {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        // Obtener el plan del tenant desde el usuario
+        if (parsedUser?.tenant?.plan) {
+          setTenantPlan(parsedUser.tenant.plan);
+        }
       } catch (err) {
         console.error('Error parsing user data:', err);
       }
@@ -53,6 +66,26 @@ export default function Products() {
   }, [user, filterProductName, filterMenuName, filterRestaurantName, filterTenantName, page, itemsPerPage]);
 
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  const getProductLimit = () => {
+    if (isSuperAdmin) return -1; // SUPER_ADMIN puede crear ilimitados
+    if (!tenantPlan) return 30; // Por defecto
+    
+    const limits: Record<string, number> = {
+      free: 30,
+      basic: 300, // Plan básico: 300 productos
+      premium: -1, // Ilimitado
+    };
+    
+    return limits[tenantPlan] || 30;
+  };
+
+  const canCreateProduct = () => {
+    const limit = getProductLimit();
+    if (limit === -1) return true; // Ilimitado
+    
+    return products.length < limit;
+  };
 
   useEffect(() => {
     if (formData.menuId) {
@@ -134,7 +167,12 @@ export default function Products() {
     try {
       // Validar que si hay menuId, también haya sectionId
       if (formData.menuId && !formData.sectionId) {
-        alert('Si seleccionas un menú, debes seleccionar también una sección');
+        setAlertData({
+          title: 'Validación',
+          message: 'Si seleccionas un menú, debes seleccionar también una sección',
+          variant: 'warning',
+        });
+        setShowAlert(true);
         return;
       }
 
@@ -177,7 +215,12 @@ export default function Products() {
       });
       loadData();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error guardando producto');
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error guardando producto',
+        variant: 'error',
+      });
+      setShowAlert(true);
     }
   };
 
@@ -203,14 +246,28 @@ export default function Products() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+  const handleDeleteClick = (id: string) => {
+    setProductToDelete(id);
+    setShowConfirmDelete(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
     
     try {
-      await api.delete(`/menu-items/${id}`);
+      await api.delete(`/menu-items/${productToDelete}`);
       loadData();
+      setShowConfirmDelete(false);
+      setProductToDelete(null);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error eliminando producto');
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error eliminando producto',
+        variant: 'error',
+      });
+      setShowAlert(true);
+      setShowConfirmDelete(false);
+      setProductToDelete(null);
     }
   };
 
@@ -288,6 +345,7 @@ export default function Products() {
             }}
             onCancel={() => {
               setShowProductWizard(false);
+              loadData(); // Recargar datos para actualizar el contador
             }}
           />
         </div>
@@ -300,11 +358,28 @@ export default function Products() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Productos</h1>
         <button className="btn btn-primary" onClick={() => {
-          setShowProductWizard(true);
+          if (canCreateProduct()) {
+            setShowProductWizard(true);
+          } else {
+            setShowLimitModal(true);
+          }
         }}>
           + Nuevo Producto
         </button>
       </div>
+
+      {user && user.role !== 'SUPER_ADMIN' && (
+        <div className="mb-3 p-3 bg-light rounded border">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <strong style={{ fontSize: '1.1rem' }}>
+              {total || products.length}/{getProductLimit() === -1 ? '∞' : getProductLimit()} productos disponibles
+            </strong>
+          </div>
+          <p className="mb-0 text-muted" style={{ fontSize: '0.9rem' }}>
+            Puedes ampliar la cantidad de productos disponibles cambiando tu plan de suscripción.
+          </p>
+        </div>
+      )}
 
       {isSuperAdmin && (
         <div className="mb-3">
@@ -473,7 +548,7 @@ export default function Products() {
                     </button>
                     <button 
                       className="btn btn-sm btn-danger" 
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() => handleDeleteClick(product.id)}
                     >
                       Eliminar
                     </button>
@@ -698,6 +773,83 @@ export default function Products() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de límite de productos */}
+      {showLimitModal && (
+        <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setShowLimitModal(false)}>
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
+                <h5 className="modal-title" style={{ color: '#856404' }}>
+                  <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#ffc107' }}></i>
+                  Límite de Productos Alcanzado
+                </h5>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => setShowLimitModal(false)}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body" style={{ padding: '24px' }}>
+                <p style={{ marginBottom: '16px', fontSize: '16px' }}>
+                  Has alcanzado el límite de <strong>{getProductLimit()}</strong> producto(s) para tu plan <strong>{tenantPlan || 'gratuito'}</strong>.
+                </p>
+                <p style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
+                  Actualmente tienes <strong>{total || products.length}</strong> producto(s) creado(s).
+                </p>
+                <div className="alert alert-warning mb-0" style={{ 
+                  backgroundColor: '#fff3cd', 
+                  border: '1px solid #ffc107',
+                  borderRadius: '4px',
+                  padding: '12px'
+                }}>
+                  <strong>Para crear más productos:</strong><br />
+                  Por favor, amplía tu suscripción para aumentar el límite de productos disponibles.
+                </div>
+              </div>
+              <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={() => setShowLimitModal(false)}
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para eliminar producto */}
+      <ConfirmModal
+        show={showConfirmDelete}
+        title="Eliminar Producto"
+        message="¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          setShowConfirmDelete(false);
+          setProductToDelete(null);
+        }}
+      />
+
+      {/* Modal de alerta */}
+      {alertData && (
+        <AlertModal
+          show={showAlert}
+          title={alertData.title}
+          message={alertData.message}
+          variant={alertData.variant}
+          onClose={() => {
+            setShowAlert(false);
+            setAlertData(null);
+          }}
+        />
       )}
     </AdminLayout>
   );

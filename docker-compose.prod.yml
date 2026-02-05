@@ -1,0 +1,146 @@
+# ========================================
+# MenuQR - Docker Compose PRODUCCIÓN
+# ========================================
+# Servidor: /opt/menuqr
+# Traefik global existente | certresolver: mytlschallenge | red: root_default
+# Sin puertos expuestos. Sin nginx.
+# ========================================
+
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: menuqr_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-menuqr}
+      POSTGRES_USER: ${POSTGRES_USER:-menuqr_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-menuqr_password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-menuqr_user} -d ${POSTGRES_DB:-menuqr}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - root_default
+
+  redis:
+    image: redis:7-alpine
+    container_name: menuqr_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - root_default
+
+  minio:
+    image: minio/minio:latest
+    container_name: menuqr_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+    networks:
+      - root_default
+    labels:
+      - "traefik.enable=true"
+      # Console web (opcional)
+      - "traefik.http.routers.menuqr-minio.rule=Host(`minio.menuqr.72-60-133-229.nip.io`)"
+      - "traefik.http.routers.menuqr-minio.entrypoints=websecure"
+      - "traefik.http.routers.menuqr-minio.tls=true"
+      - "traefik.http.routers.menuqr-minio.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.menuqr-minio.loadbalancer.server.port=9001"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: menuqr_backend
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-menuqr_user}:${POSTGRES_PASSWORD:-menuqr_password}@postgres:5432/${POSTGRES_DB:-menuqr}
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: "false"
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      FRONTEND_URL: ${FRONTEND_URL}
+      BACKEND_URL: ${BACKEND_URL}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - root_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.menuqr-api.rule=Host(`api.menuqr.72-60-133-229.nip.io`)"
+      - "traefik.http.routers.menuqr-api.entrypoints=websecure"
+      - "traefik.http.routers.menuqr-api.tls=true"
+      - "traefik.http.routers.menuqr-api.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.menuqr-api.loadbalancer.server.port=3001"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    container_name: menuqr_frontend
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    depends_on:
+      - backend
+    networks:
+      - root_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.menuqr-front.rule=Host(`menuqr.72-60-133-229.nip.io`)"
+      - "traefik.http.routers.menuqr-front.entrypoints=websecure"
+      - "traefik.http.routers.menuqr-front.tls=true"
+      - "traefik.http.routers.menuqr-front.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.menuqr-front.loadbalancer.server.port=3000"
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  root_default:
+    external: true

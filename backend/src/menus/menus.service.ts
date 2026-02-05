@@ -198,6 +198,9 @@ export class MenusService {
     validFrom?: Date;
     validTo?: Date;
   }) {
+    // Validar límite de menús según el plan
+    await this.validateMenuLimit(tenantId);
+
     // Verificar que el restaurante pertenece al tenant (solo si restaurantId no es null)
     if (data.restaurantId !== null && data.restaurantId !== undefined && data.restaurantId !== '') {
       const restaurant = await this.postgres.queryRaw<any>(
@@ -543,6 +546,60 @@ export class MenusService {
       // Si no, convertirla en BadRequestException
       throw new BadRequestException(error.message || 'Error al actualizar el orden de los menús');
     }
+  }
+
+  private async validateMenuLimit(tenantId: string) {
+    // Obtener el plan del tenant
+    const tenant = await this.postgres.queryRaw<any>(
+      `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [tenantId]
+    );
+
+    if (!tenant[0]) {
+      throw new NotFoundException('Tenant no encontrado');
+    }
+
+    const plan = tenant[0].plan || 'free'; // Default a 'free' si no tiene plan
+
+    // Obtener límite según el plan
+    const limit = this.getMenuLimit(plan);
+
+    // Si el límite es -1 (ilimitado), no validar
+    if (limit === -1) {
+      return;
+    }
+
+    // Contar menús activos del tenant (solo los no eliminados)
+    const count = await this.postgres.queryRaw<any>(
+      `SELECT COUNT(*) as total 
+       FROM menus 
+       WHERE tenant_id = $1 AND deleted_at IS NULL`,
+      [tenantId]
+    );
+
+    const total = parseInt(count[0].total) || 0;
+
+    this.logger.log(`Validando límite de menús: tenantId=${tenantId}, plan=${plan}, limit=${limit}, total=${total}`);
+
+    if (total >= limit) {
+      throw new BadRequestException(
+        `Has alcanzado el límite de ${limit} menú(s) para el plan ${plan}. ` +
+        `Actualmente tienes ${total} menú(s) creado(s). ` +
+        `Por favor, actualiza tu plan para crear más menús.`
+      );
+    }
+  }
+
+  private getMenuLimit(plan: string): number {
+    const limits: Record<string, number> = {
+      free: 3, // Plan gratuito: 3 menús
+      basic: 20,
+      premium: -1, // Ilimitado
+    };
+
+    // Si el plan no está definido o es null, usar 'free' como default
+    const planKey = plan || 'free';
+    return limits[planKey] || 3; // Default a 3 si el plan no está en la lista
   }
 }
 

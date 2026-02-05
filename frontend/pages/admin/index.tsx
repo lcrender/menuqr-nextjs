@@ -43,10 +43,18 @@ export default function Admin() {
           api.get('/menus'),
         ]);
         
+        const restaurants = restaurantsRes.data?.data || restaurantsRes.data || [];
+        const menus = menusRes.data?.data || menusRes.data || [];
+        
         setStats({
-          totalRestaurants: restaurantsRes.data.length,
-          totalMenus: menusRes.data.length,
+          totalRestaurants: restaurants.length,
+          totalMenus: menus.length,
         });
+
+        // Si no hay restaurantes, redirigir a la página de restaurantes con el wizard abierto
+        if (restaurants.length === 0) {
+          router.push('/admin/restaurants?wizard=true');
+        }
       }
     } catch (error) {
       console.error('Error cargando estadísticas:', error);

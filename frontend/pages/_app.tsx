@@ -1,6 +1,7 @@
 import type { AppProps } from 'next/app';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/admin.css';
+import '../styles/landing.css';
 import '../styles/templates.css';
 import '../templates/classic/classic.css';
 import '../templates/minimalist/minimalist.css';

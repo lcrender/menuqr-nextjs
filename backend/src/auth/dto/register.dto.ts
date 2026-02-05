@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsNotEmpty, IsOptional, IsAlphanumeric, Min, Max } from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
@@ -26,8 +26,8 @@ export class RegisterDto {
   })
   @IsString({ message: 'El nombre debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'El nombre es requerido' })
-  @Min(2, { message: 'El nombre debe tener al menos 2 caracteres' })
-  @Max(50, { message: 'El nombre no puede exceder 50 caracteres' })
+  @MinLength(2, { message: 'El nombre debe tener al menos 2 caracteres' })
+  @MaxLength(50, { message: 'El nombre no puede exceder 50 caracteres' })
   firstName: string;
 
   @ApiProperty({
@@ -36,8 +36,8 @@ export class RegisterDto {
   })
   @IsString({ message: 'El apellido debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'El apellido es requerido' })
-  @Min(2, { message: 'El apellido debe tener al menos 2 caracteres' })
-  @Max(50, { message: 'El apellido no puede exceder 50 caracteres' })
+  @MinLength(2, { message: 'El apellido debe tener al menos 2 caracteres' })
+  @MaxLength(50, { message: 'El apellido no puede exceder 50 caracteres' })
   lastName: string;
 
   @ApiProperty({
@@ -47,8 +47,8 @@ export class RegisterDto {
   })
   @IsOptional()
   @IsString({ message: 'El nombre del tenant debe ser una cadena de texto' })
-  @Min(2, { message: 'El nombre del tenant debe tener al menos 2 caracteres' })
-  @Max(100, { message: 'El nombre del tenant no puede exceder 100 caracteres' })
+  @MinLength(2, { message: 'El nombre del tenant debe tener al menos 2 caracteres' })
+  @MaxLength(100, { message: 'El nombre del tenant no puede exceder 100 caracteres' })
   tenantName?: string;
 }
 

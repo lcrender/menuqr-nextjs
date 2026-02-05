@@ -301,8 +301,11 @@ export class MenuItemsService {
     prices?: Array<{ currency: string; label?: string; amount: number }>;
     iconCodes?: string[];
   }) {
-    // Si se proporciona menuId y sectionId, verificar que pertenecen al tenant
-    if (data.menuId && data.sectionId) {
+    // Validar límite de productos según el plan
+    await this.validateMenuItemLimit(tenantId);
+
+    // Si se proporciona menuId, verificar que pertenece al tenant
+    if (data.menuId) {
       const menu = await this.postgres.queryRaw<any>(
         `SELECT id FROM menus 
          WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL 
@@ -314,19 +317,23 @@ export class MenuItemsService {
         throw new NotFoundException('Menú no encontrado o no pertenece al tenant');
       }
 
-      const section = await this.postgres.queryRaw<any>(
-        `SELECT id FROM menu_sections 
-         WHERE id = $1 AND menu_id = $2 AND tenant_id = $3 AND deleted_at IS NULL 
-         LIMIT 1`,
-        [data.sectionId, data.menuId, tenantId]
-      );
+      // Si también se proporciona sectionId, verificar que pertenece al menú
+      if (data.sectionId) {
+        const section = await this.postgres.queryRaw<any>(
+          `SELECT id FROM menu_sections 
+           WHERE id = $1 AND menu_id = $2 AND tenant_id = $3 AND deleted_at IS NULL 
+           LIMIT 1`,
+          [data.sectionId, data.menuId, tenantId]
+        );
 
-      if (!section[0]) {
-        throw new NotFoundException('Sección no encontrada o no pertenece al menú');
+        if (!section[0]) {
+          throw new NotFoundException('Sección no encontrada o no pertenece al menú');
+        }
       }
-    } else if (data.menuId || data.sectionId) {
-      // Si solo se proporciona uno, es un error
-      throw new BadRequestException('Si se proporciona menuId, también debe proporcionarse sectionId');
+      // Si hay menuId pero no sectionId, permitir (el producto se guardará pero no se mostrará en el menú)
+    } else if (data.sectionId) {
+      // Si solo se proporciona sectionId sin menuId, es un error
+      throw new BadRequestException('Si se proporciona sectionId, también debe proporcionarse menuId');
     }
 
     // Obtener el siguiente valor de sort dentro de la sección (si hay sección)
@@ -630,6 +637,60 @@ export class MenuItemsService {
       }
       throw new BadRequestException(error.message || 'Error al actualizar el orden de los productos');
     }
+  }
+
+  private async validateMenuItemLimit(tenantId: string) {
+    // Obtener el plan del tenant
+    const tenant = await this.postgres.queryRaw<any>(
+      `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [tenantId]
+    );
+
+    if (!tenant[0]) {
+      throw new NotFoundException('Tenant no encontrado');
+    }
+
+    const plan = tenant[0].plan || 'free'; // Default a 'free' si no tiene plan
+
+    // Obtener límite según el plan
+    const limit = this.getMenuItemLimit(plan);
+
+    // Si el límite es -1 (ilimitado), no validar
+    if (limit === -1) {
+      return;
+    }
+
+    // Contar productos activos del tenant (solo los no eliminados)
+    const count = await this.postgres.queryRaw<any>(
+      `SELECT COUNT(*) as total 
+       FROM menu_items 
+       WHERE tenant_id = $1 AND deleted_at IS NULL`,
+      [tenantId]
+    );
+
+    const total = parseInt(count[0].total) || 0;
+
+    this.logger.log(`Validando límite de productos: tenantId=${tenantId}, plan=${plan}, limit=${limit}, total=${total}`);
+
+    if (total >= limit) {
+      throw new BadRequestException(
+        `Has alcanzado el límite de ${limit} producto(s) para el plan ${plan}. ` +
+        `Actualmente tienes ${total} producto(s) creado(s). ` +
+        `Por favor, actualiza tu plan para crear más productos.`
+      );
+    }
+  }
+
+  private getMenuItemLimit(plan: string): number {
+    const limits: Record<string, number> = {
+      free: 30, // Plan gratuito: 30 productos
+      basic: 300, // Plan básico: 300 productos
+      premium: -1, // Ilimitado
+    };
+
+    // Si el plan no está definido o es null, usar 'free' como default
+    const planKey = plan || 'free';
+    return limits[planKey] || 30; // Default a 30 si el plan no está en la lista
   }
 }
 

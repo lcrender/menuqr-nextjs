@@ -2,6 +2,11 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import ClassicTemplate from '../../../templates/classic/ClassicTemplate';
+import MinimalistTemplate from '../../../templates/minimalist/MinimalistTemplate';
+import FoodieTemplate from '../../../templates/foodie/FoodieTemplate';
+import BurgersTemplate from '../../../templates/burgers/BurgersTemplate';
+import ItalianFoodTemplate from '../../../templates/italianfood/ItalianFoodTemplate';
 
 interface MenuSection {
   id: string;
@@ -33,6 +38,54 @@ const formatPrice = (price: ItemPrice) => {
   return `${price.currency} ${price.amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
+// Códigos de país comunes para WhatsApp
+const countryCodes: { [key: string]: string } = {
+  'Argentina': '54',
+  'Brasil': '55',
+  'Chile': '56',
+  'Colombia': '57',
+  'México': '52',
+  'Perú': '51',
+  'España': '34',
+  'Estados Unidos': '1',
+};
+
+const formatWhatsAppForLink = (whatsapp: string, country?: string): string => {
+  // Limpiar el número (remover espacios, guiones, paréntesis, etc.)
+  let cleaned = whatsapp.replace(/[\s\-\(\)]/g, '');
+  
+  // Si el número ya tiene código de país (empieza con +), devolverlo limpio
+  if (cleaned.startsWith('+')) {
+    return cleaned.substring(1);
+  }
+  
+  // Si hay un código de país, agregarlo
+  if (country && countryCodes[country]) {
+    return `${countryCodes[country]}${cleaned}`;
+  }
+  
+  // Si no se puede determinar el código de país, devolver el número limpio
+  return cleaned;
+};
+
+interface Restaurant {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logoUrl?: string;
+  coverUrl?: string;
+  whatsapp?: string;
+  country?: string;
+  template?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+}
+
 interface Menu {
   id: string;
   slug: string;
@@ -58,19 +111,53 @@ export default function MenuPage() {
   const router = useRouter();
   const { restaurantSlug, menuSlug } = router.query;
   const [menu, setMenu] = useState<Menu | null>(null);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!restaurantSlug || !menuSlug) return;
 
-    const fetchMenu = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
+        // Obtener el menú
+        const menuResponse = await axios.get(
           `http://localhost:3001/public/restaurants/${restaurantSlug}/menus/${menuSlug}`,
         );
-        setMenu(response.data);
+        setMenu(menuResponse.data);
+        
+        // Obtener el restaurante para tener todos los datos necesarios
+        const restaurantResponse = await axios.get(
+          `http://localhost:3001/public/restaurants/${restaurantSlug}`,
+        );
+        const restaurantData = restaurantResponse.data;
+        
+        // Extraer WhatsApp del phone si existe
+        let whatsapp = '';
+        if (restaurantData.phone && restaurantData.phone.includes('WhatsApp:')) {
+          const whatsappMatch = restaurantData.phone.match(/WhatsApp:\s*(.+?)(?:\s*\|)?$/i);
+          whatsapp = whatsappMatch ? whatsappMatch[1].trim() : '';
+        }
+        
+        setRestaurant({
+          ...restaurantData,
+          whatsapp,
+        });
+
+        // Registrar vista del menú
+        if (menuResponse.data?.id && restaurantData?.tenantId) {
+          try {
+            await axios.post('http://localhost:3001/tracking/menu-view', {
+              menuId: menuResponse.data.id,
+              restaurantId: restaurantData.id,
+              tenantId: restaurantData.tenantId,
+            });
+          } catch (trackingErr) {
+            // No mostrar error al usuario, solo loguear
+            console.error('Error registrando vista:', trackingErr);
+          }
+        }
       } catch (err: any) {
         if (err.response?.status === 404) {
           setError('Menú no encontrado');
@@ -82,7 +169,7 @@ export default function MenuPage() {
       }
     };
 
-    fetchMenu();
+    fetchData();
   }, [restaurantSlug, menuSlug]);
 
   if (loading) {
@@ -110,333 +197,119 @@ export default function MenuPage() {
     );
   }
 
+  if (!restaurant) {
+    return (
+      <div className="container mt-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Obtener el template del restaurante (el menú usa el template del restaurante)
-  const template = menu.template || 'classic';
-
-  // Renderizar según la plantilla
-  const renderMenu = () => {
-    switch (template) {
-      case 'modern':
-        return renderModernTemplate();
-      case 'foodie':
-        return renderFoodieTemplate();
-      case 'classic':
-      default:
-        return renderClassicTemplate();
-    }
+  const template = menu.template || restaurant.template || 'classic';
+  
+  // Preparar el menú en el formato que esperan los templates
+  const selectedMenu = {
+    id: menu.id,
+    name: menu.name,
+    slug: menu.slug,
+    ...(menu.description && { description: menu.description }),
+    sections: menu.sections,
   };
+  
+  // Preparar la lista de menús (solo el menú actual)
+  const menuList = [{
+    id: menu.id,
+    name: menu.name,
+    slug: menu.slug,
+    ...(menu.description && { description: menu.description }),
+  }];
 
-  const renderClassicTemplate = () => {
+  // Renderizar según la plantilla usando los componentes de template
+  if (template === 'classic') {
     return (
-      <div className={`template-${template} menu-container`} style={{ minHeight: '100vh', paddingTop: '40px' }}>
-        <div className="container mt-4">
-          <div className="text-center mb-4">
-          <Link href={`/r/${menu.restaurantSlug}`} className="btn btn-link">
-            ← Volver a {menu.restaurantName}
-          </Link>
-        </div>
-        
-        <div className="card">
-          <div className="card-body">
-            <h1 className="card-title text-center">{menu.name}</h1>
-            {menu.description && (
-              <p className="card-text text-center text-muted">{menu.description}</p>
-            )}
-            
-            <hr />
-            
-            {menu.sections.length === 0 ? (
-              <div className="alert alert-info mt-3">
-                <p>El menú está siendo actualizado. Vuelve pronto.</p>
-              </div>
-            ) : (
-              <>
-                {/* Índice de secciones */}
-                {menu.sections.length > 1 && (
-                  <div className="mb-4 p-3" style={{ backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
-                    <div className="d-flex flex-wrap gap-2">
-                      {menu.sections.map((section) => (
-                        <a
-                          key={section.id}
-                          href={`#section-${section.id}`}
-                          className="btn btn-sm btn-outline-primary"
-                          style={{ borderRadius: '20px' }}
-                        >
-                          {section.name}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {menu.sections.map((section) => (
-                  <div key={section.id} id={`section-${section.id}`} className="mt-4" style={{ scrollMarginTop: '80px' }}>
-                    <h2 className="border-bottom pb-2">{section.name}</h2>
-                  <div className="row">
-                    {section.items.map((item) => (
-                      <div key={item.id} className="col-md-6 mb-4">
-                        <div className="card h-100">
-                          {item.photos && item.photos.length > 0 && (
-                            <img 
-                              src={item.photos[0]} 
-                              alt={item.name}
-                              className="card-img-top"
-                              style={{ height: '200px', objectFit: 'cover' }}
-                            />
-                          )}
-                          <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-start mb-3">
-                              <h5 className="card-title">{item.name}</h5>
-                              {item.icons.length > 0 && (
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxWidth: '200px', justifyContent: 'flex-end' }}>
-                                  {item.icons.map((icon) => (
-                                    <span key={icon} className="badge bg-info" title={iconLabels[icon] || icon}>
-                                      {iconLabels[icon] || icon}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                            {item.description && (
-                              <p className="card-text text-muted mb-3">{item.description}</p>
-                            )}
-                            <div className="mt-3" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                              {item.prices.map((price, idx) => (
-                                <span key={idx} className="badge bg-primary">
-                                  {price.label && `${price.label}: `}
-                                  {formatPrice(price)}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              </>
-            )}
-          </div>
-        </div>
-        </div>
-      </div>
+      <ClassicTemplate
+        restaurant={restaurant}
+        menuList={menuList}
+        selectedMenu={selectedMenu}
+        onMenuSelect={() => {}}
+        formatPrice={formatPrice}
+        formatWhatsAppForLink={formatWhatsAppForLink}
+        iconLabels={iconLabels}
+      />
     );
-  };
+  }
 
-  const renderModernTemplate = () => {
+  if (template === 'minimalist') {
     return (
-      <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px 0' }}>
-        <div className="container">
-          <div className="text-center mb-4">
-            <Link href={`/r/${menu.restaurantSlug}`} className="btn btn-link">
-              ← Volver a {menu.restaurantName}
-            </Link>
-          </div>
-          
-          <div className="card shadow-lg" style={{ borderRadius: '16px', border: 'none' }}>
-            <div className="card-body p-5">
-              <h1 className="text-center mb-3" style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>
-                {menu.name}
-              </h1>
-              {menu.description && (
-                <p className="text-center text-muted mb-5">{menu.description}</p>
-              )}
-              
-              {menu.sections.length === 0 ? (
-                <div className="alert alert-info mt-3">
-                  <p>El menú está siendo actualizado. Vuelve pronto.</p>
-                </div>
-              ) : (
-                <>
-                  {/* Índice de secciones */}
-                  {menu.sections.length > 1 && (
-                    <div className="mb-5 p-4" style={{ backgroundColor: '#f8f9fa', borderRadius: '12px', border: '1px solid #e0e0e0' }}>
-                      <div className="d-flex flex-wrap gap-2">
-                        {menu.sections.map((section) => (
-                          <a
-                            key={section.id}
-                            href={`#section-${section.id}`}
-                            className="btn btn-sm btn-outline-dark"
-                            style={{ borderRadius: '20px', padding: '8px 20px' }}
-                          >
-                            {section.name}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {menu.sections.map((section) => (
-                    <div key={section.id} id={`section-${section.id}`} className="mt-5" style={{ scrollMarginTop: '80px' }}>
-                      <h2 className="mb-4" style={{ fontSize: '1.8rem', fontWeight: '600', color: '#333' }}>
-                        {section.name}
-                      </h2>
-                    <div className="row g-4">
-                      {section.items.map((item) => (
-                        <div key={item.id} className="col-md-6 col-lg-4">
-                          <div className="card h-100" style={{ border: 'none', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                            {item.photos && item.photos.length > 0 && (
-                              <img 
-                                src={item.photos[0]} 
-                                alt={item.name}
-                                style={{ height: '200px', objectFit: 'cover', width: '100%' }}
-                              />
-                            )}
-                            <div className="card-body p-4 d-flex flex-column">
-                              <div className="mb-2">
-                                <h5 className="card-title mb-2" style={{ fontSize: '1.2rem', fontWeight: '600' }}>
-                                  {item.name}
-                                </h5>
-                                {item.icons.length > 0 && (
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
-                                    {item.icons.map((icon) => (
-                                      <span key={icon} className="badge bg-light text-dark" title={iconLabels[icon] || icon} style={{ fontSize: '0.75rem' }}>
-                                        {iconLabels[icon] || icon}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                              {item.description && (
-                                <p className="card-text text-muted mb-3" style={{ flexGrow: 1, fontSize: '0.9rem' }}>{item.description}</p>
-                              )}
-                              <div className="mt-auto" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                {item.prices.map((price, idx) => (
-                                  <span key={idx} className="badge bg-dark" style={{ fontSize: '0.9rem', padding: '6px 10px' }}>
-                                    {price.label && `${price.label}: `}
-                                    {formatPrice(price)}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <MinimalistTemplate
+        restaurant={restaurant}
+        menuList={menuList}
+        selectedMenu={selectedMenu}
+        onMenuSelect={() => {}}
+        formatPrice={formatPrice}
+        formatWhatsAppForLink={formatWhatsAppForLink}
+        iconLabels={iconLabels}
+      />
     );
-  };
+  }
 
-  const renderFoodieTemplate = () => {
+  if (template === 'foodie') {
     return (
-      <div style={{ backgroundColor: '#1a1a1a', minHeight: '100vh', padding: '20px 0', color: '#fff' }}>
-        <div className="container">
-          <div className="text-center mb-4">
-            <Link href={`/r/${menu.restaurantSlug}`} className="btn btn-outline-light">
-              ← Volver a {menu.restaurantName}
-            </Link>
-          </div>
-          
-          <div className="card" style={{ backgroundColor: '#2a2a2a', border: 'none', borderRadius: '20px' }}>
-            <div className="card-body p-5">
-              <h1 className="text-center mb-3" style={{ fontSize: '3rem', fontWeight: 'bold', color: '#fff' }}>
-                {menu.name}
-              </h1>
-              {menu.description && (
-                <p className="text-center text-muted mb-5" style={{ fontSize: '1.2rem' }}>
-                  {menu.description}
-                </p>
-              )}
-              
-              {menu.sections.length === 0 ? (
-                <div className="alert alert-warning mt-3">
-                  <p>El menú está siendo actualizado. Vuelve pronto.</p>
-                </div>
-              ) : (
-                <>
-                  {/* Índice de secciones */}
-                  {menu.sections.length > 1 && (
-                    <div className="mb-5 p-4" style={{ backgroundColor: '#333', borderRadius: '15px', border: '2px solid #ff6b6b' }}>
-                      <div className="d-flex flex-wrap gap-2">
-                        {menu.sections.map((section) => (
-                          <a
-                            key={section.id}
-                            href={`#section-${section.id}`}
-                            className="btn btn-sm"
-                            style={{ 
-                              borderRadius: '20px', 
-                              padding: '8px 20px',
-                              background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
-                              border: 'none',
-                              color: '#fff',
-                              fontWeight: '600'
-                            }}
-                          >
-                            {section.name}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {menu.sections.map((section) => (
-                    <div key={section.id} id={`section-${section.id}`} className="mt-5" style={{ scrollMarginTop: '80px' }}>
-                      <h2 className="mb-4" style={{ fontSize: '2rem', fontWeight: '600', color: '#ffd700', borderBottom: '2px solid #ffd700', paddingBottom: '10px' }}>
-                        {section.name}
-                      </h2>
-                    <div className="row g-4">
-                      {section.items.map((item) => (
-                        <div key={item.id} className="col-md-6">
-                          <div className="card h-100" style={{ backgroundColor: '#333', border: 'none', borderRadius: '15px', overflow: 'hidden' }}>
-                            {item.photos && item.photos.length > 0 && (
-                              <img 
-                                src={item.photos[0]} 
-                                alt={item.name}
-                                style={{ height: '250px', objectFit: 'cover' }}
-                              />
-                            )}
-                            <div className="card-body p-4">
-                              <div className="d-flex justify-content-between align-items-start mb-2">
-                                <h5 className="card-title" style={{ fontSize: '1.4rem', fontWeight: '600', color: '#fff' }}>
-                                  {item.name}
-                                </h5>
-                                {item.icons.length > 0 && (
-                                  <div>
-                                    {item.icons.map((icon) => (
-                                      <span key={icon} className="badge bg-warning text-dark me-1" title={iconLabels[icon] || icon}>
-                                        {iconLabels[icon] || icon}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                              {item.description && (
-                                <p className="card-text text-muted mb-3" style={{ color: '#aaa' }}>
-                                  {item.description}
-                                </p>
-                              )}
-                              <div className="mt-auto">
-                                {item.prices.map((price, idx) => (
-                                  <span key={idx} className="badge bg-warning text-dark me-2" style={{ fontSize: '1.1rem', padding: '10px 15px' }}>
-                                    {price.label && `${price.label}: `}
-                                    {formatPrice(price)}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <FoodieTemplate
+        restaurant={restaurant}
+        menuList={menuList}
+        selectedMenu={selectedMenu}
+        onMenuSelect={() => {}}
+        formatPrice={formatPrice}
+        formatWhatsAppForLink={formatWhatsAppForLink}
+        iconLabels={iconLabels}
+      />
     );
-  };
+  }
 
-  return renderMenu();
+  if (template === 'burgers') {
+    return (
+      <BurgersTemplate
+        restaurant={restaurant}
+        menuList={menuList}
+        selectedMenu={selectedMenu}
+        onMenuSelect={() => {}}
+        formatPrice={formatPrice}
+        formatWhatsAppForLink={formatWhatsAppForLink}
+        iconLabels={iconLabels}
+      />
+    );
+  }
+
+  if (template === 'italianFood') {
+    return (
+      <ItalianFoodTemplate
+        restaurant={restaurant}
+        menuList={menuList}
+        selectedMenu={selectedMenu}
+        onMenuSelect={() => {}}
+        formatPrice={formatPrice}
+        formatWhatsAppForLink={formatWhatsAppForLink}
+        iconLabels={iconLabels}
+      />
+    );
+  }
+
+  // Fallback a classic si el template no es reconocido
+  return (
+    <ClassicTemplate
+      restaurant={restaurant}
+      menuList={menuList}
+      selectedMenu={selectedMenu}
+      onMenuSelect={() => {}}
+      formatPrice={formatPrice}
+      formatWhatsAppForLink={formatWhatsAppForLink}
+      iconLabels={iconLabels}
+    />
+  );
 }
-

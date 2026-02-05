@@ -56,7 +56,12 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
   const secondaryColor = restaurant.secondaryColor || '#0056b3';
 
   return (
-    <div className="template-classic restaurant-container" style={{ minHeight: '100vh', width: '100%' }}>
+    <div className="template-classic restaurant-container" style={{ 
+      minHeight: '100vh', 
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       <style jsx>{`
         .template-classic {
           --primary-color: ${primaryColor};
@@ -101,7 +106,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
         }
       `}</style>
 
-      <div style={{ width: '100%', paddingLeft: '40px', paddingRight: '40px' }}>
+      <div style={{ width: '100%', paddingLeft: '40px', paddingRight: '40px', flex: '1' }}>
         {/* Cover Image */}
         {restaurant.coverUrl && (
           <div className="mb-4" style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
@@ -115,7 +120,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
 
         {/* Restaurant Info */}
         <div className="mb-5">
-          <div className="text-center mb-4">
+          <div className="text-center mb-4" style={{ marginTop: '40px' }}>
             {restaurant.logoUrl && (
               <img 
                 src={restaurant.logoUrl} 
@@ -281,7 +286,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
       </div>
 
       {/* Footer */}
-      <footer className="template-classic footer mt-5" style={{ padding: '40px 40px', color: 'white', marginTop: '60px', width: '100%' }}>
+      <footer className="template-classic footer mt-5" style={{ padding: '40px 40px', color: 'white', marginTop: 'auto', width: '100%' }}>
         <div style={{ width: '100%', maxWidth: '100%' }}>
           <div className="row">
             <div className="col-md-6">

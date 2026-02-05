@@ -39,18 +39,21 @@ model Tenant {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  tenantId     String?  @map("tenant_id") // null para super_admin
-  email        String
-  passwordHash String   @map("password_hash")
-  role         UserRole @default(ADMIN)
-  firstName    String?  @map("first_name")
-  lastName     String?  @map("last_name")
-  isActive     Boolean  @default(true) @map("is_active")
-  lastLoginAt  DateTime? @map("last_login_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  deletedAt    DateTime? @map("deleted_at")
+  id                    String   @id @default(cuid())
+  tenantId              String?  @map("tenant_id") // null para super_admin
+  email                 String
+  passwordHash          String   @map("password_hash")
+  role                  UserRole @default(ADMIN)
+  firstName             String?  @map("first_name")
+  lastName              String?  @map("last_name")
+  isActive              Boolean  @default(true) @map("is_active")
+  emailVerified         Boolean  @default(false) @map("email_verified")
+  emailVerificationToken String? @map("email_verification_token")
+  emailVerifiedAt       DateTime? @map("email_verified_at")
+  lastLoginAt           DateTime? @map("last_login_at")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")
 
   // Relaciones
   tenant    Tenant?     @relation(fields: [tenantId], references: [id])

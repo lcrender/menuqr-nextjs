@@ -66,11 +66,12 @@ const nextConfig = {
   // ========================================
   async redirects() {
     return [
-      {
-        source: '/',
-        destination: '/admin',
-        permanent: false,
-      },
+      // Redirección removida: la landing page se muestra en /
+      // {
+      //   source: '/',
+      //   destination: '/admin',
+      //   permanent: false,
+      // },
     ];
   },
 

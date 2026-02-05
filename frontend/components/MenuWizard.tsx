@@ -7,6 +7,7 @@ interface MenuWizardProps {
   restaurants: any[];
   onComplete: () => void;
   onCancel?: () => void;
+  fromRestaurantCreation?: boolean; // Indica si viene desde la creación de un restaurante
 }
 
 interface Section {
@@ -22,8 +23,10 @@ export default function MenuWizard({
   restaurants,
   onComplete,
   onCancel,
+  fromRestaurantCreation = false,
 }: MenuWizardProps) {
-  const [currentStep, setCurrentStep] = useState(0); // 0 = selección inicial, 1 = nombre/descripción, 2 = secciones
+  // Si viene desde la creación de restaurante, empezar en paso 0, sino saltar directamente al paso 1
+  const [currentStep, setCurrentStep] = useState(fromRestaurantCreation ? 0 : 1);
   const [selectedOption, setSelectedOption] = useState<'create' | 'select' | null>(null);
   const [formData, setFormData] = useState({
     restaurantId: initialRestaurantId || '',
@@ -141,6 +144,15 @@ export default function MenuWizard({
     setSections(reordered);
   };
 
+  const handleToggleSectionActive = (index: number) => {
+    const updated = [...sections];
+    updated[index] = {
+      ...updated[index],
+      isActive: !updated[index].isActive,
+    };
+    setSections(updated);
+  };
+
   // Drag and Drop
   const handleDragStart = (index: number) => {
     setDraggedSection(index);
@@ -177,6 +189,17 @@ export default function MenuWizard({
     e.preventDefault();
     
     if (currentStep === 2) {
+      // Validar que haya al menos una sección activa
+      const activeSections = sections.filter(section => section.isActive);
+      if (activeSections.length === 0) {
+        if (sections.length === 0) {
+          alert('Debes agregar al menos una sección activa antes de crear el menú. Por favor, agrega una sección usando el formulario de arriba.');
+        } else {
+          alert('Debes tener al menos una sección activa antes de crear el menú. Tienes secciones creadas pero todas están inactivas. Por favor, edita una sección y márcala como "Activa".');
+        }
+        return;
+      }
+
       // Guardar el menú y las secciones
       setLoading(true);
       try {
@@ -190,9 +213,9 @@ export default function MenuWizard({
         const res = await api.post('/menus', menuData);
         const createdMenuId = res.data.id;
         
-        // Luego crear las secciones
-        if (sections.length > 0) {
-          const sectionsPromises = sections.map((section, index) =>
+        // Luego crear las secciones (solo las activas)
+        if (activeSections.length > 0) {
+          const sectionsPromises = activeSections.map((section, index) =>
             api.post('/menu-sections', {
               menuId: createdMenuId,
               name: section.name,
@@ -260,8 +283,8 @@ export default function MenuWizard({
     );
   }
 
-  // Pantalla inicial de selección
-  if (currentStep === 0) {
+  // Pantalla inicial de selección (solo si viene desde la creación de restaurante)
+  if (currentStep === 0 && fromRestaurantCreation) {
     return (
       <div className="restaurant-wizard">
         <div className="wizard-header">
@@ -399,7 +422,7 @@ export default function MenuWizard({
             <div className="wizard-step-header">
               <h3 className="wizard-step-title">Secciones del menú</h3>
               <p className="wizard-step-description">
-                Agrega, edita o elimina secciones. Arrastra para reordenar.
+                Agrega, edita o elimina secciones. Arrastra para reordenar. <strong>Debes agregar al menos una sección activa para poder crear el menú.</strong>
               </p>
             </div>
 
@@ -465,7 +488,7 @@ export default function MenuWizard({
               {/* Lista de secciones con drag and drop */}
               {sections.length === 0 ? (
                 <div className="wizard-empty-state">
-                  <p>No hay secciones creadas. Agrega una sección usando el formulario de arriba.</p>
+                  <p><strong>No hay secciones creadas.</strong> Agrega al menos una sección activa usando el formulario de arriba para poder crear el menú.</p>
                 </div>
               ) : (
                 <div className="wizard-sections-list">
@@ -485,7 +508,15 @@ export default function MenuWizard({
                         <div className="wizard-section-info">
                           <span className="wizard-section-order">{index + 1}</span>
                           <span className="wizard-section-name">{section.name}</span>
-                          <span className={`wizard-section-badge ${section.isActive ? 'active' : 'inactive'}`}>
+                          <span 
+                            className={`wizard-section-badge ${section.isActive ? 'active' : 'inactive'}`}
+                            onClick={() => handleToggleSectionActive(index)}
+                            style={{ 
+                              cursor: 'pointer',
+                              userSelect: 'none'
+                            }}
+                            title={`Haz clic para ${section.isActive ? 'desactivar' : 'activar'} esta sección`}
+                          >
                             {section.isActive ? 'Activa' : 'Inactiva'}
                           </span>
                         </div>
@@ -546,13 +577,26 @@ export default function MenuWizard({
                 Siguiente →
               </button>
             ) : (
-              <button 
-                type="submit" 
-                className="admin-btn"
-                disabled={loading}
-              >
-                {loading ? 'Guardando...' : 'Crear Menú'}
-              </button>
+              <>
+                <button 
+                  type="submit" 
+                  className="admin-btn"
+                  disabled={loading || sections.filter(s => s.isActive).length === 0}
+                  title={sections.filter(s => s.isActive).length === 0 ? 'Debes agregar al menos una sección activa' : ''}
+                >
+                  {loading ? 'Guardando...' : 'Crear Menú'}
+                </button>
+                {sections.filter(s => s.isActive).length === 0 && sections.length > 0 && (
+                  <p style={{ 
+                    color: '#dc3545', 
+                    fontSize: '0.875rem', 
+                    marginTop: '8px',
+                    marginBottom: 0
+                  }}>
+                    ⚠️ Debes tener al menos una sección activa para crear el menú
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>

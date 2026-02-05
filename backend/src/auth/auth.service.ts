@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 // DTOs
 import { LoginDto } from './dto/login.dto';
@@ -17,6 +18,13 @@ import { EmailService } from '../common/email/email.service';
 
 // Entidades
 import { User, UserRole } from '@prisma/client';
+
+// Tipo extendido para incluir campos de verificación de email
+type UserWithVerification = User & {
+  emailVerified: boolean;
+  emailVerificationToken: string | null;
+  emailVerifiedAt: Date | null;
+};
 
 @Injectable()
 export class AuthService {
@@ -37,12 +45,17 @@ export class AuthService {
   /**
    * Valida las credenciales del usuario
    */
-  async validateUser(email: string, password: string): Promise<User> {
+  async validateUser(email: string, password: string): Promise<UserWithVerification> {
     try {
       const user = await this.usersService.findByEmail(email);
       
       if (!user || !user.isActive) {
         throw new UnauthorizedException('Credenciales inválidas');
+      }
+
+      // Verificar que el email esté verificado
+      if (!user.emailVerified) {
+        throw new UnauthorizedException('Por favor, verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.');
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
@@ -126,38 +139,54 @@ export class AuthService {
         parseInt(this.configService.get('BCRYPT_ROUNDS', '12'))
       );
 
-      // Crear tenant si se especifica
-      let tenantId: string | null = null;
-      if (tenantName) {
-        const tenant = await this.tenantsService.create({
-          name: tenantName,
-          plan: 'free',
-          settings: {
-            timezone: 'UTC',
-            currency: 'USD',
-            language: 'es-ES',
-          },
-        });
-        tenantId = tenant.id;
-      }
+      // Crear tenant automáticamente para cada nuevo usuario con plan "free"
+      // Si se especifica un nombre, usarlo; si no, usar el email como nombre
+      const tenantNameToUse = tenantName || `${firstName} ${lastName}`.trim() || email.split('@')[0];
+      
+      const tenant = await this.tenantsService.create({
+        name: tenantNameToUse,
+        plan: 'free',
+        settings: {
+          timezone: 'UTC',
+          currency: 'USD',
+          language: 'es-ES',
+        },
+      });
 
-      // Crear usuario
+      // Generar token de verificación de email
+      const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+
+      // Crear usuario con rol ADMIN y tenant asignado (email no verificado inicialmente)
       const user = await this.usersService.create({
         email,
         passwordHash,
         firstName,
         lastName,
         role: UserRole.ADMIN,
-        tenantId,
+        tenantId: tenant.id,
         isActive: true,
+        emailVerified: false,
+        emailVerificationToken,
       });
 
-      // Generar tokens
-      const tokens = await this.generateTokens(user);
+      // Enviar email de verificación
+      try {
+        await this.emailService.sendEmailVerification(
+          email,
+          firstName || 'Usuario',
+          emailVerificationToken,
+        );
+      } catch (emailError) {
+        this.logger.error(`Error enviando email de verificación a ${email}:`, emailError);
+        // No fallar el registro si el email falla, solo loguear el error
+      }
 
-      this.logger.log(`Usuario ${email} registrado exitosamente`);
+      this.logger.log(`Usuario ${email} registrado exitosamente. Email de verificación enviado.`);
 
+      // NO generar tokens de acceso hasta que el email esté verificado
+      // Retornar mensaje indicando que debe verificar el email
       return {
+        message: 'Usuario registrado exitosamente. Por favor, verifica tu email para activar tu cuenta.',
         user: {
           id: user.id,
           email: user.email,
@@ -165,11 +194,43 @@ export class AuthService {
           firstName: user.firstName,
           lastName: user.lastName,
           tenantId: user.tenantId,
+          emailVerified: false,
+        },
+        requiresEmailVerification: true,
+      };
+    } catch (error) {
+      this.logger.error('Error en registro:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verificar email con token
+   */
+  async verifyEmail(token: string) {
+    try {
+      const user = await this.usersService.verifyEmail(token);
+
+      // Generar tokens después de verificar el email
+      const tokens = await this.generateTokens(user);
+
+      this.logger.log(`Email verificado exitosamente para ${user.email}`);
+
+      return {
+        message: 'Email verificado exitosamente. Tu cuenta ha sido activada.',
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          tenantId: user.tenantId,
+          emailVerified: true,
         },
         ...tokens,
       };
     } catch (error) {
-      this.logger.error('Error en registro:', error);
+      this.logger.error('Error verificando email:', error);
       throw error;
     }
   }

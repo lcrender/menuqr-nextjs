@@ -1,6 +1,13 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { User } from '@prisma/client';
+
+// Tipo extendido para incluir campos de verificación de email
+type UserWithVerification = User & {
+  emailVerified: boolean;
+  emailVerificationToken: string | null;
+  emailVerifiedAt: Date | null;
+};
 
 @Injectable()
 export class UsersService {
@@ -8,7 +15,7 @@ export class UsersService {
 
   constructor(private readonly postgres: PostgresService) {}
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<UserWithVerification | null> {
     const result = await this.postgres.queryRaw<any>(
       'SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1',
       [email]
@@ -17,7 +24,7 @@ export class UsersService {
     return this.mapUserFromDb(result[0]);
   }
   
-  private mapUserFromDb(row: any): User {
+  private mapUserFromDb(row: any): UserWithVerification {
     return {
       id: row.id,
       tenantId: row.tenant_id,
@@ -27,14 +34,17 @@ export class UsersService {
       firstName: row.first_name,
       lastName: row.last_name,
       isActive: row.is_active,
+      emailVerified: row.email_verified || false,
+      emailVerificationToken: row.email_verification_token || null,
+      emailVerifiedAt: row.email_verified_at || null,
       lastLoginAt: row.last_login_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       deletedAt: row.deleted_at,
-    } as User;
+    } as UserWithVerification;
   }
 
-  async findById(id: string): Promise<User | null> {
+  async findById(id: string): Promise<UserWithVerification | null> {
     const result = await this.postgres.queryRaw<any>(
       'SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1',
       [id]
@@ -51,14 +61,65 @@ export class UsersService {
     role: string;
     tenantId?: string | null;
     isActive: boolean;
+    emailVerified?: boolean;
+    emailVerificationToken?: string | null;
   }): Promise<User> {
     const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
     await this.postgres.executeRaw(
-      `INSERT INTO users (id, email, password_hash, first_name, last_name, role, tenant_id, is_active, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6::"UserRole", $7, $8, NOW(), NOW())`,
-      [id, data.email, data.passwordHash, data.firstName || null, data.lastName || null, data.role, data.tenantId || null, data.isActive]
+      `INSERT INTO users (id, email, password_hash, first_name, last_name, role, tenant_id, is_active, email_verified, email_verification_token, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6::"UserRole", $7, $8, $9, $10, NOW(), NOW())`,
+      [
+        id,
+        data.email,
+        data.passwordHash,
+        data.firstName || null,
+        data.lastName || null,
+        data.role,
+        data.tenantId || null,
+        data.isActive,
+        data.emailVerified || false,
+        data.emailVerificationToken || null,
+      ]
     );
-    return this.findById(id) as Promise<User>;
+    return this.findById(id) as Promise<UserWithVerification>;
+  }
+
+  async verifyEmail(token: string): Promise<UserWithVerification> {
+    const result = await this.postgres.queryRaw<any>(
+      'SELECT * FROM users WHERE email_verification_token = $1 AND deleted_at IS NULL LIMIT 1',
+      [token]
+    );
+    
+    if (!result[0]) {
+      throw new NotFoundException('Token de verificación inválido o expirado');
+    }
+
+    const user = this.mapUserFromDb(result[0]);
+
+    if (user.emailVerified === true) {
+      throw new BadRequestException('El email ya ha sido verificado');
+    }
+
+    // Verificar que el token no tenga más de 24 horas
+    const tokenAge = Date.now() - new Date(user.createdAt).getTime();
+    const maxAge = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
+
+    if (tokenAge > maxAge) {
+      throw new BadRequestException('El token de verificación ha expirado. Por favor, solicita uno nuevo.');
+    }
+
+    // Actualizar usuario como verificado
+    await this.postgres.executeRaw(
+      `UPDATE users 
+       SET email_verified = true, 
+           email_verified_at = NOW(), 
+           email_verification_token = NULL,
+           updated_at = NOW() 
+       WHERE id = $1`,
+      [user.id]
+    );
+
+    return this.findById(user.id) as Promise<UserWithVerification>;
   }
 
   async updateLastLogin(id: string): Promise<void> {

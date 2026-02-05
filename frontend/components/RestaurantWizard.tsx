@@ -619,10 +619,10 @@ export default function RestaurantWizard({
                     }
                   }
                 }}
-                placeholder="pedro.com o https://www.restaurante.com (opcional)"
+                placeholder="laparrilla22.com o https://www.restaurante.com (opcional)"
               />
               <small className="wizard-help-text">
-                Puedes escribir solo el dominio (ej: pedro.com) y se agregará https:// automáticamente
+                Puedes escribir solo el dominio (ej: laparrilla22.com) y se agregará https:// automáticamente
               </small>
             </div>
           </div>
