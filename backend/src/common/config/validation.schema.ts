@@ -4,12 +4,16 @@ export const validationSchema = Joi.object({
   // ========================================
   // BASE DE DATOS
   // ========================================
-  DATABASE_URL: Joi.string().required().uri(),
+  DATABASE_URL: Joi.string()
+    .required()
+    .uri({ scheme: ['postgresql', 'postgres'] }),
 
   // ========================================
   // REDIS
   // ========================================
-  REDIS_URL: Joi.string().required().uri(),
+  REDIS_URL: Joi.string()
+    .required()
+    .uri({ scheme: ['redis'] }),
 
   // ========================================
   // JWT - TOKENS

@@ -43,3 +43,27 @@ Acceso:
 | IP:5432 → Postgres expuesto | Solo red Docker |
 | IP:6379 → Redis expuesto | Solo red Docker |
 | IP:9000-9001 → MinIO expuesto | Solo red Docker (consola por Traefik si está configurada) |
+
+---
+
+## Troubleshooting
+
+### Backend no arranca: `"DATABASE_URL" must be a valid uri`
+
+- El compose construye `DATABASE_URL` desde `POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_DB` del `.env` en `/opt/menuqr`.
+- Revisá que en `.env` existan y no estén vacíos: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`.
+- Si la contraseña tiene caracteres como `@`, `#`, `:`, `/`, puede romper la URI; usá una contraseña sin esos caracteres o codificada en la URL.
+- Para ver qué URL recibe el backend:  
+  `docker compose -f docker-compose.prod.yml run --rm backend env | grep DATABASE_URL`
+
+### Prisma migrate: OpenSSL / "Unexpected token E in JSON"
+
+- Suele pasar con la imagen Alpine del backend. Asegurate de usar la imagen **slim** (ver `backend/Dockerfile`).
+- En el servidor: `git pull`, luego reconstruir sin caché y levantar:
+  ```bash
+  cd /opt/menuqr
+  docker compose -f docker-compose.prod.yml build --no-cache backend
+  docker compose -f docker-compose.prod.yml up -d
+  ```
+- Después:  
+  `docker compose -f docker-compose.prod.yml run --rm backend npx prisma migrate deploy`
