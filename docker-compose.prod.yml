@@ -6,8 +6,6 @@
 # Sin puertos expuestos. Sin nginx.
 # ========================================
 
-version: "3.8"
-
 services:
   postgres:
     image: postgres:16-alpine

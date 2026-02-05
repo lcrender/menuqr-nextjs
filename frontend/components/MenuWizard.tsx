@@ -27,7 +27,7 @@ export default function MenuWizard({
 }: MenuWizardProps) {
   // Si viene desde la creación de restaurante, empezar en paso 0, sino saltar directamente al paso 1
   const [currentStep, setCurrentStep] = useState(fromRestaurantCreation ? 0 : 1);
-  const [selectedOption, setSelectedOption] = useState<'create' | 'select' | null>(null);
+  const [, setSelectedOption] = useState<'create' | 'select' | null>(null);
   const [formData, setFormData] = useState({
     restaurantId: initialRestaurantId || '',
     name: '',
