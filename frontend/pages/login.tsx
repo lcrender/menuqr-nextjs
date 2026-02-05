@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import axios from 'axios';
+import api from '../lib/axios';
 import Head from 'next/head';
 
 export default function Login() {
@@ -44,7 +44,7 @@ export default function Login() {
         }
 
         // Registrar nuevo usuario
-        const response = await axios.post('http://localhost:3001/auth/register', {
+        const response = await api.post('/auth/register', {
           email,
           password,
           firstName,
@@ -69,7 +69,7 @@ export default function Login() {
         }
       } else {
         // Login
-        const response = await axios.post('http://localhost:3001/auth/login', {
+        const response = await api.post('/auth/login', {
           email,
           password,
         });

@@ -67,3 +67,27 @@ Acceso:
   ```
 - Después:  
   `docker compose -f docker-compose.prod.yml run --rm backend npx prisma migrate deploy`
+
+### Crear primer usuario (admin) desde consola
+
+Ejecutá (reemplazá email y contraseña):
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm \
+  -e ADMIN_EMAIL=tu@email.com \
+  -e ADMIN_PASSWORD=TuPasswordSeguro123! \
+  backend node scripts/create-admin.js
+```
+
+O con nombre y apellido:
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm \
+  -e ADMIN_EMAIL=admin@tudominio.com \
+  -e ADMIN_PASSWORD=TuPass123! \
+  -e ADMIN_FIRST_NAME=TuNombre \
+  -e ADMIN_LAST_NAME=TuApellido \
+  backend node scripts/create-admin.js
+```
+
+Luego iniciá sesión en el frontend con ese email y contraseña.

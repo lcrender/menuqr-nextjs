@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import { API_URL } from '../../../lib/config';
 import ClassicTemplate from '../../../templates/classic/ClassicTemplate';
 import MinimalistTemplate from '../../../templates/minimalist/MinimalistTemplate';
 import FoodieTemplate from '../../../templates/foodie/FoodieTemplate';
@@ -123,13 +124,13 @@ export default function MenuPage() {
         setLoading(true);
         // Obtener el menú
         const menuResponse = await axios.get(
-          `http://localhost:3001/public/restaurants/${restaurantSlug}/menus/${menuSlug}`,
+          `${API_URL}/public/restaurants/${restaurantSlug}/menus/${menuSlug}`,
         );
         setMenu(menuResponse.data);
         
         // Obtener el restaurante para tener todos los datos necesarios
         const restaurantResponse = await axios.get(
-          `http://localhost:3001/public/restaurants/${restaurantSlug}`,
+          `${API_URL}/public/restaurants/${restaurantSlug}`,
         );
         const restaurantData = restaurantResponse.data;
         
@@ -148,7 +149,7 @@ export default function MenuPage() {
         // Registrar vista del menú
         if (menuResponse.data?.id && restaurantData?.tenantId) {
           try {
-            await axios.post('http://localhost:3001/tracking/menu-view', {
+            await axios.post(`${API_URL}/tracking/menu-view`, {
               menuId: menuResponse.data.id,
               restaurantId: restaurantData.id,
               tenantId: restaurantData.tenantId,

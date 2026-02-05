@@ -1,7 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { API_URL } from './config';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3001',
+  baseURL: API_URL,
 });
 
 // Interceptor para agregar el token a todas las peticiones
@@ -62,7 +63,7 @@ api.interceptors.response.use(
         }
 
         // Intentar refrescar el token
-        const response = await axios.post('http://localhost:3001/auth/refresh', {
+        const response = await axios.post(`${API_URL}/auth/refresh`, {
           refreshToken,
         });
 

@@ -24,6 +24,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:reset": "prisma migrate reset",
     "db:seed": "ts-node prisma/seed.ts",
+    "create-admin": "node scripts/create-admin.js",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
     "prisma:generate": "prisma generate"

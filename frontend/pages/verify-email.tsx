@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import axios from 'axios';
+import api from '../lib/axios';
 import Head from 'next/head';
 
 export default function VerifyEmail() {
@@ -19,7 +19,7 @@ export default function VerifyEmail() {
   const verifyEmail = async (verificationToken: string) => {
     try {
       setStatus('loading');
-      const response = await axios.post('http://localhost:3001/auth/verify-email', {
+      const response = await api.post('/auth/verify-email', {
         token: verificationToken,
       });
 
