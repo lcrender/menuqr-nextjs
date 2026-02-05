@@ -1,6 +1,8 @@
 # Etapa de desarrollo
 FROM node:18-slim AS development
 
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copiar archivos de dependencias
@@ -24,6 +26,9 @@ CMD ["npm", "run", "start:dev"]
 
 # Etapa de producción
 FROM node:18-slim AS production
+
+# Prisma schema/query engine requiere OpenSSL en runtime
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
