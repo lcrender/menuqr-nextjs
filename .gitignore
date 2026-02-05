@@ -45,8 +45,8 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 
-# Prisma
-backend/prisma/migrations/
+# Prisma (migrations sí se versionan para deploy)
+# backend/prisma/migrations/
 
 # Cache
 .cache/
