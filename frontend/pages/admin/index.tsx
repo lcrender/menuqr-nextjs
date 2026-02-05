@@ -31,7 +31,7 @@ export default function Admin() {
     }
   }, [router]);
 
-  const loadStats = async (token: string, user: any) => {
+  const loadStats = async (_token: string, user: any) => {
     try {
       if (user.role === 'SUPER_ADMIN') {
         const metricsRes = await api.get('/tenants/metrics');

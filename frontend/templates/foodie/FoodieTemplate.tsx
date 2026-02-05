@@ -368,8 +368,8 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
               {restaurant.phone && (
                 <p style={{ marginBottom: '10px', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>📞 Teléfono:</strong>{' '}
-                  <a href={`tel:${restaurant.phone.split('|')[0].trim()}`} style={{ color: 'white', textDecoration: 'underline' }}>
-                    {restaurant.phone.split('|')[0].trim()}
+                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} style={{ color: 'white', textDecoration: 'underline' }}>
+                    {restaurant.phone.split('|')[0]?.trim() ?? ''}
                   </a>
                 </p>
               )}

@@ -449,8 +449,8 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                 {restaurant.phone && (
                   <p style={{ marginBottom: '8px', marginTop: 0, fontSize: '0.9rem', lineHeight: '1.4', color: '#000000' }}>
                     <strong>📞 Teléfono:</strong>{' '}
-                    <a href={`tel:${restaurant.phone.split('|')[0].trim()}`} style={{ color: '#000000', textDecoration: 'underline' }}>
-                      {restaurant.phone.split('|')[0].trim()}
+                    <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} style={{ color: '#000000', textDecoration: 'underline' }}>
+                      {restaurant.phone.split('|')[0]?.trim() ?? ''}
                     </a>
                   </p>
                 )}

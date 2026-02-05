@@ -288,7 +288,9 @@ export default function Products() {
 
   const updatePrice = (index: number, field: string, value: any) => {
     const newPrices = [...formData.prices];
-    newPrices[index] = { ...newPrices[index], [field]: value };
+    const existing = newPrices[index];
+    if (!existing) return;
+    newPrices[index] = { ...existing, [field]: value };
     setFormData({ ...formData, prices: newPrices });
   };
 

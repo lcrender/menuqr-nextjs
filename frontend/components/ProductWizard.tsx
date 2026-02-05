@@ -179,7 +179,7 @@ export default function ProductWizard({
   const initialEffectiveCurrency = getEffectiveDefaultCurrency(initialMenuId);
   
   const [currentStep, setCurrentStep] = useState(startWithCreate ? 1 : 0); // 0 = selección inicial, 1 = nombre/descripción, 2 = precios, 3 = otros (iconos e imágenes)
-  const [selectedOption, setSelectedOption] = useState<'create' | 'select' | null>(startWithCreate ? 'create' : null);
+  const [, setSelectedOption] = useState<'create' | 'select' | null>(startWithCreate ? 'create' : null);
   const [formData, setFormData] = useState({
     menuId: initialMenuId || '',
     sectionIds: [] as string[], // Cambiar a array para múltiples secciones
@@ -213,7 +213,7 @@ export default function ProductWizard({
   const [currentProductCount, setCurrentProductCount] = useState<number>(0);
   const [showAlert, setShowAlert] = useState(false);
   const [alertData, setAlertData] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' | 'info' } | null>(null);
-  const [availableIcons, setAvailableIcons] = useState([
+  const [availableIcons] = useState([
     { code: 'celiaco', label: 'Sin Gluten' },
     { code: 'vegetariano', label: 'Vegetariano' },
     { code: 'vegano', label: 'Vegano' },
@@ -370,6 +370,7 @@ export default function ProductWizard({
 
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [startWithCreate, currentStep, currentProductCount, tenantPlan]);
 
   // Función para obtener el límite de productos
@@ -412,9 +413,10 @@ export default function ProductWizard({
   // Actualizar la moneda por defecto cuando cambie la prop o la moneda del restaurante
   // Solo si hay un menú asignado (si no hay menú, se maneja en el otro useEffect)
   useEffect(() => {
-    if (formData.prices.length > 0 && formData.menuId) {
+    const firstPrice = formData.prices[0];
+    if (formData.prices.length > 0 && formData.menuId && firstPrice) {
       // Si el primer precio tiene la moneda anterior (USD por defecto) y no ha sido modificado, actualizarlo
-      if (formData.prices[0].currency === 'USD' && formData.prices[0].amount === 0) {
+      if (firstPrice.currency === 'USD' && firstPrice.amount === 0) {
         const currencyToUse = restaurantCurrency || defaultCurrency;
         setFormData(prev => ({
           ...prev,
@@ -428,26 +430,25 @@ export default function ProductWizard({
 
   // Cuando se entra al paso de precios o cambia la moneda del restaurante, asegurar que el primer precio tenga la moneda correcta
   useEffect(() => {
-    if (currentStep === 2 && formData.prices.length > 0) {
-      // Si hay menú asignado, usar la moneda del restaurante o la defaultCurrency
-      // Si no hay menú asignado, usar la moneda efectiva por defecto (del usuario/tenant o del navegador)
-      const currencyToUse = formData.menuId 
-        ? (restaurantCurrency || defaultCurrency)
-        : effectiveDefaultCurrency;
-      
-      const firstPrice = formData.prices[0];
-      // Solo actualizar si el precio no tiene monto (no ha sido modificado) o si la moneda es diferente
-      // También actualizar si la moneda actual es USD (por defecto) y tenemos una moneda diferente
-      if (firstPrice.amount === 0 || 
+    if (currentStep !== 2 || formData.prices.length === 0) return;
+    const firstPrice = formData.prices[0];
+    if (!firstPrice) return;
+    // Si hay menú asignado, usar la moneda del restaurante o la defaultCurrency
+    // Si no hay menú asignado, usar la moneda efectiva por defecto (del usuario/tenant o del navegador)
+    const currencyToUse = formData.menuId 
+      ? (restaurantCurrency || defaultCurrency)
+      : effectiveDefaultCurrency;
+    // Solo actualizar si el precio no tiene monto (no ha sido modificado) o si la moneda es diferente
+    // También actualizar si la moneda actual es USD (por defecto) y tenemos una moneda diferente
+    if (firstPrice.amount === 0 || 
           (firstPrice.currency !== currencyToUse && firstPrice.amount === 0) ||
           (firstPrice.currency === 'USD' && currencyToUse !== 'USD' && firstPrice.amount === 0)) {
-        setFormData(prev => ({
-          ...prev,
-          prices: prev.prices.map((price, index) => 
-            index === 0 ? { ...price, currency: currencyToUse } : price
-          ),
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        prices: prev.prices.map((price, index) => 
+          index === 0 ? { ...price, currency: currencyToUse } : price
+        ),
+      }));
     }
   }, [currentStep, restaurantCurrency, defaultCurrency, effectiveDefaultCurrency, formData.menuId]);
 
@@ -487,7 +488,8 @@ export default function ProductWizard({
               setRestaurantCurrency(restaurantCurrency);
               
               // Si estamos en el paso de precios y el primer precio no tiene monto, actualizar la moneda
-              if (currentStep === 2 && formData.prices.length > 0 && formData.prices[0].amount === 0) {
+              const firstPrice = formData.prices[0];
+              if (currentStep === 2 && formData.prices.length > 0 && firstPrice && firstPrice.amount === 0) {
                 setFormData(prev => ({
                   ...prev,
                   prices: prev.prices.map((price, index) => 
@@ -1027,8 +1029,7 @@ export default function ProductWizard({
         data.menuId = formData.menuId;
         data.sectionId = selectedSectionId || formData.sectionIds[0];
         
-        const response = await api.post('/menu-items', data);
-        const productId = response.data.id;
+        await api.post('/menu-items', data);
         
         // Si hay más de una sección, asociar el producto a las demás secciones
         // Nota: El backend actualmente solo permite un sectionId por producto
@@ -1151,7 +1152,9 @@ export default function ProductWizard({
 
   const updatePrice = (index: number, field: keyof Price, value: string | number) => {
     const newPrices = [...formData.prices];
-    newPrices[index] = { ...newPrices[index], [field]: value };
+    const existing = newPrices[index];
+    if (!existing) return;
+    newPrices[index] = { ...existing, [field]: value };
     setFormData({ ...formData, prices: newPrices });
   };
 
@@ -1270,7 +1273,7 @@ export default function ProductWizard({
                               <p>Arrastra productos aquí</p>
                             </div>
                           ) : (
-                            sectionItems.map((item: any, itemIndex: number) => {
+                            sectionItems.map((item: any, _itemIndex: number) => {
                               const isDragged = draggedItem?.itemId === item.id;
                               const isDragOver = dragOverItem?.itemId === item.id && dragOverItem?.sectionId === section.id;
                               const showBeforeIndicator = isDragOver && dragOverItem?.position === 'before';

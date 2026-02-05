@@ -153,7 +153,7 @@ export default function RestaurantPage() {
         let country = '';
         if (data.address) {
           // La dirección suele tener formato: "calle, ciudad, provincia, código postal, país"
-          const addressParts = data.address.split(',').map(p => p.trim());
+          const addressParts = data.address.split(',').map((p: string) => p.trim());
           if (addressParts.length > 0) {
             // El último elemento suele ser el país
             const possibleCountry = addressParts[addressParts.length - 1];
@@ -382,8 +382,8 @@ export default function RestaurantPage() {
                   <div className="mb-2">
                     <strong>📞 Teléfono:</strong>
                     <div>
-                      <a href={`tel:${restaurant.phone.split('|')[0].trim()}`} style={{ fontSize: '0.9rem' }}>
-                        {restaurant.phone.split('|')[0].trim()}
+                      <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} style={{ fontSize: '0.9rem' }}>
+                        {restaurant.phone.split('|')[0]?.trim() ?? ''}
                       </a>
                     </div>
                   </div>

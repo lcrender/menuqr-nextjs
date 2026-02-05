@@ -33,7 +33,7 @@ const countryCodes: { [key: string]: string } = {
   'Venezuela': '58',
 };
 
-// Monedas oficiales por país
+// Monedas oficiales por país (sugerir al seleccionar país)
 const countryCurrencies: { [key: string]: string } = {
   'Argentina': 'ARS',
   'Brasil': 'BRL',
@@ -95,11 +95,11 @@ interface RestaurantWizardProps {
 export default function RestaurantWizard({
   formData,
   setFormData,
-  logoFile,
+  logoFile: _logoFile,
   setLogoFile,
   logoPreview,
   setLogoPreview,
-  coverFile,
+  coverFile: _coverFile,
   setCoverFile,
   coverPreview,
   setCoverPreview,
@@ -108,7 +108,7 @@ export default function RestaurantWizard({
 }: RestaurantWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
-  const [detectingCountry, setDetectingCountry] = useState(false);
+  const [, setDetectingCountry] = useState(false);
 
   // Mapeo de nombres de países de APIs a nuestros nombres
   const countryNameMap: { [key: string]: string } = {
@@ -166,7 +166,7 @@ export default function RestaurantWizard({
             }
             
             if (validCountries.includes(countryName)) {
-              setFormData(prev => ({ ...prev, country: countryName }));
+              setFormData((prev: any) => ({ ...prev, country: countryName }));
             }
           }
         } catch (error) {
@@ -183,7 +183,7 @@ export default function RestaurantWizard({
               }
               
               if (validCountries.includes(countryName)) {
-                setFormData(prev => ({ ...prev, country: countryName }));
+                setFormData((prev: any) => ({ ...prev, country: countryName }));
               }
             }
           } catch (error2) {
@@ -428,7 +428,13 @@ export default function RestaurantWizard({
               <label className="wizard-label">País *</label>
               <CountrySelector
                 value={formData.country}
-                onChange={(value) => setFormData({ ...formData, country: value, province: '', city: '' })}
+                onChange={(value) => setFormData({
+                  ...formData,
+                  country: value,
+                  province: '',
+                  city: '',
+                  defaultCurrency: countryCurrencies[value] || formData.defaultCurrency || 'USD',
+                })}
                 className="w-100"
               />
             </div>
@@ -697,7 +703,7 @@ export default function RestaurantWizard({
                               // Remover la moneda
                               setFormData({
                                 ...formData,
-                                additionalCurrencies: currentCurrencies.filter(c => c !== currency),
+                                additionalCurrencies: currentCurrencies.filter((c: string) => c !== currency),
                               });
                             } else {
                               // Agregar la moneda

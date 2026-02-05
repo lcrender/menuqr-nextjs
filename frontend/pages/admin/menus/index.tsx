@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import React from 'react';
-import { useRouter } from 'next/router';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
 import ProductWizard from '../../../components/ProductWizard';
@@ -9,14 +8,13 @@ import ConfirmModal from '../../../components/ConfirmModal';
 import AlertModal from '../../../components/AlertModal';
 
 export default function Menus() {
-  const router = useRouter();
   const [menus, setMenus] = useState<any[]>([]);
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [filterMenuName, setFilterMenuName] = useState<string>('');
-  const [filterRestaurantName, setFilterRestaurantName] = useState<string>('');
-  const [filterTenantName, setFilterTenantName] = useState<string>('');
+  const [filterMenuName] = useState<string>('');
+  const [filterRestaurantName] = useState<string>('');
+  const [filterTenantName] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'sections'>('info');
@@ -33,16 +31,18 @@ export default function Menus() {
     restaurantId: '',
     name: '',
     description: '',
+    validFrom: '',
+    validTo: '',
   });
   const [showProductWizard, setShowProductWizard] = useState(false);
   const [editingMenuId, setEditingMenuId] = useState<string | null>(null);
   const [showEditMenuOptions, setShowEditMenuOptions] = useState(false);
   const [selectedMenuForEdit, setSelectedMenuForEdit] = useState<any>(null);
-  const [editMode, setEditMode] = useState<'info' | 'sections' | 'products' | null>(null);
+  const [, setEditMode] = useState<'info' | 'sections' | 'products' | null>(null);
   const [draggedMenu, setDraggedMenu] = useState<number | null>(null);
   const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(50);
+  const [itemsPerPage] = useState<number>(50);
   const [showMenuWizard, setShowMenuWizard] = useState(false);
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -184,6 +184,8 @@ export default function Menus() {
             restaurantId: '',
             name: '',
             description: '',
+            validFrom: '',
+            validTo: '',
           });
         }
       } else {
@@ -236,6 +238,8 @@ export default function Menus() {
         restaurantId: selectedMenuForEdit.restaurantId || selectedMenuForEdit.restaurant_id || '',
         name: selectedMenuForEdit.name || '',
         description: selectedMenuForEdit.description || '',
+        validFrom: selectedMenuForEdit.validFrom ?? '',
+        validTo: selectedMenuForEdit.validTo ?? '',
       });
       setActiveTab('info');
       setShowModal(true);
@@ -1010,7 +1014,7 @@ export default function Menus() {
               {activeTab === 'info' ? (
                 <form onSubmit={(e) => {
                   // Verificar si el botón que disparó el submit tiene el atributo data-close-after-save
-                  const target = e.nativeEvent.submitter as HTMLButtonElement;
+                  const target = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement;
                   const shouldClose = target?.getAttribute('data-close-after-save') === 'true';
                   handleSubmit(e, shouldClose);
                 }}>
@@ -1080,6 +1084,8 @@ export default function Menus() {
                         restaurantId: '',
                         name: '',
                         description: '',
+                        validFrom: '',
+                        validTo: '',
                       });
                     }}
                     style={{

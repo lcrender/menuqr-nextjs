@@ -198,7 +198,7 @@ export default function Restaurants() {
       // Solo actualizar si la moneda actual es USD (por defecto) o si no hay moneda seleccionada
       // Esto evita sobrescribir si el usuario ya seleccionó una moneda manualmente
       if (!formData.defaultCurrency || formData.defaultCurrency === 'USD') {
-        setFormData(prev => ({ ...prev, defaultCurrency: countryCurrency }));
+        setFormData(prev => ({ ...prev, defaultCurrency: countryCurrency || 'USD' }));
       }
     }
   }, [formData.country, editing]);
@@ -475,7 +475,7 @@ export default function Restaurants() {
   const extractPhone = (phone: string | null | undefined) => {
     if (!phone) return '';
     // Si contiene "|", tomar solo la parte antes del separador
-    const phonePart = phone.split('|')[0].trim();
+    const phonePart = phone.split('|')[0]?.trim() ?? '';
     return phonePart || '';
   };
 
@@ -484,7 +484,7 @@ export default function Restaurants() {
     if (!phone) return '';
     // El formato del backend es: "phone | WhatsApp: whatsapp_number"
     const whatsappMatch = phone.match(/WhatsApp:\s*(.+?)(?:\s*\|)?$/i);
-    return whatsappMatch ? whatsappMatch[1].trim() : '';
+    return whatsappMatch ? (whatsappMatch[1]?.trim() ?? '') : '';
   };
 
   const handleEdit = async (restaurant: any) => {
@@ -528,7 +528,7 @@ export default function Restaurants() {
         postalCode: addressParts.postalCode,
         country: addressParts.country,
         phone: phone,
-        usePhoneForWhatsApp: usePhoneForWhatsApp,
+        usePhoneForWhatsApp: Boolean(usePhoneForWhatsApp),
         whatsapp: whatsapp,
         email: fullRestaurant.email || '',
         website: fullRestaurant.website || '',
@@ -757,18 +757,20 @@ export default function Restaurants() {
             coverPreview={coverPreview}
             setCoverPreview={setCoverPreview}
             onSubmit={handleSubmit}
-            onCancel={restaurants.length > 0 ? () => {
-              setShowWizard(false);
-      setFormData({
-        name: '', description: '', street: '', city: '', province: '', postalCode: '', country: '',
-        phone: '', usePhoneForWhatsApp: false, whatsapp: '', email: '', website: '', timezone: 'UTC', template: 'classic',
-        defaultCurrency: 'USD', additionalCurrencies: [], primaryColor: '#007bff', secondaryColor: '#0056b3',
-      });
-              setLogoFile(null);
-              setLogoPreview(null);
-              setCoverFile(null);
-              setCoverPreview(null);
-            } : undefined}
+            {...(restaurants.length > 0 ? {
+              onCancel: () => {
+                setShowWizard(false);
+                setFormData({
+                  name: '', description: '', street: '', city: '', province: '', postalCode: '', country: '',
+                  phone: '', usePhoneForWhatsApp: false, whatsapp: '', email: '', website: '', timezone: 'UTC', template: 'classic',
+                  defaultCurrency: 'USD', additionalCurrencies: [], primaryColor: '#007bff', secondaryColor: '#0056b3',
+                });
+                setLogoFile(null);
+                setLogoPreview(null);
+                setCoverFile(null);
+                setCoverPreview(null);
+              },
+            } : {})}
           />
         </div>
       ) : (

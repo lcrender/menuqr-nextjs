@@ -161,7 +161,7 @@ export default function MenuWizard({
     setDraggedSection(index);
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
+  const handleDragOver = (e: React.DragEvent, _index: number) => {
     e.preventDefault();
   };
 
