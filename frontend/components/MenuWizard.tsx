@@ -104,6 +104,7 @@ export default function MenuWizard({
 
   const handleEditSection = (index: number) => {
     const section = sections[index];
+    if (!section) return;
     setEditingSection(section);
     setSectionFormData({
       name: section.name,
