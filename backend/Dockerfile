@@ -1,5 +1,5 @@
 # Etapa de desarrollo
-FROM node:18-alpine AS development
+FROM node:18-slim AS development
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ EXPOSE 3001
 CMD ["npm", "run", "start:dev"]
 
 # Etapa de producción
-FROM node:18-alpine AS production
+FROM node:18-slim AS production
 
 WORKDIR /app
 
@@ -43,9 +43,8 @@ RUN npm run db:generate && npm run build
 # Quitar devDependencies para imagen final
 RUN npm prune --production
 
-# Crear usuario no-root
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nestjs -u 1001
+# Crear usuario no-root (Debian: groupadd/useradd)
+RUN groupadd --gid 1001 nodejs && useradd --uid 1001 --gid nodejs --shell /bin/false --create-home nestjs
 
 # Cambiar ownership
 RUN chown -R nestjs:nodejs /app
