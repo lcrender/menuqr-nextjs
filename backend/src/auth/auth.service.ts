@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -198,9 +198,16 @@ export class AuthService {
         },
         requiresEmailVerification: true,
       };
-    } catch (error) {
-      this.logger.error('Error en registro:', error);
-      throw error;
+    } catch (error: any) {
+      this.logger.error('Error en registro:', error?.message ?? error);
+      if (error?.stack) this.logger.debug(error.stack);
+      if (error?.code) this.logger.error(`Código error (DB/otro): ${error.code}`);
+      if (error?.detail) this.logger.error(`Detalle: ${error.detail}`);
+      // Reenviar excepciones HTTP (4xx) tal cual
+      if (error?.statusCode && error?.statusCode >= 400 && error?.statusCode < 500) throw error;
+      throw new InternalServerErrorException(
+        'No se pudo completar el registro. Revisá los logs del backend para más detalle.',
+      );
     }
   }
 

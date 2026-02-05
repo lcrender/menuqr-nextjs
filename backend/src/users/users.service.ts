@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, InternalServerErrorException } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { User } from '@prisma/client';
 
@@ -81,7 +81,12 @@ export class UsersService {
         data.emailVerificationToken || null,
       ]
     );
-    return this.findById(id) as Promise<UserWithVerification>;
+    const user = await this.findById(id);
+    if (!user) {
+      this.logger.error(`Usuario insertado pero no encontrado por id: ${id}`);
+      throw new InternalServerErrorException('Error creando usuario. Por favor, intentá de nuevo.');
+    }
+    return user as UserWithVerification;
   }
 
   async verifyEmail(token: string): Promise<UserWithVerification> {
