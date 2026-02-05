@@ -31,19 +31,16 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Instalar solo dependencias de producción
-RUN npm install --omit=dev
+# Instalar todas las dependencias (incl. dev para nest build)
+RUN npm install
 
 # Copiar código fuente
 COPY . .
 
-# Generar Prisma client
-RUN npm run db:generate
+# Generar Prisma client y construir aplicación
+RUN npm run db:generate && npm run build
 
-# Construir aplicación
-RUN npm run build
-
-# Limpiar dependencias de desarrollo
+# Quitar devDependencies para imagen final
 RUN npm prune --production
 
 # Crear usuario no-root
