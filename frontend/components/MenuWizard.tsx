@@ -125,6 +125,7 @@ export default function MenuWizard({
     if (index !== -1) {
       const updated = [...sections];
       const existing = updated[index];
+      if (!existing) return;
       updated[index] = {
         ...existing,
         name: sectionFormData.name.trim(),
@@ -148,11 +149,10 @@ export default function MenuWizard({
   };
 
   const handleToggleSectionActive = (index: number) => {
+    const section = sections[index];
+    if (!section) return;
     const updated = [...sections];
-    updated[index] = {
-      ...updated[index],
-      isActive: !updated[index].isActive,
-    };
+    updated[index] = { ...section, isActive: !section.isActive, sort: section.sort };
     setSections(updated);
   };
 
@@ -167,7 +167,7 @@ export default function MenuWizard({
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    
+
     if (draggedSection === null || draggedSection === dropIndex) {
       setDraggedSection(null);
       return;
@@ -175,13 +175,15 @@ export default function MenuWizard({
 
     const updated = [...sections];
     const draggedItem = updated[draggedSection];
-    
+    if (!draggedItem) {
+      setDraggedSection(null);
+      return;
+    }
+
     // Remover el item arrastrado
     updated.splice(draggedSection, 1);
-    
     // Insertar en la nueva posición
     updated.splice(dropIndex, 0, draggedItem);
-    
     // Actualizar el orden
     const reordered = updated.map((section, i) => ({ ...section, sort: i }));
     setSections(reordered);
