@@ -32,6 +32,20 @@ export default function Users() {
   const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(50);
+  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserStats | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+        setCurrentUser({ id: parsed.id, role: parsed.role });
+      } catch (_) {}
+    }
+  }, []);
 
   useEffect(() => {
     loadUsers();
@@ -76,6 +90,43 @@ export default function Users() {
       setUserDetails(null);
     } finally {
       setLoadingDetails(false);
+    }
+  };
+
+  const handleToggleActive = async (e: React.MouseEvent, user: UserStats) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (currentUser?.id === user.id) return;
+    setActionLoading(user.id);
+    try {
+      await api.patch(`/users/${user.id}/active`, { isActive: !user.isActive });
+      await loadUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Error al actualizar el estado');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, user: UserStats) => {
+    e.stopPropagation();
+    if (currentUser?.id === user.id) return;
+    setUserToDelete(user);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    setActionLoading(userToDelete.id);
+    try {
+      await api.delete(`/users/${userToDelete.id}`);
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
+      await loadUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Error al eliminar el usuario');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -170,12 +221,13 @@ export default function Users() {
                 <th>Menús</th>
                 <th>PA</th>
                 <th>PI</th>
+                {currentUser?.role === 'SUPER_ADMIN' && <th>Acciones</th>}
               </tr>
             </thead>
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center text-muted">
+                  <td colSpan={currentUser?.role === 'SUPER_ADMIN' ? 9 : 8} className="text-center text-muted">
                     No hay usuarios registrados
                   </td>
                 </tr>
@@ -219,6 +271,39 @@ export default function Users() {
                     <td>
                       <span className="badge bg-secondary">{user.inactiveProductCount}</span>
                     </td>
+                    {currentUser?.role === 'SUPER_ADMIN' && (
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <div className="d-flex align-items-center gap-2">
+                          <div className="form-check form-switch mb-0">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              role="switch"
+                              checked={user.isActive}
+                              disabled={currentUser?.id === user.id || actionLoading === user.id}
+                              readOnly
+                              onClick={(e) => handleToggleActive(e as any, user)}
+                            />
+                            <label className="form-check-label small">
+                              {user.isActive ? 'Activo' : 'Inactivo'}
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-danger"
+                            disabled={currentUser?.id === user.id || actionLoading === user.id}
+                            onClick={(e) => handleDeleteClick(e, user)}
+                            title="Eliminar usuario"
+                          >
+                            {actionLoading === user.id ? (
+                              <span className="spinner-border spinner-border-sm" role="status" />
+                            ) : (
+                              'Borrar'
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -265,6 +350,32 @@ export default function Users() {
               </li>
             </ul>
           </nav>
+        </div>
+      )}
+
+      {/* Modal confirmar borrado */}
+      {showDeleteConfirm && userToDelete && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex={-1}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Eliminar usuario</h5>
+                <button type="button" className="btn-close" onClick={() => { setShowDeleteConfirm(false); setUserToDelete(null); }} />
+              </div>
+              <div className="modal-body">
+                ¿Estás seguro de que deseas eliminar al usuario <strong>{userToDelete.email}</strong>? Esta acción no se puede deshacer.
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowDeleteConfirm(false); setUserToDelete(null); }}>
+                  Cancelar
+                </button>
+                <button type="button" className="btn btn-danger" disabled={actionLoading === userToDelete.id} onClick={handleConfirmDelete}>
+                  {actionLoading === userToDelete.id ? <span className="spinner-border spinner-border-sm me-1" /> : null}
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

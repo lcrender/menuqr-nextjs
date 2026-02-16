@@ -338,5 +338,29 @@ export class UsersService {
       })),
     };
   }
+
+  /** Activar o desactivar usuario (solo SUPER_ADMIN). */
+  async setActive(userId: string, isActive: boolean): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    await this.postgres.executeRaw(
+      'UPDATE users SET is_active = $1, updated_at = NOW() WHERE id = $2',
+      [isActive, userId]
+    );
+  }
+
+  /** Borrado lógico de usuario (solo SUPER_ADMIN). */
+  async deleteUser(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    await this.postgres.executeRaw(
+      'UPDATE users SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1',
+      [userId]
+    );
+  }
 }
 
