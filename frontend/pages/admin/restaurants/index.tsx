@@ -771,9 +771,10 @@ export default function Restaurants() {
         </div>
       ) : (
         <>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h1 className="admin-title">Restaurantes</h1>
-            <button className="admin-btn" onClick={() => {
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <h1 className="admin-title mb-0">Restaurantes</h1>
+            <div className="admin-quick-links">
+              <button type="button" className="admin-btn" onClick={() => {
               if (canCreateRestaurant()) {
                 setEditing(null);
                 setLogoFile(null);
@@ -797,8 +798,9 @@ export default function Restaurants() {
                 setShowLimitModal(true);
               }
             }}>
-              + Nuevo Restaurante
-            </button>
+                + Nuevo Restaurante
+              </button>
+            </div>
           </div>
 
           {user && user.role !== 'SUPER_ADMIN' && (

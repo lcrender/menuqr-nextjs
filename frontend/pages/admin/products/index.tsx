@@ -357,19 +357,39 @@ export default function Products() {
 
   return (
     <AdminLayout>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Productos</h1>
-        <button className="btn btn-primary" onClick={() => {
-          if (canCreateProduct()) {
-            setShowProductWizard(true);
-          } else {
-            setShowLimitModal(true);
-          }
-        }}>
-          + Nuevo Producto
-        </button>
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h1 className="admin-title mb-0">Productos</h1>
+        <div className="admin-quick-links">
+          <button
+            type="button"
+            className="admin-btn"
+            onClick={() => {
+              if (canCreateProduct()) {
+                setShowProductWizard(true);
+              } else {
+                setShowLimitModal(true);
+              }
+            }}
+            disabled={restaurants.length === 0}
+          >
+            + Nuevo Producto
+          </button>
+        </div>
       </div>
 
+      {!loading && restaurants.length === 0 && (
+        <div className="admin-card mb-4" style={{ textAlign: 'center', padding: '2rem' }}>
+          <p className="mb-3" style={{ fontSize: '1.1rem', color: 'var(--admin-text-secondary)' }}>
+            Para crear un producto primero necesitas tener al menos un restaurante y un menú.
+          </p>
+          <a href="/admin/restaurants?wizard=true" className="admin-btn">
+            Crear mi primer restaurante
+          </a>
+        </div>
+      )}
+
+      {restaurants.length > 0 && (
+        <>
       {user && user.role !== 'SUPER_ADMIN' && (
         <div className="mb-3 p-3 bg-light rounded border">
           <div className="d-flex align-items-center gap-2 mb-2">
@@ -775,6 +795,9 @@ export default function Products() {
             </div>
           </div>
         </div>
+      )}
+
+        </>
       )}
 
       {/* Modal de límite de productos */}

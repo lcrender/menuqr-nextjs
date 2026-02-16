@@ -730,34 +730,43 @@ export default function Menus() {
         </div>
       )}
 
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Menús</h1>
-        <button className="btn btn-primary" onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // Verificar límite antes de abrir el wizard
-          const limit = getMenuLimit();
-          
-          // Si no es SUPER_ADMIN y se alcanzó el límite, mostrar modal
-          if (!isSuperAdmin && limit !== -1 && menus.length >= limit) {
-            const plan = tenantPlan || 'free';
-            setLimitMessage({
-              limit,
-              current: menus.length,
-              plan: plan === 'free' ? 'gratuito' : plan
-            });
-            setShowLimitModal(true);
-            return;
-          }
-          
-          setShowMenuWizard(true);
-        }}>
-          + Nuevo Menú
-        </button>
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h1 className="admin-title mb-0">Menús</h1>
+        <div className="admin-quick-links">
+          <button
+            type="button"
+            className="admin-btn"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const limit = getMenuLimit();
+              if (!isSuperAdmin && limit !== -1 && menus.length >= limit) {
+                const plan = tenantPlan || 'free';
+                setLimitMessage({ limit, current: menus.length, plan: plan === 'free' ? 'gratuito' : plan });
+                setShowLimitModal(true);
+                return;
+              }
+              setShowMenuWizard(true);
+            }}
+            disabled={restaurants.length === 0}
+          >
+            + Nuevo Menú
+          </button>
+        </div>
       </div>
 
-      {user && user.role !== 'SUPER_ADMIN' && (
+      {!loading && restaurants.length === 0 && (
+        <div className="admin-card mb-4" style={{ textAlign: 'center', padding: '2rem' }}>
+          <p className="mb-3" style={{ fontSize: '1.1rem', color: 'var(--admin-text-secondary)' }}>
+            Para crear un menú primero necesitas tener al menos un restaurante.
+          </p>
+          <a href="/admin/restaurants?wizard=true" className="admin-btn">
+            Crear mi primer restaurante
+          </a>
+        </div>
+      )}
+
+      {user && user.role !== 'SUPER_ADMIN' && restaurants.length > 0 && (
         <div className="mb-3 p-3 bg-light rounded border">
           <div className="d-flex align-items-center gap-2 mb-2">
             <strong style={{ fontSize: '1.1rem' }}>
@@ -770,7 +779,7 @@ export default function Menus() {
         </div>
       )}
 
-      {loading ? (
+      {restaurants.length > 0 && (loading ? (
         <div className="text-center">
           <div className="spinner-border" role="status">
             <span className="visually-hidden">Cargando...</span>
@@ -894,7 +903,7 @@ export default function Menus() {
             </tbody>
           </table>
         </div>
-      )}
+      ))}
 
       {/* Paginación para SUPER_ADMIN */}
       {isSuperAdmin && total > itemsPerPage && (
