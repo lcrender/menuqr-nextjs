@@ -15,7 +15,6 @@ COPY . .
 # Exponer puerto
 EXPOSE 3000
 
-# Comando por defecto
 CMD ["npm", "run", "dev"]
 
 # Etapa de producción

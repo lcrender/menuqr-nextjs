@@ -208,6 +208,57 @@ docker compose exec frontend npm run test
 
 ## 🔧 Desarrollo
 
+### Desarrollo local (recomendado)
+
+Solo infra en Docker; backend y frontend en tu máquina (sin problemas de volúmenes ni builds):
+
+```bash
+# Terminal 1: infra
+docker compose -f docker-compose.dev.yml up -d postgres redis minio
+
+# Terminal 2: backend
+cd backend && npm install && npm run start:dev
+
+# Terminal 3: frontend
+cd frontend && npm install && npm run dev
+```
+
+Primera vez (migraciones y seed):
+
+```bash
+cd backend
+npx prisma migrate deploy
+npm run db:seed
+```
+
+- **Frontend**: http://localhost:3000  
+- **Backend API**: http://localhost:3001  
+- Asegurate que `.env` tenga `DATABASE_URL`, `REDIS_URL` y MinIO apuntando a `localhost` y los puertos 5432, 6379, 9000.
+
+### Modo desarrollo (todo en Docker, hot reload)
+
+Para levantar todo en modo dev con recarga al guardar cambios:
+
+```bash
+docker compose -f docker-compose.dev.yml up
+```
+
+- **Frontend**: http://localhost:3000  
+- **Backend API**: http://localhost:3001  
+- **Postgres**: localhost:5432 | **Redis**: localhost:6379 | **MinIO**: http://localhost:9000 (consola :9001)
+
+Primera vez (o si la base está vacía):
+
+```bash
+# Aplicar migraciones (usa imagen sin montar código, evita errores Prisma/OpenSSL)
+docker compose -f docker-compose.dev.yml --profile tools run --rm backend-run npx prisma migrate deploy
+
+# Datos de prueba (mismo servicio sin volúmenes)
+docker compose -f docker-compose.dev.yml --profile tools run --rm backend-run npm run db:seed
+```
+
+Si el seed falla con error de Prisma/OpenSSL (libssl, musl), usá `backend-run` como arriba en lugar de `backend`.
+
 ### Comandos Útiles
 
 ```bash

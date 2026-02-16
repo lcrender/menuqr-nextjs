@@ -41,9 +41,10 @@ async function main() {
       role: UserRole.SUPER_ADMIN,
       firstName: 'Super',
       lastName: 'Administrador',
-      isActive: true
+      isActive: true,
     }
   });
+  await prisma.$executeRaw`UPDATE users SET email_verified = true WHERE id = ${superAdmin.id}`;
 
   console.log(`✅ Super Admin creado: ${superAdmin.email}`);
 
@@ -62,9 +63,10 @@ async function main() {
       role: UserRole.ADMIN,
       firstName: 'Juan',
       lastName: 'Pérez',
-      isActive: true
+      isActive: true,
     }
   });
+  await prisma.$executeRaw`UPDATE users SET email_verified = true WHERE id = ${admin.id}`;
 
   console.log(`✅ Admin creado: ${admin.email}`);
 
@@ -97,12 +99,12 @@ async function main() {
   
   const menu = await prisma.menu.create({
     data: {
-      tenantId: demoTenant.id,
-      restaurantId: restaurant.id,
+      tenant: { connect: { id: demoTenant.id } },
+      restaurant: { connect: { id: restaurant.id } },
       name: 'Carta Principal',
+      slug: 'carta-principal',
       description: 'Nuestra selección de platos tradicionales argentinos',
       status: MenuStatus.PUBLISHED,
-      template: 'classic',
       isActive: true
     }
   });

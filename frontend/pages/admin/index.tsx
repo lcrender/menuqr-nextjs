@@ -38,26 +38,35 @@ export default function Admin() {
         setStats(metricsRes.data);
       } else {
         // Para admin, obtener estadísticas de su tenant
-        const [restaurantsRes, menusRes] = await Promise.all([
-          api.get('/restaurants'),
-          api.get('/menus'),
-        ]);
-        
-        const restaurants = restaurantsRes.data?.data || restaurantsRes.data || [];
-        const menus = menusRes.data?.data || menusRes.data || [];
-        
-        setStats({
-          totalRestaurants: restaurants.length,
-          totalMenus: menus.length,
-        });
+        try {
+          const [restaurantsRes, menusRes] = await Promise.all([
+            api.get('/restaurants'),
+            api.get('/menus'),
+          ]);
 
-        // Si no hay restaurantes, redirigir a la página de restaurantes con el wizard abierto
-        if (restaurants.length === 0) {
+          const restaurants = restaurantsRes.data?.data || restaurantsRes.data || [];
+          const menus = menusRes.data?.data || menusRes.data || [];
+
+          setStats({
+            totalRestaurants: Array.isArray(restaurants) ? restaurants.length : 0,
+            totalMenus: Array.isArray(menus) ? menus.length : 0,
+          });
+
+          // Si no hay restaurantes, redirigir a la página de restaurantes con el wizard abierto
+          if (Array.isArray(restaurants) && restaurants.length === 0) {
+            router.push('/admin/restaurants?wizard=true');
+          }
+        } catch (innerError) {
+          console.error('Error cargando estadísticas (restaurants/menus):', innerError);
+          // Si falla la carga (ej. 500 por columnas faltantes), redirigir al wizard para que el usuario pueda crear su primer restaurante
           router.push('/admin/restaurants?wizard=true');
         }
       }
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
+      if (user?.role === 'ADMIN') {
+        router.push('/admin/restaurants?wizard=true');
+      }
     }
   };
 

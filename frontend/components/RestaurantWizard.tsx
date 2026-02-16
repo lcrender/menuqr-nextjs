@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import CountrySelector from './CountrySelector';
 import ProvinceSelector from './ProvinceSelector';
 import CitySelector from './CitySelector';
@@ -109,6 +109,8 @@ export default function RestaurantWizard({
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
   const [, setDetectingCountry] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   // Mapeo de nombres de países de APIs a nuestros nombres
   const countryNameMap: { [key: string]: string } = {
@@ -220,6 +222,30 @@ export default function RestaurantWizard({
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
+  };
+
+  const handleDrop = (e: React.DragEvent, type: 'logo' | 'cover') => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      if (type === 'logo') {
+        setLogoFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setCoverFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => setCoverPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const canGoToNextStep = () => {
@@ -267,14 +293,7 @@ export default function RestaurantWizard({
         <p className="wizard-subtitle">Sigue estos pasos para configurar tu restaurante</p>
       </div>
 
-      {/* Progress bar */}
       <div className="wizard-progress">
-        <div className="wizard-progress-bar">
-          <div 
-            className="wizard-progress-fill" 
-            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-          ></div>
-        </div>
         <div className="wizard-steps">
           <div className={`wizard-step ${currentStep >= 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>
             <div className="wizard-step-number">1</div>
@@ -732,59 +751,79 @@ export default function RestaurantWizard({
             {/* Logo */}
             <div className="wizard-field">
               <label className="wizard-label">Logo del restaurante</label>
-              <div className="wizard-file-upload">
+              <div
+                className={`wizard-image-upload-zone ${logoPreview ? 'has-image' : ''}`}
+                onClick={() => logoInputRef.current?.click()}
+                onDrop={(e) => handleDrop(e, 'logo')}
+                onDragOver={handleDragOver}
+              >
                 <input
+                  ref={logoInputRef}
                   type="file"
-                  className="admin-form-control"
                   accept="image/*"
                   onChange={handleLogoChange}
+                  style={{ display: 'none' }}
                 />
-                {logoPreview && (
-                  <div className="wizard-image-preview">
-                    <img 
-                      src={logoPreview} 
-                      alt="Logo preview" 
-                      className="wizard-preview-image"
-                    />
+                {logoPreview ? (
+                  <div className="wizard-image-preview-wrap">
+                    <img src={logoPreview} alt="Vista previa del logo" className="wizard-preview-image" />
+                    <div className="wizard-upload-change-overlay">
+                      <span className="wizard-upload-change-btn">Cambiar imagen</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="wizard-upload-placeholder">
+                    <div className="wizard-upload-icon">🖼️</div>
+                    <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
+                    <span className="wizard-upload-hint">512×512px o 1024×1024px · JPG, PNG · máx. 2MB</span>
                   </div>
                 )}
               </div>
               <small className="wizard-hint" style={{ color: '#666', fontSize: '0.875rem', marginTop: '8px', display: 'block' }}>
-                <strong>Resolución recomendada:</strong> 512x512px o 1024x1024px (formato cuadrado). 
-                Formatos aceptados: JPG, PNG. Tamaño máximo recomendado: 2MB.
+                Logo cuadrado para tu restaurante. Se mostrará en el menú y en la cabecera.
               </small>
             </div>
 
             {/* Foto de portada */}
             <div className="wizard-field">
               <label className="wizard-label">Foto de portada</label>
-              <div className="wizard-file-upload">
+              <div
+                className={`wizard-image-upload-zone ${coverPreview ? 'has-image' : ''}`}
+                onClick={() => coverInputRef.current?.click()}
+                onDrop={(e) => handleDrop(e, 'cover')}
+                onDragOver={handleDragOver}
+              >
                 <input
+                  ref={coverInputRef}
                   type="file"
-                  className="admin-form-control"
                   accept="image/*"
                   onChange={handleCoverChange}
+                  style={{ display: 'none' }}
                 />
-                {coverPreview && (
-                  <div className="wizard-image-preview">
-                    <img 
-                      src={coverPreview} 
-                      alt="Cover preview" 
-                      className="wizard-preview-image cover"
-                    />
+                {coverPreview ? (
+                  <div className="wizard-image-preview-wrap">
+                    <img src={coverPreview} alt="Vista previa de portada" className="wizard-preview-image cover" />
+                    <div className="wizard-upload-change-overlay">
+                      <span className="wizard-upload-change-btn">Cambiar imagen</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="wizard-upload-placeholder">
+                    <div className="wizard-upload-icon">📷</div>
+                    <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
+                    <span className="wizard-upload-hint">1920×1080px o 16:9 · JPG, PNG · máx. 5MB</span>
                   </div>
                 )}
               </div>
               <small className="wizard-hint" style={{ color: '#666', fontSize: '0.875rem', marginTop: '8px', display: 'block' }}>
-                <strong>Resolución recomendada:</strong> 1920x1080px o 1920x600px (formato horizontal 16:9 o similar). 
-                Formatos aceptados: JPG, PNG. Tamaño máximo recomendado: 5MB.
+                Imagen horizontal para la cabecera del menú. Da la bienvenida a tus clientes.
               </small>
             </div>
 
             {/* Template de diseño */}
             <div className="wizard-field">
               <label className="wizard-label">Plantilla de diseño</label>
-              <div className="wizard-template-selector">
+              <div className="wizard-template-selector wizard-template-selector--grid">
                 <div 
                   className={`wizard-template-option ${formData.template === 'classic' ? 'active' : ''}`}
                   onClick={() => setFormData({ ...formData, template: 'classic' })}
@@ -794,12 +833,12 @@ export default function RestaurantWizard({
                   <div className="wizard-template-desc">Diseño tradicional y elegante</div>
                 </div>
                 <div 
-                  className={`wizard-template-option ${formData.template === 'modern' ? 'active' : ''}`}
-                  onClick={() => setFormData({ ...formData, template: 'modern' })}
+                  className={`wizard-template-option ${formData.template === 'minimalist' ? 'active' : ''}`}
+                  onClick={() => setFormData({ ...formData, template: 'minimalist' })}
                 >
-                  <div className="wizard-template-preview modern"></div>
-                  <div className="wizard-template-name">Moderno</div>
-                  <div className="wizard-template-desc">Diseño minimalista y contemporáneo</div>
+                  <div className="wizard-template-preview minimalist"></div>
+                  <div className="wizard-template-name">Minimalista</div>
+                  <div className="wizard-template-desc">Diseño limpio y contemporáneo</div>
                 </div>
                 <div 
                   className={`wizard-template-option ${formData.template === 'foodie' ? 'active' : ''}`}
@@ -808,6 +847,22 @@ export default function RestaurantWizard({
                   <div className="wizard-template-preview foodie"></div>
                   <div className="wizard-template-name">Foodie</div>
                   <div className="wizard-template-desc">Diseño gastronómico y apetitoso</div>
+                </div>
+                <div 
+                  className={`wizard-template-option ${formData.template === 'burgers' ? 'active' : ''}`}
+                  onClick={() => setFormData({ ...formData, template: 'burgers' })}
+                >
+                  <div className="wizard-template-preview burgers"></div>
+                  <div className="wizard-template-name">Burgers</div>
+                  <div className="wizard-template-desc">Estilo hamburguesería, bold y dinámico</div>
+                </div>
+                <div 
+                  className={`wizard-template-option ${formData.template === 'italianFood' ? 'active' : ''}`}
+                  onClick={() => setFormData({ ...formData, template: 'italianFood' })}
+                >
+                  <div className="wizard-template-preview italianfood"></div>
+                  <div className="wizard-template-name">Italian Food</div>
+                  <div className="wizard-template-desc">Elegante con colores de la bandera italiana</div>
                 </div>
               </div>
               <small className="wizard-hint">

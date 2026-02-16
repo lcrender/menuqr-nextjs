@@ -1,0 +1,153 @@
+# ========================================
+# MenuQR - Docker Compose DESARROLLO
+# ========================================
+# Uso: docker compose -f docker-compose.dev.yml up
+# Frontend: http://localhost:3000  |  Backend API: http://localhost:3001
+# Postgres: localhost:5432  |  Redis: localhost:6379  |  MinIO: http://localhost:9000 (console :9001)
+# ========================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: menuqr_postgres_dev
+    environment:
+      POSTGRES_DB: menuqr
+      POSTGRES_USER: menuqr_user
+      POSTGRES_PASSWORD: menuqr_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U menuqr_user -d menuqr"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - menuqr_dev
+
+  redis:
+    image: redis:7-alpine
+    container_name: menuqr_redis_dev
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - menuqr_dev
+
+  minio:
+    image: minio/minio:latest
+    container_name: menuqr_minio_dev
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data_dev:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - menuqr_dev
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: menuqr_backend_dev
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 3001
+      DATABASE_URL: postgresql://menuqr_user:menuqr_password@postgres:5432/menuqr
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: "dev-jwt-secret-min-32-chars-long!!!!!!!!!"
+      JWT_REFRESH_SECRET: "dev-refresh-secret-min-32-chars-long!!!!"
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: "false"
+      MINIO_BUCKET: menuqr-assets
+      MINIO_ACCESS_KEY: admin
+      MINIO_SECRET_KEY: admin123
+      FRONTEND_URL: http://localhost:3000
+      BACKEND_URL: http://localhost:3001
+      CORS_ORIGIN: http://localhost:3000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - menuqr_dev
+
+  # Servicio sin montar código: para seed/migrate usa node_modules de la imagen (evita Prisma musl/OpenSSL en volumen viejo)
+  backend-run:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: menuqr_backend_run
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://menuqr_user:menuqr_password@postgres:5432/menuqr
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - menuqr_dev
+    profiles:
+      - tools
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: menuqr_frontend_dev
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - menuqr_dev
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:
+  minio_data_dev:
+
+networks:
+  menuqr_dev:
+    driver: bridge

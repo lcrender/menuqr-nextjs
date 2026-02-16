@@ -1,0 +1,12 @@
+# No copiar node_modules del host (se instalan en el contenedor con npm install)
+node_modules
+npm-debug.log
+dist
+.git
+.env
+.env.*
+*.md
+coverage
+.nyc_output
+*.log
+.DS_Store

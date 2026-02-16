@@ -3,6 +3,9 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../lib/axios';
 import Head from 'next/head';
+import AlertModal from '../components/AlertModal';
+
+const isProduction = typeof process !== 'undefined' && process.env.NODE_ENV === 'production';
 
 export default function Login() {
   const router = useRouter();
@@ -15,6 +18,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showRegisterSuccessModal, setShowRegisterSuccessModal] = useState(false);
 
   useEffect(() => {
     // Verificar si viene con action=register
@@ -53,10 +57,9 @@ export default function Login() {
 
         // Si el registro requiere verificación de email
         if (response.data.requiresEmailVerification) {
-          alert('¡Registro exitoso! Por favor, verifica tu email. Hemos enviado un enlace de verificación a tu dirección de correo electrónico.');
-          // No redirigir, mostrar mensaje en la página
           setError('');
           setMessage('Registro exitoso. Por favor, revisa tu email y haz clic en el enlace de verificación para activar tu cuenta.');
+          setShowRegisterSuccessModal(true);
           return;
         }
 
@@ -279,7 +282,7 @@ export default function Login() {
                   </button>
                 </form>
 
-                {!isRegister && (
+                {!isRegister && !isProduction && (
                   <div className="landing-auth-footer">
                     <p className="landing-auth-footer-text">
                       <strong>Credenciales de prueba:</strong><br />
@@ -313,6 +316,14 @@ export default function Login() {
           </div>
         </footer>
       </div>
+
+      <AlertModal
+        show={showRegisterSuccessModal}
+        title="Registro exitoso"
+        message="Por favor, verifica tu email. Hemos enviado un enlace de verificación a tu dirección de correo electrónico."
+        variant="success"
+        onClose={() => setShowRegisterSuccessModal(false)}
+      />
     </>
   );
 }

@@ -18,10 +18,14 @@ COPY . .
 # Generar Prisma client
 RUN npm run db:generate
 
+# Entrypoint para dev: si node_modules está vacío (volumen), instala deps en el contenedor
+COPY scripts/docker-dev-entrypoint.sh /docker-dev-entrypoint.sh
+RUN chmod +x /docker-dev-entrypoint.sh
+
 # Exponer puerto
 EXPOSE 3001
 
-# Comando por defecto
+ENTRYPOINT ["/docker-dev-entrypoint.sh"]
 CMD ["npm", "run", "start:dev"]
 
 # Etapa de producción
