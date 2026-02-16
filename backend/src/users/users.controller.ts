@@ -25,11 +25,15 @@ export class UsersController {
     return this.usersService.findAllWithStats(email, limitNum, offsetNum);
   }
 
-  @Get(':id/details')
-  @ApiOperation({ summary: 'Obtener detalles completos de un usuario' })
-  @ApiResponse({ status: 200, description: 'Detalles del usuario con restaurantes, menús y productos' })
-  async getUserDetails(@Param('id') id: string) {
-    return this.usersService.getUserDetails(id);
+  @Delete('remove/:id')
+  @ApiOperation({ summary: 'Eliminar usuario (borrado lógico)' })
+  @ApiResponse({ status: 200, description: 'Usuario eliminado' })
+  async deleteUser(@Param('id') id: string, @Request() req) {
+    if (req.user?.id === id) {
+      throw new BadRequestException('No puedes eliminar tu propio usuario');
+    }
+    await this.usersService.deleteUser(id);
+    return { message: 'Usuario eliminado' };
   }
 
   @Patch(':id/active')
@@ -47,15 +51,11 @@ export class UsersController {
     return { message: body.isActive ? 'Usuario activado' : 'Usuario desactivado' };
   }
 
-  @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar usuario (borrado lógico)' })
-  @ApiResponse({ status: 200, description: 'Usuario eliminado' })
-  async deleteUser(@Param('id') id: string, @Request() req) {
-    if (req.user?.id === id) {
-      throw new BadRequestException('No puedes eliminar tu propio usuario');
-    }
-    await this.usersService.deleteUser(id);
-    return { message: 'Usuario eliminado' };
+  @Get(':id/details')
+  @ApiOperation({ summary: 'Obtener detalles completos de un usuario' })
+  @ApiResponse({ status: 200, description: 'Detalles del usuario con restaurantes, menús y productos' })
+  async getUserDetails(@Param('id') id: string) {
+    return this.usersService.getUserDetails(id);
   }
 }
 

@@ -119,7 +119,7 @@ export default function Users() {
     if (!userToDelete) return;
     setActionLoading(userToDelete.id);
     try {
-      await api.delete(`/users/${userToDelete.id}`);
+      await api.delete(`/users/remove/${userToDelete.id}`);
       setShowDeleteConfirm(false);
       setUserToDelete(null);
       await loadUsers();
