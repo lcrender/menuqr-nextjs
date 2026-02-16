@@ -175,20 +175,16 @@ export default function Restaurants() {
     return restaurants.length < limit;
   };
 
-  // Abrir wizard automáticamente si viene con parámetro wizard=true o si no hay restaurantes
+  // Abrir wizard automáticamente si viene con parámetro wizard=true o si no hay restaurantes (ADMIN o SUPER_ADMIN)
   useEffect(() => {
-    if (user && !loading && !isSuperAdmin) {
-      // Verificar si viene con parámetro wizard en la URL
-      if (router.query.wizard === 'true') {
-        setShowWizard(true);
-        // Limpiar el parámetro de la URL sin recargar la página
-        router.replace('/admin/restaurants', undefined, { shallow: true });
-      } else if (restaurants.length === 0 && !filterName) {
-        // Si no hay restaurantes y no hay filtro activo, abrir wizard automáticamente
-        setShowWizard(true);
-      }
+    if (!user || loading) return;
+    if (router.query.wizard === 'true') {
+      setShowWizard(true);
+      router.replace('/admin/restaurants', undefined, { shallow: true });
+    } else if (restaurants.length === 0 && !filterName) {
+      setShowWizard(true);
     }
-  }, [user, loading, restaurants.length, filterName, isSuperAdmin, router.query.wizard]);
+  }, [user, loading, restaurants.length, filterName, router.query.wizard]);
 
   // Actualizar moneda por defecto cuando cambia el país (solo al crear, no al editar)
   useEffect(() => {
@@ -743,7 +739,7 @@ export default function Restaurants() {
           />
         </div>
       ) : /* Mostrar wizard de restaurante si no hay restaurantes (sin filtro) o si se solicita crear uno nuevo */
-      showWizard || (!isSuperAdmin && !loading && restaurants.length === 0 && !filterName) ? (
+      showWizard || (!loading && restaurants.length === 0 && !filterName) ? (
         <div className="restaurant-wizard-container">
           <RestaurantWizard
             formData={formData}

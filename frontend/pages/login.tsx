@@ -5,7 +5,10 @@ import api from '../lib/axios';
 import Head from 'next/head';
 import AlertModal from '../components/AlertModal';
 
-const isProduction = typeof process !== 'undefined' && process.env.NODE_ENV === 'production';
+// Ocultar credenciales de prueba: en build de producción (NODE_ENV) o si se define NEXT_PUBLIC_APP_ENV=production
+const isProduction =
+  typeof process !== 'undefined' &&
+  (process.env.NEXT_PUBLIC_APP_ENV === 'production' || process.env.NODE_ENV === 'production');
 
 export default function Login() {
   const router = useRouter();

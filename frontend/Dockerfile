@@ -22,11 +22,13 @@ FROM node:18-alpine AS production
 
 WORKDIR /app
 
-# Build-time args para URLs públicas (Next.js)
+# Build-time args para URLs públicas y modo producción (Next.js)
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_APP_ENV
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_APP_ENV=$NEXT_PUBLIC_APP_ENV
 
 # Copiar archivos de dependencias
 COPY package*.json ./
