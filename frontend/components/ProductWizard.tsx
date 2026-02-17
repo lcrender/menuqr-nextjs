@@ -229,6 +229,13 @@ export default function ProductWizard({
   const [publishingMenu, setPublishingMenu] = useState(false);
   const [unpublishingMenu, setUnpublishingMenu] = useState(false);
   const [showUnpublishModal, setShowUnpublishModal] = useState(false);
+  const [showLoadExistingModal, setShowLoadExistingModal] = useState(false);
+  const [existingProductsPool, setExistingProductsPool] = useState<any[]>([]);
+  const [loadingExistingProducts, setLoadingExistingProducts] = useState(false);
+  const [selectedExistingIds, setSelectedExistingIds] = useState<Set<string>>(new Set());
+  const [loadExistingSectionId, setLoadExistingSectionId] = useState('');
+  const [copyingExisting, setCopyingExisting] = useState(false);
+  const [loadExistingError, setLoadExistingError] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<{ sectionId: string; itemId: string } | null>(null);
   const [dragOverItem, setDragOverItem] = useState<{ sectionId: string; itemId: string | null; position: 'before' | 'after' } | null>(null);
   const [restaurantCurrency, setRestaurantCurrency] = useState<string>(defaultCurrency);
@@ -941,10 +948,55 @@ export default function ProductWizard({
     setCurrentStep(1);
   };
 
-  const handleSelectExisting = () => {
+  const handleSelectExisting = async () => {
     setSelectedOption('select');
-    // TODO: Implementar selección de productos existentes
-    alert('Funcionalidad de seleccionar productos existentes próximamente');
+    setShowLoadExistingModal(true);
+    setLoadExistingError(null);
+    setExistingProductsPool([]);
+    setSelectedExistingIds(new Set());
+    setLoadExistingSectionId(sections.length > 0 ? sections[0].id : '');
+    setLoadingExistingProducts(true);
+    try {
+      const res = await api.get('/menu-items');
+      const allItems = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+      const currentRestaurantId = menus.find((m: any) => m.id === initialMenuId)?.restaurantId ?? menus.find((m: any) => m.id === initialMenuId)?.restaurant_id;
+      const otherMenuIds = (menus || []).filter((m: any) => (m.restaurantId ?? m.restaurant_id) === currentRestaurantId && m.id !== initialMenuId).map((m: any) => m.id);
+      const fromOtherMenus = allItems.filter((p: any) => otherMenuIds.includes(p.menuId || p.menu_id));
+      setExistingProductsPool(fromOtherMenus);
+    } catch (err: any) {
+      setLoadExistingError(err.response?.data?.message || 'Error al cargar productos');
+    } finally {
+      setLoadingExistingProducts(false);
+    }
+  };
+
+  const toggleSelectedExisting = (id: string) => {
+    setSelectedExistingIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleCopyExistingToMenu = async () => {
+    if (!loadExistingSectionId || selectedExistingIds.size === 0) return;
+    setCopyingExisting(true);
+    try {
+      await Promise.all(
+        Array.from(selectedExistingIds).map((id) =>
+          api.post(`/menu-items/${id}/copy-to-menu`, { menuId: initialMenuId, sectionId: loadExistingSectionId })
+        )
+      );
+      setShowLoadExistingModal(false);
+      setSelectedExistingIds(new Set());
+      await loadMenuData();
+      if (onComplete) onComplete();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Error al copiar algunos productos');
+    } finally {
+      setCopyingExisting(false);
+    }
   };
 
   const handleNext = () => {
@@ -1551,6 +1603,89 @@ export default function ProductWizard({
                   {unpublishingMenu ? 'Despublicando...' : 'Sí, despublicar'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Cargar productos ya creados (clonar desde otros menús del mismo restaurante) */}
+      {showLoadExistingModal && (
+        <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => !copyingExisting && setShowLoadExistingModal(false)}>
+          <div className="modal-dialog modal-dialog-centered modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
+                <h5 className="modal-title">Cargar productos ya creados</h5>
+                <button type="button" className="btn-close" onClick={() => !copyingExisting && setShowLoadExistingModal(false)} aria-label="Cerrar" />
+              </div>
+              <div className="modal-body" style={{ padding: '24px' }}>
+                <p className="text-muted small mb-3">
+                  Elige productos de otros menús del mismo restaurante para copiarlos a este menú (se clonan con precios e iconos).
+                </p>
+                {loadingExistingProducts ? (
+                  <div className="text-center py-4">
+                    <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Cargando...</span></div>
+                  </div>
+                ) : loadExistingError ? (
+                  <div className="alert alert-danger mb-0">{loadExistingError}</div>
+                ) : existingProductsPool.length === 0 ? (
+                  <div className="alert alert-info mb-0">
+                    No hay productos en otros menús del mismo restaurante. Crea productos en otro menú y vuelve a intentar, o crea uno nuevo aquí.
+                  </div>
+                ) : (
+                  <>
+                    {sections.length === 0 ? (
+                      <div className="alert alert-warning mb-3">
+                        Crea al menos una sección en este menú para poder copiar productos aquí.
+                      </div>
+                    ) : (
+                      <div className="mb-3">
+                        <label className="form-label fw-semibold">Añadir a la sección</label>
+                        <select
+                          className="form-select"
+                          value={loadExistingSectionId}
+                          onChange={(e) => setLoadExistingSectionId(e.target.value)}
+                        >
+                          {sections.map((s: any) => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div className="mb-2 fw-semibold">Selecciona los productos a copiar:</div>
+                    <div style={{ maxHeight: '280px', overflowY: 'auto', border: '1px solid #dee2e6', borderRadius: '6px', padding: '8px' }}>
+                      {existingProductsPool.map((p: any) => (
+                        <label key={p.id} className="d-flex align-items-center gap-2 py-2 px-2 rounded" style={{ cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedExistingIds.has(p.id)}
+                            onChange={() => toggleSelectedExisting(p.id)}
+                            disabled={copyingExisting}
+                          />
+                          <span className="flex-grow-1">{p.name}</span>
+                          {p.prices && p.prices[0] && (
+                            <span className="text-muted small">{formatPrice(p.prices[0])}</span>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              {!loadingExistingProducts && !loadExistingError && existingProductsPool.length > 0 && sections.length > 0 && (
+                <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowLoadExistingModal(false)} disabled={copyingExisting}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleCopyExistingToMenu}
+                    disabled={copyingExisting || selectedExistingIds.size === 0 || !loadExistingSectionId}
+                  >
+                    {copyingExisting ? 'Copiando…' : `Copiar ${selectedExistingIds.size} producto(s) al menú`}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

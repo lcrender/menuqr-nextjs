@@ -46,6 +46,13 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // No intentar refrescar token en login/register: el 401 es "credenciales inválidas"
+    // y debe mostrarse en el formulario, no redirigir y perder el mensaje
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register');
+    if (isAuthEndpoint) {
+      return Promise.reject(error);
+    }
+
     // Si es un error 401 y no hemos intentado refrescar el token
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;

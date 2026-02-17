@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Request, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RestaurantsService } from './restaurants.service';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
@@ -11,6 +11,23 @@ import { Roles } from '../common/decorators/roles.decorator';
 @Roles('ADMIN', 'SUPER_ADMIN')
 export class RestaurantsController {
   constructor(private readonly restaurantsService: RestaurantsService) {}
+
+  @Get('config-state')
+  @ApiOperation({ summary: 'Estado de configuración del restaurante seleccionado' })
+  @ApiResponse({ status: 200, description: 'hasRestaurant, hasMenu, hasProductLinkedToMenu, isComplete, progressPercentage' })
+  async getConfigState(@Request() req, @Query('restaurantId') restaurantId?: string) {
+    const tenantId = req.user.role === 'SUPER_ADMIN' ? (req.query.tenantId as string) : req.user.tenantId;
+    if (!tenantId) {
+      return {
+        hasRestaurant: false,
+        hasMenu: false,
+        hasProductLinkedToMenu: false,
+        isComplete: false,
+        progressPercentage: 0,
+      };
+    }
+    return this.restaurantsService.getConfigState(tenantId, restaurantId || undefined);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Listar restaurantes del tenant' })

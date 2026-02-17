@@ -99,6 +99,21 @@ export class MenuItemsController {
     return this.menuItemsService.findAll(tenantId, menuId, sectionId, productName);
   }
 
+  @Post(':id/copy-to-menu')
+  @ApiOperation({ summary: 'Copiar producto a otro menú y sección' })
+  @ApiResponse({ status: 201, description: 'Producto clonado en el menú indicado' })
+  @ApiResponse({ status: 404, description: 'Item o menú/sección no encontrado' })
+  async copyToMenu(
+    @Param('id') id: string,
+    @Body() body: { menuId: string; sectionId: string; tenantId?: string },
+    @Request() req,
+  ) {
+    const tenantId = req.user.role === 'SUPER_ADMIN' ? body.tenantId : req.user.tenantId;
+    if (!tenantId) throw new BadRequestException('Tenant ID es requerido');
+    if (!body.menuId || !body.sectionId) throw new BadRequestException('menuId y sectionId son requeridos');
+    return this.menuItemsService.copyToMenu(id, tenantId, { menuId: body.menuId, sectionId: body.sectionId });
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener item por ID' })
   @ApiResponse({ status: 200, description: 'Item encontrado' })

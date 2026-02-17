@@ -138,6 +138,117 @@ export class RestaurantsService {
     };
   }
 
+  /**
+   * Estado de configuración del restaurante seleccionado (sin modificar modelos ni BD).
+   * Evalúa: tiene restaurante, tiene menú, tiene producto vinculado a menú del restaurante.
+   * Incluye datos para avisos: restaurante inactivo, menús no publicados, menús sin productos.
+   */
+  async getConfigState(tenantId: string, restaurantId?: string | null): Promise<{
+    hasRestaurant: boolean;
+    hasMenu: boolean;
+    hasProductLinkedToMenu: boolean;
+    isComplete: boolean;
+    progressPercentage: number;
+    restaurantIsActive?: boolean;
+    restaurantSlug?: string | null;
+    restaurantName?: string | null;
+    menusSummary?: { id: string; name: string; status: string; productCount: number }[];
+  }> {
+    const empty = {
+      hasRestaurant: false,
+      hasMenu: false,
+      hasProductLinkedToMenu: false,
+      isComplete: false,
+      progressPercentage: 0,
+    };
+
+    const restaurantCountResult = await this.postgres.queryRaw<{ count: string }>(
+      `SELECT COUNT(*)::text as count FROM restaurants WHERE tenant_id = $1 AND deleted_at IS NULL`,
+      [tenantId]
+    );
+    const restaurantCount = parseInt(restaurantCountResult[0]?.count || '0', 10);
+    const hasRestaurant = restaurantCount >= 1;
+
+    if (!hasRestaurant) {
+      return empty;
+    }
+
+    let effectiveRestaurantId = restaurantId || null;
+    if (!effectiveRestaurantId) {
+      const first = await this.postgres.queryRaw<{ id: string }>(
+        `SELECT id FROM restaurants WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1`,
+        [tenantId]
+      );
+      effectiveRestaurantId = first[0]?.id || null;
+    }
+
+    if (!effectiveRestaurantId) {
+      return {
+        ...empty,
+        hasRestaurant: true,
+        progressPercentage: 33,
+      };
+    }
+
+    const menuCountResult = await this.postgres.queryRaw<{ count: string }>(
+      `SELECT COUNT(*)::text as count FROM menus WHERE restaurant_id = $1 AND deleted_at IS NULL AND status = 'PUBLISHED'`,
+      [effectiveRestaurantId]
+    );
+    const menuCount = parseInt(menuCountResult[0]?.count || '0', 10);
+    const hasMenu = menuCount >= 1;
+
+    const productLinkedResult = await this.postgres.queryRaw<{ count: string }>(
+      `SELECT COUNT(*)::text as count
+       FROM menu_items mi
+       INNER JOIN menus m ON m.id = mi.menu_id AND m.deleted_at IS NULL AND m.status = 'PUBLISHED'
+       WHERE m.restaurant_id = $1 AND mi.deleted_at IS NULL`,
+      [effectiveRestaurantId]
+    );
+    const productLinkedCount = parseInt(productLinkedResult[0]?.count || '0', 10);
+    const hasProductLinkedToMenu = productLinkedCount >= 1;
+
+    let progressPercentage = 0;
+    if (hasRestaurant) progressPercentage = 33;
+    if (hasRestaurant && hasMenu) progressPercentage = 66;
+    if (hasRestaurant && hasMenu && hasProductLinkedToMenu) progressPercentage = 100;
+
+    const restaurantRow = await this.postgres.queryRaw<{ is_active: boolean; slug: string | null; name: string | null }>(
+      `SELECT is_active, slug, name FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [effectiveRestaurantId]
+    );
+    const restaurantIsActive = restaurantRow[0]?.is_active ?? true;
+    const restaurantSlug = restaurantRow[0]?.slug ?? null;
+    const restaurantName = restaurantRow[0]?.name ?? null;
+
+    const menusSummaryRows = await this.postgres.queryRaw<any>(
+      `SELECT m.id, m.name, m.status, COUNT(mi.id)::text as product_count
+       FROM menus m
+       LEFT JOIN menu_items mi ON mi.menu_id = m.id AND mi.deleted_at IS NULL
+       WHERE m.restaurant_id = $1 AND m.deleted_at IS NULL
+       GROUP BY m.id, m.name, m.status
+       ORDER BY m.name`,
+      [effectiveRestaurantId]
+    );
+    const menusSummary = Array.isArray(menusSummaryRows) ? menusSummaryRows.map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      status: row.status || 'DRAFT',
+      productCount: parseInt(row.product_count || '0', 10),
+    })) : [];
+
+    return {
+      hasRestaurant: true,
+      hasMenu,
+      hasProductLinkedToMenu,
+      isComplete: hasRestaurant && hasMenu && hasProductLinkedToMenu,
+      progressPercentage,
+      restaurantIsActive,
+      restaurantSlug,
+      restaurantName,
+      menusSummary,
+    };
+  }
+
   async findById(id: string, tenantId?: string) {
     let query = `
       SELECT 
@@ -456,11 +567,13 @@ export class RestaurantsService {
   }
 
   async delete(id: string, tenantId: string) {
-    const restaurant = await this.findById(id, tenantId);
-    
+    await this.findById(id, tenantId);
+    // Liberar el slug para poder reutilizarlo al crear un nuevo restaurante (constraint unique tenant_id + slug)
+    const freedSlug = `deleted_${id}`;
+
     await this.postgres.executeRaw(
-      `UPDATE restaurants SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
-      [id, tenantId]
+      `UPDATE restaurants SET deleted_at = NOW(), slug = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
+      [freedSlug, id, tenantId]
     );
 
     return { message: 'Restaurante eliminado exitosamente' };

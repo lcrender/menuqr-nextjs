@@ -24,6 +24,12 @@ export default function Products() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [productToCopy, setProductToCopy] = useState<any>(null);
+  const [copyTargetMenuId, setCopyTargetMenuId] = useState('');
+  const [copyTargetSectionId, setCopyTargetSectionId] = useState('');
+  const [copySections, setCopySections] = useState<any[]>([]);
+  const [copyLoading, setCopyLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertData, setAlertData] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' | 'info' } | null>(null);
   const [editing, setEditing] = useState<any>(null);
@@ -244,6 +250,51 @@ export default function Products() {
       loadSections(menuId);
     }
     setShowModal(true);
+  };
+
+  const handleCopyToMenuClick = (product: any) => {
+    setProductToCopy(product);
+    setCopyTargetMenuId('');
+    setCopyTargetSectionId('');
+    setCopySections([]);
+    setShowCopyModal(true);
+  };
+
+  useEffect(() => {
+    if (showCopyModal && copyTargetMenuId) {
+      api.get(`/menu-sections?menuId=${copyTargetMenuId}`).then(res => {
+        setCopySections(Array.isArray(res.data) ? res.data : []);
+        setCopyTargetSectionId('');
+      }).catch(() => setCopySections([]));
+    }
+  }, [showCopyModal, copyTargetMenuId]);
+
+  const handleCopyToMenuSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!productToCopy || !copyTargetMenuId || !copyTargetSectionId) return;
+    setCopyLoading(true);
+    try {
+      await api.post(`/menu-items/${productToCopy.id}/copy-to-menu`, {
+        menuId: copyTargetMenuId,
+        sectionId: copyTargetSectionId,
+      });
+      setShowCopyModal(false);
+      setProductToCopy(null);
+      setCopyTargetMenuId('');
+      setCopyTargetSectionId('');
+      loadData();
+      setAlertData({ title: 'Listo', message: 'Producto copiado al menú indicado.', variant: 'success' });
+      setShowAlert(true);
+    } catch (err: any) {
+      setAlertData({
+        title: 'Error',
+        message: err.response?.data?.message || 'No se pudo copiar el producto.',
+        variant: 'error',
+      });
+      setShowAlert(true);
+    } finally {
+      setCopyLoading(false);
+    }
   };
 
   const handleDeleteClick = (id: string) => {
@@ -568,6 +619,13 @@ export default function Products() {
                     <button className="btn btn-sm btn-primary me-1" onClick={() => handleEdit(product)}>
                       Editar
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary me-1"
+                      onClick={() => handleCopyToMenuClick(product)}
+                    >
+                      Copiar a otro menú
+                    </button>
                     <button 
                       className="btn btn-sm btn-danger" 
                       onClick={() => handleDeleteClick(product.id)}
@@ -843,6 +901,72 @@ export default function Products() {
                   Entendido
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Copiar a otro menú */}
+      {showCopyModal && productToCopy && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Copiar a otro menú</h5>
+                <button type="button" className="btn-close" onClick={() => { setShowCopyModal(false); setProductToCopy(null); }} aria-label="Cerrar" />
+              </div>
+              <form onSubmit={handleCopyToMenuSubmit}>
+                <div className="modal-body">
+                  <p className="text-muted small mb-3">
+                    Copiar &quot;{productToCopy.name}&quot; a un menú y sección del mismo restaurante.
+                  </p>
+                  <div className="mb-3">
+                    <label className="form-label">Menú de destino</label>
+                    <select
+                      className="form-select"
+                      value={copyTargetMenuId}
+                      onChange={(e) => setCopyTargetMenuId(e.target.value)}
+                      required
+                    >
+                      <option value="">Seleccione un menú</option>
+                      {(() => {
+                        const currentMenuId = productToCopy.menuId || productToCopy.menu_id;
+                        const currentMenu = menus.find(m => m.id === currentMenuId);
+                        const restaurantId = currentMenu?.restaurantId ?? currentMenu?.restaurant_id;
+                        const sameRestaurantMenus = menus.filter(
+                          m => (m.restaurantId ?? m.restaurant_id) === restaurantId && m.id !== currentMenuId
+                        );
+                        return sameRestaurantMenus.map(m => (
+                          <option key={m.id} value={m.id}>{m.name}</option>
+                        ));
+                      })()}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Sección de destino</label>
+                    <select
+                      className="form-select"
+                      value={copyTargetSectionId}
+                      onChange={(e) => setCopyTargetSectionId(e.target.value)}
+                      required
+                      disabled={!copyTargetMenuId}
+                    >
+                      <option value="">{copyTargetMenuId ? 'Seleccione una sección' : 'Primero elija un menú'}</option>
+                      {copySections.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => { setShowCopyModal(false); setProductToCopy(null); }}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={copyLoading || !copyTargetMenuId || !copyTargetSectionId}>
+                    {copyLoading ? 'Copiando…' : 'Copiar'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

@@ -555,6 +555,107 @@ export class MenuItemsService {
     return { message: 'Item eliminado exitosamente' };
   }
 
+  /**
+   * Clona un producto en otro menú y sección (mismo tenant). Copia nombre, descripción, precios, iconos y fotos.
+   */
+  async copyToMenu(
+    id: string,
+    tenantId: string,
+    target: { menuId: string; sectionId: string },
+  ) {
+    const source = await this.findById(id, tenantId);
+    if (!source) throw new NotFoundException(`Item con ID ${id} no encontrado`);
+
+    const menu = await this.postgres.queryRaw<any>(
+      `SELECT id FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [target.menuId, tenantId]
+    );
+    if (!menu[0]) throw new NotFoundException('Menú de destino no encontrado o no pertenece al tenant');
+
+    const section = await this.postgres.queryRaw<any>(
+      `SELECT id FROM menu_sections WHERE id = $1 AND menu_id = $2 AND tenant_id = $3 AND deleted_at IS NULL LIMIT 1`,
+      [target.sectionId, target.menuId, tenantId]
+    );
+    if (!section[0]) throw new NotFoundException('Sección de destino no encontrada o no pertenece al menú');
+
+    await this.validateMenuItemLimit(tenantId);
+
+    const maxSortResult = await this.postgres.queryRaw<{ max_sort: number }>(
+      `SELECT COALESCE(MAX(sort), -1) as max_sort FROM menu_items WHERE section_id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      [target.sectionId, tenantId]
+    );
+    const nextSort = (maxSortResult[0]?.max_sort ?? -1) + 1;
+
+    const newId = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+
+    await this.postgres.executeRaw(
+      `INSERT INTO menu_items (id, tenant_id, menu_id, section_id, name, description, sort, active, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
+      [
+        newId,
+        tenantId,
+        target.menuId,
+        target.sectionId,
+        source.name,
+        source.description ?? null,
+        nextSort,
+        source.active !== false,
+      ]
+    );
+
+    const prices = await this.postgres.queryRaw<any>(
+      `SELECT currency, label, amount FROM item_prices WHERE item_id = $1 AND deleted_at IS NULL`,
+      [id]
+    );
+    for (const p of prices) {
+      const priceId = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+      await this.postgres.executeRaw(
+        `INSERT INTO item_prices (id, tenant_id, item_id, currency, label, amount, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+        [priceId, tenantId, newId, p.currency, p.label ?? null, p.amount]
+      );
+    }
+
+    const iconRows = await this.postgres.queryRaw<any>(
+      `SELECT icon_id FROM item_icons WHERE item_id = $1`,
+      [id]
+    );
+    for (const row of iconRows) {
+      const itemIconId = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+      await this.postgres.executeRaw(
+        `INSERT INTO item_icons (id, item_id, icon_id, created_at) VALUES ($1, $2, $3, NOW())
+         ON CONFLICT (item_id, icon_id) DO NOTHING`,
+        [itemIconId, newId, row.icon_id]
+      );
+    }
+
+    const mediaRows = await this.postgres.queryRaw<any>(
+      `SELECT url, kind, filename, mime_type, size, width, height FROM media_assets WHERE item_id = $1 AND deleted_at IS NULL`,
+      [id]
+    );
+    for (const m of mediaRows) {
+      const mediaId = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+      await this.postgres.executeRaw(
+        `INSERT INTO media_assets (id, tenant_id, url, kind, item_id, filename, mime_type, size, width, height, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())`,
+        [
+          mediaId,
+          tenantId,
+          m.url,
+          m.kind,
+          newId,
+          m.filename,
+          m.mime_type,
+          m.size,
+          m.width ?? null,
+          m.height ?? null,
+        ]
+      );
+    }
+
+    return this.findById(newId, tenantId);
+  }
+
   // Gestión de precios
   async addPrice(tenantId: string, itemId: string, data: {
     currency: string;
