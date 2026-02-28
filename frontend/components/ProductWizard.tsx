@@ -382,15 +382,14 @@ export default function ProductWizard({
 
   // Función para obtener el límite de productos
   const getProductLimit = () => {
-    if (!tenantPlan) return 30; // Por defecto
-    
+    if (!tenantPlan) return 10;
     const limits: Record<string, number> = {
-      free: 30,
-      basic: 300,
-      premium: -1, // Ilimitado
+      free: 10,
+      basic: 50,
+      pro: 300,
+      premium: 1200,
     };
-    
-    return limits[tenantPlan] || 30;
+    return limits[tenantPlan] ?? 10;
   };
 
   // Función para verificar si se puede crear un producto

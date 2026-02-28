@@ -156,16 +156,15 @@ export default function Restaurants() {
 
   // Calcular si el usuario puede crear más restaurantes
   const getRestaurantLimit = () => {
-    if (isSuperAdmin) return -1; // SUPER_ADMIN puede crear ilimitados
-    if (!tenantPlan) return 1; // Por defecto
-    
+    if (isSuperAdmin) return -1;
+    if (!tenantPlan) return 1;
     const limits: Record<string, number> = {
       free: 1,
-      basic: 5, // Plan básico: 5 restaurantes
-      premium: -1, // Ilimitado
+      basic: 1,
+      pro: 3,
+      premium: 10,
     };
-    
-    return limits[tenantPlan] || 1;
+    return limits[tenantPlan] ?? 1;
   };
 
   const canCreateRestaurant = () => {

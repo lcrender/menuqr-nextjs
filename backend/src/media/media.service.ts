@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { MinioService } from '../common/minio/minio.service';
 
@@ -81,11 +81,26 @@ export class MediaService {
     }
   }
 
+  /** Planes que permiten subir fotos de productos: pro, premium. Free y basic no. */
+  private async assertProductPhotosAllowed(tenantId: string): Promise<void> {
+    const tenant = await this.postgres.queryRaw<any>(
+      `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [tenantId]
+    );
+    const plan = tenant[0]?.plan || 'free';
+    if (plan === 'free' || plan === 'basic') {
+      throw new ForbiddenException(
+        'La carga de fotos de productos no está incluida en tu plan. Actualiza a Pro o Premium para habilitarla.'
+      );
+    }
+  }
+
   async uploadItemPhoto(
     tenantId: string,
     itemId: string,
     file: Express.Multer.File,
   ): Promise<{ id: string; url: string }> {
+    await this.assertProductPhotosAllowed(tenantId);
     try {
       // Subir archivo a MinIO
       const { url, filename } = await this.minio.uploadFile(file, `items/${itemId}`);

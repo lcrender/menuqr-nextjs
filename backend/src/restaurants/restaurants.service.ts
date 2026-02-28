@@ -623,14 +623,14 @@ export class RestaurantsService {
 
   private getRestaurantLimit(plan: string): number {
     const limits: Record<string, number> = {
-      free: 1, // Plan gratuito: solo 1 restaurante
-      basic: 5, // Plan básico: 5 restaurantes
-      premium: -1, // Ilimitado
+      free: 1,
+      basic: 1,
+      pro: 3,
+      premium: 10,
     };
 
-    // Si el plan no está definido o es null, usar 'free' como default
     const planKey = plan || 'free';
-    return limits[planKey] || 1; // Default a 1 si el plan no está en la lista
+    return limits[planKey] ?? 1;
   }
 
   private async slugExists(slug: string, tenantId: string, excludeId?: string): Promise<boolean> {

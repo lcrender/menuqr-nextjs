@@ -784,14 +784,14 @@ export class MenuItemsService {
 
   private getMenuItemLimit(plan: string): number {
     const limits: Record<string, number> = {
-      free: 30, // Plan gratuito: 30 productos
-      basic: 300, // Plan básico: 300 productos
-      premium: -1, // Ilimitado
+      free: 10,
+      basic: 50,
+      pro: 300,
+      premium: 1200,
     };
 
-    // Si el plan no está definido o es null, usar 'free' como default
     const planKey = plan || 'free';
-    return limits[planKey] || 30; // Default a 30 si el plan no está en la lista
+    return limits[planKey] ?? 10;
   }
 }
 

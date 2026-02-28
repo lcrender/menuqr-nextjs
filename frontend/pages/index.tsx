@@ -135,92 +135,87 @@ export default function Home() {
               Empieza gratis y escala cuando lo necesites. Sin compromisos, cancela cuando quieras.
             </p>
             
-            <div className="landing-pricing-grid">
-              {/* Plan Gratis */}
+            <div className="landing-pricing-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '22px', maxWidth: '1100px', margin: '0 auto' }}>
+              {/* Plan Free */}
               <div className="landing-pricing-card">
                 <div className="landing-pricing-header">
-                  <h3 className="landing-pricing-name">Gratis</h3>
+                  <h3 className="landing-pricing-name">Free</h3>
                   <div className="landing-pricing-price">
-                    <span className="landing-pricing-amount">$0</span>
+                    <span className="landing-pricing-amount">US$ 0</span>
                     <span className="landing-pricing-period">/mes</span>
                   </div>
                   <p className="landing-pricing-description">Perfecto para empezar</p>
                 </div>
                 <ul className="landing-pricing-features">
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>1 restaurante</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>3 menús</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>Plantillas básicas</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>QR personalizado</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>1 idioma</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>Soporte por email</span>
-                  </li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>1 restaurante</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 10 productos</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas básicas</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR personalizado</span></li>
+                  <li className="landing-pricing-feature landing-pricing-muted"><span>✗</span><span>Fotos de productos</span></li>
                 </ul>
-                <button onClick={handleTryFree} className="landing-btn-secondary landing-btn-full">
-                  Empezar Gratis
-                </button>
+                <button onClick={handleTryFree} className="landing-btn-secondary landing-btn-full">Empezar con Free</button>
               </div>
 
-              {/* Plan Premium */}
+              {/* Plan Basic */}
+              <div className="landing-pricing-card">
+                <div className="landing-pricing-header">
+                  <h3 className="landing-pricing-name">Basic</h3>
+                  <div className="landing-pricing-price">
+                    <span className="landing-pricing-amount">US$ 5</span>
+                    <span className="landing-pricing-period">/mes</span>
+                  </div>
+                  <p className="landing-pricing-description">Para crecer un poco más</p>
+                </div>
+                <ul className="landing-pricing-features">
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>1 restaurante</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 50 productos</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas básicas</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR personalizado</span></li>
+                  <li className="landing-pricing-feature landing-pricing-muted"><span>✗</span><span>Fotos de productos</span></li>
+                </ul>
+                <button onClick={handleTryFree} className="landing-btn-secondary landing-btn-full">Elegir Basic</button>
+              </div>
+
+              {/* Plan Pro */}
               <div className="landing-pricing-card landing-pricing-card-featured">
                 <div className="landing-pricing-badge">Más Popular</div>
                 <div className="landing-pricing-header">
-                  <h3 className="landing-pricing-name">Premium</h3>
+                  <h3 className="landing-pricing-name">Pro</h3>
                   <div className="landing-pricing-price">
-                    <span className="landing-pricing-amount">$29</span>
+                    <span className="landing-pricing-amount">US$ 10</span>
                     <span className="landing-pricing-period">/mes</span>
                   </div>
-                  <p className="landing-pricing-description">Para restaurantes profesionales</p>
+                  <p className="landing-pricing-description">Para restaurantes en serio</p>
                 </div>
                 <ul className="landing-pricing-features">
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>Restaurantes ilimitados</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>Menús ilimitados</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>Todas las plantillas</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>QR personalizado + analytics</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>Múltiples idiomas</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>Soporte prioritario</span>
-                  </li>
-                  <li className="landing-pricing-feature">
-                    <span className="landing-pricing-check">✓</span>
-                    <span>Personalización avanzada</span>
-                  </li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>3 restaurantes</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 300 productos</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas Pro</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Fotos de productos</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR personalizado</span></li>
                 </ul>
-                <button onClick={handleTryFree} className="landing-btn-primary landing-btn-full">
-                  Probar Premium
-                </button>
+                <button onClick={handleTryFree} className="landing-btn-primary landing-btn-full">Elegir Pro</button>
+              </div>
+
+              {/* Plan Premium */}
+              <div className="landing-pricing-card">
+                <div className="landing-pricing-header">
+                  <h3 className="landing-pricing-name">Premium</h3>
+                  <div className="landing-pricing-price">
+                    <span className="landing-pricing-amount">US$ 30</span>
+                    <span className="landing-pricing-period">/mes</span>
+                  </div>
+                  <p className="landing-pricing-description">Máximo rendimiento</p>
+                </div>
+                <ul className="landing-pricing-features">
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>10 restaurantes</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 1200 productos</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas Premium</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Fotos de productos</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR personalizado</span></li>
+                  <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Soporte prioritario</span></li>
+                </ul>
+                <button onClick={handleTryFree} className="landing-btn-secondary landing-btn-full">Elegir Premium</button>
               </div>
             </div>
           </div>

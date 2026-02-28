@@ -74,16 +74,15 @@ export default function Products() {
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const getProductLimit = () => {
-    if (isSuperAdmin) return -1; // SUPER_ADMIN puede crear ilimitados
-    if (!tenantPlan) return 30; // Por defecto
-    
+    if (isSuperAdmin) return -1;
+    if (!tenantPlan) return 10;
     const limits: Record<string, number> = {
-      free: 30,
-      basic: 300, // Plan básico: 300 productos
-      premium: -1, // Ilimitado
+      free: 10,
+      basic: 50,
+      pro: 300,
+      premium: 1200,
     };
-    
-    return limits[tenantPlan] || 30;
+    return limits[tenantPlan] ?? 10;
   };
 
   const canCreateProduct = () => {

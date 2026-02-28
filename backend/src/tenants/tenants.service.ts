@@ -158,6 +158,7 @@ export class TenantsService {
         COUNT(*) FILTER (WHERE status = 'suspended' AND deleted_at IS NULL) as "suspendedTenants",
         COUNT(*) FILTER (WHERE plan = 'free' AND deleted_at IS NULL) as "freePlanTenants",
         COUNT(*) FILTER (WHERE plan = 'basic' AND deleted_at IS NULL) as "basicPlanTenants",
+        COUNT(*) FILTER (WHERE plan = 'pro' AND deleted_at IS NULL) as "proPlanTenants",
         COUNT(*) FILTER (WHERE plan = 'premium' AND deleted_at IS NULL) as "premiumPlanTenants"
       FROM tenants
     `);
