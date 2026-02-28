@@ -92,6 +92,56 @@ export class EmailService implements OnModuleInit {
     }
   }
 
+  /** Email al nuevo correo con link para confirmar el cambio de email. */
+  async sendEmailChangeVerification(
+    newEmail: string,
+    firstName: string,
+    token: string,
+  ): Promise<void> {
+    const confirmUrl = `${this.frontendUrl}/verify-email-change?token=${encodeURIComponent(token)}`;
+    const html = this.getEmailChangeVerificationTemplate(firstName, confirmUrl);
+
+    if (this.transporter) {
+      try {
+        await this.transporter.sendMail({
+          from: this.getFrom(),
+          to: newEmail,
+          subject: 'Confirma el cambio de email - MenuQR',
+          html,
+        });
+        this.logger.log(`Email de confirmación de cambio enviado a ${newEmail}`);
+      } catch (err) {
+        this.logger.error(`Error enviando email de cambio a ${newEmail}:`, err);
+        throw err;
+      }
+    } else {
+      this.logger.log(`[DEV] Email de cambio de correo para ${newEmail}`);
+      this.logger.warn(`🔗 Enlace: ${confirmUrl}`);
+    }
+  }
+
+  /** Notificación al email anterior informando que el email fue modificado. */
+  async sendEmailChangeNotification(oldEmail: string): Promise<void> {
+    const html = this.getEmailChangeNotificationTemplate();
+
+    if (this.transporter) {
+      try {
+        await this.transporter.sendMail({
+          from: this.getFrom(),
+          to: oldEmail,
+          subject: 'Tu email en MenuQR fue modificado',
+          html,
+        });
+        this.logger.log(`Notificación de cambio de email enviada a ${oldEmail}`);
+      } catch (err) {
+        this.logger.error(`Error enviando notificación de cambio a ${oldEmail}:`, err);
+        throw err;
+      }
+    } else {
+      this.logger.log(`[DEV] Notificación de cambio de email para ${oldEmail}`);
+    }
+  }
+
   private getPasswordResetEmailTemplate(firstName: string, resetUrl: string): string {
     return `
       <!DOCTYPE html>
@@ -123,6 +173,85 @@ export class EmailService implements OnModuleInit {
             <p style="word-break: break-all; color: #6366f1;">${resetUrl}</p>
             <p><strong>Este enlace expira en 1 hora.</strong></p>
             <p>Si no solicitaste este cambio, puedes ignorar este email. Tu contraseña no se modificará.</p>
+            <p>Saludos,<br>El equipo de MenuQR</p>
+          </div>
+          <div class="footer">
+            <p>&copy; ${new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private getEmailChangeVerificationTemplate(firstName: string, confirmUrl: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8fafc; padding: 30px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🍽️ MenuQR</h1>
+          </div>
+          <div class="content">
+            <h2>Hola ${firstName},</h2>
+            <p>Recibimos una solicitud para cambiar el email de tu cuenta en MenuQR a esta dirección.</p>
+            <p>Haz clic en el siguiente botón para confirmar el cambio:</p>
+            <div style="text-align: center;">
+              <a href="${confirmUrl}" class="button">Confirmar cambio de email</a>
+            </div>
+            <p>O copia y pega este enlace en tu navegador:</p>
+            <p style="word-break: break-all; color: #6366f1;">${confirmUrl}</p>
+            <p><strong>Este enlace expira en 1 hora.</strong></p>
+            <p>Si no solicitaste este cambio, puedes ignorar este email. Tu email no se modificará.</p>
+            <p>Saludos,<br>El equipo de MenuQR</p>
+          </div>
+          <div class="footer">
+            <p>&copy; ${new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private getEmailChangeNotificationTemplate(): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8fafc; padding: 30px; border-radius: 0 0 8px 8px; }
+          .alert { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 16px 0; }
+          .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🍽️ MenuQR</h1>
+          </div>
+          <div class="content">
+            <h2>Cambio de email realizado</h2>
+            <p>Te informamos que el email asociado a tu cuenta en MenuQR fue modificado correctamente.</p>
+            <div class="alert">
+              <strong>¿No realizaste este cambio?</strong> Contacta a soporte inmediatamente.
+            </div>
             <p>Saludos,<br>El equipo de MenuQR</p>
           </div>
           <div class="footer">

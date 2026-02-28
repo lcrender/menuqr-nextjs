@@ -19,6 +19,7 @@ import { QRModule } from './qr/qr.module';
 import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { TrackingModule } from './tracking/tracking.module';
+import { PaymentModule } from './payment/payment.module';
 
 // Módulos comunes
 import { DatabaseModule } from './common/database/database.module';
@@ -98,6 +99,7 @@ import { validationSchema } from './common/config/validation.schema';
     HealthModule,
     MetricsModule,
     TrackingModule,
+    PaymentModule,
   ],
   controllers: [],
   providers: [],

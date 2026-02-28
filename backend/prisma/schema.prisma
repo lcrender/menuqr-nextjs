@@ -47,21 +47,62 @@ model User {
   firstName             String?  @map("first_name")
   lastName              String?  @map("last_name")
   isActive              Boolean  @default(true) @map("is_active")
-  emailVerified         Boolean  @default(false) @map("email_verified")
-  emailVerificationToken String? @map("email_verification_token")
-  emailVerifiedAt       DateTime? @map("email_verified_at")
-  lastLoginAt           DateTime? @map("last_login_at")
-  createdAt             DateTime @default(now()) @map("created_at")
+  emailVerified           Boolean   @default(false) @map("email_verified")
+  emailVerificationToken  String?   @map("email_verification_token")
+  emailVerifiedAt          DateTime? @map("email_verified_at")
+  pendingEmail             String?   @map("pending_email")
+  emailChangeToken         String?   @map("email_change_token")
+  emailChangeExpiresAt     DateTime? @map("email_change_expires_at")
+  lastLoginAt              DateTime? @map("last_login_at")
+  revokedSessionsBefore  DateTime? @map("revoked_sessions_before")
+  registrationCountry     String?   @map("registration_country") // detectado por IP al registrarse
+  declaredCountry        String?   @map("declared_country")
+  createdAt               DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
   deletedAt             DateTime? @map("deleted_at")
 
   // Relaciones
-  tenant    Tenant?     @relation(fields: [tenantId], references: [id])
-  auditLogs AuditLog[]
+  tenant        Tenant?        @relation(fields: [tenantId], references: [id])
+  auditLogs     AuditLog[]
+  subscriptions Subscription[]
 
   // Índices y constraints
   @@unique([tenantId, email])
   @@map("users")
+}
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  userId                String             @map("user_id")
+  paymentProvider       PaymentProvider    @map("payment_provider")
+  externalSubscriptionId String            @map("external_subscription_id")
+  billingCountry        String?            @map("billing_country")
+  currency              String?
+  status                SubscriptionStatus @default(incomplete)
+  planType              PlanType           @map("plan_type")
+  subscriptionPlan      String?            @map("subscription_plan") // basic, pro, premium (para sync con tenant.plan)
+  currentPeriodStart    DateTime?          @map("current_period_start")
+  currentPeriodEnd      DateTime?          @map("current_period_end")
+  cancelAtPeriodEnd     Boolean            @default(false) @map("cancel_at_period_end")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentProvider, externalSubscriptionId])
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  provider    String   // paypal, mercadopago
+  eventId     String   @map("event_id")
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@unique([provider, eventId])
+  @@map("webhook_events")
 }
 
 model Restaurant {
@@ -310,6 +351,25 @@ enum MenuStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum PaymentProvider {
+  paypal
+  mercadopago
+  internal
+}
+
+enum SubscriptionStatus {
+  active
+  canceled
+  past_due
+  incomplete
+  expired
+}
+
+enum PlanType {
+  monthly
+  yearly
 }
 
 // ========================================

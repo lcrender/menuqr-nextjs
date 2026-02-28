@@ -15,6 +15,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UsersService } from '../users/users.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { EmailService } from '../common/email/email.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 
 // Entidades
 import { User, UserRole } from '@prisma/client';
@@ -36,6 +37,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
 
   // ========================================
@@ -121,9 +123,10 @@ export class AuthService {
   }
 
   /**
-   * Registro de nuevo usuario
+   * Registro de nuevo usuario.
+   * registrationCountry: detectado por IP al registrarse (opcional).
    */
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto, registrationCountry?: string) {
     try {
       const { email, password, firstName, lastName, tenantName } = registerDto;
 
@@ -170,6 +173,20 @@ export class AuthService {
         isActive: true,
         emailVerified: isDev,
         emailVerificationToken,
+        registrationCountry: registrationCountry ?? null,
+      });
+
+      // Crear suscripción free por defecto (plan interno, sin proveedor de pago)
+      await this.subscriptionService.create({
+        userId: user.id,
+        paymentProvider: 'internal',
+        externalSubscriptionId: `free-${user.id}`,
+        billingCountry: registrationCountry ?? null,
+        currency: 'USD',
+        status: 'active',
+        planType: 'monthly',
+        subscriptionPlan: 'free',
+        cancelAtPeriodEnd: false,
       });
 
       if (!isDev) {
@@ -279,6 +296,15 @@ export class AuthService {
         throw new UnauthorizedException('Usuario no válido');
       }
 
+      // Si se revocaron todas las sesiones, rechazar tokens emitidos antes de esa fecha
+      const revokedBefore = (user as any).revokedSessionsBefore as Date | undefined;
+      if (revokedBefore && payload.iat != null) {
+        const iatSec = typeof payload.iat === 'number' ? payload.iat : (payload.iat as Date).getTime() / 1000;
+        if (iatSec < revokedBefore.getTime() / 1000) {
+          throw new UnauthorizedException('Esta sesión fue cerrada. Inicia sesión de nuevo.');
+        }
+      }
+
       // Generar nuevos tokens
       const tokens = await this.generateTokens(user);
 
@@ -356,6 +382,95 @@ export class AuthService {
       this.logger.error('Error en reset password:', error);
       throw new BadRequestException('Token inválido o expirado');
     }
+  }
+
+  /**
+   * Cambio de contraseña para usuario autenticado (requiere contraseña actual).
+   * Opcionalmente invalida el resto de sesiones.
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+    options?: { revokeOtherSessions?: boolean },
+  ) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Usuario no válido');
+    }
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new BadRequestException('La contraseña actual no es correcta');
+    }
+    this.validatePassword(newPassword);
+    const passwordHash = await bcrypt.hash(
+      newPassword,
+      parseInt(this.configService.get('BCRYPT_ROUNDS', '12')),
+    );
+    await this.usersService.updatePassword(userId, passwordHash);
+    if (options?.revokeOtherSessions) {
+      await this.usersService.setRevokedSessionsBefore(userId);
+    }
+    this.logger.log(`Contraseña cambiada para usuario ${user.email}`);
+    return { message: 'Contraseña actualizada correctamente' };
+  }
+
+  /**
+   * Cierra todas las sesiones del usuario (invalida todos los refresh tokens).
+   */
+  async revokeAllSessions(userId: string) {
+    await this.usersService.setRevokedSessionsBefore(userId);
+    this.logger.log(`Sesiones revocadas para usuario ${userId}`);
+    return { message: 'Todas las sesiones han sido cerradas. Deberás iniciar sesión de nuevo en otros dispositivos.' };
+  }
+
+  /**
+   * Solicitud de cambio de email. Valida contraseña actual, delega en UserService y envía email al nuevo correo.
+   */
+  async changeEmailRequest(userId: string, newEmail: string, currentPassword: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Usuario no válido');
+    }
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new BadRequestException('La contraseña actual no es correcta');
+    }
+    const { token, pendingEmail } = await this.usersService.requestEmailChange(userId, newEmail);
+    await this.emailService.sendEmailChangeVerification(
+      pendingEmail,
+      user.firstName || 'Usuario',
+      token,
+    );
+    return { message: 'Se envió un email de confirmación al nuevo correo. Revisa tu bandeja de entrada.' };
+  }
+
+  /**
+   * Confirma el cambio de email con el token del link. Delega en UserService y notifica al email anterior.
+   */
+  async confirmEmailChange(token: string) {
+    const { oldEmail, newEmail } = await this.usersService.confirmEmailChange(token);
+    await this.emailService.sendEmailChangeNotification(oldEmail);
+    return { message: 'Email actualizado correctamente. Ya puedes iniciar sesión con tu nuevo correo.' };
+  }
+
+  /**
+   * Lista sesiones activas (stub: actualmente solo podemos representar la sesión actual).
+   * Escalable: en el futuro se puede almacenar cada refresh token con device/lastActive.
+   */
+  async getActiveSessions(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.isActive) {
+      return [];
+    }
+    return [
+      {
+        id: 'current',
+        device: 'Este dispositivo',
+        lastActive: new Date().toISOString(),
+        current: true,
+      },
+    ];
   }
 
   /**

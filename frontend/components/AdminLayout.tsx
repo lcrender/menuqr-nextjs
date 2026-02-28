@@ -141,6 +141,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </li>
 
               <li className="admin-nav-item">
+                <Link 
+                  href="/admin/profile" 
+                  className={`admin-nav-link ${currentPath.startsWith('/admin/profile') ? 'active' : ''}`}
+                >
+                  Mi perfil
+                </Link>
+              </li>
+
+              <li className="admin-nav-item">
                 <div>
                   <button
                     className={`admin-nav-link w-100 text-start d-flex justify-content-between align-items-center ${isHelpSection ? 'active' : ''}`}

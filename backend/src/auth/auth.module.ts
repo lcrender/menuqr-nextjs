@@ -19,6 +19,8 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { TenantsModule } from '../tenants/tenants.module';
 import { EmailModule } from '../common/email/email.module';
+import { GeoModule } from '../geo/geo.module';
+import { SubscriptionModule } from '../subscription/subscription.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { EmailModule } from '../common/email/email.module';
     UsersModule,
     TenantsModule,
     EmailModule,
+    GeoModule,
+    SubscriptionModule,
     PassportModule,
     
     // ========================================

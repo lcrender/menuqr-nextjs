@@ -1,5 +1,6 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import * as helmet from 'helmet';
@@ -17,8 +18,9 @@ async function bootstrap() {
   try {
     logger.log('🚀 Iniciando MenuQR Backend...');
     
-    const app = await NestFactory.create(AppModule, {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: new WinstonLogger(),
+      rawBody: true, // necesario para verificar firma de webhooks (PayPal, etc.)
     });
 
     const configService = app.get(ConfigService);
@@ -195,9 +197,10 @@ async function bootstrap() {
     // ========================================
     // CONFIGURACIÓN DE PUERTO
     // ========================================
-    
+    // En Docker el servidor debe escuchar en 0.0.0.0 para ser accesible desde el host.
     const port = configService.get('PORT', 3001);
-    await app.listen(port);
+    const host = configService.get('HOST', '0.0.0.0');
+    await app.listen(port, host);
 
     logger.log(`✅ MenuQR Backend iniciado en puerto ${port}`);
     logger.log(`🌐 URL: http://localhost:${port}`);

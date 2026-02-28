@@ -1999,3 +1999,13 @@ body {
   color: rgba(255, 255, 255, 0.9) !important;
 }
 
+/* Perfil: secciones claras y espaciado SaaS */
+.profile-section {
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px var(--admin-shadow);
+}
+.profile-section .card-header {
+  border-radius: 12px 12px 0 0;
+}
+
