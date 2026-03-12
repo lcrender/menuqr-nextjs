@@ -16,7 +16,6 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -55,7 +54,6 @@ export default function Login() {
           email,
           password,
           firstName,
-          lastName,
         });
 
         // Si el registro requiere verificación de email
@@ -198,21 +196,6 @@ export default function Login() {
                         />
                       </div>
 
-                      <div className="landing-auth-field">
-                        <label htmlFor="lastName" className="landing-auth-label">
-                          Apellido
-                        </label>
-                        <input
-                          type="text"
-                          className="landing-auth-input"
-                          id="lastName"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          required
-                          disabled={loading}
-                          placeholder="Tu apellido"
-                        />
-                      </div>
                     </>
                   )}
 
@@ -311,6 +294,9 @@ export default function Login() {
                 <Link href="/" className="landing-footer-link">Inicio</Link>
                 <Link href="/admin/help/documentation" className="landing-footer-link">Documentación</Link>
                 <Link href="/admin/help/support" className="landing-footer-link">Soporte</Link>
+                <Link href="/legal/terminos-y-condiciones" className="landing-footer-link">Términos y Condiciones</Link>
+                <Link href="/legal/politica-de-privacidad" className="landing-footer-link">Política de Privacidad</Link>
+                <Link href="/legal/politica-de-cookies" className="landing-footer-link">Política de Cookies</Link>
               </div>
             </div>
             <div className="landing-footer-copyright">

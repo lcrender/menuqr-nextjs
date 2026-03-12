@@ -50,7 +50,9 @@ export default function PricingPlansGrid({ variant = 'landing', onSelectPlan, lo
         </div>
         <ul className="landing-pricing-features">
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>1 restaurante</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 10 productos</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 3 menús</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Secciones ilimitadas por menú</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 30 productos</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas básicas</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR personalizado</span></li>
           <li className="landing-pricing-feature landing-pricing-muted"><span>✗</span><span>Fotos de productos</span></li>
@@ -65,14 +67,16 @@ export default function PricingPlansGrid({ variant = 'landing', onSelectPlan, lo
         <div className="landing-pricing-header">
           <h3 className="landing-pricing-name">Basic</h3>
           <div className="landing-pricing-price">
-            <span className="landing-pricing-amount">US$ 5</span>
+            <span className="landing-pricing-amount">US$ 1.90</span>
             <span className="landing-pricing-period">/mes</span>
           </div>
           <p className="landing-pricing-description">Para crecer un poco más</p>
         </div>
         <ul className="landing-pricing-features">
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>1 restaurante</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 50 productos</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 6 menús</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Secciones ilimitadas por menú</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 60 productos</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas básicas</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR personalizado</span></li>
           <li className="landing-pricing-feature landing-pricing-muted"><span>✗</span><span>Fotos de productos</span></li>
@@ -88,45 +92,25 @@ export default function PricingPlansGrid({ variant = 'landing', onSelectPlan, lo
         <div className="landing-pricing-header">
           <h3 className="landing-pricing-name">Pro</h3>
           <div className="landing-pricing-price">
-            <span className="landing-pricing-amount">US$ 10</span>
+            <span className="landing-pricing-amount">US$ 9</span>
             <span className="landing-pricing-period">/mes</span>
           </div>
           <p className="landing-pricing-description">Para restaurantes en serio</p>
         </div>
         <ul className="landing-pricing-features">
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>3 restaurantes</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 30 menús</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Secciones ilimitadas por menú</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 300 productos</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas Pro</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Fotos de productos</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR personalizado</span></li>
         </ul>
         <button type="button" onClick={() => handleCta('pro')} className="landing-btn-primary landing-btn-full" disabled={loadingPlan !== null}>
           {isSubscription && loadingPlan === 'pro' ? '…' : 'Elegir Pro'}
         </button>
       </div>
 
-      {/* Plan Premium */}
-      <div className="landing-pricing-card">
-        <div className="landing-pricing-header">
-          <h3 className="landing-pricing-name">Premium</h3>
-          <div className="landing-pricing-price">
-            <span className="landing-pricing-amount">US$ 30</span>
-            <span className="landing-pricing-period">/mes</span>
-          </div>
-          <p className="landing-pricing-description">Máximo rendimiento</p>
-        </div>
-        <ul className="landing-pricing-features">
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>10 restaurantes</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Hasta 1200 productos</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas Premium</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Fotos de productos</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR personalizado</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Soporte prioritario</span></li>
-        </ul>
-        <button type="button" onClick={() => handleCta('premium')} className="landing-btn-secondary landing-btn-full" disabled={loadingPlan !== null}>
-          {isSubscription && loadingPlan === 'premium' ? '…' : 'Elegir Premium'}
-        </button>
-      </div>
+      {/* Plan Premium oculto temporalmente */}
     </div>
   );
 }

@@ -142,8 +142,8 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                 src={restaurant.logoUrl} 
                 alt={restaurant.name}
                 style={{ 
-                  width: '140px', 
-                  height: '140px', 
+                  width: '280px', 
+                  height: '280px', 
                   objectFit: 'cover',
                   borderRadius: '50%',
                   boxShadow: '0 4px 16px rgba(0,0,0,0.15)',

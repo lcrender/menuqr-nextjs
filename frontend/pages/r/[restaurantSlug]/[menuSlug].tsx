@@ -35,6 +35,9 @@ const formatPrice = (price: ItemPrice) => {
     // Para ARS, mostrar sin centavos con símbolo $
     return `$ ${Math.round(price.amount).toLocaleString('es-AR')}`;
   }
+  if (price.currency === 'EUR') {
+    return `€ ${price.amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
   // Para otras monedas, mostrar con 2 decimales
   return `${price.currency} ${price.amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
@@ -85,6 +88,7 @@ interface Restaurant {
   template?: string;
   primaryColor?: string;
   secondaryColor?: string;
+  templateConfig?: Record<string, unknown>;
 }
 
 interface Menu {

@@ -130,6 +130,9 @@ export default function VerifyEmailChange() {
                 <Link href="/" className="landing-footer-link">Inicio</Link>
                 <Link href="/admin/help/documentation" className="landing-footer-link">Documentación</Link>
                 <Link href="/admin/help/support" className="landing-footer-link">Soporte</Link>
+                <Link href="/legal/terminos-y-condiciones" className="landing-footer-link">Términos y Condiciones</Link>
+                <Link href="/legal/politica-de-privacidad" className="landing-footer-link">Política de Privacidad</Link>
+                <Link href="/legal/politica-de-cookies" className="landing-footer-link">Política de Cookies</Link>
               </div>
             </div>
             <div className="landing-footer-copyright">

@@ -16,6 +16,7 @@ interface FoodieTemplateProps {
     country?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    templateConfig?: Record<string, unknown>;
   };
   menuList: Array<{ id: string; name: string; slug: string; description?: string }>;
   selectedMenu: {
@@ -53,6 +54,11 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
 }) => {
   const primaryColor = restaurant.primaryColor || '#2c3e50';
   const secondaryColor = restaurant.secondaryColor || '#34495e';
+  const tc = restaurant.templateConfig || {};
+  const showCover = tc.showCoverImage !== false;
+  const showLogo = tc.showLogo !== false;
+  const showName = tc.showRestaurantName !== false;
+  const showDescription = tc.showRestaurantDescription !== false;
 
   return (
     <div className="template-foodie restaurant-container" style={{ minHeight: '100vh', width: '100%', background: '#f8f9fa' }}>
@@ -100,7 +106,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
       `}</style>
 
       {/* Cover Image */}
-      {restaurant.coverUrl && (
+      {showCover && restaurant.coverUrl && (
         <div style={{ width: '100%', height: '400px', overflow: 'hidden', position: 'relative' }}>
           <img 
             src={restaurant.coverUrl} 
@@ -113,14 +119,14 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
       {/* Restaurant Info - Simple and Compact */}
       <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '40px 40px 60px 40px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '30px', flexWrap: 'wrap' }}>
-          {restaurant.logoUrl && (
+          {showLogo && restaurant.logoUrl && (
             <div style={{ flexShrink: 0 }}>
               <img 
                 src={restaurant.logoUrl} 
                 alt={restaurant.name}
                 style={{ 
-                  width: '100px', 
-                  height: '100px', 
+                  width: '200px', 
+                  height: '200px', 
                   objectFit: 'cover',
                   borderRadius: '8px',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
@@ -129,17 +135,19 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
             </div>
           )}
           <div style={{ flex: 1, minWidth: '250px' }}>
-            <h1 style={{ 
-              fontSize: '2.5rem', 
-              fontWeight: '600', 
-              marginBottom: '12px', 
-              letterSpacing: '-0.02em',
-              color: '#2c3e50',
-              lineHeight: '1.2'
-            }}>
-              {restaurant.name}
-            </h1>
-            {restaurant.description && (
+            {showName && (
+              <h1 style={{ 
+                fontSize: '2.5rem', 
+                fontWeight: '600', 
+                marginBottom: '12px', 
+                letterSpacing: '-0.02em',
+                color: '#2c3e50',
+                lineHeight: '1.2'
+              }}>
+                {restaurant.name}
+              </h1>
+            )}
+            {showDescription && restaurant.description && (
               <div 
                 dangerouslySetInnerHTML={{ 
                   __html: restaurant.description
@@ -356,7 +364,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
         <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
           <div className="row">
             <div className="col-md-6">
-              <h4 style={{ marginBottom: '24px', fontWeight: '600' }}>{restaurant.name}</h4>
+              {showName && <h4 style={{ marginBottom: '24px', fontWeight: '600' }}>{restaurant.name}</h4>}
               {restaurant.address && (
                 <p style={{ marginBottom: '12px', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>📍 Dirección:</strong> {restaurant.address}

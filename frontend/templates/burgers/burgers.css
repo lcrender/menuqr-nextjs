@@ -11,6 +11,9 @@
       rgba(231, 76, 60, 0.02) 20px
     );
   color: #2c3e50;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .template-burgers .menu-section-title {
@@ -22,6 +25,9 @@
   border-bottom: 4px solid var(--primary-color, #e74c3c);
   text-transform: uppercase;
   letter-spacing: 2px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .template-burgers .menu-item-card {
@@ -119,10 +125,18 @@
   transform: translateY(-2px);
 }
 
+.template-burgers .burgers-logo-wrapper {
+  background: #fafafa;
+}
+
 .template-burgers .section-nav-link {
   border-radius: 50px;
   transition: all 0.3s ease;
   border-width: 3px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  text-align: center;
 }
 
 .template-burgers .section-nav-link:hover {
@@ -141,10 +155,33 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .template-burgers .menu-section-title {
-    font-size: 1.75rem;
+  .template-burgers .burgers-cover {
+    border: none !important;
+    border-radius: 0 !important;
   }
-  
+
+  .template-burgers .burgers-header-row {
+    justify-content: center;
+  }
+
+  .template-burgers .burgers-logo-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .template-burgers .burgers-logo-wrapper img {
+    width: 100% !important;
+    max-width: 100%;
+    height: auto !important;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  .template-burgers .menu-section-title {
+    font-size: 1.8rem;
+  }
+
   .template-burgers .menu-item-name {
     font-size: 1.25rem;
   }

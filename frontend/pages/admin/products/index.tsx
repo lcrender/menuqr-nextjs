@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
@@ -75,14 +76,14 @@ export default function Products() {
 
   const getProductLimit = () => {
     if (isSuperAdmin) return -1;
-    if (!tenantPlan) return 10;
+    if (!tenantPlan) return 30;
     const limits: Record<string, number> = {
-      free: 10,
-      basic: 50,
+      free: 30,
+      basic: 60,
       pro: 300,
       premium: 1200,
     };
-    return limits[tenantPlan] ?? 10;
+    return limits[tenantPlan] ?? 30;
   };
 
   const canCreateProduct = () => {
@@ -610,9 +611,27 @@ export default function Products() {
                     )}
                   </td>
                   <td>
-                    <span className={`badge ${product.active ? 'bg-success' : 'bg-secondary'}`}>
-                      {product.active ? 'Activo' : 'Inactivo'}
-                    </span>
+                    <div className="d-flex align-items-center" style={{ gap: '8px' }}>
+                      <span className={`badge ${product.active ? 'bg-success' : 'bg-secondary'}`}>
+                        {product.active ? 'Activo' : 'Inactivo'}
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={async () => {
+                          try {
+                            await api.put(`/menu-items/${product.id}`, {
+                              active: !product.active,
+                            });
+                            loadData();
+                          } catch (error: any) {
+                            alert(error.response?.data?.message || 'Error al cambiar el estado del producto');
+                          }
+                        }}
+                      >
+                        {product.active ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </div>
                   </td>
                   <td>
                     <button className="btn btn-sm btn-primary me-1" onClick={() => handleEdit(product)}>
@@ -881,23 +900,61 @@ export default function Products() {
                 <p style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
                   Actualmente tienes <strong>{total || products.length}</strong> producto(s) creado(s).
                 </p>
-                <div className="alert alert-warning mb-0" style={{ 
-                  backgroundColor: '#fff3cd', 
-                  border: '1px solid #ffc107',
-                  borderRadius: '4px',
-                  padding: '12px'
-                }}>
-                  <strong>Para crear más productos:</strong><br />
-                  Por favor, amplía tu suscripción para aumentar el límite de productos disponibles.
+                <div
+                  style={{
+                    marginTop: '4px',
+                    padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%)',
+                    border: '1px solid rgba(250, 204, 21, 0.7)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '999px',
+                      backgroundColor: '#ffe58f',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                    }}
+                  >
+                    🛒
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#854d0e', marginBottom: 2 }}>
+                      Para crear más productos
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
+                      Amplía tu suscripción para aumentar el límite de productos disponibles.
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
+              <div
+                className="modal-footer modal-limit-footer"
+                style={{ borderTop: '1px solid #dee2e6' }}
+              >
+                <Link 
+                  href="/admin/profile/subscription" 
+                  className="admin-btn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Ver planes y suscripción
+                </Link>
                 <button 
                   type="button" 
-                  className="btn btn-primary" 
+                  className="admin-btn admin-btn-secondary" 
                   onClick={() => setShowLimitModal(false)}
                 >
-                  Entendido
+                  Por el momento no me interesa
                 </button>
               </div>
             </div>

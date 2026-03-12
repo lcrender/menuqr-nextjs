@@ -33,12 +33,13 @@ export class RegisterDto {
   @ApiProperty({
     description: 'Apellido del usuario',
     example: 'Pérez',
+    required: false,
   })
+  @IsOptional()
   @IsString({ message: 'El apellido debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El apellido es requerido' })
   @MinLength(2, { message: 'El apellido debe tener al menos 2 caracteres' })
   @MaxLength(50, { message: 'El apellido no puede exceder 50 caracteres' })
-  lastName: string;
+  lastName?: string;
 
   @ApiProperty({
     description: 'Nombre del tenant/empresa (opcional)',

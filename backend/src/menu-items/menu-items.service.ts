@@ -784,14 +784,14 @@ export class MenuItemsService {
 
   private getMenuItemLimit(plan: string): number {
     const limits: Record<string, number> = {
-      free: 10,
-      basic: 50,
+      free: 30,
+      basic: 60,
       pro: 300,
       premium: 1200,
     };
 
     const planKey = plan || 'free';
-    return limits[planKey] ?? 10;
+    return limits[planKey] ?? 30;
   }
 }
 

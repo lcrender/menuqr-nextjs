@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import QRCode from 'react-qr-code';
 import api from '../../lib/axios';
 import AdminLayout from '../../components/AdminLayout';
+import PlanBadge from '../../components/profile/PlanBadge';
 
 export type MenuSummary = {
   id: string;
@@ -20,6 +21,12 @@ export type RestaurantConfigState = {
   restaurantIsActive?: boolean;
   restaurantSlug?: string | null;
   restaurantName?: string | null;
+  restaurantAddress?: string | null;
+  restaurantLogoUrl?: string | null;
+  restaurantTemplate?: string | null;
+  restaurantEmail?: string | null;
+  restaurantPhone?: string | null;
+  restaurantWebsite?: string | null;
   menusSummary?: MenuSummary[];
 };
 
@@ -123,30 +130,19 @@ export default function Admin() {
           router.replace('/admin/restaurants?wizard=true');
         }
       } else {
-        // Para admin, obtener estadísticas de su tenant
+        // Para admin: un solo endpoint con conteos y límites del plan
         try {
-          const [restaurantsRes, menusRes] = await Promise.all([
-            api.get('/restaurants'),
-            api.get('/menus'),
-          ]);
-
-          const restaurants = Array.isArray(restaurantsRes.data?.data)
-            ? restaurantsRes.data.data
-            : Array.isArray(restaurantsRes.data)
-              ? restaurantsRes.data
-              : [];
-          const menus = Array.isArray(menusRes.data?.data)
-            ? menusRes.data.data
-            : Array.isArray(menusRes.data)
-              ? menusRes.data
-              : [];
-
+          const dashboardRes = await api.get('/restaurants/dashboard-stats');
+          const d = dashboardRes.data;
           setStats({
-            totalRestaurants: restaurants.length,
-            totalMenus: menus.length,
+            totalRestaurants: d.totalRestaurants ?? 0,
+            totalMenus: d.totalMenus ?? 0,
+            totalProducts: d.totalProducts ?? 0,
+            restaurantLimit: d.restaurantLimit ?? 1,
+            productLimit: d.productLimit ?? 30,
           });
         } catch (innerError) {
-          console.error('Error cargando estadísticas (restaurants/menus):', innerError);
+          console.error('Error cargando estadísticas (dashboard-stats):', innerError);
           router.replace('/admin/restaurants?wizard=true');
         }
       }
@@ -316,88 +312,93 @@ export default function Admin() {
 
       {!showOnboarding && (
         <>
-          {user?.role === 'ADMIN' && configState?.isComplete && configState.restaurantSlug && (
-            <div className="row g-4 mb-4">
-              <div className="col-md-6">
-                <div className="admin-card h-100">
-                  <h5 className="admin-card-title mb-3">{configState.restaurantName || 'Tu restaurante'}</h5>
-                  <div style={{ padding: '32px', backgroundColor: '#fff', borderRadius: '8px', display: 'inline-block', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                    <QRCode
-                      id="dashboard-restaurant-qr-svg"
-                      value={typeof window !== 'undefined' ? `${window.location.origin}/r/${configState.restaurantSlug}` : ''}
-                      size={220}
-                      level="M"
-                    />
-                  </div>
-                  <div className="mt-3 d-flex flex-wrap gap-2">
-                    <a
-                      href={configState.restaurantSlug ? `${typeof window !== 'undefined' ? window.location.origin : ''}/r/${configState.restaurantSlug}` : '#'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="admin-btn"
-                      style={{ textDecoration: 'none' }}
-                    >
-                      Ver restaurante
-                    </a>
-                    <button type="button" className="admin-btn" onClick={handleDownloadDashboardQR}>
-                      Descargar QR
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-6">
-                <div className="admin-card h-100" style={{ fontSize: '1.1rem' }}>
-                  <h5 className="admin-card-title" style={{ fontSize: '1.25rem' }}>Configuración del restaurante</h5>
-                  <div className="mb-3">
-                    <div className="d-flex justify-content-between align-items-center mb-1" style={{ fontSize: '1rem' }}>
-                      <span className="text-muted">Progreso</span>
-                      <span className="fw-bold">{configState.progressPercentage}%</span>
-                    </div>
-                    <div className="progress" style={{ height: '8px' }}>
-                      <div
-                        className="progress-bar"
-                        role="progressbar"
-                        style={{ width: `${configState.progressPercentage}%` }}
-                        aria-valuenow={configState.progressPercentage}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                      />
-                    </div>
-                  </div>
-                  <ul className="list-unstyled mb-0" style={{ fontSize: '1.1rem' }}>
-                    <li>{configState.hasRestaurant ? '✓' : '○'} Restaurante creado</li>
-                    <li>{configState.hasMenu ? '✓' : '○'} Menú en el restaurante</li>
-                    <li>{configState.hasProductLinkedToMenu ? '✓' : '○'} Producto vinculado a un menú</li>
-                  </ul>
-                  <p className="small text-success mb-0 mt-2">Configuración completa</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="admin-card">
+          {/* 1. Arriba de todo: mensaje de bienvenida */}
+          <div className="admin-card mb-4">
             <h5 className="admin-card-title">Bienvenido, {user?.firstName || user?.email}</h5>
             <p className="admin-card-body">
               Rol: <span className="badge bg-primary">{user?.role}</span>
             </p>
           </div>
 
+          {/* 2. Cards Restaurantes, Menús, Productos */}
           {stats && (
             <div className="row g-4 mb-4">
-              {stats.totalRestaurants !== undefined && (
+              {user?.role === 'ADMIN' && stats.totalRestaurants !== undefined && stats.restaurantLimit !== undefined && (
                 <div className="col-md-3 col-sm-6">
-                  <div className="admin-stat-card">
+                  <div className="admin-stat-card h-100 d-flex flex-column">
                     <p className="admin-stat-title">Restaurantes</p>
-                    <h2 className="admin-stat-value">{stats.totalRestaurants}</h2>
+                    <h2 className="admin-stat-value">
+                      {stats.totalRestaurants}/{stats.restaurantLimit}
+                    </h2>
+                    <p className="small text-muted mb-0 mt-1">creados / disponibles</p>
+                    <div className="mt-auto pt-3">
+                      <a href="/admin/restaurants" className="admin-btn" style={{ textDecoration: 'none' }}>Gestionar Restaurantes</a>
+                    </div>
                   </div>
                 </div>
               )}
-              
+              {user?.role === 'SUPER_ADMIN' && stats.totalRestaurants !== undefined && (
+                <div className="col-md-3 col-sm-6">
+                  <div className="admin-stat-card h-100 d-flex flex-column">
+                    <p className="admin-stat-title">Restaurantes</p>
+                    <h2 className="admin-stat-value">{stats.totalRestaurants}</h2>
+                    <div className="mt-auto pt-3">
+                      <a href="/admin/restaurants" className="admin-btn" style={{ textDecoration: 'none' }}>Gestionar Restaurantes</a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {stats.totalMenus !== undefined && (
                 <div className="col-md-3 col-sm-6">
-                  <div className="admin-stat-card">
+                  <div className="admin-stat-card h-100 d-flex flex-column">
                     <p className="admin-stat-title">Menús</p>
                     <h2 className="admin-stat-value">{stats.totalMenus}</h2>
+                    <div className="mt-auto pt-3">
+                      <a href="/admin/menus" className="admin-btn" style={{ textDecoration: 'none' }}>Gestionar Menús</a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {user?.role === 'ADMIN' && stats.totalProducts !== undefined && stats.productLimit !== undefined && (
+                <div className="col-md-3 col-sm-6">
+                  <div className="admin-stat-card h-100 d-flex flex-column">
+                    <p className="admin-stat-title">Productos</p>
+                    <h2 className="admin-stat-value">
+                      {stats.totalProducts}/{stats.productLimit}
+                    </h2>
+                    <p className="small text-muted mb-0 mt-1">creados / disponibles</p>
+                    <div className="mt-auto pt-3">
+                      <a href="/admin/products" className="admin-btn" style={{ textDecoration: 'none' }}>Gestionar Productos</a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {user?.role === 'ADMIN' && (
+                <div className="col-md-3 col-sm-6">
+                  <div
+                    className="admin-stat-card h-100 d-flex flex-column justify-content-center"
+                    style={{
+                      background: 'linear-gradient(135deg, #e8f4fd 0%, #d4ebfa 100%)',
+                      border: '2px solid var(--bs-primary, #0d6efd)',
+                      boxShadow: '0 4px 12px rgba(13, 110, 253, 0.2)',
+                    }}
+                  >
+                    <p className="admin-stat-title mb-2" style={{ fontSize: '1rem' }}>
+                      ¿Necesitás crear más productos?
+                    </p>
+                    <p className="small text-muted mb-3" style={{ lineHeight: 1.4 }}>
+                      Probá por 30 días cualquiera de nuestros planes.
+                    </p>
+                    <a
+                      href="/admin/profile/subscription"
+                      className="btn btn-primary btn-sm align-self-start"
+                      style={{ textDecoration: 'none', fontWeight: 600 }}
+                    >
+                      Gestionar suscripción
+                    </a>
                   </div>
                 </div>
               )}
@@ -405,13 +406,13 @@ export default function Admin() {
               {user?.role === 'SUPER_ADMIN' && stats.totalTenants !== undefined && (
                 <>
                   <div className="col-md-3 col-sm-6">
-                    <div className="admin-stat-card">
+                    <div className="admin-stat-card h-100">
                       <p className="admin-stat-title">Tenants</p>
                       <h2 className="admin-stat-value">{stats.totalTenants}</h2>
                     </div>
                   </div>
                   <div className="col-md-3 col-sm-6">
-                    <div className="admin-stat-card">
+                    <div className="admin-stat-card h-100">
                       <p className="admin-stat-title">Usuarios</p>
                       <h2 className="admin-stat-value">{stats.totalUsers}</h2>
                     </div>
@@ -421,14 +422,109 @@ export default function Admin() {
             </div>
           )}
 
-          <div className="admin-card">
-            <h5 className="admin-card-title">Accesos Rápidos</h5>
-            <div className="admin-quick-links">
-              <a href="/admin/restaurants" className="admin-btn">Gestionar Restaurantes</a>
-              <a href="/admin/menus" className="admin-btn">Gestionar Menús</a>
-              <a href="/admin/products" className="admin-btn">Gestionar Productos</a>
+          {/* 3. Abajo: módulo QR del restaurante (solo cuando configuración 100%) */}
+          {user?.role === 'ADMIN' && configState?.isComplete && configState.restaurantSlug && (
+            <div className="admin-card">
+              <div className="row g-3 align-items-center">
+                <div className="col-12 col-md-6 d-flex align-items-center">
+                  <div className="d-flex align-items-start gap-3 w-100">
+                    {configState.restaurantLogoUrl && (
+                      <img
+                        src={configState.restaurantLogoUrl}
+                        alt=""
+                        style={{ width: 211, height: 211, objectFit: 'contain', borderRadius: '10px', flexShrink: 0 }}
+                      />
+                    )}
+                    <div className="flex-grow-1 min-w-0">
+                      <h5 className="admin-card-title mb-1" style={{ fontSize: '1.62rem', textTransform: 'uppercase', letterSpacing: '0.02em', paddingTop: '1.25rem' }}>
+                        {configState.restaurantName || 'Tu restaurante'}
+                      </h5>
+                      {configState.restaurantAddress && (
+                        <p className="text-muted mb-1" style={{ fontSize: '1.05rem' }}>{configState.restaurantAddress}</p>
+                      )}
+                      <div className="text-muted" style={{ textDecoration: 'none', fontSize: '1.05rem' }}>
+                        {configState.restaurantEmail && (
+                          <p className="mb-0"><span className="text-dark">Email:</span>{' '}
+                            <a href={`mailto:${configState.restaurantEmail}`} className="text-muted" style={{ textDecoration: 'none' }}>{configState.restaurantEmail}</a>
+                          </p>
+                        )}
+                        {configState.restaurantPhone && (() => {
+                          const raw = configState.restaurantPhone;
+                          const hasWhatsAppPart = raw.includes('| WhatsApp:');
+                          const displayPhone = raw.split('|')[0].trim();
+                          const whatsappMatch = raw.match(/\|\s*WhatsApp:\s*(.+)/);
+                          const whatsappDisplay = whatsappMatch ? whatsappMatch[1].trim() : displayPhone;
+                          const whatsappDigits = (whatsappMatch ? whatsappMatch[1] : raw).replace(/\D/g, '');
+                          if (hasWhatsAppPart && whatsappDigits) {
+                            return (
+                              <>
+                                <p className="mb-0"><span className="text-dark">Teléfono:</span>{' '}{displayPhone}</p>
+                                <p className="mb-0"><span className="text-dark">WhatsApp:</span>{' '}
+                                  <a href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{whatsappDisplay}</a>
+                                </p>
+                              </>
+                            );
+                          }
+                          return (
+                            <p className="mb-0"><span className="text-dark">Teléfono / WhatsApp:</span>{' '}
+                              <a href={`https://wa.me/${raw.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{displayPhone}</a>
+                            </p>
+                          );
+                        })()}
+                        {configState.restaurantWebsite && (
+                          <p className="mb-0"><span className="text-dark">Web:</span>{' '}
+                            <a href={configState.restaurantWebsite.startsWith('http') ? configState.restaurantWebsite : `https://${configState.restaurantWebsite}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{configState.restaurantWebsite}</a>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-12 col-md-6 d-flex align-items-center">
+                  <div className="row g-3 align-items-center w-100">
+                    <div className="col-12 col-md-6 d-flex flex-column gap-3 align-items-center">
+                      <button type="button" className="admin-btn" onClick={handleDownloadDashboardQR}>
+                        Descargar QR
+                      </button>
+                      <a
+                        href={configState.restaurantSlug ? `${typeof window !== 'undefined' ? window.location.origin : ''}/r/${configState.restaurantSlug}` : '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="admin-btn"
+                        style={{ textDecoration: 'none' }}
+                      >
+                        Ver restaurante
+                      </a>
+                    </div>
+                    <div className="col-12 col-md-6 d-flex justify-content-center justify-content-md-center">
+                      <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', display: 'inline-block', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                        <QRCode
+                          id="dashboard-restaurant-qr-svg"
+                          value={typeof window !== 'undefined' ? `${window.location.origin}/r/${configState.restaurantSlug}` : ''}
+                          size={220}
+                          level="M"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="border-top pt-3 mt-3 text-start d-flex flex-wrap align-items-center gap-3">
+                <span>
+                  <span className="small text-muted">Suscripción: </span>
+                  <PlanBadge plan={user?.tenant?.plan} />
+                </span>
+                {configState.restaurantTemplate && (
+                  <span>
+                    <span className="small text-muted">Plantilla: </span>
+                    <span className="small">
+                      {configState.restaurantTemplate === 'italianFood' ? 'Italian Food' : configState.restaurantTemplate === 'classic' ? 'Classic' : configState.restaurantTemplate === 'minimalist' ? 'Minimalist' : configState.restaurantTemplate === 'foodie' ? 'Foodie' : configState.restaurantTemplate === 'burgers' ? 'Burgers' : configState.restaurantTemplate}
+                    </span>
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </AdminLayout>

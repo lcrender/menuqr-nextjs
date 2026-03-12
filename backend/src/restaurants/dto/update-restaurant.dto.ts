@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, IsUrl, IsBoolean, ValidateIf, IsIn, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsUrl, IsBoolean, ValidateIf, IsIn, IsArray, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateRestaurantDto {
@@ -120,5 +120,13 @@ export class UpdateRestaurantDto {
   @IsString()
   @IsOptional()
   secondaryColor?: string;
+
+  @ApiProperty({ 
+    description: 'Opciones de configuración de la plantilla (según la plantilla asignada)', 
+    required: false 
+  })
+  @IsObject()
+  @IsOptional()
+  templateConfig?: Record<string, unknown>;
 }
 

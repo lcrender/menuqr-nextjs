@@ -152,6 +152,12 @@ export class RestaurantsService {
     restaurantIsActive?: boolean;
     restaurantSlug?: string | null;
     restaurantName?: string | null;
+    restaurantAddress?: string | null;
+    restaurantLogoUrl?: string | null;
+    restaurantTemplate?: string | null;
+    restaurantEmail?: string | null;
+    restaurantPhone?: string | null;
+    restaurantWebsite?: string | null;
     menusSummary?: { id: string; name: string; status: string; productCount: number }[];
   }> {
     const empty = {
@@ -212,13 +218,19 @@ export class RestaurantsService {
     if (hasRestaurant && hasMenu) progressPercentage = 66;
     if (hasRestaurant && hasMenu && hasProductLinkedToMenu) progressPercentage = 100;
 
-    const restaurantRow = await this.postgres.queryRaw<{ is_active: boolean; slug: string | null; name: string | null }>(
-      `SELECT is_active, slug, name FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+    const restaurantRow = await this.postgres.queryRaw<{ is_active: boolean; slug: string | null; name: string | null; address: string | null; logo_url: string | null; template: string | null; email: string | null; phone: string | null; website: string | null }>(
+      `SELECT is_active, slug, name, address, logo_url, template, email, phone, website FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
       [effectiveRestaurantId]
     );
     const restaurantIsActive = restaurantRow[0]?.is_active ?? true;
     const restaurantSlug = restaurantRow[0]?.slug ?? null;
     const restaurantName = restaurantRow[0]?.name ?? null;
+    const restaurantAddress = restaurantRow[0]?.address ?? null;
+    const restaurantLogoUrl = restaurantRow[0]?.logo_url ?? null;
+    const restaurantTemplate = restaurantRow[0]?.template ?? null;
+    const restaurantEmail = restaurantRow[0]?.email ?? null;
+    const restaurantPhone = restaurantRow[0]?.phone ?? null;
+    const restaurantWebsite = restaurantRow[0]?.website ?? null;
 
     const menusSummaryRows = await this.postgres.queryRaw<any>(
       `SELECT m.id, m.name, m.status, COUNT(mi.id)::text as product_count
@@ -245,6 +257,12 @@ export class RestaurantsService {
       restaurantIsActive,
       restaurantSlug,
       restaurantName,
+      restaurantAddress,
+      restaurantLogoUrl,
+      restaurantTemplate,
+      restaurantEmail,
+      restaurantPhone,
+      restaurantWebsite,
       menusSummary,
     };
   }
@@ -267,6 +285,7 @@ export class RestaurantsService {
         r.additional_currencies as "additionalCurrencies",
         r.primary_color as "primaryColor",
         r.secondary_color as "secondaryColor",
+        r.template_config as "templateConfig",
         r.logo_url as "logoUrl",
         r.cover_url as "coverUrl",
         r.is_active as "isActive",
@@ -419,6 +438,7 @@ export class RestaurantsService {
     website?: string;
     timezone?: string;
     template?: string;
+    templateConfig?: Record<string, unknown>;
     isActive?: boolean;
     defaultCurrency?: string;
     additionalCurrencies?: string[];
@@ -477,7 +497,11 @@ export class RestaurantsService {
       params.push(data.secondaryColor);
       this.logger.debug(`Actualizando secondary_color a: ${data.secondaryColor}`);
     }
-    
+    if (data.templateConfig !== undefined) {
+      updates.push(`template_config = $${paramIndex++}`);
+      params.push(JSON.stringify(data.templateConfig));
+    }
+
     // Manejar dirección: si se proporcionan campos individuales, construir dirección completa
     if (data.street !== undefined || data.city !== undefined || data.state !== undefined || 
         data.postalCode !== undefined || data.country !== undefined || data.address !== undefined) {
@@ -631,6 +655,59 @@ export class RestaurantsService {
 
     const planKey = plan || 'free';
     return limits[planKey] ?? 1;
+  }
+
+  private getProductLimit(plan: string): number {
+    const limits: Record<string, number> = {
+      free: 30,
+      basic: 60,
+      pro: 300,
+      premium: 1200,
+    };
+    const planKey = plan || 'free';
+    return limits[planKey] ?? 30;
+  }
+
+  /**
+   * Estadísticas para el dashboard del tenant: conteos y límites según plan.
+   */
+  async getDashboardStats(tenantId: string): Promise<{
+    totalRestaurants: number;
+    totalMenus: number;
+    totalProducts: number;
+    restaurantLimit: number;
+    productLimit: number;
+    plan: string;
+  }> {
+    const tenant = await this.postgres.queryRaw<any>(
+      `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [tenantId]
+    );
+    const plan = tenant[0]?.plan || 'free';
+
+    const [restCount, menuCount, productCount] = await Promise.all([
+      this.postgres.queryRaw<{ total: string }>(
+        `SELECT COUNT(*) as total FROM restaurants WHERE tenant_id = $1 AND deleted_at IS NULL`,
+        [tenantId]
+      ),
+      this.postgres.queryRaw<{ total: string }>(
+        `SELECT COUNT(*) as total FROM menus m INNER JOIN restaurants r ON r.id = m.restaurant_id AND r.deleted_at IS NULL WHERE r.tenant_id = $1 AND m.deleted_at IS NULL`,
+        [tenantId]
+      ),
+      this.postgres.queryRaw<{ total: string }>(
+        `SELECT COUNT(*) as total FROM menu_items WHERE tenant_id = $1 AND deleted_at IS NULL`,
+        [tenantId]
+      ),
+    ]);
+
+    return {
+      totalRestaurants: parseInt(restCount[0]?.total || '0', 10),
+      totalMenus: parseInt(menuCount[0]?.total || '0', 10),
+      totalProducts: parseInt(productCount[0]?.total || '0', 10),
+      restaurantLimit: this.getRestaurantLimit(plan),
+      productLimit: this.getProductLimit(plan),
+      plan,
+    };
   }
 
   private async slugExists(slug: string, tenantId: string, excludeId?: string): Promise<boolean> {

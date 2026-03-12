@@ -29,6 +29,24 @@ export class RestaurantsController {
     return this.restaurantsService.getConfigState(tenantId, restaurantId || undefined);
   }
 
+  @Get('dashboard-stats')
+  @ApiOperation({ summary: 'Conteos y límites del plan para el dashboard (restaurantes, menús, productos)' })
+  @ApiResponse({ status: 200, description: 'totalRestaurants, totalMenus, totalProducts, restaurantLimit, productLimit, plan' })
+  async getDashboardStats(@Request() req) {
+    const tenantId = req.user.role === 'SUPER_ADMIN' ? (req.query.tenantId as string) : req.user.tenantId;
+    if (!tenantId) {
+      return {
+        totalRestaurants: 0,
+        totalMenus: 0,
+        totalProducts: 0,
+        restaurantLimit: 1,
+        productLimit: 30,
+        plan: 'free',
+      };
+    }
+    return this.restaurantsService.getDashboardStats(tenantId);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Listar restaurantes del tenant' })
   @ApiResponse({ status: 200, description: 'Lista de restaurantes' })

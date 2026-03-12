@@ -382,14 +382,14 @@ export default function ProductWizard({
 
   // Función para obtener el límite de productos
   const getProductLimit = () => {
-    if (!tenantPlan) return 10;
+    if (!tenantPlan) return 30;
     const limits: Record<string, number> = {
-      free: 10,
-      basic: 50,
+      free: 30,
+      basic: 60,
       pro: 300,
       premium: 1200,
     };
-    return limits[tenantPlan] ?? 10;
+    return limits[tenantPlan] ?? 30;
   };
 
   // Función para verificar si se puede crear un producto
@@ -1584,7 +1584,10 @@ export default function ProductWizard({
                   El menú quedará despublicado y no será visible para los clientes hasta que lo vuelvas a publicar.
                 </div>
               </div>
-              <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
+              <div
+                className="modal-footer modal-limit-footer"
+                style={{ borderTop: '1px solid #dee2e6' }}
+              >
                 <button 
                   type="button" 
                   className="btn btn-secondary" 
@@ -1726,30 +1729,72 @@ export default function ProductWizard({
                 <p style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
                   Actualmente tienes <strong>{currentProductCount}</strong> producto(s) creado(s).
                 </p>
-                <div className="alert alert-warning mb-0" style={{ 
-                  backgroundColor: '#fff3cd', 
-                  border: '1px solid #ffc107',
-                  borderRadius: '4px',
-                  padding: '12px'
-                }}>
-                  <strong>Para crear más productos:</strong><br />
-                  Por favor, amplía tu suscripción para aumentar el límite de productos disponibles.
+                <div
+                  style={{
+                    marginTop: '4px',
+                    padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%)',
+                    border: '1px solid rgba(250, 204, 21, 0.7)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '999px',
+                      backgroundColor: '#ffe58f',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                    }}
+                  >
+                    🛒
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#854d0e', marginBottom: 2 }}>
+                      Para crear más productos
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
+                      Amplía tu suscripción para aumentar el límite de productos disponibles.
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
+              <div
+                className="modal-footer modal-limit-footer"
+                style={{ borderTop: '1px solid #dee2e6' }}
+              >
+                <a
+                  href="/admin/profile/subscription"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="admin-btn"
+                  style={{ textDecoration: 'none' }}
+                  onClick={async () => {
+                    // cerramos pero no cancelamos el wizard, solo refrescamos el contador
+                    setShowLimitModal(false);
+                    await loadProductCount();
+                  }}
+                >
+                  Ver planes y suscripción
+                </a>
                 <button 
                   type="button" 
-                  className="btn btn-primary" 
+                  className="admin-btn admin-btn-secondary" 
                   onClick={async () => {
                     setShowLimitModal(false);
-                    // Recargar el conteo de productos cuando se cierra el modal
                     await loadProductCount();
                     if (onCancel) {
                       onCancel();
                     }
                   }}
                 >
-                  Entendido
+                  Por el momento no me interesa
                 </button>
               </div>
             </div>
@@ -2057,7 +2102,6 @@ export default function ProductWizard({
                       cursor: 'not-allowed',
                       opacity: 0.6,
                       position: 'relative',
-                      pointerEvents: 'none'
                     }}
                   >
                     <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}>📷</div>
@@ -2067,19 +2111,45 @@ export default function ProductWizard({
                     <p style={{ margin: 0, color: '#bbb', fontSize: '14px', marginBottom: '16px' }}>
                       Formatos: JPG, PNG, GIF (máx. 5MB por imagen)
                     </p>
-                    <div style={{
-                      marginTop: '20px',
-                      padding: '12px',
-                      backgroundColor: '#fff3cd',
-                      border: '1px solid #ffc107',
-                      borderRadius: '6px',
-                      display: 'inline-block'
-                    }}>
+                    <div
+                      style={{
+                        marginTop: '20px',
+                        padding: '12px 16px',
+                        backgroundColor: '#fff3cd',
+                        border: '1px solid #ffc107',
+                        borderRadius: '6px',
+                        display: 'inline-flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        alignItems: 'center',
+                        textAlign: 'center',
+                      }}
+                    >
                       <p style={{ margin: 0, color: '#856404', fontSize: '13px', fontWeight: 500 }}>
                         <strong>⚠️ Función no disponible para usuarios gratuitos</strong>
                         <br />
-                        <span style={{ fontSize: '12px' }}>Amplía tu suscripción para poder agregar imágenes a tus productos.</span>
+                        <span style={{ fontSize: '12px' }}>
+                          Amplía tu suscripción para poder agregar imágenes a tus productos.
+                        </span>
                       </p>
+                      <a
+                        href="/admin/profile/subscription"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-block',
+                          marginTop: '4px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          borderRadius: '4px',
+                          backgroundColor: '#ffc107',
+                          color: '#212529',
+                          textDecoration: 'none',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Ver planes y suscripciones
+                      </a>
                     </div>
                   </div>
                 ) : (
@@ -2457,31 +2527,69 @@ export default function ProductWizard({
                 <p style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
                   Actualmente tienes <strong>{currentProductCount}</strong> producto(s) creado(s).
                 </p>
-                <div className="alert alert-warning mb-0" style={{ 
-                  backgroundColor: '#fff3cd', 
-                  border: '1px solid #ffc107',
-                  borderRadius: '4px',
-                  padding: '12px'
-                }}>
-                  <strong>Para crear más productos:</strong><br />
-                  Por favor, amplía tu suscripción para aumentar el límite de productos disponibles.
+                <div
+                  style={{
+                    marginTop: '4px',
+                    padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%)',
+                    border: '1px solid rgba(250, 204, 21, 0.7)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '999px',
+                      backgroundColor: '#ffe58f',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                    }}
+                  >
+                    🛒
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#854d0e', marginBottom: 2 }}>
+                      Para crear más productos
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
+                      Amplía tu suscripción para aumentar el límite de productos disponibles.
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
-                <button 
-                  type="button" 
-                  className="btn btn-primary" 
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary btn-lg"
                   onClick={async () => {
                     setShowLimitModal(false);
-                    // Recargar el conteo de productos cuando se cierra el modal
                     await loadProductCount();
                     if (onCancel) {
                       onCancel();
                     }
                   }}
                 >
-                  Entendido
+                  Por el momento no me interesa
                 </button>
+                <a
+                  href="/admin/profile/subscription"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="admin-btn"
+                  style={{ textDecoration: 'none' }}
+                  onClick={async () => {
+                    setShowLimitModal(false);
+                    await loadProductCount();
+                  }}
+                >
+                  Ver planes y suscripción
+                </a>
               </div>
             </div>
           </div>

@@ -167,16 +167,42 @@
 }
 
 .template-minimalist .footer {
-  background: linear-gradient(135deg, var(--secondary-color, #764ba2) 0%, var(--primary-color, #667eea) 100%);
-  color: white;
+  background: #f5f5f5;
+  color: #1a1a1a;
+  border-top: 1px solid #e5e5e5;
   padding: 40px 20px;
   margin-top: 60px;
   font-weight: 300;
+  font-size: 0.95rem;
+}
+
+.template-minimalist .footer a {
+  color: #1a1a1a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.template-minimalist .footer a:hover {
+  opacity: 0.75;
+}
+
+.template-minimalist .footer h4,
+.template-minimalist .footer h5 {
+  font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
 .template-minimalist .menu-items-container {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+@media (max-width: 768px) {
+  .template-minimalist .minimalist-menu-item-prices {
+    width: 100%;
+    align-items: flex-end;
+    text-align: right;
+  }
 }
 

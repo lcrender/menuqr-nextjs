@@ -17,6 +17,7 @@ interface ClassicTemplateProps {
     country?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    templateConfig?: Record<string, unknown>;
   };
   menuList: Array<{ id: string; name: string; slug: string; description?: string }>;
   selectedMenu: {
@@ -54,6 +55,11 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
 }) => {
   const primaryColor = restaurant.primaryColor || '#007bff';
   const secondaryColor = restaurant.secondaryColor || '#0056b3';
+  const tc = restaurant.templateConfig || {};
+  const showCover = tc.showCoverImage !== false;
+  const showLogo = tc.showLogo !== false;
+  const showName = tc.showRestaurantName !== false;
+  const showDescription = tc.showRestaurantDescription !== false;
 
   return (
     <div className="template-classic restaurant-container" style={{ 
@@ -106,10 +112,10 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
         }
       `}</style>
 
-      <div style={{ width: '100%', paddingLeft: '40px', paddingRight: '40px', flex: '1' }}>
+      <div className="template-classic classic-main-content" style={{ width: '100%', paddingLeft: '40px', paddingRight: '40px', flex: '1' }}>
         {/* Cover Image */}
-        {restaurant.coverUrl && (
-          <div className="mb-4" style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+        {showCover && restaurant.coverUrl && (
+          <div className="template-classic classic-cover-wrapper mb-4" style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
             <img 
               src={restaurant.coverUrl} 
               alt={restaurant.name}
@@ -121,19 +127,20 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
         {/* Restaurant Info */}
         <div className="mb-5">
           <div className="text-center mb-4" style={{ marginTop: '40px' }}>
-            {restaurant.logoUrl && (
+            {showLogo && restaurant.logoUrl && (
               <img 
+                className="template-classic classic-logo"
                 src={restaurant.logoUrl} 
                 alt={restaurant.name}
-                style={{ maxWidth: '150px', maxHeight: '150px', marginBottom: '20px' }}
+                style={{ maxWidth: '300px', maxHeight: '300px', marginBottom: '20px' }}
               />
             )}
-            <h1 style={{ color: secondaryColor, marginBottom: '15px' }}>{restaurant.name}</h1>
+            {showName && <h1 style={{ color: secondaryColor, marginBottom: '15px' }}>{restaurant.name}</h1>}
           </div>
-          {restaurant.description && (
+          {showDescription && restaurant.description && (
             <div 
               dangerouslySetInnerHTML={{ __html: restaurant.description.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') }}
-              style={{ color: '#6c757d', textAlign: 'justify', marginBottom: '40px', maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 20px' }}
+              style={{ color: '#6c757d', textAlign: 'center', marginBottom: '40px', maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 20px' }}
             />
           )}
         </div>
@@ -246,7 +253,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
                             </div>
                           )}
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', minWidth: '120px' }}>
+                        <div className="template-classic classic-menu-item-prices" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', minWidth: '120px' }}>
                           {item.prices.map((price, idx) => (
                             <span 
                               key={idx} 
@@ -290,7 +297,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
         <div style={{ width: '100%', maxWidth: '100%' }}>
           <div className="row">
             <div className="col-md-6">
-              <h4 style={{ marginBottom: '20px' }}>{restaurant.name}</h4>
+              {showName && <h4 style={{ marginBottom: '20px' }}>{restaurant.name}</h4>}
               {restaurant.address && (
                 <p style={{ marginBottom: '10px', opacity: 0.9 }}>
                   <strong>📍 Dirección:</strong> {restaurant.address}

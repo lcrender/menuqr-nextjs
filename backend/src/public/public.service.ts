@@ -32,6 +32,7 @@ export class PublicService {
           r.logo_url as "logoUrl",
           r.cover_url as "coverUrl",
           r.is_active as "isActive",
+          r.template_config as "templateConfig",
           t.name as "tenantName"
         FROM restaurants r
         INNER JOIN tenants t ON r.tenant_id = t.id
@@ -116,6 +117,7 @@ export class PublicService {
         template: restaurant.template || 'classic',
         primaryColor: restaurant.primaryColor || '#007bff',
         secondaryColor: restaurant.secondaryColor || '#0056b3',
+        templateConfig: restaurant.templateConfig ?? {},
       };
     } catch (error) {
       this.logger.error(`Error obteniendo restaurante por slug "${slug}":`, error);

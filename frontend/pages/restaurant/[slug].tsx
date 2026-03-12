@@ -118,6 +118,9 @@ const formatPrice = (price: ItemPrice) => {
   if (price.currency === 'ARS') {
     return `$ ${Math.round(price.amount).toLocaleString('es-AR')}`;
   }
+  if (price.currency === 'EUR') {
+    return `€ ${price.amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
   return `${price.currency} ${price.amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 

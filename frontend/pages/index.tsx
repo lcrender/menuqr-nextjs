@@ -169,6 +169,8 @@ export default function Home() {
                 <Link href="/login" className="landing-footer-link">Iniciar Sesión</Link>
                 <Link href="/admin/help/documentation" className="landing-footer-link">Documentación</Link>
                 <Link href="/admin/help/support" className="landing-footer-link">Soporte</Link>
+                <Link href="/legal/terminos-y-condiciones" className="landing-footer-link">Términos y Condiciones</Link>
+                <Link href="/legal/politica-de-privacidad" className="landing-footer-link">Política de Privacidad</Link>
               </div>
             </div>
             <div className="landing-footer-copyright">

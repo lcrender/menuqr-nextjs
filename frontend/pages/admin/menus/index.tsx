@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import React from 'react';
+import Link from 'next/link';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
 import ProductWizard from '../../../components/ProductWizard';
@@ -1435,23 +1436,61 @@ export default function Menus() {
                 <p style={{ marginBottom: '16px', fontSize: '16px' }}>
                   Actualmente tienes <strong>{limitMessage.current} menú(s)</strong> creado(s).
                 </p>
-                <div className="alert alert-warning mb-0" style={{ 
-                  backgroundColor: '#fff3cd', 
-                  border: '1px solid #ffc107',
-                  borderRadius: '4px',
-                  padding: '12px'
-                }}>
-                  <strong>¿Necesitas más menús?</strong><br />
-                  Por favor, amplía tu suscripción para crear más menús y aprovechar todas las funcionalidades de MenuQR.
+                <div
+                  style={{
+                    marginTop: '4px',
+                    padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%)',
+                    border: '1px solid rgba(250, 204, 21, 0.7)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '999px',
+                      backgroundColor: '#ffe58f',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                    }}
+                  >
+                    📋
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#854d0e', marginBottom: 2 }}>
+                      ¿Necesitas más menús?
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
+                      Amplía tu suscripción para crear más menús y aprovechar todas las funcionalidades de MenuQR.
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
+              <div
+                className="modal-footer modal-limit-footer"
+                style={{ borderTop: '1px solid #dee2e6' }}
+              >
+                <Link 
+                  href="/admin/profile/subscription" 
+                  className="admin-btn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Ver planes y suscripción
+                </Link>
                 <button 
                   type="button" 
-                  className="btn btn-primary" 
+                  className="admin-btn admin-btn-secondary" 
                   onClick={() => setShowLimitModal(false)}
                 >
-                  Entendido
+                  Por el momento no me interesa
                 </button>
               </div>
             </div>

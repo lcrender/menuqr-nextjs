@@ -54,8 +54,20 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
   const primaryColor = restaurant.primaryColor || '#e74c3c';
   const secondaryColor = restaurant.secondaryColor || '#c0392b';
 
+  const hexToRgba = (hex: string, a: number) => {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${a})`;
+  };
+
+  const shadowDepth = '0 2px 4px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.12), 0 16px 32px rgba(0,0,0,0.08)';
+  const shadowGlowPrimary = `0 0 28px ${hexToRgba(primaryColor, 0.22)}`;
+  const shadowGlowSecondary = `0 0 28px ${hexToRgba(secondaryColor, 0.22)}`;
+
   return (
-    <div className="template-burgers restaurant-container" style={{ minHeight: '100vh', width: '100%' }}>
+    <div className="template-burgers restaurant-container" style={{ minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden', boxSizing: 'border-box' }}>
       <style jsx>{`
         .template-burgers {
           --primary-color: ${primaryColor};
@@ -64,6 +76,10 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
         .template-burgers .menu-section-title {
           color: ${primaryColor};
           border-bottom-color: ${primaryColor};
+          text-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.12);
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          white-space: normal;
         }
         .template-burgers .menu-item-card {
           border-top-color: ${primaryColor};
@@ -82,33 +98,49 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
         .template-burgers .menu-tab-btn {
           background: ${primaryColor};
           border-color: ${primaryColor};
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1), 0 6px 16px rgba(0,0,0,0.1), 0 0 24px ${hexToRgba(primaryColor, 0.35)};
         }
         .template-burgers .menu-tab-btn:hover {
           background: ${secondaryColor};
           border-color: ${secondaryColor};
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.12), 0 0 28px ${hexToRgba(secondaryColor, 0.35)};
         }
         .template-burgers .menu-tab-btn-outline {
           border-color: ${primaryColor};
           color: ${primaryColor};
+          box-shadow: 0 2px 6px rgba(0,0,0,0.08), 0 0 16px ${hexToRgba(primaryColor, 0.15)};
         }
         .template-burgers .menu-tab-btn-outline:hover {
           background: ${primaryColor};
           color: white;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.12), 0 0 24px ${hexToRgba(primaryColor, 0.3)};
         }
         .template-burgers .footer {
           background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%);
+          border-radius: 20px 20px 0 0;
+          border: 4px solid ${secondaryColor};
+          border-bottom: none;
+          box-shadow: 0 -4px 12px rgba(0,0,0,0.1), 0 -12px 28px rgba(0,0,0,0.08), 0 0 32px ${hexToRgba(secondaryColor, 0.18)};
+        }
+        .template-burgers .section-nav-link {
+          box-shadow: 0 2px 6px rgba(0,0,0,0.08), 0 0 18px ${hexToRgba(primaryColor, 0.2)};
         }
         .template-burgers .section-nav-link:hover {
           background: ${primaryColor};
           color: white;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.12), 0 0 24px ${hexToRgba(primaryColor, 0.35)};
+        }
+        .template-burgers .restaurant-description-burgers strong {
+          color: white;
+          font-weight: 700;
         }
       `}</style>
 
       {/* Cover Image */}
       {restaurant.coverUrl && (
-        <div style={{ width: '100%', height: '350px', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
-          <img 
-            src={restaurant.coverUrl} 
+        <div className="template-burgers burgers-cover" style={{ width: '100%', height: '350px', overflow: 'hidden', position: 'relative', zIndex: 1, borderRadius: '16px', border: `4px solid ${secondaryColor}`, boxSizing: 'border-box', boxShadow: `${shadowDepth}, ${shadowGlowSecondary}` }}>
+          <img
+            src={restaurant.coverUrl}
             alt={restaurant.name}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
@@ -150,37 +182,43 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
           🍔
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '30px', flexWrap: 'wrap', marginBottom: '50px', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '30px', flexWrap: 'wrap', marginBottom: '50px', position: 'relative', zIndex: 1 }} className="template-burgers burgers-header-row">
           {restaurant.logoUrl && (
-            <div style={{ flexShrink: 0 }}>
+            <div className="template-burgers burgers-logo-wrapper" style={{ flexShrink: 0 }}>
               <img 
                 src={restaurant.logoUrl} 
                 alt={restaurant.name}
                 style={{ 
-                  width: '120px', 
-                  height: '120px', 
+                  width: '240px', 
+                  height: '240px', 
                   objectFit: 'cover',
                   borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  boxShadow: `${shadowDepth}, ${shadowGlowPrimary}`,
                   border: `4px solid ${primaryColor}`
                 }}
               />
             </div>
           )}
-          <div style={{ flex: 1, minWidth: '250px' }}>
+          <div style={{ 
+            flex: 1, 
+            minWidth: '250px',
+            background: primaryColor,
+            borderRadius: '20px',
+            padding: '32px 40px',
+            boxShadow: `${shadowDepth}, ${shadowGlowPrimary}`,
+            color: 'white',
+            border: '4px solid #000',
+            boxSizing: 'border-box'
+          }}>
             <h1 style={{ 
-              fontSize: '3rem', 
+              fontSize: '2.25rem', 
               fontWeight: '800', 
-              marginBottom: '15px', 
-              color: '#2c3e50',
+              marginBottom: '16px', 
+              color: 'white',
               lineHeight: '1.2',
               textTransform: 'uppercase',
-              letterSpacing: '2px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '15px'
+              letterSpacing: '2px'
             }}>
-              <span style={{ fontSize: '2.5rem' }}>🍔</span>
               {restaurant.name}
             </h1>
             {restaurant.description && (
@@ -191,11 +229,12 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                     .replace(/\n/g, '<br />')
                 }}
                 style={{ 
-                  fontSize: '1.1rem', 
+                  fontSize: '1rem', 
                   lineHeight: '1.7', 
-                  color: '#6c757d',
+                  color: 'rgba(255,255,255,0.95)',
                   textAlign: 'justify'
                 }}
+                className="restaurant-description-burgers"
               />
             )}
           </div>
@@ -216,7 +255,6 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                     fontSize: '1rem',
                     fontWeight: selectedMenu?.slug === menu.slug ? '700' : '600',
                     transition: 'all 0.3s ease',
-                    boxShadow: selectedMenu?.slug === menu.slug ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
                     border: selectedMenu?.slug === menu.slug ? 'none' : `3px solid ${primaryColor}`,
                     color: selectedMenu?.slug === menu.slug ? 'white' : primaryColor,
                     background: selectedMenu?.slug === menu.slug ? primaryColor : 'transparent',
@@ -434,7 +472,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
       </div>
 
       {/* Footer */}
-      <footer className="template-burgers footer mt-5" style={{ padding: '50px 40px', color: 'white', marginTop: '80px', width: '100%' }}>
+      <footer className="template-burgers footer mt-5" style={{ padding: '50px 40px', color: 'white', marginTop: '80px', width: '100%', borderRadius: '20px 20px 0 0', border: `4px solid ${secondaryColor}`, borderBottom: 'none' }}>
         <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
           <div className="row">
             <div className="col-md-6">

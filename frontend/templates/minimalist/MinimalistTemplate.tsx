@@ -16,6 +16,7 @@ interface MinimalistTemplateProps {
     country?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    templateConfig?: Record<string, unknown>;
   };
   menuList: Array<{ id: string; name: string; slug: string; description?: string }>;
   selectedMenu: {
@@ -53,6 +54,11 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
 }) => {
   const primaryColor = restaurant.primaryColor || '#667eea';
   const secondaryColor = restaurant.secondaryColor || '#764ba2';
+  const tc = restaurant.templateConfig || {};
+  const showCover = tc.showCoverImage !== false;
+  const showLogo = tc.showLogo !== false;
+  const showName = tc.showRestaurantName !== false;
+  const showDescription = tc.showRestaurantDescription !== false;
 
   return (
     <div className="template-minimalist restaurant-container" style={{ minHeight: '100vh', width: '100%' }}>
@@ -86,28 +92,31 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
           background: ${primaryColor};
           color: white;
         }
-        .template-minimalist .footer {
-          background: linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%);
-        }
       `}</style>
 
       <div style={{ width: '100%', paddingLeft: '40px', paddingRight: '40px', paddingTop: '60px' }}>
+        {/* Cover Image (si la plantilla la muestra) */}
+        {showCover && restaurant.coverUrl && (
+          <div style={{ width: '100%', marginBottom: '24px', borderRadius: '12px', overflow: 'hidden' }}>
+            <img src={restaurant.coverUrl} alt={restaurant.name} style={{ width: '100%', height: '280px', objectFit: 'cover' }} />
+          </div>
+        )}
         {/* Restaurant Info */}
         <div className="mb-5">
           <div className="text-center mb-4">
-            {restaurant.logoUrl && (
+            {showLogo && restaurant.logoUrl && (
               <img 
                 src={restaurant.logoUrl} 
                 alt={restaurant.name}
-                style={{ maxWidth: '150px', maxHeight: '150px', marginBottom: '20px' }}
+                style={{ maxWidth: '300px', maxHeight: '300px', marginBottom: '20px' }}
               />
             )}
-            <h1 style={{ color: '#1a1a1a', marginBottom: '15px', fontSize: '2.5rem', fontWeight: '300' }}>{restaurant.name}</h1>
+            {showName && <h1 style={{ color: '#1a1a1a', marginBottom: '15px', fontSize: '2.5rem', fontWeight: '300' }}>{restaurant.name}</h1>}
           </div>
-          {restaurant.description && (
+          {showDescription && restaurant.description && (
             <div 
               dangerouslySetInnerHTML={{ __html: restaurant.description.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') }}
-              style={{ color: '#666', textAlign: 'justify', marginBottom: '40px', maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 20px', fontSize: '1.1rem', lineHeight: '1.7' }}
+              style={{ color: '#666', textAlign: 'center', marginBottom: '40px', maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 20px', fontSize: '1.1rem', lineHeight: '1.7' }}
             />
           )}
         </div>
@@ -220,7 +229,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
                             </div>
                           )}
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', minWidth: '120px' }}>
+                        <div className="template-minimalist minimalist-menu-item-prices" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', minWidth: '120px' }}>
                           {item.prices.map((price, idx) => (
                             <span 
                               key={idx} 
@@ -242,56 +251,54 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
       </div>
 
       {/* Footer */}
-      <footer className="template-minimalist footer mt-5" style={{ padding: '40px 40px', color: 'white', marginTop: '60px', width: '100%' }}>
+      <footer className="template-minimalist footer mt-5" style={{ padding: '40px 40px', width: '100%' }}>
         <div style={{ width: '100%', maxWidth: '100%' }}>
           <div className="row">
             <div className="col-md-6">
-              <h4 style={{ marginBottom: '20px' }}>{restaurant.name}</h4>
+              {showName && <h4 style={{ marginBottom: '20px' }}>{restaurant.name}</h4>}
               {restaurant.address && (
-                <p style={{ marginBottom: '10px', opacity: 0.9 }}>
-                  <strong>📍 Dirección:</strong> {restaurant.address}
+                <p style={{ marginBottom: '10px', color: '#555' }}>
+                  <strong>Dirección:</strong> {restaurant.address}
                 </p>
               )}
             </div>
             <div className="col-md-6">
               <h5 style={{ marginBottom: '15px' }}>Contacto</h5>
               {restaurant.phone && (
-                <p style={{ marginBottom: '8px', opacity: 0.9 }}>
-                  <strong>📞 Teléfono:</strong>{' '}
-                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} style={{ color: 'white', textDecoration: 'underline' }}>
+                <p style={{ marginBottom: '8px', color: '#555' }}>
+                  <strong>Teléfono:</strong>{' '}
+                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`}>
                     {restaurant.phone.split('|')[0]?.trim() ?? ''}
                   </a>
                 </p>
               )}
               {restaurant.whatsapp && (
-                <p style={{ marginBottom: '8px', opacity: 0.9 }}>
-                  <strong>💬 WhatsApp:</strong>{' '}
+                <p style={{ marginBottom: '8px', color: '#555' }}>
+                  <strong>WhatsApp:</strong>{' '}
                   <a 
                     href={`https://wa.me/${formatWhatsAppForLink(restaurant.whatsapp, restaurant.country)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.whatsapp}
                   </a>
                 </p>
               )}
               {restaurant.email && (
-                <p style={{ marginBottom: '8px', opacity: 0.9 }}>
-                  <strong>✉️ Email:</strong>{' '}
-                  <a href={`mailto:${restaurant.email}`} style={{ color: 'white', textDecoration: 'underline' }}>
+                <p style={{ marginBottom: '8px', color: '#555' }}>
+                  <strong>Email:</strong>{' '}
+                  <a href={`mailto:${restaurant.email}`}>
                     {restaurant.email}
                   </a>
                 </p>
               )}
               {restaurant.website && (
-                <p style={{ marginBottom: '0', opacity: 0.9 }}>
-                  <strong>🌐 Web:</strong>{' '}
+                <p style={{ marginBottom: '0', color: '#555' }}>
+                  <strong>Web:</strong>{' '}
                   <a 
                     href={restaurant.website.startsWith('http') ? restaurant.website : `https://${restaurant.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.website}
                   </a>

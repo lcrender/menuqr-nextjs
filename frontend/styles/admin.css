@@ -196,7 +196,10 @@ body {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--admin-border);
   border-radius: 16px;
-  padding: 24px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  padding-left: 24px;
+  padding-right: 24px;
   margin-bottom: 24px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 16px var(--admin-shadow), 0 1px 4px rgba(0, 0, 0, 0.05);
@@ -313,6 +316,30 @@ body {
   background: var(--admin-bg-card-hover);
   border-color: var(--admin-border-light);
   color: var(--admin-text);
+}
+
+/* Botones de modales de límite (upgrade) */
+.modal-limit-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.modal-limit-footer .admin-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.modal-limit-footer .admin-btn-secondary {
+  background: transparent;
+  border-color: var(--admin-border-light);
+  color: var(--admin-text-secondary);
+}
+
+.modal-limit-footer .admin-btn-secondary:hover {
+  background: rgba(148, 163, 184, 0.08);
 }
 
 /* Botones de tabla minimalistas */
@@ -656,6 +683,20 @@ body {
 .admin-card,
 .admin-stat-card {
   animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Página Plantillas: aislar cards de estilos de plantillas (ej. .template-classic) */
+.admin-page-templates .admin-card {
+  background: var(--admin-bg-card);
+  color: var(--admin-text);
+}
+.admin-page-templates .admin-card .admin-card-title,
+.admin-page-templates .admin-card .admin-card-body,
+.admin-page-templates .admin-card .form-label {
+  color: var(--admin-text);
+}
+.admin-page-templates .admin-card .admin-card-body {
+  color: var(--admin-text-secondary);
 }
 
 /* Override Bootstrap específicos */
