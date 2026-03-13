@@ -240,7 +240,7 @@ export default function ProductWizard({
   const [dragOverItem, setDragOverItem] = useState<{ sectionId: string; itemId: string | null; position: 'before' | 'after' } | null>(null);
   const [restaurantCurrency, setRestaurantCurrency] = useState<string>(defaultCurrency);
 
-  // Obtener el plan del tenant desde localStorage
+  // Obtener el plan del tenant: primero desde localStorage, luego desde la API para tener el actual
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
@@ -249,10 +249,33 @@ export default function ProductWizard({
         if (parsedUser?.tenant?.plan) {
           setTenantPlan(parsedUser.tenant.plan);
         }
+        if (parsedUser?.role === 'SUPER_ADMIN') return;
       } catch (err) {
         console.error('Error parsing user data:', err);
+        return;
       }
     }
+    const fetchPlan = async () => {
+      try {
+        const res = await api.get('/restaurants/dashboard-stats');
+        const plan = res.data?.plan ?? null;
+        if (plan) {
+          setTenantPlan(plan);
+          if (userData) {
+            try {
+              const parsed = JSON.parse(userData);
+              if (parsed?.tenant && parsed.tenant.plan !== plan) {
+                const updated = { ...parsed, tenant: { ...parsed.tenant, plan } };
+                localStorage.setItem('user', JSON.stringify(updated));
+              }
+            } catch {}
+          }
+        }
+      } catch {
+        // Mantener plan de localStorage si falla
+      }
+    };
+    fetchPlan();
   }, []);
 
   // Función para recargar el conteo de productos
@@ -296,73 +319,49 @@ export default function ProductWizard({
   // Validar el límite cuando se abre el wizard con startWithCreate = true
   useEffect(() => {
     if (startWithCreate && currentStep === 1) {
-      // Función para validar el límite
+      const limits: Record<string, number> = {
+        free: 30,
+        basic: 60,
+        pro: 300,
+        premium: 1200,
+      };
+
       const validateLimit = async () => {
-        // Si aún no tenemos el tenantPlan, intentar obtenerlo
+        const userData = localStorage.getItem('user');
+        const parsedUser = userData ? (() => { try { return JSON.parse(userData); } catch { return null; } })() : null;
+        const isSuperAdmin = parsedUser?.role === 'SUPER_ADMIN';
+        if (isSuperAdmin) return;
+
+        // Obtener plan actual desde la API para no depender del caché (localStorage puede estar desactualizado)
         let planToUse = tenantPlan;
-        if (!planToUse) {
-          const userData = localStorage.getItem('user');
-          if (userData) {
-            try {
-              const parsedUser = JSON.parse(userData);
-              if (parsedUser?.tenant?.plan) {
-                planToUse = parsedUser.tenant.plan;
-                setTenantPlan(planToUse);
-              }
-            } catch (error) {
-              console.error('Error parsing user data:', error);
-            }
+        try {
+          const res = await api.get('/restaurants/dashboard-stats');
+          const apiPlan = res.data?.plan ?? null;
+          if (apiPlan) {
+            planToUse = apiPlan;
+            setTenantPlan(apiPlan);
           }
+        } catch {
+          // Si falla, usar tenantPlan de estado o localStorage
+          if (!planToUse && parsedUser?.tenant?.plan) planToUse = parsedUser.tenant.plan;
         }
+        if (!planToUse) planToUse = 'free';
 
-        // Si no tenemos plan, usar 'free' por defecto
-        if (!planToUse) {
-          planToUse = 'free';
-        }
-
-        // Si currentProductCount es 0, puede ser que aún no se haya cargado
+        // Obtener conteo actual de productos
         let countToUse = currentProductCount;
         if (countToUse === 0) {
           try {
-            const userData = localStorage.getItem('user');
-            if (!userData) {
-              return;
+            const response = await api.get('/menu-items', { params: { limit: 1, offset: 0 } });
+            if (response.data.total !== undefined) {
+              countToUse = response.data.total;
+              setCurrentProductCount(countToUse);
             }
-            
-            const parsedUser = JSON.parse(userData);
-            const isSuperAdmin = parsedUser?.role === 'SUPER_ADMIN';
-            
-            if (!isSuperAdmin) {
-              const response = await api.get('/menu-items', {
-                params: {
-                  limit: 1,
-                  offset: 0,
-                },
-              });
-              
-              if (response.data.total !== undefined) {
-                countToUse = response.data.total;
-                setCurrentProductCount(countToUse);
-              }
-            } else {
-              // Si es SUPER_ADMIN, no hay límite, no necesitamos validar
-              return;
-            }
-          } catch (error) {
-            console.error('Error obteniendo número de productos:', error);
+          } catch {
             return;
           }
         }
 
-        // Calcular el límite
-        const limits: Record<string, number> = {
-          free: 30,
-          basic: 300,
-          premium: -1,
-        };
-        const limit = limits[planToUse] || 30;
-
-        // Validar si se alcanzó el límite
+        const limit = limits[planToUse] ?? 30;
         if (limit !== -1 && countToUse >= limit) {
           setShowLimitModal(true);
           setCurrentStep(0);
@@ -2080,18 +2079,18 @@ export default function ProductWizard({
                 </div>
               </div>
 
-              {/* Sección de Imágenes */}
+              {/* Sección de Imágenes - solo planes Pro y Premium */}
               <div style={{ marginTop: '32px', paddingTop: '32px', borderTop: '1px solid #e0e0e0' }}>
                 <h4 style={{ 
                   marginBottom: '16px', 
                   fontSize: '18px', 
                   fontWeight: 600,
-                  color: (tenantPlan === 'free' || !tenantPlan) ? '#999' : 'inherit'
+                  color: (tenantPlan !== 'pro' && tenantPlan !== 'premium') ? '#999' : 'inherit'
                 }}>
                   Imágenes del Producto
                 </h4>
                 
-                {(tenantPlan === 'free' || !tenantPlan) ? (
+                {(tenantPlan !== 'pro' && tenantPlan !== 'premium') ? (
                   <div
                     style={{
                       border: '2px dashed #ccc',
@@ -2126,10 +2125,10 @@ export default function ProductWizard({
                       }}
                     >
                       <p style={{ margin: 0, color: '#856404', fontSize: '13px', fontWeight: 500 }}>
-                        <strong>⚠️ Función no disponible para usuarios gratuitos</strong>
+                        <strong>⚠️ Imágenes disponibles solo en planes Pro y Premium</strong>
                         <br />
                         <span style={{ fontSize: '12px' }}>
-                          Amplía tu suscripción para poder agregar imágenes a tus productos.
+                          Amplía tu suscripción a Pro o Premium para poder agregar imágenes a tus productos.
                         </span>
                       </p>
                       <a

@@ -26,6 +26,7 @@
     "db:seed": "ts-node prisma/seed.ts",
     "db:seed:examples": "ts-node prisma/seed-examples.ts",
     "create-admin": "node scripts/create-admin.js",
+    "list-super-admins": "node scripts/list-super-admins.js",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
     "prisma:generate": "prisma generate"

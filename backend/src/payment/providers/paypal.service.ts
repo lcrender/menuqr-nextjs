@@ -27,6 +27,14 @@ export class PayPalService implements IPaymentProviderService {
     return PAYPAL_API_BASE(this.config.get('PAYPAL_MODE', 'sandbox'));
   }
 
+  private getPlanIdForSlug(planSlug: string, planType: PlanType): string | null {
+    const suffix = planType === 'yearly' ? 'YEARLY' : 'MONTHLY';
+    const key = `PAYPAL_PLAN_ID_${planSlug.toUpperCase()}_${suffix}`;
+    const value = this.config.get(key);
+    if (value) return value;
+    return this.config.get('PAYPAL_PLAN_ID_MONTHLY') || this.config.get('PAYPAL_PLAN_ID_YEARLY') || null;
+  }
+
   private async getAccessToken(): Promise<string> {
     const clientId = this.config.get('PAYPAL_CLIENT_ID');
     const secret = this.config.get('PAYPAL_SECRET');
@@ -59,10 +67,9 @@ export class PayPalService implements IPaymentProviderService {
     cancelUrl: string;
     metadata?: Record<string, string>;
   }): Promise<CreateSubscriptionResult> {
-    const planIdKey = params.planType === 'yearly' ? 'PAYPAL_PLAN_ID_YEARLY' : 'PAYPAL_PLAN_ID_MONTHLY';
-    const planId = this.config.get(planIdKey) || this.config.get('PAYPAL_PLAN_ID_MONTHLY');
+    const planId = this.getPlanIdForSlug(params.planSlug, params.planType);
     if (!planId) {
-      throw new BadRequestException('PayPal plan ID not configured');
+      throw new BadRequestException('PayPal plan ID not configured for this plan');
     }
     const token = await this.getAccessToken();
     const body = {

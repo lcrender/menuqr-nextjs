@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -5,6 +6,16 @@ import PricingPlansGrid from '../components/PricingPlansGrid';
 
 export default function Home() {
   const router = useRouter();
+
+  useEffect(() => {
+    // Si ya hay sesión, redirigir al admin (respeta sesión al abrir nueva pestaña)
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('accessToken');
+    const userData = localStorage.getItem('user');
+    if (token && userData) {
+      router.replace('/admin');
+    }
+  }, [router]);
 
   const handleTryFree = () => {
     router.push('/login?action=register');

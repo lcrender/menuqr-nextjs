@@ -79,19 +79,36 @@ export class MenuItemsController {
     @Query('menuName') menuName: string,
     @Query('restaurantName') restaurantName: string,
     @Query('tenantName') tenantName: string,
+    @Query('restaurantId') restaurantId: string,
     @Query('limit') limit: string,
     @Query('offset') offset: string,
     @Request() req,
   ) {
-    // Si es SUPER_ADMIN y no hay tenantId en query, devolver todos los productos
-    if (req.user.role === 'SUPER_ADMIN' && !req.query.tenantId) {
+    const tenantIdQuery = req.query.tenantId as string | undefined;
+    const restaurantIdQuery = req.query.restaurantId as string | undefined;
+
+    // SUPER_ADMIN: filtrar por usuario (tenant) y/o restaurante por ID; productos solo al hacer clic
+    if (req.user.role === 'SUPER_ADMIN' && (tenantIdQuery || restaurantIdQuery)) {
+      const limitNum = limit ? parseInt(limit, 10) : undefined;
+      const offsetNum = offset ? parseInt(offset, 10) : undefined;
+      return this.menuItemsService.findAllForSuperAdminByIds(
+        tenantIdQuery,
+        restaurantIdQuery,
+        productName,
+        limitNum,
+        offsetNum,
+      );
+    }
+
+    // SUPER_ADMIN sin IDs: búsqueda por nombres (comportamiento anterior)
+    if (req.user.role === 'SUPER_ADMIN' && !tenantIdQuery && !restaurantIdQuery) {
       const limitNum = limit ? parseInt(limit, 10) : undefined;
       const offsetNum = offset ? parseInt(offset, 10) : undefined;
       return this.menuItemsService.findAllForSuperAdmin(productName, menuName, restaurantName, tenantName, limitNum, offsetNum);
     }
-    
+
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
-    
+
     if (!tenantId) {
       throw new Error('Tenant ID es requerido');
     }

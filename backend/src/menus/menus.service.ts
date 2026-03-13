@@ -46,6 +46,15 @@ export class MenusService {
 
     query += ` GROUP BY m.id, r.name, r.slug, r.template, t.name, t.id ORDER BY m.sort ASC, m.created_at DESC`;
 
+    if (tenantId) {
+      const plan = await this.getTenantPlan(tenantId);
+      const menuLimit = this.getMenuLimit(plan);
+      if (menuLimit !== -1) {
+        query += ` LIMIT $${params.length + 1}`;
+        params.push(menuLimit);
+      }
+    }
+
     const menus = await this.postgres.queryRaw<any>(query, params);
     
     // Mapear campos de snake_case a camelCase
@@ -548,18 +557,16 @@ export class MenusService {
     }
   }
 
-  private async validateMenuLimit(tenantId: string) {
-    // Obtener el plan del tenant
+  private async getTenantPlan(tenantId: string): Promise<string> {
     const tenant = await this.postgres.queryRaw<any>(
       `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
       [tenantId]
     );
+    return tenant[0]?.plan || 'free';
+  }
 
-    if (!tenant[0]) {
-      throw new NotFoundException('Tenant no encontrado');
-    }
-
-    const plan = tenant[0].plan || 'free'; // Default a 'free' si no tiene plan
+  private async validateMenuLimit(tenantId: string) {
+    const plan = await this.getTenantPlan(tenantId);
 
     // Obtener límite según el plan
     const limit = this.getMenuLimit(plan);
@@ -592,14 +599,14 @@ export class MenusService {
 
   private getMenuLimit(plan: string): number {
     const limits: Record<string, number> = {
-      free: 3, // Plan gratuito: 3 menús
-      basic: 20,
+      free: 3,
+      basic: 6,
+      pro: 30,
       premium: -1, // Ilimitado
     };
 
-    // Si el plan no está definido o es null, usar 'free' como default
     const planKey = plan || 'free';
-    return limits[planKey] || 3; // Default a 3 si el plan no está en la lista
+    return limits[planKey] ?? 3;
   }
 }
 

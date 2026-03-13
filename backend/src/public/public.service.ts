@@ -11,6 +11,30 @@ export class PublicService {
     private i18nService: I18nService,
   ) {}
 
+  private async getTenantPlan(tenantId: string): Promise<string> {
+    const rows = await this.postgresService.queryRaw<any>(
+      `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [tenantId],
+    );
+    return rows[0]?.plan || 'free';
+  }
+
+  private getRestaurantLimit(plan: string): number {
+    const limits: Record<string, number> = { free: 1, basic: 1, pro: 3, premium: 10 };
+    return limits[plan || 'free'] ?? 1;
+  }
+
+  private getMenuLimit(plan: string): number {
+    const limits: Record<string, number> = { free: 3, basic: 6, pro: 30, premium: -1 };
+    const n = limits[plan || 'free'];
+    return n ?? 3;
+  }
+
+  private getProductLimit(plan: string): number {
+    const limits: Record<string, number> = { free: 30, basic: 60, pro: 300, premium: 1200 };
+    return limits[plan || 'free'] ?? 30;
+  }
+
   async getRestaurantBySlug(slug: string, locale: string = 'es-ES') {
     try {
       // Obtener el restaurante con su tenant
@@ -53,7 +77,9 @@ export class PublicService {
 
       const restaurant = restaurantResult[0];
 
-      // Obtener TODOS los menús publicados del restaurante
+      // El restaurante ya se obtuvo con is_active = true; el límite del plan (cuántos pueden estar activos) se aplica en el admin al activar/desactivar.
+
+      // Obtener menús publicados de este restaurante (sin filtrar por "primeros N del tenant" para que el activo muestre sus menús)
       const menusQuery = `
         SELECT 
           m.id,
@@ -145,6 +171,8 @@ export class PublicService {
           r.secondary_color as "restaurantSecondaryColor"
         FROM menus m
         INNER JOIN restaurants r ON r.id = m.restaurant_id
+          AND r.deleted_at IS NULL
+          AND r.is_active = true
         WHERE m.slug = $1 
           AND r.slug = $2
           AND m.status = 'PUBLISHED'
@@ -164,6 +192,43 @@ export class PublicService {
 
       const menuData = menuResult[0];
 
+      const restaurantTenant = await this.postgresService.queryRaw<any>(
+        `SELECT tenant_id FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+        [menuData.restaurantId],
+      );
+      const tenantId = restaurantTenant[0]?.tenant_id;
+      if (tenantId) {
+        const plan = await this.getTenantPlan(tenantId);
+        const menuLimit = this.getMenuLimit(plan);
+        if (menuLimit !== -1) {
+          const allowedMenuIds = (
+            await this.postgresService.queryRaw<any>(
+              `SELECT id FROM menus WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY sort ASC, created_at DESC LIMIT $2`,
+              [tenantId, menuLimit],
+            )
+          )?.map((m: any) => m.id) || [];
+          if (!allowedMenuIds.includes(menuData.id)) {
+            throw new NotFoundException(`Menú con slug "${menuSlug}" no encontrado en el restaurante "${restaurantSlug}"`);
+          }
+        }
+      }
+
+      // Límite de productos del plan (solo primeros N ítems del menú)
+      let allowedItemIds: string[] | null = null;
+      if (tenantId) {
+        const plan = await this.getTenantPlan(tenantId);
+        const productLimit = this.getProductLimit(plan);
+        const itemIdsRows = await this.postgresService.queryRaw<any>(
+          `SELECT mi.id FROM menu_items mi
+           INNER JOIN menu_sections ms ON ms.id = mi.section_id AND ms.deleted_at IS NULL
+           WHERE mi.menu_id = $1 AND mi.deleted_at IS NULL AND mi.active = true
+           ORDER BY ms.sort ASC, mi.sort ASC, mi.created_at ASC
+           LIMIT $2`,
+          [menuData.id, productLimit],
+        );
+        allowedItemIds = (itemIdsRows || []).map((r: any) => r.id);
+      }
+
         // Obtener las secciones del menú
         const sectionsQuery = `
           SELECT 
@@ -182,9 +247,16 @@ export class PublicService {
           [menuData.id],
         );
 
-        // Para cada sección, obtener los items
+        // Para cada sección, obtener los items (respetando límite de productos del plan)
         const sectionsWithItems = await Promise.all(
           sectionsResult.map(async (section) => {
+            const itemsParams: any[] = [section.id];
+            let itemsCondition = '';
+            if (allowedItemIds !== null && allowedItemIds.length > 0) {
+              const placeholders = allowedItemIds.map((_, i) => `$${itemsParams.length + 1 + i}`).join(', ');
+              itemsCondition = ` AND mi.id IN (${placeholders})`;
+              itemsParams.push(...allowedItemIds);
+            }
             const itemsQuery = `
               SELECT 
                 mi.id,
@@ -195,12 +267,13 @@ export class PublicService {
               WHERE mi.section_id = $1 
                 AND mi.active = true
                 AND mi.deleted_at IS NULL
+                ${itemsCondition}
               ORDER BY mi.sort ASC, mi.created_at ASC
             `;
 
             const itemsResult = await this.postgresService.queryRaw<any>(
               itemsQuery,
-              [section.id],
+              itemsParams,
             );
 
             // Para cada item, obtener los precios, iconos y fotos
@@ -259,14 +332,7 @@ export class PublicService {
           }),
         );
 
-      // Obtener tenantId del restaurante
-      const restaurantTenant = await this.postgresService.queryRaw<any>(
-        `SELECT tenant_id FROM restaurants WHERE id = $1 LIMIT 1`,
-        [menuData.restaurantId],
-      );
-      const tenantId = restaurantTenant[0]?.tenant_id;
-
-      // Aplicar traducciones al menú si hay tenantId
+      // Aplicar traducciones al menú si hay tenantId (tenantId ya obtenido arriba)
       let menuTranslations: { name?: string; description?: string } = {};
       if (tenantId) {
         menuTranslations = await this.i18nService.getTranslations(

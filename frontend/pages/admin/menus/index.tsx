@@ -82,24 +82,21 @@ export default function Menus() {
   const getMenuLimit = () => {
     if (isSuperAdmin) return -1; // SUPER_ADMIN puede crear ilimitados
     
-    // Si no sabemos el plan, asumir 'free' por defecto
     const plan = tenantPlan || 'free';
-    
     const limits: Record<string, number> = {
       free: 3,
-      basic: 20,
+      basic: 6,
+      pro: 30,
       premium: -1, // Ilimitado
     };
-    
-    return limits[plan] || 3;
+    return limits[plan] ?? 3;
   };
 
   const canCreateMenu = () => {
     const limit = getMenuLimit();
     if (limit === -1) return true; // Ilimitado
-    
-    // Verificar si se alcanzó el límite
-    return menus.length < limit;
+    const currentTotal = total ?? menus.length;
+    return currentTotal < limit;
   };
 
   const loadData = async () => {
@@ -741,9 +738,10 @@ export default function Menus() {
               e.preventDefault();
               e.stopPropagation();
               const limit = getMenuLimit();
-              if (!isSuperAdmin && limit !== -1 && menus.length >= limit) {
+              const currentTotal = total ?? menus.length;
+              if (!isSuperAdmin && limit !== -1 && currentTotal >= limit) {
                 const plan = tenantPlan || 'free';
-                setLimitMessage({ limit, current: menus.length, plan: plan === 'free' ? 'gratuito' : plan });
+                setLimitMessage({ limit, current: currentTotal, plan: plan === 'free' ? 'gratuito' : plan });
                 setShowLimitModal(true);
                 return;
               }

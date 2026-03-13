@@ -4,7 +4,7 @@ import Link from 'next/link';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
 import AlertModal from '../../../components/AlertModal';
-import PricingPlansGrid from '../../../components/PricingPlansGrid';
+import PricingPlansGrid, { type PricingData } from '../../../components/PricingPlansGrid';
 
 type SubItem = {
   id: string;
@@ -21,6 +21,8 @@ type SubItem = {
 export default function SubscriptionManagement() {
   const router = useRouter();
   const [subscriptions, setSubscriptions] = useState<SubItem[]>([]);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelLoading, setCancelLoading] = useState<string | null>(null);
   const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
@@ -38,8 +40,29 @@ export default function SubscriptionManagement() {
     }
   };
 
+  const loadCurrentPlan = async () => {
+    try {
+      const res = await api.get('/restaurants/dashboard-stats');
+      const plan = res.data?.plan ?? null;
+      setCurrentPlan(plan);
+    } catch {
+      setCurrentPlan(null);
+    }
+  };
+
+  const loadPricing = async () => {
+    try {
+      const res = await api.get('/pricing');
+      setPricingData(res.data || null);
+    } catch {
+      setPricingData(null);
+    }
+  };
+
   useEffect(() => {
     loadSubscriptions();
+    loadCurrentPlan();
+    loadPricing();
   }, [router]);
 
   const handleCancel = async (externalSubscriptionId: string) => {
@@ -123,12 +146,21 @@ export default function SubscriptionManagement() {
 
         {/* Suscripciones actuales */}
         <section className="card mb-4">
-          <div className="card-header">
+          <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h2 className="h5 mb-0">Mis suscripciones</h2>
+            {currentPlan && (
+              <span className={`badge ${currentPlan === 'pro' ? 'bg-success' : currentPlan === 'premium' ? 'bg-dark' : currentPlan === 'basic' ? 'bg-info' : 'bg-secondary'} text-capitalize`}>
+                Plan actual: {currentPlan}
+              </span>
+            )}
           </div>
           <div className="card-body">
             {subscriptions.length === 0 ? (
-              <p className="text-muted mb-0">No tienes suscripciones activas. Estás en plan Free. Elige un plan de pago abajo si quieres ampliar límites.</p>
+              <p className="text-muted mb-0">
+                {currentPlan && currentPlan !== 'free'
+                  ? `Tu plan actual es ${currentPlan.toUpperCase()} (asignado por tu organización). No tienes suscripciones de pago propias.`
+                  : 'No tienes suscripciones activas. Estás en plan Free. Elige un plan de pago abajo si quieres ampliar límites.'}
+              </p>
             ) : (
               <ul className="list-group list-group-flush">
                 {subscriptions.map((s) => (
@@ -176,11 +208,14 @@ export default function SubscriptionManagement() {
             <h2 className="h5 mb-0">Planes disponibles</h2>
           </div>
           <div className="card-body">
-            <p className="text-muted small mb-3">Elige otro plan. Si ya tienes una suscripción de pago, se gestionará según las condiciones del proveedor (PayPal).</p>
+            <p className="text-muted small mb-3">
+              Elige otro plan. Los precios y el proveedor de pago dependen de tu región (Argentina: MercadoPago / ARS; resto: PayPal / USD).
+            </p>
             <PricingPlansGrid
               variant="subscription"
               onSelectPlan={handleSelectPlan}
               loadingPlan={upgradeLoading}
+              pricingData={pricingData}
             />
           </div>
         </section>

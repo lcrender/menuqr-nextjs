@@ -494,16 +494,13 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  max-width: 300px;
 }
 
 .prices-container .badge {
-  flex: 0 0 calc((100% - 12px) / 3);
+  flex: 0 0 auto;
   min-width: 0;
   text-align: center;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   margin: 0;
   box-sizing: border-box;
 }
@@ -525,6 +522,20 @@ body {
   text-overflow: ellipsis;
   margin: 0;
   box-sizing: border-box;
+}
+
+/* Botones con fondo gris claro por defecto (Copiar a otro menú, Desactivar/Activar) */
+.btn-copy-menu,
+.btn-toggle-active {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+  color: #495057;
+}
+.btn-copy-menu:hover,
+.btn-toggle-active:hover {
+  background-color: #dee2e6;
+  border-color: #ced4da;
+  color: #212529;
 }
 
 /* Tablas modernas minimalistas */

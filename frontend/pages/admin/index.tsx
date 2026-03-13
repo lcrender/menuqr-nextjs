@@ -30,11 +30,14 @@ export type RestaurantConfigState = {
   menusSummary?: MenuSummary[];
 };
 
+export type DashboardRestaurantCard = RestaurantConfigState & { restaurantId: string };
+
 export default function Admin() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [configState, setConfigState] = useState<RestaurantConfigState | null>(null);
+  const [dashboardCards, setDashboardCards] = useState<DashboardRestaurantCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -77,26 +80,31 @@ export default function Admin() {
 
   const loadConfigState = async () => {
     try {
-      const res = await api.get<RestaurantConfigState>('/restaurants/config-state');
-      setConfigState(res.data);
+      const [configRes, cardsRes] = await Promise.all([
+        api.get<RestaurantConfigState>('/restaurants/config-state'),
+        api.get<DashboardRestaurantCard[]>('/restaurants/dashboard-cards'),
+      ]);
+      setConfigState(configRes.data);
+      setDashboardCards(Array.isArray(cardsRes.data) ? cardsRes.data : []);
     } catch (err) {
       console.error('Error cargando estado de configuración:', err);
       setConfigState(null);
+      setDashboardCards([]);
     }
   };
 
-  const handleDownloadDashboardQR = () => {
-    if (!configState?.restaurantSlug) return;
-    const url = typeof window !== 'undefined' ? `${window.location.origin}/r/${configState.restaurantSlug}` : '';
+  const handleDownloadDashboardQR = (slug: string | null | undefined, qrId: string) => {
+    if (!slug) return;
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/r/${slug}` : '';
     if (!url) return;
-    const svg = document.getElementById('dashboard-restaurant-qr-svg');
+    const svg = document.getElementById(qrId);
     if (!svg) return;
     const svgData = new XMLSerializer().serializeToString(svg);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
-    const scale = 5; // 5x para alta resolución (impresión: ~1100px)
-    const marginPx = 80; // margen blanco en píxeles (en la imagen descargada)
+    const scale = 5;
+    const marginPx = 80;
     img.onload = () => {
       const qrW = img.width * scale;
       const qrH = img.height * scale;
@@ -112,7 +120,7 @@ export default function Admin() {
       ctx.restore();
       const pngFile = canvas.toDataURL('image/png');
       const downloadLink = document.createElement('a');
-      downloadLink.download = `restaurant-qr-${configState?.restaurantSlug || 'menuqr'}.png`;
+      downloadLink.download = `restaurant-qr-${slug || 'menuqr'}.png`;
       downloadLink.href = pngFile;
       downloadLink.click();
     };
@@ -134,22 +142,47 @@ export default function Admin() {
         try {
           const dashboardRes = await api.get('/restaurants/dashboard-stats');
           const d = dashboardRes.data;
+          const currentPlan = d.plan ?? 'free';
           setStats({
             totalRestaurants: d.totalRestaurants ?? 0,
             totalMenus: d.totalMenus ?? 0,
             totalProducts: d.totalProducts ?? 0,
             restaurantLimit: d.restaurantLimit ?? 1,
             productLimit: d.productLimit ?? 30,
+            plan: currentPlan,
           });
+          if (currentPlan && user?.tenant && user.tenant.plan !== currentPlan) {
+            try {
+              const updatedUser = { ...user, tenant: { ...user.tenant, plan: currentPlan } };
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+              setUser(updatedUser);
+            } catch (e) {
+              console.warn('No se pudo actualizar el plan en localStorage:', e);
+            }
+          }
         } catch (innerError) {
           console.error('Error cargando estadísticas (dashboard-stats):', innerError);
-          router.replace('/admin/restaurants?wizard=true');
+          setStats({
+            totalRestaurants: 0,
+            totalMenus: 0,
+            totalProducts: 0,
+            restaurantLimit: 1,
+            productLimit: 30,
+            plan: 'free',
+          });
         }
       }
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
       if (user?.role === 'ADMIN') {
-        router.replace('/admin/restaurants?wizard=true');
+        setStats((prev) => prev || {
+          totalRestaurants: 0,
+          totalMenus: 0,
+          totalProducts: 0,
+          restaurantLimit: 1,
+          productLimit: 30,
+          plan: 'free',
+        });
       }
     }
   };
@@ -422,108 +455,231 @@ export default function Admin() {
             </div>
           )}
 
-          {/* 3. Abajo: módulo QR del restaurante (solo cuando configuración 100%) */}
-          {user?.role === 'ADMIN' && configState?.isComplete && configState.restaurantSlug && (
-            <div className="admin-card">
-              <div className="row g-3 align-items-center">
-                <div className="col-12 col-md-6 d-flex align-items-center">
-                  <div className="d-flex align-items-start gap-3 w-100">
-                    {configState.restaurantLogoUrl && (
-                      <img
-                        src={configState.restaurantLogoUrl}
-                        alt=""
-                        style={{ width: 211, height: 211, objectFit: 'contain', borderRadius: '10px', flexShrink: 0 }}
-                      />
-                    )}
-                    <div className="flex-grow-1 min-w-0">
-                      <h5 className="admin-card-title mb-1" style={{ fontSize: '1.62rem', textTransform: 'uppercase', letterSpacing: '0.02em', paddingTop: '1.25rem' }}>
-                        {configState.restaurantName || 'Tu restaurante'}
-                      </h5>
-                      {configState.restaurantAddress && (
-                        <p className="text-muted mb-1" style={{ fontSize: '1.05rem' }}>{configState.restaurantAddress}</p>
-                      )}
-                      <div className="text-muted" style={{ textDecoration: 'none', fontSize: '1.05rem' }}>
-                        {configState.restaurantEmail && (
-                          <p className="mb-0"><span className="text-dark">Email:</span>{' '}
-                            <a href={`mailto:${configState.restaurantEmail}`} className="text-muted" style={{ textDecoration: 'none' }}>{configState.restaurantEmail}</a>
-                          </p>
+          {/* 3. Abajo: una ficha por cada restaurante (QR, datos, descarga) */}
+          {user?.role === 'ADMIN' && (dashboardCards.length > 0 || (configState?.isComplete && configState.restaurantSlug)) && (
+            <>
+              {dashboardCards.length > 0 ? (
+                <div className="row g-4">
+                  {dashboardCards.map((card) => {
+                    const qrId = `dashboard-restaurant-qr-svg-${card.restaurantId}`;
+                    const templateLabel = card.restaurantTemplate === 'italianFood' ? 'Italian Food' : card.restaurantTemplate === 'classic' ? 'Classic' : card.restaurantTemplate === 'minimalist' ? 'Minimalist' : card.restaurantTemplate === 'foodie' ? 'Foodie' : card.restaurantTemplate === 'burgers' ? 'Burgers' : card.restaurantTemplate;
+                    return (
+                      <div key={card.restaurantId} className="col-12">
+                        <div className="admin-card">
+                          <div className="row g-3 align-items-center">
+                            <div className="col-12 col-md-6 d-flex align-items-center">
+                              <div className="d-flex align-items-start gap-3 w-100">
+                                {card.restaurantLogoUrl && (
+                                  <img
+                                    src={card.restaurantLogoUrl}
+                                    alt=""
+                                    style={{ width: 211, height: 211, objectFit: 'contain', borderRadius: '10px', flexShrink: 0 }}
+                                  />
+                                )}
+                                <div className="flex-grow-1 min-w-0">
+                                  <h5 className="admin-card-title mb-1" style={{ fontSize: '1.62rem', textTransform: 'uppercase', letterSpacing: '0.02em', paddingTop: '1.25rem' }}>
+                                    {card.restaurantName || 'Restaurante'}
+                                  </h5>
+                                  {card.restaurantAddress && (
+                                    <p className="text-muted mb-1" style={{ fontSize: '1.05rem' }}>{card.restaurantAddress}</p>
+                                  )}
+                                  <div className="text-muted" style={{ textDecoration: 'none', fontSize: '1.05rem' }}>
+                                    {card.restaurantEmail && (
+                                      <p className="mb-0"><span className="text-dark">Email:</span>{' '}
+                                        <a href={`mailto:${card.restaurantEmail}`} className="text-muted" style={{ textDecoration: 'none' }}>{card.restaurantEmail}</a>
+                                      </p>
+                                    )}
+                                    {card.restaurantPhone && (() => {
+                                      const raw = card.restaurantPhone;
+                                      const hasWhatsAppPart = raw.includes('| WhatsApp:');
+                                      const displayPhone = raw.split('|')[0].trim();
+                                      const whatsappMatch = raw.match(/\|\s*WhatsApp:\s*(.+)/);
+                                      const whatsappDisplay = whatsappMatch ? whatsappMatch[1].trim() : displayPhone;
+                                      const whatsappDigits = (whatsappMatch ? whatsappMatch[1] : raw).replace(/\D/g, '');
+                                      if (hasWhatsAppPart && whatsappDigits) {
+                                        return (
+                                          <>
+                                            <p className="mb-0"><span className="text-dark">Teléfono:</span>{' '}{displayPhone}</p>
+                                            <p className="mb-0"><span className="text-dark">WhatsApp:</span>{' '}
+                                              <a href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{whatsappDisplay}</a>
+                                            </p>
+                                          </>
+                                        );
+                                      }
+                                      return (
+                                        <p className="mb-0"><span className="text-dark">Teléfono / WhatsApp:</span>{' '}
+                                          <a href={`https://wa.me/${raw.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{displayPhone}</a>
+                                        </p>
+                                      );
+                                    })()}
+                                    {card.restaurantWebsite && (
+                                      <p className="mb-0"><span className="text-dark">Web:</span>{' '}
+                                        <a href={card.restaurantWebsite.startsWith('http') ? card.restaurantWebsite : `https://${card.restaurantWebsite}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{card.restaurantWebsite}</a>
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="col-12 col-md-6 d-flex align-items-center">
+                              <div className="row g-3 align-items-center w-100">
+                                <div className="col-12 col-md-6 d-flex flex-column gap-3 align-items-center">
+                                  {card.restaurantSlug && (
+                                    <>
+                                      <button type="button" className="admin-btn" onClick={() => handleDownloadDashboardQR(card.restaurantSlug, qrId)}>
+                                        Descargar QR
+                                      </button>
+                                      <a
+                                        href={typeof window !== 'undefined' ? `${window.location.origin}/r/${card.restaurantSlug}` : '#'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="admin-btn"
+                                        style={{ textDecoration: 'none' }}
+                                      >
+                                        Ver restaurante
+                                      </a>
+                                    </>
+                                  )}
+                                  {!card.restaurantSlug && (
+                                    <span className="small text-muted">Completa menú y productos para activar el QR</span>
+                                  )}
+                                </div>
+                                <div className="col-12 col-md-6 d-flex justify-content-center justify-content-md-center">
+                                  <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', display: 'inline-block', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                                    <QRCode
+                                      id={qrId}
+                                      value={typeof window !== 'undefined' && card.restaurantSlug ? `${window.location.origin}/r/${card.restaurantSlug}` : ''}
+                                      size={220}
+                                      level="M"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="border-top pt-3 mt-3 text-start d-flex flex-wrap align-items-center gap-3">
+                            <span>
+                              <span className="small text-muted">Suscripción: </span>
+                              <PlanBadge plan={stats?.plan ?? user?.tenant?.plan} />
+                            </span>
+                            {templateLabel && (
+                              <span>
+                                <span className="small text-muted">Plantilla: </span>
+                                <span className="small">{templateLabel}</span>
+                              </span>
+                            )}
+                            {card.progressPercentage < 100 && (
+                              <span className="small text-muted">Progreso: {card.progressPercentage}%</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="admin-card">
+                  <div className="row g-3 align-items-center">
+                    <div className="col-12 col-md-6 d-flex align-items-center">
+                      <div className="d-flex align-items-start gap-3 w-100">
+                        {configState?.restaurantLogoUrl && (
+                          <img
+                            src={configState.restaurantLogoUrl}
+                            alt=""
+                            style={{ width: 211, height: 211, objectFit: 'contain', borderRadius: '10px', flexShrink: 0 }}
+                          />
                         )}
-                        {configState.restaurantPhone && (() => {
-                          const raw = configState.restaurantPhone;
-                          const hasWhatsAppPart = raw.includes('| WhatsApp:');
-                          const displayPhone = raw.split('|')[0].trim();
-                          const whatsappMatch = raw.match(/\|\s*WhatsApp:\s*(.+)/);
-                          const whatsappDisplay = whatsappMatch ? whatsappMatch[1].trim() : displayPhone;
-                          const whatsappDigits = (whatsappMatch ? whatsappMatch[1] : raw).replace(/\D/g, '');
-                          if (hasWhatsAppPart && whatsappDigits) {
-                            return (
-                              <>
-                                <p className="mb-0"><span className="text-dark">Teléfono:</span>{' '}{displayPhone}</p>
-                                <p className="mb-0"><span className="text-dark">WhatsApp:</span>{' '}
-                                  <a href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{whatsappDisplay}</a>
+                        <div className="flex-grow-1 min-w-0">
+                          <h5 className="admin-card-title mb-1" style={{ fontSize: '1.62rem', textTransform: 'uppercase', letterSpacing: '0.02em', paddingTop: '1.25rem' }}>
+                            {configState?.restaurantName || 'Tu restaurante'}
+                          </h5>
+                          {configState?.restaurantAddress && (
+                            <p className="text-muted mb-1" style={{ fontSize: '1.05rem' }}>{configState.restaurantAddress}</p>
+                          )}
+                          <div className="text-muted" style={{ textDecoration: 'none', fontSize: '1.05rem' }}>
+                            {configState?.restaurantEmail && (
+                              <p className="mb-0"><span className="text-dark">Email:</span>{' '}
+                                <a href={`mailto:${configState.restaurantEmail}`} className="text-muted" style={{ textDecoration: 'none' }}>{configState.restaurantEmail}</a>
+                              </p>
+                            )}
+                            {configState?.restaurantPhone && (() => {
+                              const raw = configState.restaurantPhone;
+                              const hasWhatsAppPart = raw.includes('| WhatsApp:');
+                              const displayPhone = raw.split('|')[0].trim();
+                              const whatsappMatch = raw.match(/\|\s*WhatsApp:\s*(.+)/);
+                              const whatsappDisplay = whatsappMatch ? whatsappMatch[1].trim() : displayPhone;
+                              const whatsappDigits = (whatsappMatch ? whatsappMatch[1] : raw).replace(/\D/g, '');
+                              if (hasWhatsAppPart && whatsappDigits) {
+                                return (
+                                  <>
+                                    <p className="mb-0"><span className="text-dark">Teléfono:</span>{' '}{displayPhone}</p>
+                                    <p className="mb-0"><span className="text-dark">WhatsApp:</span>{' '}
+                                      <a href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{whatsappDisplay}</a>
+                                    </p>
+                                  </>
+                                );
+                              }
+                              return (
+                                <p className="mb-0"><span className="text-dark">Teléfono / WhatsApp:</span>{' '}
+                                  <a href={`https://wa.me/${raw.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{displayPhone}</a>
                                 </p>
-                              </>
-                            );
-                          }
-                          return (
-                            <p className="mb-0"><span className="text-dark">Teléfono / WhatsApp:</span>{' '}
-                              <a href={`https://wa.me/${raw.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{displayPhone}</a>
-                            </p>
-                          );
-                        })()}
-                        {configState.restaurantWebsite && (
-                          <p className="mb-0"><span className="text-dark">Web:</span>{' '}
-                            <a href={configState.restaurantWebsite.startsWith('http') ? configState.restaurantWebsite : `https://${configState.restaurantWebsite}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{configState.restaurantWebsite}</a>
-                          </p>
-                        )}
+                              );
+                            })()}
+                            {configState?.restaurantWebsite && (
+                              <p className="mb-0"><span className="text-dark">Web:</span>{' '}
+                                <a href={configState.restaurantWebsite.startsWith('http') ? configState.restaurantWebsite : `https://${configState.restaurantWebsite}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{configState.restaurantWebsite}</a>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-6 d-flex align-items-center">
+                      <div className="row g-3 align-items-center w-100">
+                        <div className="col-12 col-md-6 d-flex flex-column gap-3 align-items-center">
+                          <button type="button" className="admin-btn" onClick={() => handleDownloadDashboardQR(configState?.restaurantSlug, 'dashboard-restaurant-qr-svg')}>
+                            Descargar QR
+                          </button>
+                          <a
+                            href={configState?.restaurantSlug ? `${typeof window !== 'undefined' ? window.location.origin : ''}/r/${configState.restaurantSlug}` : '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="admin-btn"
+                            style={{ textDecoration: 'none' }}
+                          >
+                            Ver restaurante
+                          </a>
+                        </div>
+                        <div className="col-12 col-md-6 d-flex justify-content-center justify-content-md-center">
+                          <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', display: 'inline-block', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                            <QRCode
+                              id="dashboard-restaurant-qr-svg"
+                              value={typeof window !== 'undefined' ? `${window.location.origin}/r/${configState?.restaurantSlug || ''}` : ''}
+                              size={220}
+                              level="M"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="col-12 col-md-6 d-flex align-items-center">
-                  <div className="row g-3 align-items-center w-100">
-                    <div className="col-12 col-md-6 d-flex flex-column gap-3 align-items-center">
-                      <button type="button" className="admin-btn" onClick={handleDownloadDashboardQR}>
-                        Descargar QR
-                      </button>
-                      <a
-                        href={configState.restaurantSlug ? `${typeof window !== 'undefined' ? window.location.origin : ''}/r/${configState.restaurantSlug}` : '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="admin-btn"
-                        style={{ textDecoration: 'none' }}
-                      >
-                        Ver restaurante
-                      </a>
-                    </div>
-                    <div className="col-12 col-md-6 d-flex justify-content-center justify-content-md-center">
-                      <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', display: 'inline-block', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                        <QRCode
-                          id="dashboard-restaurant-qr-svg"
-                          value={typeof window !== 'undefined' ? `${window.location.origin}/r/${configState.restaurantSlug}` : ''}
-                          size={220}
-                          level="M"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="border-top pt-3 mt-3 text-start d-flex flex-wrap align-items-center gap-3">
-                <span>
-                  <span className="small text-muted">Suscripción: </span>
-                  <PlanBadge plan={user?.tenant?.plan} />
-                </span>
-                {configState.restaurantTemplate && (
-                  <span>
-                    <span className="small text-muted">Plantilla: </span>
-                    <span className="small">
-                      {configState.restaurantTemplate === 'italianFood' ? 'Italian Food' : configState.restaurantTemplate === 'classic' ? 'Classic' : configState.restaurantTemplate === 'minimalist' ? 'Minimalist' : configState.restaurantTemplate === 'foodie' ? 'Foodie' : configState.restaurantTemplate === 'burgers' ? 'Burgers' : configState.restaurantTemplate}
+                  <div className="border-top pt-3 mt-3 text-start d-flex flex-wrap align-items-center gap-3">
+                    <span>
+                      <span className="small text-muted">Suscripción: </span>
+                      <PlanBadge plan={stats?.plan ?? user?.tenant?.plan} />
                     </span>
-                  </span>
-                )}
-              </div>
-            </div>
+                    {configState?.restaurantTemplate && (
+                      <span>
+                        <span className="small text-muted">Plantilla: </span>
+                        <span className="small">
+                          {configState.restaurantTemplate === 'italianFood' ? 'Italian Food' : configState.restaurantTemplate === 'classic' ? 'Classic' : configState.restaurantTemplate === 'minimalist' ? 'Minimalist' : configState.restaurantTemplate === 'foodie' ? 'Foodie' : configState.restaurantTemplate === 'burgers' ? 'Burgers' : configState.restaurantTemplate}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

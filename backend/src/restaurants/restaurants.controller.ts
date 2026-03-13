@@ -47,6 +47,15 @@ export class RestaurantsController {
     return this.restaurantsService.getDashboardStats(tenantId);
   }
 
+  @Get('dashboard-cards')
+  @ApiOperation({ summary: 'Fichas de todos los restaurantes del tenant para el dashboard (una por restaurante)' })
+  @ApiResponse({ status: 200, description: 'Array de estado de configuración por restaurante' })
+  async getDashboardCards(@Request() req) {
+    const tenantId = req.user.role === 'SUPER_ADMIN' ? (req.query.tenantId as string) : req.user.tenantId;
+    if (!tenantId) return [];
+    return this.restaurantsService.getDashboardCards(tenantId);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Listar restaurantes del tenant' })
   @ApiResponse({ status: 200, description: 'Lista de restaurantes' })

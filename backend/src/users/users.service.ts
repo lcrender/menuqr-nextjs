@@ -227,6 +227,37 @@ export class UsersService {
     return { oldEmail, newEmail };
   }
 
+  /**
+   * Actualizar usuario por parte del super admin (región/país de facturación, etc.).
+   */
+  async updateByAdmin(
+    id: string,
+    data: { declaredCountry?: string | null },
+  ): Promise<UserWithVerification> {
+    const updates: string[] = ['updated_at = NOW()'];
+    const params: any[] = [];
+    let i = 1;
+    if (data.declaredCountry !== undefined) {
+      updates.push(`declared_country = $${i}`);
+      params.push(data.declaredCountry === '' ? null : data.declaredCountry);
+      i++;
+    }
+    // Si no hay ningún campo que actualizar (solo updated_at), devolver el usuario sin tocar la BD
+    if (updates.length <= 1) {
+      const user = await this.findById(id);
+      if (!user) throw new NotFoundException('Usuario no encontrado');
+      return user as UserWithVerification;
+    }
+    params.push(id);
+    await this.postgres.executeRaw(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = $${i}`,
+      params,
+    );
+    const user = await this.findById(id);
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    return user as UserWithVerification;
+  }
+
   async updateProfile(
     id: string,
     data: { firstName?: string; lastName?: string; declaredCountry?: string | null },
@@ -287,6 +318,7 @@ export class UsersService {
         u.last_name as "lastName",
         u.is_active as "isActive",
         u.tenant_id as "tenantId",
+        u.declared_country as "declaredCountry",
         t.name as "tenantName",
         t.plan as "subscriptionPlan",
         COUNT(DISTINCT r.id) as "restaurantCount",
@@ -308,7 +340,7 @@ export class UsersService {
       params.push(`%${userEmail}%`);
     }
     
-    query += ` GROUP BY u.id, u.email, u.role, u.first_name, u.last_name, u.is_active, u.tenant_id, t.name, t.plan
+    query += ` GROUP BY u.id, u.email, u.role, u.first_name, u.last_name, u.is_active, u.tenant_id, u.declared_country, t.name, t.plan
       ORDER BY u.created_at DESC`;
 
     // Aplicar paginación si se proporciona
@@ -334,6 +366,7 @@ export class UsersService {
         isActive: u.isActive,
         tenantId: u.tenantId,
         tenantName: u.tenantName,
+        declaredCountry: u.declaredCountry ?? null,
         subscriptionPlan: u.subscriptionPlan || null,
         restaurantCount: parseInt(u.restaurantCount) || 0,
         menuCount: parseInt(u.menuCount) || 0,
@@ -426,6 +459,8 @@ export class UsersService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        declaredCountry: user.declaredCountry ?? null,
+        registrationCountry: user.registrationCountry ?? null,
       },
       restaurants: restaurants.map((r: any) => ({
         id: r.id,

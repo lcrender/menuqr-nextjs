@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { UsersService } from './users.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { BadRequestException } from '@nestjs/common';
+import { UpdateUserByAdminDto } from './dto/update-user-by-admin.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -56,6 +57,16 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Detalles del usuario con restaurantes, menús y productos' })
   async getUserDetails(@Param('id') id: string) {
     return this.usersService.getUserDetails(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar usuario (super admin): región/país de facturación' })
+  @ApiResponse({ status: 200, description: 'Usuario actualizado' })
+  async updateUser(
+    @Param('id') id: string,
+    @Body() body: UpdateUserByAdminDto,
+  ) {
+    return this.usersService.updateByAdmin(id, body);
   }
 }
 

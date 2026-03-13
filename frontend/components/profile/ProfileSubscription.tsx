@@ -27,6 +27,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 interface ProfileSubscriptionProps {
   subscriptions: SubscriptionItem[];
+  /** Plan actual del tenant (desde API dashboard-stats), para mostrar el estado real aunque no haya suscripción de pago */
+  currentPlan?: string | null;
   onSubscriptionsChange: () => void;
   onFeedback?: (type: 'success' | 'error', message: string) => void;
   feedback: { type: 'success' | 'error'; message: string } | null;
@@ -35,6 +37,7 @@ interface ProfileSubscriptionProps {
 
 export default function ProfileSubscription({
   subscriptions,
+  currentPlan = null,
   onSubscriptionsChange,
   onFeedback,
   feedback,
@@ -44,8 +47,8 @@ export default function ProfileSubscription({
   const [confirmCancel, setConfirmCancel] = useState<{ id: string; externalId: string } | null>(null);
 
   const activeSubscription = subscriptions.find((s) => s.status === 'active');
-  const effectivePlan = activeSubscription?.subscriptionPlan ?? 'free';
-  const isFree = effectivePlan === 'free' || !activeSubscription;
+  const effectivePlan = (currentPlan || activeSubscription?.subscriptionPlan || 'free').toLowerCase();
+  const isFree = effectivePlan === 'free' && !activeSubscription;
 
   const handleCancelRequest = (s: SubscriptionItem) => {
     if (s.paymentProvider === 'internal') return;
@@ -77,7 +80,7 @@ export default function ProfileSubscription({
             href="/admin/profile/subscription"
             className={isFree ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary'}
           >
-            {isFree ? 'Actualizar a Pro' : 'Gestionar suscripción'}
+            Actualizar suscripción
           </Link>
         </div>
       </div>
@@ -89,15 +92,22 @@ export default function ProfileSubscription({
           </div>
         )}
 
-        {/* Estado actual: solo lectura desde Subscription */}
+        {/* Estado actual: plan desde API (currentPlan) o desde suscripciones */}
         {subscriptions.length === 0 ? (
           <div className="mb-4">
-            <p className="text-muted mb-1">No tienes suscripciones de pago. Estás en plan <strong>Free</strong>.</p>
+            <p className="text-muted mb-1">
+              {currentPlan && currentPlan !== 'free'
+                ? <>Tu plan actual es <strong className="text-capitalize">{currentPlan}</strong> (asignado por tu organización). No tienes suscripciones de pago propias.</>
+                : <>No tienes suscripciones de pago. Estás en plan <strong>Free</strong>.</>}
+            </p>
             <Link href="/admin/profile/subscription">Ver planes y actualizar</Link>
           </div>
         ) : (
           <div className="mb-4">
             <h3 className="h6 mb-2">Estado actual</h3>
+            {currentPlan && (
+              <p className="text-muted small mb-2">Plan activo: <strong className="text-capitalize">{currentPlan}</strong></p>
+            )}
             <ul className="list-group list-group-flush">
               {subscriptions.map((s) => (
                 <li key={s.id} className="list-group-item px-0">

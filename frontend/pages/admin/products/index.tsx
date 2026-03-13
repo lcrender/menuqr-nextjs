@@ -49,6 +49,18 @@ export default function Products() {
   const [page, setPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(50);
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
+  const [planFetchedFromApi, setPlanFetchedFromApi] = useState(false);
+  const [tenants, setTenants] = useState<Array<{ id: string; name: string; plan: string; userCount?: number; restaurantCount?: number }>>([]);
+  const [allRestaurants, setAllRestaurants] = useState<Array<{ id: string; name: string; tenantId?: string; tenantName?: string }>>([]);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(null);
+  const [superAdminSearched, setSuperAdminSearched] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [restaurantSearch, setRestaurantSearch] = useState('');
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [restaurantDropdownOpen, setRestaurantDropdownOpen] = useState(false);
+  const [editPhotos, setEditPhotos] = useState<Array<{ preview: string; id?: string; file?: File }>>([]);
+  const [editImageDragging, setEditImageDragging] = useState(false);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -56,7 +68,6 @@ export default function Products() {
       try {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
-        // Obtener el plan del tenant desde el usuario
         if (parsedUser?.tenant?.plan) {
           setTenantPlan(parsedUser.tenant.plan);
         }
@@ -66,13 +77,65 @@ export default function Products() {
     }
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user, filterProductName, filterMenuName, filterRestaurantName, filterTenantName, page, itemsPerPage]);
-
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  // Obtener el plan actual desde la API (por si cambió, ej. super admin actualizó el plan)
+  useEffect(() => {
+    if (!user || isSuperAdmin) return;
+    const fetchPlan = async () => {
+      try {
+        const res = await api.get('/restaurants/dashboard-stats');
+        const plan = res.data?.plan ?? null;
+        if (plan) {
+          setTenantPlan(plan);
+          if (user?.tenant && user.tenant.plan !== plan) {
+            const updatedUser = { ...user, tenant: { ...user.tenant, plan } };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+          }
+        }
+        setPlanFetchedFromApi(true);
+      } catch {
+        setPlanFetchedFromApi(true);
+      }
+    };
+    fetchPlan();
+  }, [user?.id, isSuperAdmin]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (isSuperAdmin && (!superAdminSearched || (!selectedTenantId && !selectedRestaurantId))) return;
+    loadData();
+  }, [user, isSuperAdmin, superAdminSearched, selectedTenantId, selectedRestaurantId, filterProductName, filterMenuName, filterRestaurantName, filterTenantName, page, itemsPerPage]);
+
+  useEffect(() => {
+    if (!isSuperAdmin || !user) return;
+    const loadTenants = async () => {
+      try {
+        const res = await api.get('/tenants', { params: { limit: 500 } });
+        const payload = res.data?.data ?? res.data;
+        setTenants(Array.isArray(payload) ? payload : []);
+      } catch {
+        setTenants([]);
+      }
+    };
+    loadTenants();
+  }, [user, isSuperAdmin]);
+
+  useEffect(() => {
+    if (!isSuperAdmin || !user) return;
+    const loadAllRestaurants = async () => {
+      try {
+        const res = await api.get('/restaurants', { params: { limit: 1000 } });
+        const payload = res.data?.data ?? res.data;
+        const list = Array.isArray(payload) ? payload : [];
+        setAllRestaurants(list);
+      } catch {
+        setAllRestaurants([]);
+      }
+    };
+    loadAllRestaurants();
+  }, [user, isSuperAdmin]);
 
   const getProductLimit = () => {
     if (isSuperAdmin) return -1;
@@ -89,8 +152,10 @@ export default function Products() {
   const canCreateProduct = () => {
     const limit = getProductLimit();
     if (limit === -1) return true; // Ilimitado
-    
-    return products.length < limit;
+    // No bloquear hasta tener el plan desde la API (evita bloqueo con plan viejo de localStorage)
+    if (!isSuperAdmin && !planFetchedFromApi) return true;
+    const currentTotal = total ?? products.length;
+    return currentTotal < limit;
   };
 
   useEffect(() => {
@@ -113,6 +178,8 @@ export default function Products() {
       setLoading(true);
       const params: any = {};
       if (isSuperAdmin) {
+        if (selectedTenantId) params.tenantId = selectedTenantId;
+        if (selectedRestaurantId) params.restaurantId = selectedRestaurantId;
         if (filterProductName) params.productName = filterProductName;
         if (filterMenuName) params.menuName = filterMenuName;
         if (filterRestaurantName) params.restaurantName = filterRestaurantName;
@@ -127,21 +194,23 @@ export default function Products() {
 
       const [productsRes, menusRes, restaurantsRes] = await Promise.all([
         api.get('/menu-items', { params }),
-        api.get('/menus'),
-        api.get('/restaurants'),
+        api.get('/menus', isSuperAdmin ? { params: selectedTenantId ? { tenantId: selectedTenantId } : {} } : {}),
+        api.get('/restaurants', isSuperAdmin ? { params: selectedTenantId ? { tenantId: selectedTenantId } : {} } : {}),
       ]);
-      
+
+      const menusPayload = menusRes.data;
+      const restaurantsPayload = restaurantsRes.data;
+      setMenus(Array.isArray(menusPayload) ? menusPayload : (menusPayload?.data ?? []));
+      setRestaurants(Array.isArray(restaurantsPayload) ? restaurantsPayload : (restaurantsPayload?.data ?? []));
+
       // Manejar respuesta paginada o no paginada de productos
       if (productsRes.data.data && productsRes.data.total !== undefined) {
         setProducts(productsRes.data.data);
         setTotal(productsRes.data.total);
       } else {
-        setProducts(productsRes.data);
-        setTotal(productsRes.data.length);
+        setProducts(Array.isArray(productsRes.data) ? productsRes.data : []);
+        setTotal(Array.isArray(productsRes.data) ? productsRes.data.length : 0);
       }
-      
-      setMenus(menusRes.data);
-      setRestaurants(restaurantsRes.data || []);
       
       // Cargar iconos disponibles (esto requeriría un endpoint, por ahora usamos valores por defecto)
       setAvailableIcons([
@@ -196,6 +265,14 @@ export default function Products() {
           prices: validPrices,
           iconCodes: formData.iconCodes,
         });
+        const newPhotos = editPhotos.filter((p) => p.file);
+        for (const p of newPhotos) {
+          if (p.file) {
+            const fd = new FormData();
+            fd.append('file', p.file);
+            await api.post(`/media/items/${editing.id}/photo`, fd);
+          }
+        }
       } else {
         // Enviar solo los campos que tienen valor
         const dataToSend = {
@@ -208,6 +285,7 @@ export default function Products() {
 
       setShowModal(false);
       setEditing(null);
+      setEditPhotos([]);
       setSelectedMenu('');
       const defaultCurrency = getDefaultCurrency('');
       setFormData({
@@ -246,10 +324,38 @@ export default function Products() {
         : [{ currency: defaultCurrency, label: '', amount: 0 }],
       iconCodes: product.icons || [],
     });
+    setEditPhotos((product.photos || []).map((p: any) => ({ preview: p.url || p, id: p.id })));
     if (menuId) {
       loadSections(menuId);
     }
     setShowModal(true);
+  };
+
+  const canAddEditPhotos = user?.role === 'SUPER_ADMIN' || tenantPlan === 'pro' || tenantPlan === 'premium';
+
+  const handleEditImageUpload = (files: File[]) => {
+    const imageFiles = files.filter((f) => f.type.startsWith('image/'));
+    imageFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          setEditPhotos((prev) => [...prev, { preview: e.target!.result as string, file }]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeEditImage = async (index: number) => {
+    const item = editPhotos[index];
+    if (item.id) {
+      try {
+        await api.delete(`/media/${item.id}`);
+      } catch (err) {
+        console.error('Error eliminando foto:', err);
+      }
+    }
+    setEditPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleCopyToMenuClick = (product: any) => {
@@ -421,14 +527,169 @@ export default function Products() {
                 setShowLimitModal(true);
               }
             }}
-            disabled={restaurants.length === 0}
+            disabled={isSuperAdmin ? (!selectedTenantId && !selectedRestaurantId ? true : restaurants.length === 0) : restaurants.length === 0}
           >
             + Nuevo Producto
           </button>
         </div>
       </div>
 
-      {!loading && restaurants.length === 0 && (
+      {isSuperAdmin && (
+        <div className="admin-card mb-4">
+          <h2 className="admin-card-title mb-3">Buscar productos por usuario y/o restaurante</h2>
+          <p className="text-muted small mb-3">
+            Elige al menos un usuario (organización) o un restaurante. Al hacer clic en &quot;Ver productos&quot; se cargarán los productos.
+          </p>
+          <div className="row g-3 mb-3">
+            <div className="col-12 col-md-6">
+              <label className="form-label fw-semibold">Usuario (organización)</label>
+              <div className="position-relative">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Escriba y elija una opción de la lista"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  onFocus={() => setUserDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setUserDropdownOpen(false), 200)}
+                />
+                {(userDropdownOpen || userSearch) && (
+                  <div
+                    className="list-group position-absolute w-100 mt-1 shadow-sm border rounded"
+                    style={{ maxHeight: '220px', overflowY: 'auto', zIndex: 1060 }}
+                  >
+                    {tenants
+                      .filter((t) => !userSearch || t.name.toLowerCase().includes(userSearch.toLowerCase()))
+                      .slice(0, 50)
+                      .map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          className="list-group-item list-group-item-action text-start"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setSelectedTenantId(t.id);
+                            setUserSearch(t.name);
+                            setUserDropdownOpen(false);
+                          }}
+                        >
+                          <span className="fw-semibold">{t.name}</span>
+                          <span className="badge bg-secondary ms-2">{t.plan}</span>
+                        </button>
+                      ))}
+                    {tenants.filter((t) => !userSearch || t.name.toLowerCase().includes(userSearch.toLowerCase())).length === 0 && (
+                      <div className="list-group-item text-muted small">No hay coincidencias</div>
+                    )}
+                  </div>
+                )}
+                {selectedTenantId && (
+                  <div className="mt-1 d-flex align-items-center gap-2">
+                    <span className="badge bg-primary">
+                      {tenants.find((t) => t.id === selectedTenantId)?.name ?? selectedTenantId}
+                    </span>
+                    <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => { setSelectedTenantId(null); setUserSearch(''); }}>
+                      Quitar
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="col-12 col-md-6">
+              <label className="form-label fw-semibold">Restaurante</label>
+              <div className="position-relative">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Opcional: escriba y elija un restaurante"
+                  value={restaurantSearch}
+                  onChange={(e) => setRestaurantSearch(e.target.value)}
+                  onFocus={() => setRestaurantDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setRestaurantDropdownOpen(false), 200)}
+                />
+                {(restaurantDropdownOpen || restaurantSearch) && (
+                  <div
+                    className="list-group position-absolute w-100 mt-1 shadow-sm border rounded"
+                    style={{ maxHeight: '220px', overflowY: 'auto', zIndex: 1060 }}
+                  >
+                    {allRestaurants
+                      .filter((r) => {
+                        const matchSearch = !restaurantSearch || (r.name || '').toLowerCase().includes(restaurantSearch.toLowerCase());
+                        const matchTenant = !selectedTenantId || (r.tenantId || r.tenant_id) === selectedTenantId;
+                        return matchSearch && matchTenant;
+                      })
+                      .slice(0, 50)
+                      .map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          className="list-group-item list-group-item-action text-start"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setSelectedRestaurantId(r.id);
+                            setRestaurantSearch(r.name || '');
+                            setRestaurantDropdownOpen(false);
+                          }}
+                        >
+                          <span className="fw-semibold">{r.name}</span>
+                          {r.tenantName && <span className="text-muted small ms-2">({r.tenantName})</span>}
+                        </button>
+                      ))}
+                    {allRestaurants.filter((r) => {
+                      const matchSearch = !restaurantSearch || (r.name || '').toLowerCase().includes(restaurantSearch.toLowerCase());
+                      const matchTenant = !selectedTenantId || (r.tenantId || r.tenant_id) === selectedTenantId;
+                      return matchSearch && matchTenant;
+                    }).length === 0 && (
+                      <div className="list-group-item text-muted small">No hay coincidencias</div>
+                    )}
+                  </div>
+                )}
+                {selectedRestaurantId && (
+                  <div className="mt-1 d-flex align-items-center gap-2">
+                    <span className="badge bg-primary">
+                      {allRestaurants.find((r) => r.id === selectedRestaurantId)?.name ?? selectedRestaurantId}
+                    </span>
+                    <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => { setSelectedRestaurantId(null); setRestaurantSearch(''); }}>
+                      Quitar
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <p className="text-muted small mb-2">
+            El botón se habilita cuando eliges <strong>al menos una opción</strong> de las listas de arriba (haz clic en una fila al escribir o al abrir el desplegable).
+          </p>
+          <div className="d-flex align-items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              className="admin-btn"
+              disabled={!selectedTenantId && !selectedRestaurantId}
+              onClick={() => setSuperAdminSearched(true)}
+            >
+              Ver productos
+            </button>
+            {superAdminSearched && (selectedTenantId || selectedRestaurantId) && (
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => {
+                  setSelectedTenantId(null);
+                  setSelectedRestaurantId(null);
+                  setUserSearch('');
+                  setRestaurantSearch('');
+                  setSuperAdminSearched(false);
+                  setProducts([]);
+                  setTotal(0);
+                }}
+              >
+                Limpiar y buscar de nuevo
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!loading && !isSuperAdmin && restaurants.length === 0 && (
         <div className="admin-card mb-4" style={{ textAlign: 'center', padding: '2rem' }}>
           <p className="mb-3" style={{ fontSize: '1.1rem', color: 'var(--admin-text-secondary)' }}>
             Para crear un producto primero necesitas tener al menos un restaurante y un menú.
@@ -439,7 +700,7 @@ export default function Products() {
         </div>
       )}
 
-      {restaurants.length > 0 && (
+      {(restaurants.length > 0 || (isSuperAdmin && superAdminSearched)) && (
         <>
       {user && user.role !== 'SUPER_ADMIN' && (
         <div className="mb-3 p-3 bg-light rounded border">
@@ -549,7 +810,7 @@ export default function Products() {
                 {isSuperAdmin && <th>Plantilla</th>}
                 <th>Menú</th>
                 <th>Sección</th>
-                <th>Precios</th>
+                <th style={{ minWidth: '160px' }}>Precios</th>
                 <th>Íconos</th>
                 <th>Estado</th>
                 <th>Acciones</th>
@@ -584,11 +845,11 @@ export default function Products() {
                   )}
                   <td>{product.menuName || (product.menuId || product.menu_id ? getMenuName(product.menuId || product.menu_id) : <span className="text-muted">Sin asignar</span>)}</td>
                   <td>{product.sectionName || (product.sectionId || product.section_id ? getSectionName(product.sectionId || product.section_id) : <span className="text-muted">-</span>)}</td>
-                  <td>
+                  <td style={{ minWidth: '160px' }}>
                     {product.prices && product.prices.length > 0 ? (
-                      <div className="prices-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxWidth: '300px' }}>
+                      <div className="prices-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
                         {product.prices.map((price: any, idx: number) => (
-                          <span key={idx} className="badge bg-primary" style={{ margin: '2px 0' }}>
+                          <span key={idx} className="badge bg-primary" style={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}>
                             {formatPrice(price)}
                           </span>
                         ))}
@@ -617,7 +878,7 @@ export default function Products() {
                       </span>
                       <button
                         type="button"
-                        className="btn btn-sm btn-outline-secondary"
+                        className="btn btn-sm btn-outline-secondary btn-toggle-active"
                         onClick={async () => {
                           try {
                             await api.put(`/menu-items/${product.id}`, {
@@ -639,7 +900,7 @@ export default function Products() {
                     </button>
                     <button
                       type="button"
-                      className="btn btn-sm btn-outline-secondary me-1"
+                      className="btn btn-sm btn-outline-secondary btn-copy-menu me-1"
                       onClick={() => handleCopyToMenuClick(product)}
                     >
                       Copiar a otro menú
@@ -705,7 +966,7 @@ export default function Products() {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">{editing ? 'Editar' : 'Nuevo'} Producto</h5>
-                <button className="btn-close" onClick={() => setShowModal(false)}></button>
+                <button className="btn-close" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); }}></button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="modal-body">
@@ -847,6 +1108,147 @@ export default function Products() {
                     </div>
                   </div>
 
+                  {editing && (
+                    <div className="mb-3" style={{ paddingTop: '16px', borderTop: '1px solid #e0e0e0' }}>
+                      <label className="form-label" style={{ fontWeight: 600 }}>
+                        Imágenes del Producto
+                      </label>
+                      {!canAddEditPhotos ? (
+                        <div
+                          style={{
+                            border: '2px dashed #ccc',
+                            borderRadius: '8px',
+                            padding: '24px',
+                            textAlign: 'center',
+                            backgroundColor: '#f5f5f5',
+                            cursor: 'not-allowed',
+                            opacity: 0.6,
+                          }}
+                        >
+                          <div style={{ fontSize: '36px', marginBottom: '12px', opacity: 0.5 }}>📷</div>
+                          <p style={{ margin: 0, color: '#999', fontSize: '14px', marginBottom: '8px' }}>
+                            Arrastra imágenes aquí o haz clic para seleccionar
+                          </p>
+                          <p style={{ margin: 0, color: '#bbb', fontSize: '13px', marginBottom: '12px' }}>
+                            Formatos: JPG, PNG, GIF (máx. 5MB por imagen)
+                          </p>
+                          <div
+                            style={{
+                              marginTop: '16px',
+                              padding: '12px 16px',
+                              backgroundColor: '#fff3cd',
+                              border: '1px solid #ffc107',
+                              borderRadius: '6px',
+                              display: 'inline-flex',
+                              flexDirection: 'column',
+                              gap: '8px',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <p style={{ margin: 0, color: '#856404', fontSize: '13px', fontWeight: 500 }}>
+                              <strong>⚠️ Función no disponible para usuarios gratuitos</strong>
+                              <br />
+                              <span style={{ fontSize: '12px' }}>
+                                Amplía tu suscripción para poder agregar imágenes a tus productos.
+                              </span>
+                            </p>
+                            <a
+                              href="/admin/profile/subscription"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-block',
+                                marginTop: '4px',
+                                padding: '6px 12px',
+                                fontSize: '12px',
+                                borderRadius: '4px',
+                                backgroundColor: '#ffc107',
+                                color: '#212529',
+                                textDecoration: 'none',
+                                fontWeight: 600,
+                              }}
+                            >
+                              Ver planes y suscripción
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            style={{
+                              border: `2px dashed ${editImageDragging ? '#007bff' : '#ccc'}`,
+                              borderRadius: '8px',
+                              padding: '24px',
+                              textAlign: 'center',
+                              backgroundColor: editImageDragging ? '#f0f8ff' : '#fafafa',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                            }}
+                            onDragOver={(e) => { e.preventDefault(); setEditImageDragging(true); }}
+                            onDragLeave={() => setEditImageDragging(false)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setEditImageDragging(false);
+                              handleEditImageUpload(Array.from(e.dataTransfer.files));
+                            }}
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
+                              input.multiple = true;
+                              input.onchange = (e: any) => {
+                                if (e.target.files) handleEditImageUpload(Array.from(e.target.files));
+                              };
+                              input.click();
+                            }}
+                          >
+                            <div style={{ fontSize: '36px', marginBottom: '8px' }}>📷</div>
+                            <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
+                              Arrastra imágenes aquí o haz clic para seleccionar
+                            </p>
+                            <p style={{ margin: 0, color: '#999', fontSize: '12px' }}>
+                              Formatos: JPG, PNG, GIF (máx. 5MB por imagen)
+                            </p>
+                          </div>
+                          {editPhotos.length > 0 && (
+                            <div className="d-flex flex-wrap gap-2 mt-2">
+                              {editPhotos.map((photo, index) => (
+                                <div key={index} style={{ position: 'relative', width: '80px', height: '80px' }}>
+                                  <img
+                                    src={photo.preview}
+                                    alt=""
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                      borderRadius: '8px',
+                                      border: '1px solid #ddd',
+                                    }}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-danger"
+                                    style={{
+                                      position: 'absolute',
+                                      top: '4px',
+                                      right: '4px',
+                                      padding: '2px 6px',
+                                      fontSize: '12px',
+                                    }}
+                                    onClick={(e) => { e.preventDefault(); removeEditImage(index); }}
+                                    title="Quitar imagen"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+
                   <div className="mb-3">
                     <div className="form-check">
                       <input
@@ -860,7 +1262,7 @@ export default function Products() {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                  <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); }}>
                     Cancelar
                   </button>
                   <button type="submit" className="btn btn-primary">

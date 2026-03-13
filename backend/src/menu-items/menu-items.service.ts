@@ -47,6 +47,15 @@ export class MenuItemsService {
 
     query += ` ORDER BY mi.menu_id NULLS LAST, ms.sort NULLS LAST, mi.sort ASC, mi.created_at ASC`;
 
+    if (tenantId) {
+      const plan = await this.getTenantPlan(tenantId);
+      const itemLimit = this.getMenuItemLimit(plan);
+      if (itemLimit !== -1) {
+        query += ` LIMIT $${params.length + 1}`;
+        params.push(itemLimit);
+      }
+    }
+
     const items = await this.postgres.queryRaw<any>(query, params);
 
     // Para cada item, obtener precios, iconos y fotos
@@ -94,6 +103,116 @@ export class MenuItemsService {
     );
 
     return itemsWithDetails;
+  }
+
+  /**
+   * Listar productos para SUPER_ADMIN filtrando por tenantId y/o restaurantId (IDs exactos).
+   * Se usa cuando el admin elige usuario y/o restaurante en los selects.
+   */
+  async findAllForSuperAdminByIds(
+    tenantId?: string,
+    restaurantId?: string,
+    productName?: string,
+    limit?: number,
+    offset?: number,
+  ): Promise<{ data: any[]; total: number }> {
+    const countParams: any[] = [];
+    let countQuery = `
+      SELECT COUNT(DISTINCT mi.id) as total
+      FROM menu_items mi
+      LEFT JOIN menus m ON m.id = mi.menu_id AND m.deleted_at IS NULL
+      LEFT JOIN restaurants r ON r.id = m.restaurant_id AND r.deleted_at IS NULL
+      WHERE mi.deleted_at IS NULL
+    `;
+    if (tenantId) {
+      countParams.push(tenantId);
+      countQuery += ` AND mi.tenant_id = $${countParams.length}`;
+    }
+    if (restaurantId) {
+      countParams.push(restaurantId);
+      countQuery += ` AND r.id = $${countParams.length}`;
+    }
+    if (productName) {
+      countParams.push(`%${productName}%`);
+      countQuery += ` AND LOWER(mi.name) LIKE LOWER($${countParams.length})`;
+    }
+
+    const countResult = await this.postgres.queryRaw<{ total: string }>(countQuery, countParams);
+    const total = parseInt(countResult[0]?.total || '0', 10);
+
+    const params: any[] = [];
+    let query = `
+      SELECT 
+        mi.*,
+        ms.name as "sectionName",
+        m.name as "menuName",
+        r.name as "restaurantName",
+        r.template as "restaurantTemplate",
+        t.name as "tenantName",
+        t.id as "tenantId"
+      FROM menu_items mi
+      LEFT JOIN menu_sections ms ON ms.id = mi.section_id AND ms.deleted_at IS NULL
+      LEFT JOIN menus m ON m.id = mi.menu_id AND m.deleted_at IS NULL
+      LEFT JOIN restaurants r ON r.id = m.restaurant_id AND r.deleted_at IS NULL
+      LEFT JOIN tenants t ON t.id = mi.tenant_id AND t.deleted_at IS NULL
+      WHERE mi.deleted_at IS NULL
+    `;
+    if (tenantId) {
+      params.push(tenantId);
+      query += ` AND mi.tenant_id = $${params.length}`;
+    }
+    if (restaurantId) {
+      params.push(restaurantId);
+      query += ` AND r.id = $${params.length}`;
+    }
+    if (productName) {
+      params.push(`%${productName}%`);
+      query += ` AND LOWER(mi.name) LIKE LOWER($${params.length})`;
+    }
+    query += ` ORDER BY mi.menu_id NULLS LAST, ms.sort NULLS LAST, mi.sort ASC, mi.created_at ASC`;
+    if (limit != null) {
+      params.push(limit);
+      query += ` LIMIT $${params.length}`;
+      if (offset != null) {
+        params.push(offset);
+        query += ` OFFSET $${params.length}`;
+      }
+    }
+
+    const items = await this.postgres.queryRaw<any>(query, params);
+    const itemsWithDetails = await Promise.all(
+      items.map(async (item: any) => {
+        const [prices, icons, photos] = await Promise.all([
+          this.postgres.queryRaw<any>(
+            `SELECT currency, label, amount FROM item_prices WHERE item_id = $1 AND deleted_at IS NULL ORDER BY amount ASC`,
+            [item.id]
+          ),
+          this.postgres.queryRaw<any>(
+            `SELECT i.code FROM icons i INNER JOIN item_icons ii ON i.id = ii.icon_id WHERE ii.item_id = $1 AND i.is_active = true`,
+            [item.id]
+          ),
+          this.postgres.queryRaw<any>(
+            `SELECT id, url, filename, mime_type as "mimeType", width, height FROM media_assets WHERE item_id = $1 AND kind = 'image' AND deleted_at IS NULL ORDER BY created_at ASC`,
+            [item.id]
+          ),
+        ]);
+        return {
+          ...item,
+          menuId: item.menu_id,
+          sectionId: item.section_id,
+          menuName: item.menuName || 'Sin menú',
+          sectionName: item.sectionName || 'Sin sección',
+          restaurantName: item.restaurantName || 'Sin restaurante',
+          restaurantTemplate: item.restaurantTemplate || 'classic',
+          tenantName: item.tenantName || null,
+          tenantId: item.tenantId || null,
+          prices,
+          icons: icons.map((i: any) => i.code),
+          photos,
+        };
+      })
+    );
+    return { data: itemsWithDetails, total };
   }
 
   async findAllForSuperAdmin(productName?: string, menuName?: string, restaurantName?: string, tenantName?: string, limit?: number, offset?: number): Promise<{ data: any[]; total: number }> {
@@ -740,18 +859,16 @@ export class MenuItemsService {
     }
   }
 
-  private async validateMenuItemLimit(tenantId: string) {
-    // Obtener el plan del tenant
+  private async getTenantPlan(tenantId: string): Promise<string> {
     const tenant = await this.postgres.queryRaw<any>(
       `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
       [tenantId]
     );
+    return tenant[0]?.plan || 'free';
+  }
 
-    if (!tenant[0]) {
-      throw new NotFoundException('Tenant no encontrado');
-    }
-
-    const plan = tenant[0].plan || 'free'; // Default a 'free' si no tiene plan
+  private async validateMenuItemLimit(tenantId: string) {
+    const plan = await this.getTenantPlan(tenantId);
 
     // Obtener límite según el plan
     const limit = this.getMenuItemLimit(plan);

@@ -13,6 +13,7 @@ interface UserStats {
   isActive: boolean;
   tenantId: string | null;
   tenantName: string | null;
+  declaredCountry: string | null;
   subscriptionPlan: string | null;
   restaurantCount: number;
   menuCount: number;
@@ -103,6 +104,39 @@ export default function Users() {
       await loadUsers();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Error al actualizar el estado');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRegionChange = async (e: React.ChangeEvent<HTMLSelectElement>, user: UserStats) => {
+    e.stopPropagation();
+    const value = e.target.value;
+    const declaredCountry = value === '' ? null : value;
+    setActionLoading(user.id);
+    try {
+      await api.patch(`/users/${user.id}`, { declaredCountry });
+      await loadUsers();
+      if (selectedUser?.id === user.id && userDetails) {
+        setUserDetails({ ...userDetails, user: { ...userDetails.user, declaredCountry } });
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Error al actualizar la región');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handlePlanChange = async (e: React.ChangeEvent<HTMLSelectElement>, user: UserStats) => {
+    e.stopPropagation();
+    const newPlan = e.target.value as 'free' | 'basic' | 'pro' | 'premium';
+    if (!user.tenantId) return;
+    setActionLoading(user.id);
+    try {
+      await api.put(`/tenants/${user.tenantId}`, { plan: newPlan });
+      await loadUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Error al actualizar el plan');
     } finally {
       setActionLoading(null);
     }
@@ -216,6 +250,7 @@ export default function Users() {
                 <th>Email</th>
                 <th>Tenant</th>
                 <th>Suscripción</th>
+                {currentUser?.role === 'SUPER_ADMIN' && <th>Región</th>}
                 <th>Estado</th>
                 <th>Restaurantes</th>
                 <th>Menús</th>
@@ -227,7 +262,7 @@ export default function Users() {
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={currentUser?.role === 'SUPER_ADMIN' ? 9 : 8} className="text-center text-muted">
+                  <td colSpan={currentUser?.role === 'SUPER_ADMIN' ? 10 : 8} className="text-center text-muted">
                     No hay usuarios registrados
                   </td>
                 </tr>
@@ -249,11 +284,44 @@ export default function Users() {
                         <span className="text-muted">-</span>
                       )}
                     </td>
-                    <td>
-                      <span className={`badge ${getPlanBadgeClass(user.subscriptionPlan)}`}>
-                        {getPlanLabel(user.subscriptionPlan)}
-                      </span>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      {currentUser?.role === 'SUPER_ADMIN' && user.tenantId ? (
+                        <select
+                          className="form-select form-select-sm"
+                          style={{ width: 'auto', minWidth: '110px' }}
+                          value={(user.subscriptionPlan || 'free').toLowerCase()}
+                          disabled={actionLoading === user.id}
+                          onChange={(e) => handlePlanChange(e, user)}
+                          onClick={(e) => e.stopPropagation()}
+                          title="Solo para pruebas: cambia el plan del tenant sin generar suscripción"
+                        >
+                          <option value="free">Gratis</option>
+                          <option value="basic">Básico</option>
+                          <option value="pro">Pro</option>
+                          <option value="premium">Premium</option>
+                        </select>
+                      ) : (
+                        <span className={`badge ${getPlanBadgeClass(user.subscriptionPlan)}`}>
+                          {getPlanLabel(user.subscriptionPlan)}
+                        </span>
+                      )}
                     </td>
+                    {currentUser?.role === 'SUPER_ADMIN' && (
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <select
+                          className="form-select form-select-sm"
+                          style={{ width: 'auto', minWidth: '130px' }}
+                          value={user.declaredCountry ?? ''}
+                          disabled={actionLoading === user.id}
+                          onChange={(e) => handleRegionChange(e, user)}
+                          onClick={(e) => e.stopPropagation()}
+                          title="Región para precios (Argentina: ARS/MercadoPago, resto: USD/PayPal)"
+                        >
+                          <option value="">Resto (USD)</option>
+                          <option value="AR">Argentina (ARS)</option>
+                        </select>
+                      </td>
+                    )}
                     <td>
                       <span className={`badge ${user.isActive ? 'bg-success' : 'bg-secondary'}`}>
                         {user.isActive ? 'Activo' : 'Inactivo'}
@@ -410,6 +478,35 @@ export default function Users() {
                   </div>
                 ) : userDetails ? (
                   <>
+                    {currentUser?.role === 'SUPER_ADMIN' && (
+                      <div className="mb-4">
+                        <h6 className="mb-2">Región de facturación</h6>
+                        <p className="text-muted small mb-2">Define precios y proveedor de pago (Argentina: ARS/MercadoPago, resto: USD/PayPal).</p>
+                        <select
+                          className="form-select form-select-sm"
+                          style={{ width: 'auto', maxWidth: '220px' }}
+                          value={userDetails.user?.declaredCountry ?? ''}
+                          disabled={actionLoading === selectedUser?.id}
+                          onChange={async (e) => {
+                            const declaredCountry = e.target.value === '' ? null : e.target.value;
+                            if (!selectedUser) return;
+                            setActionLoading(selectedUser.id);
+                            try {
+                              await api.patch(`/users/${selectedUser.id}`, { declaredCountry });
+                              setUserDetails({ ...userDetails, user: { ...userDetails.user, declaredCountry } });
+                              await loadUsers();
+                            } catch (err: any) {
+                              alert(err.response?.data?.message || 'Error al actualizar la región');
+                            } finally {
+                              setActionLoading(null);
+                            }
+                          }}
+                        >
+                          <option value="">Resto del mundo (USD)</option>
+                          <option value="AR">Argentina (ARS)</option>
+                        </select>
+                      </div>
+                    )}
                     {/* Restaurantes */}
                     <div className="mb-4">
                       <h6 className="mb-3">Restaurantes ({userDetails.restaurants.length})</h6>

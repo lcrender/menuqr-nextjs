@@ -2,8 +2,9 @@
 
 ## Resumen
 
-- **PayPal**: suscripciones recurrentes (mensual/anual), webhooks para activación, cancelación, pago fallido y renovación.
-- **MercadoPago**: preparado como proveedor futuro (solo Argentina); no implementado aún.
+- **PayPal**: suscripciones recurrentes (USD) para usuarios internacionales. Webhooks para activación, cancelación, pago fallido y renovación.
+- **MercadoPago**: suscripciones recurrentes (ARS) para Argentina. API Preapproval, webhooks para autorización y pagos.
+- **Pricing por región**: tabla `plans` + `plan_prices` (país, moneda, precio, proveedor). Argentina (AR) → ARS + MercadoPago; resto → GLOBAL (USD + PayPal). Fallback automático a GLOBAL si no hay precio para el país.
 - La activación del plan **solo** se hace vía webhooks del proveedor; el frontend no puede activar suscripciones.
 
 ## Base de datos
@@ -25,6 +26,8 @@ Nuevas entidades:
 - **User**: `registration_country`, `declared_country` (opcionales).
 - **Subscription**: por usuario, proveedor, `external_subscription_id`, estado, `plan_type` (monthly/yearly), `subscription_plan` (basic/pro/premium), períodos, `cancel_at_period_end`.
 - **WebhookEvent**: idempotencia (provider + event_id).
+- **plans**: id, name, description (ej. plan_basic, plan_pro).
+- **plan_prices**: plan_id, country (AR, GLOBAL, …), currency, price, payment_provider. Un precio por (plan_id, country). Migración: `20260206000000_add_plans_and_plan_prices`.
 
 ### Backfill: suscripción free para usuarios existentes
 
@@ -47,9 +50,12 @@ También puedes ejecutar el contenido de `scripts/backfill-free-subscriptions.sq
 
 ## Proveedor de pago
 
-`getPaymentProvider(user)` devuelve el proveedor para ese usuario. Hoy siempre `paypal`; en el futuro se puede elegir por país/tenant sin hardcodear `if country === 'AR'`.
+`PaymentProviderService.getPaymentProvider(user)` usa `declared_country` o `registration_country` del usuario: **AR → mercadopago**, resto → **paypal**.
 
 ## Endpoints
+
+- **GET /pricing** (opcional auth)  
+  Devuelve precios por región. Si el usuario envía Bearer token, se usa su país (billing_country de suscripción, o declared_country, o registration_country); si no, se devuelve GLOBAL (USD/PayPal). Respuesta: `{ country, currency, paymentProvider, plans: [{ slug, name, price, currency, paymentProvider }] }`.
 
 - **POST /payment/webhooks/:provider** (paypal | mercadopago)  
   Webhook del proveedor. Cuerpo en bruto para verificar firma. Público.
@@ -58,7 +64,7 @@ También puedes ejecutar el contenido de `scripts/backfill-free-subscriptions.sq
   Lista suscripciones del usuario.
 
 - **POST /subscriptions/create** (auth)  
-  Crea suscripción en el proveedor. Body: `planType`, `planSlug`, `returnUrl`, `cancelUrl`. Respuesta incluye `approvalUrl` para redirigir al usuario. El plan se activa cuando PayPal envía el webhook de activación.
+  Crea suscripción en el proveedor según país del usuario (AR → MercadoPago, resto → PayPal). Body: `planType`, `planSlug`, `returnUrl`, `cancelUrl`. Respuesta incluye `approvalUrl` (o `init_point` para MP) para redirigir al usuario. El plan se activa cuando el proveedor envía el webhook de activación.
 
 - **POST /subscriptions/cancel** (auth)  
   Cancela en el proveedor. Body: `externalSubscriptionId` (opcional), `cancelAtPeriodEnd` (opcional).
@@ -77,6 +83,16 @@ En el dashboard de PayPal configurar la URL del webhook:
 `https://tu-dominio.com/payment/webhooks/paypal`
 
 Eventos recomendados: BILLING.SUBSCRIPTION.ACTIVATED, BILLING.SUBSCRIPTION.CANCELLED, BILLING.SUBSCRIPTION.SUSPENDED, BILLING.SUBSCRIPTION.PAYMENT.FAILED, PAYMENT.SALE.COMPLETED.
+
+## Configuración MercadoPago (Argentina)
+
+En `.env`:
+
+- `MERCADOPAGO_ACCESS_TOKEN`: access token de la aplicación (producción o sandbox).
+
+URL del webhook: `https://tu-dominio.com/payment/webhooks/mercadopago`
+
+Eventos: autorización de preapproval, pagos creados, preapproval cancelado. Al confirmar pago/autorización se actualiza `subscriptions` y se sincroniza `tenants.plan`.
 
 ## Sincronización con Tenant
 

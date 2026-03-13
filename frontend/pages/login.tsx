@@ -23,6 +23,16 @@ export default function Login() {
   const [showRegisterSuccessModal, setShowRegisterSuccessModal] = useState(false);
 
   useEffect(() => {
+    // Si ya hay sesión, redirigir al admin (respeta sesión al abrir nueva pestaña)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    if (token && userData) {
+      router.replace('/admin');
+      return;
+    }
+  }, [router]);
+
+  useEffect(() => {
     // Verificar si viene con action=register
     if (router.query.action === 'register') {
       setIsRegister(true);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import api from '../lib/axios';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
   const currentPath = router.pathname;
@@ -32,6 +34,21 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       setLoading(false);
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!user || user.role !== 'ADMIN') return;
+    api.get('/restaurants/dashboard-stats')
+      .then((res) => {
+        const plan = res.data?.plan ?? null;
+        setCurrentPlan(plan);
+        if (plan && user?.tenant && user.tenant.plan !== plan) {
+          const updated = { ...user, tenant: { ...user.tenant, plan } };
+          localStorage.setItem('user', JSON.stringify(updated));
+          setUser(updated);
+        }
+      })
+      .catch(() => setCurrentPlan(null));
+  }, [user?.id, user?.role]);
 
   // Mantener el menú de ayuda abierto si estamos en una de sus páginas
   useEffect(() => {
@@ -70,7 +87,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="admin-sidebar-header">
               <h4>MenuQR</h4>
               <p className="small">{user?.email}</p>
-              <span className="badge bg-primary">{user?.role}</span>
+              <span className="badge bg-primary mb-2">{user?.role}</span>
+              {currentPlan != null && (
+                <span className={`badge ${currentPlan === 'pro' ? 'bg-success' : currentPlan === 'premium' ? 'bg-dark' : currentPlan === 'basic' ? 'bg-info' : 'bg-secondary'}`} style={{ display: 'inline-block', width: 'fit-content', textTransform: 'uppercase' }}>
+                  {currentPlan}
+                </span>
+              )}
             </div>
 
             <ul className="admin-nav flex-grow-1">

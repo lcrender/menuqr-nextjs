@@ -12,6 +12,7 @@ export default function Profile() {
   const router = useRouter();
   const [profile, setProfile] = useState<ProfileMe | null>(null);
   const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>([]);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -25,6 +26,12 @@ export default function Profile() {
       ]);
       setProfile(meRes.data);
       setSubscriptions(Array.isArray(subsRes.data) ? subsRes.data : []);
+      try {
+        const statsRes = await api.get('/restaurants/dashboard-stats');
+        setCurrentPlan(statsRes.data?.plan ?? null);
+      } catch {
+        setCurrentPlan(null);
+      }
     } catch (e) {
       if ((e as any)?.response?.status === 401) router.push('/login');
       setAlertModal({ title: 'Error', message: 'No se pudo cargar el perfil.', variant: 'error' });
@@ -57,6 +64,7 @@ export default function Profile() {
 
   const handleSubscriptionsChange = useCallback(() => {
     api.get('/subscriptions/me').then((res) => setSubscriptions(Array.isArray(res.data) ? res.data : [])).catch(() => {});
+    api.get('/restaurants/dashboard-stats').then((res) => setCurrentPlan(res.data?.plan ?? null)).catch(() => {});
   }, []);
 
   if (loading) {
@@ -99,6 +107,7 @@ export default function Profile() {
             {/* 3. Suscripción (solo lectura desde Subscription, acciones vía backend) */}
             <ProfileSubscription
               subscriptions={subscriptions}
+              currentPlan={currentPlan}
               onSubscriptionsChange={handleSubscriptionsChange}
               onFeedback={(type, message) => setFeedback({ type, message })}
               feedback={feedback}

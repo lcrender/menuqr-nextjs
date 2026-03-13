@@ -11,6 +11,10 @@ export class RestaurantsService {
     private readonly configService: ConfigService,
   ) {}
 
+  /**
+   * Lista todos los restaurantes del tenant (sin límite por plan).
+   * El límite del plan aplica a cuántos pueden estar activos a la vez; el usuario ve todos y elige cuál usar.
+   */
   async findAll(tenantId: string) {
     const restaurants = await this.postgres.queryRaw<any>(
       `      SELECT 
@@ -36,7 +40,7 @@ export class RestaurantsService {
       LEFT JOIN menus m ON m.restaurant_id = r.id AND m.deleted_at IS NULL
       WHERE r.tenant_id = $1 AND r.deleted_at IS NULL
       GROUP BY r.id
-      ORDER BY r.created_at DESC`,
+      ORDER BY r.created_at ASC`,
       [tenantId]
     );
 
@@ -196,9 +200,46 @@ export class RestaurantsService {
       };
     }
 
+    return this.getConfigStateForRestaurant(tenantId, effectiveRestaurantId);
+  }
+
+  /**
+   * Estado de configuración de un solo restaurante (debe pertenecer al tenant).
+   */
+  private async getConfigStateForRestaurant(tenantId: string, restaurantId: string): Promise<{
+    hasRestaurant: boolean;
+    hasMenu: boolean;
+    hasProductLinkedToMenu: boolean;
+    isComplete: boolean;
+    progressPercentage: number;
+    restaurantIsActive?: boolean;
+    restaurantSlug?: string | null;
+    restaurantName?: string | null;
+    restaurantAddress?: string | null;
+    restaurantLogoUrl?: string | null;
+    restaurantTemplate?: string | null;
+    restaurantEmail?: string | null;
+    restaurantPhone?: string | null;
+    restaurantWebsite?: string | null;
+    menusSummary?: { id: string; name: string; status: string; productCount: number }[];
+  }> {
+    const belongs = await this.postgres.queryRaw<{ id: string }>(
+      `SELECT id FROM restaurants WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [restaurantId, tenantId]
+    );
+    if (!belongs?.length) {
+      return {
+        hasRestaurant: false,
+        hasMenu: false,
+        hasProductLinkedToMenu: false,
+        isComplete: false,
+        progressPercentage: 0,
+      };
+    }
+
     const menuCountResult = await this.postgres.queryRaw<{ count: string }>(
       `SELECT COUNT(*)::text as count FROM menus WHERE restaurant_id = $1 AND deleted_at IS NULL AND status = 'PUBLISHED'`,
-      [effectiveRestaurantId]
+      [restaurantId]
     );
     const menuCount = parseInt(menuCountResult[0]?.count || '0', 10);
     const hasMenu = menuCount >= 1;
@@ -208,19 +249,18 @@ export class RestaurantsService {
        FROM menu_items mi
        INNER JOIN menus m ON m.id = mi.menu_id AND m.deleted_at IS NULL AND m.status = 'PUBLISHED'
        WHERE m.restaurant_id = $1 AND mi.deleted_at IS NULL`,
-      [effectiveRestaurantId]
+      [restaurantId]
     );
     const productLinkedCount = parseInt(productLinkedResult[0]?.count || '0', 10);
     const hasProductLinkedToMenu = productLinkedCount >= 1;
 
-    let progressPercentage = 0;
-    if (hasRestaurant) progressPercentage = 33;
-    if (hasRestaurant && hasMenu) progressPercentage = 66;
-    if (hasRestaurant && hasMenu && hasProductLinkedToMenu) progressPercentage = 100;
+    let progressPercentage = 33;
+    if (hasMenu) progressPercentage = 66;
+    if (hasProductLinkedToMenu) progressPercentage = 100;
 
     const restaurantRow = await this.postgres.queryRaw<{ is_active: boolean; slug: string | null; name: string | null; address: string | null; logo_url: string | null; template: string | null; email: string | null; phone: string | null; website: string | null }>(
       `SELECT is_active, slug, name, address, logo_url, template, email, phone, website FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
-      [effectiveRestaurantId]
+      [restaurantId]
     );
     const restaurantIsActive = restaurantRow[0]?.is_active ?? true;
     const restaurantSlug = restaurantRow[0]?.slug ?? null;
@@ -239,7 +279,7 @@ export class RestaurantsService {
        WHERE m.restaurant_id = $1 AND m.deleted_at IS NULL
        GROUP BY m.id, m.name, m.status
        ORDER BY m.name`,
-      [effectiveRestaurantId]
+      [restaurantId]
     );
     const menusSummary = Array.isArray(menusSummaryRows) ? menusSummaryRows.map((row: any) => ({
       id: row.id,
@@ -252,7 +292,7 @@ export class RestaurantsService {
       hasRestaurant: true,
       hasMenu,
       hasProductLinkedToMenu,
-      isComplete: hasRestaurant && hasMenu && hasProductLinkedToMenu,
+      isComplete: hasMenu && hasProductLinkedToMenu,
       progressPercentage,
       restaurantIsActive,
       restaurantSlug,
@@ -265,6 +305,41 @@ export class RestaurantsService {
       restaurantWebsite,
       menusSummary,
     };
+  }
+
+  /**
+   * Lista de estados de configuración de todos los restaurantes del tenant (para dashboard con una ficha por restaurante).
+   */
+  async getDashboardCards(tenantId: string): Promise<Array<{
+    restaurantId: string;
+    hasRestaurant: boolean;
+    hasMenu: boolean;
+    hasProductLinkedToMenu: boolean;
+    isComplete: boolean;
+    progressPercentage: number;
+    restaurantIsActive?: boolean;
+    restaurantSlug?: string | null;
+    restaurantName?: string | null;
+    restaurantAddress?: string | null;
+    restaurantLogoUrl?: string | null;
+    restaurantTemplate?: string | null;
+    restaurantEmail?: string | null;
+    restaurantPhone?: string | null;
+    restaurantWebsite?: string | null;
+    menusSummary?: { id: string; name: string; status: string; productCount: number }[];
+  }>> {
+    const rows = await this.postgres.queryRaw<{ id: string }>(
+      `SELECT id FROM restaurants WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY created_at ASC`,
+      [tenantId]
+    );
+    if (!rows?.length) return [];
+    const cards = await Promise.all(
+      rows.map(async (r) => {
+        const state = await this.getConfigStateForRestaurant(tenantId, r.id);
+        return { restaurantId: r.id, ...state };
+      })
+    );
+    return cards;
   }
 
   async findById(id: string, tenantId?: string) {
@@ -564,6 +639,33 @@ export class RestaurantsService {
       updates.push(`is_active = $${paramIndex++}`);
       params.push(data.isActive);
       this.logger.log(`Actualizando is_active a ${data.isActive} para restaurante ${id}`);
+
+      // Al activar uno, respetar límite de activos del plan: desactivar otros si ya se alcanzó el límite
+      if (data.isActive === true && !restaurant.isActive) {
+        const plan = await this.getTenantPlan(tenantId);
+        const maxActive = this.getRestaurantLimit(plan);
+        if (maxActive !== -1) {
+          const activeCountResult = await this.postgres.queryRaw<{ count: string }>(
+            `SELECT COUNT(*)::text as count FROM restaurants WHERE tenant_id = $1 AND deleted_at IS NULL AND is_active = true`,
+            [tenantId]
+          );
+          const activeCount = parseInt(activeCountResult[0]?.count || '0', 10);
+          if (activeCount >= maxActive) {
+            const toDeactivate = activeCount - maxActive + 1;
+            await this.postgres.executeRaw(
+              `UPDATE restaurants SET is_active = false, updated_at = NOW()
+               WHERE tenant_id = $1 AND deleted_at IS NULL AND id != $2 AND is_active = true
+               AND id IN (
+                 SELECT id FROM restaurants
+                 WHERE tenant_id = $1 AND deleted_at IS NULL AND id != $2 AND is_active = true
+                 ORDER BY updated_at ASC
+                 LIMIT $3
+               )`,
+              [tenantId, id, toDeactivate]
+            );
+          }
+        }
+      }
     }
 
     if (updates.length === 0) {
@@ -603,18 +705,16 @@ export class RestaurantsService {
     return { message: 'Restaurante eliminado exitosamente' };
   }
 
-  private async validateRestaurantLimit(tenantId: string) {
-    // Obtener el plan del tenant
+  private async getTenantPlan(tenantId: string): Promise<string> {
     const tenant = await this.postgres.queryRaw<any>(
       `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
       [tenantId]
     );
+    return tenant[0]?.plan || 'free';
+  }
 
-    if (!tenant[0]) {
-      throw new NotFoundException('Tenant no encontrado');
-    }
-
-    const plan = tenant[0].plan || 'free'; // Default a 'free' si no tiene plan
+  private async validateRestaurantLimit(tenantId: string) {
+    const plan = await this.getTenantPlan(tenantId);
 
     // Obtener límite según el plan
     const limit = this.getRestaurantLimit(plan);
