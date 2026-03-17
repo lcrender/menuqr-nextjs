@@ -20,6 +20,11 @@ export default function Products() {
   const [filterMenuName, setFilterMenuName] = useState<string>('');
   const [filterRestaurantName, setFilterRestaurantName] = useState<string>('');
   const [filterTenantName, setFilterTenantName] = useState<string>('');
+  const [filterSectionName, setFilterSectionName] = useState<string>('');
+  const [filterRestaurantId, setFilterRestaurantId] = useState<string>('');
+  const [filterMenuId, setFilterMenuId] = useState<string>('');
+  const [filterSectionId, setFilterSectionId] = useState<string>('');
+  const [filterSections, setFilterSections] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showProductWizard, setShowProductWizard] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -61,6 +66,7 @@ export default function Products() {
   const [restaurantDropdownOpen, setRestaurantDropdownOpen] = useState(false);
   const [editPhotos, setEditPhotos] = useState<Array<{ preview: string; id?: string; file?: File }>>([]);
   const [editImageDragging, setEditImageDragging] = useState(false);
+  const [draggedProductIndex, setDraggedProductIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -106,7 +112,7 @@ export default function Products() {
     if (!user) return;
     if (isSuperAdmin && (!superAdminSearched || (!selectedTenantId && !selectedRestaurantId))) return;
     loadData();
-  }, [user, isSuperAdmin, superAdminSearched, selectedTenantId, selectedRestaurantId, filterProductName, filterMenuName, filterRestaurantName, filterTenantName, page, itemsPerPage]);
+  }, [user, isSuperAdmin, superAdminSearched, selectedTenantId, selectedRestaurantId, filterProductName, filterMenuName, filterRestaurantName, filterTenantName, filterSectionName, filterRestaurantId, filterMenuId, filterSectionId, page, itemsPerPage]);
 
   useEffect(() => {
     if (!isSuperAdmin || !user) return;
@@ -184,12 +190,16 @@ export default function Products() {
         if (filterMenuName) params.menuName = filterMenuName;
         if (filterRestaurantName) params.restaurantName = filterRestaurantName;
         if (filterTenantName) params.tenantName = filterTenantName;
+        if (filterSectionName) params.sectionName = filterSectionName;
         if (itemsPerPage) {
           params.limit = itemsPerPage;
           params.offset = (page - 1) * itemsPerPage;
         }
       } else {
         if (filterProductName) params.productName = filterProductName;
+        if (filterRestaurantId) params.restaurantId = filterRestaurantId;
+        if (filterMenuId) params.menuId = filterMenuId;
+        if (filterSectionId) params.sectionId = filterSectionId;
       }
 
       const [productsRes, menusRes, restaurantsRes] = await Promise.all([
@@ -237,6 +247,23 @@ export default function Products() {
     }
   };
 
+  // Cargar secciones para el filtro cuando cambia el menú (admin tenant)
+  useEffect(() => {
+    if (!isSuperAdmin && filterMenuId) {
+      api.get(`/menu-sections?menuId=${filterMenuId}`)
+        .then((res) => setFilterSections(Array.isArray(res.data) ? res.data : []))
+        .catch(() => setFilterSections([]));
+    } else {
+      setFilterSections([]);
+      if (!filterMenuId) setFilterSectionId('');
+    }
+  }, [isSuperAdmin, filterMenuId]);
+
+  // Menús filtrados por restaurante (para el dropdown de filtro)
+  const menusForFilter = filterRestaurantId
+    ? menus.filter((m: any) => (m.restaurantId || m.restaurant_id) === filterRestaurantId)
+    : menus;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -265,13 +292,12 @@ export default function Products() {
           prices: validPrices,
           iconCodes: formData.iconCodes,
         });
-        const newPhotos = editPhotos.filter((p) => p.file);
-        for (const p of newPhotos) {
-          if (p.file) {
-            const fd = new FormData();
-            fd.append('file', p.file);
-            await api.post(`/media/items/${editing.id}/photo`, fd);
-          }
+        // Una sola imagen por producto; el backend reemplaza la anterior si existe
+        const photoToUpload = editPhotos.find((p) => p.file);
+        if (photoToUpload?.file) {
+          const fd = new FormData();
+          fd.append('file', photoToUpload.file);
+          await api.post(`/media/items/${editing.id}/photo`, fd);
         }
       } else {
         // Enviar solo los campos que tienen valor
@@ -324,7 +350,9 @@ export default function Products() {
         : [{ currency: defaultCurrency, label: '', amount: 0 }],
       iconCodes: product.icons || [],
     });
-    setEditPhotos((product.photos || []).map((p: any) => ({ preview: p.url || p, id: p.id })));
+    // Un producto tiene solo una imagen: tomar la primera si existe
+    const photos = product.photos || [];
+    setEditPhotos(photos.length ? [{ preview: photos[0].url || photos[0], id: photos[0].id }] : []);
     if (menuId) {
       loadSections(menuId);
     }
@@ -334,28 +362,27 @@ export default function Products() {
   const canAddEditPhotos = user?.role === 'SUPER_ADMIN' || tenantPlan === 'pro' || tenantPlan === 'premium';
 
   const handleEditImageUpload = (files: File[]) => {
-    const imageFiles = files.filter((f) => f.type.startsWith('image/'));
-    imageFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          setEditPhotos((prev) => [...prev, { preview: e.target!.result as string, file }]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    const file = files.filter((f) => f.type.startsWith('image/'))[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setEditPhotos([{ preview: e.target!.result as string, file }]);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
-  const removeEditImage = async (index: number) => {
-    const item = editPhotos[index];
-    if (item.id) {
+  const removeEditImage = async () => {
+    const current = editPhotos[0];
+    if (editing?.id && current?.id) {
       try {
-        await api.delete(`/media/${item.id}`);
+        await api.delete(`/media/items/${editing.id}/photo`);
       } catch (err) {
         console.error('Error eliminando foto:', err);
       }
     }
-    setEditPhotos((prev) => prev.filter((_, i) => i !== index));
+    setEditPhotos([]);
   };
 
   const handleCopyToMenuClick = (product: any) => {
@@ -364,6 +391,58 @@ export default function Products() {
     setCopyTargetSectionId('');
     setCopySections([]);
     setShowCopyModal(true);
+  };
+
+  const getSectionKey = (p: any) => `${p.menuId || p.menu_id || ''}_${p.sectionId || p.section_id || ''}`;
+
+  const handleProductDragStart = (index: number) => {
+    setDraggedProductIndex(index);
+  };
+
+  const handleProductDragOver = (e: React.DragEvent, _index: number) => {
+    e.preventDefault();
+  };
+
+  const handleProductDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedProductIndex === null || draggedProductIndex === dropIndex) {
+      setDraggedProductIndex(null);
+      return;
+    }
+    const dragged = products[draggedProductIndex];
+    const dropTarget = products[dropIndex];
+    if (getSectionKey(dragged) !== getSectionKey(dropTarget)) {
+      setDraggedProductIndex(null);
+      return;
+    }
+    const sectionKey = getSectionKey(dragged);
+    const sectionProducts = products.filter((p) => getSectionKey(p) === sectionKey);
+    const fromPos = sectionProducts.findIndex((p) => p.id === dragged.id);
+    const toPos = sectionProducts.findIndex((p) => p.id === dropTarget.id);
+    if (fromPos < 0 || toPos < 0) {
+      setDraggedProductIndex(null);
+      return;
+    }
+    const reordered = [...sectionProducts];
+    reordered.splice(fromPos, 1);
+    reordered.splice(toPos, 0, dragged);
+    const itemOrders = reordered.map((p, i) => ({ id: p.id, sort: i }));
+    const body: { itemOrders: Array<{ id: string; sort: number }>; tenantId?: string } = { itemOrders };
+    if (isSuperAdmin && (dragged.tenantId || dragged.tenant_id)) {
+      body.tenantId = dragged.tenantId || dragged.tenant_id;
+    }
+    setDraggedProductIndex(null);
+    try {
+      await api.post('/menu-items/reorder', body);
+      loadData();
+    } catch (err: any) {
+      setAlertData({
+        title: 'Error',
+        message: err.response?.data?.message || 'Error al cambiar el orden',
+        variant: 'error',
+      });
+      setShowAlert(true);
+    }
   };
 
   useEffect(() => {
@@ -715,83 +794,164 @@ export default function Products() {
         </div>
       )}
 
-      {isSuperAdmin && (
-        <div className="mb-3">
-          <div className="d-flex align-items-center gap-2 flex-wrap">
-            <div className="d-flex align-items-center gap-2">
-              <label htmlFor="filterProductName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
-                Producto:
-              </label>
-              <input
-                id="filterProductName"
-                type="text"
-                className="form-control"
-                placeholder="Nombre del producto"
-                value={filterProductName}
-                onChange={(e) => setFilterProductName(e.target.value)}
-                style={{ width: '200px' }}
-              />
-            </div>
-            <div className="d-flex align-items-center gap-2">
-              <label htmlFor="filterMenuName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
-                Menú:
-              </label>
-              <input
-                id="filterMenuName"
-                type="text"
-                className="form-control"
-                placeholder="Nombre del menú"
-                value={filterMenuName}
-                onChange={(e) => setFilterMenuName(e.target.value)}
-                style={{ width: '200px' }}
-              />
-            </div>
-            <div className="d-flex align-items-center gap-2">
-              <label htmlFor="filterRestaurantName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
-                Restaurante:
-              </label>
-              <input
-                id="filterRestaurantName"
-                type="text"
-                className="form-control"
-                placeholder="Nombre del restaurante"
-                value={filterRestaurantName}
-                onChange={(e) => setFilterRestaurantName(e.target.value)}
-                style={{ width: '200px' }}
-              />
-            </div>
-            <div className="d-flex align-items-center gap-2">
-              <label htmlFor="filterTenantName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
-                Tenant:
-              </label>
-              <input
-                id="filterTenantName"
-                type="text"
-                className="form-control"
-                placeholder="Nombre del tenant"
-                value={filterTenantName}
-                onChange={(e) => setFilterTenantName(e.target.value)}
-                style={{ width: '200px' }}
-              />
-            </div>
-            {(filterProductName || filterMenuName || filterRestaurantName || filterTenantName) && (
-              <button
-                type="button"
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => {
-                  setFilterProductName('');
-                  setFilterMenuName('');
-                  setFilterRestaurantName('');
-                  setFilterTenantName('');
-                }}
-                title="Limpiar filtros"
-              >
-                ✕ Limpiar
-              </button>
-            )}
+      {/* Sección de filtros: nombre, restaurante, menú, sección */}
+      <div className="mb-3 p-3 bg-light rounded border">
+        <h6 className="mb-3 fw-semibold">Filtros</h6>
+        <div className="d-flex align-items-center gap-3 flex-wrap">
+          <div className="d-flex align-items-center gap-2">
+            <label htmlFor="filterProductName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+              Nombre:
+            </label>
+            <input
+              id="filterProductName"
+              type="text"
+              className="form-control form-control-sm"
+              placeholder="Nombre del producto"
+              value={filterProductName}
+              onChange={(e) => setFilterProductName(e.target.value)}
+              style={{ width: '180px' }}
+            />
           </div>
+          {isSuperAdmin ? (
+            <>
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="filterRestaurantName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+                  Restaurante:
+                </label>
+                <input
+                  id="filterRestaurantName"
+                  type="text"
+                  className="form-control form-control-sm"
+                  placeholder="Nombre del restaurante"
+                  value={filterRestaurantName}
+                  onChange={(e) => setFilterRestaurantName(e.target.value)}
+                  style={{ width: '180px' }}
+                />
+              </div>
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="filterMenuName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+                  Menú:
+                </label>
+                <input
+                  id="filterMenuName"
+                  type="text"
+                  className="form-control form-control-sm"
+                  placeholder="Nombre del menú"
+                  value={filterMenuName}
+                  onChange={(e) => setFilterMenuName(e.target.value)}
+                  style={{ width: '180px' }}
+                />
+              </div>
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="filterSectionName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+                  Sección:
+                </label>
+                <input
+                  id="filterSectionName"
+                  type="text"
+                  className="form-control form-control-sm"
+                  placeholder="Nombre de la sección"
+                  value={filterSectionName}
+                  onChange={(e) => setFilterSectionName(e.target.value)}
+                  style={{ width: '180px' }}
+                />
+              </div>
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="filterTenantName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+                  Tenant:
+                </label>
+                <input
+                  id="filterTenantName"
+                  type="text"
+                  className="form-control form-control-sm"
+                  placeholder="Nombre del tenant"
+                  value={filterTenantName}
+                  onChange={(e) => setFilterTenantName(e.target.value)}
+                  style={{ width: '180px' }}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="filterRestaurantId" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+                  Restaurante:
+                </label>
+                <select
+                  id="filterRestaurantId"
+                  className="form-select form-select-sm"
+                  value={filterRestaurantId}
+                  onChange={(e) => {
+                    setFilterRestaurantId(e.target.value);
+                    setFilterMenuId('');
+                    setFilterSectionId('');
+                  }}
+                  style={{ width: '200px' }}
+                >
+                  <option value="">Todos los restaurantes</option>
+                  {restaurants.map((r: any) => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="filterMenuId" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+                  Menú:
+                </label>
+                <select
+                  id="filterMenuId"
+                  className="form-select form-select-sm"
+                  value={filterMenuId}
+                  onChange={(e) => { setFilterMenuId(e.target.value); setFilterSectionId(''); }}
+                  style={{ width: '200px' }}
+                >
+                  <option value="">Todos los menús</option>
+                  {menusForFilter.map((m: any) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="filterSectionId" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+                  Sección:
+                </label>
+                <select
+                  id="filterSectionId"
+                  className="form-select form-select-sm"
+                  value={filterSectionId}
+                  onChange={(e) => setFilterSectionId(e.target.value)}
+                  style={{ width: '200px' }}
+                  disabled={!filterMenuId}
+                >
+                  <option value="">Todas las secciones</option>
+                  {filterSections.map((s: any) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+          {(filterProductName || filterMenuName || filterRestaurantName || filterTenantName || filterSectionName || filterRestaurantId || filterMenuId || filterSectionId) && (
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => {
+                setFilterProductName('');
+                setFilterMenuName('');
+                setFilterRestaurantName('');
+                setFilterTenantName('');
+                setFilterSectionName('');
+                setFilterRestaurantId('');
+                setFilterMenuId('');
+                setFilterSectionId('');
+              }}
+              title="Limpiar filtros"
+            >
+              ✕ Limpiar filtros
+            </button>
+          )}
         </div>
-      )}
+      </div>
 
       {loading ? (
         <div className="text-center">
@@ -810,6 +970,7 @@ export default function Products() {
                 {isSuperAdmin && <th>Plantilla</th>}
                 <th>Menú</th>
                 <th>Sección</th>
+                <th style={{ width: '44px' }}></th>
                 <th style={{ minWidth: '160px' }}>Precios</th>
                 <th>Íconos</th>
                 <th>Estado</th>
@@ -817,8 +978,31 @@ export default function Products() {
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
-                <tr key={product.id}>
+              {products.map((product, index) => (
+                <tr
+                  key={product.id}
+                  draggable
+                  onDragStart={() => handleProductDragStart(index)}
+                  onDragOver={(e) => handleProductDragOver(e, index)}
+                  onDrop={(e) => handleProductDrop(e, index)}
+                  style={{
+                    cursor: 'move',
+                    opacity: draggedProductIndex === index ? 0.5 : 1,
+                    transition: 'opacity 0.2s ease',
+                  }}
+                >
+                  <td
+                    style={{
+                      cursor: 'grab',
+                      fontSize: '18px',
+                      color: '#6c757d',
+                      userSelect: 'none',
+                      textAlign: 'center',
+                      width: '44px',
+                    }}
+                  >
+                    ☰
+                  </td>
                   <td>{product.name}</td>
                   {isSuperAdmin && (
                     <td>
@@ -963,15 +1147,17 @@ export default function Products() {
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">{editing ? 'Editar' : 'Nuevo'} Producto</h5>
-                <button className="btn-close" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); }}></button>
+            <div className="modal-content" style={{ borderRadius: '10px', overflow: 'hidden' }}>
+              <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
+                <h5 className="modal-title" style={{ margin: 0, fontWeight: 600, fontSize: '1.15rem' }}>{editing ? 'Editar' : 'Nuevo'} Producto</h5>
+                <button type="button" className="btn-close" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); }} aria-label="Cerrar"></button>
               </div>
               <form onSubmit={handleSubmit}>
-                <div className="modal-body">
+                <div className="modal-body" style={{ padding: '24px 28px', maxHeight: '70vh', overflowY: 'auto' }}>
+                  <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Asignación</h6>
                   <div className="mb-3">
-                    <label className="form-label">Menú (Opcional - puede crearse sin menú)</label>
+                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>Menú (Opcional - puede crearse sin menú)</label>
                     <select
                       className="form-select"
                       value={formData.menuId}
@@ -996,12 +1182,12 @@ export default function Products() {
                         </option>
                       ))}
                     </select>
-                    <small className="text-muted">Puedes crear el producto sin menú y asignarlo después a cualquier menú</small>
+                    <small className="text-muted" style={{ display: 'block', marginTop: '6px', fontSize: '0.8125rem' }}>Puedes crear el producto sin menú y asignarlo después a cualquier menú</small>
                   </div>
                   
                   {formData.menuId && (
-                    <div className="mb-3">
-                      <label className="form-label">Sección *</label>
+                    <div className="mb-0">
+                      <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>Sección *</label>
                       <select
                         className="form-select"
                         value={formData.sectionId}
@@ -1017,9 +1203,12 @@ export default function Products() {
                       </select>
                     </div>
                   )}
+                  </section>
 
+                  <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Contenido</h6>
                   <div className="mb-3">
-                    <label className="form-label">Nombre *</label>
+                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>Nombre *</label>
                     <input
                       type="text"
                       className="form-control"
@@ -1029,17 +1218,22 @@ export default function Products() {
                     />
                   </div>
                   
-                  <div className="mb-3">
-                    <label className="form-label">Descripción</label>
+                  <div className="mb-0">
+                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>Descripción</label>
                     <textarea
                       className="form-control"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={3}
+                      style={{ resize: 'vertical' }}
                     />
                   </div>
+                  </section>
 
+                  <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Precios</h6>
                   <div className="mb-3">
-                    <label className="form-label">Precios</label>
+                    <label className="form-label" style={{ marginBottom: '8px', fontWeight: 500, display: 'block' }}>Precios</label>
                     {formData.prices.map((price, index) => (
                       <div key={index} className="row mb-2">
                         <div className="col-md-3">
@@ -1085,13 +1279,16 @@ export default function Products() {
                         </div>
                       </div>
                     ))}
-                    <button type="button" className="btn btn-sm btn-secondary" onClick={addPrice}>
+                    <button type="button" className="btn btn-sm btn-secondary" onClick={addPrice} style={{ marginTop: '8px' }}>
                       + Agregar Precio
                     </button>
                   </div>
+                  </section>
 
-                  <div className="mb-3">
-                    <label className="form-label">Íconos</label>
+                  <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Íconos</h6>
+                  <div className="mb-0">
+                    <label className="form-label" style={{ marginBottom: '8px', fontWeight: 500, display: 'block' }}>Íconos</label>
                     <div className="d-flex flex-wrap gap-2">
                       {availableIcons.map((icon) => (
                         <button
@@ -1107,12 +1304,12 @@ export default function Products() {
                       ))}
                     </div>
                   </div>
+                  </section>
 
                   {editing && (
-                    <div className="mb-3" style={{ paddingTop: '16px', borderTop: '1px solid #e0e0e0' }}>
-                      <label className="form-label" style={{ fontWeight: 600 }}>
-                        Imágenes del Producto
-                      </label>
+                    <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Imágenes del producto</h6>
+                    <div className="mb-0">
                       {!canAddEditPhotos ? (
                         <div
                           style={{
@@ -1174,6 +1371,7 @@ export default function Products() {
                         </div>
                       ) : (
                         <>
+                          {editPhotos.length === 0 ? (
                           <div
                             style={{
                               border: `2px dashed ${editImageDragging ? '#007bff' : '#ccc'}`,
@@ -1195,62 +1393,68 @@ export default function Products() {
                               const input = document.createElement('input');
                               input.type = 'file';
                               input.accept = 'image/*';
-                              input.multiple = true;
+                              input.multiple = false;
                               input.onchange = (e: any) => {
-                                if (e.target.files) handleEditImageUpload(Array.from(e.target.files));
+                                if (e.target.files?.length) handleEditImageUpload(Array.from(e.target.files));
                               };
                               input.click();
                             }}
                           >
                             <div style={{ fontSize: '36px', marginBottom: '8px' }}>📷</div>
                             <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
-                              Arrastra imágenes aquí o haz clic para seleccionar
+                              Arrastra una imagen o haz clic para seleccionar
                             </p>
                             <p style={{ margin: 0, color: '#999', fontSize: '12px' }}>
-                              Formatos: JPG, PNG, GIF (máx. 5MB por imagen)
+                              Una imagen por producto. JPG, PNG, GIF (máx. 5MB). Al eliminar se borra del sistema.
                             </p>
                           </div>
+                          ) : (
+                            <div style={{ marginBottom: '12px' }}>
+                              <p style={{ margin: 0, color: '#666', fontSize: '13px' }}>
+                                Una imagen por producto. Elimina la actual para subir otra (la imagen se borra del sistema).
+                              </p>
+                            </div>
+                          )}
                           {editPhotos.length > 0 && (
-                            <div className="d-flex flex-wrap gap-2 mt-2">
-                              {editPhotos.map((photo, index) => (
-                                <div key={index} style={{ position: 'relative', width: '80px', height: '80px' }}>
-                                  <img
-                                    src={photo.preview}
-                                    alt=""
-                                    style={{
-                                      width: '100%',
-                                      height: '100%',
-                                      objectFit: 'cover',
-                                      borderRadius: '8px',
-                                      border: '1px solid #ddd',
-                                    }}
-                                  />
-                                  <button
-                                    type="button"
-                                    className="btn btn-sm btn-danger"
-                                    style={{
-                                      position: 'absolute',
-                                      top: '4px',
-                                      right: '4px',
-                                      padding: '2px 6px',
-                                      fontSize: '12px',
-                                    }}
-                                    onClick={(e) => { e.preventDefault(); removeEditImage(index); }}
-                                    title="Quitar imagen"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              ))}
+                            <div className="mt-2" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                              <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
+                                <img
+                                  src={editPhotos[0].preview}
+                                  alt=""
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ddd',
+                                  }}
+                                />
+                              </div>
+                              <div>
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-danger"
+                                  onClick={(e) => { e.preventDefault(); removeEditImage(); }}
+                                  title="Eliminar imagen (se borra del sistema)"
+                                >
+                                  Eliminar imagen
+                                </button>
+                                <p style={{ margin: '6px 0 0', color: '#666', fontSize: '12px' }}>
+                                  Elimina esta imagen para poder subir otra.
+                                </p>
+                              </div>
                             </div>
                           )}
                         </>
                       )}
                     </div>
+                    </section>
                   )}
 
-                  <div className="mb-3">
-                    <div className="form-check">
+                  <section style={{ marginBottom: 0 }}>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Estado</h6>
+                  <div className="mb-0">
+                    <div className="form-check" style={{ paddingLeft: '1.6em', marginTop: '4px' }}>
                       <input
                         className="form-check-input"
                         type="checkbox"
@@ -1260,8 +1464,9 @@ export default function Products() {
                       <label className="form-check-label">Producto activo</label>
                     </div>
                   </div>
+                  </section>
                 </div>
-                <div className="modal-footer">
+                <div className="modal-footer" style={{ padding: '16px 28px', borderTop: '1px solid #dee2e6', backgroundColor: '#f8f9fa', gap: '10px' }}>
                   <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); }}>
                     Cancelar
                   </button>

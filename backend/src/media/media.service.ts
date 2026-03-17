@@ -95,6 +95,25 @@ export class MediaService {
     }
   }
 
+  /** Elimina todas las fotos existentes del producto (MinIO + BD). Un producto tiene solo una imagen. */
+  private async deleteItemPhotos(tenantId: string, itemId: string): Promise<void> {
+    const existing = await this.postgres.queryRaw<{ id: string; filename: string }>(
+      `SELECT id, filename FROM media_assets WHERE item_id = $1 AND tenant_id = $2 AND kind = 'image' AND deleted_at IS NULL`,
+      [itemId, tenantId]
+    );
+    for (const row of existing) {
+      try {
+        await this.minio.deleteFile(row.filename);
+      } catch (e) {
+        this.logger.warn(`No se pudo borrar archivo MinIO ${row.filename}:`, e);
+      }
+      await this.postgres.executeRaw(
+        `UPDATE media_assets SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+        [row.id, tenantId]
+      );
+    }
+  }
+
   async uploadItemPhoto(
     tenantId: string,
     itemId: string,
@@ -102,6 +121,9 @@ export class MediaService {
   ): Promise<{ id: string; url: string }> {
     await this.assertProductPhotosAllowed(tenantId);
     try {
+      // Un producto tiene solo una imagen: borrar la anterior (archivo + BD) antes de subir la nueva
+      await this.deleteItemPhotos(tenantId, itemId);
+
       // Subir archivo a MinIO
       const { url, filename } = await this.minio.uploadFile(file, `items/${itemId}`);
 
@@ -121,6 +143,11 @@ export class MediaService {
       this.logger.error('Error subiendo foto de item:', error);
       throw error;
     }
+  }
+
+  /** Elimina la foto del producto (una por producto). Borra archivo en MinIO y registro en BD. */
+  async deleteItemPhoto(tenantId: string, itemId: string): Promise<void> {
+    await this.deleteItemPhotos(tenantId, itemId);
   }
 
   async deleteMedia(id: string, tenantId: string): Promise<void> {

@@ -7,7 +7,7 @@ export class MenuItemsService {
 
   constructor(private readonly postgres: PostgresService) {}
 
-  async findAll(tenantId: string | null, menuId?: string, sectionId?: string, productName?: string) {
+  async findAll(tenantId: string | null, menuId?: string, sectionId?: string, productName?: string, restaurantId?: string) {
     let query = `
       SELECT 
         mi.*,
@@ -29,6 +29,11 @@ export class MenuItemsService {
     if (tenantId) {
       query += ` AND mi.tenant_id = $${params.length + 1}`;
       params.push(tenantId);
+    }
+
+    if (restaurantId) {
+      query += ` AND m.restaurant_id = $${params.length + 1}`;
+      params.push(restaurantId);
     }
 
     if (menuId) {
@@ -215,11 +220,12 @@ export class MenuItemsService {
     return { data: itemsWithDetails, total };
   }
 
-  async findAllForSuperAdmin(productName?: string, menuName?: string, restaurantName?: string, tenantName?: string, limit?: number, offset?: number): Promise<{ data: any[]; total: number }> {
+  async findAllForSuperAdmin(productName?: string, menuName?: string, restaurantName?: string, tenantName?: string, sectionName?: string, limit?: number, offset?: number): Promise<{ data: any[]; total: number }> {
     // Query para contar el total
     let countQuery = `
       SELECT COUNT(DISTINCT mi.id) as total
       FROM menu_items mi
+      LEFT JOIN menu_sections ms ON ms.id = mi.section_id AND ms.deleted_at IS NULL
       LEFT JOIN menus m ON m.id = mi.menu_id AND m.deleted_at IS NULL
       LEFT JOIN restaurants r ON r.id = m.restaurant_id AND r.deleted_at IS NULL
       LEFT JOIN tenants t ON t.id = mi.tenant_id AND t.deleted_at IS NULL
@@ -245,6 +251,11 @@ export class MenuItemsService {
     if (tenantName) {
       countQuery += ` AND LOWER(t.name) LIKE LOWER($${countParams.length + 1})`;
       countParams.push(`%${tenantName}%`);
+    }
+
+    if (sectionName) {
+      countQuery += ` AND LOWER(ms.name) LIKE LOWER($${countParams.length + 1})`;
+      countParams.push(`%${sectionName}%`);
     }
 
     const countResult = await this.postgres.queryRaw<{ total: string }>(countQuery, countParams);
@@ -287,6 +298,11 @@ export class MenuItemsService {
     if (tenantName) {
       query += ` AND LOWER(t.name) LIKE LOWER($${params.length + 1})`;
       params.push(`%${tenantName}%`);
+    }
+
+    if (sectionName) {
+      query += ` AND LOWER(ms.name) LIKE LOWER($${params.length + 1})`;
+      params.push(`%${sectionName}%`);
     }
 
     query += ` ORDER BY mi.menu_id NULLS LAST, ms.sort NULLS LAST, mi.sort ASC, mi.created_at ASC`;

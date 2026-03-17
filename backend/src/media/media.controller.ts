@@ -86,8 +86,20 @@ export class MediaController {
     return this.mediaService.uploadItemPhoto(tenantId, itemId, file);
   }
 
+  @Delete('items/:itemId/photo')
+  @ApiOperation({ summary: 'Eliminar foto del producto (una por producto)' })
+  @ApiResponse({ status: 200, description: 'Foto eliminada del sistema' })
+  async deleteItemPhoto(
+    @Param('itemId') itemId: string,
+    @Request() req,
+  ) {
+    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
+    await this.mediaService.deleteItemPhoto(tenantId, itemId);
+    return { message: 'Foto eliminada' };
+  }
+
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar media' })
+  @ApiOperation({ summary: 'Eliminar media por ID' })
   @ApiResponse({ status: 200, description: 'Media eliminada exitosamente' })
   async deleteMedia(@Param('id') id: string, @Request() req) {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;

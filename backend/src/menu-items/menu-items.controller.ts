@@ -79,6 +79,7 @@ export class MenuItemsController {
     @Query('menuName') menuName: string,
     @Query('restaurantName') restaurantName: string,
     @Query('tenantName') tenantName: string,
+    @Query('sectionName') sectionName: string,
     @Query('restaurantId') restaurantId: string,
     @Query('limit') limit: string,
     @Query('offset') offset: string,
@@ -104,7 +105,7 @@ export class MenuItemsController {
     if (req.user.role === 'SUPER_ADMIN' && !tenantIdQuery && !restaurantIdQuery) {
       const limitNum = limit ? parseInt(limit, 10) : undefined;
       const offsetNum = offset ? parseInt(offset, 10) : undefined;
-      return this.menuItemsService.findAllForSuperAdmin(productName, menuName, restaurantName, tenantName, limitNum, offsetNum);
+      return this.menuItemsService.findAllForSuperAdmin(productName, menuName, restaurantName, tenantName, sectionName, limitNum, offsetNum);
     }
 
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
@@ -113,7 +114,8 @@ export class MenuItemsController {
       throw new Error('Tenant ID es requerido');
     }
 
-    return this.menuItemsService.findAll(tenantId, menuId, sectionId, productName);
+    const restaurantIdTenant = req.user.role !== 'SUPER_ADMIN' ? (req.query.restaurantId as string | undefined) : undefined;
+    return this.menuItemsService.findAll(tenantId, menuId, sectionId, productName, restaurantIdTenant);
   }
 
   @Post(':id/copy-to-menu')
