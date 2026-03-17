@@ -306,6 +306,10 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
               )}
             </div>
           </div>
+          <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.1)', textAlign: 'center', fontSize: '0.8rem', color: '#666' }}>
+            Menú creado con{' '}
+            <a href="https://appmenuqr.com" target="_blank" rel="noopener noreferrer" style={{ color: '#666', textDecoration: 'underline' }}>appmenuqr.com</a>
+          </div>
         </div>
       </footer>
     </div>

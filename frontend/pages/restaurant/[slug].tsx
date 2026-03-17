@@ -8,6 +8,7 @@ import MinimalistTemplate from '../../templates/minimalist/MinimalistTemplate';
 import FoodieTemplate from '../../templates/foodie/FoodieTemplate';
 import BurgersTemplate from '../../templates/burgers/BurgersTemplate';
 import ItalianFoodTemplate from '../../templates/italianfood/ItalianFoodTemplate';
+import GourmetTemplate from '../../templates/gourmet/GourmetTemplate';
 
 // Códigos de país comunes para WhatsApp
 const countryCodes: { [key: string]: string } = {
@@ -70,6 +71,7 @@ interface Restaurant {
   template?: string;
   primaryColor?: string;
   secondaryColor?: string;
+  templateConfig?: Record<string, unknown>;
 }
 
 interface MenuSection {
@@ -184,6 +186,7 @@ export default function RestaurantPage() {
           template: data.template || 'classic',
           primaryColor: data.primaryColor || '#007bff',
           secondaryColor: data.secondaryColor || '#0056b3',
+          templateConfig: data.templateConfig ?? undefined,
         });
         
         // Ordenar menús por sort (si existe) o mantener el orden del backend
@@ -301,6 +304,21 @@ export default function RestaurantPage() {
   if (template === 'burgers') {
     return (
       <BurgersTemplate
+        restaurant={restaurant}
+        menuList={menuList}
+        selectedMenu={selectedMenu}
+        onMenuSelect={loadMenu}
+        formatPrice={formatPrice}
+        formatWhatsAppForLink={formatWhatsAppForLink}
+        iconLabels={iconLabels}
+      />
+    );
+  }
+
+  // Usar el componente GourmetTemplate si el template es 'gourmet'
+  if (template === 'gourmet') {
+    return (
+      <GourmetTemplate
         restaurant={restaurant}
         menuList={menuList}
         selectedMenu={selectedMenu}

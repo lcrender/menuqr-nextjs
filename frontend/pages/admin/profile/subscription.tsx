@@ -149,8 +149,8 @@ export default function SubscriptionManagement() {
           <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h2 className="h5 mb-0">Mis suscripciones</h2>
             {currentPlan && (
-              <span className={`badge ${currentPlan === 'pro' ? 'bg-success' : currentPlan === 'premium' ? 'bg-dark' : currentPlan === 'basic' ? 'bg-info' : 'bg-secondary'} text-capitalize`}>
-                Plan actual: {currentPlan}
+              <span className={`badge ${currentPlan === 'pro' || currentPlan === 'pro_team' ? 'bg-success' : currentPlan === 'premium' ? 'bg-dark' : currentPlan === 'basic' ? 'bg-info' : 'bg-secondary'} text-capitalize`}>
+                Plan actual: {currentPlan === 'pro_team' ? 'Pro Team' : currentPlan}
               </span>
             )}
           </div>
@@ -158,7 +158,7 @@ export default function SubscriptionManagement() {
             {subscriptions.length === 0 ? (
               <p className="text-muted mb-0">
                 {currentPlan && currentPlan !== 'free'
-                  ? `Tu plan actual es ${currentPlan.toUpperCase()} (asignado por tu organización). No tienes suscripciones de pago propias.`
+                  ? `Tu plan actual es ${currentPlan === 'pro_team' ? 'Pro Team' : currentPlan.toUpperCase()} (asignado por tu organización). No tienes suscripciones de pago propias.`
                   : 'No tienes suscripciones activas. Estás en plan Free. Elige un plan de pago abajo si quieres ampliar límites.'}
               </p>
             ) : (

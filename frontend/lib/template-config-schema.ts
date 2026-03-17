@@ -25,6 +25,7 @@ export const TEMPLATE_NAMES: Record<string, string> = {
   foodie: 'Foodie',
   burgers: 'Burgers',
   italianFood: 'Italian Food',
+  gourmet: 'Gourmet',
 };
 
 /** Opciones de color comunes a todas las plantillas (los ejemplos ya usan estos colores). */
@@ -77,6 +78,28 @@ const VISIBILITY_OPTIONS: TemplateConfigOption[] = [
   },
 ];
 
+/** Opciones Gourmet: colores, tipografía clásica y visibilidad (logo, portada, fotos de productos). */
+const GOURMET_OPTIONS: TemplateConfigOption[] = [
+  ...COMMON_COLOR_OPTIONS,
+  {
+    id: 'fontFamily',
+    label: 'Tipografía',
+    description: 'Fuente clásica para títulos y texto.',
+    type: 'select',
+    default: 'serif',
+    options: [
+      { value: 'serif', label: 'Serif (Georgia)' },
+      { value: 'sans', label: 'Sans (Helvetica)' },
+      { value: 'century', label: 'Century Schoolbook' },
+      { value: 'baskerville', label: 'Baskerville' },
+      { value: 'palatino', label: 'Palatino' },
+    ],
+  },
+  { id: 'showLogo', label: 'Mostrar logo', description: 'Mostrar el logo del restaurante.', type: 'boolean', default: true },
+  { id: 'showCoverImage', label: 'Mostrar imagen de portada', description: 'Mostrar la imagen de portada.', type: 'boolean', default: true },
+  { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista (sin placeholder si no hay foto).', type: 'boolean', default: true },
+];
+
 /**
  * Opciones de configuración disponibles por plantilla.
  * classic, minimalist y foodie incluyen además opciones de visibilidad (portada, logo, nombre, descripción).
@@ -87,4 +110,5 @@ export const TEMPLATE_CONFIG_SCHEMAS: Record<string, TemplateConfigOption[]> = {
   foodie: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS],
   burgers: [...COMMON_COLOR_OPTIONS],
   italianFood: [...COMMON_COLOR_OPTIONS],
+  gourmet: GOURMET_OPTIONS,
 };

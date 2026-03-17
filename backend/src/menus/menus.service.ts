@@ -602,6 +602,7 @@ export class MenusService {
       free: 3,
       basic: 6,
       pro: 30,
+      pro_team: 30,
       premium: -1, // Ilimitado
     };
 

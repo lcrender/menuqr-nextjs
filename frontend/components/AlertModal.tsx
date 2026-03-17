@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 interface AlertModalProps {
   show: boolean;
@@ -6,6 +7,8 @@ interface AlertModalProps {
   message: string;
   onClose: () => void;
   variant?: 'success' | 'error' | 'warning' | 'info';
+  /** Botón principal adicional (ej. "Configurar plantilla" con enlace). */
+  actionButton?: { label: string; href: string };
 }
 
 export default function AlertModal({
@@ -14,6 +17,7 @@ export default function AlertModal({
   message,
   onClose,
   variant = 'info',
+  actionButton,
 }: AlertModalProps) {
   if (!show) return null;
 
@@ -88,9 +92,14 @@ export default function AlertModal({
             </div>
           </div>
           <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
-            <button type="button" className="btn btn-primary" onClick={onClose}>
+            <button type="button" className={actionButton?.href ? 'btn btn-secondary' : 'btn btn-primary'} onClick={onClose}>
               Aceptar
             </button>
+            {actionButton?.href && (
+              <Link href={actionButton.href} className="btn btn-primary" onClick={onClose}>
+                {actionButton.label}
+              </Link>
+            )}
           </div>
         </div>
       </div>

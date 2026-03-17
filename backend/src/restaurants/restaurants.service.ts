@@ -548,8 +548,14 @@ export class RestaurantsService {
       params.push(data.description);
     }
     if (data.template !== undefined && data.template !== null) {
-      if (!['classic', 'minimalist', 'foodie', 'burgers', 'italianFood'].includes(data.template)) {
-        throw new BadRequestException('Template inválido. Debe ser: classic, minimalist, foodie, burgers o italianFood');
+      if (!['classic', 'minimalist', 'foodie', 'burgers', 'italianFood', 'gourmet'].includes(data.template)) {
+        throw new BadRequestException('Template inválido. Debe ser: classic, minimalist, foodie, burgers, italianFood o gourmet');
+      }
+      if (data.template === 'gourmet') {
+        const plan = await this.getTenantPlan(tenantId);
+        if (plan !== 'pro' && plan !== 'premium' && plan !== 'pro_team') {
+          throw new BadRequestException('La plantilla Gourmet está disponible solo para planes Pro, Pro Team o Premium.');
+        }
       }
       updates.push(`template = $${paramIndex++}`);
       params.push(data.template);
@@ -750,6 +756,7 @@ export class RestaurantsService {
       free: 1,
       basic: 1,
       pro: 3,
+      pro_team: 3,
       premium: 10,
     };
 
@@ -762,6 +769,7 @@ export class RestaurantsService {
       free: 30,
       basic: 60,
       pro: 300,
+      pro_team: 300,
       premium: 1200,
     };
     const planKey = plan || 'free';

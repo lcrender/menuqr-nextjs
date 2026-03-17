@@ -8,6 +8,7 @@ import MinimalistTemplate from '../../../templates/minimalist/MinimalistTemplate
 import FoodieTemplate from '../../../templates/foodie/FoodieTemplate';
 import BurgersTemplate from '../../../templates/burgers/BurgersTemplate';
 import ItalianFoodTemplate from '../../../templates/italianfood/ItalianFoodTemplate';
+import GourmetTemplate from '../../../templates/gourmet/GourmetTemplate';
 
 interface MenuSection {
   id: string;
@@ -280,6 +281,20 @@ export default function MenuPage() {
   if (template === 'burgers') {
     return (
       <BurgersTemplate
+        restaurant={restaurant}
+        menuList={menuList}
+        selectedMenu={selectedMenu}
+        onMenuSelect={() => {}}
+        formatPrice={formatPrice}
+        formatWhatsAppForLink={formatWhatsAppForLink}
+        iconLabels={iconLabels}
+      />
+    );
+  }
+
+  if (template === 'gourmet') {
+    return (
+      <GourmetTemplate
         restaurant={restaurant}
         menuList={menuList}
         selectedMenu={selectedMenu}

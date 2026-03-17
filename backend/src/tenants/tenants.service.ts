@@ -134,7 +134,24 @@ export class TenantsService {
       params
     );
 
+    if (data.plan !== undefined && (data.plan === 'free' || data.plan === 'basic')) {
+      await this.resetProTemplatesToClassic(id);
+    }
+
     return this.findById(id);
+  }
+
+  /**
+   * Si el tenant pasa a free/basic, los restaurantes con plantilla Pro (ej. gourmet) pasan a classic.
+   */
+  private async resetProTemplatesToClassic(tenantId: string): Promise<void> {
+    const proOnlyTemplates = ['gourmet'];
+    await this.postgres.executeRaw(
+      `UPDATE restaurants SET template = 'classic', updated_at = NOW()
+       WHERE tenant_id = $1 AND deleted_at IS NULL AND template = ANY($2::text[])`,
+      [tenantId, proOnlyTemplates]
+    );
+    this.logger.log(`Reset Pro templates to classic for tenant ${tenantId} (if any)`);
   }
 
   async block(id: string) {
@@ -159,6 +176,7 @@ export class TenantsService {
         COUNT(*) FILTER (WHERE plan = 'free' AND deleted_at IS NULL) as "freePlanTenants",
         COUNT(*) FILTER (WHERE plan = 'basic' AND deleted_at IS NULL) as "basicPlanTenants",
         COUNT(*) FILTER (WHERE plan = 'pro' AND deleted_at IS NULL) as "proPlanTenants",
+        COUNT(*) FILTER (WHERE plan = 'pro_team' AND deleted_at IS NULL) as "proTeamPlanTenants",
         COUNT(*) FILTER (WHERE plan = 'premium' AND deleted_at IS NULL) as "premiumPlanTenants"
       FROM tenants
     `);

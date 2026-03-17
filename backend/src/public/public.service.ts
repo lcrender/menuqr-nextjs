@@ -20,18 +20,18 @@ export class PublicService {
   }
 
   private getRestaurantLimit(plan: string): number {
-    const limits: Record<string, number> = { free: 1, basic: 1, pro: 3, premium: 10 };
+    const limits: Record<string, number> = { free: 1, basic: 1, pro: 3, pro_team: 3, premium: 10 };
     return limits[plan || 'free'] ?? 1;
   }
 
   private getMenuLimit(plan: string): number {
-    const limits: Record<string, number> = { free: 3, basic: 6, pro: 30, premium: -1 };
+    const limits: Record<string, number> = { free: 3, basic: 6, pro: 30, pro_team: 30, premium: -1 };
     const n = limits[plan || 'free'];
     return n ?? 3;
   }
 
   private getProductLimit(plan: string): number {
-    const limits: Record<string, number> = { free: 30, basic: 60, pro: 300, premium: 1200 };
+    const limits: Record<string, number> = { free: 30, basic: 60, pro: 300, pro_team: 300, premium: 1200 };
     return limits[plan || 'free'] ?? 30;
   }
 

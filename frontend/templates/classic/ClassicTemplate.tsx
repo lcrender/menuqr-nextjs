@@ -347,6 +347,10 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
               )}
             </div>
           </div>
+          <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.25)', textAlign: 'center', fontSize: '0.8rem', opacity: 0.9 }}>
+            Menú creado con{' '}
+            <a href="https://appmenuqr.com" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>appmenuqr.com</a>
+          </div>
         </div>
       </footer>
     </div>

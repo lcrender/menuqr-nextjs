@@ -54,7 +54,7 @@ export interface PreviewMenu {
   sections: MenuSection[];
 }
 
-const TEMPLATE_IDS = ['classic', 'minimalist', 'foodie', 'burgers', 'italianFood'] as const;
+const TEMPLATE_IDS = ['classic', 'minimalist', 'foodie', 'burgers', 'italianFood', 'gourmet'] as const;
 export type PreviewTemplateId = typeof TEMPLATE_IDS[number];
 
 /** Clásica: Bodegón Argentino, ARS */
@@ -728,6 +728,83 @@ const italianFoodData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus
   menus: [menuItalianoItalianFood, menuEspanolItalianFood, menuEnglishItalianFood],
 };
 
+/** Imágenes reales del menú gourmet, servidas desde /images/ (frontend/public/images). */
+const GOURMET_IMAGE = (name: string) => `/images/${name}.jpg`;
+
+/** Gourmet: restaurante fino, algunos ítems con foto y otros sin (vista previa sin placeholder). */
+const gourmetMenu: PreviewMenu = {
+  id: 'preview-gourmet-menu',
+  slug: 'carta-gourmet',
+  name: 'Carta',
+  description: 'Platos de temporada y propuestas del chef.',
+  restaurantId: 'preview-gourmet',
+  restaurantName: 'Lumina',
+  restaurantSlug: 'preview-gourmet',
+  template: 'gourmet',
+  sections: [
+    {
+      id: 'g-entradas',
+      name: 'Entradas',
+      items: [
+        { id: 'g-e1', name: 'Carpaccio de res', description: 'Finas láminas con rúcula, parmesano y alcaparras.', prices: [{ currency: 'EUR', amount: 14 }], icons: [], photos: [GOURMET_IMAGE('carpaccio-de-res')] },
+        { id: 'g-e2', name: 'Tartar de atún', description: 'Atún rojo, aguacate y chips de wonton.', prices: [{ currency: 'EUR', amount: 16 }], icons: [], photos: [GOURMET_IMAGE('tartar-de-atun')] },
+        { id: 'g-e3', name: 'Burrata con tomate', description: 'Burrata cremosa, tomate confitado y albahaca.', prices: [{ currency: 'EUR', amount: 12 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('burrata-con-tomate')] },
+      ],
+    },
+    {
+      id: 'g-principales',
+      name: 'Platos principales',
+      items: [
+        { id: 'g-p1', name: 'Solomillo con reducción', description: 'Solomillo de ternera, reducción de vino tinto y puré de patata.', prices: [{ currency: 'EUR', amount: 28 }], icons: [], photos: [GOURMET_IMAGE('solomillo-con-reduccion')] },
+        { id: 'g-p2', name: 'Risotto de setas', description: 'Arroz cremoso con setas de temporada y trufa.', prices: [{ currency: 'EUR', amount: 22 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('risotto-de-setas')] },
+        { id: 'g-p3', name: 'Pescado del día', description: 'Pescado fresco según mercado, guarnición de temporada.', prices: [{ currency: 'EUR', amount: 24 }], icons: [], photos: [GOURMET_IMAGE('pescado-del-dia')] },
+        { id: 'g-p4', name: 'Cordero confitado', description: 'Pierna de cordero confitada con verduras glaseadas.', prices: [{ currency: 'EUR', amount: 26 }], icons: [], photos: [GOURMET_IMAGE('cordero-confitado')] },
+        { id: 'g-p5', name: 'Pechuga de pato a la naranja', description: 'Pechuga sellada con reducción de naranja y especias. Guarnición de puré de boniato.', prices: [{ currency: 'EUR', amount: 27 }], icons: [], photos: [GOURMET_IMAGE('pechuga-de-pato-a-la-naranja')] },
+        { id: 'g-p6', name: 'Ravioli de langostinos', description: 'Ravioli relleno de langostinos con salsa de azafrán y espárragos verdes.', prices: [{ currency: 'EUR', amount: 25 }], icons: [], photos: [GOURMET_IMAGE('ravioli-de-langostinos')] },
+      ],
+    },
+    {
+      id: 'g-postres',
+      name: 'Postres',
+      items: [
+        { id: 'g-d1', name: 'Soufflé de chocolate', description: 'Soufflé caliente con helado de vainilla.', prices: [{ currency: 'EUR', amount: 10 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('souffle-de-chocolate')] },
+        { id: 'g-d2', name: 'Tarta de queso', description: 'Tarta de queso cremosa con coulis de frutos rojos.', prices: [{ currency: 'EUR', amount: 9 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('tarta-de-queso')] },
+        { id: 'g-d3', name: 'Sorbete de limón', description: 'Sorbete refrescante con menta.', prices: [{ currency: 'EUR', amount: 7 }], icons: ['vegano', 'vegetariano'], photos: [GOURMET_IMAGE('sorbete-de-limon')] },
+      ],
+    },
+    {
+      id: 'g-bebidas',
+      name: 'Bebidas',
+      items: [
+        { id: 'g-b1', name: 'Agua mineral', description: 'Con o sin gas. 500 ml.', prices: [{ currency: 'EUR', label: '500 ml', amount: 3 }], icons: [] },
+        { id: 'g-b2', name: 'Vino de la casa', description: 'Tinto o blanco. Copa o botella.', prices: [{ currency: 'EUR', label: 'Copa', amount: 5 }, { currency: 'EUR', label: 'Botella', amount: 18 }], icons: [] },
+        { id: 'g-b3', name: 'Café', description: 'Expresso, cortado, con leche o descafeinado.', prices: [{ currency: 'EUR', amount: 2.5 }], icons: [] },
+      ],
+    },
+  ],
+};
+
+const gourmetData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: PreviewMenu[] } = {
+  restaurant: {
+    id: 'preview-gourmet',
+    name: 'Lumina',
+    slug: 'preview-gourmet',
+    description: 'En Lumina creemos que cada cena es un viaje. Nuestra cocina de autor apuesta por el producto de proximidad y de temporada, reinterpretado con técnica contemporánea y un toque personal. El equipo trabaja cada plato como una composición: texturas, contrastes y aromas al servicio del sabor. La carta cambia con las estaciones y con las ideas del chef, siempre con una base de materias primas seleccionadas y un servicio atento en un ambiente íntimo y elegante. Te invitamos a vivir una experiencia gastronómica en la que la luz, el espacio y el detalle forman parte del menú.',
+    address: 'Calle Gourmet 1, Madrid',
+    phone: '+34 91 555 01 02',
+    email: 'reservas@lumina.es',
+    website: 'https://lumina.es',
+    template: 'gourmet',
+    primaryColor: '#2c3e50',
+    secondaryColor: '#8b6914',
+    country: 'España',
+    logoUrl: '/preview/logo-gourmet.jpg',
+    coverUrl: '/preview/portada-gourmet.jpg',
+  },
+  menu: gourmetMenu,
+  menus: [gourmetMenu],
+};
+
 export type PreviewDataResult = { restaurant: PreviewRestaurant; menu: PreviewMenu; menus?: PreviewMenu[] };
 
 const previewData: Record<PreviewTemplateId, PreviewDataResult> = {
@@ -736,6 +813,7 @@ const previewData: Record<PreviewTemplateId, PreviewDataResult> = {
   foodie: foodieData,
   burgers: burgersData,
   italianFood: italianFoodData,
+  gourmet: gourmetData,
 };
 
 export function getPreviewData(templateId: string): PreviewDataResult | null {

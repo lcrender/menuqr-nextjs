@@ -4,6 +4,7 @@ const PLAN_STYLES: Record<string, { bg: string; text: string; label: string }> =
   free: { bg: 'bg-secondary', text: 'text-white', label: 'Free' },
   basic: { bg: 'bg-info', text: 'text-dark', label: 'Basic' },
   pro: { bg: 'bg-primary', text: 'text-white', label: 'Pro' },
+  pro_team: { bg: 'bg-primary', text: 'text-white', label: 'Pro Team' },
   premium: { bg: 'bg-dark', text: 'text-white', label: 'Premium' },
 };
 

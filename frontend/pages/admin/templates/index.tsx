@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
+import AlertModal from '../../../components/AlertModal';
 import { TEMPLATE_NAMES } from '../../../lib/template-config-schema';
 
 interface Template {
@@ -11,6 +12,8 @@ interface Template {
   description: string;
   preview: string;
   category: string;
+  /** Si es true, solo usuarios con plan Pro o Premium pueden aplicar esta plantilla. La vista previa sigue disponible para todos. */
+  requiresProOrPremium?: boolean;
 }
 
 const templates: Template[] = [
@@ -34,6 +37,14 @@ const templates: Template[] = [
     description: 'Diseño elegante y sofisticado, ideal para restaurantes gourmet.',
     preview: '🍽️',
     category: 'Gourmet',
+  },
+  {
+    id: 'gourmet',
+    name: 'Gourmet',
+    description: 'Estilo refinado con tipografías clásicas. Fotos de productos solo cuando existan. Disponible para plan Pro o Premium.',
+    preview: '🥂',
+    category: 'Gourmet',
+    requiresProOrPremium: true,
   },
   {
     id: 'burgers',
@@ -65,9 +76,23 @@ export default function Templates() {
   const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState<string>('#007bff');
   const [secondaryColor, setSecondaryColor] = useState<string>('#0056b3');
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [alertModal, setAlertModal] = useState<{ title: string; message: string; variant: 'success' | 'error'; restaurantId?: string } | null>(null);
 
   useEffect(() => {
     loadRestaurants();
+  }, []);
+
+  useEffect(() => {
+    const loadPlan = async () => {
+      try {
+        const res = await api.get('/restaurants/dashboard-stats');
+        setCurrentPlan(res.data?.plan ?? null);
+      } catch {
+        setCurrentPlan(null);
+      }
+    };
+    loadPlan();
   }, []);
 
   const loadRestaurants = async () => {
@@ -153,12 +178,21 @@ export default function Templates() {
         setSecondaryColor(savedSecondaryColor);
       }
       
-      alert(`Plantilla "${templates.find(t => t.id === templateId)?.name}" y colores aplicados exitosamente`);
+      setAlertModal({
+        title: 'Plantilla aplicada',
+        message: 'Entra a configurar la plantilla para ajustar colores y opciones.',
+        variant: 'success',
+        restaurantId,
+      });
       // No limpiar la selección para que el usuario pueda ver los cambios
     } catch (error: any) {
       console.error('Error aplicando plantilla:', error);
       console.error('Detalles del error:', error.response?.data);
-      alert(error.response?.data?.message || 'Error aplicando plantilla');
+      setAlertModal({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error aplicando plantilla.',
+        variant: 'error',
+      });
     } finally {
       setApplyingTemplate(null);
     }
@@ -271,13 +305,32 @@ export default function Templates() {
                     flexDirection: 'column',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    borderColor: previewSelectedId === template.id ? 'var(--admin-primary, #6366f1)' : undefined,
-                    boxShadow: previewSelectedId === template.id ? '0 0 0 2px var(--admin-primary, #6366f1)' : undefined,
+                    borderColor: previewSelectedId === template.id ? 'var(--admin-primary, #6366f1)' : template.requiresProOrPremium ? 'rgba(180, 140, 45, 0.6)' : undefined,
+                    borderWidth: template.requiresProOrPremium ? '2px' : undefined,
+                    boxShadow: previewSelectedId === template.id ? '0 0 0 2px var(--admin-primary, #6366f1)' : template.requiresProOrPremium ? '0 2px 12px rgba(180, 140, 45, 0.15)' : undefined,
+                    background: template.requiresProOrPremium ? 'linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(255, 248, 230, 0.4) 100%)' : undefined,
                   }}
                   onClick={() => setPreviewSelectedId(template.id)}
                 >
-                  <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <h3 className="admin-card-title" style={{ marginBottom: '8px' }}>
+                  <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                    {template.requiresProOrPremium && (
+                      <span style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        fontSize: '0.7rem',
+                        fontWeight: '700',
+                        letterSpacing: '0.05em',
+                        color: '#b48c2d',
+                        background: 'rgba(180, 140, 45, 0.15)',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        border: '1px solid rgba(180, 140, 45, 0.5)',
+                      }}>
+                        PRO
+                      </span>
+                    )}
+                    <h3 className="admin-card-title" style={{ marginBottom: '8px', paddingRight: template.requiresProOrPremium ? '48px' : undefined }}>
                       {template.name}
                     </h3>
                     <p className="admin-card-body" style={{ flex: 1, marginBottom: '16px', fontSize: '0.9375rem' }}>
@@ -295,61 +348,69 @@ export default function Templates() {
                       </a>
                     </p>
                     <div onClick={(e) => e.stopPropagation()}>
-                      <label className="form-label" style={{ 
-                        fontSize: '0.875rem', 
-                        fontWeight: 600, 
-                        marginBottom: '8px',
-                        color: 'var(--admin-text)'
-                      }}>
-                        Aplicar a restaurante:
-                      </label>
-                      <select
-                        className="wizard-input-large"
-                        value={selectedTemplate === template.id && selectedRestaurant ? selectedRestaurant : ''}
-                        onChange={async (e) => {
-                          if (e.target.value) {
-                            if (selectedTemplate === template.id && selectedRestaurant === e.target.value) {
-                              setSelectedRestaurant(null);
-                              setSelectedTemplate(null);
-                              await new Promise(resolve => setTimeout(resolve, 100));
-                            }
-                            await handleRestaurantSelect(template.id, e.target.value);
-                          } else {
-                            setSelectedRestaurant(null);
-                            setSelectedTemplate(null);
-                          }
-                        }}
-                        disabled={applyingTemplate?.startsWith(template.id) || false}
-                        style={{
-                          width: '100%',
-                          background: 'white',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <option value="">Seleccionar restaurante...</option>
-                        {restaurants.map((restaurant) => (
-                          <option key={restaurant.id} value={restaurant.id}>
-                            {restaurant.name} {getRestaurantTemplate(restaurant.id) === template.id ? '(Actual)' : ''}
-                          </option>
-                        ))}
-                      </select>
-                      {selectedTemplate === template.id && selectedRestaurant && (
-                        <button
-                          type="button"
-                          className="admin-btn"
-                          onClick={() => handleApplyTemplate(template.id, selectedRestaurant)}
-                          disabled={applyingTemplate === `${template.id}-${selectedRestaurant}`}
-                          style={{ width: '100%', marginTop: '12px', padding: '10px 16px' }}
-                        >
-                          {applyingTemplate === `${template.id}-${selectedRestaurant}` ? (
-                            <>
-                              <span className="spinner-border spinner-border-sm me-2" role="status" />
-                              Aplicando...
-                            </>
-                          ) : (
-                            'Aplicar plantilla'
+                      {template.requiresProOrPremium && currentPlan !== 'pro' && currentPlan !== 'pro_team' && currentPlan !== 'premium' ? (
+                        <p className="small text-muted" style={{ margin: 0 }}>
+                          Esta plantilla está disponible solo para plan <strong>Pro</strong>, <strong>Pro Team</strong> o <strong>Premium</strong>. Puedes ver la vista previa arriba.
+                        </p>
+                      ) : (
+                        <>
+                          <label className="form-label" style={{ 
+                            fontSize: '0.875rem', 
+                            fontWeight: 600, 
+                            marginBottom: '8px',
+                            color: 'var(--admin-text)'
+                          }}>
+                            Aplicar a restaurante:
+                          </label>
+                          <select
+                            className="wizard-input-large"
+                            value={selectedTemplate === template.id && selectedRestaurant ? selectedRestaurant : ''}
+                            onChange={async (e) => {
+                              if (e.target.value) {
+                                if (selectedTemplate === template.id && selectedRestaurant === e.target.value) {
+                                  setSelectedRestaurant(null);
+                                  setSelectedTemplate(null);
+                                  await new Promise(resolve => setTimeout(resolve, 100));
+                                }
+                                await handleRestaurantSelect(template.id, e.target.value);
+                              } else {
+                                setSelectedRestaurant(null);
+                                setSelectedTemplate(null);
+                              }
+                            }}
+                            disabled={applyingTemplate?.startsWith(template.id) || false}
+                            style={{
+                              width: '100%',
+                              background: 'white',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <option value="">Seleccionar restaurante...</option>
+                            {restaurants.map((restaurant) => (
+                              <option key={restaurant.id} value={restaurant.id}>
+                                {restaurant.name} {getRestaurantTemplate(restaurant.id) === template.id ? '(Actual)' : ''}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedTemplate === template.id && selectedRestaurant && (
+                            <button
+                              type="button"
+                              className="admin-btn"
+                              onClick={() => handleApplyTemplate(template.id, selectedRestaurant)}
+                              disabled={applyingTemplate === `${template.id}-${selectedRestaurant}`}
+                              style={{ width: '100%', marginTop: '12px', padding: '10px 16px' }}
+                            >
+                              {applyingTemplate === `${template.id}-${selectedRestaurant}` ? (
+                                <>
+                                  <span className="spinner-border spinner-border-sm me-2" role="status" />
+                                  Aplicando...
+                                </>
+                              ) : (
+                                'Aplicar plantilla'
+                              )}
+                            </button>
                           )}
-                        </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -401,6 +462,17 @@ export default function Templates() {
           </div>
         )}
       </div>
+
+      {alertModal && (
+        <AlertModal
+          show={!!alertModal}
+          title={alertModal.title}
+          message={alertModal.message}
+          variant={alertModal.variant}
+          onClose={() => setAlertModal(null)}
+          actionButton={alertModal.variant === 'success' && alertModal.restaurantId ? { label: 'Configurar plantilla', href: `/admin/templates/configure/${alertModal.restaurantId}` } : undefined}
+        />
+      )}
     </AdminLayout>
   );
 }

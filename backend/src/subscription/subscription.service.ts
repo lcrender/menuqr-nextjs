@@ -143,6 +143,7 @@ export class SubscriptionService {
    * Sincroniza el plan del tenant con la suscripción activa del usuario.
    * Si la suscripción está active y tiene subscription_plan, actualiza tenant.plan.
    * Si está canceled/expired/past_due, baja a 'free'.
+   * No sobrescribe el plan 'pro_team' (asignado manualmente por super admin, sin suscripción).
    */
   async syncTenantPlanFromSubscription(userId: string): Promise<void> {
     const user = await this.postgres.queryRaw<any>(
@@ -151,6 +152,15 @@ export class SubscriptionService {
     );
     const tenantId = user[0]?.tenant_id;
     if (!tenantId) return;
+
+    const [tenantRow] = await this.postgres.queryRaw<any>(
+      'SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1',
+      [tenantId]
+    );
+    if (tenantRow?.plan === 'pro_team') {
+      this.logger.log(`Tenant ${tenantId} has plan pro_team (manual), skipping sync`);
+      return;
+    }
 
     const subs = await this.findByUserId(userId);
     const active = subs.find((s) => s.status === 'active');
@@ -161,6 +171,23 @@ export class SubscriptionService {
       [newPlan, tenantId]
     );
     this.logger.log(`Synced tenant ${tenantId} plan to ${newPlan} for user ${userId}`);
+
+    if (newPlan === 'free' || newPlan === 'basic') {
+      await this.resetProTemplatesToClassic(tenantId);
+    }
+  }
+
+  /**
+   * Si el tenant baja a free/basic, los restaurantes con plantilla Pro (ej. gourmet) pasan a classic.
+   */
+  private async resetProTemplatesToClassic(tenantId: string): Promise<void> {
+    const proOnlyTemplates = ['gourmet'];
+    await this.postgres.executeRaw(
+      `UPDATE restaurants SET template = 'classic', updated_at = NOW()
+       WHERE tenant_id = $1 AND deleted_at IS NULL AND template = ANY($2::text[])`,
+      [tenantId, proOnlyTemplates]
+    );
+    this.logger.log(`Reset Pro templates to classic for tenant ${tenantId} (if any)`);
   }
 
   async recordWebhookProcessed(provider: string, eventId: string): Promise<boolean> {

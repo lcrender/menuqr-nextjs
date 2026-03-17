@@ -129,7 +129,7 @@ export default function Users() {
 
   const handlePlanChange = async (e: React.ChangeEvent<HTMLSelectElement>, user: UserStats) => {
     e.stopPropagation();
-    const newPlan = e.target.value as 'free' | 'basic' | 'pro' | 'premium';
+    const newPlan = e.target.value as 'free' | 'basic' | 'pro' | 'premium' | 'pro_team';
     if (!user.tenantId) return;
     setActionLoading(user.id);
     try {
@@ -169,6 +169,9 @@ export default function Users() {
     switch (plan.toLowerCase()) {
       case 'premium':
         return 'bg-success';
+      case 'pro':
+      case 'pro_team':
+        return 'bg-info';
       case 'basic':
         return 'bg-primary';
       case 'free':
@@ -183,6 +186,10 @@ export default function Users() {
     switch (plan.toLowerCase()) {
       case 'premium':
         return 'Premium';
+      case 'pro':
+        return 'Pro';
+      case 'pro_team':
+        return 'Pro Team';
       case 'basic':
         return 'Básico';
       case 'free':
@@ -298,6 +305,7 @@ export default function Users() {
                           <option value="free">Gratis</option>
                           <option value="basic">Básico</option>
                           <option value="pro">Pro</option>
+                          <option value="pro_team">Pro Team</option>
                           <option value="premium">Premium</option>
                         </select>
                       ) : (

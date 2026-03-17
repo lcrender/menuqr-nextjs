@@ -20,6 +20,7 @@ export default function ConfigureTemplate() {
   const [saving, setSaving] = useState(false);
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!restaurantId || typeof restaurantId !== 'string') return;
@@ -59,6 +60,8 @@ export default function ConfigureTemplate() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!restaurantId || typeof restaurantId !== 'string' || !restaurant) return;
+    setError(null);
+    setSuccessMessage(null);
     try {
       setSaving(true);
       const hex = (v: unknown) => (typeof v === 'string' && /^#[0-9A-Fa-f]{6}$/.test(v) ? v : null);
@@ -74,6 +77,7 @@ export default function ConfigureTemplate() {
         primaryColor: String(formValues.primaryColor ?? ''),
         secondaryColor: String(formValues.secondaryColor ?? ''),
       } : null);
+      setSuccessMessage('Configuración guardada correctamente.');
     } catch (e: any) {
       setError(e.response?.data?.message || 'Error al guardar');
     } finally {
@@ -131,6 +135,16 @@ export default function ConfigureTemplate() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="admin-card" style={{ padding: '24px' }}>
+                {error && (
+                  <div className="alert alert-danger" style={{ marginBottom: '20px' }} role="alert">
+                    {error}
+                  </div>
+                )}
+                {successMessage && (
+                  <div className="alert alert-success" style={{ marginBottom: '20px' }} role="alert">
+                    {successMessage}
+                  </div>
+                )}
                 {schema.map((opt) => (
                   <Field key={opt.id} option={opt} value={formValues[opt.id]} onChange={(v) => handleChange(opt.id, v)} />
                 ))}

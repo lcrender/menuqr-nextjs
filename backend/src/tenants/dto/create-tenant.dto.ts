@@ -7,9 +7,9 @@ export class CreateTenantDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ description: 'Plan del tenant', enum: ['free', 'basic', 'pro', 'premium'] })
+  @ApiProperty({ description: 'Plan del tenant', enum: ['free', 'basic', 'pro', 'premium', 'pro_team'] })
   @IsString()
-  @IsIn(['free', 'basic', 'pro', 'premium'])
+  @IsIn(['free', 'basic', 'pro', 'premium', 'pro_team'])
   plan: string;
 
   @ApiProperty({ description: 'Configuraciones del tenant', required: false })

@@ -904,6 +904,7 @@ export class MenuItemsService {
       free: 30,
       basic: 60,
       pro: 300,
+      pro_team: 300,
       premium: 1200,
     };
 

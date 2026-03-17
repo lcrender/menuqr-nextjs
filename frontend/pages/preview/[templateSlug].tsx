@@ -7,6 +7,7 @@ import MinimalistTemplate from '../../templates/minimalist/MinimalistTemplate';
 import FoodieTemplate from '../../templates/foodie/FoodieTemplate';
 import BurgersTemplate from '../../templates/burgers/BurgersTemplate';
 import ItalianFoodTemplate from '../../templates/italianfood/ItalianFoodTemplate';
+import GourmetTemplate from '../../templates/gourmet/GourmetTemplate';
 import type { ItemPrice } from '../../data/preview-data';
 
 const formatPrice = (price: ItemPrice) => {
@@ -107,6 +108,7 @@ export default function PreviewPage() {
   if (template === 'minimalist') return <MinimalistTemplate {...commonProps} />;
   if (template === 'foodie') return <FoodieTemplate {...commonProps} />;
   if (template === 'burgers') return <BurgersTemplate {...commonProps} />;
+  if (template === 'gourmet') return <GourmetTemplate {...commonProps} />;
   if (template === 'italianFood') return <ItalianFoodTemplate {...commonProps} />;
 
   return <ClassicTemplate {...commonProps} />;
