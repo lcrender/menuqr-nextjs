@@ -48,9 +48,13 @@ async function bootstrap() {
     // CONFIGURACIÓN DE CORS
     // ========================================
     
-    const corsOrigin = configService.get('CORS_ORIGIN', 'http://localhost:3000');
+    const corsOriginRaw = configService.get<string>('CORS_ORIGIN', 'http://localhost:3000');
+    const corsOrigin =
+      typeof corsOriginRaw === 'string' && corsOriginRaw.includes(',')
+        ? corsOriginRaw.split(',').map((o) => o.trim()).filter(Boolean)
+        : corsOriginRaw;
     const corsCredentials = configService.get('CORS_CREDENTIALS', 'true') === 'true';
-    
+
     app.enableCors({
       origin: corsOrigin,
       credentials: corsCredentials,

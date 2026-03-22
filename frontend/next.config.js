@@ -79,6 +79,14 @@ const nextConfig = {
   // CONFIGURACIÓN DE REWRITES
   // ========================================
   async rewrites() {
+    // Proxy interno al backend (Docker: http://backend:3001). Evita CORS en el navegador
+    // si NEXT_PUBLIC_API_URL=/api-proxy (recomendado en docker-compose.prod).
+    const internalApi = (
+      process.env.INTERNAL_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://127.0.0.1:3001'
+    ).replace(/\/$/, '');
+
     return [
       {
         source: '/r/:restaurantSlug',
@@ -87,6 +95,10 @@ const nextConfig = {
       {
         source: '/m/:menuSlug',
         destination: '/menu/:menuSlug',
+      },
+      {
+        source: '/api-proxy/:path*',
+        destination: `${internalApi}/:path*`,
       },
     ];
   },
