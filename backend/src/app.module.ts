@@ -16,7 +16,6 @@ import { MenuSectionsModule } from './menu-sections/menu-sections.module';
 import { PublicModule } from './public/public.module';
 import { MediaModule } from './media/media.module';
 import { QRModule } from './qr/qr.module';
-import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { PaymentModule } from './payment/payment.module';
@@ -31,6 +30,7 @@ import { I18nModule } from './common/i18n/i18n.module';
 
 // Configuración de validación
 import { validationSchema } from './common/config/validation.schema';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -96,12 +96,11 @@ import { validationSchema } from './common/config/validation.schema';
     PublicModule,
     MediaModule,
     QRModule,
-    HealthModule,
     MetricsModule,
     TrackingModule,
     PaymentModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}
