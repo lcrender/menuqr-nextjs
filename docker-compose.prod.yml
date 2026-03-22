@@ -1,15 +1,31 @@
 # ========================================
 # MenuQR - Docker Compose PRODUCCIÓN
 # ========================================
-# Servidor: /opt/menuqr
-# Traefik global existente | certresolver: mytlschallenge | red: root_default
-# Sin puertos expuestos. Sin nginx.
+# Servidor: /opt/menuqr (ejemplo)
+# Traefik existente | certresolver: mytlschallenge | red: root_default
+# Sin puertos expuestos al host.
+#
+# Dominio: appmenuqr.com
+# DNS (Hostinger u otro): registros A (o AAAA) → IP del VPS.
+# Cloudflare vs DNS directo al VPS: la config de Traefik es la misma;
+# si usas proxy naranja en Cloudflare, en SSL/TLS suele ir "Full" o "Full (strict)".
+#
+# Subdominios a crear en DNS:
+#   appmenuqr.com, www.appmenuqr.com  → frontend
+#   api.appmenuqr.com                 → backend
+#   s3.appmenuqr.com                  → MinIO API (imágenes / S3)
+#   minio.appmenuqr.com               → consola MinIO (opcional)
+#
+# En .env de producción alinear URLs:
+#   FRONTEND_URL, BACKEND_URL, CORS_ORIGIN, NEXT_PUBLIC_*, MINIO_PUBLIC_URL
+#   MINIO_PUBLIC_URL=https://s3.appmenuqr.com  (sin path del bucket; el código concatena bucket/ruta)
 # ========================================
 
 services:
   postgres:
     image: postgres:16-alpine
     container_name: menuqr_postgres
+    restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-menuqr}
       POSTGRES_USER: ${POSTGRES_USER:-menuqr_user}
@@ -29,6 +45,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: menuqr_redis
+    restart: always
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
@@ -43,6 +60,7 @@ services:
   minio:
     image: minio/minio:latest
     container_name: menuqr_minio
+    restart: always
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
@@ -58,12 +76,29 @@ services:
       - root_default
     labels:
       - "traefik.enable=true"
-      # Console web (opcional)
-      - "traefik.http.routers.menuqr-minio.rule=Host(`minio.menuqr.72-60-133-229.nip.io`)"
+      - "traefik.docker.network=root_default"
+      # MinIO S3 API (público para URLs de assets)
+      - "traefik.http.routers.menuqr-s3.rule=Host(`s3.appmenuqr.com`)"
+      - "traefik.http.routers.menuqr-s3.entrypoints=websecure"
+      - "traefik.http.routers.menuqr-s3.tls=true"
+      - "traefik.http.routers.menuqr-s3.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.menuqr-s3.loadbalancer.server.port=9000"
+      - "traefik.http.routers.menuqr-s3-http.rule=Host(`s3.appmenuqr.com`)"
+      - "traefik.http.routers.menuqr-s3-http.entrypoints=web"
+      - "traefik.http.routers.menuqr-s3-http.middlewares=menuqr-s3-redirect"
+      - "traefik.http.middlewares.menuqr-s3-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.menuqr-s3-redirect.redirectscheme.permanent=true"
+      # Consola web MinIO
+      - "traefik.http.routers.menuqr-minio.rule=Host(`minio.appmenuqr.com`)"
       - "traefik.http.routers.menuqr-minio.entrypoints=websecure"
       - "traefik.http.routers.menuqr-minio.tls=true"
       - "traefik.http.routers.menuqr-minio.tls.certresolver=mytlschallenge"
       - "traefik.http.services.menuqr-minio.loadbalancer.server.port=9001"
+      - "traefik.http.routers.menuqr-minio-http.rule=Host(`minio.appmenuqr.com`)"
+      - "traefik.http.routers.menuqr-minio-http.entrypoints=web"
+      - "traefik.http.routers.menuqr-minio-http.middlewares=menuqr-minio-redirect"
+      - "traefik.http.middlewares.menuqr-minio-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.menuqr-minio-redirect.redirectscheme.permanent=true"
 
   backend:
     build:
@@ -71,6 +106,7 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: menuqr_backend
+    restart: always
     env_file:
       - .env
     environment:
@@ -99,11 +135,17 @@ services:
       - root_default
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.menuqr-api.rule=Host(`api.menuqr.72-60-133-229.nip.io`)"
+      - "traefik.docker.network=root_default"
+      - "traefik.http.routers.menuqr-api.rule=Host(`api.appmenuqr.com`)"
       - "traefik.http.routers.menuqr-api.entrypoints=websecure"
       - "traefik.http.routers.menuqr-api.tls=true"
       - "traefik.http.routers.menuqr-api.tls.certresolver=mytlschallenge"
       - "traefik.http.services.menuqr-api.loadbalancer.server.port=3001"
+      - "traefik.http.routers.menuqr-api-http.rule=Host(`api.appmenuqr.com`)"
+      - "traefik.http.routers.menuqr-api-http.entrypoints=web"
+      - "traefik.http.routers.menuqr-api-http.middlewares=menuqr-api-redirect"
+      - "traefik.http.middlewares.menuqr-api-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.menuqr-api-redirect.redirectscheme.permanent=true"
 
   frontend:
     build:
@@ -115,6 +157,7 @@ services:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
         NEXT_PUBLIC_APP_ENV: production
     container_name: menuqr_frontend
+    restart: always
     env_file:
       - .env
     environment:
@@ -129,11 +172,17 @@ services:
       - root_default
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.menuqr-front.rule=Host(`menuqr.72-60-133-229.nip.io`)"
+      - "traefik.docker.network=root_default"
+      - "traefik.http.routers.menuqr-front.rule=Host(`appmenuqr.com`) || Host(`www.appmenuqr.com`)"
       - "traefik.http.routers.menuqr-front.entrypoints=websecure"
       - "traefik.http.routers.menuqr-front.tls=true"
       - "traefik.http.routers.menuqr-front.tls.certresolver=mytlschallenge"
       - "traefik.http.services.menuqr-front.loadbalancer.server.port=3000"
+      - "traefik.http.routers.menuqr-front-http.rule=Host(`appmenuqr.com`) || Host(`www.appmenuqr.com`)"
+      - "traefik.http.routers.menuqr-front-http.entrypoints=web"
+      - "traefik.http.routers.menuqr-front-http.middlewares=menuqr-front-redirect"
+      - "traefik.http.middlewares.menuqr-front-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.menuqr-front-redirect.redirectscheme.permanent=true"
 
 volumes:
   postgres_data:
