@@ -30,16 +30,20 @@ async function bootstrap() {
     // ========================================
     
     // Helmet para headers de seguridad
-    app.use(helmet.default({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'"],
-          imgSrc: ["'self'", "data:", "https:"],
+    app.use(
+      helmet.default({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "https:"],
+          },
         },
-      },
-    }));
+        // Evita que CORP bloquee respuestas cross-origin cuando el front llama directo a la API
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+      }),
+    );
 
     // Compresión gzip
     app.use(compression());
@@ -49,17 +53,41 @@ async function bootstrap() {
     // ========================================
     
     const corsOriginRaw = configService.get<string>('CORS_ORIGIN', 'http://localhost:3000');
-    const corsOrigin =
+    const corsAllowList: string[] =
       typeof corsOriginRaw === 'string' && corsOriginRaw.includes(',')
         ? corsOriginRaw.split(',').map((o) => o.trim()).filter(Boolean)
-        : corsOriginRaw;
+        : [corsOriginRaw].filter(Boolean);
     const corsCredentials = configService.get('CORS_CREDENTIALS', 'true') === 'true';
 
     app.enableCors({
-      origin: corsOrigin,
+      origin: (origin, callback) => {
+        // Server-to-server o mismo proceso sin header Origin
+        if (!origin) {
+          return callback(null, true);
+        }
+        if (corsAllowList.includes(origin)) {
+          return callback(null, true);
+        }
+        // Desarrollo: cualquier localhost
+        try {
+          const u = new URL(origin);
+          if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
+            return callback(null, true);
+          }
+        } catch {
+          /* ignore */
+        }
+        return callback(null, false);
+      },
       credentials: corsCredentials,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Requested-With',
+        'Accept',
+        'Accept-Language',
+      ],
     });
 
     // ========================================
