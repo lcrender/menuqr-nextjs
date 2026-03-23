@@ -126,7 +126,22 @@
 .landing-btn-cta {
   font-size: 1.2rem;
   padding: 18px 40px;
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+}
+
+/* CTA sobre fondo morado: botón claro para contraste (no usar gradiente igual al fondo) */
+.landing-cta .landing-btn-primary.landing-btn-cta {
+  background: #ffffff;
+  color: #4338ca;
+  border: 2px solid #ffffff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+}
+
+.landing-cta .landing-btn-primary.landing-btn-cta:hover {
+  background: #f1f5f9;
+  color: #3730a3;
+  border-color: #f1f5f9;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
 }
 
 /* Hero Section */
@@ -245,12 +260,22 @@
   background: var(--landing-bg-light);
 }
 
+/* Planes: 1 columna en móvil/tablet; 3 columnas en desktop (sin inline styles en el componente) */
 .landing-pricing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 32px;
-  max-width: 900px;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 1120px;
   margin: 0 auto;
+  align-items: stretch;
+}
+
+@media (min-width: 992px) {
+  .landing-pricing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
 }
 
 .landing-pricing-card {
@@ -615,7 +640,23 @@
   }
 
   .landing-pricing-grid {
-    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 0 2px;
+  }
+
+  .landing-pricing-card {
+    padding: 28px 20px;
+  }
+
+  .landing-pricing-header {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+  }
+
+  .landing-pricing-feature {
+    padding: 10px 0;
+    font-size: 0.9375rem;
+    gap: 10px;
   }
 
   .landing-nav-actions {
@@ -630,6 +671,11 @@
 
   .landing-cta-title {
     font-size: 2rem;
+  }
+
+  .landing-cta .landing-btn-primary.landing-btn-cta {
+    width: 100%;
+    max-width: 360px;
   }
 
   .landing-footer-content {
@@ -654,6 +700,48 @@
   }
 }
 
+/* Móvil: logo e “Iniciar sesión” en la misma fila y altura */
+@media (max-width: 576px) {
+  .landing-nav {
+    padding: 12px 0;
+  }
+
+  .landing-nav-content {
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .landing-logo {
+    min-width: 0;
+    flex: 1 1 auto;
+    align-items: center;
+    font-size: 1.2rem;
+    line-height: 1.2;
+  }
+
+  .landing-logo-icon {
+    font-size: 1.65rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .landing-nav-actions {
+    flex-shrink: 0;
+    width: auto;
+    align-items: center;
+  }
+
+  .landing-nav-login-btn {
+    white-space: nowrap;
+    padding: 8px 14px;
+    font-size: 0.875rem;
+  }
+}
+
 @media (max-width: 480px) {
   .landing-hero {
     padding: 60px 0 80px;
@@ -670,11 +758,18 @@
   }
 
   .landing-pricing-card {
-    padding: 32px 24px;
+    padding: 24px 18px;
   }
 
   .landing-pricing-amount {
     font-size: 1.875rem;
+  }
+
+  .landing-cta .landing-btn-primary.landing-btn-cta {
+    width: 100%;
+    max-width: 100%;
+    padding: 16px 24px;
+    font-size: 1.05rem;
   }
 }
 

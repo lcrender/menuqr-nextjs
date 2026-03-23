@@ -12,7 +12,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [user, setUser] = useState<any>(null);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
   const currentPath = router.pathname;
   const isHelpSection = currentPath.startsWith('/admin/help');
   const [helpMenuOpen, setHelpMenuOpen] = useState(isHelpSection);
@@ -22,6 +23,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const userData = localStorage.getItem('user');
 
     if (!token || !userData) {
+      setLoading(false);
       router.push('/login');
       return;
     }
@@ -29,10 +31,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     try {
       setUser(JSON.parse(userData));
     } catch (err) {
-      router.push('/login');
-    } finally {
       setLoading(false);
+      router.push('/login');
+      return;
     }
+    setLoading(false);
   }, [router]);
 
   useEffect(() => {
@@ -80,11 +83,58 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="container-fluid admin-container">
-      <div className="row g-0">
-        {/* Sidebar */}
-        <nav className="col-md-3 col-lg-2 d-md-block admin-sidebar">
-          <div className="d-flex flex-column h-100">
-            <div className="admin-sidebar-header">
+        <header className="admin-mobile-topbar d-md-none">
+          <button
+            type="button"
+            className="admin-mobile-menu-btn"
+            onClick={() => setMobileNavOpen(true)}
+            aria-expanded={mobileNavOpen}
+            aria-controls="admin-sidebar-nav"
+            aria-label="Abrir menú"
+          >
+            <span className="admin-mobile-menu-icon" aria-hidden>
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+          <span className="admin-mobile-topbar-title">MenuQR</span>
+        </header>
+
+        {mobileNavOpen && (
+          <div
+            role="button"
+            tabIndex={0}
+            className="admin-sidebar-backdrop"
+            aria-label="Cerrar menú"
+            onClick={() => setMobileNavOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setMobileNavOpen(false);
+              }
+            }}
+          />
+        )}
+
+        <div className="admin-layout">
+          <nav
+            id="admin-sidebar-nav"
+            className={`admin-sidebar ${mobileNavOpen ? 'admin-sidebar--open' : ''}`}
+          >
+            <div className="d-flex flex-column h-100">
+              <div className="admin-sidebar-mobile-bar d-md-none">
+                <span className="admin-sidebar-mobile-bar-title">Menú</span>
+                <button
+                  type="button"
+                  className="admin-sidebar-close-btn"
+                  onClick={() => setMobileNavOpen(false)}
+                  aria-label="Cerrar menú"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="admin-sidebar-header">
               <h4>MenuQR</h4>
               <p className="small">{user?.email}</p>
               <span className="badge bg-primary mb-2">{user?.role}</span>
@@ -215,20 +265,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </li>
             </ul>
 
-            <div className="admin-logout">
-              <button className="admin-logout-btn" onClick={handleLogout}>
-                Cerrar Sesión
-              </button>
+              <div className="admin-logout">
+                <button className="admin-logout-btn" onClick={handleLogout}>
+                  Cerrar Sesión
+                </button>
+              </div>
             </div>
-          </div>
-        </nav>
+          </nav>
 
-        {/* Main content */}
-        <main className="col-md-9 col-lg-10 admin-main">
-          {children}
-        </main>
+          <main className="admin-main">{children}</main>
+        </div>
       </div>
-    </div>
   );
 }
 

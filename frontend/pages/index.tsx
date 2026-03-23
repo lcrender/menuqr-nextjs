@@ -43,11 +43,8 @@ export default function Home() {
                 <span className="landing-logo-text">MenuQR</span>
               </div>
               <div className="landing-nav-actions">
-                <button onClick={handleLogin} className="landing-btn-secondary">
+                <button onClick={handleLogin} className="landing-btn-secondary landing-nav-login-btn">
                   Iniciar Sesión
-                </button>
-                <button onClick={handleTryFree} className="landing-btn-primary">
-                  Probar Gratis
                 </button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import Link from 'next/link';
 import api from '../../../lib/axios';
@@ -78,6 +78,11 @@ export default function Menus() {
   }, [user, filterMenuName, filterRestaurantName, filterTenantName, page, itemsPerPage]);
 
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  const sortedMenus = useMemo(
+    () => [...menus].sort((a, b) => (a.sort || 0) - (b.sort || 0)),
+    [menus],
+  );
 
   const getMenuLimit = () => {
     if (isSuperAdmin) return -1; // SUPER_ADMIN puede crear ilimitados
@@ -785,8 +790,9 @@ export default function Menus() {
           </div>
         </div>
       ) : (
-        <div className="table-responsive">
-          <table className="table">
+            <>
+        <div className="d-none d-md-block table-responsive admin-menus-table-wrap">
+          <table className="table table-admin-menus">
             <thead>
               <tr>
                 <th style={{ width: '40px' }}></th>
@@ -801,9 +807,7 @@ export default function Menus() {
               </tr>
             </thead>
             <tbody>
-              {[...menus]
-                .sort((a, b) => (a.sort || 0) - (b.sort || 0))
-                .map((menu, index) => (
+              {sortedMenus.map((menu, index) => (
                 <tr 
                   key={menu.id}
                   draggable
@@ -869,7 +873,7 @@ export default function Menus() {
                   </td>
                   <td>{menu.sectionCount || 0}</td>
                   <td>
-                    <div className="d-flex gap-2">
+                    <div className="d-flex flex-wrap gap-2">
                       <button 
                         className="btn btn-sm btn-primary" 
                         onClick={() => handleViewMenu(menu)}
@@ -902,17 +906,115 @@ export default function Menus() {
             </tbody>
           </table>
         </div>
+
+        <div className="d-md-none admin-menus-mobile-list">
+          {sortedMenus.map((menu, index) => {
+            const menuUrl = getMenuPublicUrl(menu);
+            const statusBadge =
+              menu.status === 'PUBLISHED'
+                ? { className: 'bg-success', label: 'PUBLICADO' }
+                : menu.status === 'DRAFT'
+                  ? { className: 'bg-warning text-dark', label: 'BORRADOR' }
+                  : { className: 'bg-secondary', label: menu.status || 'DRAFT' };
+            const templateShort = menu.restaurantTemplate
+              ? menu.restaurantTemplate === 'italianFood'
+                ? 'Italian Food'
+                : menu.restaurantTemplate.charAt(0).toUpperCase() + menu.restaurantTemplate.slice(1)
+              : 'Clásico';
+            return (
+              <div
+                key={menu.id}
+                className="admin-menus-mobile-card admin-card"
+                draggable
+                onDragStart={() => handleMenuDragStart(index)}
+                onDragOver={(e) => handleMenuDragOver(e, index)}
+                onDrop={(e) => handleMenuDrop(e, index)}
+                style={{
+                  cursor: 'move',
+                  opacity: draggedMenu === index ? 0.5 : 1,
+                  transition: 'opacity 0.2s ease',
+                }}
+              >
+                <div className="admin-menus-mobile-head">
+                  <span
+                    className="admin-menus-mobile-drag"
+                    aria-hidden
+                  >
+                    ☰
+                  </span>
+                  <span className="admin-menus-mobile-order">{index + 1}</span>
+                  <div className="admin-menus-mobile-head-text">
+                    <span className="admin-menus-mobile-name">{menu.name}</span>
+                    <span className={`badge ${statusBadge.className} admin-menus-mobile-badge`}>
+                      {statusBadge.label}
+                    </span>
+                  </div>
+                </div>
+                {isSuperAdmin && menu.tenantName && (
+                  <p className="admin-menus-mobile-meta">
+                    <span className="admin-menus-mobile-meta-label">Tenant:</span>{' '}
+                    <span className="badge bg-info">{menu.tenantName}</span>
+                  </p>
+                )}
+                <p className="admin-menus-mobile-meta">
+                  <span className="admin-menus-mobile-meta-label">Restaurante:</span>{' '}
+                  <strong>{getRestaurantName(menu.restaurantId || menu.restaurant_id) || 'Sin restaurante'}</strong>
+                </p>
+                {isSuperAdmin && (
+                  <p className="admin-menus-mobile-meta">
+                    <span className="admin-menus-mobile-meta-label">Plantilla:</span>{' '}
+                    <span className="badge bg-secondary">{templateShort}</span>
+                  </p>
+                )}
+                <p className="admin-menus-mobile-sections">
+                  Secciones: <strong>{menu.sectionCount ?? 0}</strong>
+                </p>
+                <div className="admin-menus-mobile-grid">
+                  {menuUrl ? (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary"
+                      onClick={() => handleViewMenu(menu)}
+                    >
+                      Ver menú
+                    </button>
+                  ) : (
+                    <button type="button" className="btn btn-sm btn-primary" disabled title="Slug o restaurante incompleto">
+                      Ver menú
+                    </button>
+                  )}
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => handleEdit(menu)}>
+                    Editar
+                  </button>
+                  {menu.status === 'PUBLISHED' ? (
+                    <button type="button" className="btn btn-sm btn-warning" onClick={() => handleUnpublish(menu)}>
+                      Despublicar
+                    </button>
+                  ) : (
+                    <button type="button" className="btn btn-sm btn-success" onClick={() => handlePublish(menu)}>
+                      Publicar
+                    </button>
+                  )}
+                  <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDeleteClick(menu.id)}>
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+            </>
       ))}
 
       {/* Paginación para SUPER_ADMIN */}
       {isSuperAdmin && total > itemsPerPage && (
-        <div className="d-flex justify-content-between align-items-center mt-4">
-          <div>
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-center gap-3 mt-4 admin-menus-pagination">
+          <div className="text-center text-md-start">
             <span className="text-muted">
               Mostrando {((page - 1) * itemsPerPage) + 1} - {Math.min(page * itemsPerPage, total)} de {total}
             </span>
           </div>
-          <nav>
+          <nav className="admin-menus-pagination-nav">
             <ul className="pagination mb-0">
               <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
                 <button className="page-link" onClick={() => setPage(page - 1)} disabled={page === 1}>

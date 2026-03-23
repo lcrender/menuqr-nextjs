@@ -795,98 +795,98 @@ export default function Products() {
       )}
 
       {/* Sección de filtros: nombre, restaurante, menú, sección */}
-      <div className="mb-3 p-3 bg-light rounded border">
+      <div className="mb-3 p-3 bg-light rounded border admin-products-filters">
         <h6 className="mb-3 fw-semibold">Filtros</h6>
-        <div className="d-flex align-items-center gap-3 flex-wrap">
-          <div className="d-flex align-items-center gap-2">
-            <label htmlFor="filterProductName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+        <div className="d-flex align-items-center gap-3 flex-wrap admin-products-filters-row">
+          <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
+            <label htmlFor="filterProductName" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
               Nombre:
             </label>
             <input
               id="filterProductName"
               type="text"
-              className="form-control form-control-sm"
+              className="form-control form-control-sm admin-products-filter-control"
               placeholder="Nombre del producto"
+              aria-label="Filtrar por nombre del producto"
               value={filterProductName}
               onChange={(e) => setFilterProductName(e.target.value)}
-              style={{ width: '180px' }}
             />
           </div>
           {isSuperAdmin ? (
             <>
-              <div className="d-flex align-items-center gap-2">
-                <label htmlFor="filterRestaurantName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
+                <label htmlFor="filterRestaurantName" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
                   Restaurante:
                 </label>
                 <input
                   id="filterRestaurantName"
                   type="text"
-                  className="form-control form-control-sm"
+                  className="form-control form-control-sm admin-products-filter-control"
                   placeholder="Nombre del restaurante"
+                  aria-label="Filtrar por restaurante"
                   value={filterRestaurantName}
                   onChange={(e) => setFilterRestaurantName(e.target.value)}
-                  style={{ width: '180px' }}
                 />
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <label htmlFor="filterMenuName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
+                <label htmlFor="filterMenuName" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
                   Menú:
                 </label>
                 <input
                   id="filterMenuName"
                   type="text"
-                  className="form-control form-control-sm"
+                  className="form-control form-control-sm admin-products-filter-control"
                   placeholder="Nombre del menú"
+                  aria-label="Filtrar por menú"
                   value={filterMenuName}
                   onChange={(e) => setFilterMenuName(e.target.value)}
-                  style={{ width: '180px' }}
                 />
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <label htmlFor="filterSectionName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
+                <label htmlFor="filterSectionName" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
                   Sección:
                 </label>
                 <input
                   id="filterSectionName"
                   type="text"
-                  className="form-control form-control-sm"
+                  className="form-control form-control-sm admin-products-filter-control"
                   placeholder="Nombre de la sección"
+                  aria-label="Filtrar por sección"
                   value={filterSectionName}
                   onChange={(e) => setFilterSectionName(e.target.value)}
-                  style={{ width: '180px' }}
                 />
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <label htmlFor="filterTenantName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
+                <label htmlFor="filterTenantName" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
                   Tenant:
                 </label>
                 <input
                   id="filterTenantName"
                   type="text"
-                  className="form-control form-control-sm"
+                  className="form-control form-control-sm admin-products-filter-control"
                   placeholder="Nombre del tenant"
+                  aria-label="Filtrar por tenant"
                   value={filterTenantName}
                   onChange={(e) => setFilterTenantName(e.target.value)}
-                  style={{ width: '180px' }}
                 />
               </div>
             </>
           ) : (
             <>
-              <div className="d-flex align-items-center gap-2">
-                <label htmlFor="filterRestaurantId" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
+                <label htmlFor="filterRestaurantId" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
                   Restaurante:
                 </label>
                 <select
                   id="filterRestaurantId"
-                  className="form-select form-select-sm"
+                  className="form-select form-select-sm admin-products-filter-select"
+                  aria-label="Filtrar por restaurante"
                   value={filterRestaurantId}
                   onChange={(e) => {
                     setFilterRestaurantId(e.target.value);
                     setFilterMenuId('');
                     setFilterSectionId('');
                   }}
-                  style={{ width: '200px' }}
                 >
                   <option value="">Todos los restaurantes</option>
                   {restaurants.map((r: any) => (
@@ -894,16 +894,16 @@ export default function Products() {
                   ))}
                 </select>
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <label htmlFor="filterMenuId" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
+                <label htmlFor="filterMenuId" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
                   Menú:
                 </label>
                 <select
                   id="filterMenuId"
-                  className="form-select form-select-sm"
+                  className="form-select form-select-sm admin-products-filter-select"
+                  aria-label="Filtrar por menú"
                   value={filterMenuId}
                   onChange={(e) => { setFilterMenuId(e.target.value); setFilterSectionId(''); }}
-                  style={{ width: '200px' }}
                 >
                   <option value="">Todos los menús</option>
                   {menusForFilter.map((m: any) => (
@@ -911,16 +911,16 @@ export default function Products() {
                   ))}
                 </select>
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <label htmlFor="filterSectionId" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
+                <label htmlFor="filterSectionId" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
                   Sección:
                 </label>
                 <select
                   id="filterSectionId"
-                  className="form-select form-select-sm"
+                  className="form-select form-select-sm admin-products-filter-select"
+                  aria-label="Filtrar por sección"
                   value={filterSectionId}
                   onChange={(e) => setFilterSectionId(e.target.value)}
-                  style={{ width: '200px' }}
                   disabled={!filterMenuId}
                 >
                   <option value="">Todas las secciones</option>
@@ -934,7 +934,7 @@ export default function Products() {
           {(filterProductName || filterMenuName || filterRestaurantName || filterTenantName || filterSectionName || filterRestaurantId || filterMenuId || filterSectionId) && (
             <button
               type="button"
-              className="btn btn-sm btn-outline-secondary"
+              className="btn btn-sm btn-outline-secondary admin-products-filters-clear"
               onClick={() => {
                 setFilterProductName('');
                 setFilterMenuName('');
@@ -960,17 +960,18 @@ export default function Products() {
           </div>
         </div>
       ) : (
-        <div className="table-responsive">
-          <table className="table">
+        <>
+        <div className="d-none d-md-block table-responsive admin-products-table-wrap">
+          <table className="table table-admin-products">
             <thead>
               <tr>
+                <th style={{ width: '44px' }} aria-label="Arrastrar para ordenar" />
                 <th>Nombre</th>
                 {isSuperAdmin && <th>Tenant</th>}
                 <th>Restaurante</th>
                 {isSuperAdmin && <th>Plantilla</th>}
                 <th>Menú</th>
                 <th>Sección</th>
-                <th style={{ width: '44px' }}></th>
                 <th style={{ minWidth: '160px' }}>Precios</th>
                 <th>Íconos</th>
                 <th>Estado</th>
@@ -1101,17 +1102,146 @@ export default function Products() {
             </tbody>
           </table>
         </div>
+
+        <div className="d-md-none admin-products-mobile-list">
+          {products.map((product, index) => {
+            const templateShort = product.restaurantTemplate
+              ? product.restaurantTemplate === 'italianFood'
+                ? 'Italian Food'
+                : product.restaurantTemplate.charAt(0).toUpperCase() + product.restaurantTemplate.slice(1)
+              : 'Clásico';
+            const menuLabel =
+              product.menuName ||
+              (product.menuId || product.menu_id ? getMenuName(product.menuId || product.menu_id) : null);
+            const sectionLabel =
+              product.sectionName ||
+              (product.sectionId || product.section_id ? getSectionName(product.sectionId || product.section_id) : null);
+            return (
+              <div
+                key={product.id}
+                className="admin-products-mobile-card admin-card"
+                draggable
+                onDragStart={() => handleProductDragStart(index)}
+                onDragOver={(e) => handleProductDragOver(e, index)}
+                onDrop={(e) => handleProductDrop(e, index)}
+                style={{
+                  cursor: 'move',
+                  opacity: draggedProductIndex === index ? 0.5 : 1,
+                  transition: 'opacity 0.2s ease',
+                }}
+              >
+                <div className="admin-products-mobile-head">
+                  <span className="admin-products-mobile-drag" aria-hidden>
+                    ☰
+                  </span>
+                  <div className="admin-products-mobile-head-text">
+                    <span className="admin-products-mobile-name">{product.name}</span>
+                    <span className={`badge ${product.active ? 'bg-success' : 'bg-secondary'} admin-products-mobile-badge`}>
+                      {product.active ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                </div>
+                {isSuperAdmin && product.tenantName && (
+                  <p className="admin-products-mobile-meta">
+                    <span className="admin-products-mobile-meta-label">Tenant:</span>{' '}
+                    <span className="badge bg-info">{product.tenantName}</span>
+                  </p>
+                )}
+                <p className="admin-products-mobile-meta">
+                  <span className="admin-products-mobile-meta-label">Restaurante:</span>{' '}
+                  <strong>
+                    {product.restaurantName ? product.restaurantName : 'Sin restaurante'}
+                  </strong>
+                </p>
+                {isSuperAdmin && (
+                  <p className="admin-products-mobile-meta">
+                    <span className="admin-products-mobile-meta-label">Plantilla:</span>{' '}
+                    <span className="badge bg-secondary">{templateShort}</span>
+                  </p>
+                )}
+                <p className="admin-products-mobile-meta">
+                  <span className="admin-products-mobile-meta-label">Menú:</span>{' '}
+                  {menuLabel ? <strong>{menuLabel}</strong> : <span className="text-muted">Sin asignar</span>}
+                </p>
+                <p className="admin-products-mobile-meta">
+                  <span className="admin-products-mobile-meta-label">Sección:</span>{' '}
+                  {sectionLabel ? <strong>{sectionLabel}</strong> : <span className="text-muted">—</span>}
+                </p>
+                <div className="admin-products-mobile-prices">
+                  <span className="admin-products-mobile-meta-label">Precios:</span>{' '}
+                  {product.prices && product.prices.length > 0 ? (
+                    <div className="admin-products-mobile-price-badges">
+                      {product.prices.map((price: any, idx: number) => (
+                        <span key={idx} className="badge bg-primary">
+                          {formatPrice(price)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </div>
+                <div className="admin-products-mobile-icons">
+                  <span className="admin-products-mobile-meta-label">Íconos:</span>{' '}
+                  {product.icons && product.icons.length > 0 ? (
+                    <div className="admin-products-mobile-icon-badges">
+                      {product.icons.map((icon: string, idx: number) => (
+                        <span key={idx} className="badge bg-info">
+                          {icon}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </div>
+                <div className="admin-products-mobile-grid">
+                  <button type="button" className="btn btn-sm btn-primary" onClick={() => handleEdit(product)}>
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary btn-copy-menu"
+                    onClick={() => handleCopyToMenuClick(product)}
+                  >
+                    Copiar a otro menú
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary btn-toggle-active"
+                    onClick={async () => {
+                      try {
+                        await api.put(`/menu-items/${product.id}`, {
+                          active: !product.active,
+                        });
+                        loadData();
+                      } catch (error: any) {
+                        alert(error.response?.data?.message || 'Error al cambiar el estado del producto');
+                      }
+                    }}
+                  >
+                    {product.active ? 'Desactivar' : 'Activar'}
+                  </button>
+                  <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDeleteClick(product.id)}>
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        </>
       )}
 
       {/* Paginación para SUPER_ADMIN */}
       {isSuperAdmin && total > itemsPerPage && (
-        <div className="d-flex justify-content-between align-items-center mt-4">
-          <div>
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-center gap-3 mt-4 admin-menus-pagination">
+          <div className="text-center text-md-start">
             <span className="text-muted">
               Mostrando {((page - 1) * itemsPerPage) + 1} - {Math.min(page * itemsPerPage, total)} de {total}
             </span>
           </div>
-          <nav>
+          <nav className="admin-menus-pagination-nav">
             <ul className="pagination mb-0">
               <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
                 <button className="page-link" onClick={() => setPage(page - 1)} disabled={page === 1}>

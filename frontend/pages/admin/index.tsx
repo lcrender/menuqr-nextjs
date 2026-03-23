@@ -469,16 +469,16 @@ export default function Admin() {
                         <div className="admin-card">
                           <div className="row g-3 align-items-center">
                             <div className="col-12 col-md-6 d-flex align-items-center">
-                              <div className="d-flex align-items-start gap-3 w-100">
+                              <div className="d-flex flex-column flex-md-row align-items-center align-items-md-start gap-3 w-100 dashboard-restaurant-card-info">
                                 {card.restaurantLogoUrl && (
                                   <img
                                     src={card.restaurantLogoUrl}
                                     alt=""
-                                    style={{ width: 211, height: 211, objectFit: 'contain', borderRadius: '10px', flexShrink: 0 }}
+                                    className="dashboard-restaurant-card-logo"
                                   />
                                 )}
-                                <div className="flex-grow-1 min-w-0">
-                                  <h5 className="admin-card-title mb-1" style={{ fontSize: '1.62rem', textTransform: 'uppercase', letterSpacing: '0.02em', paddingTop: '1.25rem' }}>
+                                <div className="flex-grow-1 min-w-0 text-center text-md-start w-100">
+                                  <h5 className="admin-card-title mb-1 dashboard-restaurant-card-title">
                                     {card.restaurantName || 'Restaurante'}
                                   </h5>
                                   {card.restaurantAddress && (
@@ -582,16 +582,16 @@ export default function Admin() {
                 <div className="admin-card">
                   <div className="row g-3 align-items-center">
                     <div className="col-12 col-md-6 d-flex align-items-center">
-                      <div className="d-flex align-items-start gap-3 w-100">
+                      <div className="d-flex flex-column flex-md-row align-items-center align-items-md-start gap-3 w-100 dashboard-restaurant-card-info">
                         {configState?.restaurantLogoUrl && (
                           <img
                             src={configState.restaurantLogoUrl}
                             alt=""
-                            style={{ width: 211, height: 211, objectFit: 'contain', borderRadius: '10px', flexShrink: 0 }}
+                            className="dashboard-restaurant-card-logo"
                           />
                         )}
-                        <div className="flex-grow-1 min-w-0">
-                          <h5 className="admin-card-title mb-1" style={{ fontSize: '1.62rem', textTransform: 'uppercase', letterSpacing: '0.02em', paddingTop: '1.25rem' }}>
+                        <div className="flex-grow-1 min-w-0 text-center text-md-start w-100">
+                          <h5 className="admin-card-title mb-1 dashboard-restaurant-card-title">
                             {configState?.restaurantName || 'Tu restaurante'}
                           </h5>
                           {configState?.restaurantAddress && (

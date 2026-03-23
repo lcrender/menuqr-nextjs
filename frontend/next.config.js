@@ -107,9 +107,9 @@ const nextConfig = {
   experimental: {
     // Habilitar App Router en el futuro
     // appDir: true,
-    
-    // Optimizaciones de rendimiento
-    optimizeCss: true,
+
+    // optimizeCss (critters) puede dejar la app casi sin estilos en producción (pantalla “en blanco”).
+    // scrollRestoration: ok en Pages Router
     scrollRestoration: true,
   },
 

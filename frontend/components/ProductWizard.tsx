@@ -1501,7 +1501,6 @@ export default function ProductWizard({
                 className="admin-btn"
                 onClick={handlePublishMenu}
                 disabled={publishingMenu}
-                style={{ minWidth: '200px' }}
               >
                 {publishingMenu ? 'Publicando...' : '📢 Publicar Menú'}
               </button>
@@ -1525,7 +1524,6 @@ export default function ProductWizard({
                   className="admin-btn admin-btn-secondary"
                   onClick={() => setShowUnpublishModal(true)}
                   disabled={unpublishingMenu}
-                  style={{ minWidth: '150px' }}
                 >
                   {unpublishingMenu ? 'Despublicando...' : 'Despublicar menú'}
                 </button>
@@ -1533,7 +1531,7 @@ export default function ProductWizard({
                   type="button" 
                   className="admin-btn"
                   onClick={handleViewMenu}
-                  style={{ minWidth: '150px', backgroundColor: '#17a2b8', borderColor: '#17a2b8' }}
+                  style={{ backgroundColor: '#17a2b8', borderColor: '#17a2b8' }}
                 >
                   👁️ Ver menú
                 </button>

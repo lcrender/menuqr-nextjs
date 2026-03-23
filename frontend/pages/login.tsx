@@ -113,6 +113,7 @@ export default function Login() {
       <Head>
         <title>{isRegister ? 'Registrarse - MenuQR' : 'Iniciar Sesión - MenuQR'}</title>
         <meta name="description" content={isRegister ? 'Crea tu cuenta gratis en MenuQR' : 'Inicia sesión en MenuQR'} />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
 
       <div className="landing-page">

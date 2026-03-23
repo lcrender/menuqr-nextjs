@@ -205,74 +205,59 @@ export default function Templates() {
 
   return (
     <AdminLayout>
-      <div className="admin-main admin-page-templates" style={{ padding: '20px', paddingTop: '40px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', overflow: 'hidden' }}>
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4" style={{ flexShrink: 0 }}>
-          <div style={{ marginBottom: '20px' }}>
+      <div className="admin-main admin-page-templates">
+        <div className="admin-templates-page-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+          <div className="admin-templates-page-intro">
             <h1 className="admin-title">Plantillas</h1>
-            <p className="text-muted" style={{ marginTop: '8px', fontSize: '1rem' }}>
+            <p className="text-muted admin-templates-page-subtitle">
               Selecciona una plantilla para aplicar a tus restaurantes
             </p>
           </div>
         </div>
 
         {loading ? (
-          <div className="text-center" style={{ flex: 1 }}>
+          <div className="text-center admin-templates-loading">
             <div className="spinner-border" role="status">
               <span className="visually-hidden">Cargando...</span>
             </div>
           </div>
         ) : (
-          <div style={{
-            display: 'flex',
-            gap: '24px',
-            alignItems: 'stretch',
-            flex: 1,
-            minHeight: 0,
-          }}>
-            <div style={{
-              flex: '1 1 0',
-              minWidth: '280px',
-              minHeight: 0,
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '24px',
-              paddingRight: '8px',
-            }}>
+          <div className="admin-templates-layout">
+            <div className="admin-templates-main">
             {/* Restaurantes por plantilla */}
-            <section style={{ flexShrink: 0 }}>
-              <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--admin-text)', marginBottom: '12px' }}>
+            <section className="admin-templates-restaurants-section">
+              <h2 className="admin-templates-section-title">
                 Tus restaurantes por plantilla
               </h2>
               {restaurants.length === 0 ? (
-                <p style={{ fontSize: '0.9375rem', color: 'var(--admin-text-muted)', margin: 0 }}>
+                <p className="admin-templates-empty-msg">
                   Aún no tienes restaurantes. Crea uno en Restaurantes y asígnale una plantilla aquí.
                 </p>
               ) : (
-                <div className="admin-card" style={{ padding: '16px', marginBottom: 0 }}>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9375rem' }}>
+                <>
+                <div className="admin-card admin-templates-table-card d-none d-md-block">
+                  <div className="table-responsive">
+                    <table className="table admin-templates-restaurants-table mb-0">
                       <thead>
-                        <tr style={{ borderBottom: '1px solid var(--admin-border)' }}>
-                          <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, color: 'var(--admin-text)' }}>Restaurante</th>
-                          <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, color: 'var(--admin-text)' }}>Plantilla</th>
-                          <th style={{ textAlign: 'right', padding: '10px 12px', fontWeight: 600, color: 'var(--admin-text)' }}>Acción</th>
+                        <tr>
+                          <th>Restaurante</th>
+                          <th>Plantilla</th>
+                          <th className="text-end">Acción</th>
                         </tr>
                       </thead>
                       <tbody>
                         {restaurants.map((r) => (
-                          <tr key={r.id} style={{ borderBottom: '1px solid var(--admin-border-light)' }}>
-                            <td style={{ padding: '12px' }}>{r.name}</td>
-                            <td style={{ padding: '12px' }}>
+                          <tr key={r.id}>
+                            <td>{r.name}</td>
+                            <td>
                               <span className="badge bg-primary" style={{ fontSize: '0.8125rem' }}>
                                 {TEMPLATE_NAMES[r.template] || r.template || 'Clásica'}
                               </span>
                             </td>
-                            <td style={{ padding: '12px', textAlign: 'right' }}>
+                            <td className="text-end">
                               <Link
                                 href={`/admin/templates/configure/${r.id}`}
-                                className="admin-btn"
-                                style={{ padding: '6px 14px', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block' }}
+                                className="admin-btn admin-templates-config-link"
                               >
                                 Configurar plantilla
                               </Link>
@@ -283,16 +268,59 @@ export default function Templates() {
                     </table>
                   </div>
                 </div>
+                <div className="d-md-none admin-templates-restaurants-mobile">
+                  {restaurants.map((r) => (
+                    <div key={r.id} className="admin-card admin-templates-restaurant-mobile-card">
+                      <div className="admin-templates-restaurant-mobile-name">{r.name}</div>
+                      <div className="admin-templates-restaurant-mobile-template">
+                        <span className="badge bg-primary" style={{ fontSize: '0.8125rem' }}>
+                          {TEMPLATE_NAMES[r.template] || r.template || 'Clásica'}
+                        </span>
+                      </div>
+                      <Link
+                        href={`/admin/templates/configure/${r.id}`}
+                        className="admin-btn admin-templates-config-link-mobile"
+                      >
+                        Configurar plantilla
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+                </>
               )}
             </section>
 
+            <aside className="admin-templates-preview" aria-label="Vista previa de plantilla">
+              {!previewSelectedId ? (
+                <p className="admin-templates-preview-placeholder">
+                  Seleccione alguna plantilla para previsualizarla
+                </p>
+              ) : (
+                <>
+                  <div className="admin-templates-preview-image-wrap">
+                    <img
+                      key={previewSelectedId}
+                      src={previewImageError[previewSelectedId] ? PREVIEW_DEFAULT_IMAGE : `${PREVIEW_IMAGE_BASE}/preview-${previewSelectedId}.jpg`}
+                      alt={`Vista previa ${templates.find(t => t.id === previewSelectedId)?.name ?? previewSelectedId}`}
+                      className="admin-templates-preview-img"
+                      onError={() => setPreviewImageError((prev) => ({ ...prev, [previewSelectedId]: true }))}
+                      loading="lazy"
+                    />
+                  </div>
+                  <a
+                    href={`/preview/${previewSelectedId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="admin-btn admin-templates-preview-cta"
+                  >
+                    Ver vista previa
+                  </a>
+                </>
+              )}
+            </aside>
+
             {/* Grid de plantillas */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '16px',
-              alignContent: 'start',
-            }}>
+            <div className="admin-templates-grid">
             {templates.map((template) => (
               <div key={template.id} style={{ minWidth: 0 }}>
                 <div
@@ -350,7 +378,7 @@ export default function Templates() {
                     <div onClick={(e) => e.stopPropagation()}>
                       {template.requiresProOrPremium && currentPlan !== 'pro' && currentPlan !== 'pro_team' && currentPlan !== 'premium' ? (
                         <p className="small text-muted" style={{ margin: 0 }}>
-                          Esta plantilla está disponible solo para plan <strong>Pro</strong>, <strong>Pro Team</strong> o <strong>Premium</strong>. Puedes ver la vista previa arriba.
+                          Esta plantilla está disponible solo para plan <strong>Pro</strong>, <strong>Pro Team</strong> o <strong>Premium</strong>. Puedes ver la vista previa con el enlace de la tarjeta o seleccionando la plantilla para ver la imagen de ejemplo.
                         </p>
                       ) : (
                         <>
@@ -419,46 +447,6 @@ export default function Templates() {
             ))}
             </div>
             </div>
-
-            <aside
-              style={{
-                width: '320px',
-                flexShrink: 0,
-                background: 'var(--admin-card-bg, #fff)',
-                border: '1px solid var(--admin-border, #e5e7eb)',
-                borderRadius: '12px',
-                padding: '20px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-              }}
-            >
-              {!previewSelectedId ? (
-                <p style={{ margin: 0, color: 'var(--admin-text-muted)', fontSize: '0.9375rem', lineHeight: 1.5, textAlign: 'center', padding: '40px 16px' }}>
-                  Seleccione alguna plantilla para previsualizarla
-                </p>
-              ) : (
-                <>
-                  <div style={{ borderRadius: '8px', overflow: 'hidden', marginBottom: '16px', background: '#f1f5f9' }}>
-                    <img
-                      key={previewSelectedId}
-                      src={previewImageError[previewSelectedId] ? PREVIEW_DEFAULT_IMAGE : `${PREVIEW_IMAGE_BASE}/preview-${previewSelectedId}.jpg`}
-                      alt={`Vista previa ${templates.find(t => t.id === previewSelectedId)?.name ?? previewSelectedId}`}
-                      style={{ width: '100%', height: 'auto', display: 'block', verticalAlign: 'top' }}
-                      onError={() => setPreviewImageError((prev) => ({ ...prev, [previewSelectedId]: true }))}
-                      loading="lazy"
-                    />
-                  </div>
-                  <a
-                    href={`/preview/${previewSelectedId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="admin-btn"
-                    style={{ display: 'block', textAlign: 'center', padding: '10px 16px', textDecoration: 'none' }}
-                  >
-                    Ver vista previa
-                  </a>
-                </>
-              )}
-            </aside>
           </div>
         )}
       </div>

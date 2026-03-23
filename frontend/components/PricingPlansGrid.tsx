@@ -42,17 +42,7 @@ export default function PricingPlansGrid({ variant = 'landing', onSelectPlan, lo
   };
 
   return (
-    <div
-      className="landing-pricing-grid"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '22px',
-        width: '100%',
-        maxWidth: '100%',
-        margin: 0,
-      }}
-    >
+    <div className="landing-pricing-grid">
       {/* Plan Free */}
       <div className="landing-pricing-card">
         <div className="landing-pricing-header">

@@ -179,9 +179,12 @@ export default function Restaurants() {
   useEffect(() => {
     if (!user || loading) return;
     if (router.query.wizard === 'true') {
+      setEditing(null);
       setShowWizard(true);
       router.replace('/admin/restaurants', undefined, { shallow: true });
     } else if (restaurants.length === 0 && !filterName) {
+      // Sin restaurantes: modo creación. Limpiar editing para no hacer PUT a un id ya borrado.
+      setEditing(null);
       setShowWizard(true);
     }
   }, [user, loading, restaurants.length, filterName, router.query.wizard]);
@@ -298,10 +301,19 @@ export default function Restaurants() {
 
       let restaurantId: string;
 
-      if (editing) {
-        const res = await api.put(`/restaurants/${editing.id}`, data);
-        restaurantId = editing.id;
+      // editing puede quedar apuntando a un restaurante ya borrado (modal cerrado sin limpiar, etc.)
+      const editingId = editing?.id;
+      const editingStillInList =
+        !!editingId && restaurants.some((r: { id: string }) => r.id === editingId);
+      const shouldUpdate = Boolean(editing && editingStillInList);
+
+      if (shouldUpdate) {
+        await api.put(`/restaurants/${editingId}`, data);
+        restaurantId = editingId as string;
       } else {
+        if (editing && !editingStillInList) {
+          setEditing(null);
+        }
         const res = await api.post('/restaurants', data);
         restaurantId = res.data.id;
       }
@@ -713,6 +725,7 @@ export default function Restaurants() {
       {showMenuWizard && newRestaurantId ? (
         <div className="restaurant-wizard-container">
           <MenuWizard
+            key={newRestaurantId}
             restaurantId={newRestaurantId}
             restaurants={restaurants}
             fromRestaurantCreation={true}
@@ -818,14 +831,14 @@ export default function Restaurants() {
 
           {isSuperAdmin && (
             <div className="mb-3">
-              <div className="d-flex align-items-center gap-2">
-                <label htmlFor="filterName" className="form-label mb-0" style={{ whiteSpace: 'nowrap' }}>
+              <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 admin-restaurants-filter">
+                <label htmlFor="filterName" className="form-label mb-0 flex-shrink-0" style={{ whiteSpace: 'nowrap' }}>
                   Filtrar por nombre:
                 </label>
                 <input
                   id="filterName"
                   type="text"
-                  className="form-control"
+                  className="form-control admin-restaurants-filter-input"
                   placeholder="Nombre del restaurante"
                   value={filterName}
                   onChange={(e) => {
@@ -843,7 +856,6 @@ export default function Restaurants() {
                   }}
                   onClick={(e) => e.stopPropagation()}
                   onFocus={(e) => e.stopPropagation()}
-                  style={{ width: '250px' }}
                 />
                 {filterName && (
                   <button
@@ -870,47 +882,53 @@ export default function Restaurants() {
               </div>
             </div>
           ) : (
-        <div className="table-responsive">
-          <table className="table">
+            <>
+        <div className="d-none d-md-block table-responsive admin-restaurants-table-wrap">
+          <table className="table table-admin-restaurants">
             <thead>
               <tr>
-                <th>Foto</th>
-                <th>Nombre</th>
-                <th>Estado</th>
-                <th>Menús</th>
-                <th>Acciones</th>
+                <th className="admin-restaurants-col-photo">Foto</th>
+                <th className="admin-restaurants-col-status">Estado</th>
+                <th className="admin-restaurants-col-menus text-nowrap">Menús</th>
+                <th className="admin-restaurants-col-actions">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {restaurants.map((restaurant) => (
-                <tr key={restaurant.id}>
-                  <td>
+                <React.Fragment key={restaurant.id}>
+                  <tr className="admin-restaurants-name-row">
+                    <td colSpan={4}>
+                      <span className="admin-restaurants-name-title">{restaurant.name}</span>
+                    </td>
+                  </tr>
+                  <tr className="admin-restaurants-data-row">
+                    <td className="admin-restaurants-col-photo">
                     {restaurant.logoUrl ? (
                       <img 
                         src={restaurant.logoUrl} 
-                        alt={restaurant.name}
-                        style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
+                        alt=""
+                        className="admin-restaurants-thumb"
                       />
                     ) : (
-                      <div style={{ width: '50px', height: '50px', backgroundColor: '#ddd', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div className="admin-restaurants-thumb admin-restaurants-thumb-placeholder">
                         <span className="text-muted">Sin foto</span>
                       </div>
                     )}
-                  </td>
-                  <td>{restaurant.name}</td>
-                  <td>
+                    </td>
+                    <td className="admin-restaurants-col-status">
                     <span className={`badge ${restaurant.isActive ? 'bg-success' : 'bg-secondary'}`}>
                       {restaurant.isActive ? 'Activo' : 'Inactivo'}
                     </span>
-                  </td>
-                  <td>{restaurant.menuCount || 0}</td>
-                  <td>
+                    </td>
+                    <td className="admin-restaurants-col-menus">{restaurant.menuCount || 0}</td>
+                    <td className="admin-restaurants-col-actions p-2">
+                    <div className="admin-restaurants-actions">
                     {restaurant.slug && (
                       <a
                         href={`/r/${restaurant.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn btn-sm btn-info me-1"
+                        className="btn btn-sm btn-info"
                         title="Ver restaurante en nueva pestaña"
                       >
                         👁️ Ver
@@ -918,46 +936,121 @@ export default function Restaurants() {
                     )}
                     {restaurant.slug && (
                       <button 
-                        className="btn btn-sm btn-info text-white me-1" 
+                        type="button"
+                        className="btn btn-sm btn-info text-white" 
                         onClick={() => handleViewQR(restaurant)}
                         title="Ver y descargar QR"
                       >
                         Ver QR
                       </button>
                     )}
-                    <button className="btn btn-sm btn-primary me-1" onClick={() => handleEdit(restaurant)}>
+                    <button type="button" className="btn btn-sm btn-primary" onClick={() => handleEdit(restaurant)}>
                       Editar
                     </button>
                     <button 
-                      className="btn btn-sm btn-warning me-1" 
+                      type="button"
+                      className="btn btn-sm btn-warning" 
                       onClick={() => handleToggleActive(restaurant)}
                       disabled={loading}
                     >
                       {restaurant.isActive ? 'Desactivar' : 'Activar'}
                     </button>
                     <button 
-                      className="btn btn-sm btn-danger" 
+                      type="button"
+                      className="btn btn-sm btn-danger d-none d-md-inline-block" 
                       onClick={() => handleDeleteClick(restaurant.id)}
                     >
                       Eliminar
                     </button>
-                  </td>
-                </tr>
+                    </div>
+                    </td>
+                  </tr>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
         </div>
+
+        <div className="d-md-none admin-restaurants-mobile-list">
+          {restaurants.map((restaurant) => (
+            <div key={restaurant.id} className="admin-restaurants-mobile-card admin-card">
+              <div className="admin-restaurants-mobile-head">
+                {restaurant.logoUrl ? (
+                  <img
+                    src={restaurant.logoUrl}
+                    alt=""
+                    className="admin-restaurants-thumb admin-restaurants-mobile-thumb"
+                  />
+                ) : (
+                  <div className="admin-restaurants-thumb admin-restaurants-thumb-placeholder admin-restaurants-mobile-thumb">
+                    <span className="text-muted">Sin foto</span>
+                  </div>
+                )}
+                <div className="admin-restaurants-mobile-head-text">
+                  <span className="admin-restaurants-mobile-name">{restaurant.name}</span>
+                  <span className={`badge ${restaurant.isActive ? 'bg-success' : 'bg-secondary'} admin-restaurants-mobile-badge`}>
+                    {restaurant.isActive ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+              </div>
+              <p className="admin-restaurants-mobile-menus">
+                Menús: <strong>{restaurant.menuCount ?? 0}</strong>
+              </p>
+              <div className="admin-restaurants-mobile-grid">
+                {restaurant.slug ? (
+                  <a
+                    href={`/r/${restaurant.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-info"
+                  >
+                    👁️ Ver
+                  </a>
+                ) : (
+                  <button type="button" className="btn btn-sm btn-info" disabled title="Activa el restaurante y el menú para ver">
+                    👁️ Ver
+                  </button>
+                )}
+                <button type="button" className="btn btn-sm btn-primary" onClick={() => handleEdit(restaurant)}>
+                  Editar
+                </button>
+                {restaurant.slug ? (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-info text-white"
+                    onClick={() => handleViewQR(restaurant)}
+                  >
+                    Ver QR
+                  </button>
+                ) : (
+                  <button type="button" className="btn btn-sm btn-info text-white" disabled title="Completa la configuración para el QR">
+                    Ver QR
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-sm btn-warning"
+                  onClick={() => handleToggleActive(restaurant)}
+                  disabled={loading}
+                >
+                  {restaurant.isActive ? 'Desactivar' : 'Activar'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+            </>
           )}
 
           {/* Paginación para SUPER_ADMIN */}
           {isSuperAdmin && total > itemsPerPage && (
-            <div className="d-flex justify-content-between align-items-center mt-4">
-              <div>
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-center gap-3 mt-4 admin-restaurants-pagination">
+              <div className="text-center text-md-start">
                 <span className="text-muted">
                   Mostrando {((page - 1) * itemsPerPage) + 1} - {Math.min(page * itemsPerPage, total)} de {total}
                 </span>
               </div>
-              <nav>
+              <nav className="admin-restaurants-pagination-nav">
                 <ul className="pagination mb-0">
                   <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
                     <button className="page-link" onClick={() => setPage(page - 1)} disabled={page === 1}>
@@ -998,7 +1091,15 @@ export default function Restaurants() {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">{editing ? 'Editar' : 'Nuevo'} Restaurante</h5>
-                <button className="btn-close" onClick={() => setShowModal(false)}></button>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditing(null);
+                  }}
+                  aria-label="Cerrar"
+                />
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
@@ -1406,13 +1507,34 @@ export default function Restaurants() {
                     </div>
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                    Cancelar
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    {editing ? 'Actualizar' : 'Crear'}
-                  </button>
+                <div className="modal-footer flex-column flex-md-row align-items-stretch align-items-md-center justify-content-md-end gap-2">
+                  <div className="d-flex justify-content-end gap-2 w-100 flex-wrap">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setShowModal(false);
+                        setEditing(null);
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                      {editing ? 'Actualizar' : 'Crear'}
+                    </button>
+                  </div>
+                  {editing && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger w-100 d-md-none order-last"
+                      onClick={() => {
+                        setShowModal(false);
+                        handleDeleteClick(editing.id);
+                      }}
+                    >
+                      Eliminar restaurante
+                    </button>
+                  )}
                 </div>
               </form>
             </div>
