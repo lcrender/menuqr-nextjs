@@ -470,7 +470,14 @@ export default function Templates() {
           message={alertModal.message}
           variant={alertModal.variant}
           onClose={() => setAlertModal(null)}
-          actionButton={alertModal.variant === 'success' && alertModal.restaurantId ? { label: 'Configurar plantilla', href: `/admin/templates/configure/${alertModal.restaurantId}` } : undefined}
+          {...(alertModal.variant === 'success' && alertModal.restaurantId
+            ? {
+                actionButton: {
+                  label: 'Configurar plantilla',
+                  href: `/admin/templates/configure/${alertModal.restaurantId}`,
+                },
+              }
+            : {})}
         />
       )}
     </AdminLayout>

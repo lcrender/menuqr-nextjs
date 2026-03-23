@@ -56,7 +56,7 @@ export default function Products() {
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
   const [planFetchedFromApi, setPlanFetchedFromApi] = useState(false);
   const [tenants, setTenants] = useState<Array<{ id: string; name: string; plan: string; userCount?: number; restaurantCount?: number }>>([]);
-  const [allRestaurants, setAllRestaurants] = useState<Array<{ id: string; name: string; tenantId?: string; tenantName?: string }>>([]);
+  const [allRestaurants, setAllRestaurants] = useState<Array<{ id: string; name: string; tenantId?: string; tenant_id?: string; tenantName?: string }>>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(null);
   const [superAdminSearched, setSuperAdminSearched] = useState(false);
@@ -1415,7 +1415,7 @@ export default function Products() {
                               </p>
                             </div>
                           )}
-                          {editPhotos.length > 0 && (
+                          {editPhotos.length > 0 && editPhotos[0] && (
                             <div className="mt-2" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                               <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
                                 <img

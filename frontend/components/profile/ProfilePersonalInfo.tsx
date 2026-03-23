@@ -50,10 +50,12 @@ export default function ProfilePersonalInfo({
     setError(null);
     setSaving(true);
     try {
-      await onSave({
-        firstName: form.firstName.trim() || undefined,
-        lastName: form.lastName.trim() || undefined,
-      });
+      const payload: { firstName?: string; lastName?: string } = {};
+      const fn = form.firstName.trim();
+      const ln = form.lastName.trim();
+      if (fn) payload.firstName = fn;
+      if (ln) payload.lastName = ln;
+      await onSave(payload);
       onClearFeedback();
     } catch (err: any) {
       setError(err.response?.data?.message || 'No se pudo guardar.');

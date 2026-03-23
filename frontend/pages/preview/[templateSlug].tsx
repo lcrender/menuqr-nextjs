@@ -68,15 +68,26 @@ export default function PreviewPage() {
   }
 
   const { restaurant, menu, menus } = data;
-  const menuListSource = menus ?? [menu];
-  const [selectedSlug, setSelectedSlug] = useState<string>(menuListSource[0].slug);
+  const menuListSource = menus?.length ? menus : [menu];
+  const [selectedSlug, setSelectedSlug] = useState<string>(() => menuListSource[0]?.slug ?? '');
   useEffect(() => {
-    setSelectedSlug(menuListSource[0].slug);
+    const s = menuListSource[0]?.slug;
+    if (s) setSelectedSlug(s);
   }, [slug]);
   const selectedMenuFromList = useMemo(
     () => menuListSource.find((m) => m.slug === selectedSlug) ?? menuListSource[0],
     [menuListSource, selectedSlug]
   );
+
+  if (!menuListSource[0] || !selectedMenuFromList) {
+    return (
+      <div className="container mt-5 py-5">
+        <div className="alert alert-warning" role="alert">Sin menú en la vista previa.</div>
+        <Link href="/admin/templates" className="btn btn-primary mt-2">Ir a plantillas</Link>
+      </div>
+    );
+  }
+
   const selectedMenu = {
     id: selectedMenuFromList.id,
     name: selectedMenuFromList.name,

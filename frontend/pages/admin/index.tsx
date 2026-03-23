@@ -102,6 +102,7 @@ export default function Admin() {
     const svgData = new XMLSerializer().serializeToString(svg);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     const img = new Image();
     const scale = 5;
     const marginPx = 80;
@@ -175,7 +176,7 @@ export default function Admin() {
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
       if (user?.role === 'ADMIN') {
-        setStats((prev) => prev || {
+        setStats((prev: unknown) => prev || {
           totalRestaurants: 0,
           totalMenus: 0,
           totalProducts: 0,
@@ -492,10 +493,10 @@ export default function Admin() {
                                     {card.restaurantPhone && (() => {
                                       const raw = card.restaurantPhone;
                                       const hasWhatsAppPart = raw.includes('| WhatsApp:');
-                                      const displayPhone = raw.split('|')[0].trim();
+                                      const displayPhone = (raw.split('|')[0] ?? raw).trim();
                                       const whatsappMatch = raw.match(/\|\s*WhatsApp:\s*(.+)/);
-                                      const whatsappDisplay = whatsappMatch ? whatsappMatch[1].trim() : displayPhone;
-                                      const whatsappDigits = (whatsappMatch ? whatsappMatch[1] : raw).replace(/\D/g, '');
+                                      const whatsappDisplay = whatsappMatch?.[1]?.trim() ?? displayPhone;
+                                      const whatsappDigits = (whatsappMatch?.[1] ?? raw).replace(/\D/g, '');
                                       if (hasWhatsAppPart && whatsappDigits) {
                                         return (
                                           <>
@@ -605,10 +606,10 @@ export default function Admin() {
                             {configState?.restaurantPhone && (() => {
                               const raw = configState.restaurantPhone;
                               const hasWhatsAppPart = raw.includes('| WhatsApp:');
-                              const displayPhone = raw.split('|')[0].trim();
+                              const displayPhone = (raw.split('|')[0] ?? raw).trim();
                               const whatsappMatch = raw.match(/\|\s*WhatsApp:\s*(.+)/);
-                              const whatsappDisplay = whatsappMatch ? whatsappMatch[1].trim() : displayPhone;
-                              const whatsappDigits = (whatsappMatch ? whatsappMatch[1] : raw).replace(/\D/g, '');
+                              const whatsappDisplay = whatsappMatch?.[1]?.trim() ?? displayPhone;
+                              const whatsappDigits = (whatsappMatch?.[1] ?? raw).replace(/\D/g, '');
                               if (hasWhatsAppPart && whatsappDigits) {
                                 return (
                                   <>
