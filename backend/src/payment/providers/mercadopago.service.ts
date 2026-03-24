@@ -10,6 +10,7 @@ import {
 } from '../interfaces/payment-provider.interface';
 import { SubscriptionService } from '../../subscription/subscription.service';
 import { PricingService } from '../pricing.service';
+import { readEnvTrimmed } from '../../common/config/read-env-trimmed';
 import { AppSettingsService } from '../../app-settings/app-settings.service';
 
 const MP_API_BASE = 'https://api.mercadopago.com';
@@ -30,13 +31,27 @@ export class MercadoPagoService implements IPaymentProviderService {
     private readonly appSettings: AppSettingsService,
   ) {}
 
+  /** Intenta extraer mensaje legible del JSON de error de la API de Mercado Pago. */
+  private parseMercadoPagoErrorMessage(raw: string): string | null {
+    try {
+      const j = JSON.parse(raw) as { message?: string; cause?: Array<{ description?: string }> };
+      if (j.message && typeof j.message === 'string') return j.message;
+      const first = j.cause?.[0]?.description;
+      if (first) return first;
+    } catch {
+      /* ignore */
+    }
+    if (raw.length > 0 && raw.length < 400) return raw;
+    return null;
+  }
+
   /**
    * Token según modo en BD: sandbox → MERCADOPAGO_ACCESS_TOKEN_TEST, producción → MERCADOPAGO_ACCESS_TOKEN.
    */
   private async resolveAccessToken(): Promise<string> {
     const mode = await this.appSettings.getMercadoPagoMode();
     if (mode === 'sandbox') {
-      const test = this.config.get<string>('MERCADOPAGO_ACCESS_TOKEN_TEST')?.trim();
+      const test = readEnvTrimmed('MERCADOPAGO_ACCESS_TOKEN_TEST', this.config);
       if (!test) {
         throw new BadRequestException(
           'Mercado Pago en modo prueba: definí MERCADOPAGO_ACCESS_TOKEN_TEST en el servidor (.env).',
@@ -44,7 +59,7 @@ export class MercadoPagoService implements IPaymentProviderService {
       }
       return test;
     }
-    const token = this.config.get<string>('MERCADOPAGO_ACCESS_TOKEN')?.trim();
+    const token = readEnvTrimmed('MERCADOPAGO_ACCESS_TOKEN', this.config);
     if (!token) {
       throw new BadRequestException(
         'Mercado Pago no está configurado: definí MERCADOPAGO_ACCESS_TOKEN en el servidor (.env).',
@@ -55,12 +70,20 @@ export class MercadoPagoService implements IPaymentProviderService {
 
   async createSubscription(params: {
     userId: string;
+    payerEmail?: string;
     planType: PlanType;
     planSlug: string;
     returnUrl: string;
     cancelUrl: string;
     metadata?: Record<string, string>;
   }): Promise<CreateSubscriptionResult> {
+    const payerEmail = params.payerEmail?.trim();
+    if (!payerEmail) {
+      throw new BadRequestException(
+        'Tu cuenta no tiene email registrado; Mercado Pago lo requiere para suscripciones.',
+      );
+    }
+
     const priceRow = await this.pricingService.getPlanPrice(params.planSlug as 'basic' | 'pro', 'AR');
     if (!priceRow || priceRow.currency !== 'ARS') {
       throw new BadRequestException('Plan price for Argentina (ARS) not found');
@@ -68,19 +91,26 @@ export class MercadoPagoService implements IPaymentProviderService {
     const isYearly = params.planType === 'yearly';
     const amount = Math.round(isYearly ? priceRow.priceYearly : priceRow.price);
     const token = await this.resolveAccessToken();
+
+    // MP exige end_date en auto_recurring para suscripciones sin plan asociado (status pending).
+    const endDate = new Date();
+    endDate.setFullYear(endDate.getFullYear() + 5);
+
     const preapprovalPayload = {
       reason: `MenuQR - Plan ${priceRow.planName}${isYearly ? ' (anual)' : ''}`,
+      payer_email: payerEmail,
       auto_recurring: {
         frequency: isYearly ? 12 : 1,
         frequency_type: 'months' as const,
         transaction_amount: amount,
         currency_id: 'ARS',
+        end_date: endDate.toISOString(),
       },
       back_url: params.returnUrl,
-      status: 'pending',
+      status: 'pending' as const,
       external_reference: params.userId,
-      payer_email: undefined as string | undefined,
     };
+
     const res = await fetch(`${MP_API_BASE}/preapproval`, {
       method: 'POST',
       headers: {
@@ -90,9 +120,12 @@ export class MercadoPagoService implements IPaymentProviderService {
       body: JSON.stringify(preapprovalPayload),
     });
     if (!res.ok) {
-      const err = await res.text();
-      this.logger.error(`MercadoPago preapproval error: ${err}`);
-      throw new BadRequestException('Failed to create MercadoPago subscription');
+      const errText = await res.text();
+      this.logger.error(`MercadoPago preapproval error (${res.status}): ${errText}`);
+      const mpMessage = this.parseMercadoPagoErrorMessage(errText);
+      throw new BadRequestException(
+        mpMessage ?? 'Failed to create MercadoPago subscription',
+      );
     }
     const data = await res.json();
     const initPoint = data.init_point || data.sandbox_init_point;

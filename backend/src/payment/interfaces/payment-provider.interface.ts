@@ -27,6 +27,8 @@ export interface IPaymentProviderService {
 
   createSubscription(params: {
     userId: string;
+    /** Email del pagador (obligatorio Mercado Pago /preapproval con status pending). */
+    payerEmail?: string;
     planType: PlanType;
     planSlug: string; // basic | pro | premium
     returnUrl: string;

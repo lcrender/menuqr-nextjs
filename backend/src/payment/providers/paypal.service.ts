@@ -61,6 +61,7 @@ export class PayPalService implements IPaymentProviderService {
 
   async createSubscription(params: {
     userId: string;
+    payerEmail?: string;
     planType: PlanType;
     planSlug: string;
     returnUrl: string;

@@ -129,6 +129,8 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       BACKEND_URL: ${BACKEND_URL}
       CORS_ORIGIN: ${CORS_ORIGIN}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
+      MERCADOPAGO_ACCESS_TOKEN_TEST: ${MERCADOPAGO_ACCESS_TOKEN_TEST:-}
     depends_on:
       postgres:
         condition: service_healthy

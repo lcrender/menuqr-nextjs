@@ -88,6 +88,9 @@ services:
       FRONTEND_URL: http://localhost:3000
       BACKEND_URL: http://localhost:3001
       CORS_ORIGIN: http://localhost:3000
+      # Mercado Pago: interpolación desde el .env de la raíz (además de env_file), para que siempre entren al contenedor
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
+      MERCADOPAGO_ACCESS_TOKEN_TEST: ${MERCADOPAGO_ACCESS_TOKEN_TEST:-}
     volumes:
       - ./backend:/app
       - /app/node_modules
@@ -116,6 +119,8 @@ services:
       NODE_ENV: development
       DATABASE_URL: postgresql://menuqr_user:menuqr_password@postgres:5432/menuqr
       REDIS_URL: redis://redis:6379
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
+      MERCADOPAGO_ACCESS_TOKEN_TEST: ${MERCADOPAGO_ACCESS_TOKEN_TEST:-}
     depends_on:
       postgres:
         condition: service_healthy

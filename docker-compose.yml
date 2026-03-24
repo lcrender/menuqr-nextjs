@@ -101,6 +101,8 @@ services:
       BACKEND_URL: https://api.menuqr.72-60-133-229.nip.io
       CORS_ORIGIN: https://menuqr.72-60-133-229.nip.io
       MINIO_PUBLIC_URL: https://s3.menuqr.72-60-133-229.nip.io
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
+      MERCADOPAGO_ACCESS_TOKEN_TEST: ${MERCADOPAGO_ACCESS_TOKEN_TEST:-}
 
     depends_on:
       postgres:

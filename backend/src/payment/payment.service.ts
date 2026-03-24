@@ -51,6 +51,7 @@ export class PaymentService {
     const service = this.getProviderService(provider);
     return service.createSubscription({
       ...params,
+      payerEmail: user.email ?? undefined,
       metadata: { userId: params.userId },
     });
   }
