@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
+import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 
 @Injectable()
 export class TenantsService {
   private readonly logger = new Logger(TenantsService.name);
 
-  constructor(private readonly postgres: PostgresService) {}
+  constructor(
+    private readonly postgres: PostgresService,
+    private readonly planLimits: PlanLimitsService,
+  ) {}
 
   async findAll(page: number = 1, limit: number = 10, search?: string) {
     const offset = (page - 1) * limit;
@@ -135,23 +139,10 @@ export class TenantsService {
     );
 
     if (data.plan !== undefined && (data.plan === 'free' || data.plan === 'basic')) {
-      await this.resetProTemplatesToClassic(id);
+      await this.planLimits.resetTemplatesIncompatibleWithPlan(id, data.plan);
     }
 
     return this.findById(id);
-  }
-
-  /**
-   * Si el tenant pasa a free/basic, los restaurantes con plantilla Pro (ej. gourmet) pasan a classic.
-   */
-  private async resetProTemplatesToClassic(tenantId: string): Promise<void> {
-    const proOnlyTemplates = ['gourmet'];
-    await this.postgres.executeRaw(
-      `UPDATE restaurants SET template = 'classic', updated_at = NOW()
-       WHERE tenant_id = $1 AND deleted_at IS NULL AND template = ANY($2::text[])`,
-      [tenantId, proOnlyTemplates]
-    );
-    this.logger.log(`Reset Pro templates to classic for tenant ${tenantId} (if any)`);
   }
 
   async block(id: string) {

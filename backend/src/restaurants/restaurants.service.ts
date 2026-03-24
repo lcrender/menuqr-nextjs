@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger, ForbiddenException } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
+import { PlanLimitsService, RESTAURANT_TEMPLATE_IDS } from '../common/plan-limits/plan-limits.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class RestaurantsService {
   constructor(
     private readonly postgres: PostgresService,
     private readonly configService: ConfigService,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   /**
@@ -423,6 +425,15 @@ export class RestaurantsService {
     // Validar límite de restaurantes según el plan
     await this.validateRestaurantLimit(tenantId);
 
+    const template = data.template || 'classic';
+    if (!RESTAURANT_TEMPLATE_IDS.includes(template as (typeof RESTAURANT_TEMPLATE_IDS)[number])) {
+      throw new BadRequestException(
+        'Template inválido. Debe ser: classic, minimalist, foodie, burgers, italianFood o gourmet',
+      );
+    }
+    const planForTpl = await this.getTenantPlan(tenantId);
+    await this.planLimits.assertTemplateAllowedForTenantPlan(planForTpl, template);
+
     // Generar slug único
     const baseSlug = this.generateSlug(data.name);
     let slug = baseSlug;
@@ -468,7 +479,7 @@ export class RestaurantsService {
         slug,
         data.description || null,
         data.timezone || 'UTC',
-        data.template || 'classic',
+        template,
         fullAddress || null,
         data.phone || null,
         data.email || null,
@@ -548,15 +559,13 @@ export class RestaurantsService {
       params.push(data.description);
     }
     if (data.template !== undefined && data.template !== null) {
-      if (!['classic', 'minimalist', 'foodie', 'burgers', 'italianFood', 'gourmet'].includes(data.template)) {
-        throw new BadRequestException('Template inválido. Debe ser: classic, minimalist, foodie, burgers, italianFood o gourmet');
+      if (!RESTAURANT_TEMPLATE_IDS.includes(data.template as (typeof RESTAURANT_TEMPLATE_IDS)[number])) {
+        throw new BadRequestException(
+          'Template inválido. Debe ser: classic, minimalist, foodie, burgers, italianFood o gourmet',
+        );
       }
-      if (data.template === 'gourmet') {
-        const plan = await this.getTenantPlan(tenantId);
-        if (plan !== 'pro' && plan !== 'premium' && plan !== 'pro_team') {
-          throw new BadRequestException('La plantilla Gourmet está disponible solo para planes Pro, Pro Team o Premium.');
-        }
-      }
+      const plan = await this.getTenantPlan(tenantId);
+      await this.planLimits.assertTemplateAllowedForTenantPlan(plan, data.template);
       updates.push(`template = $${paramIndex++}`);
       params.push(data.template);
     }
@@ -649,7 +658,7 @@ export class RestaurantsService {
       // Al activar uno, respetar límite de activos del plan: desactivar otros si ya se alcanzó el límite
       if (data.isActive === true && !restaurant.isActive) {
         const plan = await this.getTenantPlan(tenantId);
-        const maxActive = this.getRestaurantLimit(plan);
+        const maxActive = await this.planLimits.getRestaurantLimit(plan);
         if (maxActive !== -1) {
           const activeCountResult = await this.postgres.queryRaw<{ count: string }>(
             `SELECT COUNT(*)::text as count FROM restaurants WHERE tenant_id = $1 AND deleted_at IS NULL AND is_active = true`,
@@ -723,7 +732,7 @@ export class RestaurantsService {
     const plan = await this.getTenantPlan(tenantId);
 
     // Obtener límite según el plan
-    const limit = this.getRestaurantLimit(plan);
+    const limit = await this.planLimits.getRestaurantLimit(plan);
 
     // Si el límite es -1 (ilimitado), no validar
     if (limit === -1) {
@@ -751,31 +760,6 @@ export class RestaurantsService {
     }
   }
 
-  private getRestaurantLimit(plan: string): number {
-    const limits: Record<string, number> = {
-      free: 1,
-      basic: 1,
-      pro: 3,
-      pro_team: 3,
-      premium: 10,
-    };
-
-    const planKey = plan || 'free';
-    return limits[planKey] ?? 1;
-  }
-
-  private getProductLimit(plan: string): number {
-    const limits: Record<string, number> = {
-      free: 30,
-      basic: 60,
-      pro: 300,
-      pro_team: 300,
-      premium: 1200,
-    };
-    const planKey = plan || 'free';
-    return limits[planKey] ?? 30;
-  }
-
   /**
    * Estadísticas para el dashboard del tenant: conteos y límites según plan.
    */
@@ -784,6 +768,7 @@ export class RestaurantsService {
     totalMenus: number;
     totalProducts: number;
     restaurantLimit: number;
+    menuLimit: number;
     productLimit: number;
     plan: string;
   }> {
@@ -812,8 +797,9 @@ export class RestaurantsService {
       totalRestaurants: parseInt(restCount[0]?.total || '0', 10),
       totalMenus: parseInt(menuCount[0]?.total || '0', 10),
       totalProducts: parseInt(productCount[0]?.total || '0', 10),
-      restaurantLimit: this.getRestaurantLimit(plan),
-      productLimit: this.getProductLimit(plan),
+      restaurantLimit: await this.planLimits.getRestaurantLimit(plan),
+      menuLimit: await this.planLimits.getMenuLimit(plan),
+      productLimit: await this.planLimits.getProductLimit(plan),
       plan,
     };
   }

@@ -149,6 +149,7 @@ export default function Admin() {
             totalMenus: d.totalMenus ?? 0,
             totalProducts: d.totalProducts ?? 0,
             restaurantLimit: d.restaurantLimit ?? 1,
+            menuLimit: d.menuLimit ?? 3,
             productLimit: d.productLimit ?? 30,
             plan: currentPlan,
           });
@@ -168,6 +169,7 @@ export default function Admin() {
             totalMenus: 0,
             totalProducts: 0,
             restaurantLimit: 1,
+            menuLimit: 3,
             productLimit: 30,
             plan: 'free',
           });
@@ -181,6 +183,7 @@ export default function Admin() {
           totalMenus: 0,
           totalProducts: 0,
           restaurantLimit: 1,
+          menuLimit: 3,
           productLimit: 30,
           plan: 'free',
         });
@@ -383,7 +386,22 @@ export default function Admin() {
                 </div>
               )}
 
-              {stats.totalMenus !== undefined && (
+              {user?.role === 'ADMIN' && stats.totalMenus !== undefined && stats.menuLimit !== undefined && (
+                <div className="col-md-3 col-sm-6">
+                  <div className="admin-stat-card h-100 d-flex flex-column">
+                    <p className="admin-stat-title">Menús</p>
+                    <h2 className="admin-stat-value">
+                      {stats.totalMenus}/{stats.menuLimit === -1 ? '∞' : stats.menuLimit}
+                    </h2>
+                    <p className="small text-muted mb-0 mt-1">creados / disponibles</p>
+                    <div className="mt-auto pt-3">
+                      <a href="/admin/menus" className="admin-btn" style={{ textDecoration: 'none' }}>Gestionar Menús</a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {user?.role === 'SUPER_ADMIN' && stats.totalMenus !== undefined && (
                 <div className="col-md-3 col-sm-6">
                   <div className="admin-stat-card h-100 d-flex flex-column">
                     <p className="admin-stat-title">Menús</p>

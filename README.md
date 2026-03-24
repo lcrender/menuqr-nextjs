@@ -43,9 +43,19 @@ cp .env.example .env
 
 ### 2. Levantar servicios
 
+**Desarrollo en tu máquina (API en `localhost:3001`):**
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+**Stack tipo producción / Traefik** (el `docker-compose.yml` por defecto **no** expone `3001` en el host; la API no se prueba con `http://localhost:3001`):
+
 ```bash
 docker compose up -d
 ```
+
+Más detalle: [`docs/LOCAL-DEV-DOCKER.md`](docs/LOCAL-DEV-DOCKER.md).
 
 ### 3. Ejecutar migraciones y seeds
 
@@ -234,6 +244,7 @@ npm run db:seed
 - **Frontend**: http://localhost:3000  
 - **Backend API**: http://localhost:3001  
 - Asegurate que `.env` tenga `DATABASE_URL`, `REDIS_URL` y MinIO apuntando a `localhost` y los puertos 5432, 6379, 9000.
+- **Redis**: el contenedor corre y `REDIS_URL` es obligatoria; el backend **aún no usa Redis** para caché (usa memoria). Detalle y planes futuros: [backend/docs/REDIS.md](backend/docs/REDIS.md).
 
 ### Modo desarrollo (todo en Docker, hot reload)
 
@@ -245,7 +256,8 @@ docker compose -f docker-compose.dev.yml up
 
 - **Frontend**: http://localhost:3000  
 - **Backend API**: http://localhost:3001  
-- **Postgres**: localhost:5432 | **Redis**: localhost:6379 | **MinIO**: http://localhost:9000 (consola :9001)
+- **Postgres**: localhost:5432 | **Redis**: localhost:6379 | **MinIO**: http://localhost:9000 (consola :9001)  
+  → Redis: [backend/docs/REDIS.md](backend/docs/REDIS.md)
 
 Primera vez (o si la base está vacía):
 

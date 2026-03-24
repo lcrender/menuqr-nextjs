@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
+import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'incomplete' | 'expired';
 export type PlanType = 'monthly' | 'yearly';
@@ -26,7 +27,10 @@ export interface SubscriptionRow {
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
 
-  constructor(private readonly postgres: PostgresService) {}
+  constructor(
+    private readonly postgres: PostgresService,
+    private readonly planLimits: PlanLimitsService,
+  ) {}
 
   async findByExternalId(provider: PaymentProvider, externalSubscriptionId: string): Promise<SubscriptionRow | null> {
     const rows = await this.postgres.queryRaw<any>(
@@ -173,21 +177,8 @@ export class SubscriptionService {
     this.logger.log(`Synced tenant ${tenantId} plan to ${newPlan} for user ${userId}`);
 
     if (newPlan === 'free' || newPlan === 'basic') {
-      await this.resetProTemplatesToClassic(tenantId);
+      await this.planLimits.resetTemplatesIncompatibleWithPlan(tenantId, newPlan);
     }
-  }
-
-  /**
-   * Si el tenant baja a free/basic, los restaurantes con plantilla Pro (ej. gourmet) pasan a classic.
-   */
-  private async resetProTemplatesToClassic(tenantId: string): Promise<void> {
-    const proOnlyTemplates = ['gourmet'];
-    await this.postgres.executeRaw(
-      `UPDATE restaurants SET template = 'classic', updated_at = NOW()
-       WHERE tenant_id = $1 AND deleted_at IS NULL AND template = ANY($2::text[])`,
-      [tenantId, proOnlyTemplates]
-    );
-    this.logger.log(`Reset Pro templates to classic for tenant ${tenantId} (if any)`);
   }
 
   async recordWebhookProcessed(provider: string, eventId: string): Promise<boolean> {

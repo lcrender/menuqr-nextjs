@@ -55,7 +55,7 @@ También puedes ejecutar el contenido de `scripts/backfill-free-subscriptions.sq
 ## Endpoints
 
 - **GET /pricing** (opcional auth)  
-  Devuelve precios por región. Si el usuario envía Bearer token, se usa su país (billing_country de suscripción, o declared_country, o registration_country); si no, se devuelve GLOBAL (USD/PayPal). Respuesta: `{ country, currency, paymentProvider, plans: [{ slug, name, price, currency, paymentProvider }] }`.
+  Devuelve precios por región. Si el usuario envía Bearer token, se usa su país (billing_country de suscripción, o declared_country, o registration_country); si no, se devuelve GLOBAL (USD/PayPal). Respuesta: `{ country, currency, paymentProvider, plans: [{ slug, name, price, priceYearly, currency, paymentProvider }] }`. El **precio anual** (`priceYearly`) se calcula como **mensual × 10** (sin columna en BD); mismo proveedor por región. **MercadoPago** usa ese monto en preapproval anual; **PayPal** sigue usando los IDs de plan mensual/anual configurados en `.env`.
 
 - **POST /payment/webhooks/:provider** (paypal | mercadopago)  
   Webhook del proveedor. Cuerpo en bruto para verificar firma. Público.
@@ -88,11 +88,21 @@ Eventos recomendados: BILLING.SUBSCRIPTION.ACTIVATED, BILLING.SUBSCRIPTION.CANCE
 
 En `.env`:
 
-- `MERCADOPAGO_ACCESS_TOKEN`: access token de la aplicación (producción o sandbox).
+- `MERCADOPAGO_ACCESS_TOKEN`: access token de **producción** (cobros reales).
+- `MERCADOPAGO_ACCESS_TOKEN_TEST`: access token de **prueba** (cuentas de test / sandbox).
+
+El modo activo (**prueba** vs **producción**) lo define el super admin en el panel (**Configuración → Mercado Pago**): se guarda en la tabla `app_settings` (`mercadopago_mode` = `sandbox` | `production`). Por defecto, sin fila en BD, se usa **producción**. La API elige el token según ese modo.
 
 URL del webhook: `https://tu-dominio.com/payment/webhooks/mercadopago`
 
 Eventos: autorización de preapproval, pagos creados, preapproval cancelado. Al confirmar pago/autorización se actualiza `subscriptions` y se sincroniza `tenants.plan`.
+
+## Super admin: vista de catálogo en el panel
+
+- **GET `/admin/plan-catalog`** (JWT, rol `SUPER_ADMIN`): devuelve límites por plan de tenant (alineados con `plan-limits.constants.ts`), plantillas estándar vs Pro, y filas de `plans` / `plan_prices` (ARS + Mercado Pago, USD + PayPal).
+- En el frontend: **Admin → Configuración → Suscripciones** (`/admin/config/subscriptions`).
+- **Mercado Pago (modo prueba/producción)**: **GET** y **PATCH** `/admin/mercadopago-config` (JWT, `SUPER_ADMIN`). PATCH body: `{ "mode": "sandbox" | "production" }`. Respuesta incluye `hasProductionTokenConfigured` / `hasTestTokenConfigured` (sin exponer secretos). UI: `/admin/config/mercadopago`.
+- **Límites por plan de tenant**: **GET** y **PUT** `/admin/plan-limits` (`SUPER_ADMIN`). Persistencia en `tenant_plan_limit_overrides`; sin filas se usan los defaults de `plan-limits.constants.ts`. La API (restaurantes, menús, productos, menú público, fotos, downgrade de plan) lee límites vía `PlanLimitsService`. UI: `/admin/config/plan-limits`.
 
 ## Sincronización con Tenant
 

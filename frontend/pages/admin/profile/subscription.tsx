@@ -4,7 +4,7 @@ import Link from 'next/link';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
 import AlertModal from '../../../components/AlertModal';
-import PricingPlansGrid, { type PricingData } from '../../../components/PricingPlansGrid';
+import PricingPlansGrid, { type BillingCycle, type PricingData } from '../../../components/PricingPlansGrid';
 
 type SubItem = {
   id: string;
@@ -79,7 +79,7 @@ export default function SubscriptionManagement() {
     }
   };
 
-  const handleSelectPlan = async (planSlug: string) => {
+  const handleSelectPlan = async (planSlug: string, billing: BillingCycle) => {
     if (planSlug === 'free') {
       setAlert({
         title: 'Plan Free',
@@ -88,6 +88,7 @@ export default function SubscriptionManagement() {
       });
       return;
     }
+    const planType = billing === 'yearly' ? 'yearly' : 'monthly';
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
     const returnUrl = `${baseUrl}/admin/profile/subscription?success=1`;
     const cancelUrl = `${baseUrl}/admin/profile/subscription?cancel=1`;
@@ -95,7 +96,7 @@ export default function SubscriptionManagement() {
     try {
       const res = await api.post('/subscriptions/create', {
         planSlug,
-        planType: 'monthly',
+        planType,
         returnUrl,
         cancelUrl,
       });

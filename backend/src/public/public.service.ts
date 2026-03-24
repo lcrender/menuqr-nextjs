@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { I18nService } from '../common/i18n/i18n.service';
+import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 
 @Injectable()
 export class PublicService {
@@ -9,6 +10,7 @@ export class PublicService {
   constructor(
     private postgresService: PostgresService,
     private i18nService: I18nService,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   private async getTenantPlan(tenantId: string): Promise<string> {
@@ -17,22 +19,6 @@ export class PublicService {
       [tenantId],
     );
     return rows[0]?.plan || 'free';
-  }
-
-  private getRestaurantLimit(plan: string): number {
-    const limits: Record<string, number> = { free: 1, basic: 1, pro: 3, pro_team: 3, premium: 10 };
-    return limits[plan || 'free'] ?? 1;
-  }
-
-  private getMenuLimit(plan: string): number {
-    const limits: Record<string, number> = { free: 3, basic: 6, pro: 30, pro_team: 30, premium: -1 };
-    const n = limits[plan || 'free'];
-    return n ?? 3;
-  }
-
-  private getProductLimit(plan: string): number {
-    const limits: Record<string, number> = { free: 30, basic: 60, pro: 300, pro_team: 300, premium: 1200 };
-    return limits[plan || 'free'] ?? 30;
   }
 
   async getRestaurantBySlug(slug: string, locale: string = 'es-ES') {
@@ -199,7 +185,7 @@ export class PublicService {
       const tenantId = restaurantTenant[0]?.tenant_id;
       if (tenantId) {
         const plan = await this.getTenantPlan(tenantId);
-        const menuLimit = this.getMenuLimit(plan);
+        const menuLimit = await this.planLimits.getMenuLimit(plan);
         if (menuLimit !== -1) {
           const allowedMenuIds = (
             await this.postgresService.queryRaw<any>(
@@ -217,7 +203,7 @@ export class PublicService {
       let allowedItemIds: string[] | null = null;
       if (tenantId) {
         const plan = await this.getTenantPlan(tenantId);
-        const productLimit = this.getProductLimit(plan);
+        const productLimit = await this.planLimits.getProductLimit(plan);
         const itemIdsRows = await this.postgresService.queryRaw<any>(
           `SELECT mi.id FROM menu_items mi
            INNER JOIN menu_sections ms ON ms.id = mi.section_id AND ms.deleted_at IS NULL

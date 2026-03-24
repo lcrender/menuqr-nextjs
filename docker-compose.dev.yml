@@ -1,8 +1,9 @@
 # ========================================
 # MenuQR - Docker Compose DESARROLLO
 # ========================================
-# Uso: docker compose -f docker-compose.dev.yml up
-# Frontend: http://localhost:3000  |  Backend API: http://localhost:3001
+# Uso: docker compose -f docker-compose.dev.yml up --build
+# (El docker-compose.yml "default" NO publica 3001: para local usá SIEMPRE este archivo.)
+# Frontend: http://localhost:3000  |  Backend API: http://localhost:3001  |  Health: http://localhost:3001/health
 # Postgres: localhost:5432  |  Redis: localhost:6379  |  MinIO: http://localhost:9000 (console :9001)
 # ========================================
 

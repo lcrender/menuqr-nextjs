@@ -16,7 +16,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const currentPath = router.pathname;
   const isHelpSection = currentPath.startsWith('/admin/help');
+  const isConfigSection = currentPath.startsWith('/admin/config');
   const [helpMenuOpen, setHelpMenuOpen] = useState(isHelpSection);
+  const [configMenuOpen, setConfigMenuOpen] = useState(isConfigSection);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -59,6 +61,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       setHelpMenuOpen(true);
     }
   }, [isHelpSection]);
+
+  useEffect(() => {
+    if (isConfigSection) {
+      setConfigMenuOpen(true);
+    }
+  }, [isConfigSection]);
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -263,6 +271,70 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   )}
                 </div>
               </li>
+
+              {isSuperAdmin && (
+                <li className="admin-nav-item mt-2 pt-2 border-top border-secondary border-opacity-25">
+                  <div>
+                    <button
+                      type="button"
+                      className={`admin-nav-link w-100 text-start d-flex justify-content-between align-items-center ${isConfigSection ? 'active' : ''}`}
+                      onClick={() => setConfigMenuOpen(!configMenuOpen)}
+                      style={{
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: 'transparent',
+                      }}
+                    >
+                      <span>⚙️ Configuración</span>
+                      <span
+                        style={{
+                          transform: configMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.3s',
+                        }}
+                      >
+                        ▼
+                      </span>
+                    </button>
+                    {configMenuOpen && (
+                      <ul
+                        className="admin-subnav"
+                        style={{ listStyle: 'none', paddingLeft: '20px', marginTop: '5px' }}
+                      >
+                        <li className="admin-nav-item">
+                          <Link
+                            href="/admin/config/subscriptions"
+                            className={`admin-nav-link ${currentPath === '/admin/config/subscriptions' ? 'active' : ''}`}
+                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            Suscripciones
+                          </Link>
+                        </li>
+                        <li className="admin-nav-item">
+                          <Link
+                            href="/admin/config/mercadopago"
+                            className={`admin-nav-link ${currentPath === '/admin/config/mercadopago' ? 'active' : ''}`}
+                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            Mercado Pago
+                          </Link>
+                        </li>
+                        <li className="admin-nav-item">
+                          <Link
+                            href="/admin/config/plan-limits"
+                            className={`admin-nav-link ${currentPath === '/admin/config/plan-limits' ? 'active' : ''}`}
+                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            Límites de planes
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              )}
             </ul>
 
               <div className="admin-logout">

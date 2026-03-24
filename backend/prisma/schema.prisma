@@ -105,6 +105,29 @@ model WebhookEvent {
   @@map("webhook_events")
 }
 
+/// Clave-valor para ajustes globales de la app (ej. modo Mercado Pago).
+model AppSetting {
+  key       String   @id @map("key")
+  value     String   @map("value")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
+/// Límites por plan de tenant (override sobre plan-limits.constants). Sin fila = usar código.
+model TenantPlanLimitOverride {
+  planKey              String   @id @map("plan_key")
+  restaurantLimit      Int      @map("restaurant_limit")
+  menuLimit            Int      @map("menu_limit")
+  productLimit         Int      @map("product_limit")
+  gourmetTemplate      Boolean  @map("gourmet_template")
+  productPhotosAllowed Boolean  @map("product_photos_allowed")
+  proOnlyTemplates     Json     @default("[]") @map("pro_only_templates")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("tenant_plan_limit_overrides")
+}
+
 model Restaurant {
   id          String   @id @default(cuid())
   tenantId    String   @map("tenant_id")

@@ -107,6 +107,12 @@ export const validationSchema = Joi.object({
   FREE_PLAN_ITEM_LIMIT: Joi.number().default(50),
 
   // ========================================
+  // MERCADO PAGO (opcional; país AR)
+  // ========================================
+  MERCADOPAGO_ACCESS_TOKEN: Joi.string().optional().allow(''),
+  MERCADOPAGO_ACCESS_TOKEN_TEST: Joi.string().optional().allow(''),
+
+  // ========================================
   // DESARROLLO
   // ========================================
   DEBUG: Joi.boolean().default(false),

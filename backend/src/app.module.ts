@@ -31,6 +31,7 @@ import { I18nModule } from './common/i18n/i18n.module';
 // Configuración de validación
 import { validationSchema } from './common/config/validation.schema';
 import { AppController } from './app.controller';
+import { PlanLimitsModule } from './common/plan-limits/plan-limits.module';
 
 @Module({
   imports: [
@@ -44,6 +45,8 @@ import { AppController } from './app.controller';
       validationOptions: {
         allowUnknown: true,
         abortEarly: false,
+        // Docker / .env siempre pasan strings; sin convert Joi puede rechazar PORT, MINIO_PORT, booleans, etc. y el API no arranca.
+        convert: true,
       },
     }),
 
@@ -51,6 +54,7 @@ import { AppController } from './app.controller';
     // MÓDULOS DE INFRAESTRUCTURA
     // ========================================
     DatabaseModule,
+    PlanLimitsModule,
     CustomCacheModule,
     LoggerModule,
     MinioModule,

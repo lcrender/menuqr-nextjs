@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
+import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import { QRService } from '../qr/qr.service';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class MenusService {
   constructor(
     private readonly postgres: PostgresService,
     private readonly qrService: QRService,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   async findAll(tenantId: string | null, restaurantId?: string, menuName?: string): Promise<any[]> {
@@ -48,7 +50,7 @@ export class MenusService {
 
     if (tenantId) {
       const plan = await this.getTenantPlan(tenantId);
-      const menuLimit = this.getMenuLimit(plan);
+      const menuLimit = await this.planLimits.getMenuLimit(plan);
       if (menuLimit !== -1) {
         query += ` LIMIT $${params.length + 1}`;
         params.push(menuLimit);
@@ -569,7 +571,7 @@ export class MenusService {
     const plan = await this.getTenantPlan(tenantId);
 
     // Obtener límite según el plan
-    const limit = this.getMenuLimit(plan);
+    const limit = await this.planLimits.getMenuLimit(plan);
 
     // Si el límite es -1 (ilimitado), no validar
     if (limit === -1) {
@@ -597,17 +599,5 @@ export class MenusService {
     }
   }
 
-  private getMenuLimit(plan: string): number {
-    const limits: Record<string, number> = {
-      free: 3,
-      basic: 6,
-      pro: 30,
-      pro_team: 30,
-      premium: -1, // Ilimitado
-    };
-
-    const planKey = plan || 'free';
-    return limits[planKey] ?? 3;
-  }
 }
 

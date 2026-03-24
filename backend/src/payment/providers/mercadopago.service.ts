@@ -10,6 +10,7 @@ import {
 } from '../interfaces/payment-provider.interface';
 import { SubscriptionService } from '../../subscription/subscription.service';
 import { PricingService } from '../pricing.service';
+import { AppSettingsService } from '../../app-settings/app-settings.service';
 
 const MP_API_BASE = 'https://api.mercadopago.com';
 
@@ -26,11 +27,29 @@ export class MercadoPagoService implements IPaymentProviderService {
     private readonly config: ConfigService,
     private readonly subscriptionService: SubscriptionService,
     private readonly pricingService: PricingService,
+    private readonly appSettings: AppSettingsService,
   ) {}
 
-  private getAccessToken(): string {
-    const token = this.config.get('MERCADOPAGO_ACCESS_TOKEN');
-    if (!token) throw new BadRequestException('MercadoPago is not configured');
+  /**
+   * Token según modo en BD: sandbox → MERCADOPAGO_ACCESS_TOKEN_TEST, producción → MERCADOPAGO_ACCESS_TOKEN.
+   */
+  private async resolveAccessToken(): Promise<string> {
+    const mode = await this.appSettings.getMercadoPagoMode();
+    if (mode === 'sandbox') {
+      const test = this.config.get<string>('MERCADOPAGO_ACCESS_TOKEN_TEST')?.trim();
+      if (!test) {
+        throw new BadRequestException(
+          'Mercado Pago en modo prueba: definí MERCADOPAGO_ACCESS_TOKEN_TEST en el servidor (.env).',
+        );
+      }
+      return test;
+    }
+    const token = this.config.get<string>('MERCADOPAGO_ACCESS_TOKEN')?.trim();
+    if (!token) {
+      throw new BadRequestException(
+        'Mercado Pago no está configurado: definí MERCADOPAGO_ACCESS_TOKEN en el servidor (.env).',
+      );
+    }
     return token;
   }
 
@@ -46,13 +65,14 @@ export class MercadoPagoService implements IPaymentProviderService {
     if (!priceRow || priceRow.currency !== 'ARS') {
       throw new BadRequestException('Plan price for Argentina (ARS) not found');
     }
-    const amount = Math.round(priceRow.price);
-    const token = this.getAccessToken();
+    const isYearly = params.planType === 'yearly';
+    const amount = Math.round(isYearly ? priceRow.priceYearly : priceRow.price);
+    const token = await this.resolveAccessToken();
     const preapprovalPayload = {
-      reason: `MenuQR - Plan ${priceRow.planName}`,
+      reason: `MenuQR - Plan ${priceRow.planName}${isYearly ? ' (anual)' : ''}`,
       auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
+        frequency: isYearly ? 12 : 1,
+        frequency_type: 'months' as const,
         transaction_amount: amount,
         currency_id: 'ARS',
       },
@@ -107,7 +127,7 @@ export class MercadoPagoService implements IPaymentProviderService {
     externalSubscriptionId: string;
     cancelAtPeriodEnd?: boolean;
   }): Promise<CancelSubscriptionResult> {
-    const token = this.getAccessToken();
+    const token = await this.resolveAccessToken();
     const res = await fetch(`${MP_API_BASE}/preapproval/${params.externalSubscriptionId}`, {
       method: 'PUT',
       headers: {
@@ -150,7 +170,7 @@ export class MercadoPagoService implements IPaymentProviderService {
   }
 
   private async handlePaymentCreated(paymentId: string, body: any): Promise<void> {
-    const token = this.getAccessToken();
+    const token = await this.resolveAccessToken();
     const res = await fetch(`${MP_API_BASE}/v1/payments/${paymentId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -172,7 +192,7 @@ export class MercadoPagoService implements IPaymentProviderService {
   }
 
   private async handlePreapprovalEvent(preapprovalId: string, body: any): Promise<void> {
-    const token = this.getAccessToken();
+    const token = await this.resolveAccessToken();
     const res = await fetch(`${MP_API_BASE}/preapproval/${preapprovalId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });

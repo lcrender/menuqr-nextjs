@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
+import { yearlyPriceFromMonthly } from './pricing.constants';
 
 export type PlanSlug = 'basic' | 'pro';
 
@@ -9,7 +10,10 @@ export interface PlanPriceRow {
   planSlug: PlanSlug;
   country: string;
   currency: string;
+  /** Precio mensual (desde BD) */
   price: number;
+  /** Precio anual = price × factor (ver pricing.constants) */
+  priceYearly: number;
   paymentProvider: string;
 }
 
@@ -49,13 +53,15 @@ export class PricingService {
         [planId, c]
       );
       if (rows[0]) {
+        const monthly = rows[0].price as number;
         return {
           planId: rows[0].planId,
           planName: rows[0].planName,
           planSlug,
           country: rows[0].country,
           currency: rows[0].currency,
-          price: rows[0].price,
+          price: monthly,
+          priceYearly: yearlyPriceFromMonthly(monthly, rows[0].currency),
           paymentProvider: rows[0].paymentProvider,
         };
       }
@@ -71,10 +77,24 @@ export class PricingService {
     country: string;
     currency: string;
     paymentProvider: string;
-    plans: Array<{ slug: PlanSlug; name: string; price: number; currency: string; paymentProvider: string }>;
+    plans: Array<{
+      slug: PlanSlug;
+      name: string;
+      price: number;
+      priceYearly: number;
+      currency: string;
+      paymentProvider: string;
+    }>;
   }> {
     const slugs: PlanSlug[] = ['basic', 'pro'];
-    const plans: Array<{ slug: PlanSlug; name: string; price: number; currency: string; paymentProvider: string }> = [];
+    const plans: Array<{
+      slug: PlanSlug;
+      name: string;
+      price: number;
+      priceYearly: number;
+      currency: string;
+      paymentProvider: string;
+    }> = [];
     let currency = 'USD';
     let paymentProvider = 'paypal';
     let resolvedCountry = 'GLOBAL';
@@ -86,6 +106,7 @@ export class PricingService {
           slug,
           name: row.planName,
           price: row.price,
+          priceYearly: row.priceYearly,
           currency: row.currency,
           paymentProvider: row.paymentProvider,
         });

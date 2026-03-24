@@ -1,6 +1,7 @@
 import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { MinioService } from '../common/minio/minio.service';
+import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 
 @Injectable()
 export class MediaService {
@@ -9,6 +10,7 @@ export class MediaService {
   constructor(
     private readonly postgres: PostgresService,
     private readonly minio: MinioService,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   async uploadRestaurantPhoto(
@@ -81,16 +83,16 @@ export class MediaService {
     }
   }
 
-  /** Planes que permiten subir fotos de productos: pro, premium. Free y basic no. */
+  /** Según límites efectivos del plan (BD override o defaults). */
   private async assertProductPhotosAllowed(tenantId: string): Promise<void> {
     const tenant = await this.postgres.queryRaw<any>(
       `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
       [tenantId]
     );
     const plan = tenant[0]?.plan || 'free';
-    if (plan === 'free' || plan === 'basic') {
+    if (!(await this.planLimits.allowsProductPhotos(plan))) {
       throw new ForbiddenException(
-        'La carga de fotos de productos no está incluida en tu plan. Actualiza a Pro o Premium para habilitarla.'
+        'La carga de fotos de productos no está incluida en tu plan. Actualizá el plan para habilitarla.',
       );
     }
   }

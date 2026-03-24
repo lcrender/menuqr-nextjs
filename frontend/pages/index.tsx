@@ -1,11 +1,28 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
-import PricingPlansGrid from '../components/PricingPlansGrid';
+import PricingPlansGrid, { type PricingData } from '../components/PricingPlansGrid';
+import api from '../lib/axios';
 
 export default function Home() {
   const router = useRouter();
+  const [pricingData, setPricingData] = useState<PricingData | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get('/pricing')
+      .then((res) => {
+        if (!cancelled) setPricingData(res.data ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setPricingData(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     // Si ya hay sesión, redirigir al admin (respeta sesión al abrir nueva pestaña)
@@ -143,7 +160,7 @@ export default function Home() {
             <p className="landing-section-subtitle">
               Empieza gratis y escala cuando lo necesites. Sin compromisos, cancela cuando quieras.
             </p>
-            <PricingPlansGrid variant="landing" />
+            <PricingPlansGrid variant="landing" pricingData={pricingData} />
           </div>
         </section>
 
