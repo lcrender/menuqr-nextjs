@@ -9,6 +9,7 @@ import {
   WebhookHandleResult,
 } from '../interfaces/payment-provider.interface';
 import { SubscriptionService } from '../../subscription/subscription.service';
+import { PaymentHistoryService, type PaymentAttemptStatus } from '../payment-history.service';
 
 const PAYPAL_API_BASE = (mode: string) =>
   mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
@@ -21,6 +22,7 @@ export class PayPalService implements IPaymentProviderService {
   constructor(
     private readonly config: ConfigService,
     private readonly subscriptionService: SubscriptionService,
+    private readonly paymentHistory: PaymentHistoryService,
   ) {}
 
   private get baseUrl(): string {
@@ -179,10 +181,10 @@ export class PayPalService implements IPaymentProviderService {
         await this.handleSubscriptionSuspended(subscriptionId);
         break;
       case 'BILLING.SUBSCRIPTION.PAYMENT.FAILED':
-        await this.handlePaymentFailed(subscriptionId);
+        await this.handlePaymentFailed(subscriptionId, body, eventId);
         break;
       case 'PAYMENT.SALE.COMPLETED':
-        await this.handlePaymentCompleted(body, subscriptionId);
+        await this.handlePaymentCompleted(body, subscriptionId, eventId);
         break;
       default:
         this.logger.log(`PayPal webhook event type not handled: ${eventType}`);
@@ -277,18 +279,77 @@ export class PayPalService implements IPaymentProviderService {
     if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
   }
 
-  private async handlePaymentFailed(subscriptionId: string): Promise<void> {
+  private async handlePaymentFailed(subscriptionId: string, body: any, eventId: string): Promise<void> {
     await this.subscriptionService.updateStatus('paypal', subscriptionId, { status: 'past_due' });
     const sub = await this.subscriptionService.findByExternalId('paypal', subscriptionId);
+
+    // Persistimos el intento fallido para que el usuario pueda verlo en su historial.
+    const resource = body?.resource || body;
+    const externalPaymentId = resource?.id || body?.id || eventId;
+    const occurredAtRaw = resource?.create_time || resource?.time || body?.create_time;
+    const occurredAt = occurredAtRaw ? new Date(occurredAtRaw) : new Date();
+    const amountValue = resource?.amount?.value ?? resource?.amount?.total_amount ?? null;
+    const currency = resource?.amount?.currency_code ?? resource?.amount?.currency?.code ?? resource?.amount?.currency ?? null;
+    const providerStatus = body?.event_type || body?.type;
+    const failureReason = resource?.reason || resource?.failure_reason || resource?.description || null;
+
+    if (sub?.userId && externalPaymentId) {
+      const attemptStatus: PaymentAttemptStatus = 'failed';
+      await this.paymentHistory.recordPaymentAttempt({
+        userId: sub.userId,
+        subscriptionId: sub.id,
+        paymentProvider: 'paypal',
+        externalPaymentId: String(externalPaymentId),
+        providerEventId: eventId,
+        providerStatus: String(providerStatus ?? ''),
+        status: attemptStatus,
+        planSlug: sub.subscriptionPlan ?? null,
+        planType: sub.planType ?? null,
+        amount: amountValue,
+        currency,
+        occurredAt,
+        failureReason: failureReason ? String(failureReason) : null,
+        rawData: body,
+      });
+    }
+
     if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
   }
 
-  private async handlePaymentCompleted(body: any, subscriptionId?: string): Promise<void> {
+  private async handlePaymentCompleted(body: any, subscriptionId?: string, eventId?: string): Promise<void> {
     const resource = body.resource || body;
     const subId = resource?.billing_agreement_id || subscriptionId;
     if (!subId) return;
     const sub = await this.subscriptionService.findByExternalId('paypal', subId);
     if (!sub) return;
+
+    // Persistimos el intento como completado (la suscripción se activa/renueva vía sincronización).
+    const externalPaymentId = resource?.id || body?.id || eventId || subId;
+    const occurredAtRaw = resource?.create_time || resource?.time || body?.create_time;
+    const occurredAt = occurredAtRaw ? new Date(occurredAtRaw) : new Date();
+    const amountValue = resource?.amount?.value ?? resource?.amount?.total_amount ?? null;
+    const currency =
+      resource?.amount?.currency_code ?? resource?.amount?.currency?.code ?? resource?.amount?.currency ?? null;
+    const providerStatus = body?.event_type || body?.type;
+
+    if (sub.userId && externalPaymentId) {
+      const attemptStatus: PaymentAttemptStatus = 'completed';
+      await this.paymentHistory.recordPaymentAttempt({
+        userId: sub.userId,
+        subscriptionId: sub.id,
+        paymentProvider: 'paypal',
+        externalPaymentId: String(externalPaymentId),
+        providerEventId: eventId ?? null,
+        providerStatus: String(providerStatus ?? ''),
+        status: attemptStatus,
+        planSlug: sub.subscriptionPlan ?? null,
+        planType: sub.planType ?? null,
+        amount: amountValue,
+        currency,
+        occurredAt,
+        rawData: body,
+      });
+    }
     const startTime = resource?.billing_agreement_id && resource?.create_time;
     const endTime = resource?.billing_agreement_id && resource?.valid_until;
     if (startTime || endTime) {

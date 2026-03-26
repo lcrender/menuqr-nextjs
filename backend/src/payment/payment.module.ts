@@ -15,6 +15,7 @@ import { AdminPlanCatalogController } from './admin-plan-catalog.controller';
 import { AdminPlanCatalogService } from './admin-plan-catalog.service';
 import { AppSettingsModule } from '../app-settings/app-settings.module';
 import { PlanLimitsModule } from '../common/plan-limits/plan-limits.module';
+import { PaymentHistoryService } from './payment-history.service';
 
 @Module({
   imports: [
@@ -34,11 +35,12 @@ import { PlanLimitsModule } from '../common/plan-limits/plan-limits.module';
   providers: [
     PaymentProviderService,
     PaymentService,
+    PaymentHistoryService,
     PricingService,
     PayPalService,
     MercadoPagoService,
     AdminPlanCatalogService,
   ],
-  exports: [PaymentService, PaymentProviderService, PricingService],
+  exports: [PaymentService, PaymentProviderService, PricingService, PaymentHistoryService],
 })
 export class PaymentModule {}

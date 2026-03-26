@@ -13,6 +13,7 @@ import { SubscriptionService } from '../../subscription/subscription.service';
 import { PricingService } from '../pricing.service';
 import { readEnvTrimmed } from '../../common/config/read-env-trimmed';
 import { AppSettingsService } from '../../app-settings/app-settings.service';
+import { PaymentHistoryService, type PaymentAttemptStatus } from '../payment-history.service';
 
 const MP_API_BASE = 'https://api.mercadopago.com';
 
@@ -30,6 +31,7 @@ export class MercadoPagoService implements IPaymentProviderService {
     private readonly subscriptionService: SubscriptionService,
     private readonly pricingService: PricingService,
     private readonly appSettings: AppSettingsService,
+    private readonly paymentHistory: PaymentHistoryService,
   ) {}
 
   /** Intenta extraer mensaje legible del JSON de error de la API de Mercado Pago. */
@@ -289,7 +291,7 @@ export class MercadoPagoService implements IPaymentProviderService {
 
     if (type === 'payment' || type === 'payment.created') {
       const paymentId = (body.data as { id?: unknown } | undefined)?.id;
-      if (paymentId != null) await this.handlePaymentCreated(String(paymentId), body);
+      if (paymentId != null) await this.handlePaymentCreated(String(paymentId), body, eventId);
     } else if (
       type === 'subscription_preapproval' ||
       type === 'preapproval' ||
@@ -303,7 +305,7 @@ export class MercadoPagoService implements IPaymentProviderService {
     return { processed: true, idempotencyKey: eventId };
   }
 
-  private async handlePaymentCreated(paymentId: string, body: any): Promise<void> {
+  private async handlePaymentCreated(paymentId: string, body: any, eventId: string): Promise<void> {
     const token = await this.resolveAccessToken();
     const res = await fetch(`${MP_API_BASE}/v1/payments/${paymentId}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -312,25 +314,59 @@ export class MercadoPagoService implements IPaymentProviderService {
     const payment = await res.json();
     const status = payment.status;
     const externalRef = payment.external_reference;
-    if (status === 'approved' && externalRef) {
-      const preapprovalExt = payment.preapproval_id || payment.subscription_id;
-      const sub = await this.subscriptionService.findByExternalId(
-        'mercadopago',
-        preapprovalExt ? String(preapprovalExt) : paymentId,
-      );
-      if (sub) {
-        const start = payment.date_approved ? new Date(payment.date_approved) : new Date();
-        const ms =
-          sub.planType === 'yearly'
-            ? 366 * 24 * 60 * 60 * 1000
-            : 31 * 24 * 60 * 60 * 1000;
-        await this.subscriptionService.updateStatus('mercadopago', sub.externalSubscriptionId, {
-          status: 'active',
-          currentPeriodStart: start,
-          currentPeriodEnd: payment.date_approved ? new Date(new Date(payment.date_approved).getTime() + ms) : null,
-        });
-        await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
-      }
+
+    const preapprovalExt = payment.preapproval_id || payment.subscription_id;
+    const subscriptionExternalId = preapprovalExt ? String(preapprovalExt) : paymentId;
+    const sub = await this.subscriptionService.findByExternalId('mercadopago', subscriptionExternalId);
+
+    const attemptStatus: PaymentAttemptStatus =
+      status === 'approved'
+        ? 'completed'
+        : status === 'rejected' || status === 'cancelled' || status === 'refunded' || status === 'failed'
+          ? 'failed'
+          : 'pending';
+
+    const userId = externalRef ? String(externalRef) : sub?.userId;
+    if (userId) {
+      const occurredAt = payment.date_approved
+        ? new Date(payment.date_approved)
+        : payment.date_created
+          ? new Date(payment.date_created)
+          : new Date();
+
+      await this.paymentHistory.recordPaymentAttempt({
+        userId,
+        subscriptionId: sub?.id ?? null,
+        paymentProvider: 'mercadopago',
+        externalPaymentId: String(paymentId),
+        providerEventId: eventId,
+        providerStatus: String(status ?? ''),
+        status: attemptStatus,
+        planSlug: sub?.subscriptionPlan ?? null,
+        planType: sub?.planType ?? null,
+        amount: payment.transaction_amount ?? payment.transaction_details?.total_paid_amount ?? null,
+        currency: payment.currency_id ?? null,
+        occurredAt,
+        failureReason: payment.status_detail ?? payment.failure_reason ?? null,
+        rawData: payment,
+      });
+    }
+
+    // Activación del plan solo para pagos aprobados.
+    if (status === 'approved' && externalRef && sub) {
+      const start = payment.date_approved ? new Date(payment.date_approved) : new Date();
+      const ms =
+        sub.planType === 'yearly'
+          ? 366 * 24 * 60 * 60 * 1000
+          : 31 * 24 * 60 * 60 * 1000;
+      await this.subscriptionService.updateStatus('mercadopago', sub.externalSubscriptionId, {
+        status: 'active',
+        currentPeriodStart: start,
+        currentPeriodEnd: payment.date_approved
+          ? new Date(new Date(payment.date_approved).getTime() + ms)
+          : null,
+      });
+      await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
     }
   }
 

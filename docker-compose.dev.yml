@@ -135,6 +135,7 @@ services:
       dockerfile: Dockerfile
       target: development
     container_name: menuqr_frontend_dev
+    command: npm run dev
     environment:
       NODE_ENV: development
       # Navegador (host): llama a localhost:3001. Dentro del contenedor, el proxy /api-proxy debe ir al servicio backend.

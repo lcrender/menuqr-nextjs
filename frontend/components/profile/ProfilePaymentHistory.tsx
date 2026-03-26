@@ -12,16 +12,24 @@ export interface PaymentItem {
 interface ProfilePaymentHistoryProps {
   /** Si true, se muestra dentro de la sección Suscripción en perfil. */
   embedded?: boolean;
+  /** Endpoint para cargar el historial de pagos. */
+  apiPath?: string;
+  /** Query params para el endpoint (ej. filtros). */
+  queryParams?: Record<string, string | number | boolean | undefined>;
 }
 
-export default function ProfilePaymentHistory({ embedded = false }: ProfilePaymentHistoryProps) {
+export default function ProfilePaymentHistory({
+  embedded = false,
+  apiPath = '/subscriptions/me/payments',
+  queryParams = {},
+}: ProfilePaymentHistoryProps) {
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await api.get('/subscriptions/me/payments');
+        const res = await api.get(apiPath, { params: queryParams });
         setPayments(Array.isArray(res.data) ? res.data : []);
       } catch {
         setPayments([]);
@@ -30,7 +38,8 @@ export default function ProfilePaymentHistory({ embedded = false }: ProfilePayme
       }
     };
     load();
-  }, []);
+    // JSON stringify para que el useEffect se dispare cuando cambien los filtros.
+  }, [apiPath, JSON.stringify(queryParams)]);
 
   if (loading) {
     return <p className="text-muted small">Cargando historial…</p>;
@@ -70,7 +79,15 @@ export default function ProfilePaymentHistory({ embedded = false }: ProfilePayme
                   <td>{p.amount}</td>
                   <td>{p.currency}</td>
                   <td>
-                    <span className={`badge ${p.status === 'completed' || p.status === 'paid' ? 'bg-success' : 'bg-secondary'}`}>
+                    <span
+                      className={`badge ${
+                        p.status === 'completed' || p.status === 'paid'
+                          ? 'bg-success'
+                          : p.status === 'failed'
+                            ? 'bg-danger'
+                            : 'bg-secondary'
+                      }`}
+                    >
                       {p.status}
                     </span>
                   </td>
