@@ -1164,7 +1164,7 @@ export default function Menus() {
                           />
                         </div>
                         <div className="wizard-field-large">
-                          <label className="wizard-label">Descripción</label>
+                          <label className="wizard-label">Descripción (opcional)</label>
                           <textarea
                             className="wizard-textarea-large"
                             value={formData.description}

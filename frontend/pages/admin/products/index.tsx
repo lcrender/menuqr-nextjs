@@ -48,7 +48,7 @@ export default function Products() {
     name: '',
     description: '',
     active: true,
-    prices: [{ currency: 'USD', label: '', amount: 0 }] as { currency: string; label: string; amount: number }[],
+    prices: [{ currency: 'USD', label: '', amount: null }] as { currency: string; label: string; amount: number | null }[],
     iconCodes: [] as string[],
     highlighted: false,
   });
@@ -316,7 +316,7 @@ export default function Products() {
       if (editing) {
         // Filtrar precios válidos (con currency y amount > 0)
         const validPrices = formData.prices.filter(
-          (p: any) => p.currency && p.currency.trim() !== '' && (p.amount > 0 || p.amount === 0)
+          (p: any) => p.currency && p.currency.trim() !== '' && p.amount != null && p.amount > 0
         );
         
         await api.put(`/menu-items/${editing.id}`, {
@@ -336,11 +336,14 @@ export default function Products() {
           await api.post(`/media/items/${editing.id}/photo`, fd);
         }
       } else {
-        // Enviar solo los campos que tienen valor
+        const validPrices = formData.prices.filter(
+          (p) => p.currency && p.currency.trim() !== '' && p.amount != null && p.amount > 0
+        );
         const dataToSend = {
           ...formData,
           menuId: formData.menuId || undefined,
           sectionId: formData.sectionId || undefined,
+          prices: validPrices,
         };
         await api.post('/menu-items', dataToSend);
       }
@@ -356,7 +359,7 @@ export default function Products() {
         name: '',
         description: '',
         active: true,
-        prices: [{ currency: defaultCurrency, label: '', amount: 0 }] as { currency: string; label: string; amount: number }[],
+        prices: [{ currency: defaultCurrency, label: '', amount: null }] as { currency: string; label: string; amount: number | null }[],
         iconCodes: [],
         highlighted: false,
       });
@@ -382,9 +385,13 @@ export default function Products() {
       name: product.name || '',
       description: product.description || '',
       active: product.active !== undefined ? product.active : true,
-      prices: product.prices && product.prices.length > 0 
-        ? product.prices.map((p: any) => ({ ...p, currency: p.currency || defaultCurrency }))
-        : [{ currency: defaultCurrency, label: '', amount: 0 }],
+      prices: product.prices && product.prices.length > 0
+        ? product.prices.map((p: any) => ({
+            ...p,
+            currency: p.currency || defaultCurrency,
+            amount: p.amount === 0 || p.amount == null ? null : p.amount,
+          }))
+        : [{ currency: defaultCurrency, label: '', amount: null }],
       iconCodes: product.icons || [],
       highlighted: (product as any)?.extra?.highlighted === true,
     });
@@ -562,7 +569,7 @@ export default function Products() {
     const defaultCurrency = getDefaultCurrency(formData.menuId);
     setFormData({
       ...formData,
-      prices: [...formData.prices, { currency: defaultCurrency, label: '', amount: 0 }],
+      prices: [...formData.prices, { currency: defaultCurrency, label: '', amount: null }],
     });
   };
 
@@ -1400,7 +1407,7 @@ export default function Products() {
                   </div>
                   
                   <div className="mb-0">
-                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>Descripción</label>
+                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>Descripción (opcional)</label>
                     <textarea
                       className="form-control"
                       value={formData.description}
@@ -1440,11 +1447,26 @@ export default function Products() {
                           <input
                             type="number"
                             className="form-control"
-                            placeholder="Monto"
-                            value={price.amount}
-                            onChange={(e) => updatePrice(index, 'amount', parseFloat(e.target.value) || 0)}
+                            inputMode="decimal"
+                            value={price.amount === null || price.amount === undefined ? '' : price.amount}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              if (v === '') {
+                                updatePrice(index, 'amount', null);
+                                return;
+                              }
+                              const n = parseFloat(v);
+                              updatePrice(index, 'amount', Number.isFinite(n) ? n : null);
+                            }}
+                            onFocus={(e) => {
+                              const unset = price.amount == null || price.amount === 0;
+                              if (unset) {
+                                updatePrice(index, 'amount', null);
+                                requestAnimationFrame(() => (e.target as HTMLInputElement).select());
+                              }
+                            }}
                             step="0.01"
-                            required
+                            placeholder="Ej.: 12,50"
                           />
                         </div>
                         <div className="col-md-2">

@@ -5,6 +5,23 @@ import CountrySelector from './CountrySelector';
 import ProvinceSelector from './ProvinceSelector';
 import CitySelector from './CitySelector';
 
+const PREVIEW_IMAGE_BASE = '/preview';
+const PREVIEW_DEFAULT_IMAGE = '/preview/preview-default.svg';
+
+const WIZARD_TEMPLATES: Array<{
+  id: 'classic' | 'minimalist' | 'foodie' | 'burgers' | 'italianFood' | 'gourmet';
+  name: string;
+  desc: string;
+  previewClass: string;
+}> = [
+  { id: 'classic', name: 'Clásico', desc: 'Diseño tradicional y elegante', previewClass: 'classic' },
+  { id: 'minimalist', name: 'Minimalista', desc: 'Diseño limpio y contemporáneo', previewClass: 'minimalist' },
+  { id: 'foodie', name: 'Foodie', desc: 'Diseño gastronómico y apetitoso', previewClass: 'foodie' },
+  { id: 'gourmet', name: 'Gourmet', desc: 'Estilo refinado y premium', previewClass: 'gourmet' },
+  { id: 'burgers', name: 'Burgers', desc: 'Bold y dinámico estilo hamburguesería', previewClass: 'burgers' },
+  { id: 'italianFood', name: 'Italian Food', desc: 'Elegante con colores de la bandera italiana', previewClass: 'italianfood' },
+];
+
 // Función para validar dominio
 const isValidDomain = (domain: string): boolean => {
   if (!domain || domain.trim() === '') return false;
@@ -117,6 +134,9 @@ export default function RestaurantWizard({
   const [logoCropSrc, setLogoCropSrc] = useState<string | null>(null);
   const [showCoverCrop, setShowCoverCrop] = useState(false);
   const [coverCropSrc, setCoverCropSrc] = useState<string | null>(null);
+  const [previewSelectedId, setPreviewSelectedId] = useState<string | null>(null);
+  const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
+  const [previewImageError, setPreviewImageError] = useState<Record<string, boolean>>({});
 
   // Mapeo de nombres de países de APIs a nuestros nombres
   const countryNameMap: { [key: string]: string } = {
@@ -288,6 +308,11 @@ export default function RestaurantWizard({
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const selectTemplateForPreview = (templateId: string) => {
+    setPreviewSelectedId(templateId);
+    setPreviewDrawerOpen(true);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -836,47 +861,26 @@ export default function RestaurantWizard({
             {/* Template de diseño */}
             <div className="wizard-field">
               <label className="wizard-label">Plantilla de diseño</label>
+              <p className="wizard-help-text" style={{ marginBottom: '14px', fontSize: '0.9rem', color: '#6c757d' }}>
+                Seleccione una plantilla de diseño para tu menu, luego podras cambiarlo y configurar los colores de tu marca
+              </p>
               <div className="wizard-template-selector wizard-template-selector--grid">
-                <div 
-                  className={`wizard-template-option ${formData.template === 'classic' ? 'active' : ''}`}
-                  onClick={() => setFormData({ ...formData, template: 'classic' })}
-                >
-                  <div className="wizard-template-preview classic"></div>
-                  <div className="wizard-template-name">Clásico</div>
-                  <div className="wizard-template-desc">Diseño tradicional y elegante</div>
-                </div>
-                <div 
-                  className={`wizard-template-option ${formData.template === 'minimalist' ? 'active' : ''}`}
-                  onClick={() => setFormData({ ...formData, template: 'minimalist' })}
-                >
-                  <div className="wizard-template-preview minimalist"></div>
-                  <div className="wizard-template-name">Minimalista</div>
-                  <div className="wizard-template-desc">Diseño limpio y contemporáneo</div>
-                </div>
-                <div 
-                  className={`wizard-template-option ${formData.template === 'foodie' ? 'active' : ''}`}
-                  onClick={() => setFormData({ ...formData, template: 'foodie' })}
-                >
-                  <div className="wizard-template-preview foodie"></div>
-                  <div className="wizard-template-name">Foodie</div>
-                  <div className="wizard-template-desc">Diseño gastronómico y apetitoso</div>
-                </div>
-                <div 
-                  className={`wizard-template-option ${formData.template === 'burgers' ? 'active' : ''}`}
-                  onClick={() => setFormData({ ...formData, template: 'burgers' })}
-                >
-                  <div className="wizard-template-preview burgers"></div>
-                  <div className="wizard-template-name">Burgers</div>
-                  <div className="wizard-template-desc">Estilo hamburguesería, bold y dinámico</div>
-                </div>
-                <div 
-                  className={`wizard-template-option ${formData.template === 'italianFood' ? 'active' : ''}`}
-                  onClick={() => setFormData({ ...formData, template: 'italianFood' })}
-                >
-                  <div className="wizard-template-preview italianfood"></div>
-                  <div className="wizard-template-name">Italian Food</div>
-                  <div className="wizard-template-desc">Elegante con colores de la bandera italiana</div>
-                </div>
+                {WIZARD_TEMPLATES.map((t) => (
+                  <div
+                    key={t.id}
+                    className={`wizard-template-option ${formData.template === t.id ? 'active' : ''}`}
+                    onClick={() => selectTemplateForPreview(t.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') selectTemplateForPreview(t.id);
+                    }}
+                  >
+                    <div className={`wizard-template-preview ${t.previewClass}`}></div>
+                    <div className="wizard-template-name">{t.name}</div>
+                    <div className="wizard-template-desc">{t.desc}</div>
+                  </div>
+                ))}
               </div>
               <small className="wizard-hint">
                 Esta plantilla se aplicará a todos los menús de este restaurante
@@ -889,7 +893,7 @@ export default function RestaurantWizard({
               <p className="wizard-help-text" style={{ marginBottom: '20px', fontSize: '0.9rem', color: '#6c757d' }}>
                 Personaliza los colores principales de tu restaurante. Estos colores se aplicarán a botones, títulos y elementos destacados.
               </p>
-              <div className="row">
+              <div className="row g-5">
                 <div className="col-md-6">
                   <label className="wizard-label" style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
                     Color primario
@@ -985,6 +989,62 @@ export default function RestaurantWizard({
           </div>
         </div>
       </form>
+
+      {previewDrawerOpen && previewSelectedId && (
+        <div
+          className="admin-templates-preview-drawer-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vista previa ampliada"
+          onClick={() => setPreviewDrawerOpen(false)}
+        >
+          <div className="admin-templates-preview-drawer-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-templates-preview-drawer-header">
+              <div className="fw-semibold">
+                Vista previa: {WIZARD_TEMPLATES.find((t) => t.id === previewSelectedId)?.name ?? previewSelectedId}
+              </div>
+              <button
+                type="button"
+                className="btn-close"
+                aria-label="Cerrar"
+                onClick={() => setPreviewDrawerOpen(false)}
+              />
+            </div>
+
+            <div className="admin-templates-preview-drawer-body">
+              <img
+                key={previewSelectedId}
+                src={previewImageError[previewSelectedId] ? PREVIEW_DEFAULT_IMAGE : `${PREVIEW_IMAGE_BASE}/preview-${previewSelectedId}.jpg`}
+                alt={`Vista previa ${WIZARD_TEMPLATES.find((t) => t.id === previewSelectedId)?.name ?? previewSelectedId}`}
+                className="admin-templates-preview-drawer-img"
+                onError={() => setPreviewImageError((prev) => ({ ...prev, [previewSelectedId]: true }))}
+                loading="lazy"
+              />
+            </div>
+
+            <div className="admin-templates-preview-drawer-footer" style={{ display: 'flex', gap: 10, justifyContent: 'space-between' }}>
+              <a
+                href={`/preview/${previewSelectedId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-btn admin-templates-preview-drawer-cta"
+              >
+                Abrir en nueva pestaña →
+              </a>
+              <button
+                type="button"
+                className="admin-btn"
+                onClick={() => {
+                  setFormData({ ...formData, template: previewSelectedId });
+                  setPreviewDrawerOpen(false);
+                }}
+              >
+                Usar esta plantilla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <LogoCropModal
         show={showLogoCrop}

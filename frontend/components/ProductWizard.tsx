@@ -18,16 +18,23 @@ interface ProductWizardProps {
 interface Price {
   currency: string;
   label: string;
-  amount: number;
+  /** null = campo vacío (sin valor tipeado aún) */
+  amount: number | null;
 }
 
+const isPriceAmountUnset = (amount: number | null | undefined) =>
+  amount == null || amount === 0;
+
 const formatPrice = (price: Price) => {
+  if (isPriceAmountUnset(price.amount)) {
+    return '—';
+  }
   if (price.currency === 'ARS') {
     // Para ARS, mostrar sin centavos con símbolo $
     return `$ ${Math.round(price.amount).toLocaleString('es-AR')}`;
   }
   // Para otras monedas, mostrar con 2 decimales
-  return `${price.currency} ${price.amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${price.currency} ${(price.amount as number).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 // Función para obtener la moneda por defecto basada en el timezone y locale del navegador
@@ -186,7 +193,7 @@ export default function ProductWizard({
     sectionIds: [] as string[], // Cambiar a array para múltiples secciones
     name: '',
     description: '',
-    prices: [{ currency: initialEffectiveCurrency, label: '', amount: 0 }] as Price[],
+    prices: [{ currency: initialEffectiveCurrency, label: '', amount: null }] as Price[],
     iconCodes: [] as string[],
     highlighted: false,
   });
@@ -443,7 +450,7 @@ export default function ProductWizard({
     const firstPrice = formData.prices[0];
     if (formData.prices.length > 0 && formData.menuId && firstPrice) {
       // Si el primer precio tiene la moneda anterior (USD por defecto) y no ha sido modificado, actualizarlo
-      if (firstPrice.currency === 'USD' && firstPrice.amount === 0) {
+      if (firstPrice.currency === 'USD' && isPriceAmountUnset(firstPrice.amount)) {
         const currencyToUse = restaurantCurrency || defaultCurrency;
         setFormData(prev => ({
           ...prev,
@@ -467,9 +474,7 @@ export default function ProductWizard({
       : effectiveDefaultCurrency;
     // Solo actualizar si el precio no tiene monto (no ha sido modificado) o si la moneda es diferente
     // También actualizar si la moneda actual es USD (por defecto) y tenemos una moneda diferente
-    if (firstPrice.amount === 0 || 
-          (firstPrice.currency !== currencyToUse && firstPrice.amount === 0) ||
-          (firstPrice.currency === 'USD' && currencyToUse !== 'USD' && firstPrice.amount === 0)) {
+    if (isPriceAmountUnset(firstPrice.amount)) {
       setFormData(prev => ({
         ...prev,
         prices: prev.prices.map((price, index) => 
@@ -516,7 +521,7 @@ export default function ProductWizard({
               
               // Si estamos en el paso de precios y el primer precio no tiene monto, actualizar la moneda
               const firstPrice = formData.prices[0];
-              if (currentStep === 2 && formData.prices.length > 0 && firstPrice && firstPrice.amount === 0) {
+              if (currentStep === 2 && formData.prices.length > 0 && firstPrice && isPriceAmountUnset(firstPrice.amount)) {
                 setFormData(prev => ({
                   ...prev,
                   prices: prev.prices.map((price, index) => 
@@ -1085,7 +1090,9 @@ export default function ProductWizard({
     setLoading(true);
     try {
       // Filtrar precios válidos (con amount > 0)
-      const validPrices = formData.prices.filter(p => p.amount > 0);
+      const validPrices = formData.prices.filter(
+        (p): p is Price & { amount: number } => p.amount != null && p.amount > 0
+      );
       
       // Crear el producto base (sin secciones si no hay ninguna seleccionada)
       const data: any = {
@@ -1172,7 +1179,7 @@ export default function ProductWizard({
         sectionIds: [],
         name: '',
         description: '',
-        prices: [{ currency: restaurantCurrency || defaultCurrency, label: '', amount: 0 }],
+        prices: [{ currency: restaurantCurrency || defaultCurrency, label: '', amount: null }],
         iconCodes: [],
         highlighted: false,
       });
@@ -1211,7 +1218,7 @@ export default function ProductWizard({
   const addPrice = () => {
     setFormData({
       ...formData,
-      prices: [...formData.prices, { currency: defaultCurrency, label: '', amount: 0 }],
+      prices: [...formData.prices, { currency: defaultCurrency, label: '', amount: null }],
     });
   };
 
@@ -1224,7 +1231,7 @@ export default function ProductWizard({
     }
   };
 
-  const updatePrice = (index: number, field: keyof Price, value: string | number) => {
+  const updatePrice = (index: number, field: keyof Price, value: string | number | null) => {
     const newPrices = [...formData.prices];
     const existing = newPrices[index];
     if (!existing) return;
@@ -1982,7 +1989,7 @@ export default function ProductWizard({
 
               {/* Descripción */}
               <div className="wizard-field wizard-field-large">
-                <label className="wizard-label">Descripción</label>
+                <label className="wizard-label">Descripción (opcional)</label>
                 <textarea
                   className="admin-form-control wizard-textarea-large"
                   value={formData.description}
@@ -2041,12 +2048,25 @@ export default function ProductWizard({
                     <input
                       type="number"
                       className="admin-form-control"
-                      value={price.amount}
-                      onChange={(e) => updatePrice(index, 'amount', parseFloat(e.target.value) || 0)}
-                      placeholder="0.00"
-                      min="0"
+                      inputMode="decimal"
+                      value={price.amount === null || price.amount === undefined ? '' : price.amount}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === '') {
+                          updatePrice(index, 'amount', null);
+                          return;
+                        }
+                        const n = parseFloat(v);
+                        updatePrice(index, 'amount', Number.isFinite(n) ? n : null);
+                      }}
+                      onFocus={(e) => {
+                        if (isPriceAmountUnset(price.amount)) {
+                          updatePrice(index, 'amount', null);
+                          requestAnimationFrame(() => e.target.select());
+                        }
+                      }}
+                      placeholder="Ej.: 12,50"
                       step="0.01"
-                      required
                     />
                   </div>
                   {formData.prices.length > 1 && (

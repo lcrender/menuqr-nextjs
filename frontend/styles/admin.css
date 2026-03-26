@@ -45,6 +45,9 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Fila principal: sidebar + contenido (responsive) */
@@ -105,8 +108,10 @@ body {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
+    max-width: 100%;
     flex: 1 1 auto;
     min-height: 0;
+    overflow-x: hidden;
   }
 
   .admin-mobile-topbar {
@@ -241,6 +246,9 @@ body {
     max-width: 100%;
     flex: 1 1 auto;
     min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-wrap: break-word;
   }
 }
 
@@ -376,6 +384,8 @@ body {
 .admin-main {
   padding: 32px;
   min-height: 100vh;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 /* Títulos */
@@ -875,6 +885,9 @@ body {
 @media (max-width: 768px) {
   .admin-main {
     padding: 16px;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-wrap: break-word;
   }
   
   .admin-title {
@@ -883,6 +896,32 @@ body {
   
   .admin-stat-value {
     font-size: 2rem;
+  }
+
+  /* Evita scroll horizontal por tablas, imágenes o SVG fijos */
+  .admin-main img,
+  .admin-main video,
+  .admin-main canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .admin-main svg {
+    max-width: 100%;
+  }
+
+  .admin-main .table-responsive,
+  .admin-main .admin-table-scroll {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .admin-main .row {
+    min-width: 0;
+  }
+
+  .admin-main [class*="col-"] {
+    min-width: 0;
   }
 }
 

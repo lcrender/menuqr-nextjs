@@ -409,7 +409,7 @@ export default function MenuWizard({
 
               {/* Descripción */}
               <div className="wizard-field wizard-field-large">
-                <label className="wizard-label">Descripción</label>
+                <label className="wizard-label">Descripción (opcional)</label>
                 <textarea
                   className="admin-form-control wizard-textarea-large"
                   value={formData.description}

@@ -67,32 +67,11 @@ export async function exportLogoWebpFile(imageSrc: string, pixelCrop: Area): Pro
       c.toBlob((b) => resolve(b), 'image/webp', q);
     });
 
-  while (side >= 128) {
-    let q = 0.92;
-    while (q >= 0.2) {
-      const blob = await tryBlob(canvas, q);
-      if (blob && blob.size <= LOGO_MAX_BYTES) {
-        return new File([blob], 'logo.webp', { type: 'image/webp' });
-      }
-      q -= 0.04;
-    }
-    side -= 32;
-    if (side < 128) break;
-    canvas = document.createElement('canvas');
-    canvas.width = side;
-    canvas.height = side;
-    ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas no disponible');
-    ctx.drawImage(cropCanvas, 0, 0, side, side);
-  }
-
-  const last = await tryBlob(canvas, 0.18);
-  if (last && last.size <= LOGO_MAX_BYTES) {
-    return new File([last], 'logo.webp', { type: 'image/webp' });
-  }
-  throw new Error(
-    'No se pudo comprimir el logo a 300 KB. Probá con otra imagen o un recorte más simple.',
-  );
+  // No bloqueamos al usuario si no se llega al peso objetivo.
+  // El backend optimiza y guarda una versión liviana; acá solo generamos un WebP razonable.
+  const blob = (await tryBlob(canvas, 0.92)) || (await tryBlob(canvas, 0.82)) || (await tryBlob(canvas, 0.72));
+  if (!blob) throw new Error('No se pudo exportar la imagen');
+  return new File([blob], 'logo.webp', { type: 'image/webp' });
 }
 
 async function exportCroppedFixedWebpFile(args: {
@@ -139,15 +118,17 @@ async function exportCroppedFixedWebpFile(args: {
     });
 
   let q = 0.92;
+  let last: Blob | null = null;
   while (q >= minQuality) {
     const blob = await tryBlob(q);
+    if (blob) last = blob;
     if (blob && blob.size <= maxBytes) {
       return new File([blob], filename, { type: 'image/webp' });
     }
     q -= 0.04;
   }
-
-  throw new Error('No se pudo generar la imagen con el peso máximo solicitado. Probá con otra imagen o un recorte más simple.');
+  if (!last) throw new Error('No se pudo exportar la imagen');
+  return new File([last], filename, { type: 'image/webp' });
 }
 
 /**

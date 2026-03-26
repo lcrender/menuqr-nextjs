@@ -113,6 +113,37 @@ export class MinioService implements OnModuleInit {
     }
   }
 
+  async uploadBuffer(
+    buffer: Buffer,
+    args: {
+      folder?: string;
+      filename: string;
+      contentType: string;
+    },
+  ): Promise<{ url: string; filename: string }> {
+    try {
+      const folder = args.folder || 'uploads';
+      const timestamp = Date.now();
+      const filename = `${folder}/${timestamp}-${args.filename}`;
+
+      await this.minioClient.putObject(
+        this.bucketName,
+        filename,
+        buffer,
+        buffer.length,
+        {
+          'Content-Type': args.contentType,
+        },
+      );
+
+      const url = `${this.publicUrl}/${this.bucketName}/${filename}`;
+      return { url, filename };
+    } catch (error) {
+      this.logger.error('Error subiendo buffer a MinIO:', error);
+      throw error;
+    }
+  }
+
   async deleteFile(filename: string): Promise<void> {
     try {
       await this.minioClient.removeObject(this.bucketName, filename);
