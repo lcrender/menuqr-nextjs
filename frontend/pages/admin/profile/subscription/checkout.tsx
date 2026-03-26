@@ -17,6 +17,12 @@ import type { PricingData } from '../../../../components/PricingPlansGrid';
 
 type PlanSlug = 'starter' | 'pro' | 'premium';
 type BillingCycle = 'monthly' | 'yearly';
+type SubItem = {
+  id: string;
+  paymentProvider: string;
+  status: string;
+  subscriptionPlan: string | null;
+};
 
 function yearlyAmount(plan: { price: number; priceYearly?: number }): number {
   return plan.priceYearly ?? plan.price * 10;
@@ -35,6 +41,7 @@ export default function SubscriptionCheckoutPage() {
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [pricingLoading, setPricingLoading] = useState(true);
   const [limits, setLimits] = useState(DEFAULT_PUBLIC_PLAN_LIMITS);
+  const [subscriptions, setSubscriptions] = useState<SubItem[]>([]);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -55,8 +62,11 @@ export default function SubscriptionCheckoutPage() {
       try {
         const res = await api.get('/pricing');
         setPricingData(res.data || null);
+        const subsRes = await api.get('/subscriptions/me');
+        setSubscriptions(Array.isArray(subsRes.data) ? subsRes.data : []);
       } catch {
         setPricingData(null);
+        setSubscriptions([]);
       } finally {
         setPricingLoading(false);
       }
@@ -116,9 +126,19 @@ export default function SubscriptionCheckoutPage() {
 
   const paymentLabel = pricingData?.paymentProvider === 'mercadopago' ? 'Mercado Pago' : 'PayPal';
   const isArs = planRow?.currency === 'ARS';
+  const activePaid = subscriptions.find(
+    (s) =>
+      s.status === 'active' &&
+      s.paymentProvider !== 'internal' &&
+      String(s.subscriptionPlan ?? '').toLowerCase() !== 'free',
+  );
+  const isSameActivePlan =
+    !!activePaid &&
+    !!planSlug &&
+    String(activePaid.subscriptionPlan ?? '').toLowerCase() === planSlug;
 
   const handleSubscribe = async () => {
-    if (!planSlug || !acceptedTerms || !planRow) return;
+    if (!planSlug || !acceptedTerms || !planRow || isSameActivePlan) return;
     const planType = billingCycle === 'yearly' ? 'yearly' : 'monthly';
     const origin = getPublicAppOrigin().replace(/\/$/, '');
     const returnUrl = origin
@@ -261,6 +281,11 @@ export default function SubscriptionCheckoutPage() {
             )}
 
             <div className="small text-muted mb-3">
+              {isSameActivePlan && (
+                <div className="alert alert-warning small py-2 mb-3" role="status">
+                  Ya tenés activa esta suscripción. Elegí otro plan para cambiar o gestioná tu suscripción actual.
+                </div>
+              )}
               <p className="mb-2">
                 <strong>Renovación automática:</strong> la suscripción se renueva al final de cada período de facturación
                 hasta que la canceles.
@@ -308,7 +333,7 @@ export default function SubscriptionCheckoutPage() {
             <button
               type="button"
               className="btn btn-primary btn-lg w-100"
-              disabled={!acceptedTerms || submitting}
+              disabled={!acceptedTerms || submitting || isSameActivePlan}
               onClick={handleSubscribe}
             >
               {submitting ? 'Redirigiendo…' : 'Suscribirme'}

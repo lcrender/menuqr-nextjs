@@ -53,6 +53,8 @@ model User {
   pendingEmail             String?   @map("pending_email")
   emailChangeToken         String?   @map("email_change_token")
   emailChangeExpiresAt     DateTime? @map("email_change_expires_at")
+  pendingPlan              String?   @map("pending_plan")
+  pendingBillingCycle      PlanType? @map("pending_billing_cycle")
   lastLoginAt              DateTime? @map("last_login_at")
   revokedSessionsBefore  DateTime? @map("revoked_sessions_before")
   registrationCountry     String?   @map("registration_country") // detectado por IP al registrarse

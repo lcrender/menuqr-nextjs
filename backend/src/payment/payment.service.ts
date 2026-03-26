@@ -99,9 +99,24 @@ export class PaymentService {
     const sameProvider = subs.filter((s) => s.paymentProvider === provider);
     const active = sameProvider.find((s) => s.status === 'active');
     if (active) {
-      throw new BadRequestException(
-        'Ya tenés una suscripción de pago activa. Cancelala en «Gestionar suscripción» antes de contratar otro plan.',
-      );
+      const activePlan = String(active.subscriptionPlan ?? '').toLowerCase();
+      const targetPlan = String(params.planSlug ?? '').toLowerCase();
+      if (activePlan === targetPlan) {
+        throw new BadRequestException(
+          'Ya tenés activa esta suscripción. Elegí otro plan o gestioná tu suscripción actual.',
+        );
+      }
+
+      // Cambio de plan (upgrade/downgrade): cancelar la activa actual del mismo proveedor
+      // antes de abrir el nuevo checkout para evitar dobles cobros por error.
+      const service = this.getProviderService(provider);
+      await service.cancelSubscription({
+        externalSubscriptionId: active.externalSubscriptionId,
+        cancelAtPeriodEnd: false,
+      });
+      await this.subscriptionService.updateStatus(provider, active.externalSubscriptionId, {
+        status: 'canceled',
+      });
     }
 
     // Evitar preapprovals / filas incompletas colgadas (ej. usuario reintenta checkout).

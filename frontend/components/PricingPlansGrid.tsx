@@ -69,12 +69,15 @@ export default function PricingPlansGrid({
   pricingData = null,
 }: PricingPlansGridProps) {
   const router = useRouter();
+  const isLanding = variant === 'landing';
   const isSubscription = variant === 'subscription' && onSelectPlan;
+  const showBillingToggle = variant === 'landing' || isSubscription;
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
 
   const planFree = pricingData?.plans?.find((p) => p.slug === 'free');
   const planStarter = pricingData?.plans?.find((p) => p.slug === 'starter');
   const planPro = pricingData?.plans?.find((p) => p.slug === 'pro');
+  const planPremium = pricingData?.plans?.find((p) => p.slug === 'premium');
   const paymentProvider = pricingData?.paymentProvider ?? 'paypal';
   const isMercadoPago = paymentProvider === 'mercadopago';
 
@@ -93,6 +96,7 @@ export default function PricingPlansGrid({
   const F = lim.free;
   const S = lim.starter;
   const P = lim.pro;
+  const X = lim.premium;
 
   const starterMoreProducts = S.productLimit > F.productLimit;
   const proMoreRestaurants = P.restaurantLimit > S.restaurantLimit;
@@ -100,6 +104,7 @@ export default function PricingPlansGrid({
   const proMoreProducts = P.productLimit === -1 || P.productLimit > S.productLimit;
 
   const handleCta = (planSlug?: PlanSlug) => {
+    const isPaidPlan = planSlug === 'starter' || planSlug === 'pro' || planSlug === 'premium';
     if (isSubscription && planSlug && planSlug !== 'free') {
       router.push(`/admin/profile/subscription/checkout?plan=${planSlug}&billing=${billingCycle}`);
       return;
@@ -112,6 +117,21 @@ export default function PricingPlansGrid({
     if (variant === 'profile') {
       router.push('/');
     } else {
+      // Landing/precio sin sesión: preservar plan elegido para completar registro + verificación.
+      if (isPaidPlan) {
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('accessToken');
+          const user = localStorage.getItem('user');
+          if (token && user) {
+            router.push(`/admin/profile/subscription/checkout?plan=${planSlug}&billing=${billingCycle}`);
+            return;
+          }
+          localStorage.setItem('pendingPlan', String(planSlug));
+          localStorage.setItem('pendingBillingCycle', billingCycle);
+        }
+        router.push(`/login?action=register&pendingPlan=${planSlug}&pendingBillingCycle=${billingCycle}`);
+        return;
+      }
       router.push('/login?action=register');
     }
   };
@@ -141,7 +161,7 @@ export default function PricingPlansGrid({
       </p>
     );
 
-    if (isSubscription) {
+    if (showBillingToggle) {
       const main = billingCycle === 'yearly' ? yearly : monthly;
       const period = billingCycle === 'yearly' ? '/año' : '/mes';
       return (
@@ -169,42 +189,52 @@ export default function PricingPlansGrid({
   };
 
   const freeCurrency = planFree?.currency ?? pricingData?.currency ?? 'USD';
+  const BillingToggle = (
+    <div
+      className="d-flex flex-wrap justify-content-start align-items-center gap-2"
+      style={{ gridColumn: '1 / -1', marginTop: isLanding ? '12px' : '0', marginBottom: '18px' }}
+    >
+      <span className="small text-muted me-1">Facturación:</span>
+      <div className="btn-group btn-group-sm" role="group" aria-label="Ciclo de facturación">
+        <button
+          type="button"
+          className={`btn ${billingCycle === 'monthly' ? 'btn-primary' : 'btn-outline-primary'}`}
+          onClick={() => setBillingCycle('monthly')}
+          disabled={loadingPlan !== null}
+        >
+          Mensual
+        </button>
+        <button
+          type="button"
+          className={`btn ${billingCycle === 'yearly' ? 'btn-primary' : 'btn-outline-primary'}`}
+          onClick={() => setBillingCycle('yearly')}
+          disabled={loadingPlan !== null}
+        >
+          Anual
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="landing-pricing-grid">
-      {isSubscription && (
-        <div className="d-flex flex-wrap align-items-center gap-2 mb-3" style={{ gridColumn: '1 / -1' }}>
-          <span className="small text-muted me-1">Facturación:</span>
-          <div className="btn-group btn-group-sm" role="group" aria-label="Ciclo de facturación">
-            <button
-              type="button"
-              className={`btn ${billingCycle === 'monthly' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setBillingCycle('monthly')}
-              disabled={loadingPlan !== null}
-            >
-              Mensual
-            </button>
-            <button
-              type="button"
-              className={`btn ${billingCycle === 'yearly' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setBillingCycle('yearly')}
-              disabled={loadingPlan !== null}
-            >
-              Anual
-            </button>
-          </div>
-          <span className="small text-muted">El anual se muestra en oferta (precio cargado en catálogo).</span>
-        </div>
-      )}
+      {showBillingToggle && !isLanding && BillingToggle}
 
       {/* Plan Free */}
-      <div className="landing-pricing-card">
+      <div className={`landing-pricing-card ${isLanding ? 'landing-pricing-card-free-horizontal' : ''}`}>
         <div className="landing-pricing-header">
           <h3 className="landing-pricing-name">Free</h3>
           <div className="landing-pricing-price">
             <span className="landing-pricing-amount">{formatCurrency(0, freeCurrency)}</span>
             <span className="landing-pricing-period">/mes</span>
           </div>
+          {isLanding && (
+            <p className="landing-pricing-free-note mb-0">
+              Empeza gratis,
+              <br />
+              mejora cuando quieras.
+            </p>
+          )}
           <div className="landing-pricing-annual-offer landing-pricing-annual-offer-placeholder" aria-hidden="true">
             <span className="landing-pricing-offer-strike">000</span>
             <span className="landing-pricing-discount-offer-badge">00% descuento</span>
@@ -226,18 +256,20 @@ export default function PricingPlansGrid({
           </li>
           <li className="landing-pricing-feature landing-pricing-muted"><span>✗</span><span>Sin fotos de productos</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Alérgenos</span></li>
-          {renderDestacarProductosFeatureRow(F.productHighlightAllowed)}
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Desactivar productos</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Reordenar productos</span></li>
+          {renderDestacarProductosFeatureRow(F.productHighlightAllowed)}
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas básicas</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>1 idioma</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR descargable</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Soporte</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR descargable</span></li>
         </ul>
         <button type="button" onClick={() => handleCta('free')} className="landing-btn-secondary landing-btn-full" disabled={loadingPlan !== null}>
           {isSubscription && loadingPlan === 'free' ? '…' : 'Empezar con Free'}
         </button>
       </div>
+
+      {showBillingToggle && isLanding && BillingToggle}
 
       {/* Plan Starter */}
       <div className="landing-pricing-card">
@@ -262,16 +294,16 @@ export default function PricingPlansGrid({
           </li>
           <li className="landing-pricing-feature landing-pricing-muted"><span>✗</span><span>Sin fotos de productos</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Alérgenos</span></li>
-          {renderDestacarProductosFeatureRow(S.productHighlightAllowed)}
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Desactivar productos</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Reordenar productos</span></li>
+          {renderDestacarProductosFeatureRow(S.productHighlightAllowed)}
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas básicas</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>1 idioma</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR descargable</span></li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
             <span>Soporte email</span>
           </li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR descargable</span></li>
         </ul>
         <button type="button" onClick={() => handleCta('starter')} className="landing-btn-secondary landing-btn-full" disabled={loadingPlan !== null}>
           {isSubscription && loadingPlan === 'starter' ? '…' : isSubscription && billingCycle === 'yearly' ? 'Elegir Starter (anual)' : 'Elegir Starter'}
@@ -309,9 +341,9 @@ export default function PricingPlansGrid({
             <span>Fotos de productos</span>
           </li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Alérgenos</span></li>
-          {renderDestacarProductosFeatureRow(P.productHighlightAllowed)}
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Desactivar productos</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Reordenar productos</span></li>
+          {renderDestacarProductosFeatureRow(P.productHighlightAllowed)}
           <li
             className={`landing-pricing-feature${P.gourmetTemplate ? ' landing-pricing-feature-highlight' : ''}`}
           >
@@ -324,14 +356,60 @@ export default function PricingPlansGrid({
             <span className="landing-pricing-check">✓</span>
             <span>3 idiomas</span>
           </li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR descargable</span></li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
             <span>Soporte prioritario</span>
           </li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR descargable</span></li>
         </ul>
         <button type="button" onClick={() => handleCta('pro')} className="landing-btn-primary landing-btn-full" disabled={loadingPlan !== null}>
           {isSubscription && loadingPlan === 'pro' ? '…' : isSubscription && billingCycle === 'yearly' ? 'Elegir Pro (anual)' : 'Elegir Pro'}
+        </button>
+      </div>
+
+      {/* Plan Premium */}
+      <div className="landing-pricing-card">
+        <div className="landing-pricing-header">
+          <h3 className="landing-pricing-name">Premium</h3>
+          {renderPaidPriceBlock(planPremium, 'USD 15.99', 'USD', 15.99)}
+        </div>
+        <ul className="landing-pricing-features">
+          <li className="landing-pricing-feature landing-pricing-feature-highlight">
+            <span className="landing-pricing-check">✓</span>
+            <span>{formatRestaurantsLine(X.restaurantLimit)}</span>
+          </li>
+          <li className="landing-pricing-feature landing-pricing-feature-highlight">
+            <span className="landing-pricing-check">✓</span>
+            <span>{formatMenusLine(X.menuLimit)}</span>
+          </li>
+          <li className="landing-pricing-feature landing-pricing-feature-highlight">
+            <span className="landing-pricing-check">✓</span>
+            <span>{formatProductsLine(X.productLimit)}</span>
+          </li>
+          <li className="landing-pricing-feature landing-pricing-feature-highlight">
+            <span className="landing-pricing-check">✓</span>
+            <span>Fotos de productos</span>
+          </li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Alérgenos</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Desactivar productos</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Reordenar productos</span></li>
+          {renderDestacarProductosFeatureRow(X.productHighlightAllowed)}
+          <li className="landing-pricing-feature landing-pricing-feature-highlight">
+            <span className="landing-pricing-check">✓</span>
+            <span>Plantillas Premium</span>
+          </li>
+          <li className="landing-pricing-feature landing-pricing-feature-highlight">
+            <span className="landing-pricing-check">✓</span>
+            <span>Idiomas ilimitados</span>
+          </li>
+          <li className="landing-pricing-feature landing-pricing-feature-highlight">
+            <span className="landing-pricing-check">✓</span>
+            <span>Soporte dedicado</span>
+          </li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR descargable</span></li>
+        </ul>
+        <button type="button" onClick={() => handleCta('premium')} className="landing-btn-secondary landing-btn-full" disabled={loadingPlan !== null}>
+          {isSubscription && loadingPlan === 'premium' ? '…' : isSubscription && billingCycle === 'yearly' ? 'Elegir Premium (anual)' : 'Elegir Premium'}
         </button>
       </div>
 

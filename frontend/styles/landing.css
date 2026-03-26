@@ -260,7 +260,7 @@
   background: var(--landing-bg-light);
 }
 
-/* Planes: 1 columna en móvil/tablet; 3 columnas en desktop (sin inline styles en el componente) */
+/* Planes: 1 columna en móvil, 2 en tablet, 3 en desktop */
 .landing-pricing-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -271,11 +271,101 @@
   align-items: stretch;
 }
 
-@media (min-width: 992px) {
+@media (min-width: 768px) {
+  .landing-pricing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+  }
+}
+
+@media (min-width: 1200px) {
   .landing-pricing-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px;
   }
+
+  /* Landing: Free horizontal arriba y luego 3 planes en columnas */
+  .landing-pricing-card.landing-pricing-card-free-horizontal {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr 1fr;
+    gap: 14px 20px;
+    align-items: start;
+    padding: 20px 22px;
+  }
+
+  .landing-pricing-card.landing-pricing-card-free-horizontal .landing-pricing-header {
+    grid-column: 1;
+    grid-row: 1;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
+    border-right: 1px solid var(--landing-border);
+    text-align: center;
+    min-height: 0;
+    padding-right: 18px;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .landing-pricing-card.landing-pricing-card-free-horizontal .landing-pricing-name {
+    margin-bottom: 8px;
+    font-size: 1.4rem;
+  }
+
+  .landing-pricing-card.landing-pricing-card-free-horizontal .landing-pricing-price {
+    margin-bottom: 4px;
+  }
+
+  .landing-pricing-card.landing-pricing-card-free-horizontal .landing-pricing-amount {
+    font-size: 1.8rem;
+  }
+
+  .landing-pricing-card.landing-pricing-card-free-horizontal .landing-pricing-annual-offer-placeholder {
+    display: none;
+  }
+
+  .landing-pricing-card.landing-pricing-card-free-horizontal .landing-pricing-features {
+    grid-column: 2 / 4;
+    grid-row: 1;
+    margin: 0 0 0 8px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
+    row-gap: 4px;
+    align-self: start;
+  }
+
+  .landing-pricing-card.landing-pricing-card-free-horizontal .landing-pricing-feature {
+    margin-bottom: 0;
+    padding: 2px 0;
+    gap: 8px;
+    font-size: 0.93rem;
+  }
+
+  .landing-pricing-card.landing-pricing-card-free-horizontal .landing-pricing-feature:first-child {
+    padding-top: 0;
+  }
+
+  .landing-pricing-card.landing-pricing-card-free-horizontal .landing-btn-full {
+    grid-column: 4;
+    grid-row: 1;
+    width: auto;
+    justify-self: end;
+    align-self: end;
+    margin-top: 0;
+    padding-inline: 18px;
+    white-space: nowrap;
+  }
+}
+
+.landing-pricing-free-note {
+  color: var(--landing-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 .landing-pricing-card {

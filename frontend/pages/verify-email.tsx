@@ -33,9 +33,16 @@ export default function VerifyEmail() {
       setStatus('success');
       setMessage(response.data.message || 'Email verificado exitosamente. Tu cuenta ha sido activada.');
 
-      // Redirigir al admin después de 2 segundos
+      const pendingPlan = response.data?.pendingPlan as string | null | undefined;
+      const pendingBillingCycle = (response.data?.pendingBillingCycle as string | null | undefined) ?? 'monthly';
+      const target =
+        pendingPlan && (pendingBillingCycle === 'monthly' || pendingBillingCycle === 'yearly')
+          ? `/admin/profile/subscription/checkout?plan=${pendingPlan}&billing=${pendingBillingCycle}`
+          : '/admin';
+
+      // Redirigir al destino correspondiente después de 2 segundos
       setTimeout(() => {
-        router.push('/admin');
+        router.push(target);
       }, 2000);
     } catch (err: any) {
       setStatus('error');
@@ -96,10 +103,10 @@ export default function VerifyEmail() {
                       {message}
                     </p>
                     <p className="landing-auth-subtitle" style={{ marginTop: '16px', fontSize: '0.9rem' }}>
-                      Serás redirigido al panel de administración en unos segundos...
+                      Serás redirigido automáticamente en unos segundos...
                     </p>
                     <Link href="/admin" className="landing-btn-primary landing-btn-full" style={{ marginTop: '24px' }}>
-                      Ir al Panel de Administración
+                      Continuar
                     </Link>
                   </div>
                 )}

@@ -21,6 +21,8 @@ export default function Login() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [showRegisterSuccessModal, setShowRegisterSuccessModal] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<'starter' | 'pro' | 'premium' | null>(null);
+  const [pendingBillingCycle, setPendingBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   useEffect(() => {
     // Si ya hay sesión, redirigir al admin (respeta sesión al abrir nueva pestaña)
@@ -37,6 +39,26 @@ export default function Login() {
     if (router.query.action === 'register') {
       setIsRegister(true);
     }
+    const qpPlan = typeof router.query.pendingPlan === 'string' ? router.query.pendingPlan.toLowerCase() : '';
+    const qpBilling =
+      typeof router.query.pendingBillingCycle === 'string'
+        ? router.query.pendingBillingCycle.toLowerCase()
+        : '';
+    const lsPlan = typeof window !== 'undefined' ? (localStorage.getItem('pendingPlan') || '').toLowerCase() : '';
+    const lsBilling =
+      typeof window !== 'undefined' ? (localStorage.getItem('pendingBillingCycle') || '').toLowerCase() : '';
+    const resolvedPlan = ['starter', 'pro', 'premium'].includes(qpPlan)
+      ? qpPlan
+      : ['starter', 'pro', 'premium'].includes(lsPlan)
+        ? lsPlan
+        : '';
+    const resolvedBilling = qpBilling === 'yearly' || qpBilling === 'monthly'
+      ? qpBilling
+      : lsBilling === 'yearly' || lsBilling === 'monthly'
+        ? lsBilling
+        : 'monthly';
+    if (resolvedPlan) setPendingPlan(resolvedPlan as 'starter' | 'pro' | 'premium');
+    setPendingBillingCycle(resolvedBilling as 'monthly' | 'yearly');
   }, [router.query]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,13 +86,17 @@ export default function Login() {
           email,
           password,
           firstName,
+          pendingPlan: pendingPlan ?? undefined,
+          pendingBillingCycle: pendingPlan ? pendingBillingCycle : undefined,
         });
 
         // Si el registro requiere verificación de email
         if (response.data.requiresEmailVerification) {
-          setError('');
-          setMessage('Registro exitoso. Por favor, revisa tu email y haz clic en el enlace de verificación para activar tu cuenta.');
-          setShowRegisterSuccessModal(true);
+          const target =
+            pendingPlan != null
+              ? `/verify-email-required?pendingPlan=${pendingPlan}&pendingBillingCycle=${pendingBillingCycle}`
+              : '/verify-email-required';
+          router.push(target);
           return;
         }
 
@@ -79,7 +105,13 @@ export default function Login() {
           localStorage.setItem('accessToken', response.data.accessToken);
           localStorage.setItem('refreshToken', response.data.refreshToken);
           localStorage.setItem('user', JSON.stringify(response.data.user));
-          router.push('/admin');
+          if (pendingPlan) {
+            localStorage.removeItem('pendingPlan');
+            localStorage.removeItem('pendingBillingCycle');
+            router.push(`/admin/profile/subscription/checkout?plan=${pendingPlan}&billing=${pendingBillingCycle}`);
+          } else {
+            router.push('/admin');
+          }
         }
       } else {
         // Login
@@ -93,8 +125,15 @@ export default function Login() {
         localStorage.setItem('refreshToken', response.data.refreshToken);
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
-        // Redirigir al panel de administración
-        router.push('/admin');
+        // Si venía con plan pendiente y ya está autenticado/verificado, ir directo a checkout.
+        const plan = pendingPlan;
+        if (plan) {
+          localStorage.removeItem('pendingPlan');
+          localStorage.removeItem('pendingBillingCycle');
+          router.push(`/admin/profile/subscription/checkout?plan=${plan}&billing=${pendingBillingCycle}`);
+        } else {
+          router.push('/admin');
+        }
       }
     } catch (err: any) {
       setError(

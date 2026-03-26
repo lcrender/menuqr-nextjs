@@ -8,6 +8,8 @@ type UserWithVerification = User & {
   emailVerified: boolean;
   emailVerificationToken: string | null;
   emailVerifiedAt: Date | null;
+  pendingPlan?: string | null;
+  pendingBillingCycle?: 'monthly' | 'yearly' | null;
   revokedSessionsBefore?: Date | null;
 };
 
@@ -39,6 +41,8 @@ export class UsersService {
       emailVerified: row.email_verified || false,
       emailVerificationToken: row.email_verification_token || null,
       emailVerifiedAt: row.email_verified_at || null,
+      pendingPlan: row.pending_plan ?? null,
+      pendingBillingCycle: row.pending_billing_cycle ?? null,
       lastLoginAt: row.last_login_at,
       revokedSessionsBefore: row.revoked_sessions_before ?? null,
       registrationCountry: row.registration_country ?? null,
@@ -68,13 +72,15 @@ export class UsersService {
     isActive: boolean;
     emailVerified?: boolean;
     emailVerificationToken?: string | null;
+    pendingPlan?: string | null;
+    pendingBillingCycle?: 'monthly' | 'yearly' | null;
     registrationCountry?: string | null;
     declaredCountry?: string | null;
   }): Promise<User> {
     const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
     await this.postgres.executeRaw(
-      `INSERT INTO users (id, email, password_hash, first_name, last_name, role, tenant_id, is_active, email_verified, email_verification_token, registration_country, declared_country, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6::"UserRole", $7, $8, $9, $10, $11, $12, NOW(), NOW())`,
+      `INSERT INTO users (id, email, password_hash, first_name, last_name, role, tenant_id, is_active, email_verified, email_verification_token, pending_plan, pending_billing_cycle, registration_country, declared_country, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6::"UserRole", $7, $8, $9, $10, $11, $12::"PlanType", $13, $14, NOW(), NOW())`,
       [
         id,
         data.email,
@@ -86,6 +92,8 @@ export class UsersService {
         data.isActive,
         data.emailVerified || false,
         data.emailVerificationToken || null,
+        data.pendingPlan ?? null,
+        data.pendingBillingCycle ?? null,
         data.registrationCountry ?? null,
         data.declaredCountry ?? null,
       ]
@@ -134,6 +142,26 @@ export class UsersService {
     );
 
     return this.findById(user.id) as Promise<UserWithVerification>;
+  }
+
+  async getPendingPlan(userId: string): Promise<{ plan: string; billingCycle: 'monthly' | 'yearly' } | null> {
+    const rows = await this.postgres.queryRaw<any>(
+      'SELECT pending_plan, pending_billing_cycle FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1',
+      [userId],
+    );
+    const plan = rows[0]?.pending_plan ? String(rows[0].pending_plan).toLowerCase() : '';
+    const billing = rows[0]?.pending_billing_cycle ? String(rows[0].pending_billing_cycle).toLowerCase() : '';
+    if (!plan || !billing) return null;
+    if (!['starter', 'pro', 'premium'].includes(plan)) return null;
+    if (billing !== 'monthly' && billing !== 'yearly') return null;
+    return { plan, billingCycle: billing as 'monthly' | 'yearly' };
+  }
+
+  async clearPendingPlan(userId: string): Promise<void> {
+    await this.postgres.executeRaw(
+      'UPDATE users SET pending_plan = NULL, pending_billing_cycle = NULL, updated_at = NOW() WHERE id = $1',
+      [userId],
+    );
   }
 
   async updateLastLogin(id: string): Promise<void> {

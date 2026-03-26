@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, MaxLength, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
@@ -51,5 +51,23 @@ export class RegisterDto {
   @MinLength(2, { message: 'El nombre del tenant debe tener al menos 2 caracteres' })
   @MaxLength(100, { message: 'El nombre del tenant no puede exceder 100 caracteres' })
   tenantName?: string;
+
+  @ApiProperty({
+    description: 'Plan pendiente elegido antes del registro (flujo checkout tras verificación)',
+    example: 'pro',
+    required: false,
+  })
+  @IsOptional()
+  @IsIn(['starter', 'pro', 'premium'])
+  pendingPlan?: 'starter' | 'pro' | 'premium';
+
+  @ApiProperty({
+    description: 'Ciclo de facturación pendiente para el plan elegido',
+    example: 'monthly',
+    required: false,
+  })
+  @IsOptional()
+  @IsIn(['monthly', 'yearly'])
+  pendingBillingCycle?: 'monthly' | 'yearly';
 }
 

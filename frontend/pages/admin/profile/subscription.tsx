@@ -78,6 +78,10 @@ export default function SubscriptionManagement() {
   useEffect(() => {
     const { success, cancel } = router.query;
     if (success === '1') {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('pendingPlan');
+        localStorage.removeItem('pendingBillingCycle');
+      }
       setAlert({ title: 'Proceso completado', message: 'Cuando el pago se confirme, tu plan se actualizará. Puede tardar unos segundos.', variant: 'success' });
       router.replace('/admin/profile/subscription', undefined, { shallow: true });
       loadSubscriptions();

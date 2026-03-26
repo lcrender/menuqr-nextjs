@@ -176,6 +176,14 @@ export class SubscriptionService {
     );
     this.logger.log(`Synced tenant ${tenantId} plan to ${newPlan} for user ${userId}`);
 
+    // Si se activó un plan de pago, limpiar pendingPlan del flujo registro/verificación.
+    if (active && newPlan !== 'free') {
+      await this.postgres.executeRaw(
+        'UPDATE users SET pending_plan = NULL, pending_billing_cycle = NULL, updated_at = NOW() WHERE id = $1',
+        [userId],
+      );
+    }
+
     if (newPlan === 'free' || newPlan === 'starter') {
       await this.planLimits.resetTemplatesIncompatibleWithPlan(tenantId, newPlan);
     }

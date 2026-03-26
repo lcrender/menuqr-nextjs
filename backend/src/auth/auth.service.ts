@@ -128,7 +128,7 @@ export class AuthService {
    */
   async register(registerDto: RegisterDto, registrationCountry?: string) {
     try {
-      const { email, password, firstName, lastName, tenantName } = registerDto;
+      const { email, password, firstName, lastName, tenantName, pendingPlan, pendingBillingCycle } = registerDto;
 
       // Verificar si el email ya existe
       const existingUser = await this.usersService.findByEmail(email);
@@ -173,6 +173,8 @@ export class AuthService {
         isActive: true,
         emailVerified: isDev,
         emailVerificationToken,
+        pendingPlan: pendingPlan ?? null,
+        pendingBillingCycle: pendingBillingCycle ?? null,
         registrationCountry: registrationCountry ?? null,
       });
 
@@ -210,6 +212,8 @@ export class AuthService {
             lastName: user.lastName,
             tenantId: user.tenantId,
             emailVerified: false,
+            pendingPlan: pendingPlan ?? null,
+            pendingBillingCycle: pendingBillingCycle ?? null,
           },
           requiresEmailVerification: true,
         };
@@ -231,6 +235,8 @@ export class AuthService {
           lastName: user.lastName,
           tenantId: user.tenantId,
           tenant: tenantInfo ? { id: tenantInfo.id, name: tenantInfo.name, plan: tenantInfo.plan } : null,
+          pendingPlan: pendingPlan ?? null,
+          pendingBillingCycle: pendingBillingCycle ?? null,
         },
         ...tokens,
       };
@@ -253,6 +259,7 @@ export class AuthService {
   async verifyEmail(token: string) {
     try {
       const user = await this.usersService.verifyEmail(token);
+      const pending = await this.usersService.getPendingPlan(user.id);
 
       // Generar tokens después de verificar el email
       const tokens = await this.generateTokens(user);
@@ -270,6 +277,8 @@ export class AuthService {
           tenantId: user.tenantId,
           emailVerified: true,
         },
+        pendingPlan: pending?.plan ?? null,
+        pendingBillingCycle: pending?.billingCycle ?? null,
         ...tokens,
       };
     } catch (error) {
