@@ -188,7 +188,7 @@ export default function Metrics() {
                       <td>
                         <span className={`badge ${
                           plan.plan === 'premium' ? 'bg-success' :
-                          plan.plan === 'basic' ? 'bg-primary' :
+                          plan.plan === 'starter' || plan.plan === 'basic' ? 'bg-primary' :
                           'bg-secondary'
                         }`}>
                           {plan.plan}

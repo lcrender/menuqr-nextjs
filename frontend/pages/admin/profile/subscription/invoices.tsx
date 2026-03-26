@@ -1,0 +1,22 @@
+import Link from 'next/link';
+import AdminLayout from '../../../../components/AdminLayout';
+
+export default function SubscriptionInvoicesPage() {
+  return (
+    <AdminLayout>
+      <div className="container-fluid py-4">
+        <div className="d-flex align-items-center gap-2 mb-4 flex-wrap">
+          <Link href="/admin/profile/subscription" className="btn btn-sm btn-outline-secondary">
+            ← Volver a gestión
+          </Link>
+        </div>
+
+        <h1 className="h3 mb-3">Facturas</h1>
+        <div className="alert alert-info mb-0">
+          Próximamente: listado de facturas e historial descargable.
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}
+

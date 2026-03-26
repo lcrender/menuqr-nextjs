@@ -90,7 +90,8 @@ export default function Menus() {
     const plan = tenantPlan || 'free';
     const limits: Record<string, number> = {
       free: 3,
-      basic: 6,
+      starter: 6,
+      basic: 6, // legacy (antes de renombrar a Starter)
       pro: 30,
       premium: -1, // Ilimitado
     };

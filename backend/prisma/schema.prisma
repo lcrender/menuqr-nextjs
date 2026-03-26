@@ -17,7 +17,7 @@ datasource db {
 model Tenant {
   id        String   @id @default(cuid())
   name      String
-  plan      String   @default("free") // free, basic, premium
+  plan      String   @default("free") // free, starter, premium
   settings  Json?    // Configuraciones del tenant
   status    String   @default("active") // active, blocked, suspended
   createdAt DateTime @default(now()) @map("created_at")
@@ -64,7 +64,8 @@ model User {
   // Relaciones
   tenant        Tenant?        @relation(fields: [tenantId], references: [id])
   auditLogs     AuditLog[]
-  subscriptions Subscription[]
+  subscriptions              Subscription[]
+  subscriptionCheckoutSessions SubscriptionCheckoutSession[]
 
   // Índices y constraints
   @@unique([tenantId, email])
@@ -80,7 +81,7 @@ model Subscription {
   currency              String?
   status                SubscriptionStatus @default(incomplete)
   planType              PlanType           @map("plan_type")
-  subscriptionPlan      String?            @map("subscription_plan") // basic, pro, premium (para sync con tenant.plan)
+  subscriptionPlan      String?            @map("subscription_plan") // starter, pro, premium (para sync con tenant.plan)
   currentPeriodStart    DateTime?          @map("current_period_start")
   currentPeriodEnd      DateTime?          @map("current_period_end")
   cancelAtPeriodEnd     Boolean            @default(false) @map("cancel_at_period_end")
@@ -88,11 +89,33 @@ model Subscription {
   updatedAt             DateTime           @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkoutSessions SubscriptionCheckoutSession[]
 
   @@unique([paymentProvider, externalSubscriptionId])
   @@index([userId])
   @@index([status])
   @@map("subscriptions")
+}
+
+/// Registro previo al redirect a MP/PayPal (precio acordado, términos aceptados, estado pending → redirected).
+model SubscriptionCheckoutSession {
+  id                 String   @id @default(cuid())
+  userId             String   @map("user_id")
+  planSlug           String   @map("plan_slug")
+  billingCycle       PlanType @map("billing_cycle")
+  priceAmount        Decimal  @map("price_amount") @db.Decimal(12, 2)
+  currency           String
+  paymentProvider    PaymentProvider @map("payment_provider")
+  status             String   @default("pending")
+  termsAcceptedAt    DateTime @map("terms_accepted_at")
+  subscriptionId     String?  @map("subscription_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("subscription_checkout_sessions")
 }
 
 model WebhookEvent {
@@ -122,6 +145,7 @@ model TenantPlanLimitOverride {
   productLimit         Int      @map("product_limit")
   gourmetTemplate      Boolean  @map("gourmet_template")
   productPhotosAllowed Boolean  @map("product_photos_allowed")
+  productHighlightAllowed Boolean @default(false) @map("product_highlight_allowed")
   proOnlyTemplates     Json     @default("[]") @map("pro_only_templates")
   updatedAt            DateTime @updatedAt @map("updated_at")
 

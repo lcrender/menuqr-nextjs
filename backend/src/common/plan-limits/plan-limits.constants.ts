@@ -2,7 +2,7 @@
  * Límites por plan del tenant (sincronizar con restaurants, menus y menu-items services).
  * Valores -1 = ilimitado.
  */
-export const TENANT_PLAN_KEYS = ['free', 'basic', 'pro', 'pro_team', 'premium'] as const;
+export const TENANT_PLAN_KEYS = ['free', 'starter', 'pro', 'pro_team', 'premium'] as const;
 export type TenantPlanKey = (typeof TENANT_PLAN_KEYS)[number];
 
 export interface TenantPlanLimitsRow {
@@ -15,6 +15,8 @@ export interface TenantPlanLimitsRow {
   gourmetTemplate: boolean;
   /** Fotos en productos (MinIO) */
   productPhotosAllowed: boolean;
+  /** Habilita la opción "Destacar producto" en el admin (y luego se usa en plantillas). */
+  productHighlightAllowed: boolean;
   /** Plantillas Pro de pago en UI (ej. Gourmet en admin) */
   proOnlyTemplatesInAdmin: string[];
   note?: string;
@@ -42,16 +44,18 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       productLimit: 30,
       gourmetTemplate: false,
       productPhotosAllowed: false,
+      productHighlightAllowed: false,
       proOnlyTemplatesInAdmin: [],
     },
     {
-      key: 'basic',
-      label: 'Basic',
+      key: 'starter',
+      label: 'Starter',
       restaurantLimit: 1,
       menuLimit: 6,
       productLimit: 60,
       gourmetTemplate: false,
       productPhotosAllowed: false,
+      productHighlightAllowed: false,
       proOnlyTemplatesInAdmin: [],
     },
     {
@@ -62,6 +66,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       productLimit: 300,
       gourmetTemplate: true,
       productPhotosAllowed: true,
+      productHighlightAllowed: true,
       proOnlyTemplatesInAdmin: ['gourmet'],
     },
     {
@@ -72,6 +77,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       productLimit: 300,
       gourmetTemplate: true,
       productPhotosAllowed: true,
+      productHighlightAllowed: true,
       proOnlyTemplatesInAdmin: ['gourmet'],
       note: 'Asignación manual por super admin; no se sobrescribe por webhooks de suscripción.',
     },
@@ -83,6 +89,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       productLimit: 1200,
       gourmetTemplate: true,
       productPhotosAllowed: true,
+      productHighlightAllowed: true,
       proOnlyTemplatesInAdmin: ['gourmet'],
     },
   ];

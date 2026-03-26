@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
-import { API_URL } from '../../lib/config';
+import { getApiBaseUrl } from '../../lib/config';
 import ClassicTemplate from '../../templates/classic/ClassicTemplate';
 import MinimalistTemplate from '../../templates/minimalist/MinimalistTemplate';
 import FoodieTemplate from '../../templates/foodie/FoodieTemplate';
@@ -144,7 +144,7 @@ export default function RestaurantPage() {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${API_URL}/public/restaurants/${slug}`,
+          `${getApiBaseUrl()}/public/restaurants/${slug}`,
         );
         const data = response.data;
         
@@ -221,7 +221,7 @@ export default function RestaurantPage() {
     setLoadingMenu(true);
     try {
       const response = await axios.get(
-        `${API_URL}/public/restaurants/${slug}/menus/${menuSlug}`,
+        `${getApiBaseUrl()}/public/restaurants/${slug}/menus/${menuSlug}`,
       );
       setSelectedMenu(response.data);
     } catch (err: any) {

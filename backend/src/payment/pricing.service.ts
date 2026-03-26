@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
-import { yearlyPriceFromMonthly } from './pricing.constants';
+import { PREMIUM_CHECKOUT_ENABLED, yearlyPriceFromMonthly } from './pricing.constants';
 
-export type PlanSlug = 'basic' | 'pro';
+export type PlanSlug = 'free' | 'starter' | 'pro' | 'premium';
 
 export interface PlanPriceRow {
   planId: string;
@@ -12,23 +12,61 @@ export interface PlanPriceRow {
   currency: string;
   /** Precio mensual (desde BD) */
   price: number;
-  /** Precio anual = price × factor (ver pricing.constants) */
+  /** Precio anual: columna price_yearly si existe; si no, mensual × factor */
   priceYearly: number;
   paymentProvider: string;
 }
 
 const PLAN_ID_BY_SLUG: Record<PlanSlug, string> = {
-  basic: 'plan_basic',
+  free: 'plan_free',
+  starter: 'plan_starter',
   pro: 'plan_pro',
+  premium: 'plan_premium',
 };
 
 /**
  * Servicio de precios por región.
- * Busca precio específico por país y aplica fallback a GLOBAL (USD/PayPal) si no existe.
+ * Busca plan_price con country = país dado y fallback a GLOBAL (USD/PayPal).
  */
 @Injectable()
 export class PricingService {
+  private readonly logger = new Logger(PricingService.name);
+  /** null = aún no probado; false = columna ausente (usar fallback mensual×N). */
+  private priceYearlyColumnAvailable: boolean | null = null;
+
   constructor(private readonly postgres: PostgresService) {}
+
+  private async queryPlanPriceRow(planId: string, country: string): Promise<any[]> {
+    const sqlWithYear = `SELECT p.id as "planId", p.name as "planName", pp.country, pp.currency, pp.price::float as price,
+                pp.price_yearly::float as "priceYearlyRaw", pp.payment_provider as "paymentProvider"
+         FROM plan_prices pp
+         JOIN plans p ON p.id = pp.plan_id
+         WHERE pp.plan_id = $1 AND pp.country = $2
+         LIMIT 1`;
+    const sqlNoYear = `SELECT p.id as "planId", p.name as "planName", pp.country, pp.currency, pp.price::float as price,
+                NULL::float as "priceYearlyRaw", pp.payment_provider as "paymentProvider"
+         FROM plan_prices pp
+         JOIN plans p ON p.id = pp.plan_id
+         WHERE pp.plan_id = $1 AND pp.country = $2
+         LIMIT 1`;
+
+    if (this.priceYearlyColumnAvailable === false) {
+      return this.postgres.queryRaw(sqlNoYear, [planId, country]);
+    }
+    try {
+      const rows = await this.postgres.queryRaw(sqlWithYear, [planId, country]);
+      if (this.priceYearlyColumnAvailable === null) {
+        this.priceYearlyColumnAvailable = true;
+      }
+      return rows;
+    } catch (e) {
+      this.logger.warn(
+        `plan_prices.price_yearly no disponible; usando precio anual derivado. Ejecutá migraciones. ${e}`,
+      );
+      this.priceYearlyColumnAvailable = false;
+      return this.postgres.queryRaw(sqlNoYear, [planId, country]);
+    }
+  }
 
   /**
    * Obtiene el precio de un plan para un país.
@@ -40,20 +78,17 @@ export class PricingService {
     if (!planId) return null;
 
     const normalizedCountry = country ? country.toUpperCase().trim() : null;
-    // Orden: primero país específico, luego GLOBAL
     const countriesToTry = normalizedCountry && normalizedCountry !== 'GLOBAL' ? [normalizedCountry, 'GLOBAL'] : ['GLOBAL'];
 
     for (const c of countriesToTry) {
-      const rows = await this.postgres.queryRaw<any>(
-        `SELECT p.id as "planId", p.name as "planName", pp.country, pp.currency, pp.price::float as price, pp.payment_provider as "paymentProvider"
-         FROM plan_prices pp
-         JOIN plans p ON p.id = pp.plan_id
-         WHERE pp.plan_id = $1 AND pp.country = $2
-         LIMIT 1`,
-        [planId, c]
-      );
+      const rows = await this.queryPlanPriceRow(planId, c);
       if (rows[0]) {
         const monthly = rows[0].price as number;
+        const rawYearly = rows[0].priceYearlyRaw;
+        const priceYearly =
+          rawYearly != null && !Number.isNaN(Number(rawYearly))
+            ? Number(rawYearly)
+            : yearlyPriceFromMonthly(monthly, rows[0].currency);
         return {
           planId: rows[0].planId,
           planName: rows[0].planName,
@@ -61,7 +96,7 @@ export class PricingService {
           country: rows[0].country,
           currency: rows[0].currency,
           price: monthly,
-          priceYearly: yearlyPriceFromMonthly(monthly, rows[0].currency),
+          priceYearly,
           paymentProvider: rows[0].paymentProvider,
         };
       }
@@ -71,7 +106,7 @@ export class PricingService {
 
   /**
    * Devuelve todos los planes con su precio para el país dado (fallback a GLOBAL).
-   * Incluye currency y paymentProvider únicos para la respuesta (todos los planes en la misma región comparten moneda/proveedor).
+   * Orden: Free → Starter → Pro → Premium.
    */
   async getPricesForCountry(country: string | null): Promise<{
     country: string;
@@ -86,7 +121,9 @@ export class PricingService {
       paymentProvider: string;
     }>;
   }> {
-    const slugs: PlanSlug[] = ['basic', 'pro'];
+    const slugs: PlanSlug[] = PREMIUM_CHECKOUT_ENABLED
+      ? ['free', 'starter', 'pro', 'premium']
+      : ['free', 'starter', 'pro'];
     const plans: Array<{
       slug: PlanSlug;
       name: string;

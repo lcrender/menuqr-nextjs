@@ -317,6 +317,10 @@
   margin-bottom: 32px;
   padding-bottom: 32px;
   border-bottom: 1px solid var(--landing-border);
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .landing-pricing-name {
@@ -375,6 +379,57 @@
 .landing-pricing-feature.landing-pricing-muted {
   color: var(--landing-text-muted, #888);
   opacity: 0.9;
+}
+
+/** Ventaja frente al plan inferior (más cupo, mejor soporte, funciones Pro, etc.) */
+.landing-pricing-feature-highlight {
+  font-weight: 600;
+  color: var(--landing-primary-dark);
+}
+
+.landing-pricing-feature-highlight .landing-pricing-check {
+  color: var(--landing-primary-dark);
+}
+
+.landing-pricing-feature-highlight strong {
+  font-weight: 700;
+  color: inherit;
+}
+
+/* Oferta anual: precio mensual x12 tachado + %off + anual final */
+.landing-pricing-annual-offer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.landing-pricing-offer-strike {
+  text-decoration: line-through;
+  color: var(--landing-text-muted);
+  font-weight: 600;
+}
+
+.landing-pricing-discount-offer-badge {
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--landing-primary-dark);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.landing-pricing-offer-final {
+  font-weight: 800;
+  color: var(--landing-text);
+}
+
+.landing-pricing-annual-offer-placeholder {
+  visibility: hidden;
+  min-height: 52px;
 }
 
 /* CTA Section */

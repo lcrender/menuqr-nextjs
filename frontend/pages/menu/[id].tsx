@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
-import { API_URL } from '../../lib/config';
+import { getApiBaseUrl } from '../../lib/config';
 
 interface MenuSection {
   id: string;
@@ -59,7 +59,7 @@ export default function MenuPage() {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${API_URL}/public/menus/${id}`,
+          `${getApiBaseUrl()}/public/menus/${id}`,
         );
         setMenu(response.data);
       } catch (err: any) {

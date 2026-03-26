@@ -29,7 +29,8 @@ export class PayPalService implements IPaymentProviderService {
 
   private getPlanIdForSlug(planSlug: string, planType: PlanType): string | null {
     const suffix = planType === 'yearly' ? 'YEARLY' : 'MONTHLY';
-    const key = `PAYPAL_PLAN_ID_${planSlug.toUpperCase()}_${suffix}`;
+    const envSlug = planSlug === 'starter' ? 'BASIC' : planSlug.toUpperCase();
+    const key = `PAYPAL_PLAN_ID_${envSlug}_${suffix}`;
     const value = this.config.get(key);
     if (value) return value;
     return this.config.get('PAYPAL_PLAN_ID_MONTHLY') || this.config.get('PAYPAL_PLAN_ID_YEARLY') || null;
@@ -68,6 +69,9 @@ export class PayPalService implements IPaymentProviderService {
     cancelUrl: string;
     metadata?: Record<string, string>;
   }): Promise<CreateSubscriptionResult> {
+    if (params.planSlug === 'free') {
+      throw new BadRequestException('El plan Free no requiere suscripción de pago.');
+    }
     const planId = this.getPlanIdForSlug(params.planSlug, params.planType);
     if (!planId) {
       throw new BadRequestException('PayPal plan ID not configured for this plan');
@@ -312,7 +316,7 @@ export class PayPalService implements IPaymentProviderService {
     const defaultPlan = this.config.get('PAYPAL_PLAN_ID_MONTHLY');
     if (planId === premiumMonthly || planId === premiumYearly) return 'premium';
     if (planId === proMonthly || planId === proYearly) return 'pro';
-    if (planId === basicMonthly || planId === basicYearly || planId === defaultPlan) return 'basic';
-    return 'basic';
+    if (planId === basicMonthly || planId === basicYearly || planId === defaultPlan) return 'starter';
+    return 'starter';
   }
 }

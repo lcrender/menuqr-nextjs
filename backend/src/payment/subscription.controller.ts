@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { PaymentService } from './payment.service';
 import { SubscriptionService } from '../subscription/subscription.service';
+import { SubscriptionCheckoutDto } from './dto/subscription-checkout.dto';
 
 @ApiTags('subscriptions')
 @Controller('subscriptions')
@@ -42,7 +43,10 @@ export class SubscriptionController {
   }
 
   @Post('create')
-  @ApiOperation({ summary: 'Crear suscripción (devuelve URL de aprobación). No activa el plan hasta el webhook.' })
+  @ApiOperation({
+    summary:
+      'Crear suscripción directo (sin paso checkout). Preferí POST /subscriptions/checkout desde la UI.',
+  })
   async create(
     @Request() req: any,
     @Body() body: { planType: 'monthly' | 'yearly'; planSlug: string; returnUrl: string; cancelUrl: string },
@@ -55,6 +59,22 @@ export class SubscriptionController {
       cancelUrl: body.cancelUrl,
     });
     return result;
+  }
+
+  @Post('checkout')
+  @ApiOperation({
+    summary:
+      'Confirmar checkout (términos aceptados), registrar sesión y crear suscripción en el proveedor (URL de pago).',
+  })
+  async checkout(@Request() req: any, @Body() body: SubscriptionCheckoutDto) {
+    return this.paymentService.checkoutSubscription({
+      userId: req.user.id,
+      planSlug: body.planSlug,
+      planType: body.planType,
+      returnUrl: body.returnUrl,
+      cancelUrl: body.cancelUrl,
+      acceptedTerms: body.acceptedTerms,
+    });
   }
 
   @Post('cancel')

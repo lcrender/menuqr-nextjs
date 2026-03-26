@@ -74,6 +74,20 @@ async function bootstrap() {
           if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
             return callback(null, true);
           }
+          // Túneles HTTPS (ngrok, Cloudflare Tunnel, etc.) — no listar en CORS_ORIGIN cada URL
+          const dev = configService.get<string>('NODE_ENV', 'development') !== 'production';
+          if (dev) {
+            const h = u.hostname.toLowerCase();
+            if (
+              h.endsWith('.ngrok-free.app') ||
+              h.endsWith('.ngrok.io') ||
+              h.endsWith('.ngrok.app') ||
+              h.endsWith('.trycloudflare.com') ||
+              h.endsWith('.loca.lt')
+            ) {
+              return callback(null, true);
+            }
+          }
         } catch {
           /* ignore */
         }

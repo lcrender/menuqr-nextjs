@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
-import { API_URL } from '../../../lib/config';
+import { getApiBaseUrl } from '../../../lib/config';
 import ClassicTemplate from '../../../templates/classic/ClassicTemplate';
 import MinimalistTemplate from '../../../templates/minimalist/MinimalistTemplate';
 import FoodieTemplate from '../../../templates/foodie/FoodieTemplate';
@@ -129,13 +129,13 @@ export default function MenuPage() {
         setLoading(true);
         // Obtener el menú
         const menuResponse = await axios.get(
-          `${API_URL}/public/restaurants/${restaurantSlug}/menus/${menuSlug}`,
+          `${getApiBaseUrl()}/public/restaurants/${restaurantSlug}/menus/${menuSlug}`,
         );
         setMenu(menuResponse.data);
         
         // Obtener el restaurante para tener todos los datos necesarios
         const restaurantResponse = await axios.get(
-          `${API_URL}/public/restaurants/${restaurantSlug}`,
+          `${getApiBaseUrl()}/public/restaurants/${restaurantSlug}`,
         );
         const restaurantData = restaurantResponse.data;
         
@@ -154,7 +154,7 @@ export default function MenuPage() {
         // Registrar vista del menú
         if (menuResponse.data?.id && restaurantData?.tenantId) {
           try {
-            await axios.post(`${API_URL}/tracking/menu-view`, {
+            await axios.post(`${getApiBaseUrl()}/tracking/menu-view`, {
               menuId: menuResponse.data.id,
               restaurantId: restaurantData.id,
               tenantId: restaurantData.tenantId,

@@ -176,7 +176,7 @@ export class SubscriptionService {
     );
     this.logger.log(`Synced tenant ${tenantId} plan to ${newPlan} for user ${userId}`);
 
-    if (newPlan === 'free' || newPlan === 'basic') {
+    if (newPlan === 'free' || newPlan === 'starter') {
       await this.planLimits.resetTemplatesIncompatibleWithPlan(tenantId, newPlan);
     }
   }
@@ -204,6 +204,49 @@ export class SubscriptionService {
       [provider, eventId]
     );
     return !!rows[0];
+  }
+
+  /** Registro de checkout antes de redirigir a Mercado Pago / PayPal (precio y términos). */
+  async createCheckoutSession(data: {
+    userId: string;
+    planSlug: string;
+    billingCycle: PlanType;
+    priceAmount: number;
+    currency: string;
+    paymentProvider: PaymentProvider;
+  }): Promise<string> {
+    const id = `cko_${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+    await this.postgres.executeRaw(
+      `INSERT INTO subscription_checkout_sessions (id, user_id, plan_slug, billing_cycle, price_amount, currency, payment_provider, status, terms_accepted_at, created_at)
+       VALUES ($1, $2, $3, $4::"PlanType", $5, $6, $7::"PaymentProvider", 'pending', NOW(), NOW())`,
+      [
+        id,
+        data.userId,
+        data.planSlug,
+        data.billingCycle,
+        data.priceAmount,
+        data.currency,
+        data.paymentProvider,
+      ]
+    );
+    return id;
+  }
+
+  async updateCheckoutSession(
+    sessionId: string,
+    data: { subscriptionId?: string; status: 'redirected' | 'failed' },
+  ): Promise<void> {
+    if (data.subscriptionId) {
+      await this.postgres.executeRaw(
+        `UPDATE subscription_checkout_sessions SET status = $1, subscription_id = $2 WHERE id = $3`,
+        [data.status, data.subscriptionId, sessionId]
+      );
+    } else {
+      await this.postgres.executeRaw(
+        `UPDATE subscription_checkout_sessions SET status = $1 WHERE id = $2`,
+        [data.status, sessionId]
+      );
+    }
   }
 
   private mapRow(row: any): SubscriptionRow {

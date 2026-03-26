@@ -4,6 +4,7 @@ import Link from 'next/link';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
 import AlertModal from '../../../components/AlertModal';
+import { formatCurrency } from '../../../lib/format-currency';
 import PricingPlansGrid, { type BillingCycle, type PricingData } from '../../../components/PricingPlansGrid';
 
 type SubItem = {
@@ -12,10 +13,11 @@ type SubItem = {
   externalSubscriptionId: string | null;
   status: string;
   planType: string;
-  subscriptionPlan: string;
+  subscriptionPlan: string | null;
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
   cancelAtPeriodEnd?: boolean;
+  currency?: string | null;
 };
 
 export default function SubscriptionManagement() {
@@ -24,8 +26,6 @@ export default function SubscriptionManagement() {
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [cancelLoading, setCancelLoading] = useState<string | null>(null);
-  const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ title: string; message: string; variant: 'success' | 'error' } | null>(null);
 
   const loadSubscriptions = async () => {
@@ -65,51 +65,13 @@ export default function SubscriptionManagement() {
     loadPricing();
   }, [router]);
 
-  const handleCancel = async (externalSubscriptionId: string) => {
-    if (!confirm('¿Cancelar esta suscripción? Dejarás de tener acceso al plan al final del período actual.')) return;
-    setCancelLoading(externalSubscriptionId);
-    try {
-      await api.post('/subscriptions/cancel', { externalSubscriptionId });
-      await loadSubscriptions();
-      setAlert({ title: 'Listo', message: 'Solicitud de cancelación enviada.', variant: 'success' });
-    } catch (err: any) {
-      setAlert({ title: 'Error', message: err.response?.data?.message || 'No se pudo cancelar.', variant: 'error' });
-    } finally {
-      setCancelLoading(null);
-    }
-  };
-
-  const handleSelectPlan = async (planSlug: string, billing: BillingCycle) => {
+  const handleSelectPlan = (planSlug: string, _billing: BillingCycle) => {
     if (planSlug === 'free') {
       setAlert({
         title: 'Plan Free',
         message: 'El plan Free no requiere pago. Si cancelas tu suscripción de pago, volverás al plan Free al final del período.',
         variant: 'success',
       });
-      return;
-    }
-    const planType = billing === 'yearly' ? 'yearly' : 'monthly';
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const returnUrl = `${baseUrl}/admin/profile/subscription?success=1`;
-    const cancelUrl = `${baseUrl}/admin/profile/subscription?cancel=1`;
-    setUpgradeLoading(planSlug);
-    try {
-      const res = await api.post('/subscriptions/create', {
-        planSlug,
-        planType,
-        returnUrl,
-        cancelUrl,
-      });
-      const approvalUrl = res.data?.approvalUrl;
-      if (approvalUrl) {
-        window.location.href = approvalUrl;
-        return;
-      }
-      setAlert({ title: 'Error', message: 'No se recibió URL de pago. Revisa la configuración de pagos.', variant: 'error' });
-    } catch (err: any) {
-      setAlert({ title: 'Error', message: err.response?.data?.message || 'No se pudo iniciar la suscripción.', variant: 'error' });
-    } finally {
-      setUpgradeLoading(null);
     }
   };
 
@@ -135,6 +97,48 @@ export default function SubscriptionManagement() {
     );
   }
 
+  const hasActivePaidSubscription = subscriptions.some((s) => {
+    const slug = String(s.subscriptionPlan ?? '').toLowerCase();
+    return s.status === 'active' && s.paymentProvider !== 'internal' && slug !== 'free';
+  });
+
+  const paidActive = subscriptions.find((s) => {
+    const slug = String(s.subscriptionPlan ?? '').toLowerCase();
+    return s.status === 'active' && s.paymentProvider !== 'internal' && slug !== 'free';
+  });
+
+  const freeActiveFallback = subscriptions.find((s) => {
+    const slug = String(s.subscriptionPlan ?? '').toLowerCase();
+    return s.status === 'active' && (s.paymentProvider === 'internal' || slug === 'free');
+  });
+
+  const effectiveSubscription = paidActive ?? freeActiveFallback ?? subscriptions[0] ?? null;
+
+  const effectivePlanSlug = String(effectiveSubscription?.subscriptionPlan ?? 'free').toLowerCase() as
+    | 'free'
+    | 'starter'
+    | 'pro'
+    | 'premium';
+
+  const effectivePricingPlan =
+    pricingData?.plans?.find((p) => p.slug === effectivePlanSlug) ?? null;
+
+  const monthlyPrice = effectivePricingPlan?.price ?? 0;
+  const yearlyPrice = effectivePricingPlan?.priceYearly ?? monthlyPrice * 10;
+  const currency = effectivePricingPlan?.currency ?? pricingData?.currency ?? 'USD';
+  const billing = effectiveSubscription?.planType === 'yearly' ? 'yearly' : 'monthly';
+  const autoRenewal = effectiveSubscription ? !effectiveSubscription.cancelAtPeriodEnd : false;
+  const periodEnd = effectiveSubscription?.currentPeriodEnd
+    ? new Date(effectiveSubscription.currentPeriodEnd).toLocaleDateString('es', { dateStyle: 'medium' })
+    : '—';
+
+  const canCancelSubscription =
+    (currentPlan !== 'free' && currentPlan !== 'pro_team') &&
+    !!effectiveSubscription &&
+    effectiveSubscription.status === 'active' &&
+    effectiveSubscription.paymentProvider !== 'internal' &&
+    effectivePlanSlug !== 'free';
+
   return (
     <AdminLayout>
       <div className="container-fluid py-4">
@@ -145,61 +149,76 @@ export default function SubscriptionManagement() {
         </div>
         <h1 className="h3 mb-4">Gestionar suscripción</h1>
 
-        {/* Suscripciones actuales */}
+        {/* Resumen principal (panel SaaS) */}
         <section className="card mb-4">
-          <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h2 className="h5 mb-0">Mis suscripciones</h2>
-            {currentPlan && (
-              <span className={`badge ${currentPlan === 'pro' || currentPlan === 'pro_team' ? 'bg-success' : currentPlan === 'premium' ? 'bg-dark' : currentPlan === 'basic' ? 'bg-info' : 'bg-secondary'} text-capitalize`}>
-                Plan actual: {currentPlan === 'pro_team' ? 'Pro Team' : currentPlan}
-              </span>
-            )}
+          <div className="card-header">
+            <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <h2 className="h5 mb-0">Tu suscripción</h2>
+              {currentPlan && (
+                <span className="badge bg-secondary text-capitalize">
+                  Plan (tenant): {currentPlan === 'pro_team' ? 'Pro Team' : currentPlan}
+                </span>
+              )}
+            </div>
           </div>
+
           <div className="card-body">
-            {subscriptions.length === 0 ? (
-              <p className="text-muted mb-0">
-                {currentPlan && currentPlan !== 'free'
-                  ? `Tu plan actual es ${currentPlan === 'pro_team' ? 'Pro Team' : currentPlan.toUpperCase()} (asignado por tu organización). No tienes suscripciones de pago propias.`
-                  : 'No tienes suscripciones activas. Estás en plan Free. Elige un plan de pago abajo si quieres ampliar límites.'}
-              </p>
-            ) : (
-              <ul className="list-group list-group-flush">
-                {subscriptions.map((s) => (
-                  <li key={s.id} className="list-group-item">
-                    <div className="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                      <div>
-                        <span className="fw-semibold text-capitalize">{s.subscriptionPlan || 'free'}</span>
-                        <span className="text-muted ms-2">({s.planType === 'yearly' ? 'Anual' : 'Mensual'})</span>
-                        <span className={`badge ms-2 ${s.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
-                          {s.status}
-                        </span>
-                        {s.paymentProvider !== 'internal' && (
-                          <span className="text-muted small ms-2"> · {s.paymentProvider}</span>
-                        )}
-                        {s.cancelAtPeriodEnd && (
-                          <span className="badge bg-warning text-dark ms-2">Se cancela al final del período</span>
-                        )}
-                        {(s.currentPeriodStart || s.currentPeriodEnd) && (
-                          <div className="small text-muted mt-1">
-                            {s.currentPeriodEnd && `Válido hasta: ${new Date(s.currentPeriodEnd).toLocaleDateString()}`}
-                          </div>
-                        )}
-                      </div>
-                      {s.paymentProvider !== 'internal' && s.status === 'active' && (
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => handleCancel(s.externalSubscriptionId!)}
-                          disabled={cancelLoading === s.externalSubscriptionId}
-                        >
-                          {cancelLoading === s.externalSubscriptionId ? '…' : 'Cancelar suscripción'}
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <div className="row g-3">
+              <div className="col-12 col-md-6">
+                <div className="small text-muted">Plan actual</div>
+                <div className="h5 mb-0 text-capitalize">{effectivePlanSlug}</div>
+              </div>
+              <div className="col-12 col-md-6">
+                <div className="small text-muted">Estado</div>
+                <div className="h5 mb-0">{effectiveSubscription?.status ?? '—'}</div>
+              </div>
+
+              <div className="col-12 col-md-6">
+                <div className="small text-muted">Facturación</div>
+                <div className="h5 mb-0">{billing === 'yearly' ? 'Anual' : 'Mensual'}</div>
+              </div>
+              <div className="col-12 col-md-6">
+                <div className="small text-muted">Renovación automática</div>
+                <div className="h5 mb-0">{autoRenewal ? 'Activa' : 'Desactivada'}</div>
+              </div>
+
+              <div className="col-12 col-md-6">
+                <div className="small text-muted">Precio mensual</div>
+                <div className="h5 mb-0">{formatCurrency(monthlyPrice, currency)}</div>
+              </div>
+              <div className="col-12 col-md-6">
+                <div className="small text-muted">Precio anual</div>
+                <div className="h5 mb-0">{formatCurrency(yearlyPrice, currency)}</div>
+              </div>
+
+              <div className="col-12">
+                <div className="small text-muted">Próximo cobro / fin de período</div>
+                <div className="h5 mb-0">{periodEnd}</div>
+              </div>
+            </div>
+
+            <div className="mt-4 d-flex flex-wrap gap-2">
+              <Link href="/admin/profile/subscription/details" className="btn btn-sm btn-outline-primary">
+                Detalles de la suscripción
+              </Link>
+              {canCancelSubscription && (
+                <Link href="/admin/profile/subscription/details" className="btn btn-sm btn-outline-danger">
+                  Cancelar suscripción
+                </Link>
+              )}
+              <Link href="/admin/profile/subscription/payments" className="btn btn-sm btn-outline-primary">
+                Historial de pagos
+              </Link>
+              <Link href="/admin/profile/subscription/invoices" className="btn btn-sm btn-outline-secondary">
+                Ver facturas
+              </Link>
+              <Link href="/admin/profile/subscription/payment-method" className="btn btn-sm btn-outline-secondary">
+                Método de pago
+              </Link>
+              <Link href="/admin/profile/subscription/reactivation" className="btn btn-sm btn-outline-secondary">
+                Reanudar
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -212,10 +231,14 @@ export default function SubscriptionManagement() {
             <p className="text-muted small mb-3">
               Elige otro plan. Los precios y el proveedor de pago dependen de tu región (Argentina: MercadoPago / ARS; resto: PayPal / USD).
             </p>
+            {hasActivePaidSubscription && (
+              <div className="alert alert-info small py-2 mb-3" role="status">
+                Tenés una suscripción activa. Para contratar otro plan, primero cancelá la actual arriba; el sistema no permite dos suscripciones de pago activas a la vez.
+              </div>
+            )}
             <PricingPlansGrid
               variant="subscription"
               onSelectPlan={handleSelectPlan}
-              loadingPlan={upgradeLoading}
               pricingData={pricingData}
             />
           </div>

@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import LogoCropModal from './LogoCropModal';
+import CoverCropModal from './CoverCropModal';
 import CountrySelector from './CountrySelector';
 import ProvinceSelector from './ProvinceSelector';
 import CitySelector from './CitySelector';
@@ -111,6 +113,10 @@ export default function RestaurantWizard({
   const [, setDetectingCountry] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [showLogoCrop, setShowLogoCrop] = useState(false);
+  const [logoCropSrc, setLogoCropSrc] = useState<string | null>(null);
+  const [showCoverCrop, setShowCoverCrop] = useState(false);
+  const [coverCropSrc, setCoverCropSrc] = useState<string | null>(null);
 
   // Mapeo de nombres de países de APIs a nuestros nombres
   const countryNameMap: { [key: string]: string } = {
@@ -202,23 +208,25 @@ export default function RestaurantWizard({
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setLogoFile(file);
+    if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
+        setLogoCropSrc(reader.result as string);
+        setShowLogoCrop(true);
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
   };
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setCoverFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setCoverPreview(reader.result as string);
+        setCoverFile(null);
+        setCoverCropSrc(reader.result as string);
+        setShowCoverCrop(true);
       };
       reader.readAsDataURL(file);
     }
@@ -230,14 +238,19 @@ export default function RestaurantWizard({
     const file = e.dataTransfer.files?.[0];
     if (file && file.type.startsWith('image/')) {
       if (type === 'logo') {
-        setLogoFile(file);
         const reader = new FileReader();
-        reader.onloadend = () => setLogoPreview(reader.result as string);
+        reader.onloadend = () => {
+          setLogoCropSrc(reader.result as string);
+          setShowLogoCrop(true);
+        };
         reader.readAsDataURL(file);
       } else {
-        setCoverFile(file);
         const reader = new FileReader();
-        reader.onloadend = () => setCoverPreview(reader.result as string);
+        reader.onloadend = () => {
+          setCoverFile(null);
+          setCoverCropSrc(reader.result as string);
+          setShowCoverCrop(true);
+        };
         reader.readAsDataURL(file);
       }
     }
@@ -775,12 +788,12 @@ export default function RestaurantWizard({
                   <div className="wizard-upload-placeholder">
                     <div className="wizard-upload-icon">🖼️</div>
                     <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
-                    <span className="wizard-upload-hint">512×512px o 1024×1024px · JPG, PNG · máx. 2MB</span>
+                    <span className="wizard-upload-hint">Recortá en el editor; se guarda 400×400 WebP (máx. 300 KB)</span>
                   </div>
                 )}
               </div>
               <small className="wizard-hint" style={{ color: '#666', fontSize: '0.875rem', marginTop: '8px', display: 'block' }}>
-                Logo cuadrado para tu restaurante. Se mostrará en el menú y en la cabecera.
+                Recortá en el editor; se guarda en 400×400 px WebP (máx. 300 KB). Se muestra en el menú y en la cabecera.
               </small>
             </div>
 
@@ -811,12 +824,12 @@ export default function RestaurantWizard({
                   <div className="wizard-upload-placeholder">
                     <div className="wizard-upload-icon">📷</div>
                     <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
-                    <span className="wizard-upload-hint">1920×1080px o 16:9 · JPG, PNG · máx. 5MB</span>
+                    <span className="wizard-upload-hint">1200×800 px · WebP · máx. 600 KB</span>
                   </div>
                 )}
               </div>
               <small className="wizard-hint" style={{ color: '#666', fontSize: '0.875rem', marginTop: '8px', display: 'block' }}>
-                Imagen horizontal para la cabecera del menú. Da la bienvenida a tus clientes.
+                Recortá en el editor; se guarda en 1200×800 px WebP (máx. 600 KB).
               </small>
             </div>
 
@@ -972,6 +985,42 @@ export default function RestaurantWizard({
           </div>
         </div>
       </form>
+
+      <LogoCropModal
+        show={showLogoCrop}
+        imageSrc={logoCropSrc}
+        onClose={() => {
+          setShowLogoCrop(false);
+          setLogoCropSrc(null);
+        }}
+        onComplete={(file) => {
+          if (logoPreview?.startsWith('blob:')) {
+            URL.revokeObjectURL(logoPreview);
+          }
+          setLogoFile(file);
+          setLogoPreview(URL.createObjectURL(file));
+          setShowLogoCrop(false);
+          setLogoCropSrc(null);
+        }}
+      />
+
+      <CoverCropModal
+        show={showCoverCrop}
+        imageSrc={coverCropSrc}
+        onClose={() => {
+          setShowCoverCrop(false);
+          setCoverCropSrc(null);
+        }}
+        onComplete={(file) => {
+          if (coverPreview?.startsWith('blob:')) {
+            URL.revokeObjectURL(coverPreview);
+          }
+          setCoverFile(file);
+          setCoverPreview(URL.createObjectURL(file));
+          setShowCoverCrop(false);
+          setCoverCropSrc(null);
+        }}
+      />
     </div>
   );
 }

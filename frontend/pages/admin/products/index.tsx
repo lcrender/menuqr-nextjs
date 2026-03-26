@@ -7,6 +7,8 @@ import AdminLayout from '../../../components/AdminLayout';
 import ProductWizard from '../../../components/ProductWizard';
 import ConfirmModal from '../../../components/ConfirmModal';
 import AlertModal from '../../../components/AlertModal';
+import ProductPhotoCropModal from '../../../components/ProductPhotoCropModal';
+import { fetchPublicPlanLimits } from '../../../lib/public-plan-limits';
 
 export default function Products() {
   const router = useRouter();
@@ -48,6 +50,7 @@ export default function Products() {
     active: true,
     prices: [{ currency: 'USD', label: '', amount: 0 }] as { currency: string; label: string; amount: number }[],
     iconCodes: [] as string[],
+    highlighted: false,
   });
   const [availableIcons, setAvailableIcons] = useState<any[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -55,6 +58,7 @@ export default function Products() {
   const [itemsPerPage, setItemsPerPage] = useState<number>(50);
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
   const [planFetchedFromApi, setPlanFetchedFromApi] = useState(false);
+  const [canHighlightProducts, setCanHighlightProducts] = useState(false);
   const [tenants, setTenants] = useState<Array<{ id: string; name: string; plan: string; userCount?: number; restaurantCount?: number }>>([]);
   const [allRestaurants, setAllRestaurants] = useState<Array<{ id: string; name: string; tenantId?: string; tenant_id?: string; tenantName?: string }>>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
@@ -65,6 +69,8 @@ export default function Products() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [restaurantDropdownOpen, setRestaurantDropdownOpen] = useState(false);
   const [editPhotos, setEditPhotos] = useState<Array<{ preview: string; id?: string; file?: File }>>([]);
+  const [showProductPhotoCrop, setShowProductPhotoCrop] = useState(false);
+  const [productPhotoCropSrc, setProductPhotoCropSrc] = useState<string | null>(null);
   const [editImageDragging, setEditImageDragging] = useState(false);
   const [draggedProductIndex, setDraggedProductIndex] = useState<number | null>(null);
 
@@ -109,6 +115,34 @@ export default function Products() {
   }, [user?.id, isSuperAdmin]);
 
   useEffect(() => {
+    if (!tenantPlan) return;
+    let cancelled = false;
+    fetchPublicPlanLimits()
+      .then((m) => {
+        if (cancelled) return;
+        const row = (m as any)[tenantPlan];
+        setCanHighlightProducts(!!row?.productHighlightAllowed);
+      })
+      .catch(() => {
+        if (!cancelled) setCanHighlightProducts(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantPlan]);
+
+  // Si es SUPER_ADMIN, el plan relevante para mostrar opciones es el plan del tenant seleccionado.
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    if (!selectedTenantId) {
+      setTenantPlan(null);
+      return;
+    }
+    const t = tenants.find((x) => x.id === selectedTenantId);
+    setTenantPlan(t?.plan ?? null);
+  }, [isSuperAdmin, selectedTenantId, tenants]);
+
+  useEffect(() => {
     if (!user) return;
     if (isSuperAdmin && (!superAdminSearched || (!selectedTenantId && !selectedRestaurantId))) return;
     loadData();
@@ -148,6 +182,7 @@ export default function Products() {
     if (!tenantPlan) return 30;
     const limits: Record<string, number> = {
       free: 30,
+      starter: 60,
       basic: 60,
       pro: 300,
       premium: 1200,
@@ -291,6 +326,7 @@ export default function Products() {
           sectionId: formData.sectionId || undefined,
           prices: validPrices,
           iconCodes: formData.iconCodes,
+          highlighted: formData.highlighted,
         });
         // Una sola imagen por producto; el backend reemplaza la anterior si existe
         const photoToUpload = editPhotos.find((p) => p.file);
@@ -322,6 +358,7 @@ export default function Products() {
         active: true,
         prices: [{ currency: defaultCurrency, label: '', amount: 0 }] as { currency: string; label: string; amount: number }[],
         iconCodes: [],
+        highlighted: false,
       });
       loadData();
     } catch (error: any) {
@@ -349,6 +386,7 @@ export default function Products() {
         ? product.prices.map((p: any) => ({ ...p, currency: p.currency || defaultCurrency }))
         : [{ currency: defaultCurrency, label: '', amount: 0 }],
       iconCodes: product.icons || [],
+      highlighted: (product as any)?.extra?.highlighted === true,
     });
     // Un producto tiene solo una imagen: tomar la primera si existe
     const photos = product.photos || [];
@@ -364,11 +402,24 @@ export default function Products() {
   const handleEditImageUpload = (files: File[]) => {
     const file = files.filter((f) => f.type.startsWith('image/'))[0];
     if (!file) return;
+
+    // Mientras el usuario edita/recorta, evitamos que el "Guardar" suba el archivo anterior.
+    // Mantenemos solo el preview y removemos `file`.
+    setEditPhotos((prev) => {
+      if (!prev.length) return prev;
+      const first = prev[0];
+      if (!first) return prev;
+      if (first.id) {
+        return [{ preview: first.preview, id: first.id }];
+      }
+      return [{ preview: first.preview }];
+    });
+
     const reader = new FileReader();
     reader.onload = (e) => {
-      if (e.target?.result) {
-        setEditPhotos([{ preview: e.target!.result as string, file }]);
-      }
+      if (!e.target?.result) return;
+      setProductPhotoCropSrc(e.target.result as string);
+      setShowProductPhotoCrop(true);
     };
     reader.readAsDataURL(file);
   };
@@ -1457,7 +1508,7 @@ export default function Products() {
                             Arrastra imágenes aquí o haz clic para seleccionar
                           </p>
                           <p style={{ margin: 0, color: '#bbb', fontSize: '13px', marginBottom: '12px' }}>
-                            Formatos: JPG, PNG, GIF (máx. 5MB por imagen)
+                            Se abre un editor para recortar. Se guarda en 800×800 WebP (máx. 250 KB).
                           </p>
                           <div
                             style={{
@@ -1535,7 +1586,7 @@ export default function Products() {
                               Arrastra una imagen o haz clic para seleccionar
                             </p>
                             <p style={{ margin: 0, color: '#999', fontSize: '12px' }}>
-                              Una imagen por producto. JPG, PNG, GIF (máx. 5MB). Al eliminar se borra del sistema.
+                              Una imagen por producto. Se guarda en 800×800 WebP (máx. 250 KB). Al eliminar se borra del sistema.
                             </p>
                           </div>
                           ) : (
@@ -1593,6 +1644,17 @@ export default function Products() {
                       />
                       <label className="form-check-label">Producto activo</label>
                     </div>
+                    {canHighlightProducts && (
+                      <div className="form-check" style={{ paddingLeft: '1.6em', marginTop: '8px' }}>
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={formData.highlighted}
+                          onChange={(e) => setFormData({ ...formData, highlighted: e.target.checked })}
+                        />
+                        <label className="form-check-label">Producto destacado</label>
+                      </div>
+                    )}
                   </div>
                   </section>
                 </div>
@@ -1793,6 +1855,23 @@ export default function Products() {
           }}
         />
       )}
+
+      <ProductPhotoCropModal
+        show={showProductPhotoCrop}
+        imageSrc={productPhotoCropSrc}
+        onClose={() => {
+          setShowProductPhotoCrop(false);
+          setProductPhotoCropSrc(null);
+        }}
+        onComplete={(file) => {
+          if (editPhotos[0]?.preview?.startsWith('blob:')) {
+            URL.revokeObjectURL(editPhotos[0].preview);
+          }
+          setEditPhotos([{ preview: URL.createObjectURL(file), file }]);
+          setShowProductPhotoCrop(false);
+          setProductPhotoCropSrc(null);
+        }}
+      />
     </AdminLayout>
   );
 }

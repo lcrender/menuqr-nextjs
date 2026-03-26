@@ -12,6 +12,8 @@ import MenuWizard from '../../../components/MenuWizard';
 import QRCode from 'react-qr-code';
 import ConfirmModal from '../../../components/ConfirmModal';
 import AlertModal from '../../../components/AlertModal';
+import LogoCropModal from '../../../components/LogoCropModal';
+import CoverCropModal from '../../../components/CoverCropModal';
 
 // Códigos de país comunes para WhatsApp
 const countryCodes: { [key: string]: string } = {
@@ -109,8 +111,12 @@ export default function Restaurants() {
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [showLogoCrop, setShowLogoCrop] = useState(false);
+  const [logoCropSrc, setLogoCropSrc] = useState<string | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [showCoverCrop, setShowCoverCrop] = useState(false);
+  const [coverCropSrc, setCoverCropSrc] = useState<string | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedRestaurantForQR, setSelectedRestaurantForQR] = useState<any>(null);
   const [filterName, setFilterName] = useState<string>('');
@@ -161,6 +167,7 @@ export default function Restaurants() {
     if (!tenantPlan) return 1;
     const limits: Record<string, number> = {
       free: 1,
+      starter: 1,
       basic: 1,
       pro: 3,
       premium: 10,
@@ -577,23 +584,25 @@ export default function Restaurants() {
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setLogoFile(file);
+    if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
+        setLogoCropSrc(reader.result as string);
+        setShowLogoCrop(true);
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
   };
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setCoverFile(file);
+      setCoverFile(null);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setCoverPreview(reader.result as string);
+        setCoverCropSrc(reader.result as string);
+        setShowCoverCrop(true);
       };
       reader.readAsDataURL(file);
     }
@@ -1212,6 +1221,9 @@ export default function Restaurants() {
                       accept="image/*"
                       onChange={handleLogoChange}
                     />
+                    <small className="form-text text-muted">
+                      Se abre un editor para recortar. Se guarda en 400×400 px, WebP, máx. 300 KB.
+                    </small>
                     {logoPreview && (
                       <div className="mt-2">
                         <img 
@@ -1232,6 +1244,9 @@ export default function Restaurants() {
                       accept="image/*"
                       onChange={handleCoverChange}
                     />
+                    <small className="form-text text-muted">
+                      Se abre un editor para recortar. Se guarda en 1200×800 px, WebP, máx. 600 KB.
+                    </small>
                     {coverPreview && (
                       <div className="mt-2">
                         <img 
@@ -1728,6 +1743,42 @@ export default function Restaurants() {
           }}
         />
       )}
+
+      <LogoCropModal
+        show={showLogoCrop}
+        imageSrc={logoCropSrc}
+        onClose={() => {
+          setShowLogoCrop(false);
+          setLogoCropSrc(null);
+        }}
+        onComplete={(file) => {
+          if (logoPreview?.startsWith('blob:')) {
+            URL.revokeObjectURL(logoPreview);
+          }
+          setLogoFile(file);
+          setLogoPreview(URL.createObjectURL(file));
+          setShowLogoCrop(false);
+          setLogoCropSrc(null);
+        }}
+      />
+
+      <CoverCropModal
+        show={showCoverCrop}
+        imageSrc={coverCropSrc}
+        onClose={() => {
+          setShowCoverCrop(false);
+          setCoverCropSrc(null);
+        }}
+        onComplete={(file) => {
+          if (coverPreview?.startsWith('blob:')) {
+            URL.revokeObjectURL(coverPreview);
+          }
+          setCoverFile(file);
+          setCoverPreview(URL.createObjectURL(file));
+          setShowCoverCrop(false);
+          setCoverCropSrc(null);
+        }}
+      />
     </AdminLayout>
   );
 }

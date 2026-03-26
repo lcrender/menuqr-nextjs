@@ -24,9 +24,9 @@ npx prisma migrate dev --name add_subscriptions
 Nuevas entidades:
 
 - **User**: `registration_country`, `declared_country` (opcionales).
-- **Subscription**: por usuario, proveedor, `external_subscription_id`, estado, `plan_type` (monthly/yearly), `subscription_plan` (basic/pro/premium), períodos, `cancel_at_period_end`.
+- **Subscription**: por usuario, proveedor, `external_subscription_id`, estado, `plan_type` (monthly/yearly), `subscription_plan` (starter/pro/premium), períodos, `cancel_at_period_end`.
 - **WebhookEvent**: idempotencia (provider + event_id).
-- **plans**: id, name, description (ej. plan_basic, plan_pro).
+- **plans**: id, name, description (ej. plan_starter, plan_pro).
 - **plan_prices**: plan_id, country (AR, GLOBAL, …), currency, price, payment_provider. Un precio por (plan_id, country). Migración: `20260206000000_add_plans_and_plan_prices`.
 
 ### Backfill: suscripción free para usuarios existentes
@@ -77,7 +77,7 @@ En `.env`:
 - `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`
 - `PAYPAL_WEBHOOK_ID`: ID del webhook en el dashboard (para verificar firma)
 - `PAYPAL_PLAN_ID_MONTHLY`, `PAYPAL_PLAN_ID_YEARLY`: IDs de planes creados en PayPal
-- Opcional: `PAYPAL_PLAN_ID_BASIC_MONTHLY`, `PAYPAL_PLAN_ID_PRO_MONTHLY`, `PAYPAL_PLAN_ID_PREMIUM_MONTHLY` para mapear a subscription_plan (basic/pro/premium)
+- Opcional: `PAYPAL_PLAN_ID_BASIC_MONTHLY` (plan Starter), `PAYPAL_PLAN_ID_PRO_MONTHLY`, `PAYPAL_PLAN_ID_PREMIUM_MONTHLY` para mapear a subscription_plan (starter/pro/premium)
 
 En el dashboard de PayPal configurar la URL del webhook:  
 `https://tu-dominio.com/payment/webhooks/paypal`
@@ -90,12 +90,15 @@ En `.env`:
 
 - `MERCADOPAGO_ACCESS_TOKEN`: access token de **producción** (cobros reales).
 - `MERCADOPAGO_ACCESS_TOKEN_TEST`: access token de **prueba** (cuentas de test / sandbox).
+- `MERCADOPAGO_WEBHOOK_SECRET` (recomendado en producción): clave de firma del webhook en el panel de Mercado Pago. Si está definida, el backend valida la cabecera `x-signature`. Si no está, acepta notificaciones sin verificar (útil solo en desarrollo).
 
 El modo activo (**prueba** vs **producción**) lo define el super admin en el panel (**Configuración → Mercado Pago**): se guarda en la tabla `app_settings` (`mercadopago_mode` = `sandbox` | `production`). Por defecto, sin fila en BD, se usa **producción**. La API elige el token según ese modo.
 
 URL del webhook: `https://tu-dominio.com/payment/webhooks/mercadopago`
 
 Eventos: autorización de preapproval, pagos creados, preapproval cancelado. Al confirmar pago/autorización se actualiza `subscriptions` y se sincroniza `tenants.plan`.
+
+**Reglas de negocio (checkout):** no se permite crear una nueva suscripción de pago si ya existe una **activa** con el mismo proveedor; hay que cancelarla antes. Las suscripciones **incomplete** previas en Mercado Pago se cancelan en el proveedor y se marcan `canceled` en BD al iniciar un nuevo checkout, para evitar preapprovals colgados.
 
 ## Super admin: vista de catálogo en el panel
 

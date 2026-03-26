@@ -33,6 +33,10 @@ export class PlanLimitItemDto {
   @IsBoolean()
   productPhotosAllowed!: boolean;
 
+  @ApiProperty({ description: 'Habilita la opción "Destacar producto" al crear/editar productos.' })
+  @IsBoolean()
+  productHighlightAllowed!: boolean;
+
   @ApiProperty({ type: [String], example: ['gourmet'] })
   @IsArray()
   @IsString({ each: true })

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import api from '../lib/axios';
 import AlertModal from './AlertModal';
+import { fetchPublicPlanLimits } from '../lib/public-plan-limits';
 
 interface ProductWizardProps {
   menuId: string;
@@ -187,6 +188,7 @@ export default function ProductWizard({
     description: '',
     prices: [{ currency: initialEffectiveCurrency, label: '', amount: 0 }] as Price[],
     iconCodes: [] as string[],
+    highlighted: false,
   });
   
   // Estado para la moneda efectiva que se actualiza cuando cambia formData.menuId
@@ -203,6 +205,7 @@ export default function ProductWizard({
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
+  const [canHighlightProducts, setCanHighlightProducts] = useState(false);
   const [showSectionModal, setShowSectionModal] = useState(false);
   const [menuSectionsForModal, setMenuSectionsForModal] = useState<any[]>([]);
   const [selectedMenuForModal, setSelectedMenuForModal] = useState<any>(null);
@@ -278,6 +281,23 @@ export default function ProductWizard({
     fetchPlan();
   }, []);
 
+  useEffect(() => {
+    if (!tenantPlan) return;
+    let cancelled = false;
+    fetchPublicPlanLimits()
+      .then((m) => {
+        if (cancelled) return;
+        const row = (m as any)[tenantPlan];
+        setCanHighlightProducts(!!row?.productHighlightAllowed);
+      })
+      .catch(() => {
+        if (!cancelled) setCanHighlightProducts(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantPlan]);
+
   // Función para recargar el conteo de productos
   const loadProductCount = async () => {
     try {
@@ -321,6 +341,7 @@ export default function ProductWizard({
     if (startWithCreate && currentStep === 1) {
       const limits: Record<string, number> = {
         free: 30,
+        starter: 60,
         basic: 60,
         pro: 300,
         premium: 1200,
@@ -384,6 +405,7 @@ export default function ProductWizard({
     if (!tenantPlan) return 30;
     const limits: Record<string, number> = {
       free: 30,
+      starter: 60,
       basic: 60,
       pro: 300,
       premium: 1200,
@@ -1071,6 +1093,7 @@ export default function ProductWizard({
         description: formData.description || undefined,
         prices: validPrices.length > 0 ? validPrices : undefined,
         iconCodes: formData.iconCodes.length > 0 ? formData.iconCodes : undefined,
+        highlighted: formData.highlighted,
       };
 
       // Si hay secciones seleccionadas o se seleccionó una en el modal, crear el producto y asociarlo
@@ -1151,6 +1174,7 @@ export default function ProductWizard({
         description: '',
         prices: [{ currency: restaurantCurrency || defaultCurrency, label: '', amount: 0 }],
         iconCodes: [],
+        highlighted: false,
       });
     } catch (error: any) {
       // Si el error es por límite alcanzado, mostrar el modal
@@ -2057,6 +2081,24 @@ export default function ProductWizard({
             </div>
 
             <div className="wizard-fields-container">
+              {canHighlightProducts && (
+                <div style={{ marginBottom: '32px' }}>
+                  <h4 style={{ marginBottom: '12px', fontSize: '18px', fontWeight: 600 }}>Destacar producto</h4>
+                  <div className="form-check" style={{ paddingLeft: '0px' }}>
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="highlighted-product-wizard"
+                      checked={formData.highlighted}
+                      onChange={(e) => setFormData((prev: any) => ({ ...prev, highlighted: e.target.checked }))}
+                    />
+                    <label className="form-check-label" htmlFor="highlighted-product-wizard">
+                      Mostrar este producto como destacado en las plantillas
+                    </label>
+                  </div>
+                </div>
+              )}
+
               {/* Sección de Iconos */}
               <div style={{ marginBottom: '32px' }}>
                 <h4 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>Iconos</h4>

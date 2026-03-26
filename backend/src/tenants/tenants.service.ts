@@ -138,7 +138,7 @@ export class TenantsService {
       params
     );
 
-    if (data.plan !== undefined && (data.plan === 'free' || data.plan === 'basic')) {
+    if (data.plan !== undefined && (data.plan === 'free' || data.plan === 'starter')) {
       await this.planLimits.resetTemplatesIncompatibleWithPlan(id, data.plan);
     }
 
@@ -165,7 +165,7 @@ export class TenantsService {
         COUNT(*) FILTER (WHERE status = 'blocked' AND deleted_at IS NULL) as "blockedTenants",
         COUNT(*) FILTER (WHERE status = 'suspended' AND deleted_at IS NULL) as "suspendedTenants",
         COUNT(*) FILTER (WHERE plan = 'free' AND deleted_at IS NULL) as "freePlanTenants",
-        COUNT(*) FILTER (WHERE plan = 'basic' AND deleted_at IS NULL) as "basicPlanTenants",
+        COUNT(*) FILTER (WHERE plan = 'starter' AND deleted_at IS NULL) as "starterPlanTenants",
         COUNT(*) FILTER (WHERE plan = 'pro' AND deleted_at IS NULL) as "proPlanTenants",
         COUNT(*) FILTER (WHERE plan = 'pro_team' AND deleted_at IS NULL) as "proTeamPlanTenants",
         COUNT(*) FILTER (WHERE plan = 'premium' AND deleted_at IS NULL) as "premiumPlanTenants"

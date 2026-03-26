@@ -439,9 +439,20 @@ export class MenuItemsService {
     active?: boolean;
     prices?: Array<{ currency: string; label?: string; amount: number }>;
     iconCodes?: string[];
+    highlighted?: boolean;
   }) {
+    const highlightWanted = data.highlighted === true;
+
     // Validar límite de productos según el plan
     await this.validateMenuItemLimit(tenantId);
+
+    if (highlightWanted) {
+      const plan = await this.getTenantPlan(tenantId);
+      const allowed = await this.planLimits.allowsProductHighlight(plan);
+      if (!allowed) {
+        throw new BadRequestException('Tu plan no permite destacar productos. Actualizá tu suscripción.');
+      }
+    }
 
     // Si se proporciona menuId, verificar que pertenece al tenant
     if (data.menuId) {
@@ -492,9 +503,9 @@ export class MenuItemsService {
     // Permitir crear productos sin menú (para luego asignarlos)
     await this.postgres.executeRaw(
       `INSERT INTO menu_items (
-        id, tenant_id, menu_id, section_id, name, description, sort, active,
+        id, tenant_id, menu_id, section_id, name, description, sort, active, extra,
         created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, NOW(), NOW())`,
       [
         id,
         tenantId,
@@ -504,6 +515,7 @@ export class MenuItemsService {
         data.description || null,
         nextSort,
         data.active !== false,
+        JSON.stringify({ highlighted: highlightWanted }),
       ]
     );
 
@@ -551,8 +563,17 @@ export class MenuItemsService {
     sectionId?: string;
     prices?: Array<{ currency: string; label?: string; amount: number }>;
     iconCodes?: string[];
+    highlighted?: boolean;
   }) {
     const item = await this.findById(id, tenantId);
+
+    if (data.highlighted === true) {
+      const plan = await this.getTenantPlan(tenantId);
+      const allowed = await this.planLimits.allowsProductHighlight(plan);
+      if (!allowed) {
+        throw new BadRequestException('Tu plan no permite destacar productos. Actualizá tu suscripción.');
+      }
+    }
 
     const updates: string[] = [];
     const params: any[] = [];
@@ -569,6 +590,13 @@ export class MenuItemsService {
     if (data.active !== undefined) {
       updates.push(`active = $${paramIndex++}`);
       params.push(data.active);
+    }
+    if (data.highlighted !== undefined) {
+      // Guardamos el flag dentro de la columna JSONB `extra` para no romper el esquema original.
+      updates.push(
+        `extra = COALESCE(extra, '{}'::jsonb) || jsonb_build_object('highlighted', $${paramIndex++})`,
+      );
+      params.push(data.highlighted);
     }
     if (data.sectionId !== undefined) {
       if (data.sectionId === null || data.sectionId === '') {
@@ -705,6 +733,15 @@ export class MenuItemsService {
     const source = await this.findById(id, tenantId);
     if (!source) throw new NotFoundException(`Item con ID ${id} no encontrado`);
 
+    const highlightedFromSource = (source as any)?.extra?.highlighted === true;
+    if (highlightedFromSource) {
+      const plan = await this.getTenantPlan(tenantId);
+      const allowed = await this.planLimits.allowsProductHighlight(plan);
+      if (!allowed) {
+        throw new BadRequestException('Tu plan no permite destacar productos. Actualizá tu suscripción.');
+      }
+    }
+
     const menu = await this.postgres.queryRaw<any>(
       `SELECT id FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
       [target.menuId, tenantId]
@@ -728,8 +765,8 @@ export class MenuItemsService {
     const newId = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
 
     await this.postgres.executeRaw(
-      `INSERT INTO menu_items (id, tenant_id, menu_id, section_id, name, description, sort, active, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
+      `INSERT INTO menu_items (id, tenant_id, menu_id, section_id, name, description, sort, active, extra, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, NOW(), NOW())`,
       [
         newId,
         tenantId,
@@ -739,6 +776,7 @@ export class MenuItemsService {
         source.description ?? null,
         nextSort,
         source.active !== false,
+        JSON.stringify({ highlighted: highlightedFromSource }),
       ]
     );
 

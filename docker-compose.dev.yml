@@ -137,8 +137,10 @@ services:
     container_name: menuqr_frontend_dev
     environment:
       NODE_ENV: development
+      # Navegador (host): llama a localhost:3001. Dentro del contenedor, el proxy /api-proxy debe ir al servicio backend.
       NEXT_PUBLIC_API_URL: http://localhost:3001
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      INTERNAL_API_URL: http://backend:3001
     volumes:
       - ./frontend:/app
       - /app/node_modules

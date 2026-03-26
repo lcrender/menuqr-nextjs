@@ -147,7 +147,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <p className="small">{user?.email}</p>
               <span className="badge bg-primary mb-2">{user?.role}</span>
               {currentPlan != null && (
-                <span className={`badge ${currentPlan === 'pro' || currentPlan === 'pro_team' ? 'bg-success' : currentPlan === 'premium' ? 'bg-dark' : currentPlan === 'basic' ? 'bg-info' : 'bg-secondary'}`} style={{ display: 'inline-block', width: 'fit-content', textTransform: 'uppercase' }}>
+                <span className={`badge ${currentPlan === 'pro' || currentPlan === 'pro_team' ? 'bg-success' : currentPlan === 'premium' ? 'bg-dark' : currentPlan === 'starter' || currentPlan === 'basic' ? 'bg-info' : 'bg-secondary'}`} style={{ display: 'inline-block', width: 'fit-content', textTransform: 'uppercase' }}>
                   {currentPlan === 'pro_team' ? 'Pro Team' : currentPlan}
                 </span>
               )}

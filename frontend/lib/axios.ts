@@ -1,13 +1,14 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { API_URL } from './config';
+import { getApiBaseUrl } from './config';
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: '',
 });
 
 // Interceptor para agregar el token a todas las peticiones
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    config.baseURL = getApiBaseUrl();
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -53,8 +54,13 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // GET públicos (precios, límites): token caducado no debe vaciar sesión ni mandar a login (landing / legales).
+    const isPublicGet =
+      (originalRequest.url?.includes('/pricing') || originalRequest.url?.includes('/public/plan-limits')) &&
+      (originalRequest.method ?? 'get').toLowerCase() === 'get';
+
     // Si es un error 401 y no hemos intentado refrescar el token
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isPublicGet) {
       originalRequest._retry = true;
 
       try {
@@ -70,7 +76,7 @@ api.interceptors.response.use(
         }
 
         // Intentar refrescar el token
-        const response = await axios.post(`${API_URL}/auth/refresh`, {
+        const response = await axios.post(`${getApiBaseUrl()}/auth/refresh`, {
           refreshToken,
         });
 

@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PaymentProviderService } from './payment-provider.service';
 import { PayPalService } from './providers/paypal.service';
 import { MercadoPagoService } from './providers/mercadopago.service';
@@ -11,6 +12,9 @@ import {
   CancelSubscriptionResult,
   WebhookHandleResult,
 } from './interfaces/payment-provider.interface';
+import { PREMIUM_CHECKOUT_ENABLED } from './pricing.constants';
+import { PricingService } from './pricing.service';
+import type { PlanSlug } from './pricing.service';
 
 @Injectable()
 export class PaymentService {
@@ -20,7 +24,42 @@ export class PaymentService {
     private readonly mercadopagoService: MercadoPagoService,
     private readonly subscriptionService: SubscriptionService,
     private readonly usersService: UsersService,
+    private readonly config: ConfigService,
+    private readonly pricingService: PricingService,
   ) {}
+
+  /**
+   * PayPal y Mercado Pago exigen URLs absolutas. Si el cliente manda vacío o una ruta relativa,
+   * se resuelve contra FRONTEND_URL (misma base que NEXT_PUBLIC_APP_URL en el front).
+   */
+  private resolveCheckoutRedirectUrl(candidate: string | undefined, fallbackRelativePath: string): string {
+    const base = String(this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000').trim().replace(/\/$/, '');
+    const trimmed = (candidate ?? '').trim();
+    if (trimmed) {
+      try {
+        const u = new URL(trimmed);
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
+          return u.href;
+        }
+      } catch {
+        /* ruta relativa u otro formato */
+      }
+      try {
+        const path = trimmed.replace(/^\/+/, '');
+        return new URL(path, `${base}/`).href;
+      } catch {
+        /* seguir al fallback */
+      }
+    }
+    try {
+      const path = fallbackRelativePath.replace(/^\/+/, '');
+      return new URL(path, `${base}/`).href;
+    } catch {
+      throw new BadRequestException(
+        'URL de retorno inválida para el checkout. Revisá FRONTEND_URL en el servidor (.env).',
+      );
+    }
+  }
 
   private getProviderService(provider: PaymentProviderType) {
     switch (provider) {
@@ -47,13 +86,105 @@ export class PaymentService {
     const user = await this.usersService.findById(params.userId);
     if (!user) throw new NotFoundException('User not found');
 
+    if (params.planSlug === 'free') {
+      throw new BadRequestException('El plan Free no requiere pago.');
+    }
+    if (params.planSlug === 'premium' && !PREMIUM_CHECKOUT_ENABLED) {
+      throw new BadRequestException('El plan Premium no está disponible todavía.');
+    }
+
     const provider = this.paymentProviderService.getPaymentProvider(user);
+
+    const subs = await this.subscriptionService.findByUserId(params.userId);
+    const sameProvider = subs.filter((s) => s.paymentProvider === provider);
+    const active = sameProvider.find((s) => s.status === 'active');
+    if (active) {
+      throw new BadRequestException(
+        'Ya tenés una suscripción de pago activa. Cancelala en «Gestionar suscripción» antes de contratar otro plan.',
+      );
+    }
+
+    // Evitar preapprovals / filas incompletas colgadas (ej. usuario reintenta checkout).
+    for (const s of sameProvider.filter((x) => x.status === 'incomplete')) {
+      if (provider === 'mercadopago') {
+        await this.mercadopagoService.cancelSubscription({
+          externalSubscriptionId: s.externalSubscriptionId,
+        });
+        await this.subscriptionService.updateStatus('mercadopago', s.externalSubscriptionId, {
+          status: 'canceled',
+        });
+      }
+    }
+
     const service = this.getProviderService(provider);
+    const returnUrl = this.resolveCheckoutRedirectUrl(params.returnUrl, '/admin/profile/subscription?success=1');
+    const cancelUrl = this.resolveCheckoutRedirectUrl(params.cancelUrl, '/admin/profile/subscription?cancel=1');
     return service.createSubscription({
       ...params,
+      returnUrl,
+      cancelUrl,
       payerEmail: user.email ?? undefined,
       metadata: { userId: params.userId },
     });
+  }
+
+  /**
+   * Checkout confirmado: registra sesión (precio, términos) y crea la suscripción en el proveedor.
+   */
+  async checkoutSubscription(params: {
+    userId: string;
+    planSlug: string;
+    planType: PlanType;
+    returnUrl: string;
+    cancelUrl: string;
+    acceptedTerms: boolean;
+  }): Promise<CreateSubscriptionResult> {
+    if (!params.acceptedTerms) {
+      throw new BadRequestException('Debés aceptar los términos y condiciones y la política de privacidad.');
+    }
+
+    const user = await this.usersService.findById(params.userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const country = this.paymentProviderService.getBillingCountry(user) ?? 'GLOBAL';
+    const priceRow = await this.pricingService.getPlanPrice(params.planSlug as PlanSlug, country);
+    if (!priceRow) {
+      throw new BadRequestException('No hay precio disponible para este plan en tu región.');
+    }
+    const amount = params.planType === 'yearly' ? priceRow.priceYearly : priceRow.price;
+    const provider = this.paymentProviderService.getPaymentProvider(user);
+
+    const sessionId = await this.subscriptionService.createCheckoutSession({
+      userId: params.userId,
+      planSlug: params.planSlug,
+      billingCycle: params.planType,
+      priceAmount: amount,
+      currency: priceRow.currency,
+      paymentProvider: provider,
+    });
+
+    try {
+      const result = await this.createSubscription({
+        userId: params.userId,
+        planSlug: params.planSlug,
+        planType: params.planType,
+        returnUrl: params.returnUrl,
+        cancelUrl: params.cancelUrl,
+      });
+      const sub = await this.subscriptionService.findByExternalId(provider, result.subscriptionId);
+      if (sub) {
+        await this.subscriptionService.updateCheckoutSession(sessionId, {
+          status: 'redirected',
+          subscriptionId: sub.id,
+        });
+      } else {
+        await this.subscriptionService.updateCheckoutSession(sessionId, { status: 'redirected' });
+      }
+      return result;
+    } catch (e) {
+      await this.subscriptionService.updateCheckoutSession(sessionId, { status: 'failed' });
+      throw e;
+    }
   }
 
   /**

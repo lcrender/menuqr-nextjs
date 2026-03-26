@@ -30,7 +30,7 @@ export interface IPaymentProviderService {
     /** Email del pagador (obligatorio Mercado Pago /preapproval con status pending). */
     payerEmail?: string;
     planType: PlanType;
-    planSlug: string; // basic | pro | premium
+    planSlug: string; // starter | pro | premium
     returnUrl: string;
     cancelUrl: string;
     metadata?: Record<string, string>;

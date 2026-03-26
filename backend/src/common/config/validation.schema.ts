@@ -111,6 +111,8 @@ export const validationSchema = Joi.object({
   // ========================================
   MERCADOPAGO_ACCESS_TOKEN: Joi.string().optional().allow(''),
   MERCADOPAGO_ACCESS_TOKEN_TEST: Joi.string().optional().allow(''),
+  /** Origen público (https) para back_url en local con túnel; MP rechaza localhost. */
+  MERCADOPAGO_PUBLIC_FRONTEND_URL: Joi.string().uri().optional().allow('', null),
 
   // ========================================
   // DESARROLLO

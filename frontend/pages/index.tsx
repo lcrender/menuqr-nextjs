@@ -24,16 +24,6 @@ export default function Home() {
     };
   }, []);
 
-  useEffect(() => {
-    // Si ya hay sesión, redirigir al admin (respeta sesión al abrir nueva pestaña)
-    if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('accessToken');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      router.replace('/admin');
-    }
-  }, [router]);
-
   const handleTryFree = () => {
     router.push('/login?action=register');
   };

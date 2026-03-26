@@ -52,5 +52,10 @@ export class UpdateMenuItemDto {
   @IsString({ each: true })
   @IsOptional()
   iconCodes?: string[];
+
+  @ApiProperty({ description: 'Marca el producto como destacado (si el plan lo permite)', required: false })
+  @IsBoolean()
+  @IsOptional()
+  highlighted?: boolean;
 }
 

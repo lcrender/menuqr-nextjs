@@ -11,6 +11,7 @@ type PlanRow = {
   productLimit: number;
   gourmetTemplate: boolean;
   productPhotosAllowed: boolean;
+  productHighlightAllowed: boolean;
   proOnlyTemplatesInAdmin: string[];
   note?: string;
 };
@@ -93,6 +94,7 @@ export default function AdminConfigPlanLimits() {
           productLimit: p.productLimit,
           gourmetTemplate: p.gourmetTemplate,
           productPhotosAllowed: p.productPhotosAllowed,
+          productHighlightAllowed: p.productHighlightAllowed,
           proOnlyTemplatesInAdmin: p.proOnlyTemplatesInAdmin || [],
         })),
       };
@@ -225,6 +227,20 @@ export default function AdminConfigPlanLimits() {
                         />
                         <label className="form-check-label" htmlFor={`ph-${p.key}`}>
                           Fotos en productos permitidas
+                        </label>
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`hl-${p.key}`}
+                          checked={p.productHighlightAllowed}
+                          onChange={(e) => updatePlan(p.key, { productHighlightAllowed: e.target.checked })}
+                        />
+                        <label className="form-check-label" htmlFor={`hl-${p.key}`}>
+                          Destacar producto permitido
                         </label>
                       </div>
                     </div>

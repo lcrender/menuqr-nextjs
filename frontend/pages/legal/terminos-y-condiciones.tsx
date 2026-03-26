@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import LegalPlanLimitsSummary from '../../components/LegalPlanLimitsSummary';
 
 export default function TerminosYCondiciones() {
   return (
@@ -103,36 +104,39 @@ export default function TerminosYCondiciones() {
                   </p>
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>4. Planes del Servicio</h2>
-                  <p>La Plataforma ofrece un plan gratuito y un plan de suscripción pago.</p>
-                  <h3 style={{ fontSize: '1rem', marginTop: '12px' }}>Plan Free</h3>
-                  <p>El plan gratuito permite:</p>
-                  <ul>
-                    <li>hasta 1 restaurante</li>
-                    <li>hasta 30 productos (las variantes cuentan como productos adicionales)</li>
-                    <li>uso de plantillas básicas</li>
-                  </ul>
-                  <h3 style={{ fontSize: '1rem', marginTop: '12px' }}>Plan Pro</h3>
-                  <p>El plan Pro permite:</p>
-                  <ul>
-                    <li>hasta 3 restaurantes</li>
-                    <li>hasta 300 productos (las variantes cuentan como productos adicionales)</li>
-                    <li>uso de plantillas Pro</li>
-                    <li>carga de fotografías de productos</li>
-                    <li>soporte prioritario</li>
-                  </ul>
-                  <p>Las características de los planes podrán modificarse en el futuro.</p>
+                  <p>
+                    La Plataforma ofrece un plan gratuito y planes de suscripción pago (por ejemplo Starter y Pro), con
+                    distintos límites de uso y funcionalidades.
+                  </p>
+                  <p className="mb-2">
+                    Los cupos de restaurantes, menús y productos, así como el uso de fotos en productos y plantillas
+                    avanzadas, dependen del plan contratado. A modo de referencia, los límites vigentes son:
+                  </p>
+                  <LegalPlanLimitsSummary />
+                  <p>
+                    Las funcionalidades comerciales o de marketing adicionales (por ejemplo idiomas, soporte, plantillas
+                    concretas) se describen en la página principal de la Plataforma y pueden actualizarse sin perjuicio de
+                    los cupos numéricos anteriores.
+                  </p>
+                  <p>Las características de los planes podrán modificarse en el futuro; prevalecerá la configuración publicada en la Plataforma.</p>
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>5. Pagos y Suscripciones</h2>
-                  <p>El plan Pro se contrata mediante suscripción mensual o anual.</p>
-                  <p>Los pagos se procesan a través de la plataforma de pagos MercadoPago.</p>
                   <p>
-                    Al contratar el plan Pro, el usuario acepta que:
+                    Los planes de pago (por ejemplo Starter y Pro) se contratan mediante suscripción mensual o anual,
+                    según las opciones disponibles en la cuenta.
+                  </p>
+                  <p>
+                    Los pagos pueden procesarse a través de proveedores habilitados (por ejemplo MercadoPago o PayPal,
+                    según región y configuración).
+                  </p>
+                  <p>
+                    Al contratar un plan de pago, el usuario acepta que:
                   </p>
                   <ul>
                     <li>la suscripción puede renovarse automáticamente</li>
-                    <li>los cobros serán gestionados por MercadoPago</li>
+                    <li>los cobros serán gestionados por el proveedor de pagos correspondiente (por ejemplo MercadoPago o PayPal, según región)</li>
                     <li>
-                      las condiciones de pago también están sujetas a los términos de MercadoPago.
+                      las condiciones de pago también están sujetas a los términos y políticas de ese proveedor.
                     </li>
                   </ul>
 

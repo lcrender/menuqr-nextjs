@@ -22,6 +22,7 @@ export type PlanLimitPersistPayload = {
   productLimit: number;
   gourmetTemplate: boolean;
   productPhotosAllowed: boolean;
+  productHighlightAllowed: boolean;
   proOnlyTemplatesInAdmin: string[];
 };
 
@@ -32,6 +33,7 @@ type OverrideRow = {
   product_limit: number;
   gourmet_template: boolean;
   product_photos_allowed: boolean;
+  product_highlight_allowed: boolean;
   pro_only_templates: unknown;
 };
 
@@ -70,6 +72,7 @@ export class PlanLimitsService {
       productLimit: o.product_limit,
       gourmetTemplate: o.gourmet_template,
       productPhotosAllowed: o.product_photos_allowed,
+      productHighlightAllowed: o.product_highlight_allowed,
       proOnlyTemplatesInAdmin: this.parseProOnlyTemplates(o.pro_only_templates),
     };
   }
@@ -84,7 +87,7 @@ export class PlanLimitsService {
     try {
       overrides = await this.postgres.queryRaw<OverrideRow>(
         `SELECT plan_key, restaurant_limit, menu_limit, product_limit,
-                gourmet_template, product_photos_allowed, pro_only_templates
+                gourmet_template, product_photos_allowed, product_highlight_allowed, pro_only_templates
          FROM tenant_plan_limit_overrides`,
       );
     } catch (e) {
@@ -148,7 +151,7 @@ export class PlanLimitsService {
   }
 
   /**
-   * Tras bajar a free/basic: restaurantes con plantilla no permitida en el plan destino pasan a classic.
+   * Tras bajar a free/starter: restaurantes con plantilla no permitida en el plan destino pasan a classic.
    */
   async resetTemplatesIncompatibleWithPlan(tenantId: string, targetPlanKey: string): Promise<void> {
     const row = await this.getEffectiveRow(targetPlanKey);
@@ -179,14 +182,15 @@ export class PlanLimitsService {
       await this.postgres.executeRaw(
         `INSERT INTO tenant_plan_limit_overrides (
            plan_key, restaurant_limit, menu_limit, product_limit,
-           gourmet_template, product_photos_allowed, pro_only_templates, updated_at
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, NOW())
+           gourmet_template, product_photos_allowed, product_highlight_allowed, pro_only_templates, updated_at
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, NOW())
          ON CONFLICT (plan_key) DO UPDATE SET
            restaurant_limit = EXCLUDED.restaurant_limit,
            menu_limit = EXCLUDED.menu_limit,
            product_limit = EXCLUDED.product_limit,
            gourmet_template = EXCLUDED.gourmet_template,
            product_photos_allowed = EXCLUDED.product_photos_allowed,
+           product_highlight_allowed = EXCLUDED.product_highlight_allowed,
            pro_only_templates = EXCLUDED.pro_only_templates,
            updated_at = NOW()`,
         [
@@ -196,6 +200,7 @@ export class PlanLimitsService {
           p.productLimit,
           p.gourmetTemplate,
           p.productPhotosAllowed,
+          p.productHighlightAllowed,
           JSON.stringify(p.proOnlyTemplatesInAdmin),
         ],
       );
@@ -214,5 +219,10 @@ export class PlanLimitsService {
         throw new BadRequestException(`${name} debe ser un entero >= -1 (-1 = ilimitado donde aplica)`);
       }
     }
+  }
+
+  async allowsProductHighlight(plan: string): Promise<boolean> {
+    const row = await this.getEffectiveRow(plan);
+    return row.productHighlightAllowed;
   }
 }

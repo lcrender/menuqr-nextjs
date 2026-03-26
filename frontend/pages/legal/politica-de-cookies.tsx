@@ -50,6 +50,11 @@ export default function PoliticaDeCookies() {
                   <p>
                     Al utilizar la Plataforma, el usuario acepta el uso de cookies conforme a esta política.
                   </p>
+                  <p className="small text-muted" style={{ marginTop: '12px' }}>
+                    Para planes de servicio, precios y límites de uso (restaurantes, menús, productos), consulte los{' '}
+                    <Link href="/legal/terminos-y-condiciones">Términos y Condiciones</Link> y la información publicada en
+                    la página principal de la Plataforma; allí se reflejan los valores vigentes.
+                  </p>
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>1. Qué son las Cookies</h2>
                   <p>

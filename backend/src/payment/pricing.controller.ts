@@ -1,5 +1,6 @@
 import { Controller, Get, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { OptionalJwtAuthGuard } from '../common/guards/optional-jwt-auth.guard';
 import { PricingService } from './pricing.service';
 import { UsersService } from '../users/users.service';
@@ -12,6 +13,8 @@ import { SubscriptionService } from '../subscription/subscription.service';
  */
 @ApiTags('pricing')
 @Controller('pricing')
+/** Sin esto, el JwtAuthGuard global devuelve 401 con token expirado y el front (landing) redirige a /login. */
+@Public()
 @UseGuards(OptionalJwtAuthGuard)
 export class PricingController {
   constructor(

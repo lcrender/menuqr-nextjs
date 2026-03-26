@@ -19,7 +19,7 @@ interface CatalogPlanDto {
   name: string;
   description: string | null;
   prices: PlanPriceDto[];
-  mapsToTenantPlan: 'basic' | 'pro';
+  mapsToTenantPlan: 'free' | 'starter' | 'pro' | 'premium';
 }
 
 interface TenantPlanRowDto {
@@ -30,6 +30,7 @@ interface TenantPlanRowDto {
   productLimit: number;
   gourmetTemplate: boolean;
   productPhotosAllowed: boolean;
+  productHighlightAllowed: boolean;
   standardTemplates: string[];
   proOnlyTemplates: string[];
   note?: string;
@@ -158,7 +159,7 @@ export default function AdminConfigSubscriptions() {
               <div className="px-3 px-md-4 py-3 border-bottom bg-light">
                 <h2 className="h5 fw-semibold mb-0">Planes del tenant (límites en la app)</h2>
                 <p className="small text-muted mb-0 mt-1">
-                  Restaurantes, menús y productos; reglas de plantilla Gourmet y fotos en productos.
+                  Restaurantes, menús y productos; plantilla Gourmet, fotos y destacar productos.
                 </p>
               </div>
               <div className="table-responsive d-none d-md-block">
@@ -172,6 +173,7 @@ export default function AdminConfigSubscriptions() {
                       <th>Plantillas estándar</th>
                       <th>Plantilla Pro</th>
                       <th>Fotos productos</th>
+                      <th>Destacar producto</th>
                       <th>Nota</th>
                     </tr>
                   </thead>
@@ -194,6 +196,7 @@ export default function AdminConfigSubscriptions() {
                             : '—'}
                         </td>
                         <td>{row.productPhotosAllowed ? 'Sí' : 'No'}</td>
+                        <td>{row.productHighlightAllowed ? 'Sí' : 'No'}</td>
                         <td className="small text-muted">{row.note || '—'}</td>
                       </tr>
                     ))}
@@ -227,6 +230,9 @@ export default function AdminConfigSubscriptions() {
                       </div>
                       <div>
                         <strong>Fotos en productos:</strong> {row.productPhotosAllowed ? 'Sí' : 'No'}
+                      </div>
+                      <div>
+                        <strong>Destacar producto:</strong> {row.productHighlightAllowed ? 'Sí' : 'No'}
                       </div>
                       {row.note && (
                         <div className="text-muted mt-2">

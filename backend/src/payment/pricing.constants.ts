@@ -1,6 +1,12 @@
 /**
- * Facturación anual = N veces el precio mensual (configurable; hoy 10 meses de descuento implícito).
- * No hay fila extra en BD: se deriva del mensual.
+ * Suscripción Premium: datos en BD y proveedores listos; la UI y el checkout
+ * se activan cuando pase a true.
+ */
+export const PREMIUM_CHECKOUT_ENABLED = false;
+
+/**
+ * Si `plan_prices.price_yearly` es NULL, se usa: mensual × N (fallback).
+ * Con precios cargados en BD, mensual y anual son independientes (ofertas).
  */
 export const YEARLY_PRICE_MONTH_MULTIPLIER = 10;
 

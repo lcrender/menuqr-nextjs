@@ -10,7 +10,7 @@ const PLAN_DEFAULT: PlanStyle = {
 
 const PLAN_STYLES: Record<string, PlanStyle> = {
   free: PLAN_DEFAULT,
-  basic: { bg: 'bg-info', text: 'text-dark', label: 'Basic' },
+  starter: { bg: 'bg-info', text: 'text-dark', label: 'Starter' },
   pro: { bg: 'bg-primary', text: 'text-white', label: 'Pro' },
   pro_team: { bg: 'bg-primary', text: 'text-white', label: 'Pro Team' },
   premium: { bg: 'bg-dark', text: 'text-white', label: 'Premium' },
@@ -22,7 +22,8 @@ interface PlanBadgeProps {
 }
 
 export default function PlanBadge({ plan, className = '' }: PlanBadgeProps) {
-  const key = (plan || 'free').toLowerCase();
+  const raw = (plan || 'free').toLowerCase();
+  const key = raw === 'basic' ? 'starter' : raw;
   const style: PlanStyle = PLAN_STYLES[key] ?? PLAN_DEFAULT;
   const label = PLAN_STYLES[key]?.label || (plan ? String(plan) : 'Free');
   return (

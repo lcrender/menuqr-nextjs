@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import LegalPlanLimitsSummary from '../../components/LegalPlanLimitsSummary';
 
 export default function PoliticaDePrivacidad() {
   return (
@@ -91,6 +92,11 @@ export default function PoliticaDePrivacidad() {
                     Si el usuario lo acepta, también podrá recibir comunicaciones informativas o promocionales por correo
                     electrónico.
                   </p>
+                  <p style={{ marginTop: '16px' }}>
+                    La cantidad de restaurantes, menús y productos que puede gestionar cada cuenta depende del plan
+                    contratado. Los topes numéricos vigentes (referencia) son:
+                  </p>
+                  <LegalPlanLimitsSummary />
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>4. Servicios de Terceros</h2>
                   <p>La Plataforma puede utilizar servicios de terceros para su funcionamiento, incluyendo:</p>

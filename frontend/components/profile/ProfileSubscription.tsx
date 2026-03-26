@@ -80,7 +80,7 @@ export default function ProfileSubscription({
             href="/admin/profile/subscription"
             className={isFree ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary'}
           >
-            Actualizar suscripción
+            Gestionar suscripción
           </Link>
         </div>
       </div>
@@ -148,9 +148,6 @@ export default function ProfileSubscription({
           </div>
         )}
 
-        <p className="small text-muted mb-2">
-          Todas las acciones (cambiar plan, cancelar, reactivar, actualizar método de pago) se realizan desde la página de gestión y pasan por el backend.
-        </p>
         {subscriptions.some((s) => s.paymentProvider !== 'internal' && s.status === 'active') && (
           <p className="small mb-0">
             <strong>Cancelar suscripción:</strong> usa el botón &quot;Cancelar suscripción&quot; en la suscripción activa de pago (arriba) o ve a <Link href="/admin/profile/subscription">Gestionar suscripción</Link>. Se te pedirá confirmación antes de cancelar.

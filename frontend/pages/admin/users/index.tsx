@@ -129,7 +129,7 @@ export default function Users() {
 
   const handlePlanChange = async (e: React.ChangeEvent<HTMLSelectElement>, user: UserStats) => {
     e.stopPropagation();
-    const newPlan = e.target.value as 'free' | 'basic' | 'pro' | 'premium' | 'pro_team';
+    const newPlan = e.target.value as 'free' | 'starter' | 'pro' | 'premium' | 'pro_team';
     if (!user.tenantId) return;
     setActionLoading(user.id);
     try {
@@ -172,6 +172,7 @@ export default function Users() {
       case 'pro':
       case 'pro_team':
         return 'bg-info';
+      case 'starter':
       case 'basic':
         return 'bg-primary';
       case 'free':
@@ -190,8 +191,9 @@ export default function Users() {
         return 'Pro';
       case 'pro_team':
         return 'Pro Team';
+      case 'starter':
       case 'basic':
-        return 'Básico';
+        return 'Starter';
       case 'free':
         return 'Gratis';
       default:
@@ -303,7 +305,7 @@ export default function Users() {
                           title="Solo para pruebas: cambia el plan del tenant sin generar suscripción"
                         >
                           <option value="free">Gratis</option>
-                          <option value="basic">Básico</option>
+                          <option value="starter">Starter</option>
                           <option value="pro">Pro</option>
                           <option value="pro_team">Pro Team</option>
                           <option value="premium">Premium</option>

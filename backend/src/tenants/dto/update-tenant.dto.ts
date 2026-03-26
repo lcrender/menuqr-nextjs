@@ -7,9 +7,9 @@ export class UpdateTenantDto {
   @IsOptional()
   name?: string;
 
-  @ApiProperty({ description: 'Plan del tenant', enum: ['free', 'basic', 'pro', 'premium', 'pro_team'], required: false })
+  @ApiProperty({ description: 'Plan del tenant', enum: ['free', 'starter', 'pro', 'premium', 'pro_team'], required: false })
   @IsString()
-  @IsIn(['free', 'basic', 'pro', 'premium', 'pro_team'])
+  @IsIn(['free', 'starter', 'pro', 'premium', 'pro_team'])
   @IsOptional()
   plan?: string;
 
