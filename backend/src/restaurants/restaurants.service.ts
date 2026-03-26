@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Logger, ForbiddenEx
 import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService, RESTAURANT_TEMPLATE_IDS } from '../common/plan-limits/plan-limits.service';
 import { ConfigService } from '@nestjs/config';
+import { I18nService } from '../common/i18n/i18n.service';
 
 @Injectable()
 export class RestaurantsService {
@@ -11,6 +12,7 @@ export class RestaurantsService {
     private readonly postgres: PostgresService,
     private readonly configService: ConfigService,
     private readonly planLimits: PlanLimitsService,
+    private readonly i18nService: I18nService,
   ) {}
 
   /**
@@ -506,6 +508,15 @@ export class RestaurantsService {
       }
     }
 
+    // Compatibilidad i18n: persistimos campos traducibles en `translations` (default es-ES).
+    const restaurantTranslations: { [key: string]: string } = {
+      name: data.name,
+    };
+    if (data.description !== undefined) {
+      restaurantTranslations.description = data.description || '';
+    }
+    await this.i18nService.saveTranslations(tenantId, 'restaurant', id, restaurantTranslations, 'es-ES');
+
     return this.findById(id, tenantId);
   }
 
@@ -700,6 +711,21 @@ export class RestaurantsService {
       `UPDATE restaurants SET ${updates.join(', ')} WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1}`,
       params
     );
+
+    // Compatibilidad i18n: persistimos cambios en `translations` (default es-ES).
+    const translations: { [key: string]: string } = {};
+    let hasAny = false;
+    if (data.name !== undefined) {
+      translations.name = data.name;
+      hasAny = true;
+    }
+    if (data.description !== undefined) {
+      translations.description = data.description || '';
+      hasAny = true;
+    }
+    if (hasAny) {
+      await this.i18nService.saveTranslations(tenantId, 'restaurant', id, translations, 'es-ES');
+    }
 
     this.logger.debug(`UPDATE ejecutado. Recargando restaurante ${id}`);
     const updated = await this.findById(id, tenantId);

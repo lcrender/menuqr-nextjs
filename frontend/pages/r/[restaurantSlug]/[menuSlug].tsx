@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { getApiBaseUrl } from '../../../lib/config';
+import { changeLanguage, getCurrentLanguage, isLanguageAvailable } from '../../../src/i18n/config';
 import ClassicTemplate from '../../../templates/classic/ClassicTemplate';
 import MinimalistTemplate from '../../../templates/minimalist/MinimalistTemplate';
 import FoodieTemplate from '../../../templates/foodie/FoodieTemplate';
@@ -115,11 +116,22 @@ const iconLabels: { [key: string]: string } = {
 
 export default function MenuPage() {
   const router = useRouter();
-  const { restaurantSlug, menuSlug } = router.query;
+  const { restaurantSlug, menuSlug, lang } = router.query;
   const [menu, setMenu] = useState<Menu | null>(null);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [locale, setLocale] = useState<string>(() => getCurrentLanguage());
+
+  // Preparación i18n: si existe `?lang=...` en la URL, lo respetamos.
+  useEffect(() => {
+    if (typeof lang === 'string' && isLanguageAvailable(lang)) {
+      changeLanguage(lang);
+      setLocale(lang);
+      return;
+    }
+    setLocale(getCurrentLanguage());
+  }, [lang]);
 
   useEffect(() => {
     if (!restaurantSlug || !menuSlug) return;
@@ -130,12 +142,14 @@ export default function MenuPage() {
         // Obtener el menú
         const menuResponse = await axios.get(
           `${getApiBaseUrl()}/public/restaurants/${restaurantSlug}/menus/${menuSlug}`,
+          { params: { locale } },
         );
         setMenu(menuResponse.data);
         
         // Obtener el restaurante para tener todos los datos necesarios
         const restaurantResponse = await axios.get(
           `${getApiBaseUrl()}/public/restaurants/${restaurantSlug}`,
+          { params: { locale } },
         );
         const restaurantData = restaurantResponse.data;
         
@@ -176,7 +190,7 @@ export default function MenuPage() {
     };
 
     fetchData();
-  }, [restaurantSlug, menuSlug]);
+  }, [restaurantSlug, menuSlug, locale]);
 
   if (loading) {
     return (

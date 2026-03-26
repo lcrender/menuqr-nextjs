@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
+import { I18nService } from '../common/i18n/i18n.service';
 
 @Injectable()
 export class MenuSectionsService {
   private readonly logger = new Logger(MenuSectionsService.name);
 
-  constructor(private readonly postgres: PostgresService) {}
+  constructor(
+    private readonly postgres: PostgresService,
+    private readonly i18nService: I18nService,
+  ) {}
 
   async findAll(tenantId: string, menuId: string) {
     return this.postgres.queryRaw<any>(
@@ -83,6 +87,14 @@ export class MenuSectionsService {
       ]
     );
 
+    await this.i18nService.saveTranslations(
+      tenantId,
+      'menu_section',
+      id,
+      { name: data.name },
+      'es-ES',
+    );
+
     return this.findById(id, tenantId);
   }
 
@@ -122,6 +134,16 @@ export class MenuSectionsService {
       `UPDATE menu_sections SET ${updates.join(', ')} WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1}`,
       params
     );
+
+    if (data.name !== undefined) {
+      await this.i18nService.saveTranslations(
+        tenantId,
+        'menu_section',
+        id,
+        { name: data.name },
+        'es-ES',
+      );
+    }
 
     return this.findById(id, tenantId);
   }

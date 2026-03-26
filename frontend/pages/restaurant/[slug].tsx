@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { getApiBaseUrl } from '../../lib/config';
+import { changeLanguage, getCurrentLanguage, isLanguageAvailable } from '../../src/i18n/config';
 import ClassicTemplate from '../../templates/classic/ClassicTemplate';
 import MinimalistTemplate from '../../templates/minimalist/MinimalistTemplate';
 import FoodieTemplate from '../../templates/foodie/FoodieTemplate';
@@ -128,7 +129,7 @@ const formatPrice = (price: ItemPrice) => {
 
 export default function RestaurantPage() {
   const router = useRouter();
-  const { slug } = router.query;
+  const { slug, lang } = router.query;
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [menuList, setMenuList] = useState<{ id: string; name: string; slug: string; description?: string }[]>([]);
@@ -136,6 +137,17 @@ export default function RestaurantPage() {
   const [loadingMenu, setLoadingMenu] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [locale, setLocale] = useState<string>(() => getCurrentLanguage());
+
+  // Preparación i18n: si existe `?lang=...` en la URL, lo respetamos.
+  useEffect(() => {
+    if (typeof lang === 'string' && isLanguageAvailable(lang)) {
+      changeLanguage(lang);
+      setLocale(lang);
+      return;
+    }
+    setLocale(getCurrentLanguage());
+  }, [lang]);
 
   useEffect(() => {
     if (!slug) return;
@@ -145,6 +157,7 @@ export default function RestaurantPage() {
         setLoading(true);
         const response = await axios.get(
           `${getApiBaseUrl()}/public/restaurants/${slug}`,
+          { params: { locale } },
         );
         const data = response.data;
         
@@ -213,7 +226,7 @@ export default function RestaurantPage() {
     };
 
     fetchRestaurant();
-  }, [slug]);
+  }, [slug, locale]);
 
   // Título de página para que se vea "Menu QR Nombre del restaurante"
   // en el navegador (importante cuando se comparte/abre el link del restaurante).
@@ -230,6 +243,7 @@ export default function RestaurantPage() {
     try {
       const response = await axios.get(
         `${getApiBaseUrl()}/public/restaurants/${slug}/menus/${menuSlug}`,
+        { params: { locale } },
       );
       setSelectedMenu(response.data);
     } catch (err: any) {

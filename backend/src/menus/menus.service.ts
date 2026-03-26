@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import { QRService } from '../qr/qr.service';
+import { I18nService } from '../common/i18n/i18n.service';
 
 @Injectable()
 export class MenusService {
@@ -11,6 +12,7 @@ export class MenusService {
     private readonly postgres: PostgresService,
     private readonly qrService: QRService,
     private readonly planLimits: PlanLimitsService,
+    private readonly i18nService: I18nService,
   ) {}
 
   async findAll(tenantId: string | null, restaurantId?: string, menuName?: string): Promise<any[]> {
@@ -267,6 +269,16 @@ export class MenusService {
       ]
     );
 
+    // Mantener compatibilidad/compatibilizar con i18n:
+    // persistimos los campos traducibles en `translations` (fallback: es-ES).
+    const translations: { [key: string]: string } = {
+      name: data.name,
+    };
+    if (data.description !== undefined) {
+      translations.description = data.description || '';
+    }
+    await this.i18nService.saveTranslations(tenantId, 'menu', id, translations, 'es-ES');
+
     return this.findById(id, tenantId);
   }
 
@@ -390,6 +402,23 @@ export class MenusService {
     );
     
     this.logger.log(`Menú ${id} actualizado exitosamente`);
+
+    // Persistir cambios traducibles en `translations`.
+    // Nota: en la tabla legacy el valor puede ser `NULL`, pero `translations.value` no puede ser NULL,
+    // por eso usamos string vacío para permitir que el fallback vuelva a columnas legacy.
+    const translations: { [key: string]: string } = {};
+    let hasAny = false;
+    if (data.name !== undefined) {
+      translations.name = data.name;
+      hasAny = true;
+    }
+    if (data.description !== undefined) {
+      translations.description = data.description || '';
+      hasAny = true;
+    }
+    if (hasAny) {
+      await this.i18nService.saveTranslations(tenantId, 'menu', id, translations, 'es-ES');
+    }
 
     return this.findById(id, tenantId);
   }

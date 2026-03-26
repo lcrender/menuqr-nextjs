@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
+import { I18nService } from '../common/i18n/i18n.service';
 
 @Injectable()
 export class MenuItemsService {
@@ -9,6 +10,7 @@ export class MenuItemsService {
   constructor(
     private readonly postgres: PostgresService,
     private readonly planLimits: PlanLimitsService,
+    private readonly i18nService: I18nService,
   ) {}
 
   async findAll(tenantId: string | null, menuId?: string, sectionId?: string, productName?: string, restaurantId?: string) {
@@ -519,6 +521,15 @@ export class MenuItemsService {
       ]
     );
 
+    // Persistir campos traducibles en `translations` (compatibilidad i18n).
+    const itemTranslations: { [key: string]: string } = {
+      name: data.name,
+    };
+    if (data.description !== undefined) {
+      itemTranslations.description = data.description || '';
+    }
+    await this.i18nService.saveTranslations(tenantId, 'menu_item', id, itemTranslations, 'es-ES');
+
     // Crear precios si se proporcionan
     if (data.prices && data.prices.length > 0) {
       for (const price of data.prices) {
@@ -706,6 +717,23 @@ export class MenuItemsService {
         `UPDATE menu_items SET ${updates.join(', ')} WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1}`,
         params
       );
+    }
+
+    // Persistir cambios traducibles en `translations`.
+    // `translations.value` no puede ser NULL, así que usamos string vacío
+    // para que el fallback vuelva a las columnas legacy (que podrían quedar en NULL).
+    const translations: { [key: string]: string } = {};
+    let hasAny = false;
+    if (data.name !== undefined) {
+      translations.name = data.name;
+      hasAny = true;
+    }
+    if (data.description !== undefined) {
+      translations.description = data.description || '';
+      hasAny = true;
+    }
+    if (hasAny) {
+      await this.i18nService.saveTranslations(tenantId, 'menu_item', id, translations, 'es-ES');
     }
 
     return this.findById(id, tenantId);
