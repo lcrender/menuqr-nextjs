@@ -1094,6 +1094,87 @@ body {
   box-sizing: border-box;
 }
 
+/* Vista previa ampliada (desktop): no invade toda la pantalla */
+.admin-templates-preview-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 2200;
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.admin-templates-preview-drawer-panel {
+  width: min(520px, 90vw);
+  height: 100%;
+  background: #ffffff;
+  border-left: 1px solid rgba(229, 231, 235, 1);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-templates-preview-drawer-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(229, 231, 235, 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-templates-preview-drawer-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.admin-templates-preview-drawer-img {
+  width: 100%;
+  height: auto;
+  max-height: 75vh;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.admin-templates-preview-drawer-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(229, 231, 235, 1);
+}
+
+.admin-templates-preview-drawer-cta {
+  width: 100%;
+}
+
+@media (max-width: 767.98px) {
+  /* En móvil, que el preview se sienta como modal centrado */
+  .admin-templates-preview-drawer-overlay {
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+  }
+
+  .admin-templates-preview-drawer-panel {
+    width: 96vw;
+    max-width: 520px;
+    height: auto;
+    max-height: 92vh;
+    border-left: none;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .admin-templates-preview-drawer-body {
+    max-height: calc(92vh - 120px);
+  }
+
+  .admin-templates-preview-drawer-img {
+    max-height: 60vh;
+  }
+}
+
 @media (min-width: 576px) and (max-width: 767.98px) {
   .admin-templates-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

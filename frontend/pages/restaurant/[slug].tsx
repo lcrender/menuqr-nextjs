@@ -215,6 +215,14 @@ export default function RestaurantPage() {
     fetchRestaurant();
   }, [slug]);
 
+  // Título de página para que se vea "Menu QR Nombre del restaurante"
+  // en el navegador (importante cuando se comparte/abre el link del restaurante).
+  useEffect(() => {
+    if (restaurant?.name) {
+      document.title = `Menu QR ${restaurant.name}`;
+    }
+  }, [restaurant?.name]);
+
   const loadMenu = async (menuSlug: string) => {
     if (!slug) return;
     

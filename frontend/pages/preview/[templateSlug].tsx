@@ -46,6 +46,7 @@ export default function PreviewPage() {
   const router = useRouter();
   const { templateSlug } = router.query;
   const slug = typeof templateSlug === 'string' ? templateSlug : '';
+  const embed = typeof router.query.embed === 'string' && (router.query.embed === '1' || router.query.embed === 'true');
 
   const data = slug ? getPreviewData(slug) : null;
   const validIds = getPreviewTemplateIds();
@@ -115,12 +116,82 @@ export default function PreviewPage() {
 
   const template = (restaurant.template || menu.template || 'classic') as string;
 
-  if (template === 'classic') return <ClassicTemplate {...commonProps} />;
-  if (template === 'minimalist') return <MinimalistTemplate {...commonProps} />;
-  if (template === 'foodie') return <FoodieTemplate {...commonProps} />;
-  if (template === 'burgers') return <BurgersTemplate {...commonProps} />;
-  if (template === 'gourmet') return <GourmetTemplate {...commonProps} />;
-  if (template === 'italianFood') return <ItalianFoodTemplate {...commonProps} />;
+  const templateElement: JSX.Element = (() => {
+    if (template === 'classic') return <ClassicTemplate {...commonProps} />;
+    if (template === 'minimalist') return <MinimalistTemplate {...commonProps} />;
+    if (template === 'foodie') return <FoodieTemplate {...commonProps} />;
+    if (template === 'burgers') return <BurgersTemplate {...commonProps} />;
+    if (template === 'gourmet') return <GourmetTemplate {...commonProps} />;
+    if (template === 'italianFood') return <ItalianFoodTemplate {...commonProps} />;
+    return <ClassicTemplate {...commonProps} />;
+  })();
 
-  return <ClassicTemplate {...commonProps} />;
+  // En embed, renderizamos el template “real” directamente (sin frame), para
+  // que las media queries/Bootstrap responsive usen el viewport del iframe.
+  if (embed) {
+    return templateElement;
+  }
+
+  const iframeSrc = `/preview/${encodeURIComponent(slug)}?embed=1`;
+
+  return (
+    <>
+      {/* Desktop: mockup de teléfono (usa iframe con viewport chico) */}
+      <div className="preview-phone-wrap d-none d-md-flex">
+        <div className="preview-phone" aria-label="Mockup de teléfono">
+          <div className="preview-phone-screen">
+            <iframe
+              title="Vista previa mobile"
+              src={iframeSrc}
+              className="preview-phone-iframe"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile real: render normal (sin mockup), para que el responsive sea natural */}
+      <div className="preview-mobile-wrap d-md-none">{templateElement}</div>
+
+      <style jsx>{`
+        .preview-phone-wrap {
+          min-height: 100vh;
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          padding: 24px 16px;
+          background: #f8fafc;
+        }
+
+        .preview-phone {
+          width: 390px;
+          max-width: 96vw;
+          border-radius: 42px;
+          background: #0b1220;
+          padding: 10px;
+          box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .preview-phone-screen {
+          width: 100%;
+          height: calc(100vh - 48px);
+          background: #ffffff;
+          border-radius: 32px;
+          overflow: hidden;
+          position: relative;
+        }
+
+        .preview-phone-iframe {
+          width: 100%;
+          height: 100%;
+          border: 0;
+          display: block;
+        }
+
+        .preview-mobile-wrap {
+          min-height: 100vh;
+          background: #ffffff;
+        }
+      `}</style>
+    </>
+  );
 }

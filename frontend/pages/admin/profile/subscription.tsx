@@ -160,7 +160,7 @@ export default function SubscriptionManagement() {
               <h2 className="h5 mb-0">Tu suscripción</h2>
               {currentPlan && (
                 <span className="badge bg-secondary text-capitalize">
-                  Plan (tenant): {currentPlan === 'pro_team' ? 'Pro Team' : currentPlan}
+                  Plan: {currentPlan === 'pro_team' ? 'Pro Team' : currentPlan}
                 </span>
               )}
             </div>

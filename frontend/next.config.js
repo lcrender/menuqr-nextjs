@@ -49,6 +49,24 @@ const nextConfig = {
           },
         ],
       },
+      // Permitir que /preview se embece en un iframe (usado para mockup móvil)
+      {
+        source: '/preview/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+        ],
+      },
       {
         source: '/api/(.*)',
         headers: [

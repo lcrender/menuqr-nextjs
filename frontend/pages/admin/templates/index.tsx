@@ -72,12 +72,23 @@ export default function Templates() {
   const [selectedRestaurant, setSelectedRestaurant] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [previewSelectedId, setPreviewSelectedId] = useState<string | null>(null);
+  const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
   const [previewImageError, setPreviewImageError] = useState<Record<string, boolean>>({});
   const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState<string>('#007bff');
   const [secondaryColor, setSecondaryColor] = useState<string>('#0056b3');
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [alertModal, setAlertModal] = useState<{ title: string; message: string; variant: 'success' | 'error'; restaurantId?: string } | null>(null);
+
+  const openPreviewDrawer = () => {
+    if (typeof window === 'undefined') return;
+    setPreviewDrawerOpen(true);
+  };
+
+  const selectTemplateForPreview = (templateId: string) => {
+    setPreviewSelectedId(templateId);
+    setPreviewDrawerOpen(true);
+  };
 
   useEffect(() => {
     loadRestaurants();
@@ -290,7 +301,7 @@ export default function Templates() {
               )}
             </section>
 
-            <aside className="admin-templates-preview" aria-label="Vista previa de plantilla">
+            <aside className="admin-templates-preview d-none" aria-label="Vista previa de plantilla">
               {!previewSelectedId ? (
                 <p className="admin-templates-preview-placeholder">
                   Seleccione alguna plantilla para previsualizarla
@@ -304,14 +315,23 @@ export default function Templates() {
                       alt={`Vista previa ${templates.find(t => t.id === previewSelectedId)?.name ?? previewSelectedId}`}
                       className="admin-templates-preview-img"
                       onError={() => setPreviewImageError((prev) => ({ ...prev, [previewSelectedId]: true }))}
+                      onClick={openPreviewDrawer}
+                      style={{ cursor: 'pointer' }}
                       loading="lazy"
                     />
                   </div>
+                  <button
+                    type="button"
+                    className="admin-btn admin-templates-preview-cta d-none d-md-block"
+                    onClick={openPreviewDrawer}
+                  >
+                    Ver vista previa
+                  </button>
                   <a
                     href={`/preview/${previewSelectedId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="admin-btn admin-templates-preview-cta"
+                    className="admin-btn admin-templates-preview-cta d-md-none"
                   >
                     Ver vista previa
                   </a>
@@ -338,7 +358,7 @@ export default function Templates() {
                     boxShadow: previewSelectedId === template.id ? '0 0 0 2px var(--admin-primary, #6366f1)' : template.requiresProOrPremium ? '0 2px 12px rgba(180, 140, 45, 0.15)' : undefined,
                     background: template.requiresProOrPremium ? 'linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(255, 248, 230, 0.4) 100%)' : undefined,
                   }}
-                  onClick={() => setPreviewSelectedId(template.id)}
+                  onClick={() => selectTemplateForPreview(template.id)}
                 >
                   <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                     {template.requiresProOrPremium && (
@@ -467,6 +487,52 @@ export default function Templates() {
               }
             : {})}
         />
+      )}
+
+      {previewDrawerOpen && previewSelectedId && (
+        <div
+          className="admin-templates-preview-drawer-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vista previa ampliada"
+          onClick={() => setPreviewDrawerOpen(false)}
+        >
+          <div className="admin-templates-preview-drawer-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-templates-preview-drawer-header">
+              <div className="fw-semibold">
+                Vista previa: {templates.find((t) => t.id === previewSelectedId)?.name ?? previewSelectedId}
+              </div>
+              <button
+                type="button"
+                className="btn-close"
+                aria-label="Cerrar"
+                onClick={() => setPreviewDrawerOpen(false)}
+              />
+            </div>
+
+            <div className="admin-templates-preview-drawer-body">
+              <img
+                key={previewSelectedId}
+                src={previewImageError[previewSelectedId] ? PREVIEW_DEFAULT_IMAGE : `${PREVIEW_IMAGE_BASE}/preview-${previewSelectedId}.jpg`}
+                alt={`Vista previa ${templates.find(t => t.id === previewSelectedId)?.name ?? previewSelectedId}`}
+                className="admin-templates-preview-drawer-img"
+                onError={() => setPreviewImageError((prev) => ({ ...prev, [previewSelectedId]: true }))}
+                loading="lazy"
+              />
+            </div>
+
+            <div className="admin-templates-preview-drawer-footer">
+              <a
+                href={`/preview/${previewSelectedId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-btn admin-templates-preview-drawer-cta"
+              >
+                Abrir en nueva pestaña →
+              </a>
+            </div>
+          </div>
+        </div>
       )}
     </AdminLayout>
   );

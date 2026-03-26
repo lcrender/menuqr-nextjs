@@ -67,7 +67,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
   const shadowGlowSecondary = `0 0 28px ${hexToRgba(secondaryColor, 0.22)}`;
 
   return (
-    <div className="template-burgers restaurant-container" style={{ minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden', boxSizing: 'border-box' }}>
+      <div className="template-burgers restaurant-container" style={{ minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden', boxSizing: 'border-box' }}>
       <style jsx>{`
         .template-burgers {
           --primary-color: ${primaryColor};
@@ -157,7 +157,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
       )}
 
       {/* Restaurant Info */}
-      <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '50px 40px', position: 'relative' }}>
+        <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '50px 28px', position: 'relative' }}>
         {/* Iconos decorativos de hamburguesa */}
         <div style={{
           position: 'absolute',
@@ -204,14 +204,14 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
             minWidth: '250px',
             background: primaryColor,
             borderRadius: '20px',
-            padding: '32px 40px',
+            padding: '32px 28px',
             boxShadow: `${shadowDepth}, ${shadowGlowPrimary}`,
             color: 'white',
             border: '4px solid #000',
             boxSizing: 'border-box'
           }}>
             <h1 style={{ 
-              fontSize: '2.25rem', 
+              fontSize: '1.8rem', 
               fontWeight: '800', 
               marginBottom: '16px', 
               color: 'white',
@@ -472,11 +472,21 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
       </div>
 
       {/* Footer */}
-      <footer className="template-burgers footer mt-5" style={{ padding: '50px 40px', color: 'white', marginTop: '80px', width: '100%', borderRadius: '20px 20px 0 0', border: `4px solid ${secondaryColor}`, borderBottom: 'none' }}>
+      <footer className="template-burgers footer mt-5" style={{ padding: '50px 28px', color: 'white', marginTop: '80px', width: '100%', borderRadius: '20px 20px 0 0', border: `4px solid ${secondaryColor}`, borderBottom: 'none' }}>
         <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
           <div className="row">
             <div className="col-md-6">
-              <h4 style={{ marginBottom: '24px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>{restaurant.name}</h4>
+              <h4
+                style={{
+                  marginBottom: '24px',
+                  fontWeight: '800',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontSize: '1.8rem',
+                }}
+              >
+                {restaurant.name}
+              </h4>
               {restaurant.address && (
                 <p style={{ marginBottom: '12px', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>📍 Dirección:</strong> {restaurant.address}

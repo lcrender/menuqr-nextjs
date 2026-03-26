@@ -352,9 +352,6 @@ export default function Admin() {
           {/* 1. Arriba de todo: mensaje de bienvenida */}
           <div className="admin-card mb-4">
             <h5 className="admin-card-title">Bienvenido, {user?.firstName || user?.email}</h5>
-            <p className="admin-card-body">
-              Rol: <span className="badge bg-primary">{user?.role}</span>
-            </p>
           </div>
 
           {/* 2. Cards Restaurantes, Menús, Productos */}
