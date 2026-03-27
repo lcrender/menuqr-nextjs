@@ -92,6 +92,26 @@ export class EmailService implements OnModuleInit {
     }
   }
 
+  async sendAdminNotificationEmail(to: string, subject: string, html: string): Promise<void> {
+    if (this.transporter) {
+      try {
+        await this.transporter.sendMail({
+          from: this.getFrom(),
+          to,
+          subject,
+          html,
+        });
+        this.logger.log(`Email admin-notification enviado a ${to} (${subject})`);
+      } catch (err) {
+        this.logger.error(`Error enviando email admin-notification a ${to}:`, err);
+        throw err;
+      }
+    } else {
+      this.logger.log(`[DEV] Email admin-notification a ${to} (${subject})`);
+      this.logger.warn('Sin SMTP configurado: el email se solo loguea.');
+    }
+  }
+
   /** Email al nuevo correo con link para confirmar el cambio de email. */
   async sendEmailChangeVerification(
     newEmail: string,

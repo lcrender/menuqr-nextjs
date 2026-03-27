@@ -161,8 +161,16 @@ export class SubscriptionService {
       'SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1',
       [tenantId]
     );
-    if (tenantRow?.plan === 'pro_team') {
-      this.logger.log(`Tenant ${tenantId} has plan pro_team (manual), skipping sync`);
+    // Algunos tenants pueden tener el plan escrito como "pro team" (con espacio) u otra variante.
+    const rawPlan: string = String(tenantRow?.plan ?? '').trim();
+    const normalizedPlan = rawPlan
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_')
+      .replace(/_+/g, '_');
+    const normalizedProTeam = normalizedPlan === 'proteam' || normalizedPlan === 'pro_team' ? 'pro_team' : normalizedPlan;
+
+    if (normalizedProTeam === 'pro_team') {
+      this.logger.log(`Tenant ${tenantId} has plan pro_team (manual), skipping sync (raw: "${rawPlan}")`);
       return;
     }
 

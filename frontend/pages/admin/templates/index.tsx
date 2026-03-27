@@ -79,6 +79,9 @@ export default function Templates() {
   const [secondaryColor, setSecondaryColor] = useState<string>('#0056b3');
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [alertModal, setAlertModal] = useState<{ title: string; message: string; variant: 'success' | 'error'; restaurantId?: string } | null>(null);
+  const normalizedPlan = (currentPlan || '').toLowerCase().replace(/[\s-]+/g, '_');
+  const hasProTemplatesAccess =
+    normalizedPlan === 'pro' || normalizedPlan === 'pro_team' || normalizedPlan === 'premium';
 
   const openPreviewDrawer = () => {
     if (typeof window === 'undefined') return;
@@ -396,7 +399,7 @@ export default function Templates() {
                       </a>
                     </p>
                     <div onClick={(e) => e.stopPropagation()}>
-                      {template.requiresProOrPremium && currentPlan !== 'pro' && currentPlan !== 'pro_team' && currentPlan !== 'premium' ? (
+                      {template.requiresProOrPremium && !hasProTemplatesAccess ? (
                         <p className="small text-muted" style={{ margin: 0 }}>
                           Esta plantilla está disponible solo para plan <strong>Pro</strong>, <strong>Pro Team</strong> o <strong>Premium</strong>. Puedes ver la vista previa con el enlace de la tarjeta o seleccionando la plantilla para ver la imagen de ejemplo.
                         </p>

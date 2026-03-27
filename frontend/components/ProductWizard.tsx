@@ -250,6 +250,19 @@ export default function ProductWizard({
   const [dragOverItem, setDragOverItem] = useState<{ sectionId: string; itemId: string | null; position: 'before' | 'after' } | null>(null);
   const [restaurantCurrency, setRestaurantCurrency] = useState<string>(defaultCurrency);
 
+  const normalizePlanKey = (plan: string | null | undefined): string => {
+    const raw = String(plan || 'free')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_')
+      .replace(/_+/g, '_');
+
+    // Homologación para variantes con espacio
+    if (raw === 'proteam' || raw === 'pro_team' || raw === 'pro__team') return 'pro_team';
+    if (raw === 'free' || raw === 'starter' || raw === 'pro' || raw === 'premium') return raw;
+    return 'free';
+  };
+
   // Obtener el plan del tenant: primero desde localStorage, luego desde la API para tener el actual
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -257,7 +270,7 @@ export default function ProductWizard({
       try {
         const parsedUser = JSON.parse(userData);
         if (parsedUser?.tenant?.plan) {
-          setTenantPlan(parsedUser.tenant.plan);
+          setTenantPlan(normalizePlanKey(parsedUser.tenant.plan));
         }
         if (parsedUser?.role === 'SUPER_ADMIN') return;
       } catch (err) {
@@ -270,12 +283,13 @@ export default function ProductWizard({
         const res = await api.get('/restaurants/dashboard-stats');
         const plan = res.data?.plan ?? null;
         if (plan) {
-          setTenantPlan(plan);
+          const normalized = normalizePlanKey(plan);
+          setTenantPlan(normalized);
           if (userData) {
             try {
               const parsed = JSON.parse(userData);
-              if (parsed?.tenant && parsed.tenant.plan !== plan) {
-                const updated = { ...parsed, tenant: { ...parsed.tenant, plan } };
+              if (parsed?.tenant && parsed.tenant.plan !== normalized) {
+                const updated = { ...parsed, tenant: { ...parsed.tenant, plan: normalized } };
                 localStorage.setItem('user', JSON.stringify(updated));
               }
             } catch {}
@@ -351,6 +365,7 @@ export default function ProductWizard({
         starter: 60,
         basic: 60,
         pro: 300,
+        pro_team: 300,
         premium: 1200,
       };
 
@@ -366,12 +381,12 @@ export default function ProductWizard({
           const res = await api.get('/restaurants/dashboard-stats');
           const apiPlan = res.data?.plan ?? null;
           if (apiPlan) {
-            planToUse = apiPlan;
-            setTenantPlan(apiPlan);
+            planToUse = normalizePlanKey(apiPlan);
+            setTenantPlan(normalizePlanKey(apiPlan));
           }
         } catch {
           // Si falla, usar tenantPlan de estado o localStorage
-          if (!planToUse && parsedUser?.tenant?.plan) planToUse = parsedUser.tenant.plan;
+          if (!planToUse && parsedUser?.tenant?.plan) planToUse = normalizePlanKey(parsedUser.tenant.plan);
         }
         if (!planToUse) planToUse = 'free';
 
@@ -415,6 +430,7 @@ export default function ProductWizard({
       starter: 60,
       basic: 60,
       pro: 300,
+      pro_team: 300,
       premium: 1200,
     };
     return limits[tenantPlan] ?? 30;
@@ -2145,12 +2161,12 @@ export default function ProductWizard({
                   marginBottom: '16px', 
                   fontSize: '18px', 
                   fontWeight: 600,
-                  color: (tenantPlan !== 'pro' && tenantPlan !== 'premium') ? '#999' : 'inherit'
+                  color: (tenantPlan !== 'pro' && tenantPlan !== 'pro_team' && tenantPlan !== 'premium') ? '#999' : 'inherit'
                 }}>
                   Imágenes del Producto
                 </h4>
                 
-                {(tenantPlan !== 'pro' && tenantPlan !== 'premium') ? (
+                {(tenantPlan !== 'pro' && tenantPlan !== 'pro_team' && tenantPlan !== 'premium') ? (
                   <div
                     style={{
                       border: '2px dashed #ccc',
@@ -2185,7 +2201,7 @@ export default function ProductWizard({
                       }}
                     >
                       <p style={{ margin: 0, color: '#856404', fontSize: '13px', fontWeight: 500 }}>
-                        <strong>⚠️ Imágenes disponibles solo en planes Pro y Premium</strong>
+                        <strong>⚠️ Imágenes disponibles solo en planes Pro, Pro Team y Premium</strong>
                         <br />
                         <span style={{ fontSize: '12px' }}>
                           Amplía tu suscripción a Pro o Premium para poder agregar imágenes a tus productos.

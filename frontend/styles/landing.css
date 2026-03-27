@@ -732,6 +732,48 @@
   color: var(--landing-text-muted);
 }
 
+.landing-auth-password-wrap {
+  position: relative;
+}
+
+.landing-auth-input-password {
+  padding-right: 48px;
+}
+
+.landing-auth-password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.landing-auth-password-toggle:hover {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.landing-auth-help {
+  text-align: center;
+  margin-top: -4px;
+}
+
+.landing-auth-help-link {
+  color: var(--landing-primary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.landing-auth-help-link:hover {
+  text-decoration: underline;
+}
+
 .landing-auth-hint {
   color: var(--landing-text-muted);
   font-size: 0.85rem;

@@ -20,6 +20,8 @@ export default function Login() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showRegisterSuccessModal, setShowRegisterSuccessModal] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<'starter' | 'pro' | 'premium' | null>(null);
   const [pendingBillingCycle, setPendingBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -269,17 +271,28 @@ export default function Login() {
                     <label htmlFor="password" className="landing-auth-label">
                       Contraseña
                     </label>
-                    <input
-                      type="password"
-                      className="landing-auth-input"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={loading}
-                      minLength={8}
-                      placeholder="••••••••"
-                    />
+                    <div className="landing-auth-password-wrap">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        className="landing-auth-input landing-auth-input-password"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={loading}
+                        minLength={8}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        className="landing-auth-password-toggle"
+                        onClick={() => setShowPassword((v) => !v)}
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      >
+                        {showPassword ? '🙈' : '👁️'}
+                      </button>
+                    </div>
                     {isRegister && (
                       <small className="landing-auth-hint">
                         Mínimo 8 caracteres
@@ -292,17 +305,28 @@ export default function Login() {
                       <label htmlFor="confirmPassword" className="landing-auth-label">
                         Confirmar Contraseña
                       </label>
-                      <input
-                        type="password"
-                        className="landing-auth-input"
-                        id="confirmPassword"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        disabled={loading}
-                        minLength={8}
-                        placeholder="••••••••"
-                      />
+                      <div className="landing-auth-password-wrap">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          className="landing-auth-input landing-auth-input-password"
+                          id="confirmPassword"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          disabled={loading}
+                          minLength={8}
+                          placeholder="••••••••"
+                        />
+                        <button
+                          type="button"
+                          className="landing-auth-password-toggle"
+                          onClick={() => setShowConfirmPassword((v) => !v)}
+                          aria-label={showConfirmPassword ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'}
+                          title={showConfirmPassword ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'}
+                        >
+                          {showConfirmPassword ? '🙈' : '👁️'}
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -316,6 +340,14 @@ export default function Login() {
                       : (isRegister ? 'Crear Cuenta Gratis' : 'Iniciar Sesión')
                     }
                   </button>
+
+                  {!isRegister && (
+                    <div className="landing-auth-help">
+                      <Link href="/forgot-password" className="landing-auth-help-link">
+                        ¿Perdiste tu contraseña?
+                      </Link>
+                    </div>
+                  )}
                 </form>
 
                 {!isRegister && !isProduction && (

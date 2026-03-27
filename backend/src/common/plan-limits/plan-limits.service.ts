@@ -45,6 +45,24 @@ export class PlanLimitsService {
 
   constructor(private readonly postgres: PostgresService) {}
 
+  /**
+   * Normaliza claves de plan provenientes de BD/integraciones para evitar caídas a "free"
+   * por variantes como "pro team", "pro-team" o "proteam".
+   */
+  private normalizePlanKey(planKey: string | null | undefined): TenantPlanKey {
+    const raw = String(planKey || 'free')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_');
+
+    if (raw === 'basic') return 'starter';
+    if (raw === 'proteam' || raw === 'pro_team' || raw === 'pro__team') return 'pro_team';
+    if (raw === 'free' || raw === 'starter' || raw === 'pro' || raw === 'premium') {
+      return raw;
+    }
+    return 'free';
+  }
+
   /** Conjunto de IDs de plantilla que el plan puede usar en restaurantes. */
   allowedTemplateIds(row: TenantPlanLimitsRow): Set<string> {
     const s = new Set<string>([...STANDARD_TEMPLATE_IDS]);
@@ -106,8 +124,8 @@ export class PlanLimitsService {
     if (!this.effectiveByPlan) {
       this.effectiveByPlan = await this.loadEffectiveMap();
     }
-    const k = (planKey || 'free').toLowerCase();
-    const row = this.effectiveByPlan.get(k as TenantPlanKey);
+    const k = this.normalizePlanKey(planKey);
+    const row = this.effectiveByPlan.get(k);
     if (row) return row;
     const fallback = getTenantPlanLimitsCatalog().find((r) => r.key === 'free')!;
     return { ...fallback };

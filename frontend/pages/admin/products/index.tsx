@@ -120,7 +120,13 @@ export default function Products() {
     fetchPublicPlanLimits()
       .then((m) => {
         if (cancelled) return;
-        const row = (m as any)[tenantPlan];
+        const normalizedPlan = String(tenantPlan || 'free')
+          .trim()
+          .toLowerCase()
+          .replace(/[\s-]+/g, '_')
+          .replace(/_+/g, '_');
+        const planKey = normalizedPlan === 'proteam' ? 'pro_team' : normalizedPlan;
+        const row = (m as any)[planKey];
         setCanHighlightProducts(!!row?.productHighlightAllowed);
       })
       .catch(() => {
@@ -180,14 +186,21 @@ export default function Products() {
   const getProductLimit = () => {
     if (isSuperAdmin) return -1;
     if (!tenantPlan) return 30;
+    const normalizedPlan = String(tenantPlan || 'free')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_')
+      .replace(/_+/g, '_');
+    const planKey = normalizedPlan === 'proteam' ? 'pro_team' : normalizedPlan;
     const limits: Record<string, number> = {
       free: 30,
       starter: 60,
       basic: 60,
       pro: 300,
+      pro_team: 300,
       premium: 1200,
     };
-    return limits[tenantPlan] ?? 30;
+    return limits[planKey] ?? 30;
   };
 
   const canCreateProduct = () => {
@@ -411,7 +424,17 @@ export default function Products() {
     setShowModal(true);
   };
 
-  const canAddEditPhotos = user?.role === 'SUPER_ADMIN' || tenantPlan === 'pro' || tenantPlan === 'premium';
+  const canAddEditPhotos = (() => {
+    if (user?.role === 'SUPER_ADMIN') return true;
+    if (!tenantPlan) return false;
+    const normalizedPlan = String(tenantPlan || 'free')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_')
+      .replace(/_+/g, '_');
+    const planKey = normalizedPlan === 'proteam' ? 'pro_team' : normalizedPlan;
+    return planKey === 'pro' || planKey === 'pro_team' || planKey === 'premium';
+  })();
 
   const handleEditImageUpload = (files: File[]) => {
     const file = files.filter((f) => f.type.startsWith('image/'))[0];
@@ -1550,7 +1573,7 @@ export default function Products() {
                             }}
                           >
                             <p style={{ margin: 0, color: '#856404', fontSize: '13px', fontWeight: 500 }}>
-                              <strong>⚠️ Función no disponible para usuarios gratuitos</strong>
+                              <strong>⚠️ Función no disponible para tu plan</strong>
                               <br />
                               <span style={{ fontSize: '12px' }}>
                                 Amplía tu suscripción para poder agregar imágenes a tus productos.

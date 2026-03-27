@@ -10,6 +10,8 @@ import {
 } from '../interfaces/payment-provider.interface';
 import { SubscriptionService } from '../../subscription/subscription.service';
 import { PaymentHistoryService, type PaymentAttemptStatus } from '../payment-history.service';
+import { UsersService } from '../../users/users.service';
+import { AdminMessagesService } from '../../admin-messages/admin-messages.service';
 
 const PAYPAL_API_BASE = (mode: string) =>
   mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
@@ -23,6 +25,8 @@ export class PayPalService implements IPaymentProviderService {
     private readonly config: ConfigService,
     private readonly subscriptionService: SubscriptionService,
     private readonly paymentHistory: PaymentHistoryService,
+    private readonly usersService: UsersService,
+    private readonly adminMessages: AdminMessagesService,
   ) {}
 
   private get baseUrl(): string {
@@ -231,7 +235,9 @@ export class PayPalService implements IPaymentProviderService {
   }
 
   private async handleSubscriptionActivated(subscriptionId: string, resource: any): Promise<void> {
-    let sub = await this.subscriptionService.findByExternalId('paypal', subscriptionId);
+    const existing = await this.subscriptionService.findByExternalId('paypal', subscriptionId);
+    const wasNew = !existing;
+    let sub = existing;
     const planId = resource?.plan_id;
     const startTime = resource?.start_time || resource?.billing_info?.last_payment?.time;
     const endTime = resource?.billing_info?.next_billing_time || resource?.end_time;
@@ -265,6 +271,33 @@ export class PayPalService implements IPaymentProviderService {
       });
     }
     if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
+
+    // Notificar solo cuando se crea la suscripción (no en renovaciones).
+    if (wasNew && sub) {
+      try {
+        const actor = await this.usersService.findById(sub.userId);
+        if (actor) {
+          await this.adminMessages.notifyIfEnabled(
+            'subscription_created',
+            {
+              id: actor.id,
+              email: actor.email,
+              firstName: actor.firstName ?? null,
+              lastName: actor.lastName ?? null,
+              role: actor.role,
+              tenantId: actor.tenantId ?? null,
+            },
+            {
+              subscriptionExternalId: subscriptionId,
+              planSlug: sub.subscriptionPlan ?? null,
+              planType: sub.planType ?? null,
+            },
+          );
+        }
+      } catch (e) {
+        this.logger.warn(`No se pudo enviar notificación subscription_created (PayPal) para userId=${sub.userId}: ${e}`);
+      }
+    }
   }
 
   private async handleSubscriptionCanceled(subscriptionId: string): Promise<void> {
@@ -311,6 +344,36 @@ export class PayPalService implements IPaymentProviderService {
         failureReason: failureReason ? String(failureReason) : null,
         rawData: body,
       });
+
+      // Notificar fallo (best-effort).
+      try {
+        const actor = await this.usersService.findById(sub.userId);
+        if (actor) {
+          await this.adminMessages.notifyIfEnabled(
+            'subscription_payment_failed',
+            {
+              id: actor.id,
+              email: actor.email,
+              firstName: actor.firstName ?? null,
+              lastName: actor.lastName ?? null,
+              role: actor.role,
+              tenantId: actor.tenantId ?? null,
+            },
+            {
+              paymentId: String(externalPaymentId),
+              providerStatus: String(providerStatus ?? ''),
+              failureReason: failureReason ? String(failureReason) : null,
+              amount: amountValue,
+              currency,
+              planSlug: sub.subscriptionPlan ?? null,
+              planType: sub.planType ?? null,
+              subscriptionExternalId: subscriptionId,
+            },
+          );
+        }
+      } catch (e) {
+        this.logger.warn(`No se pudo enviar notificación payment_failed (PayPal) para userId=${sub?.userId}: ${e}`);
+      }
     }
 
     if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
@@ -360,6 +423,37 @@ export class PayPalService implements IPaymentProviderService {
       });
     }
     await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
+
+    // Notificar pago exitoso (best-effort).
+    try {
+      if (sub.userId) {
+        const actor = await this.usersService.findById(sub.userId);
+        if (actor) {
+          await this.adminMessages.notifyIfEnabled(
+            'subscription_payment_succeeded',
+            {
+              id: actor.id,
+              email: actor.email,
+              firstName: actor.firstName ?? null,
+              lastName: actor.lastName ?? null,
+              role: actor.role,
+              tenantId: actor.tenantId ?? null,
+            },
+            {
+              paymentId: String(externalPaymentId),
+              providerStatus: String(providerStatus ?? ''),
+              amount: amountValue,
+              currency,
+              planSlug: sub.subscriptionPlan ?? null,
+              planType: sub.planType ?? null,
+              subscriptionExternalId: subId,
+            },
+          );
+        }
+      }
+    } catch (e) {
+      this.logger.warn(`No se pudo enviar notificación payment_succeeded (PayPal) para userId=${sub?.userId}: ${e}`);
+    }
   }
 
   private planTypeFromPayPal(planId: string): 'monthly' | 'yearly' {

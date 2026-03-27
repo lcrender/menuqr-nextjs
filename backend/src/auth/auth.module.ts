@@ -21,6 +21,7 @@ import { TenantsModule } from '../tenants/tenants.module';
 import { EmailModule } from '../common/email/email.module';
 import { GeoModule } from '../geo/geo.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
+import { AdminMessagesModule } from '../admin-messages/admin-messages.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { SubscriptionModule } from '../subscription/subscription.module';
     EmailModule,
     GeoModule,
     SubscriptionModule,
+    AdminMessagesModule,
     PassportModule,
     
     // ========================================

@@ -16,6 +16,7 @@ import { UsersService } from '../users/users.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { EmailService } from '../common/email/email.service';
 import { SubscriptionService } from '../subscription/subscription.service';
+import { AdminMessagesService } from '../admin-messages/admin-messages.service';
 
 // Entidades
 import { User, UserRole } from '@prisma/client';
@@ -38,6 +39,7 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
     private readonly subscriptionService: SubscriptionService,
+    private readonly adminMessages: AdminMessagesService,
   ) {}
 
   // ========================================
@@ -192,6 +194,28 @@ export class AuthService {
         cancelAtPeriodEnd: false,
       });
 
+      // Notificar a SUPER_ADMIN (best-effort) si está habilitado.
+      try {
+        await this.adminMessages.notifyIfEnabled(
+          'user_created',
+          {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName ?? null,
+            lastName: user.lastName ?? null,
+            role: user.role,
+            tenantId: user.tenantId ?? null,
+          },
+          {
+            pendingPlan: pendingPlan ?? null,
+            pendingBillingCycle: pendingBillingCycle ?? null,
+            registrationCountry: registrationCountry ?? null,
+          },
+        );
+      } catch (e) {
+        this.logger.warn(`No se pudo enviar notificación user_created para ${normalizedEmail}: ${e}`);
+      }
+
       if (!isDev) {
         try {
           await this.emailService.sendEmailVerification(
@@ -272,6 +296,27 @@ export class AuthService {
       const tokens = await this.generateTokens(user);
 
       this.logger.log(`Email verificado exitosamente para ${user.email}`);
+
+      // Notificar a SUPER_ADMIN (best-effort) si está habilitado.
+      try {
+        await this.adminMessages.notifyIfEnabled(
+          'user_email_verified',
+          {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName ?? null,
+            lastName: user.lastName ?? null,
+            role: user.role,
+            tenantId: user.tenantId ?? null,
+          },
+          {
+            pendingPlan: pending?.plan ?? null,
+            pendingBillingCycle: pending?.billingCycle ?? null,
+          },
+        );
+      } catch (e) {
+        this.logger.warn(`No se pudo enviar notificación user_email_verified para ${user.email}: ${e}`);
+      }
 
       return {
         message: 'Email verificado exitosamente. Tu cuenta ha sido activada.',

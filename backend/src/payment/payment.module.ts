@@ -16,6 +16,7 @@ import { AdminPlanCatalogService } from './admin-plan-catalog.service';
 import { AppSettingsModule } from '../app-settings/app-settings.module';
 import { PlanLimitsModule } from '../common/plan-limits/plan-limits.module';
 import { PaymentHistoryService } from './payment-history.service';
+import { AdminMessagesModule } from '../admin-messages/admin-messages.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PaymentHistoryService } from './payment-history.service';
     SubscriptionModule,
     AppSettingsModule,
     PlanLimitsModule,
+    AdminMessagesModule,
   ],
   controllers: [
     WebhooksController,

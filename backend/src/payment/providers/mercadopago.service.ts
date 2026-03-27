@@ -14,6 +14,8 @@ import { PricingService } from '../pricing.service';
 import { readEnvTrimmed } from '../../common/config/read-env-trimmed';
 import { AppSettingsService } from '../../app-settings/app-settings.service';
 import { PaymentHistoryService, type PaymentAttemptStatus } from '../payment-history.service';
+import { UsersService } from '../../users/users.service';
+import { AdminMessagesService } from '../../admin-messages/admin-messages.service';
 
 const MP_API_BASE = 'https://api.mercadopago.com';
 
@@ -32,6 +34,8 @@ export class MercadoPagoService implements IPaymentProviderService {
     private readonly pricingService: PricingService,
     private readonly appSettings: AppSettingsService,
     private readonly paymentHistory: PaymentHistoryService,
+    private readonly usersService: UsersService,
+    private readonly adminMessages: AdminMessagesService,
   ) {}
 
   /** Intenta extraer mensaje legible del JSON de error de la API de Mercado Pago. */
@@ -350,6 +354,35 @@ export class MercadoPagoService implements IPaymentProviderService {
         failureReason: payment.status_detail ?? payment.failure_reason ?? null,
         rawData: payment,
       });
+
+      // Notificar fallo (best-effort).
+      if (attemptStatus === 'failed') {
+        try {
+          const actor = await this.usersService.findById(userId);
+          if (actor) {
+            await this.adminMessages.notifyIfEnabled(
+              'subscription_payment_failed',
+              {
+                id: actor.id,
+                email: actor.email,
+                firstName: actor.firstName ?? null,
+                lastName: actor.lastName ?? null,
+                role: actor.role,
+                tenantId: actor.tenantId ?? null,
+              },
+              {
+                paymentId: String(paymentId),
+                providerStatus: String(status ?? ''),
+                failureReason: payment.status_detail ?? payment.failure_reason ?? null,
+                amount: payment.transaction_amount ?? payment.transaction_details?.total_paid_amount ?? null,
+                currency: payment.currency_id ?? null,
+              },
+            );
+          }
+        } catch (e) {
+          this.logger.warn(`No se pudo enviar notificación payment_failed (MP) para userId=${userId}: ${e}`);
+        }
+      }
     }
 
     // Activación del plan solo para pagos aprobados.
@@ -367,6 +400,34 @@ export class MercadoPagoService implements IPaymentProviderService {
           : null,
       });
       await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
+
+      // Notificar pago exitoso (best-effort).
+      try {
+        const actor = await this.usersService.findById(sub.userId);
+        if (actor) {
+          await this.adminMessages.notifyIfEnabled(
+            'subscription_payment_succeeded',
+            {
+              id: actor.id,
+              email: actor.email,
+              firstName: actor.firstName ?? null,
+              lastName: actor.lastName ?? null,
+              role: actor.role,
+              tenantId: actor.tenantId ?? null,
+            },
+            {
+              paymentId: String(paymentId),
+              providerStatus: String(status ?? ''),
+              planSlug: sub.subscriptionPlan ?? null,
+              planType: sub.planType ?? null,
+              amount: payment.transaction_amount ?? payment.transaction_details?.total_paid_amount ?? null,
+              currency: payment.currency_id ?? null,
+            },
+          );
+        }
+      } catch (e) {
+        this.logger.warn(`No se pudo enviar notificación payment_succeeded (MP) para userId=${sub.userId}: ${e}`);
+      }
     }
   }
 
@@ -380,6 +441,7 @@ export class MercadoPagoService implements IPaymentProviderService {
     const status = preapproval.status;
     const externalRef = preapproval.external_reference;
     let sub = await this.subscriptionService.findByExternalId('mercadopago', preapprovalId);
+    const isNewSubscription = !sub && !!externalRef;
     if (status === 'authorized' || status === 'approved') {
       if (!sub && externalRef) {
         // Rescate si el webhook llegó antes que persistiéramos la fila local (poco frecuente).
@@ -410,6 +472,33 @@ export class MercadoPagoService implements IPaymentProviderService {
         });
       }
       if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
+
+      // Notificar una NUEVA suscripción (solo si se creó en este webhook).
+      if (isNewSubscription && sub) {
+        try {
+          const actor = await this.usersService.findById(sub.userId);
+          if (actor) {
+            await this.adminMessages.notifyIfEnabled(
+              'subscription_created',
+              {
+                id: actor.id,
+                email: actor.email,
+                firstName: actor.firstName ?? null,
+                lastName: actor.lastName ?? null,
+                role: actor.role,
+                tenantId: actor.tenantId ?? null,
+              },
+              {
+                subscriptionExternalId: preapprovalId,
+                planSlug: sub.subscriptionPlan ?? null,
+                planType: sub.planType ?? null,
+              },
+            );
+          }
+        } catch (e) {
+          this.logger.warn(`No se pudo enviar notificación subscription_created (MP) para userId=${sub.userId}: ${e}`);
+        }
+      }
     } else if (status === 'cancelled') {
       if (sub) {
         await this.subscriptionService.updateStatus('mercadopago', preapprovalId, { status: 'canceled' });

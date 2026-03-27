@@ -60,6 +60,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
   const showLogo = tc.showLogo !== false;
   const showName = tc.showRestaurantName !== false;
   const showDescription = tc.showRestaurantDescription !== false;
+  const phoneDisplay = (restaurant.phone || '').replace(/\s*\|\s*WhatsApp:.*$/i, '').trim();
 
   return (
     <div className="template-classic restaurant-container" style={{ 
@@ -109,6 +110,11 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
         }
         .template-classic .footer {
           background: linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%);
+        }
+        @media (max-width: 767.98px) {
+          .template-classic .classic-footer-contact {
+            margin-top: 20px;
+          }
         }
       `}</style>
 
@@ -304,11 +310,11 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
                 </p>
               )}
             </div>
-            <div className="col-md-6">
+            <div className="col-md-6 classic-footer-contact">
               <h5 style={{ marginBottom: '15px' }}>Contacto</h5>
-              {restaurant.phone && (
+              {phoneDisplay && (
                 <p style={{ marginBottom: '8px', opacity: 0.9 }}>
-                  <strong>📞 Teléfono:</strong> {restaurant.phone}
+                  <strong>📞 Teléfono:</strong> {phoneDisplay}
                 </p>
               )}
               {restaurant.whatsapp && (

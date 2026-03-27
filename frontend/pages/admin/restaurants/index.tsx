@@ -161,18 +161,53 @@ export default function Restaurants() {
 
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
+  // Refrescar plan desde la API (evita usar un plan viejo guardado en localStorage)
+  useEffect(() => {
+    if (!user || isSuperAdmin) return;
+
+    const fetchPlan = async () => {
+      try {
+        const res = await api.get('/restaurants/dashboard-stats');
+        const plan = res.data?.plan;
+
+        if (typeof plan === 'string' && plan) {
+          setTenantPlan(plan);
+
+          // Sincronizar con el estado de usuario para que el resto del UI use el plan real
+          if (user?.tenant?.plan && user.tenant.plan !== plan) {
+            const updatedUser = { ...user, tenant: { ...user.tenant, plan } };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+          }
+        }
+      } catch {
+        // Si falla el fetch, dejamos el plan actual en estado (fallback a localStorage)
+      }
+    };
+
+    fetchPlan();
+  }, [user?.id, isSuperAdmin]);
+
   // Calcular si el usuario puede crear más restaurantes
   const getRestaurantLimit = () => {
     if (isSuperAdmin) return -1;
     if (!tenantPlan) return 1;
+    const normalizedPlan = String(tenantPlan || 'free')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_')
+      .replace(/_+/g, '_');
+
+    const planKey = normalizedPlan === 'proteam' ? 'pro_team' : normalizedPlan;
     const limits: Record<string, number> = {
       free: 1,
       starter: 1,
       basic: 1,
       pro: 3,
+      pro_team: 3,
       premium: 10,
     };
-    return limits[tenantPlan] ?? 1;
+    return limits[planKey] ?? 1;
   };
 
   const canCreateRestaurant = () => {
@@ -249,6 +284,20 @@ export default function Restaurants() {
     }
   };
 
+  const normalizeWebsiteInput = (value: string): string => {
+    const websiteValue = (value || '').trim();
+    if (!websiteValue) return '';
+    if (websiteValue.startsWith('http://') || websiteValue.startsWith('https://')) return websiteValue;
+
+    const domainRegex =
+      /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+    const cleanDomain = websiteValue.replace(/^www\./, '');
+    if (domainRegex.test(cleanDomain)) {
+      return `https://${cleanDomain}`;
+    }
+    return websiteValue;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -262,19 +311,7 @@ export default function Restaurants() {
       ].filter(Boolean);
       
       // Formatear website si es necesario
-      let website = formData.website;
-      if (website && website.trim()) {
-        const websiteValue = website.trim();
-        // Si no tiene protocolo, agregar https://
-        if (!websiteValue.startsWith('http://') && !websiteValue.startsWith('https://')) {
-          // Validar que sea un dominio válido
-          const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
-          const cleanDomain = websiteValue.replace(/^www\./, '');
-          if (domainRegex.test(cleanDomain)) {
-            website = `https://${cleanDomain}`;
-          }
-        }
-      }
+      let website = normalizeWebsiteInput(formData.website || '');
       
       const data: any = {
         name: formData.name,
@@ -1457,11 +1494,17 @@ export default function Restaurants() {
                   <div className="mb-3">
                     <label className="form-label">Sitio Web</label>
                     <input
-                      type="url"
+                      type="text"
                       className="form-control"
                       value={formData.website}
                       onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                      placeholder="Opcional"
+                      onBlur={(e) => {
+                        const normalized = normalizeWebsiteInput(e.target.value);
+                        if (normalized !== formData.website) {
+                          setFormData({ ...formData, website: normalized });
+                        }
+                      }}
+                      placeholder="Ej: dsa.com (opcional)"
                     />
                   </div>
 
