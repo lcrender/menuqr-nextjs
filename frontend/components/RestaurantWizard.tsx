@@ -5,9 +5,6 @@ import CountrySelector from './CountrySelector';
 import ProvinceSelector from './ProvinceSelector';
 import CitySelector from './CitySelector';
 
-const PREVIEW_IMAGE_BASE = '/preview';
-const PREVIEW_DEFAULT_IMAGE = '/preview/preview-default.svg';
-
 const WIZARD_TEMPLATES: Array<{
   id: 'classic' | 'minimalist' | 'foodie' | 'burgers' | 'italianFood' | 'gourmet';
   name: string;
@@ -142,7 +139,6 @@ export default function RestaurantWizard({
   const [showAdditionalCurrenciesModal, setShowAdditionalCurrenciesModal] = useState(false);
   const [previewSelectedId, setPreviewSelectedId] = useState<string | null>(null);
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
-  const [previewImageError, setPreviewImageError] = useState<Record<string, boolean>>({});
   const normalizedPlan = String(userPlan || '')
     .toLowerCase()
     .replace(/[\s-]+/g, '_')
@@ -1181,12 +1177,11 @@ export default function RestaurantWizard({
                   Próxima
                 </button>
               </div>
-              <img
+              <iframe
                 key={previewSelectedId}
-                src={previewImageError[previewSelectedId] ? PREVIEW_DEFAULT_IMAGE : `${PREVIEW_IMAGE_BASE}/preview-${previewSelectedId}.jpg`}
-                alt={`Vista previa ${WIZARD_TEMPLATES.find((t) => t.id === previewSelectedId)?.name ?? previewSelectedId}`}
-                className="admin-templates-preview-drawer-img"
-                onError={() => setPreviewImageError((prev) => ({ ...prev, [previewSelectedId]: true }))}
+                src={`/preview/${previewSelectedId}`}
+                title={`Demo ${WIZARD_TEMPLATES.find((t) => t.id === previewSelectedId)?.name ?? previewSelectedId}`}
+                className="admin-templates-preview-drawer-iframe"
                 loading="lazy"
               />
             </div>
@@ -1200,7 +1195,7 @@ export default function RestaurantWizard({
             <div className="admin-templates-preview-drawer-footer" style={{ display: 'flex', gap: 10, justifyContent: 'space-between' }}>
               <button
                 type="button"
-                className="admin-btn"
+                className="admin-btn wizard-template-action-use"
                 onClick={() => {
                   setFormData({ ...formData, template: previewSelectedId });
                   setPreviewDrawerOpen(false);
@@ -1213,7 +1208,7 @@ export default function RestaurantWizard({
                 href={`/preview/${previewSelectedId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="admin-btn admin-templates-preview-drawer-cta"
+                className="admin-btn admin-templates-preview-drawer-cta wizard-template-action-demo"
               >
                 Ver demo
               </a>
