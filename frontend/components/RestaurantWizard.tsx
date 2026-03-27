@@ -13,11 +13,12 @@ const WIZARD_TEMPLATES: Array<{
   name: string;
   desc: string;
   previewClass: string;
+  requiresProOrPremium?: boolean;
 }> = [
   { id: 'classic', name: 'Clásico', desc: 'Diseño tradicional y elegante', previewClass: 'classic' },
   { id: 'minimalist', name: 'Minimalista', desc: 'Diseño limpio y contemporáneo', previewClass: 'minimalist' },
   { id: 'foodie', name: 'Foodie', desc: 'Diseño gastronómico y apetitoso', previewClass: 'foodie' },
-  { id: 'gourmet', name: 'Gourmet', desc: 'Estilo refinado y premium', previewClass: 'gourmet' },
+  { id: 'gourmet', name: 'Gourmet', desc: 'Estilo refinado y premium', previewClass: 'gourmet', requiresProOrPremium: true },
   { id: 'burgers', name: 'Burgers', desc: 'Bold y dinámico estilo hamburguesería', previewClass: 'burgers' },
   { id: 'italianFood', name: 'Italian Food', desc: 'Elegante con colores de la bandera italiana', previewClass: 'italianfood' },
 ];
@@ -109,6 +110,8 @@ interface RestaurantWizardProps {
   setCoverPreview: (preview: string | null) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel?: () => void;
+  userPlan?: string | null;
+  isSuperAdmin?: boolean;
 }
 
 export default function RestaurantWizard({
@@ -124,6 +127,8 @@ export default function RestaurantWizard({
   setCoverPreview,
   onSubmit,
   onCancel,
+  userPlan = null,
+  isSuperAdmin = false,
 }: RestaurantWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
@@ -138,6 +143,13 @@ export default function RestaurantWizard({
   const [previewSelectedId, setPreviewSelectedId] = useState<string | null>(null);
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
   const [previewImageError, setPreviewImageError] = useState<Record<string, boolean>>({});
+  const normalizedPlan = String(userPlan || '')
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+    .replace(/_+/g, '_')
+    .trim();
+  const hasProTemplatesAccess =
+    isSuperAdmin || normalizedPlan === 'pro' || normalizedPlan === 'pro_team' || normalizedPlan === 'premium';
   const additionalCurrencies = ['USD', 'EUR', 'ARS', 'MXN', 'CLP', 'COP', 'PEN', 'BRL', 'UYU', 'PYG', 'BOB', 'VES']
     .filter((c) => c !== formData.defaultCurrency);
   const currencyLabels: { [key: string]: string } = {
@@ -346,6 +358,23 @@ export default function RestaurantWizard({
   const selectTemplateForPreview = (templateId: string) => {
     setPreviewSelectedId(templateId);
     setPreviewDrawerOpen(true);
+  };
+
+  const currentPreviewIndex = previewSelectedId
+    ? WIZARD_TEMPLATES.findIndex((t) => t.id === previewSelectedId)
+    : -1;
+  const currentPreviewTemplate = currentPreviewIndex >= 0 ? WIZARD_TEMPLATES[currentPreviewIndex] : null;
+  const canUseCurrentPreviewTemplate = Boolean(
+    currentPreviewTemplate && (!currentPreviewTemplate.requiresProOrPremium || hasProTemplatesAccess),
+  );
+
+  const goToTemplatePreview = (direction: 'prev' | 'next') => {
+    if (currentPreviewIndex < 0) return;
+    const nextIndex =
+      direction === 'prev'
+        ? (currentPreviewIndex - 1 + WIZARD_TEMPLATES.length) % WIZARD_TEMPLATES.length
+        : (currentPreviewIndex + 1) % WIZARD_TEMPLATES.length;
+    setPreviewSelectedId(WIZARD_TEMPLATES[nextIndex].id);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -943,7 +972,7 @@ export default function RestaurantWizard({
                 {WIZARD_TEMPLATES.map((t) => (
                   <div
                     key={t.id}
-                    className={`wizard-template-option ${formData.template === t.id ? 'active' : ''}`}
+                    className={`wizard-template-option ${formData.template === t.id ? 'active' : ''} ${t.requiresProOrPremium ? 'wizard-template-option-pro' : ''}`}
                     onClick={() => selectTemplateForPreview(t.id)}
                     role="button"
                     tabIndex={0}
@@ -951,9 +980,13 @@ export default function RestaurantWizard({
                       if (e.key === 'Enter' || e.key === ' ') selectTemplateForPreview(t.id);
                     }}
                   >
+                    {t.requiresProOrPremium && <span className="wizard-template-pro-badge">PRO</span>}
                     <div className={`wizard-template-preview ${t.previewClass}`}></div>
                     <div className="wizard-template-name">{t.name}</div>
                     <div className="wizard-template-desc">{t.desc}</div>
+                    {t.requiresProOrPremium && (
+                      <small className="wizard-template-pro-note">Disponible para plan Pro/Pro Team/Premium</small>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1115,6 +1148,9 @@ export default function RestaurantWizard({
             <div className="admin-templates-preview-drawer-header">
               <div className="fw-semibold">
                 Vista previa: {WIZARD_TEMPLATES.find((t) => t.id === previewSelectedId)?.name ?? previewSelectedId}
+                {currentPreviewTemplate?.requiresProOrPremium && (
+                  <span className="wizard-template-pro-badge wizard-template-pro-badge-inline">PRO</span>
+                )}
               </div>
               <button
                 type="button"
@@ -1125,6 +1161,24 @@ export default function RestaurantWizard({
             </div>
 
             <div className="admin-templates-preview-drawer-body">
+              <div className="wizard-preview-mobile-nav">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => goToTemplatePreview('prev')}
+                  aria-label="Vista previa anterior"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => goToTemplatePreview('next')}
+                  aria-label="Vista previa siguiente"
+                >
+                  →
+                </button>
+              </div>
               <img
                 key={previewSelectedId}
                 src={previewImageError[previewSelectedId] ? PREVIEW_DEFAULT_IMAGE : `${PREVIEW_IMAGE_BASE}/preview-${previewSelectedId}.jpg`}
@@ -1135,6 +1189,12 @@ export default function RestaurantWizard({
               />
             </div>
 
+            {currentPreviewTemplate?.requiresProOrPremium && !hasProTemplatesAccess && (
+              <div className="alert alert-warning mb-2" role="status">
+                Esta plantilla requiere plan Pro. Cambiá tu plan para poder usarla.
+              </div>
+            )}
+
             <div className="admin-templates-preview-drawer-footer" style={{ display: 'flex', gap: 10, justifyContent: 'space-between' }}>
               <a
                 href={`/preview/${previewSelectedId}`}
@@ -1142,7 +1202,7 @@ export default function RestaurantWizard({
                 rel="noopener noreferrer"
                 className="admin-btn admin-templates-preview-drawer-cta"
               >
-                Abrir en nueva pestaña →
+                Ver demo
               </a>
               <button
                 type="button"
@@ -1151,6 +1211,7 @@ export default function RestaurantWizard({
                   setFormData({ ...formData, template: previewSelectedId });
                   setPreviewDrawerOpen(false);
                 }}
+                disabled={!canUseCurrentPreviewTemplate}
               >
                 Usar esta plantilla
               </button>

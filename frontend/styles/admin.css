@@ -1732,6 +1732,7 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   background: white;
+  position: relative;
 }
 
 .wizard-template-option:hover {
@@ -1744,6 +1745,42 @@ body {
   border-color: var(--admin-primary);
   background: rgba(99, 102, 241, 0.05);
   box-shadow: 0 4px 16px var(--admin-glow);
+}
+
+.wizard-template-option-pro {
+  border-color: #f59e0b;
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.2);
+}
+
+.wizard-template-pro-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #f59e0b;
+  color: #111827;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  letter-spacing: 0.3px;
+}
+
+.wizard-template-pro-badge-inline {
+  position: static;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.wizard-template-pro-note {
+  display: block;
+  margin-top: 8px;
+  color: #b45309;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.wizard-preview-mobile-nav {
+  display: none;
 }
 
 .wizard-template-preview {
@@ -2738,6 +2775,18 @@ body {
     max-height: 260px;
     overflow-y: auto;
     padding-right: 4px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-preview-mobile-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-preview-mobile-nav .btn {
+    flex: 1;
+    min-height: 34px;
   }
   
   .wizard-template-selector {

@@ -826,6 +826,8 @@ export default function Restaurants() {
             coverPreview={coverPreview}
             setCoverPreview={setCoverPreview}
             onSubmit={handleSubmit}
+            userPlan={tenantPlan}
+            isSuperAdmin={isSuperAdmin}
             {...(restaurants.length > 0 ? {
               onCancel: () => {
                 setShowWizard(false);
