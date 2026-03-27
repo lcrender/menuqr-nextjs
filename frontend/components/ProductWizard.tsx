@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import api from '../lib/axios';
 import AlertModal from './AlertModal';
 import { fetchPublicPlanLimits } from '../lib/public-plan-limits';
+import ProductPhotoCropModal from './ProductPhotoCropModal';
 
 interface ProductWizardProps {
   menuId: string;
@@ -211,6 +212,8 @@ export default function ProductWizard({
   const [productImages, setProductImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [showProductPhotoCrop, setShowProductPhotoCrop] = useState(false);
+  const [productPhotoCropSrc, setProductPhotoCropSrc] = useState<string | null>(null);
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
   const [canHighlightProducts, setCanHighlightProducts] = useState(false);
   const [showSectionModal, setShowSectionModal] = useState(false);
@@ -1213,6 +1216,9 @@ export default function ProductWizard({
         highlighted: false,
       });
       setProductImages([]);
+      imagePreviews.forEach((preview) => {
+        if (preview.startsWith('blob:')) URL.revokeObjectURL(preview);
+      });
       setImagePreviews([]);
     } catch (error: any) {
       // Si el error es por límite alcanzado, mostrar el modal
@@ -1282,12 +1288,11 @@ export default function ProductWizard({
     const firstImage = files.find((file) => file.type.startsWith('image/'));
     if (!firstImage) return;
 
-    setProductImages([firstImage]);
-
     const reader = new FileReader();
     reader.onload = (e) => {
       if (e.target?.result) {
-        setImagePreviews([e.target.result as string]);
+        setProductPhotoCropSrc(e.target.result as string);
+        setShowProductPhotoCrop(true);
       }
     };
     reader.readAsDataURL(firstImage);
@@ -2497,6 +2502,24 @@ export default function ProductWizard({
           </div>
         </div>
       )}
+
+      <ProductPhotoCropModal
+        show={showProductPhotoCrop}
+        imageSrc={productPhotoCropSrc}
+        onClose={() => {
+          setShowProductPhotoCrop(false);
+          setProductPhotoCropSrc(null);
+        }}
+        onComplete={(file) => {
+          imagePreviews.forEach((preview) => {
+            if (preview.startsWith('blob:')) URL.revokeObjectURL(preview);
+          });
+          setProductImages([file]);
+          setImagePreviews([URL.createObjectURL(file)]);
+          setShowProductPhotoCrop(false);
+          setProductPhotoCropSrc(null);
+        }}
+      />
 
       {/* Modal para crear nueva sección */}
       {showCreateSectionModal && (
