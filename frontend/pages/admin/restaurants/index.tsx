@@ -330,11 +330,9 @@ export default function Restaurants() {
         const formDataLogo = new FormData();
         formDataLogo.append('file', logoFile);
         
-        await api.post(
-          `/media/restaurants/${restaurantId}/photo`,
-          formDataLogo,
-          { headers: { 'Content-Type': 'multipart/form-data' } }
-        );
+        // No fijar Content-Type: el cliente debe enviar multipart/form-data con boundary;
+        // si solo se pone "multipart/form-data" sin boundary, el backend no recibe el archivo (500).
+        await api.post(`/media/restaurants/${restaurantId}/photo`, formDataLogo);
       }
 
       // Subir foto de portada si hay una seleccionada
@@ -342,11 +340,7 @@ export default function Restaurants() {
         const formDataCover = new FormData();
         formDataCover.append('file', coverFile);
         
-        await api.post(
-          `/media/restaurants/${restaurantId}/cover`,
-          formDataCover,
-          { headers: { 'Content-Type': 'multipart/form-data' } }
-        );
+        await api.post(`/media/restaurants/${restaurantId}/cover`, formDataCover);
       }
 
       // Si es una creación nueva (no edición), abrir wizard de menú

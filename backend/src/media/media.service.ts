@@ -1,4 +1,4 @@
-import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { MinioService } from '../common/minio/minio.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
@@ -48,6 +48,11 @@ export class MediaService {
     restaurantId: string,
     file: Express.Multer.File,
   ): Promise<{ id: string; url: string }> {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException(
+        'No se recibió la imagen. Si usás el cliente HTTP, no fijes Content-Type en FormData: debe incluir el boundary.',
+      );
+    }
     try {
       // Optimizar y subir archivo a MinIO (guardamos solo la versión liviana)
       const optimized = await this.optimizeToWebp({
@@ -94,6 +99,11 @@ export class MediaService {
     restaurantId: string,
     file: Express.Multer.File,
   ): Promise<{ id: string; url: string }> {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException(
+        'No se recibió la imagen. Si usás el cliente HTTP, no fijes Content-Type en FormData: debe incluir el boundary.',
+      );
+    }
     try {
       // Optimizar y subir archivo a MinIO (guardamos solo la versión liviana)
       const optimized = await this.optimizeToWebp({
@@ -174,6 +184,11 @@ export class MediaService {
     file: Express.Multer.File,
   ): Promise<{ id: string; url: string }> {
     await this.assertProductPhotosAllowed(tenantId);
+    if (!file?.buffer?.length) {
+      throw new BadRequestException(
+        'No se recibió la imagen. Si usás el cliente HTTP, no fijes Content-Type en FormData: debe incluir el boundary.',
+      );
+    }
     try {
       // Un producto tiene solo una imagen: borrar la anterior (archivo + BD) antes de subir la nueva
       await this.deleteItemPhotos(tenantId, itemId);

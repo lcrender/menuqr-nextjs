@@ -3253,3 +3253,120 @@ body {
   border-radius: 10px;
 }
 
+/* ========================================
+   Dashboard admin — móvil: ancho 100% sin scroll horizontal en la página
+   (el scroll lateral solo dentro de tablas/.table-responsive)
+   ======================================== */
+@media (max-width: 767.98px) {
+  /* Cierra el scroll horizontal a nivel documento cuando el panel admin está activo */
+  html:has(.admin-container),
+  body:has(.admin-container),
+  #__next:has(.admin-container) {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  .admin-mobile-topbar {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .admin-mobile-topbar .admin-mobile-topbar-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Wrappers con maxWidth inline (config) no deben forzar ancho fijo > viewport */
+  .admin-page-config-mercadopago,
+  .admin-page-config-plan-limits,
+  .admin-page-config-subscriptions {
+    max-width: 100% !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Modales: que no sobrepasen el ancho útil (Bootstrap puede dejar márgenes altos) */
+  .admin-main .modal-dialog,
+  body:has(.admin-container) > .modal .modal-dialog,
+  body:has(.admin-container) .modal .modal-dialog {
+    max-width: calc(100vw - 1rem);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .admin-main .modal-content,
+  body:has(.admin-container) .modal .modal-content {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Wizard: padding lateral acorde al main */
+  .restaurant-wizard {
+    padding: 24px 16px;
+  }
+
+  /* Vista previa menú (product wizard): no empujar el ancho de la página */
+  .menu-preview-container,
+  .menu-preview {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Cards y bloques típicos */
+  .admin-main .admin-card,
+  .admin-main .admin-stat-card {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Tablas: scroll interno; la tabla no ensancha el layout */
+  .admin-main .table-responsive,
+  .admin-main .admin-table-scroll,
+  .admin-main .admin-restaurants-table-wrap,
+  .admin-main .admin-products-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .admin-main .table {
+    max-width: 100%;
+  }
+
+  /* Texto largo / URLs */
+  .admin-main pre,
+  .admin-main code {
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Controles de formulario en grillas Bootstrap */
+  .admin-main .form-control,
+  .admin-main .form-select,
+  .admin-main input:not([type="checkbox"]):not([type="radio"]),
+  .admin-main textarea,
+  .admin-main select {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Filas flex con muchos elementos (filtros, acciones) */
+  .admin-main .d-flex.gap-2,
+  .admin-main .d-flex.gap-3 {
+    min-width: 0;
+  }
+
+  .admin-main .flex-grow-1,
+  .admin-main .flex-fill {
+    min-width: 0;
+  }
+}
+
