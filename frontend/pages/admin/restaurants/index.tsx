@@ -591,7 +591,7 @@ export default function Restaurants() {
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (file && file.type.startsWith('image/')) {
       setCoverFile(null);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -600,6 +600,23 @@ export default function Restaurants() {
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
+  };
+
+  const clearLogoSelection = () => {
+    if (logoPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(logoPreview);
+    }
+    setLogoFile(null);
+    setLogoPreview(null);
+  };
+
+  const clearCoverSelection = () => {
+    if (coverPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(coverPreview);
+    }
+    setCoverFile(null);
+    setCoverPreview(null);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -1216,12 +1233,31 @@ export default function Restaurants() {
                       onChange={handleLogoChange}
                     />
                     {logoPreview && (
-                      <div className="mt-2">
+                      <div className="mt-2 position-relative d-inline-block">
                         <img 
                           src={logoPreview} 
                           alt="Logo preview" 
                           style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'cover', borderRadius: '4px' }}
                         />
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm"
+                          onClick={clearLogoSelection}
+                          aria-label="Quitar logo"
+                          style={{
+                            position: 'absolute',
+                            top: '-8px',
+                            right: '-8px',
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            padding: 0,
+                            lineHeight: 1,
+                            fontWeight: 700,
+                          }}
+                        >
+                          ×
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1236,12 +1272,31 @@ export default function Restaurants() {
                       onChange={handleCoverChange}
                     />
                     {coverPreview && (
-                      <div className="mt-2">
+                      <div className="mt-2 position-relative d-inline-block">
                         <img 
                           src={coverPreview} 
                           alt="Cover preview" 
                           style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '4px' }}
                         />
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm"
+                          onClick={clearCoverSelection}
+                          aria-label="Quitar portada"
+                          style={{
+                            position: 'absolute',
+                            top: '-8px',
+                            right: '-8px',
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            padding: 0,
+                            lineHeight: 1,
+                            fontWeight: 700,
+                          }}
+                        >
+                          ×
+                        </button>
                       </div>
                     )}
                   </div>

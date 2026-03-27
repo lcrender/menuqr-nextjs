@@ -12,7 +12,7 @@ export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @Post('restaurants/:restaurantId/photo')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
   @ApiOperation({ summary: 'Subir logo de restaurante' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -36,7 +36,7 @@ export class MediaController {
   }
 
   @Post('restaurants/:restaurantId/cover')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 12 * 1024 * 1024 } }))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
   @ApiOperation({ summary: 'Subir foto de portada de restaurante' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -60,7 +60,7 @@ export class MediaController {
   }
 
   @Post('items/:itemId/photo')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
   @ApiOperation({ summary: 'Subir foto de producto' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({

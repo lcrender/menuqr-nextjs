@@ -253,6 +253,22 @@ export default function RestaurantWizard({
     e.target.value = '';
   };
 
+  const clearLogoSelection = () => {
+    if (logoPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(logoPreview);
+    }
+    setLogoFile(null);
+    setLogoPreview(null);
+  };
+
+  const clearCoverSelection = () => {
+    if (coverPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(coverPreview);
+    }
+    setCoverFile(null);
+    setCoverPreview(null);
+  };
+
   const handleDrop = (e: React.DragEvent, type: 'logo' | 'cover') => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
@@ -805,6 +821,30 @@ export default function RestaurantWizard({
                 {logoPreview ? (
                   <div className="wizard-image-preview-wrap">
                     <img src={logoPreview} alt="Vista previa del logo" className="wizard-preview-image" />
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        clearLogoSelection();
+                      }}
+                      aria-label="Quitar logo"
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        padding: 0,
+                        lineHeight: 1,
+                        fontWeight: 700,
+                        zIndex: 2,
+                      }}
+                    >
+                      ×
+                    </button>
                     <div className="wizard-upload-change-overlay">
                       <span className="wizard-upload-change-btn">Cambiar imagen</span>
                     </div>
@@ -837,6 +877,30 @@ export default function RestaurantWizard({
                 {coverPreview ? (
                   <div className="wizard-image-preview-wrap">
                     <img src={coverPreview} alt="Vista previa de portada" className="wizard-preview-image cover" />
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        clearCoverSelection();
+                      }}
+                      aria-label="Quitar portada"
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        padding: 0,
+                        lineHeight: 1,
+                        fontWeight: 700,
+                        zIndex: 2,
+                      }}
+                    >
+                      ×
+                    </button>
                     <div className="wizard-upload-change-overlay">
                       <span className="wizard-upload-change-btn">Cambiar imagen</span>
                     </div>

@@ -9,9 +9,16 @@ import { PostgresService } from '../common/database/postgres.service';
 import { MinioService } from '../common/minio/minio.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import sharp from 'sharp';
+import { extname } from 'path';
 
 /** Usuario JWT (req.user); tenantId puede ser null p. ej. SUPER_ADMIN */
 type JwtUserPayload = { id: string; role: string; tenantId: string | null };
+type MediaUploadResult = {
+  url: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+};
 
 @Injectable()
 export class MediaService {
@@ -53,22 +60,74 @@ export class MediaService {
     return last ?? (await pipeline().resize(width, height, { fit }).webp({ quality: 40, effort: 4 }).toBuffer());
   }
 
-  /** Convierte fallos de Sharp en 400 con log del error real (MinIO/BD no pasan por aquí). */
-  private async optimizeToWebpOrBadRequest(args: {
+  /** Intenta optimizar a WebP; si falla, devuelve null para hacer fallback al original. */
+  private async tryOptimizeToWebp(args: {
     inputBuffer: Buffer;
     width: number;
     height: number;
     maxBytes: number;
     fit?: 'cover' | 'contain' | 'inside' | 'outside' | 'fill';
-  }): Promise<Buffer> {
+  }): Promise<Buffer | null> {
     try {
       return await this.optimizeToWebp(args);
     } catch (err) {
-      this.logger.error('Sharp / optimización WebP:', err);
-      throw new BadRequestException(
-        'No se pudo procesar la imagen. Usá JPG o PNG; si ya lo es, probá otra exportación o foto más liviana.',
-      );
+      this.logger.warn('Sharp falló al optimizar; se subirá imagen original.', err as Error);
+      return null;
     }
+  }
+
+  private getSafeExtension(file: Express.Multer.File): string {
+    const fromName = extname(file.originalname || '').toLowerCase();
+    if (fromName && /^[a-z0-9.]+$/.test(fromName)) return fromName;
+    if (file.mimetype === 'image/png') return '.png';
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg') return '.jpg';
+    if (file.mimetype === 'image/webp') return '.webp';
+    if (file.mimetype === 'image/gif') return '.gif';
+    return '.bin';
+  }
+
+  private async uploadRestaurantAssetWithFallback(args: {
+    file: Express.Multer.File;
+    folder: string;
+    optimizedWidth: number;
+    optimizedHeight: number;
+    optimizedMaxBytes: number;
+    optimizedFilename: string;
+  }): Promise<MediaUploadResult> {
+    const optimized = await this.tryOptimizeToWebp({
+      inputBuffer: args.file.buffer,
+      width: args.optimizedWidth,
+      height: args.optimizedHeight,
+      maxBytes: args.optimizedMaxBytes,
+      fit: 'cover',
+    });
+
+    if (optimized) {
+      const uploaded = await this.minio.uploadBuffer(optimized, {
+        folder: args.folder,
+        filename: args.optimizedFilename,
+        contentType: 'image/webp',
+      });
+      return {
+        url: uploaded.url,
+        filename: uploaded.filename,
+        mimeType: 'image/webp',
+        size: optimized.length,
+      };
+    }
+
+    const ext = this.getSafeExtension(args.file);
+    const uploadedOriginal = await this.minio.uploadBuffer(args.file.buffer, {
+      folder: args.folder,
+      filename: `original${ext}`,
+      contentType: args.file.mimetype || 'application/octet-stream',
+    });
+    return {
+      url: uploadedOriginal.url,
+      filename: uploadedOriginal.filename,
+      mimeType: args.file.mimetype || 'application/octet-stream',
+      size: args.file.size ?? args.file.buffer.length,
+    };
   }
 
   /** tenant_id real del restaurante (multipart no trae tenantId en body para SUPER_ADMIN). */
@@ -116,17 +175,13 @@ export class MediaService {
     const tenantId = await this.getRestaurantTenantIdOrThrow(restaurantId);
     this.assertTenantAccess(user, tenantId);
     try {
-      const optimized = await this.optimizeToWebpOrBadRequest({
-        inputBuffer: file.buffer,
-        width: 400,
-        height: 400,
-        maxBytes: 300 * 1024,
-        fit: 'cover',
-      });
-      const { url, filename } = await this.minio.uploadBuffer(optimized, {
+      const uploaded = await this.uploadRestaurantAssetWithFallback({
+        file,
         folder: `restaurants/${restaurantId}`,
-        filename: 'logo.webp',
-        contentType: 'image/webp',
+        optimizedWidth: 400,
+        optimizedHeight: 400,
+        optimizedMaxBytes: 1024 * 1024,
+        optimizedFilename: 'logo.webp',
       });
 
       // Guardar en base de datos
@@ -137,7 +192,7 @@ export class MediaService {
           id, tenant_id, url, kind, filename, mime_type, size,
           created_at, updated_at
         ) VALUES ($1, $2, $3, 'image', $4, $5, $6, NOW(), NOW())`,
-        [id, tenantId, url, filename, 'image/webp', optimized.length]
+        [id, tenantId, uploaded.url, uploaded.filename, uploaded.mimeType, uploaded.size]
       );
 
       // Actualizar restaurante con la foto
@@ -145,10 +200,10 @@ export class MediaService {
         `UPDATE restaurants 
          SET logo_url = $1, updated_at = NOW() 
          WHERE id = $2`,
-        [url, restaurantId]
+        [uploaded.url, restaurantId]
       );
 
-      return { id, url };
+      return { id, url: uploaded.url };
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
         throw error;
@@ -171,17 +226,13 @@ export class MediaService {
     const tenantId = await this.getRestaurantTenantIdOrThrow(restaurantId);
     this.assertTenantAccess(user, tenantId);
     try {
-      const optimized = await this.optimizeToWebpOrBadRequest({
-        inputBuffer: file.buffer,
-        width: 1200,
-        height: 800,
-        maxBytes: 600 * 1024,
-        fit: 'cover',
-      });
-      const { url, filename } = await this.minio.uploadBuffer(optimized, {
+      const uploaded = await this.uploadRestaurantAssetWithFallback({
+        file,
         folder: `restaurants/${restaurantId}/cover`,
-        filename: 'cover.webp',
-        contentType: 'image/webp',
+        optimizedWidth: 1200,
+        optimizedHeight: 800,
+        optimizedMaxBytes: 1024 * 1024,
+        optimizedFilename: 'cover.webp',
       });
 
       // Guardar en base de datos
@@ -192,7 +243,7 @@ export class MediaService {
           id, tenant_id, url, kind, filename, mime_type, size,
           created_at, updated_at
         ) VALUES ($1, $2, $3, 'image', $4, $5, $6, NOW(), NOW())`,
-        [id, tenantId, url, filename, 'image/webp', optimized.length]
+        [id, tenantId, uploaded.url, uploaded.filename, uploaded.mimeType, uploaded.size]
       );
 
       // Actualizar restaurante con la foto de portada
@@ -200,10 +251,10 @@ export class MediaService {
         `UPDATE restaurants 
          SET cover_url = $1, updated_at = NOW() 
          WHERE id = $2`,
-        [url, restaurantId]
+        [uploaded.url, restaurantId]
       );
 
-      return { id, url };
+      return { id, url: uploaded.url };
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
         throw error;
@@ -263,18 +314,28 @@ export class MediaService {
       // Un producto tiene solo una imagen: borrar la anterior (archivo + BD) antes de subir la nueva
       await this.deleteItemPhotos(tenantId, itemId);
 
-      const optimized = await this.optimizeToWebpOrBadRequest({
+      const optimized = await this.tryOptimizeToWebp({
         inputBuffer: file.buffer,
         width: 800,
         height: 800,
-        maxBytes: 250 * 1024,
+        maxBytes: 1024 * 1024,
         fit: 'cover',
       });
-      const { url, filename } = await this.minio.uploadBuffer(optimized, {
-        folder: `items/${itemId}`,
-        filename: 'product.webp',
-        contentType: 'image/webp',
-      });
+      const ext = this.getSafeExtension(file);
+      const uploadPayload =
+        optimized != null
+          ? await this.minio.uploadBuffer(optimized, {
+              folder: `items/${itemId}`,
+              filename: 'product.webp',
+              contentType: 'image/webp',
+            })
+          : await this.minio.uploadBuffer(file.buffer, {
+              folder: `items/${itemId}`,
+              filename: `original${ext}`,
+              contentType: file.mimetype || 'application/octet-stream',
+            });
+      const mimeType = optimized != null ? 'image/webp' : file.mimetype || 'application/octet-stream';
+      const mediaSize = optimized != null ? optimized.length : file.size ?? file.buffer.length;
 
       // Guardar en base de datos
       const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
@@ -284,10 +345,10 @@ export class MediaService {
           id, tenant_id, item_id, url, kind, filename, mime_type, size,
           created_at, updated_at
         ) VALUES ($1, $2, $3, $4, 'image', $5, $6, $7, NOW(), NOW())`,
-        [id, tenantId, itemId, url, filename, 'image/webp', optimized.length]
+        [id, tenantId, itemId, uploadPayload.url, uploadPayload.filename, mimeType, mediaSize]
       );
 
-      return { id, url };
+      return { id, url: uploadPayload.url };
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
         throw error;
