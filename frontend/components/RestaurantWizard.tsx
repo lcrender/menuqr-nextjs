@@ -1166,19 +1166,19 @@ export default function RestaurantWizard({
               <div className="wizard-preview-mobile-nav">
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline-secondary"
+                  className="admin-btn admin-btn-secondary wizard-preview-nav-btn"
                   onClick={() => goToTemplatePreview('prev')}
                   aria-label="Vista previa anterior"
                 >
-                  ←
+                  Anterior
                 </button>
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline-secondary"
+                  className="admin-btn admin-btn-secondary wizard-preview-nav-btn"
                   onClick={() => goToTemplatePreview('next')}
                   aria-label="Vista previa siguiente"
                 >
-                  →
+                  Próxima
                 </button>
               </div>
               <img
@@ -1198,14 +1198,6 @@ export default function RestaurantWizard({
             )}
 
             <div className="admin-templates-preview-drawer-footer" style={{ display: 'flex', gap: 10, justifyContent: 'space-between' }}>
-              <a
-                href={`/preview/${previewSelectedId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="admin-btn admin-templates-preview-drawer-cta"
-              >
-                Ver demo
-              </a>
               <button
                 type="button"
                 className="admin-btn"
@@ -1215,8 +1207,16 @@ export default function RestaurantWizard({
                 }}
                 disabled={!canUseCurrentPreviewTemplate}
               >
-                Usar esta plantilla
+                Usar Plantilla
               </button>
+              <a
+                href={`/preview/${previewSelectedId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-btn admin-templates-preview-drawer-cta"
+              >
+                Ver demo
+              </a>
             </div>
           </div>
         </div>
