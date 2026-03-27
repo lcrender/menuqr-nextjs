@@ -813,13 +813,9 @@ export default function RestaurantWizard({
                   <div className="wizard-upload-placeholder">
                     <div className="wizard-upload-icon">🖼️</div>
                     <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
-                    <span className="wizard-upload-hint">Recortá en el editor; se guarda 400×400 WebP (máx. 300 KB)</span>
                   </div>
                 )}
               </div>
-              <small className="wizard-hint" style={{ color: '#666', fontSize: '0.875rem', marginTop: '8px', display: 'block' }}>
-                Recortá en el editor; se guarda en 400×400 px WebP (máx. 300 KB). Se muestra en el menú y en la cabecera.
-              </small>
             </div>
 
             {/* Foto de portada */}
@@ -849,13 +845,9 @@ export default function RestaurantWizard({
                   <div className="wizard-upload-placeholder">
                     <div className="wizard-upload-icon">📷</div>
                     <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
-                    <span className="wizard-upload-hint">1200×800 px · WebP · máx. 600 KB</span>
                   </div>
                 )}
               </div>
-              <small className="wizard-hint" style={{ color: '#666', fontSize: '0.875rem', marginTop: '8px', display: 'block' }}>
-                Recortá en el editor; se guarda en 1200×800 px WebP (máx. 600 KB).
-              </small>
             </div>
 
             {/* Template de diseño */}

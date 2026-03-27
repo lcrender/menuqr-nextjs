@@ -1529,9 +1529,6 @@ export default function Products() {
                           <p style={{ margin: 0, color: '#999', fontSize: '14px', marginBottom: '8px' }}>
                             Arrastra imágenes aquí o haz clic para seleccionar
                           </p>
-                          <p style={{ margin: 0, color: '#bbb', fontSize: '13px', marginBottom: '12px' }}>
-                            Se abre un editor para recortar. Se guarda en 800×800 WebP (máx. 250 KB).
-                          </p>
                           <div
                             style={{
                               marginTop: '16px',
@@ -1606,9 +1603,6 @@ export default function Products() {
                             <div style={{ fontSize: '36px', marginBottom: '8px' }}>📷</div>
                             <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
                               Arrastra una imagen o haz clic para seleccionar
-                            </p>
-                            <p style={{ margin: 0, color: '#999', fontSize: '12px' }}>
-                              Una imagen por producto. Se guarda en 800×800 WebP (máx. 250 KB). Al eliminar se borra del sistema.
                             </p>
                           </div>
                           ) : (

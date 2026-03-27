@@ -32,14 +32,15 @@ export class MediaService {
   }): Promise<Buffer> {
     const { inputBuffer, width, height, maxBytes, fit = 'cover' } = args;
 
-    // Seguridad: evitar que imágenes gigantes exploten memoria (sin confiar en el cliente)
-    const base = sharp(inputBuffer, { limitInputPixels: 50_000_000 }).rotate(); // respeta EXIF orientation
+    // Cada pipeline debe usar un sharp() nuevo: una instancia solo puede ejecutarse una vez (toBuffer).
+    const pipeline = () =>
+      sharp(inputBuffer, { limitInputPixels: 50_000_000 }).rotate();
 
     let quality = 86;
     let last: Buffer | null = null;
 
     while (quality >= 40) {
-      const out = await base
+      const out = await pipeline()
         .resize(width, height, { fit })
         .webp({ quality, effort: 4 })
         .toBuffer();
@@ -48,8 +49,25 @@ export class MediaService {
       quality -= 6;
     }
 
-    // Si no entra en el máximo, devolvemos lo último (igual ya viene muy comprimido y a tamaño fijo).
-    return last || (await base.resize(width, height, { fit }).webp({ quality: 40, effort: 4 }).toBuffer());
+    return last ?? (await pipeline().resize(width, height, { fit }).webp({ quality: 40, effort: 4 }).toBuffer());
+  }
+
+  /** Convierte fallos de Sharp en 400 con log del error real (MinIO/BD no pasan por aquí). */
+  private async optimizeToWebpOrBadRequest(args: {
+    inputBuffer: Buffer;
+    width: number;
+    height: number;
+    maxBytes: number;
+    fit?: 'cover' | 'contain' | 'inside' | 'outside' | 'fill';
+  }): Promise<Buffer> {
+    try {
+      return await this.optimizeToWebp(args);
+    } catch (err) {
+      this.logger.error('Sharp / optimización WebP:', err);
+      throw new BadRequestException(
+        'No se pudo procesar la imagen. Usá JPG o PNG; si ya lo es, probá otra exportación o foto más liviana.',
+      );
+    }
   }
 
   /** tenant_id real del restaurante (multipart no trae tenantId en body para SUPER_ADMIN). */
@@ -97,8 +115,7 @@ export class MediaService {
     const tenantId = await this.getRestaurantTenantIdOrThrow(restaurantId);
     this.assertTenantAccess(user, tenantId);
     try {
-      // Optimizar y subir archivo a MinIO (guardamos solo la versión liviana)
-      const optimized = await this.optimizeToWebp({
+      const optimized = await this.optimizeToWebpOrBadRequest({
         inputBuffer: file.buffer,
         width: 400,
         height: 400,
@@ -136,11 +153,6 @@ export class MediaService {
         throw error;
       }
       this.logger.error('Error subiendo foto de restaurante:', error);
-      if (error && typeof error === 'object' && 'message' in error && String((error as Error).message).includes('sharp')) {
-        throw new BadRequestException(
-          'No se pudo procesar la imagen. Probá con JPG o PNG.',
-        );
-      }
       throw error;
     }
   }
@@ -158,8 +170,7 @@ export class MediaService {
     const tenantId = await this.getRestaurantTenantIdOrThrow(restaurantId);
     this.assertTenantAccess(user, tenantId);
     try {
-      // Optimizar y subir archivo a MinIO (guardamos solo la versión liviana)
-      const optimized = await this.optimizeToWebp({
+      const optimized = await this.optimizeToWebpOrBadRequest({
         inputBuffer: file.buffer,
         width: 1200,
         height: 800,
@@ -197,11 +208,6 @@ export class MediaService {
         throw error;
       }
       this.logger.error('Error subiendo foto de portada de restaurante:', error);
-      if (error && typeof error === 'object' && 'message' in error && String((error as Error).message).toLowerCase().includes('input')) {
-        throw new BadRequestException(
-          'No se pudo procesar la imagen. Probá con JPG o PNG.',
-        );
-      }
       throw error;
     }
   }
@@ -256,8 +262,7 @@ export class MediaService {
       // Un producto tiene solo una imagen: borrar la anterior (archivo + BD) antes de subir la nueva
       await this.deleteItemPhotos(tenantId, itemId);
 
-      // Optimizar y subir archivo a MinIO (guardamos solo la versión liviana)
-      const optimized = await this.optimizeToWebp({
+      const optimized = await this.optimizeToWebpOrBadRequest({
         inputBuffer: file.buffer,
         width: 800,
         height: 800,

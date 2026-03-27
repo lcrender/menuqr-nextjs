@@ -1215,9 +1215,6 @@ export default function Restaurants() {
                       accept="image/*"
                       onChange={handleLogoChange}
                     />
-                    <small className="form-text text-muted">
-                      Se abre un editor para recortar. Se guarda en 400×400 px, WebP, máx. 300 KB.
-                    </small>
                     {logoPreview && (
                       <div className="mt-2">
                         <img 
@@ -1238,9 +1235,6 @@ export default function Restaurants() {
                       accept="image/*"
                       onChange={handleCoverChange}
                     />
-                    <small className="form-text text-muted">
-                      Se abre un editor para recortar. Se guarda en 1200×800 px, WebP, máx. 600 KB.
-                    </small>
                     {coverPreview && (
                       <div className="mt-2">
                         <img 
