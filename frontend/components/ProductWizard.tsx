@@ -1119,13 +1119,16 @@ export default function ProductWizard({
         highlighted: formData.highlighted,
       };
 
+      let createdItemId: string | null = null;
+
       // Si hay secciones seleccionadas o se seleccionó una en el modal, crear el producto y asociarlo
       if (formData.menuId && (formData.sectionIds.length > 0 || selectedSectionId)) {
         // Crear el producto con la sección seleccionada
         data.menuId = formData.menuId;
         data.sectionId = selectedSectionId || formData.sectionIds[0];
-        
-        await api.post('/menu-items', data);
+
+        const created = await api.post('/menu-items', data);
+        createdItemId = created.data?.id || null;
         
         // Si hay más de una sección, asociar el producto a las demás secciones
         // Nota: El backend actualmente solo permite un sectionId por producto
@@ -1139,10 +1142,20 @@ export default function ProductWizard({
       } else if (formData.menuId) {
         // Crear producto con menú pero sin sección
         data.menuId = formData.menuId;
-        await api.post('/menu-items', data);
+        const created = await api.post('/menu-items', data);
+        createdItemId = created.data?.id || null;
       } else {
         // Crear producto sin asignar a menú
-        await api.post('/menu-items', data);
+        const created = await api.post('/menu-items', data);
+        createdItemId = created.data?.id || null;
+      }
+
+      // Subir foto (máximo 1) si se seleccionó en el wizard.
+      const firstImage = productImages[0];
+      if (createdItemId && firstImage) {
+        const fd = new FormData();
+        fd.append('file', firstImage);
+        await api.post(`/media/items/${createdItemId}/photo`, fd);
       }
 
       // Actualizar el conteo de productos después de crear uno
@@ -1199,6 +1212,8 @@ export default function ProductWizard({
         iconCodes: [],
         highlighted: false,
       });
+      setProductImages([]);
+      setImagePreviews([]);
     } catch (error: any) {
       // Si el error es por límite alcanzado, mostrar el modal
       if (error.response?.status === 403 || error.response?.data?.message?.includes('límite') || error.response?.data?.message?.includes('limit')) {
@@ -1263,27 +1278,24 @@ export default function ProductWizard({
   };
 
   const handleImageUpload = (files: File[]) => {
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    const newImages = [...productImages, ...imageFiles];
-    setProductImages(newImages);
-    
-    // Crear previews
-    imageFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          setImagePreviews(prev => [...prev, e.target!.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    // Solo 1 imagen por producto: tomamos la primera válida y reemplazamos la existente.
+    const firstImage = files.find((file) => file.type.startsWith('image/'));
+    if (!firstImage) return;
+
+    setProductImages([firstImage]);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setImagePreviews([e.target.result as string]);
+      }
+    };
+    reader.readAsDataURL(firstImage);
   };
 
-  const removeImage = (index: number) => {
-    const newImages = productImages.filter((_, i) => i !== index);
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    setProductImages(newImages);
-    setImagePreviews(newPreviews);
+  const removeImage = () => {
+    setProductImages([]);
+    setImagePreviews([]);
   };
 
   // Pantalla inicial de selección
@@ -2255,7 +2267,7 @@ export default function ProductWizard({
                       const input = document.createElement('input');
                       input.type = 'file';
                       input.accept = 'image/*';
-                      input.multiple = true;
+                      input.multiple = false;
                       input.onchange = (e: any) => {
                         if (e.target.files) {
                           handleImageUpload(Array.from(e.target.files));
@@ -2268,72 +2280,61 @@ export default function ProductWizard({
                       <>
                         <div style={{ fontSize: '48px', marginBottom: '16px' }}>📷</div>
                         <p style={{ margin: 0, color: '#666', fontSize: '16px', marginBottom: '8px' }}>
-                          Arrastra imágenes aquí o haz clic para seleccionar
+                          Arrastra una imagen aquí o haz clic para seleccionar
                         </p>
                         <p style={{ margin: 0, color: '#999', fontSize: '14px' }}>
-                          Formatos: JPG, PNG, GIF (máx. 5MB por imagen)
+                          Formatos: JPG, PNG, GIF (máx. 5MB)
                         </p>
                       </>
                     ) : (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center' }}>
-                        {imagePreviews.map((preview, index) => (
-                          <div key={index} style={{ position: 'relative', width: '150px', height: '150px' }}>
-                            <img
-                              src={preview}
-                              alt={`Preview ${index + 1}`}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                borderRadius: '8px',
-                                border: '1px solid #ddd'
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeImage(index);
-                              }}
-                              style={{
-                                position: 'absolute',
-                                top: '8px',
-                                right: '8px',
-                                backgroundColor: '#dc3545',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '50%',
-                                width: '28px',
-                                height: '28px',
-                                cursor: 'pointer',
-                                fontSize: '18px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                        <div
-                          style={{
-                            width: '150px',
-                            height: '150px',
-                            border: '2px dashed #ccc',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            backgroundColor: '#fafafa'
-                          }}
+                      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ position: 'relative', width: '150px', height: '150px' }}>
+                          <img
+                            src={imagePreviews[0]}
+                            alt="Preview producto"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              borderRadius: '8px',
+                              border: '1px solid #ddd'
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeImage();
+                            }}
+                            style={{
+                              position: 'absolute',
+                              top: '8px',
+                              right: '8px',
+                              backgroundColor: '#dc3545',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '28px',
+                              height: '28px',
+                              cursor: 'pointer',
+                              fontSize: '18px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-secondary"
                           onClick={(e) => {
                             e.stopPropagation();
                             const input = document.createElement('input');
                             input.type = 'file';
                             input.accept = 'image/*';
-                            input.multiple = true;
+                            input.multiple = false;
                             input.onchange = (e: any) => {
                               if (e.target.files) {
                                 handleImageUpload(Array.from(e.target.files));
@@ -2342,8 +2343,8 @@ export default function ProductWizard({
                             input.click();
                           }}
                         >
-                          <span style={{ fontSize: '32px' }}>+</span>
-                        </div>
+                          Reemplazar foto
+                        </button>
                       </div>
                     )}
                   </div>
