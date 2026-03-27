@@ -21,7 +21,7 @@ export class UsersService {
 
   async findByEmail(email: string): Promise<UserWithVerification | null> {
     const result = await this.postgres.queryRaw<any>(
-      'SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1',
+      'SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND deleted_at IS NULL LIMIT 1',
       [email]
     );
     if (!result[0]) return null;

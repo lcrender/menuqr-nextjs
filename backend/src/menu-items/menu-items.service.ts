@@ -605,7 +605,7 @@ export class MenuItemsService {
     if (data.highlighted !== undefined) {
       // Guardamos el flag dentro de la columna JSONB `extra` para no romper el esquema original.
       updates.push(
-        `extra = COALESCE(extra, '{}'::jsonb) || jsonb_build_object('highlighted', $${paramIndex++})`,
+        `extra = COALESCE(extra, '{}'::jsonb) || jsonb_build_object('highlighted', ($${paramIndex++})::boolean)`,
       );
       params.push(data.highlighted);
     }

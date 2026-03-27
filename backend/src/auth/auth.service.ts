@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger, NotFoundException, InternalServerErrorException, HttpException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -129,9 +129,10 @@ export class AuthService {
   async register(registerDto: RegisterDto, registrationCountry?: string) {
     try {
       const { email, password, firstName, lastName, tenantName, pendingPlan, pendingBillingCycle } = registerDto;
+      const normalizedEmail = (email || '').trim().toLowerCase();
 
       // Verificar si el email ya existe
-      const existingUser = await this.usersService.findByEmail(email);
+      const existingUser = await this.usersService.findByEmail(normalizedEmail);
       if (existingUser) {
         throw new BadRequestException('Ya hay una cuenta con ese email');
       }
@@ -147,7 +148,7 @@ export class AuthService {
 
       // Crear tenant automáticamente para cada nuevo usuario con plan "free"
       // Si se especifica un nombre, usarlo; si no, usar el email como nombre
-      const tenantNameToUse = tenantName || `${firstName} ${lastName}`.trim() || email.split('@')[0];
+      const tenantNameToUse = tenantName || `${firstName} ${lastName}`.trim() || normalizedEmail.split('@')[0];
       
       const tenant = await this.tenantsService.create({
         name: tenantNameToUse,
@@ -164,7 +165,7 @@ export class AuthService {
 
       // En desarrollo crear usuario ya verificado y devolver tokens; en producción exige verificación por email
       const user = await this.usersService.create({
-        email,
+        email: normalizedEmail,
         passwordHash,
         firstName,
         lastName,
@@ -194,14 +195,14 @@ export class AuthService {
       if (!isDev) {
         try {
           await this.emailService.sendEmailVerification(
-            email,
+            normalizedEmail,
             firstName || 'Usuario',
             emailVerificationToken!,
           );
         } catch (emailError) {
-          this.logger.error(`Error enviando email de verificación a ${email}:`, emailError);
+          this.logger.error(`Error enviando email de verificación a ${normalizedEmail}:`, emailError);
         }
-        this.logger.log(`Usuario ${email} registrado. Email de verificación enviado.`);
+        this.logger.log(`Usuario ${normalizedEmail} registrado. Email de verificación enviado.`);
         return {
           message: 'Usuario registrado exitosamente. Por favor, verifica tu email para activar tu cuenta.',
           user: {
@@ -219,7 +220,7 @@ export class AuthService {
         };
       }
 
-      this.logger.log(`Usuario ${email} registrado en desarrollo (sin verificación de email).`);
+      this.logger.log(`Usuario ${normalizedEmail} registrado en desarrollo (sin verificación de email).`);
       const tokens = await this.generateTokens(user);
       let tenantInfo = null;
       if (user.tenantId) {
@@ -250,7 +251,9 @@ export class AuthService {
         throw new BadRequestException('Ya hay una cuenta con ese email');
       }
       // Reenviar excepciones HTTP (4xx) tal cual
+      if (error instanceof HttpException) throw error;
       if (error?.statusCode && error?.statusCode >= 400 && error?.statusCode < 500) throw error;
+      if (error?.status && error?.status >= 400 && error?.status < 500) throw error;
       throw new InternalServerErrorException(
         'No se pudo completar el registro. Revisá los logs del backend para más detalle.',
       );
