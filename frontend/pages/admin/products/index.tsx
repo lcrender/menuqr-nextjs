@@ -318,8 +318,7 @@ export default function Products() {
         const validPrices = formData.prices.filter(
           (p: any) => p.currency && p.currency.trim() !== '' && p.amount != null && p.amount > 0
         );
-        
-        await api.put(`/menu-items/${editing.id}`, {
+        const dataToUpdate: any = {
           name: formData.name,
           description: formData.description,
           active: formData.active,
@@ -327,7 +326,12 @@ export default function Products() {
           prices: validPrices,
           iconCodes: formData.iconCodes,
           highlighted: formData.highlighted,
-        });
+        };
+        if (isSuperAdmin) {
+          dataToUpdate.tenantId = editing.tenantId || editing.tenant_id || selectedTenantId || undefined;
+        }
+
+        await api.put(`/menu-items/${editing.id}`, dataToUpdate);
         // Una sola imagen por producto; el backend reemplaza la anterior si existe
         const photoToUpload = editPhotos.find((p) => p.file);
         if (photoToUpload?.file) {
@@ -339,12 +343,15 @@ export default function Products() {
         const validPrices = formData.prices.filter(
           (p) => p.currency && p.currency.trim() !== '' && p.amount != null && p.amount > 0
         );
-        const dataToSend = {
+        const dataToSend: any = {
           ...formData,
           menuId: formData.menuId || undefined,
           sectionId: formData.sectionId || undefined,
           prices: validPrices,
         };
+        if (isSuperAdmin) {
+          dataToSend.tenantId = selectedTenantId || undefined;
+        }
         await api.post('/menu-items', dataToSend);
       }
 

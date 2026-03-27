@@ -1,7 +1,7 @@
 # Etapa de desarrollo
 FROM node:18-slim AS development
 
-RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates procps && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -32,7 +32,7 @@ CMD ["npm", "run", "start:dev"]
 FROM node:18-slim AS production
 
 # Prisma schema/query engine requiere OpenSSL en runtime
-RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates procps && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

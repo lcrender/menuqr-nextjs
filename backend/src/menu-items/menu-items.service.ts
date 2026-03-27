@@ -610,11 +610,9 @@ export class MenuItemsService {
       params.push(data.highlighted);
     }
     if (data.sectionId !== undefined) {
-      if (data.sectionId === null || data.sectionId === '') {
-        // Si se quiere quitar la sección, también quitar el menú (o dejarlo como está si el producto ya tenía menú)
-        // Por ahora, solo quitamos la sección pero mantenemos el menú
-        updates.push(`section_id = NULL`);
-      } else {
+      // `menu_items.section_id` es NOT NULL en BD.
+      // Si llega vacío por UI/cliente, mantenemos la sección actual para evitar error 500.
+      if (data.sectionId !== null && data.sectionId !== '') {
         // Obtener la sección y su menú asociado
         const section = await this.postgres.queryRaw<any>(
           `SELECT menu_id FROM menu_sections 
@@ -713,10 +711,17 @@ export class MenuItemsService {
       params.push(id);
       params.push(tenantId);
 
-      await this.postgres.executeRaw(
-        `UPDATE menu_items SET ${updates.join(', ')} WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1}`,
-        params
-      );
+      try {
+        await this.postgres.executeRaw(
+          `UPDATE menu_items SET ${updates.join(', ')} WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1}`,
+          params
+        );
+      } catch (error: any) {
+        this.logger.error(`Error actualizando producto ${id}:`, error);
+        throw new BadRequestException(
+          error?.message || 'No se pudo actualizar el producto. Verificá los datos e intentá nuevamente.',
+        );
+      }
     }
 
     // Persistir cambios traducibles en `translations`.

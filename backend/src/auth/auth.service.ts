@@ -133,7 +133,7 @@ export class AuthService {
       // Verificar si el email ya existe
       const existingUser = await this.usersService.findByEmail(email);
       if (existingUser) {
-        throw new BadRequestException('El email ya está registrado');
+        throw new BadRequestException('Ya hay una cuenta con ese email');
       }
 
       // Validar contraseña
@@ -245,6 +245,10 @@ export class AuthService {
       if (error?.stack) this.logger.debug(error.stack);
       if (error?.code) this.logger.error(`Código error (DB/otro): ${error.code}`);
       if (error?.detail) this.logger.error(`Detalle: ${error.detail}`);
+      // Condición de carrera: índice único en email/tenant puede disparar aquí.
+      if (error?.code === '23505') {
+        throw new BadRequestException('Ya hay una cuenta con ese email');
+      }
       // Reenviar excepciones HTTP (4xx) tal cual
       if (error?.statusCode && error?.statusCode >= 400 && error?.statusCode < 500) throw error;
       throw new InternalServerErrorException(
