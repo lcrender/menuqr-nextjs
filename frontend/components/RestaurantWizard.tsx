@@ -374,7 +374,9 @@ export default function RestaurantWizard({
       direction === 'prev'
         ? (currentPreviewIndex - 1 + WIZARD_TEMPLATES.length) % WIZARD_TEMPLATES.length
         : (currentPreviewIndex + 1) % WIZARD_TEMPLATES.length;
-    setPreviewSelectedId(WIZARD_TEMPLATES[nextIndex].id);
+    const nextTemplate = WIZARD_TEMPLATES[nextIndex];
+    if (!nextTemplate) return;
+    setPreviewSelectedId(nextTemplate.id);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
