@@ -2659,15 +2659,19 @@ body {
     background: #fff;
     border-top: 1px solid var(--admin-border);
     box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.08);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
   }
 
   .restaurant-wizard.restaurant-wizard-mobile .wizard-footer-right {
     width: 100%;
     margin-left: 0;
-    flex-direction: row;
+    flex-direction: column;
     gap: 8px;
   }
 
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-footer > .admin-btn,
   .restaurant-wizard.restaurant-wizard-mobile .wizard-footer .admin-btn {
     width: 100%;
     min-height: 42px;

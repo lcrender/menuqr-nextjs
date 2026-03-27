@@ -10,7 +10,6 @@ import CitySelector from '../../../components/CitySelector';
 import RestaurantWizard from '../../../components/RestaurantWizard';
 import MenuWizard from '../../../components/MenuWizard';
 import QRCode from 'react-qr-code';
-import ConfirmModal from '../../../components/ConfirmModal';
 import AlertModal from '../../../components/AlertModal';
 import LogoCropModal from '../../../components/LogoCropModal';
 import CoverCropModal from '../../../components/CoverCropModal';
@@ -125,6 +124,7 @@ export default function Restaurants() {
   const [limitMessage, setLimitMessage] = useState({ limit: 0, current: 0, plan: '' });
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [restaurantToDelete, setRestaurantToDelete] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [alertData, setAlertData] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
@@ -658,6 +658,7 @@ export default function Restaurants() {
 
   const handleDeleteClick = (id: string) => {
     setRestaurantToDelete(id);
+    setDeleteConfirmText('');
     setShowConfirmDelete(true);
   };
 
@@ -669,6 +670,7 @@ export default function Restaurants() {
       loadRestaurants();
       setShowConfirmDelete(false);
       setRestaurantToDelete(null);
+      setDeleteConfirmText('');
       setAlertData({
         title: 'Éxito',
         message: 'Restaurante eliminado correctamente',
@@ -684,6 +686,7 @@ export default function Restaurants() {
       setShowAlert(true);
       setShowConfirmDelete(false);
       setRestaurantToDelete(null);
+      setDeleteConfirmText('');
     }
   };
 
@@ -1802,19 +1805,74 @@ export default function Restaurants() {
       )}
 
       {/* Modal de confirmación para eliminar restaurante */}
-      <ConfirmModal
-        show={showConfirmDelete}
-        title="Eliminar Restaurante"
-        message="¿Estás seguro de eliminar este restaurante? Esta acción no se puede deshacer y también se eliminarán todos los menús y productos asociados."
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        variant="danger"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => {
-          setShowConfirmDelete(false);
-          setRestaurantToDelete(null);
-        }}
-      />
+      {showConfirmDelete && (
+        <div
+          className="modal show"
+          style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={() => {
+            setShowConfirmDelete(false);
+            setRestaurantToDelete(null);
+            setDeleteConfirmText('');
+          }}
+        >
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
+                <h5 className="modal-title" style={{ color: '#721c24' }}>
+                  <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#dc3545' }}></i>
+                  Eliminar Restaurante
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowConfirmDelete(false);
+                    setRestaurantToDelete(null);
+                    setDeleteConfirmText('');
+                  }}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body" style={{ padding: '24px' }}>
+                <p style={{ marginBottom: '12px', fontSize: '16px' }}>
+                  ¿Estás seguro de eliminar este restaurante? Esta acción no se puede deshacer y también se eliminarán todos los menús y productos asociados.
+                </p>
+                <p className="mb-2">
+                  Escribe <strong>ELIMINAR</strong> para confirmar.
+                </p>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="ELIMINAR"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                />
+              </div>
+              <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowConfirmDelete(false);
+                    setRestaurantToDelete(null);
+                    setDeleteConfirmText('');
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteConfirm}
+                  disabled={deleteConfirmText.trim() !== 'ELIMINAR'}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de alerta */}
       {alertData && (
