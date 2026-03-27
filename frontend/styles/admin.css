@@ -1906,6 +1906,66 @@ body {
   cursor: not-allowed;
 }
 
+.wizard-mobile-only {
+  display: none;
+}
+
+.wizard-desktop-only {
+  display: block;
+}
+
+.wizard-mobile-collapse-btn {
+  width: 100%;
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.wizard-mobile-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1080;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+.wizard-mobile-modal-panel {
+  width: 100%;
+  max-height: 72vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 14px 14px 16px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.wizard-mobile-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.wizard-mobile-modal-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.wizard-media-grid-mobile {
+  display: block;
+}
+
 /* Wizard price row */
 .wizard-price-row {
   display: grid;
@@ -2529,25 +2589,151 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .restaurant-wizard {
+  .restaurant-wizard.restaurant-wizard-mobile {
     padding: 24px;
   }
-  
-  .wizard-steps {
-    flex-wrap: wrap;
-    gap: 16px;
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-title {
+    font-size: clamp(1.08rem, 5.2vw, 1.28rem);
+    white-space: nowrap;
   }
-  
-  .wizard-step {
-    flex: 0 0 calc(50% - 8px);
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-header {
+    margin-bottom: 20px;
   }
-  
-  .wizard-step:not(:last-child)::after {
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-progress {
+    margin-bottom: 16px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-steps {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    align-items: start;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-step {
+    flex: none;
+    min-width: 0;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-step:not(:last-child)::after {
     display: none;
   }
-  
-  .wizard-step-label {
-    font-size: 0.6875rem;
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-step-number {
+    width: 26px;
+    height: 26px;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-step.active .wizard-step-number {
+    transform: none;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-step-label {
+    font-size: 0.58rem;
+    line-height: 1.1;
+    margin-top: 0;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-form {
+    margin-top: 18px;
+    padding-bottom: 140px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1040;
+    margin-top: 0;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid var(--admin-border);
+    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.08);
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-footer-right {
+    width: 100%;
+    margin-left: 0;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-footer .admin-btn {
+    width: 100%;
+    min-height: 42px;
+    font-size: 0.9rem;
+    padding: 8px 10px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-mobile-only {
+    display: block;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-desktop-only {
+    display: none;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-currencies-tags-container-mobile {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-currency-tag-selectable-mobile {
+    font-size: 0.7rem;
+    padding: 6px 8px;
+    border-radius: 999px;
+    min-height: 32px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-media-grid-mobile {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-media-grid-mobile .wizard-label {
+    font-size: 0.66rem;
+    margin-bottom: 8px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-media-grid-mobile .wizard-image-upload-zone {
+    padding: 12px 8px;
+    min-height: 140px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-media-grid-mobile .wizard-upload-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-media-grid-mobile .wizard-upload-text {
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-media-grid-mobile .wizard-preview-image,
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-media-grid-mobile .wizard-preview-image.cover {
+    max-height: 160px;
+  }
+
+  .restaurant-wizard.restaurant-wizard-mobile .wizard-template-selector--grid {
+    grid-template-columns: 1fr;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 4px;
   }
   
   .wizard-template-selector {

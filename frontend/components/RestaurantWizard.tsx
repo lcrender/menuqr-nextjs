@@ -134,9 +134,26 @@ export default function RestaurantWizard({
   const [logoCropSrc, setLogoCropSrc] = useState<string | null>(null);
   const [showCoverCrop, setShowCoverCrop] = useState(false);
   const [coverCropSrc, setCoverCropSrc] = useState<string | null>(null);
+  const [showAdditionalCurrenciesModal, setShowAdditionalCurrenciesModal] = useState(false);
   const [previewSelectedId, setPreviewSelectedId] = useState<string | null>(null);
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
   const [previewImageError, setPreviewImageError] = useState<Record<string, boolean>>({});
+  const additionalCurrencies = ['USD', 'EUR', 'ARS', 'MXN', 'CLP', 'COP', 'PEN', 'BRL', 'UYU', 'PYG', 'BOB', 'VES']
+    .filter((c) => c !== formData.defaultCurrency);
+  const currencyLabels: { [key: string]: string } = {
+    USD: 'USD - Dólar estadounidense',
+    EUR: 'EUR - Euro',
+    ARS: 'ARS - Peso argentino',
+    MXN: 'MXN - Peso mexicano',
+    CLP: 'CLP - Peso chileno',
+    COP: 'COP - Peso colombiano',
+    PEN: 'PEN - Sol peruano',
+    BRL: 'BRL - Real brasileño',
+    UYU: 'UYU - Peso uruguayo',
+    PYG: 'PYG - Guaraní paraguayo',
+    BOB: 'BOB - Boliviano',
+    VES: 'VES - Bolívar venezolano',
+  };
 
   // Mapeo de nombres de países de APIs a nuestros nombres
   const countryNameMap: { [key: string]: string } = {
@@ -340,8 +357,24 @@ export default function RestaurantWizard({
     }
   };
 
+  const toggleAdditionalCurrency = (currency: string) => {
+    const currentCurrencies = formData.additionalCurrencies || [];
+    const isSelected = currentCurrencies.includes(currency);
+    if (isSelected) {
+      setFormData({
+        ...formData,
+        additionalCurrencies: currentCurrencies.filter((c: string) => c !== currency),
+      });
+      return;
+    }
+    setFormData({
+      ...formData,
+      additionalCurrencies: [...currentCurrencies, currency],
+    });
+  };
+
   return (
-    <div className="restaurant-wizard">
+    <div className="restaurant-wizard restaurant-wizard-mobile">
       <div className="wizard-header">
         <h2 className="wizard-title">Crea tu primer restaurante</h2>
         <p className="wizard-subtitle">Sigue estos pasos para configurar tu restaurante</p>
@@ -740,58 +773,42 @@ export default function RestaurantWizard({
               </div>
 
               {/* Monedas adicionales */}
-              <div className="wizard-field wizard-field-large">
+              <div className="wizard-field wizard-field-large wizard-desktop-only">
                 <label className="wizard-label">Monedas adicionales (opcional)</label>
                 <p className="wizard-help-text" style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
                   Haz clic en las monedas que deseas aceptar además de la moneda por defecto
                 </p>
                 <div className="wizard-currencies-tags-container">
-                  {['USD', 'EUR', 'ARS', 'MXN', 'CLP', 'COP', 'PEN', 'BRL', 'UYU', 'PYG', 'BOB', 'VES']
-                    .filter(c => c !== formData.defaultCurrency)
-                    .map(currency => {
-                      const isSelected = formData.additionalCurrencies?.includes(currency) || false;
-                      const currencyLabels: { [key: string]: string } = {
-                        'USD': 'USD - Dólar estadounidense',
-                        'EUR': 'EUR - Euro',
-                        'ARS': 'ARS - Peso argentino',
-                        'MXN': 'MXN - Peso mexicano',
-                        'CLP': 'CLP - Peso chileno',
-                        'COP': 'COP - Peso colombiano',
-                        'PEN': 'PEN - Sol peruano',
-                        'BRL': 'BRL - Real brasileño',
-                        'UYU': 'UYU - Peso uruguayo',
-                        'PYG': 'PYG - Guaraní paraguayo',
-                        'BOB': 'BOB - Boliviano',
-                        'VES': 'VES - Bolívar venezolano',
-                      };
-                      
-                      return (
-                        <button
-                          key={currency}
-                          type="button"
-                          className={`wizard-currency-tag-selectable ${isSelected ? 'selected' : ''}`}
-                          onClick={() => {
-                            const currentCurrencies = formData.additionalCurrencies || [];
-                            if (isSelected) {
-                              // Remover la moneda
-                              setFormData({
-                                ...formData,
-                                additionalCurrencies: currentCurrencies.filter((c: string) => c !== currency),
-                              });
-                            } else {
-                              // Agregar la moneda
-                              setFormData({
-                                ...formData,
-                                additionalCurrencies: [...currentCurrencies, currency],
-                              });
-                            }
-                          }}
-                        >
-                          {currencyLabels[currency] || currency}
-                        </button>
-                      );
-                    })}
+                  {additionalCurrencies.map((currency) => {
+                    const isSelected = formData.additionalCurrencies?.includes(currency) || false;
+                    return (
+                      <button
+                        key={currency}
+                        type="button"
+                        className={`wizard-currency-tag-selectable ${isSelected ? 'selected' : ''}`}
+                        onClick={() => toggleAdditionalCurrency(currency)}
+                      >
+                        {currencyLabels[currency] || currency}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+
+              <div className="wizard-field wizard-field-large wizard-mobile-only">
+                <label className="wizard-label">Monedas adicionales (opcional)</label>
+                <button
+                  type="button"
+                  className="wizard-mobile-collapse-btn"
+                  onClick={() => setShowAdditionalCurrenciesModal(true)}
+                >
+                  <span>
+                    {formData.additionalCurrencies?.length
+                      ? `${formData.additionalCurrencies.length} moneda(s) seleccionada(s)`
+                      : 'Seleccionar monedas adicionales'}
+                  </span>
+                  <span aria-hidden="true">▾</span>
+                </button>
               </div>
             </div>
           </div>
@@ -802,115 +819,117 @@ export default function RestaurantWizard({
             <h3 className="wizard-step-title">Diseño</h3>
             <p className="wizard-step-description">Agrega el logo, foto de portada y elige el estilo de diseño</p>
 
-            {/* Logo */}
-            <div className="wizard-field">
-              <label className="wizard-label">Logo del restaurante</label>
-              <div
-                className={`wizard-image-upload-zone ${logoPreview ? 'has-image' : ''}`}
-                onClick={() => logoInputRef.current?.click()}
-                onDrop={(e) => handleDrop(e, 'logo')}
-                onDragOver={handleDragOver}
-              >
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoChange}
-                  style={{ display: 'none' }}
-                />
-                {logoPreview ? (
-                  <div className="wizard-image-preview-wrap">
-                    <img src={logoPreview} alt="Vista previa del logo" className="wizard-preview-image" />
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        clearLogoSelection();
-                      }}
-                      aria-label="Quitar logo"
-                      style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '50%',
-                        padding: 0,
-                        lineHeight: 1,
-                        fontWeight: 700,
-                        zIndex: 2,
-                      }}
-                    >
-                      ×
-                    </button>
-                    <div className="wizard-upload-change-overlay">
-                      <span className="wizard-upload-change-btn">Cambiar imagen</span>
+            <div className="wizard-media-grid-mobile">
+              {/* Logo */}
+              <div className="wizard-field">
+                <label className="wizard-label">Logo del restaurante</label>
+                <div
+                  className={`wizard-image-upload-zone ${logoPreview ? 'has-image' : ''}`}
+                  onClick={() => logoInputRef.current?.click()}
+                  onDrop={(e) => handleDrop(e, 'logo')}
+                  onDragOver={handleDragOver}
+                >
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    style={{ display: 'none' }}
+                  />
+                  {logoPreview ? (
+                    <div className="wizard-image-preview-wrap">
+                      <img src={logoPreview} alt="Vista previa del logo" className="wizard-preview-image" />
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          clearLogoSelection();
+                        }}
+                        aria-label="Quitar logo"
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          padding: 0,
+                          lineHeight: 1,
+                          fontWeight: 700,
+                          zIndex: 2,
+                        }}
+                      >
+                        ×
+                      </button>
+                      <div className="wizard-upload-change-overlay">
+                        <span className="wizard-upload-change-btn">Cambiar imagen</span>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="wizard-upload-placeholder">
-                    <div className="wizard-upload-icon">🖼️</div>
-                    <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
-                  </div>
-                )}
+                  ) : (
+                    <div className="wizard-upload-placeholder">
+                      <div className="wizard-upload-icon">🖼️</div>
+                      <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Foto de portada */}
-            <div className="wizard-field">
-              <label className="wizard-label">Foto de portada</label>
-              <div
-                className={`wizard-image-upload-zone ${coverPreview ? 'has-image' : ''}`}
-                onClick={() => coverInputRef.current?.click()}
-                onDrop={(e) => handleDrop(e, 'cover')}
-                onDragOver={handleDragOver}
-              >
-                <input
-                  ref={coverInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCoverChange}
-                  style={{ display: 'none' }}
-                />
-                {coverPreview ? (
-                  <div className="wizard-image-preview-wrap">
-                    <img src={coverPreview} alt="Vista previa de portada" className="wizard-preview-image cover" />
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        clearCoverSelection();
-                      }}
-                      aria-label="Quitar portada"
-                      style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '50%',
-                        padding: 0,
-                        lineHeight: 1,
-                        fontWeight: 700,
-                        zIndex: 2,
-                      }}
-                    >
-                      ×
-                    </button>
-                    <div className="wizard-upload-change-overlay">
-                      <span className="wizard-upload-change-btn">Cambiar imagen</span>
+              {/* Foto de portada */}
+              <div className="wizard-field">
+                <label className="wizard-label">Foto de portada</label>
+                <div
+                  className={`wizard-image-upload-zone ${coverPreview ? 'has-image' : ''}`}
+                  onClick={() => coverInputRef.current?.click()}
+                  onDrop={(e) => handleDrop(e, 'cover')}
+                  onDragOver={handleDragOver}
+                >
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverChange}
+                    style={{ display: 'none' }}
+                  />
+                  {coverPreview ? (
+                    <div className="wizard-image-preview-wrap">
+                      <img src={coverPreview} alt="Vista previa de portada" className="wizard-preview-image cover" />
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          clearCoverSelection();
+                        }}
+                        aria-label="Quitar portada"
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          padding: 0,
+                          lineHeight: 1,
+                          fontWeight: 700,
+                          zIndex: 2,
+                        }}
+                      >
+                        ×
+                      </button>
+                      <div className="wizard-upload-change-overlay">
+                        <span className="wizard-upload-change-btn">Cambiar imagen</span>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="wizard-upload-placeholder">
-                    <div className="wizard-upload-icon">📷</div>
-                    <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
-                  </div>
-                )}
+                  ) : (
+                    <div className="wizard-upload-placeholder">
+                      <div className="wizard-upload-icon">📷</div>
+                      <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1045,6 +1064,44 @@ export default function RestaurantWizard({
           </div>
         </div>
       </form>
+
+      {showAdditionalCurrenciesModal && (
+        <div
+          className="wizard-mobile-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Monedas adicionales"
+          onClick={() => setShowAdditionalCurrenciesModal(false)}
+        >
+          <div className="wizard-mobile-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="wizard-mobile-modal-header">
+              <h4>Monedas adicionales</h4>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => setShowAdditionalCurrenciesModal(false)}
+              >
+                Cerrar
+              </button>
+            </div>
+            <div className="wizard-currencies-tags-container wizard-currencies-tags-container-mobile">
+              {additionalCurrencies.map((currency) => {
+                const isSelected = formData.additionalCurrencies?.includes(currency) || false;
+                return (
+                  <button
+                    key={currency}
+                    type="button"
+                    className={`wizard-currency-tag-selectable wizard-currency-tag-selectable-mobile ${isSelected ? 'selected' : ''}`}
+                    onClick={() => toggleAdditionalCurrency(currency)}
+                  >
+                    {currencyLabels[currency] || currency}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {previewDrawerOpen && previewSelectedId && (
         <div
