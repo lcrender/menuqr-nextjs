@@ -2135,17 +2135,18 @@ export default function ProductWizard({
 
             <div className="wizard-fields-container">
               {canHighlightProducts && (
-                <div style={{ marginBottom: '32px' }}>
+                <div style={{ marginBottom: '32px', overflowX: 'hidden' }}>
                   <h4 style={{ marginBottom: '12px', fontSize: '18px', fontWeight: 600 }}>Destacar producto</h4>
-                  <div className="form-check" style={{ paddingLeft: '0px' }}>
+                  <div className="form-check" style={{ paddingLeft: '0px', display: 'flex', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
                     <input
                       className="form-check-input"
                       type="checkbox"
                       id="highlighted-product-wizard"
                       checked={formData.highlighted}
                       onChange={(e) => setFormData((prev: any) => ({ ...prev, highlighted: e.target.checked }))}
+                      style={{ marginLeft: 0, marginTop: '0.2rem', position: 'static', flexShrink: 0 }}
                     />
-                    <label className="form-check-label" htmlFor="highlighted-product-wizard">
+                    <label className="form-check-label" htmlFor="highlighted-product-wizard" style={{ marginBottom: 0, flex: '1 1 240px', minWidth: 0 }}>
                       Mostrar este producto como destacado en las plantillas
                     </label>
                   </div>

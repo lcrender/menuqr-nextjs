@@ -20,6 +20,24 @@ type SubItem = {
   currency?: string | null;
 };
 
+const normalizePlanKey = (value: string | null | undefined): string => {
+  const normalized = String(value || '')
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  if (!normalized) return 'free';
+  if (normalized === 'basic') return 'starter';
+  if (normalized === 'proteam') return 'pro_team';
+  return normalized;
+};
+
+const formatPlanLabel = (plan: string | null | undefined): string => {
+  const normalized = normalizePlanKey(plan);
+  if (normalized === 'pro_team') return 'pro team';
+  return normalized;
+};
+
 export default function SubscriptionManagement() {
   const router = useRouter();
   const [subscriptions, setSubscriptions] = useState<SubItem[]>([]);
@@ -118,11 +136,9 @@ export default function SubscriptionManagement() {
 
   const effectiveSubscription = paidActive ?? freeActiveFallback ?? subscriptions[0] ?? null;
 
-  const effectivePlanSlug = String(effectiveSubscription?.subscriptionPlan ?? 'free').toLowerCase() as
-    | 'free'
-    | 'starter'
-    | 'pro'
-    | 'premium';
+  const effectivePlanSlug = normalizePlanKey(
+    effectiveSubscription?.subscriptionPlan ?? currentPlan ?? 'free',
+  ) as 'free' | 'starter' | 'pro' | 'pro_team' | 'premium';
 
   const effectivePricingPlan =
     pricingData?.plans?.find((p) => p.slug === effectivePlanSlug) ?? null;
@@ -132,6 +148,9 @@ export default function SubscriptionManagement() {
   const currency = effectivePricingPlan?.currency ?? pricingData?.currency ?? 'USD';
   const billing = effectiveSubscription?.planType === 'yearly' ? 'yearly' : 'monthly';
   const autoRenewal = effectiveSubscription ? !effectiveSubscription.cancelAtPeriodEnd : false;
+  const isNoBillingPlan = effectivePlanSlug === 'free' || effectivePlanSlug === 'pro_team';
+  const billingLabel = isNoBillingPlan ? 'Sin facturación' : billing === 'yearly' ? 'Anual' : 'Mensual';
+  const autoRenewalLabel = isNoBillingPlan ? 'No necesita' : autoRenewal ? 'Activa' : 'Desactivada';
   const periodEnd = effectiveSubscription?.currentPeriodEnd
     ? new Date(effectiveSubscription.currentPeriodEnd).toLocaleDateString('es', { dateStyle: 'medium' })
     : '—';
@@ -160,7 +179,7 @@ export default function SubscriptionManagement() {
               <h2 className="h5 mb-0">Tu suscripción</h2>
               {currentPlan && (
                 <span className="badge bg-secondary text-capitalize">
-                  Plan: {currentPlan === 'pro_team' ? 'Pro Team' : currentPlan}
+                  Plan: {formatPlanLabel(currentPlan)}
                 </span>
               )}
             </div>
@@ -170,7 +189,7 @@ export default function SubscriptionManagement() {
             <div className="row g-3">
               <div className="col-12 col-md-6">
                 <div className="small text-muted">Plan actual</div>
-                <div className="h5 mb-0 text-capitalize">{effectivePlanSlug}</div>
+                <div className="h5 mb-0 text-capitalize">{formatPlanLabel(effectivePlanSlug)}</div>
               </div>
               <div className="col-12 col-md-6">
                 <div className="small text-muted">Estado</div>
@@ -179,11 +198,11 @@ export default function SubscriptionManagement() {
 
               <div className="col-12 col-md-6">
                 <div className="small text-muted">Facturación</div>
-                <div className="h5 mb-0">{billing === 'yearly' ? 'Anual' : 'Mensual'}</div>
+                <div className="h5 mb-0">{billingLabel}</div>
               </div>
               <div className="col-12 col-md-6">
                 <div className="small text-muted">Renovación automática</div>
-                <div className="h5 mb-0">{autoRenewal ? 'Activa' : 'Desactivada'}</div>
+                <div className="h5 mb-0">{autoRenewalLabel}</div>
               </div>
 
               <div className="col-12 col-md-6">
