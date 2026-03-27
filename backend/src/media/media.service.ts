@@ -33,8 +33,9 @@ export class MediaService {
     const { inputBuffer, width, height, maxBytes, fit = 'cover' } = args;
 
     // Cada pipeline debe usar un sharp() nuevo: una instancia solo puede ejecutarse una vez (toBuffer).
+    // animated: false evita edge cases con GIF/WebP multipágina; JPEG/PNG no se ven afectados.
     const pipeline = () =>
-      sharp(inputBuffer, { limitInputPixels: 50_000_000 }).rotate();
+      sharp(inputBuffer, { limitInputPixels: 50_000_000, animated: false }).rotate();
 
     let quality = 86;
     let last: Buffer | null = null;

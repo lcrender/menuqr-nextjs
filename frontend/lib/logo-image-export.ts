@@ -10,15 +10,8 @@ export const COVER_MAX_BYTES = 600 * 1024;
 export const PRODUCT_OUTPUT_PX = 800;
 export const PRODUCT_MAX_BYTES = 250 * 1024;
 
-async function assertWebpSupported(): Promise<void> {
-  const testCanvas = document.createElement('canvas');
-  testCanvas.width = 1;
-  testCanvas.height = 1;
-  const testBlob = await new Promise<Blob | null>((r) => testCanvas.toBlob(r, 'image/webp', 0.8));
-  if (!testBlob) {
-    throw new Error('Tu navegador no exporta WebP. Usá una versión reciente de Chrome, Firefox, Edge o Safari.');
-  }
-}
+/** JPEG: compatible con Sharp/libvips en cualquier servidor. El backend convierte a WebP. */
+const MIME = 'image/jpeg';
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -31,11 +24,9 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Recorta la región indicada, escala a 400×400 y exporta WebP con tamaño ≤ 300 KB (ajusta calidad y, si hace falta, escala).
+ * Recorta la región indicada, escala a 400×400 y exporta JPEG (el backend optimiza a WebP).
  */
 export async function exportLogoWebpFile(imageSrc: string, pixelCrop: Area): Promise<File> {
-  await assertWebpSupported();
-
   const image = await loadImage(imageSrc);
   const cropCanvas = document.createElement('canvas');
   cropCanvas.width = Math.max(1, Math.round(pixelCrop.width));
@@ -54,27 +45,26 @@ export async function exportLogoWebpFile(imageSrc: string, pixelCrop: Area): Pro
     cropCanvas.height,
   );
 
-  let side = LOGO_OUTPUT_PX;
-  let canvas = document.createElement('canvas');
+  const side = LOGO_OUTPUT_PX;
+  const canvas = document.createElement('canvas');
   canvas.width = side;
   canvas.height = side;
-  let ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas no disponible');
   ctx.drawImage(cropCanvas, 0, 0, side, side);
 
   const tryBlob = (c: HTMLCanvasElement, q: number): Promise<Blob | null> =>
     new Promise((resolve) => {
-      c.toBlob((b) => resolve(b), 'image/webp', q);
+      c.toBlob((b) => resolve(b), MIME, q);
     });
 
-  // No bloqueamos al usuario si no se llega al peso objetivo.
-  // El backend optimiza y guarda una versión liviana; acá solo generamos un WebP razonable.
-  const blob = (await tryBlob(canvas, 0.92)) || (await tryBlob(canvas, 0.82)) || (await tryBlob(canvas, 0.72));
+  const blob =
+    (await tryBlob(canvas, 0.92)) || (await tryBlob(canvas, 0.85)) || (await tryBlob(canvas, 0.78));
   if (!blob) throw new Error('No se pudo exportar la imagen');
-  return new File([blob], 'logo.webp', { type: 'image/webp' });
+  return new File([blob], 'logo.jpg', { type: MIME });
 }
 
-async function exportCroppedFixedWebpFile(args: {
+async function exportCroppedFixedJpegFile(args: {
   imageSrc: string;
   pixelCrop: Area;
   outputWidth: number;
@@ -83,9 +73,7 @@ async function exportCroppedFixedWebpFile(args: {
   filename: string;
   minQuality?: number;
 }): Promise<File> {
-  await assertWebpSupported();
-
-  const { imageSrc, pixelCrop, outputWidth, outputHeight, maxBytes, filename, minQuality = 0.1 } = args;
+  const { imageSrc, pixelCrop, outputWidth, outputHeight, maxBytes, filename, minQuality = 0.15 } = args;
   const image = await loadImage(imageSrc);
 
   const cropCanvas = document.createElement('canvas');
@@ -114,7 +102,7 @@ async function exportCroppedFixedWebpFile(args: {
 
   const tryBlob = (q: number): Promise<Blob | null> =>
     new Promise((resolve) => {
-      target.toBlob((b) => resolve(b), 'image/webp', q);
+      target.toBlob((b) => resolve(b), MIME, q);
     });
 
   let q = 0.92;
@@ -123,40 +111,36 @@ async function exportCroppedFixedWebpFile(args: {
     const blob = await tryBlob(q);
     if (blob) last = blob;
     if (blob && blob.size <= maxBytes) {
-      return new File([blob], filename, { type: 'image/webp' });
+      return new File([blob], filename, { type: MIME });
     }
     q -= 0.04;
   }
   if (!last) throw new Error('No se pudo exportar la imagen');
-  return new File([last], filename, { type: 'image/webp' });
+  return new File([last], filename, { type: MIME });
 }
 
-/**
- * Portada: 1200×800 px, WebP, máx. 600 KB.
- */
+/** Portada: 1200×800 px (JPEG → backend WebP). */
 export async function exportCoverWebpFile(imageSrc: string, pixelCrop: Area): Promise<File> {
-  return exportCroppedFixedWebpFile({
+  return exportCroppedFixedJpegFile({
     imageSrc,
     pixelCrop,
     outputWidth: COVER_OUTPUT_WIDTH_PX,
     outputHeight: COVER_OUTPUT_HEIGHT_PX,
     maxBytes: COVER_MAX_BYTES,
-    filename: 'cover.webp',
+    filename: 'cover.jpg',
     minQuality: 0.08,
   });
 }
 
-/**
- * Foto de producto: 800×800 px, WebP, máx. 250 KB.
- */
+/** Foto de producto: 800×800 px (JPEG → backend WebP). */
 export async function exportProductWebpFile(imageSrc: string, pixelCrop: Area): Promise<File> {
-  return exportCroppedFixedWebpFile({
+  return exportCroppedFixedJpegFile({
     imageSrc,
     pixelCrop,
     outputWidth: PRODUCT_OUTPUT_PX,
     outputHeight: PRODUCT_OUTPUT_PX,
     maxBytes: PRODUCT_MAX_BYTES,
-    filename: 'product.webp',
+    filename: 'product.jpg',
     minQuality: 0.08,
   });
 }
