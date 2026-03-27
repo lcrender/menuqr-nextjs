@@ -32,8 +32,7 @@ export class MediaController {
     @UploadedFile() file: Express.Multer.File,
     @Request() req,
   ) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
-    return this.mediaService.uploadRestaurantPhoto(tenantId, restaurantId, file);
+    return this.mediaService.uploadRestaurantPhoto(req.user, restaurantId, file);
   }
 
   @Post('restaurants/:restaurantId/cover')
@@ -57,8 +56,7 @@ export class MediaController {
     @UploadedFile() file: Express.Multer.File,
     @Request() req,
   ) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
-    return this.mediaService.uploadRestaurantCover(tenantId, restaurantId, file);
+    return this.mediaService.uploadRestaurantCover(req.user, restaurantId, file);
   }
 
   @Post('items/:itemId/photo')
@@ -82,8 +80,7 @@ export class MediaController {
     @UploadedFile() file: Express.Multer.File,
     @Request() req,
   ) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
-    return this.mediaService.uploadItemPhoto(tenantId, itemId, file);
+    return this.mediaService.uploadItemPhoto(req.user, itemId, file);
   }
 
   @Delete('items/:itemId/photo')
@@ -93,8 +90,7 @@ export class MediaController {
     @Param('itemId') itemId: string,
     @Request() req,
   ) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
-    await this.mediaService.deleteItemPhoto(tenantId, itemId);
+    await this.mediaService.deleteItemPhoto(req.user, itemId);
     return { message: 'Foto eliminada' };
   }
 
@@ -102,8 +98,7 @@ export class MediaController {
   @ApiOperation({ summary: 'Eliminar media por ID' })
   @ApiResponse({ status: 200, description: 'Media eliminada exitosamente' })
   async deleteMedia(@Param('id') id: string, @Request() req) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
-    await this.mediaService.deleteMedia(id, tenantId);
+    await this.mediaService.deleteMedia(req.user, id);
     return { message: 'Media eliminada exitosamente' };
   }
 }

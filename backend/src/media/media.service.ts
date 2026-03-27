@@ -1,8 +1,17 @@
-import { Injectable, Logger, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ForbiddenException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { MinioService } from '../common/minio/minio.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import sharp from 'sharp';
+
+/** Usuario JWT (req.user); tenantId puede ser null p. ej. SUPER_ADMIN */
+type JwtUserPayload = { id: string; role: string; tenantId: string | null };
 
 @Injectable()
 export class MediaService {
@@ -43,8 +52,40 @@ export class MediaService {
     return last || (await base.resize(width, height, { fit }).webp({ quality: 40, effort: 4 }).toBuffer());
   }
 
+  /** tenant_id real del restaurante (multipart no trae tenantId en body para SUPER_ADMIN). */
+  private async getRestaurantTenantIdOrThrow(restaurantId: string): Promise<string> {
+    const rows = await this.postgres.queryRaw<{ tenant_id: string }>(
+      `SELECT tenant_id FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [restaurantId],
+    );
+    if (!rows?.length) {
+      throw new NotFoundException('Restaurante no encontrado');
+    }
+    return rows[0].tenant_id;
+  }
+
+  private assertTenantAccess(user: JwtUserPayload, tenantId: string): void {
+    if (user.role === 'ADMIN') {
+      if (!user.tenantId || user.tenantId !== tenantId) {
+        throw new ForbiddenException('No tenés permiso para subir archivos a este restaurante');
+      }
+    }
+  }
+
+  /** tenant_id del producto (menu_item). */
+  private async getMenuItemTenantIdOrThrow(itemId: string): Promise<string> {
+    const rows = await this.postgres.queryRaw<{ tenant_id: string }>(
+      `SELECT tenant_id FROM menu_items WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [itemId],
+    );
+    if (!rows?.length) {
+      throw new NotFoundException('Producto no encontrado');
+    }
+    return rows[0].tenant_id;
+  }
+
   async uploadRestaurantPhoto(
-    tenantId: string,
+    user: JwtUserPayload,
     restaurantId: string,
     file: Express.Multer.File,
   ): Promise<{ id: string; url: string }> {
@@ -53,6 +94,8 @@ export class MediaService {
         'No se recibió la imagen. Si usás el cliente HTTP, no fijes Content-Type en FormData: debe incluir el boundary.',
       );
     }
+    const tenantId = await this.getRestaurantTenantIdOrThrow(restaurantId);
+    this.assertTenantAccess(user, tenantId);
     try {
       // Optimizar y subir archivo a MinIO (guardamos solo la versión liviana)
       const optimized = await this.optimizeToWebp({
@@ -89,13 +132,21 @@ export class MediaService {
 
       return { id, url };
     } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
+        throw error;
+      }
       this.logger.error('Error subiendo foto de restaurante:', error);
+      if (error && typeof error === 'object' && 'message' in error && String((error as Error).message).includes('sharp')) {
+        throw new BadRequestException(
+          'No se pudo procesar la imagen. Probá con JPG o PNG.',
+        );
+      }
       throw error;
     }
   }
 
   async uploadRestaurantCover(
-    tenantId: string,
+    user: JwtUserPayload,
     restaurantId: string,
     file: Express.Multer.File,
   ): Promise<{ id: string; url: string }> {
@@ -104,6 +155,8 @@ export class MediaService {
         'No se recibió la imagen. Si usás el cliente HTTP, no fijes Content-Type en FormData: debe incluir el boundary.',
       );
     }
+    const tenantId = await this.getRestaurantTenantIdOrThrow(restaurantId);
+    this.assertTenantAccess(user, tenantId);
     try {
       // Optimizar y subir archivo a MinIO (guardamos solo la versión liviana)
       const optimized = await this.optimizeToWebp({
@@ -140,7 +193,15 @@ export class MediaService {
 
       return { id, url };
     } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
+        throw error;
+      }
       this.logger.error('Error subiendo foto de portada de restaurante:', error);
+      if (error && typeof error === 'object' && 'message' in error && String((error as Error).message).toLowerCase().includes('input')) {
+        throw new BadRequestException(
+          'No se pudo procesar la imagen. Probá con JPG o PNG.',
+        );
+      }
       throw error;
     }
   }
@@ -179,10 +240,12 @@ export class MediaService {
   }
 
   async uploadItemPhoto(
-    tenantId: string,
+    user: JwtUserPayload,
     itemId: string,
     file: Express.Multer.File,
   ): Promise<{ id: string; url: string }> {
+    const tenantId = await this.getMenuItemTenantIdOrThrow(itemId);
+    this.assertTenantAccess(user, tenantId);
     await this.assertProductPhotosAllowed(tenantId);
     if (!file?.buffer?.length) {
       throw new BadRequestException(
@@ -220,32 +283,47 @@ export class MediaService {
 
       return { id, url };
     } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
+        throw error;
+      }
       this.logger.error('Error subiendo foto de item:', error);
       throw error;
     }
   }
 
   /** Elimina la foto del producto (una por producto). Borra archivo en MinIO y registro en BD. */
-  async deleteItemPhoto(tenantId: string, itemId: string): Promise<void> {
+  async deleteItemPhoto(user: JwtUserPayload, itemId: string): Promise<void> {
+    const tenantId = await this.getMenuItemTenantIdOrThrow(itemId);
+    this.assertTenantAccess(user, tenantId);
     await this.deleteItemPhotos(tenantId, itemId);
   }
 
-  async deleteMedia(id: string, tenantId: string): Promise<void> {
+  async deleteMedia(user: JwtUserPayload, id: string): Promise<void> {
     try {
-      const media = await this.postgres.queryRaw<any>(
-        `SELECT filename FROM media_assets WHERE id = $1 AND tenant_id = $2 LIMIT 1`,
-        [id, tenantId]
+      const rows = await this.postgres.queryRaw<{ filename: string; tenant_id: string }>(
+        `SELECT filename, tenant_id FROM media_assets WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+        [id],
       );
+      if (!rows?.length) {
+        throw new NotFoundException('Archivo no encontrado');
+      }
+      const { filename, tenant_id: tenantId } = rows[0];
+      this.assertTenantAccess(user, tenantId);
 
-      if (media[0]) {
-        await this.minio.deleteFile(media[0].filename);
+      try {
+        await this.minio.deleteFile(filename);
+      } catch (e) {
+        this.logger.warn(`No se pudo borrar archivo MinIO ${filename}:`, e);
       }
 
       await this.postgres.executeRaw(
         `UPDATE media_assets SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
-        [id, tenantId]
+        [id, tenantId],
       );
     } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
       this.logger.error(`Error eliminando media ${id}:`, error);
       throw error;
     }
