@@ -80,7 +80,9 @@ export class PayPalService implements IPaymentProviderService {
     }
     const planId = this.getPlanIdForSlug(params.planSlug, params.planType);
     if (!planId) {
-      throw new BadRequestException('PayPal plan ID not configured for this plan');
+      throw new BadRequestException(
+        'PayPal aún no esta disponible en tu regíon, comunicate con soporte para poder mejorar tu suscripcion.',
+      );
     }
     const token = await this.getAccessToken();
     const body = {
