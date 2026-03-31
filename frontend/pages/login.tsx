@@ -16,8 +16,10 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -66,28 +68,71 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
     setLoading(true);
+
+    const nextFieldErrors: Record<string, string> = {};
+    const trimmedEmail = email.trim();
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!trimmedEmail) {
+      nextFieldErrors.email = 'El email es obligatorio';
+    } else if (!emailRegex.test(trimmedEmail)) {
+      nextFieldErrors.email = 'El email no tiene un formato válido';
+    }
+
+    if (!password) {
+      nextFieldErrors.password = 'La contraseña es obligatoria';
+    }
+
+    if (!isRegister && password && password.length < 8) {
+      nextFieldErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+    }
+
+    if (isRegister) {
+      if (!trimmedFirstName) {
+        nextFieldErrors.firstName = 'El nombre es obligatorio';
+      } else if (trimmedFirstName.length < 2) {
+        nextFieldErrors.firstName = 'El nombre debe tener al menos 2 caracteres';
+      } else if (trimmedFirstName.length > 50) {
+        nextFieldErrors.firstName = 'El nombre no puede exceder 50 caracteres';
+      }
+
+      if (!trimmedLastName) {
+        nextFieldErrors.lastName = 'El apellido es obligatorio';
+      } else if (trimmedLastName.length < 2) {
+        nextFieldErrors.lastName = 'El apellido debe tener al menos 2 caracteres';
+      } else if (trimmedLastName.length > 50) {
+        nextFieldErrors.lastName = 'El apellido no puede exceder 50 caracteres';
+      }
+
+      if (password.length < 8) {
+        nextFieldErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+      }
+
+      if (!confirmPassword) {
+        nextFieldErrors.confirmPassword = 'Debes confirmar la contraseña';
+      } else if (password !== confirmPassword) {
+        nextFieldErrors.confirmPassword = 'Las contraseñas no son iguales';
+      }
+    }
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      setLoading(false);
+      return;
+    }
 
     try {
       if (isRegister) {
-        // Validar contraseñas
-        if (password !== confirmPassword) {
-          setError('Las contraseñas no coinciden');
-          setLoading(false);
-          return;
-        }
-
-        if (password.length < 8) {
-          setError('La contraseña debe tener al menos 8 caracteres');
-          setLoading(false);
-          return;
-        }
-
         // Registrar nuevo usuario
         const response = await api.post('/auth/register', {
-          email,
+          email: trimmedEmail,
           password,
-          firstName,
+          firstName: trimmedFirstName,
+          lastName: trimmedLastName,
           pendingPlan: pendingPlan ?? undefined,
           pendingBillingCycle: pendingPlan ? pendingBillingCycle : undefined,
         });
@@ -118,7 +163,7 @@ export default function Login() {
       } else {
         // Login
         const response = await api.post('/auth/login', {
-          email,
+          email: trimmedEmail,
           password,
         });
 
@@ -138,12 +183,34 @@ export default function Login() {
         }
       }
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || 
-        (isRegister 
-          ? 'Error al registrarse. Por favor, intenta nuevamente.'
-          : 'Error al iniciar sesión. Verifica tus credenciales.')
-      );
+      const apiMessage = err.response?.data?.message;
+      const messageList = Array.isArray(apiMessage)
+        ? apiMessage.map((m) => String(m || ''))
+        : [String(apiMessage || '')];
+      const normalizedMessage = messageList.join(' ').toLowerCase();
+
+      const backendFieldErrors: Record<string, string> = {};
+      messageList.forEach((msg) => {
+        const lower = msg.toLowerCase();
+        if (lower.includes('email')) backendFieldErrors.email = msg;
+        if (lower.includes('contraseña')) backendFieldErrors.password = msg;
+        if (lower.includes('nombre')) backendFieldErrors.firstName = msg;
+        if (lower.includes('apellido')) backendFieldErrors.lastName = msg;
+      });
+
+      if (isRegister && normalizedMessage.includes('ya hay una cuenta con ese email')) {
+        setFieldErrors((prev) => ({ ...prev, email: 'Ya hay un usuario con ese email' }));
+      } else if (Object.keys(backendFieldErrors).length > 0) {
+        setFieldErrors((prev) => ({ ...prev, ...backendFieldErrors }));
+      } else if (normalizedMessage) {
+        setError(messageList.join(' '));
+      } else {
+        setError(
+          isRegister
+            ? 'Error al registrarse. Por favor, revisa los datos e intenta nuevamente.'
+            : 'Error al iniciar sesión. Verifica tus credenciales.',
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -242,10 +309,29 @@ export default function Login() {
                           id="firstName"
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
+                          maxLength={50}
                           required
                           disabled={loading}
                           placeholder="Tu nombre"
                         />
+                        {fieldErrors.firstName && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.firstName}</small>}
+                      </div>
+                      <div className="landing-auth-field">
+                        <label htmlFor="lastName" className="landing-auth-label">
+                          Apellido
+                        </label>
+                        <input
+                          type="text"
+                          className="landing-auth-input"
+                          id="lastName"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          maxLength={50}
+                          required
+                          disabled={loading}
+                          placeholder="Tu apellido"
+                        />
+                        {fieldErrors.lastName && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.lastName}</small>}
                       </div>
 
                     </>
@@ -265,6 +351,7 @@ export default function Login() {
                       disabled={loading}
                       placeholder="tu@email.com"
                     />
+                    {fieldErrors.email && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.email}</small>}
                   </div>
 
                   <div className="landing-auth-field">
@@ -293,6 +380,7 @@ export default function Login() {
                         {showPassword ? '🙈' : '👁️'}
                       </button>
                     </div>
+                    {fieldErrors.password && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.password}</small>}
                     {isRegister && (
                       <small className="landing-auth-hint">
                         Mínimo 8 caracteres
@@ -327,6 +415,7 @@ export default function Login() {
                           {showConfirmPassword ? '🙈' : '👁️'}
                         </button>
                       </div>
+                      {fieldErrors.confirmPassword && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.confirmPassword}</small>}
                     </div>
                   )}
 

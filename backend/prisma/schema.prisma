@@ -112,6 +112,15 @@ model SubscriptionCheckoutSession {
   paymentProvider    PaymentProvider @map("payment_provider")
   status             String   @default("pending")
   termsAcceptedAt    DateTime @map("terms_accepted_at")
+  firstName          String   @map("first_name")
+  lastName           String   @map("last_name")
+  documentType       String?  @map("document_type")
+  documentNumber     String?  @map("document_number")
+  street             String
+  city               String
+  state              String
+  postalCode         String   @map("postal_code")
+  country            String
   subscriptionId     String?  @map("subscription_id")
   createdAt          DateTime @default(now()) @map("created_at")
 

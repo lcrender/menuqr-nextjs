@@ -153,6 +153,15 @@ export class PaymentService {
     returnUrl: string;
     cancelUrl: string;
     acceptedTerms: boolean;
+    firstName: string;
+    lastName: string;
+    documentType?: string;
+    documentNumber?: string;
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
   }): Promise<CreateSubscriptionResult> {
     if (!params.acceptedTerms) {
       throw new BadRequestException('Debés aceptar los términos y condiciones y la política de privacidad.');
@@ -176,6 +185,15 @@ export class PaymentService {
       priceAmount: amount,
       currency: priceRow.currency,
       paymentProvider: provider,
+      firstName: params.firstName,
+      lastName: params.lastName,
+      documentType: params.documentType,
+      documentNumber: params.documentNumber,
+      street: params.street,
+      city: params.city,
+      state: params.state,
+      postalCode: params.postalCode,
+      country: params.country,
     });
 
     try {

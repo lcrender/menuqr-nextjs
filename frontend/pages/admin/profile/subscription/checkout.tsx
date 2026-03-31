@@ -44,6 +44,18 @@ export default function SubscriptionCheckoutPage() {
   const [subscriptions, setSubscriptions] = useState<SubItem[]>([]);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [billingData, setBillingData] = useState({
+    firstName: '',
+    lastName: '',
+    documentType: 'DNI',
+    documentNumber: '',
+    street: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
+  });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState<{ title: string; message: string; variant: 'success' | 'error' } | null>(null);
 
@@ -69,6 +81,20 @@ export default function SubscriptionCheckoutPage() {
         setSubscriptions([]);
       } finally {
         setPricingLoading(false);
+      }
+
+      // Este endpoint es opcional para compatibilidad con backends que aún no lo tienen desplegado.
+      try {
+        const profileRes = await api.get('/subscriptions/checkout-profile');
+        if (profileRes.data) {
+          setBillingData((prev) => ({
+            ...prev,
+            ...profileRes.data,
+            documentType: profileRes.data.documentType || prev.documentType,
+          }));
+        }
+      } catch {
+        // No bloquear checkout si no existe/está caído; solo se pierde el autocompletado.
       }
     })();
   }, []);
@@ -139,6 +165,24 @@ export default function SubscriptionCheckoutPage() {
 
   const handleSubscribe = async () => {
     if (!planSlug || !acceptedTerms || !planRow || isSameActivePlan) return;
+    setFieldErrors({});
+    const nextErrors: Record<string, string> = {};
+    const isArgentina = (isArs || ['argentina', 'ar', 'arg'].includes((billingData.country || '').trim().toLowerCase()));
+    if (!billingData.firstName.trim()) nextErrors.firstName = 'El nombre es obligatorio.';
+    if (!billingData.lastName.trim()) nextErrors.lastName = 'El apellido es obligatorio.';
+    if (!billingData.street.trim()) nextErrors.street = 'La dirección es obligatoria.';
+    if (!billingData.city.trim()) nextErrors.city = 'La ciudad es obligatoria.';
+    if (!billingData.state.trim()) nextErrors.state = 'La provincia o estado es obligatoria.';
+    if (!billingData.postalCode.trim()) nextErrors.postalCode = 'El código postal es obligatorio.';
+    if (!billingData.country.trim()) nextErrors.country = 'El país es obligatorio.';
+    if (isArgentina) {
+      if (!billingData.documentType) nextErrors.documentType = 'El tipo de documento es obligatorio para Argentina.';
+      if (!billingData.documentNumber.trim()) nextErrors.documentNumber = 'El número de documento es obligatorio para Argentina.';
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      return;
+    }
     const planType = billingCycle === 'yearly' ? 'yearly' : 'monthly';
     const origin = getPublicAppOrigin().replace(/\/$/, '');
     const returnUrl = origin
@@ -156,6 +200,15 @@ export default function SubscriptionCheckoutPage() {
         returnUrl,
         cancelUrl,
         acceptedTerms: true,
+        firstName: billingData.firstName.trim(),
+        lastName: billingData.lastName.trim(),
+        documentType: billingData.documentType,
+        documentNumber: billingData.documentNumber.trim() || undefined,
+        street: billingData.street.trim(),
+        city: billingData.city.trim(),
+        state: billingData.state.trim(),
+        postalCode: billingData.postalCode.trim(),
+        country: billingData.country.trim(),
       });
       const approvalUrl = res.data?.approvalUrl;
       if (approvalUrl) {
@@ -240,6 +293,54 @@ export default function SubscriptionCheckoutPage() {
             </ul>
 
             <div className="border-top pt-3 mb-3">
+              <span className="small text-muted d-block mb-2">Datos de facturación</span>
+              <div className="row g-2 mb-3">
+                <div className="col-12 col-md-6">
+                  <input className="form-control" placeholder="Nombre" value={billingData.firstName} onChange={(e) => setBillingData((p) => ({ ...p, firstName: e.target.value }))} />
+                  {fieldErrors.firstName && <small className="text-danger">{fieldErrors.firstName}</small>}
+                </div>
+                <div className="col-12 col-md-6">
+                  <input className="form-control" placeholder="Apellido" value={billingData.lastName} onChange={(e) => setBillingData((p) => ({ ...p, lastName: e.target.value }))} />
+                  {fieldErrors.lastName && <small className="text-danger">{fieldErrors.lastName}</small>}
+                </div>
+                {isArs && (
+                  <>
+                    <div className="col-12 col-md-6">
+                      <select className="form-select" value={billingData.documentType} onChange={(e) => setBillingData((p) => ({ ...p, documentType: e.target.value }))}>
+                        <option value="DNI">DNI</option>
+                        <option value="CUIT">CUIT</option>
+                        <option value="CUIL">CUIL</option>
+                        <option value="PASAPORTE">PASAPORTE</option>
+                      </select>
+                      {fieldErrors.documentType && <small className="text-danger">{fieldErrors.documentType}</small>}
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <input className="form-control" placeholder="Número de documento" value={billingData.documentNumber} onChange={(e) => setBillingData((p) => ({ ...p, documentNumber: e.target.value }))} />
+                      {fieldErrors.documentNumber && <small className="text-danger">{fieldErrors.documentNumber}</small>}
+                    </div>
+                  </>
+                )}
+                <div className="col-12">
+                  <input className="form-control" placeholder="Dirección" value={billingData.street} onChange={(e) => setBillingData((p) => ({ ...p, street: e.target.value }))} />
+                  {fieldErrors.street && <small className="text-danger">{fieldErrors.street}</small>}
+                </div>
+                <div className="col-12 col-md-6">
+                  <input className="form-control" placeholder="Ciudad" value={billingData.city} onChange={(e) => setBillingData((p) => ({ ...p, city: e.target.value }))} />
+                  {fieldErrors.city && <small className="text-danger">{fieldErrors.city}</small>}
+                </div>
+                <div className="col-12 col-md-6">
+                  <input className="form-control" placeholder="Provincia / Estado" value={billingData.state} onChange={(e) => setBillingData((p) => ({ ...p, state: e.target.value }))} />
+                  {fieldErrors.state && <small className="text-danger">{fieldErrors.state}</small>}
+                </div>
+                <div className="col-12 col-md-6">
+                  <input className="form-control" placeholder="Código postal" value={billingData.postalCode} onChange={(e) => setBillingData((p) => ({ ...p, postalCode: e.target.value }))} />
+                  {fieldErrors.postalCode && <small className="text-danger">{fieldErrors.postalCode}</small>}
+                </div>
+                <div className="col-12 col-md-6">
+                  <input className="form-control" placeholder="País" value={billingData.country} onChange={(e) => setBillingData((p) => ({ ...p, country: e.target.value }))} />
+                  {fieldErrors.country && <small className="text-danger">{fieldErrors.country}</small>}
+                </div>
+              </div>
               <span className="small text-muted d-block mb-2">Facturación</span>
               <div className="btn-group" role="group" aria-label="Ciclo">
                 <button

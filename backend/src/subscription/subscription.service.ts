@@ -230,11 +230,26 @@ export class SubscriptionService {
     priceAmount: number;
     currency: string;
     paymentProvider: PaymentProvider;
+    firstName: string;
+    lastName: string;
+    documentType?: string | null;
+    documentNumber?: string | null;
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
   }): Promise<string> {
     const id = `cko_${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
     await this.postgres.executeRaw(
-      `INSERT INTO subscription_checkout_sessions (id, user_id, plan_slug, billing_cycle, price_amount, currency, payment_provider, status, terms_accepted_at, created_at)
-       VALUES ($1, $2, $3, $4::"PlanType", $5, $6, $7::"PaymentProvider", 'pending', NOW(), NOW())`,
+      `INSERT INTO subscription_checkout_sessions (
+         id, user_id, plan_slug, billing_cycle, price_amount, currency, payment_provider, status, terms_accepted_at,
+         first_name, last_name, document_type, document_number, street, city, state, postal_code, country, created_at
+       )
+       VALUES (
+         $1, $2, $3, $4::"PlanType", $5, $6, $7::"PaymentProvider", 'pending', NOW(),
+         $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW()
+       )`,
       [
         id,
         data.userId,
@@ -243,9 +258,42 @@ export class SubscriptionService {
         data.priceAmount,
         data.currency,
         data.paymentProvider,
+        data.firstName,
+        data.lastName,
+        data.documentType ?? null,
+        data.documentNumber ?? null,
+        data.street,
+        data.city,
+        data.state,
+        data.postalCode,
+        data.country,
       ]
     );
     return id;
+  }
+
+  async getLatestCheckoutBillingProfile(userId: string): Promise<{
+    firstName: string;
+    lastName: string;
+    documentType: string | null;
+    documentNumber: string | null;
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  } | null> {
+    const rows = await this.postgres.queryRaw<any>(
+      `SELECT first_name as "firstName", last_name as "lastName",
+              document_type as "documentType", document_number as "documentNumber",
+              street, city, state, postal_code as "postalCode", country
+       FROM subscription_checkout_sessions
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [userId],
+    );
+    return rows[0] ?? null;
   }
 
   async updateCheckoutSession(

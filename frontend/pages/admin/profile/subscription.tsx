@@ -135,9 +135,10 @@ export default function SubscriptionManagement() {
   });
 
   const effectiveSubscription = paidActive ?? freeActiveFallback ?? subscriptions[0] ?? null;
+  const normalizedCurrentPlan = normalizePlanKey(currentPlan);
 
   const effectivePlanSlug = normalizePlanKey(
-    effectiveSubscription?.subscriptionPlan ?? currentPlan ?? 'free',
+    paidActive?.subscriptionPlan ?? normalizedCurrentPlan ?? effectiveSubscription?.subscriptionPlan ?? 'free',
   ) as 'free' | 'starter' | 'pro' | 'pro_team' | 'premium';
 
   const effectivePricingPlan =
@@ -156,7 +157,7 @@ export default function SubscriptionManagement() {
     : '—';
 
   const canCancelSubscription =
-    (currentPlan !== 'free' && currentPlan !== 'pro_team') &&
+    (normalizedCurrentPlan !== 'free' && normalizedCurrentPlan !== 'pro_team') &&
     !!effectiveSubscription &&
     effectiveSubscription.status === 'active' &&
     effectiveSubscription.paymentProvider !== 'internal' &&

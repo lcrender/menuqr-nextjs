@@ -171,7 +171,22 @@ export class SubscriptionController {
       returnUrl: body.returnUrl,
       cancelUrl: body.cancelUrl,
       acceptedTerms: body.acceptedTerms,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      documentType: body.documentType,
+      documentNumber: body.documentNumber,
+      street: body.street,
+      city: body.city,
+      state: body.state,
+      postalCode: body.postalCode,
+      country: body.country,
     });
+  }
+
+  @Get('checkout-profile')
+  @ApiOperation({ summary: 'Obtener último perfil de facturación usado en checkout' })
+  async getCheckoutProfile(@Request() req: any) {
+    return this.subscriptionService.getLatestCheckoutBillingProfile(req.user.id);
   }
 
   @Post('cancel')
