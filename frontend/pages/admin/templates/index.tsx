@@ -5,65 +5,11 @@ import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
 import AlertModal from '../../../components/AlertModal';
 import { TEMPLATE_NAMES } from '../../../lib/template-config-schema';
-
-interface Template {
-  id: string;
-  name: string;
-  description: string;
-  preview: string;
-  category: string;
-  /** Si es true, solo usuarios con plan Pro o Premium pueden aplicar esta plantilla. La vista previa sigue disponible para todos. */
-  requiresProOrPremium?: boolean;
-}
-
-const templates: Template[] = [
-  {
-    id: 'classic',
-    name: 'Clásica',
-    description: 'Diseño tradicional y elegante, perfecto para restaurantes que buscan un estilo atemporal.',
-    preview: '🎨',
-    category: 'Tradicional',
-  },
-  {
-    id: 'minimalist',
-    name: 'Minimalista',
-    description: 'Diseño limpio y minimalista, ideal para restaurantes con un enfoque elegante y sofisticado.',
-    preview: '✨',
-    category: 'Contemporáneo',
-  },
-  {
-    id: 'foodie',
-    name: 'Foodie',
-    description: 'Diseño elegante y sofisticado, ideal para restaurantes gourmet.',
-    preview: '🍽️',
-    category: 'Gourmet',
-  },
-  {
-    id: 'gourmet',
-    name: 'Gourmet',
-    description: 'Estilo refinado con tipografías clásicas. Fotos de productos solo cuando existan. Disponible para plan Pro o Premium.',
-    preview: '🥂',
-    category: 'Gourmet',
-    requiresProOrPremium: true,
-  },
-  {
-    id: 'burgers',
-    name: 'Burgers',
-    description: 'Diseño bold y dinámico estilo hamburguesería, con tipografía impactante y colores vibrantes.',
-    preview: '🍔',
-    category: 'Casual',
-  },
-  {
-    id: 'italianFood',
-    name: 'Italian Food',
-    description: 'Diseño elegante con tipografía cursiva y colores de la bandera italiana, perfecto para restaurantes italianos.',
-    preview: '🍝',
-    category: 'Gourmet',
-  },
-];
-
-const PREVIEW_IMAGE_BASE = '/preview';
-const PREVIEW_DEFAULT_IMAGE = '/preview/preview-default.svg';
+import {
+  TEMPLATES_CATALOG as templates,
+  PREVIEW_IMAGE_BASE,
+  PREVIEW_DEFAULT_IMAGE,
+} from '../../../lib/templates-catalog';
 
 export default function Templates() {
   const router = useRouter();

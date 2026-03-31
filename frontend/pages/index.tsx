@@ -45,11 +45,17 @@ export default function Home() {
         <nav className="landing-nav">
           <div className="container">
             <div className="landing-nav-content">
-              <div className="landing-logo">
+              <Link href="/" className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
                 <span className="landing-logo-text">MenuQR</span>
-              </div>
+              </Link>
               <div className="landing-nav-actions">
+                <Link href="/demos" className="landing-nav-text-link">
+                  Demos
+                </Link>
+                <Link href="#precios" className="landing-nav-text-link">
+                  Precios
+                </Link>
                 <button onClick={handleLogin} className="landing-btn-secondary landing-nav-login-btn">
                   Iniciar Sesión
                 </button>
@@ -144,7 +150,7 @@ export default function Home() {
         </section>
 
         {/* Pricing Section */}
-        <section className="landing-pricing">
+        <section id="precios" className="landing-pricing">
           <div className="container">
             <h2 className="landing-section-title">Planes que se adaptan a tu negocio</h2>
             <p className="landing-section-subtitle">
@@ -162,9 +168,14 @@ export default function Home() {
               <p className="landing-cta-subtitle">
                 Únete a cientos de restaurantes que ya están usando MenuQR para mejorar la experiencia de sus clientes.
               </p>
-              <button onClick={handleTryFree} className="landing-btn-primary landing-btn-large landing-btn-cta">
-                Probar Gratis Ahora
-              </button>
+              <div className="landing-cta-buttons">
+                <Link href="/demos" className="landing-btn-secondary landing-btn-large landing-btn-cta-outline">
+                  Ver ejemplos
+                </Link>
+                <button onClick={handleTryFree} className="landing-btn-primary landing-btn-large landing-btn-cta">
+                  Probar Gratis Ahora
+                </button>
+              </div>
               <p className="landing-cta-note">
                 Sin tarjeta de crédito • Configuración en minutos • Cancela cuando quieras
               </p>
