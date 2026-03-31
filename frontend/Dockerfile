@@ -17,45 +17,52 @@ EXPOSE 3000
 
 CMD ["npm", "run", "dev"]
 
-# Etapa de producción
-FROM node:18-alpine AS production
+# ========================================
+# Builder: compila Next (output: standalone)
+# ========================================
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Build-time args para URLs públicas y modo producción (Next.js)
+# Build-time: deben coincidir con docker-compose (args) para rewrites y cliente
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_APP_ENV
-# URL interna del backend para rewrites (/api-proxy → backend). En Docker: http://backend:3001
 ARG INTERNAL_API_URL=http://127.0.0.1:3001
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_APP_ENV=$NEXT_PUBLIC_APP_ENV
 ENV INTERNAL_API_URL=$INTERNAL_API_URL
 
-# Copiar archivos de dependencias
 COPY package*.json ./
+RUN npm ci
 
-# Instalar dependencias
-RUN npm install --omit=dev
-
-# Copiar código fuente
 COPY . .
-
-# Construir aplicación
 RUN npm run build
 
-# Crear usuario no-root
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+# ========================================
+# Producción: ejecuta server.js del standalone
+# (incluye todas las rutas /pages, p. ej. /demos)
+# ========================================
+FROM node:18-alpine AS production
 
-# Cambiar ownership
-RUN chown -R nextjs:nodejs /app
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+
+ARG NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
 USER nextjs
 
-# Exponer puerto
 EXPOSE 3000
 
-# Comando de producción
-CMD ["npm", "run", "start"]
-
+CMD ["node", "server.js"]
