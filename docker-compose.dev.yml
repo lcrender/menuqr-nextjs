@@ -1,5 +1,5 @@
 # ========================================
-# MenuQR - Docker Compose DESARROLLO
+# AppMenuQR - Docker Compose DESARROLLO
 # ========================================
 # Uso: docker compose -f docker-compose.dev.yml up --build
 # (El docker-compose.yml "default" NO publica 3001: para local usá SIEMPRE este archivo.)
@@ -145,6 +145,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      # Evita que .next del host (p. ej. build local) choque con node_modules del contenedor → MODULE_NOT_FOUND en chunks
+      - frontend_next_cache:/app/.next
     ports:
       - "3000:3000"
     depends_on:
@@ -156,6 +158,7 @@ volumes:
   postgres_data_dev:
   redis_data_dev:
   minio_data_dev:
+  frontend_next_cache:
 
 networks:
   menuqr_dev:

@@ -6,10 +6,10 @@ export default function PoliticaDePrivacidad() {
   return (
     <>
       <Head>
-        <title>Política de Privacidad - MenuQR</title>
+        <title>Política de Privacidad - AppMenuQR</title>
         <meta
           name="description"
-          content="Política de Privacidad de la plataforma MenuQR para la recopilación y uso de datos personales."
+          content="Política de Privacidad de la plataforma AppMenuQR para la recopilación y uso de datos personales."
         />
       </Head>
 
@@ -20,7 +20,7 @@ export default function PoliticaDePrivacidad() {
             <div className="landing-nav-content">
               <Link href="/" className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </Link>
               <div className="landing-nav-actions">
                 <Link href="/login" className="landing-btn-secondary">
@@ -168,7 +168,7 @@ export default function PoliticaDePrivacidad() {
             <div className="landing-footer-content">
               <div className="landing-footer-brand">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </div>
               <div className="landing-footer-links">
                 <Link href="/" className="landing-footer-link">Inicio</Link>
@@ -180,7 +180,7 @@ export default function PoliticaDePrivacidad() {
               </div>
             </div>
             <div className="landing-footercopyright">
-              <p>&copy; {new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+              <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
             </div>
           </div>
         </footer>

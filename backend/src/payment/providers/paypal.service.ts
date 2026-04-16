@@ -90,7 +90,7 @@ export class PayPalService implements IPaymentProviderService {
       application_context: {
         return_url: params.returnUrl,
         cancel_url: params.cancelUrl,
-        brand_name: this.config.get('PAYPAL_BRAND_NAME', 'MenuQR'),
+        brand_name: this.config.get('PAYPAL_BRAND_NAME', 'AppMenuQR'),
       },
       custom_id: params.userId,
     };

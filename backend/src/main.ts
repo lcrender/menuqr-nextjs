@@ -16,7 +16,7 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   
   try {
-    logger.log('🚀 Iniciando MenuQR Backend...');
+    logger.log('🚀 Iniciando AppMenuQR Backend...');
     
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: new WinstonLogger(),
@@ -151,7 +151,7 @@ async function bootstrap() {
       const backendUrl = configService.get('BACKEND_URL', 'http://localhost:3001');
       
       const config = new DocumentBuilder()
-        .setTitle('MenuQR API')
+        .setTitle('AppMenuQR API')
         .setDescription(
           `API REST moderna para gestión de menús de restaurantes multi-tenant.
 
@@ -167,7 +167,7 @@ async function bootstrap() {
 **Versión:** 1.0.0 | **Entorno:** ${nodeEnv} | **Base URL:** ${backendUrl}`
         )
         .setVersion('1.0.0')
-        .setContact('MenuQR Team', 'https://menuqr.com', 'support@menuqr.com')
+        .setContact('AppMenuQR Team', 'https://menuqr.com', 'support@menuqr.com')
         .setLicense('MIT', 'https://opensource.org/licenses/MIT')
         .addServer(configService.get('BACKEND_URL', 'http://localhost:3001'), 'Servidor de desarrollo')
         .addBearerAuth(
@@ -218,7 +218,7 @@ async function bootstrap() {
       }
 
       SwaggerModule.setup('api', app, document, {
-        customSiteTitle: 'MenuQR API',
+        customSiteTitle: 'AppMenuQR API',
         customfavIcon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⚡</text></svg>',
         customCss: customCss,
         swaggerOptions: {
@@ -248,7 +248,7 @@ async function bootstrap() {
     const host = configService.get('HOST', '0.0.0.0');
     await app.listen(port, host);
 
-    logger.log(`✅ MenuQR Backend iniciado en puerto ${port}`);
+    logger.log(`✅ AppMenuQR Backend iniciado en puerto ${port}`);
     logger.log(`🌐 URL: http://localhost:${port}`);
     
     if (configService.get('NODE_ENV') !== 'production') {

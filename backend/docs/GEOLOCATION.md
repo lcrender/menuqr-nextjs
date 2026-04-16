@@ -1,4 +1,4 @@
-# Geolocalización y región (país) en MenuQR
+# Geolocalización y región (país) en AppMenuQR
 
 ## Resumen
 

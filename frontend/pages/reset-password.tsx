@@ -54,8 +54,8 @@ export default function ResetPasswordPage() {
   return (
     <>
       <Head>
-        <title>Restablecer contraseña - MenuQR</title>
-        <meta name="description" content="Cambia tu contraseña de MenuQR" />
+        <title>Restablecer contraseña - AppMenuQR</title>
+        <meta name="description" content="Cambia tu contraseña de AppMenuQR" />
       </Head>
       <div className="landing-page">
         <section className="landing-auth">

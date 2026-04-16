@@ -34,7 +34,7 @@ export class EmailService implements OnModuleInit {
 
   private getFrom(): string {
     const fromEmail = this.configService.get('SMTP_FROM', 'noreply@menuqr.com');
-    const fromName = this.configService.get('SMTP_FROM_NAME', 'MenuQR');
+    const fromName = this.configService.get('SMTP_FROM_NAME', 'AppMenuQR');
     return fromName ? `"${fromName}" <${fromEmail}>` : fromEmail;
   }
 
@@ -51,7 +51,7 @@ export class EmailService implements OnModuleInit {
         await this.transporter.sendMail({
           from: this.getFrom(),
           to: email,
-          subject: 'Recuperar contraseña - MenuQR',
+          subject: 'Recuperar contraseña - AppMenuQR',
           html,
         });
         this.logger.log(`Email de recuperación enviado a ${email}`);
@@ -78,7 +78,7 @@ export class EmailService implements OnModuleInit {
         await this.transporter.sendMail({
           from: this.getFrom(),
           to: email,
-          subject: 'Verifica tu email en MenuQR',
+          subject: 'Verifica tu email en AppMenuQR',
           html,
         });
         this.logger.log(`Email de verificación enviado a ${email}`);
@@ -126,7 +126,7 @@ export class EmailService implements OnModuleInit {
         await this.transporter.sendMail({
           from: this.getFrom(),
           to: newEmail,
-          subject: 'Confirma el cambio de email - MenuQR',
+          subject: 'Confirma el cambio de email - AppMenuQR',
           html,
         });
         this.logger.log(`Email de confirmación de cambio enviado a ${newEmail}`);
@@ -149,7 +149,7 @@ export class EmailService implements OnModuleInit {
         await this.transporter.sendMail({
           from: this.getFrom(),
           to: oldEmail,
-          subject: 'Tu email en MenuQR fue modificado',
+          subject: 'Tu email en AppMenuQR fue modificado',
           html,
         });
         this.logger.log(`Notificación de cambio de email enviada a ${oldEmail}`);
@@ -180,11 +180,11 @@ export class EmailService implements OnModuleInit {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🍽️ MenuQR</h1>
+            <h1>🍽️ AppMenuQR</h1>
           </div>
           <div class="content">
             <h2>Hola ${firstName},</h2>
-            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en MenuQR.</p>
+            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en AppMenuQR.</p>
             <p>Haz clic en el siguiente botón para elegir una nueva contraseña:</p>
             <div style="text-align: center;">
               <a href="${resetUrl}" class="button">Restablecer contraseña</a>
@@ -193,10 +193,10 @@ export class EmailService implements OnModuleInit {
             <p style="word-break: break-all; color: #6366f1;">${resetUrl}</p>
             <p><strong>Este enlace expira en 1 hora.</strong></p>
             <p>Si no solicitaste este cambio, puedes ignorar este email. Tu contraseña no se modificará.</p>
-            <p>Saludos,<br>El equipo de MenuQR</p>
+            <p>Saludos,<br>El equipo de AppMenuQR</p>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+            <p>&copy; ${new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
           </div>
         </div>
       </body>
@@ -222,11 +222,11 @@ export class EmailService implements OnModuleInit {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🍽️ MenuQR</h1>
+            <h1>🍽️ AppMenuQR</h1>
           </div>
           <div class="content">
             <h2>Hola ${firstName},</h2>
-            <p>Recibimos una solicitud para cambiar el email de tu cuenta en MenuQR a esta dirección.</p>
+            <p>Recibimos una solicitud para cambiar el email de tu cuenta en AppMenuQR a esta dirección.</p>
             <p>Haz clic en el siguiente botón para confirmar el cambio:</p>
             <div style="text-align: center;">
               <a href="${confirmUrl}" class="button">Confirmar cambio de email</a>
@@ -235,10 +235,10 @@ export class EmailService implements OnModuleInit {
             <p style="word-break: break-all; color: #6366f1;">${confirmUrl}</p>
             <p><strong>Este enlace expira en 1 hora.</strong></p>
             <p>Si no solicitaste este cambio, puedes ignorar este email. Tu email no se modificará.</p>
-            <p>Saludos,<br>El equipo de MenuQR</p>
+            <p>Saludos,<br>El equipo de AppMenuQR</p>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+            <p>&copy; ${new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
           </div>
         </div>
       </body>
@@ -264,18 +264,18 @@ export class EmailService implements OnModuleInit {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🍽️ MenuQR</h1>
+            <h1>🍽️ AppMenuQR</h1>
           </div>
           <div class="content">
             <h2>Cambio de email realizado</h2>
-            <p>Te informamos que el email asociado a tu cuenta en MenuQR fue modificado correctamente.</p>
+            <p>Te informamos que el email asociado a tu cuenta en AppMenuQR fue modificado correctamente.</p>
             <div class="alert">
               <strong>¿No realizaste este cambio?</strong> Contacta a soporte inmediatamente.
             </div>
-            <p>Saludos,<br>El equipo de MenuQR</p>
+            <p>Saludos,<br>El equipo de AppMenuQR</p>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+            <p>&copy; ${new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
           </div>
         </div>
       </body>
@@ -301,11 +301,11 @@ export class EmailService implements OnModuleInit {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🍽️ MenuQR</h1>
+            <h1>🍽️ AppMenuQR</h1>
           </div>
           <div class="content">
             <h2>Hola ${firstName},</h2>
-            <p>Gracias por registrarte en MenuQR.</p>
+            <p>Gracias por registrarte en AppMenuQR.</p>
             <p>Por favor, verifica tu dirección de email haciendo clic en el siguiente botón:</p>
             <div style="text-align: center;">
               <a href="${verificationUrl}" class="button">Verificar Email</a>
@@ -314,10 +314,10 @@ export class EmailService implements OnModuleInit {
             <p style="word-break: break-all; color: #6366f1;">${verificationUrl}</p>
             <p><strong>Este enlace expirará en 24 horas.</strong></p>
             <p>Si no creaste esta cuenta, puedes ignorar este email.</p>
-            <p>Saludos,<br>El equipo de MenuQR</p>
+            <p>Saludos,<br>El equipo de AppMenuQR</p>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+            <p>&copy; ${new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
           </div>
         </div>
       </body>

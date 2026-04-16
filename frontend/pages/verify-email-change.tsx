@@ -41,7 +41,7 @@ export default function VerifyEmailChange() {
   return (
     <>
       <Head>
-        <title>Confirmar cambio de email - MenuQR</title>
+        <title>Confirmar cambio de email - AppMenuQR</title>
         <meta name="description" content="Confirma el cambio de tu dirección de email" />
       </Head>
 
@@ -51,7 +51,7 @@ export default function VerifyEmailChange() {
             <div className="landing-nav-content">
               <Link href="/" className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </Link>
               <div className="landing-nav-actions">
                 <Link href="/login" className="landing-btn-secondary">
@@ -124,7 +124,7 @@ export default function VerifyEmailChange() {
             <div className="landing-footer-content">
               <div className="landing-footer-brand">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </div>
               <div className="landing-footer-links">
                 <Link href="/" className="landing-footer-link">Inicio</Link>
@@ -136,7 +136,7 @@ export default function VerifyEmailChange() {
               </div>
             </div>
             <div className="landing-footer-copyright">
-              <p>&copy; {new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+              <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
             </div>
           </div>
         </footer>

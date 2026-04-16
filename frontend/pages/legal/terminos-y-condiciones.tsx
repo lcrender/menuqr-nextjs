@@ -6,10 +6,10 @@ export default function TerminosYCondiciones() {
   return (
     <>
       <Head>
-        <title>Términos y Condiciones de Uso - MenuQR</title>
+        <title>Términos y Condiciones de Uso - AppMenuQR</title>
         <meta
           name="description"
-          content="Términos y Condiciones de uso de la plataforma MenuQR para creación y gestión de menús digitales."
+          content="Términos y Condiciones de uso de la plataforma AppMenuQR para creación y gestión de menús digitales."
         />
       </Head>
 
@@ -20,7 +20,7 @@ export default function TerminosYCondiciones() {
             <div className="landing-nav-content">
               <Link href="/" className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </Link>
               <div className="landing-nav-actions">
                 <Link href="/login" className="landing-btn-secondary">
@@ -307,7 +307,7 @@ export default function TerminosYCondiciones() {
             <div className="landing-footer-content">
               <div className="landing-footer-brand">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </div>
               <div className="landing-footer-links">
                 <Link href="/" className="landing-footer-link">Inicio</Link>
@@ -317,7 +317,7 @@ export default function TerminosYCondiciones() {
               </div>
             </div>
             <div className="landing-footer-copyright">
-              <p>&copy; {new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+              <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
             </div>
           </div>
         </footer>

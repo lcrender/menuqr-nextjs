@@ -1,5 +1,5 @@
 -- ========================================
--- MenuQR - Seed de Datos Iniciales
+-- AppMenuQR - Seed de Datos Iniciales
 -- ========================================
 
 -- Importar bcrypt para hashear passwords (usaremos valores pre-hasheados)

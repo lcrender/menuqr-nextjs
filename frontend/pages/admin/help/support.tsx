@@ -6,7 +6,7 @@ export default function SupportPage() {
       <div className="container-fluid py-4">
         <div className="row">
           <div className="col-12">
-            <h1 className="mb-4">🛠️ Soporte Técnico - MenuQR</h1>
+            <h1 className="mb-4">🛠️ Soporte Técnico - AppMenuQR</h1>
             <p className="lead mb-5">
               Reporta bugs, problemas técnicos o solicita ayuda al equipo de soporte.
             </p>
@@ -18,7 +18,7 @@ export default function SupportPage() {
               </div>
               <div className="card-body">
                 <p className="mb-4">
-                  Si encuentras algún error, bug o problema técnico en MenuQR, puedes reportarlo a nuestro equipo de soporte técnico.
+                  Si encuentras algún error, bug o problema técnico en AppMenuQR, puedes reportarlo a nuestro equipo de soporte técnico.
                 </p>
 
                 <h5 className="mb-3">📝 Información a incluir en tu reporte:</h5>
@@ -144,7 +144,7 @@ export default function SupportPage() {
             <div className="alert alert-light border">
               <h5 className="alert-heading">¿Necesitas ayuda adicional?</h5>
               <p className="mb-0">
-                Si tienes alguna pregunta sobre cómo usar MenuQR, revisa la <a href="/admin/help/documentation">documentación completa</a>. Para problemas técnicos o bugs, utiliza la información de contacto arriba.
+                Si tienes alguna pregunta sobre cómo usar AppMenuQR, revisa la <a href="/admin/help/documentation">documentación completa</a>. Para problemas técnicos o bugs, utiliza la información de contacto arriba.
               </p>
             </div>
           </div>

@@ -1,8 +1,8 @@
 {
   "name": "menuqr-backend",
   "version": "1.0.0",
-  "description": "Backend API para MenuQR - SaaS de menús de restaurantes",
-  "author": "MenuQR Team",
+  "description": "Backend API para AppMenuQR - SaaS de menús de restaurantes",
+  "author": "AppMenuQR Team",
   "private": true,
   "license": "MIT",
   "scripts": {

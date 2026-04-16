@@ -1,5 +1,5 @@
 # ========================================
-# MenuQR - Docker Compose PRODUCCIÓN
+# AppMenuQR - Docker Compose PRODUCCIÓN
 # ========================================
 # Servidor: /opt/menuqr (ejemplo)
 # Traefik existente | certresolver: mytlschallenge | red: root_default

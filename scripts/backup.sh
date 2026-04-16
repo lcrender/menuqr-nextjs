@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ========================================
-# MenuQR - Script de Backup de Base de Datos
+# AppMenuQR - Script de Backup de Base de Datos
 # ========================================
 
 # Configuración

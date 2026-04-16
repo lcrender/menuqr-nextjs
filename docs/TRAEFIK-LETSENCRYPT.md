@@ -1,12 +1,12 @@
-# Let's Encrypt con Traefik (MenuQR en producción)
+# Let's Encrypt con Traefik (AppMenuQR en producción)
 
-Los contenedores de MenuQR solo dicen **qué dominio** usan y **qué certresolver** debe emitir el certificado (`tls.certresolver=mytlschallenge` en `docker-compose.prod.yml`). **Traefik** (instalación global en el VPS) es quien habla con Let's Encrypt y guarda los certificados.
+Los contenedores de AppMenuQR solo dicen **qué dominio** usan y **qué certresolver** debe emitir el certificado (`tls.certresolver=mytlschallenge` en `docker-compose.prod.yml`). **Traefik** (instalación global en el VPS) es quien habla con Let's Encrypt y guarda los certificados.
 
 ## Requisitos previos
 
 1. **DNS**: cada host (`appmenuqr.com`, `www`, `api.appmenuqr.com`, `s3.appmenuqr.com`, `minio.appmenuqr.com`) con registro **A** (o AAAA) apuntando a la **IP pública del VPS**.
 2. **Puertos** en el VPS (firewall / Hostinger): **80** y **443** abiertos hacia Traefik.
-3. **Red Docker**: los servicios MenuQR están en `root_default` y Traefik debe poder alcanzarlos (misma red, como en `traefik.docker.network=root_default`).
+3. **Red Docker**: los servicios AppMenuQR están en `root_default` y Traefik debe poder alcanzarlos (misma red, como en `traefik.docker.network=root_default`).
 
 ## Nombre del certresolver
 
@@ -103,15 +103,15 @@ En Traefik **no está definido** un resolver llamado `letsencrypt`, pero otros s
 **Solución (elegí una):**
 
 - En la **config estática de Traefik**, duplicar el bloque ACME con el nombre `letsencrypt` apuntando al mismo `storage` y email que `mytlschallenge`, **o**
-- Cambiar las labels de esos proyectos a `tls.certresolver=mytlschallenge` (mismo nombre que MenuQR).
+- Cambiar las labels de esos proyectos a `tls.certresolver=mytlschallenge` (mismo nombre que AppMenuQR).
 
-MenuQR en `docker-compose.prod.yml` usa **`mytlschallenge`** a propósito para coincidir con un resolver que sí exista en tu servidor.
+AppMenuQR en `docker-compose.prod.yml` usa **`mytlschallenge`** a propósito para coincidir con un resolver que sí exista en tu servidor.
 
 ### `cannot be linked automatically with multiple Services` (MinIO)
 
 Ocurre cuando **un solo contenedor** define más de un `traefik.http.services.*.loadbalancer.server.port`. Traefik no sabe a qué servicio enlazar cada router.
 
-**Solución:** en `docker-compose.prod.yml` de MenuQR cada router tiene `traefik.http.routers.<nombre>.service=<nombre-del-servicio>` y los servicios S3 vs consola tienen nombres distintos (`menuqr-s3` y `menuqr-minio-console`).
+**Solución:** en `docker-compose.prod.yml` de AppMenuQR cada router tiene `traefik.http.routers.<nombre>.service=<nombre-del-servicio>` y los servicios S3 vs consola tienen nombres distintos (`menuqr-s3` y `menuqr-minio-console`).
 
 ### ACME: `tls: no application protocol` / `error:tls :: ... no application protocol`
 
@@ -152,7 +152,7 @@ no `Host(\`a\`,\`b\`)` (sintaxis vieja).
 | `timeout` / `connection refused` en ACME | Puerto 80 u 443 no llega al contenedor Traefik o firewall del proveedor. |
 | `NXDOMAIN` / no valida el dominio | DNS del subdominio no apunta aún a la IP del VPS o propagación pendiente. |
 | Certificado no se renueva | `acme.json` no persistente (se borra al recrear el contenedor). |
-| Router sin TLS | Falta `tls=true` y `tls.certresolver=...` en las labels (en MenuQR ya están). |
+| Router sin TLS | Falta `tls=true` y `tls.certresolver=...` en las labels (en AppMenuQR ya están). |
 
 ## Staging (pruebas sin límite estricto de Let's Encrypt)
 
@@ -160,4 +160,4 @@ Para probar sin agotar cuotas, en Traefik podés usar la URL de staging de ACME;
 
 ---
 
-**Resumen:** MenuQR ya pide certificados con `certresolver=mytlschallenge`. Solo necesitás que Traefik en el VPS tenga ese resolver configurado con ACME (TLS o HTTP challenge), puertos 80/443 abiertos y DNS correcto hacia el VPS.
+**Resumen:** AppMenuQR ya pide certificados con `certresolver=mytlschallenge`. Solo necesitás que Traefik en el VPS tenga ese resolver configurado con ACME (TLS o HTTP challenge), puertos 80/443 abiertos y DNS correcto hacia el VPS.

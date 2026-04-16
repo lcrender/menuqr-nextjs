@@ -9,7 +9,7 @@ export default function VerifyEmailRequiredPage() {
   return (
     <>
       <Head>
-        <title>Verificá tu email - MenuQR</title>
+        <title>Verificá tu email - AppMenuQR</title>
         <meta name="description" content="Verificá tu email para activar tu cuenta y continuar." />
       </Head>
 

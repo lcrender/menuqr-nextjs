@@ -219,8 +219,8 @@ export default function Login() {
   return (
     <>
       <Head>
-        <title>{isRegister ? 'Registrarse - MenuQR' : 'Iniciar Sesión - MenuQR'}</title>
-        <meta name="description" content={isRegister ? 'Crea tu cuenta gratis en MenuQR' : 'Inicia sesión en MenuQR'} />
+        <title>{isRegister ? 'Registrarse - AppMenuQR' : 'Iniciar Sesión - AppMenuQR'}</title>
+        <meta name="description" content={isRegister ? 'Crea tu cuenta gratis en AppMenuQR' : 'Inicia sesión en AppMenuQR'} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
 
@@ -231,7 +231,7 @@ export default function Login() {
             <div className="landing-nav-content">
               <Link href="/" className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </Link>
               <div className="landing-nav-actions">
                 <Link href="/" className="landing-btn-secondary">
@@ -253,8 +253,8 @@ export default function Login() {
                   </h1>
                   <p className="landing-auth-subtitle">
                     {isRegister 
-                      ? 'Únete a MenuQR y comienza a crear menús digitales en minutos'
-                      : 'Bienvenido de vuelta a MenuQR'}
+                      ? 'Únete a AppMenuQR y comienza a crear menús digitales en minutos'
+                      : 'Bienvenido de vuelta a AppMenuQR'}
                   </p>
                 </div>
 
@@ -459,7 +459,7 @@ export default function Login() {
             <div className="landing-footer-content">
               <div className="landing-footer-brand">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </div>
               <div className="landing-footer-links">
                 <Link href="/" className="landing-footer-link">Inicio</Link>
@@ -471,7 +471,7 @@ export default function Login() {
               </div>
             </div>
             <div className="landing-footer-copyright">
-              <p>&copy; {new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+              <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
             </div>
           </div>
         </footer>

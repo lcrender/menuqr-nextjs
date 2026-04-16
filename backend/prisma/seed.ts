@@ -5,7 +5,7 @@ import * as QRCode from 'qrcode';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Iniciando seed de MenuQR...');
+  console.log('🌱 Iniciando seed de AppMenuQR...');
 
   // ========================================
   // CREAR TENANT DEMO
@@ -401,7 +401,7 @@ async function main() {
   console.log(`   • Panel admin: http://localhost:3000/admin`);
   console.log(`   • Panel super admin: http://localhost:3000/super-admin`);
   
-  console.log('\n✨ ¡Tu MVP de MenuQR está listo para usar!');
+  console.log('\n✨ ¡Tu MVP de AppMenuQR está listo para usar!');
 }
 
 main()

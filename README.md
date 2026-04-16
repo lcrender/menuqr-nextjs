@@ -1,4 +1,4 @@
-# MenuQR - SaaS de Menús de Restaurantes
+# AppMenuQR - SaaS de Menús de Restaurantes
 
 MVP funcional para gestión de menús de restaurantes con sistema multi-tenant y Row Level Security (RLS).
 

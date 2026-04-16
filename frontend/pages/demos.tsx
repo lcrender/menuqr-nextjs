@@ -7,7 +7,6 @@ import {
   PREVIEW_IMAGE_BASE,
   PREVIEW_DEFAULT_IMAGE,
 } from '../lib/templates-catalog';
-
 export default function DemosPage() {
   const router = useRouter();
   const [previewSelectedId, setPreviewSelectedId] = useState<string | null>(null);
@@ -47,10 +46,10 @@ export default function DemosPage() {
   return (
     <>
       <Head>
-        <title>Demos de plantillas | MenuQR</title>
+        <title>Demos de plantillas | AppMenuQR</title>
         <meta
           name="description"
-          content="Explora todas las plantillas de menú digital de MenuQR. Vista previa interactiva sin registro."
+          content="Explora todas las plantillas de menú digital de AppMenuQR. Vista previa interactiva sin registro."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
@@ -61,7 +60,7 @@ export default function DemosPage() {
             <div className="landing-nav-content">
               <Link href="/" className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </Link>
               <div className="landing-nav-actions">
                 <Link href="/#precios" className="landing-nav-text-link">
@@ -132,7 +131,7 @@ export default function DemosPage() {
             <div className="landing-footer-content">
               <Link href="/" className="landing-footer-brand landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </Link>
               <div className="landing-footer-links">
                 <Link href="/login" className="landing-footer-link">
@@ -150,7 +149,7 @@ export default function DemosPage() {
               </div>
             </div>
             <div className="landing-footer-copyright">
-              <p>&copy; {new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+              <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
             </div>
           </div>
         </footer>

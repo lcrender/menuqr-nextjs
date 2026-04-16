@@ -1,5 +1,5 @@
 -- ========================================
--- MenuQR - Sample Menu: Italian Pizzeria (ENGLISH)
+-- AppMenuQR - Sample Menu: Italian Pizzeria (ENGLISH)
 -- ========================================
 -- This script creates a complete menu for an Italian pizzeria
 -- with 6 sections and typical Italian products with prices in EUR

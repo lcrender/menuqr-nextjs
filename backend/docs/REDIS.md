@@ -1,4 +1,4 @@
-# Redis en MenuQR
+# Redis en AppMenuQR
 
 Documentación del rol de **Redis** en el stack (desarrollo y producción) y del estado actual del código.
 

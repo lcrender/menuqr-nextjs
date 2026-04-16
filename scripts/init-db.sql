@@ -1,5 +1,5 @@
 -- ========================================
--- MenuQR - Inicialización de Base de Datos
+-- AppMenuQR - Inicialización de Base de Datos
 -- ========================================
 
 -- Crear extensión para UUIDs
@@ -429,7 +429,7 @@ SET client_encoding = 'UTF8';
 -- Mensaje de confirmación
 DO $$
 BEGIN
-    RAISE NOTICE 'Base de datos MenuQR inicializada correctamente con RLS y auditoría';
+    RAISE NOTICE 'Base de datos AppMenuQR inicializada correctamente con RLS y auditoría';
     RAISE NOTICE 'Recuerda ejecutar las migraciones de Prisma después de la inicialización';
 END $$;
 

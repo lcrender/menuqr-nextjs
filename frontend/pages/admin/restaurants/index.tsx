@@ -1775,7 +1775,7 @@ export default function Restaurants() {
                       ¿Necesitas más restaurantes?
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
-                      Amplía tu suscripción para crear más restaurantes y aprovechar todas las funcionalidades de MenuQR.
+                      Amplía tu suscripción para crear más restaurantes y aprovechar todas las funcionalidades de AppMenuQR.
                     </div>
                   </div>
                 </div>

@@ -33,8 +33,8 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <Head>
-        <title>Recuperar contraseña - MenuQR</title>
-        <meta name="description" content="Recupera tu contraseña de MenuQR" />
+        <title>Recuperar contraseña - AppMenuQR</title>
+        <meta name="description" content="Recupera tu contraseña de AppMenuQR" />
       </Head>
       <div className="landing-page">
         <section className="landing-auth">

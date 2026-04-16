@@ -5,10 +5,10 @@ export default function PoliticaDeCookies() {
   return (
     <>
       <Head>
-        <title>Política de Cookies - MenuQR</title>
+        <title>Política de Cookies - AppMenuQR</title>
         <meta
           name="description"
-          content="Política de Cookies de la plataforma MenuQR sobre el uso de cookies y tecnologías similares."
+          content="Política de Cookies de la plataforma AppMenuQR sobre el uso de cookies y tecnologías similares."
         />
       </Head>
 
@@ -19,7 +19,7 @@ export default function PoliticaDeCookies() {
             <div className="landing-nav-content">
               <Link href="/" className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </Link>
               <div className="landing-nav-actions">
                 <Link href="/login" className="landing-btn-secondary">
@@ -127,7 +127,7 @@ export default function PoliticaDeCookies() {
             <div className="landing-footer-content">
               <div className="landing-footer-brand">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </div>
               <div className="landing-footer-links">
                 <Link href="/" className="landing-footer-link">Inicio</Link>
@@ -139,7 +139,7 @@ export default function PoliticaDeCookies() {
               </div>
             </div>
             <div className="landing-footercopyright">
-              <p>&copy; {new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+              <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
             </div>
           </div>
         </footer>

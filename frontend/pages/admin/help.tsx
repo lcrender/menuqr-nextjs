@@ -6,9 +6,9 @@ export default function HelpPage() {
       <div className="container-fluid py-4">
         <div className="row">
           <div className="col-12">
-            <h1 className="mb-4">📚 Documentación - MenuQR</h1>
+            <h1 className="mb-4">📚 Documentación - AppMenuQR</h1>
             <p className="lead mb-5">
-              Guía completa para usar MenuQR y crear menús digitales profesionales.
+              Guía completa para usar AppMenuQR y crear menús digitales profesionales.
             </p>
 
             {/* Resumen del Flujo */}
@@ -36,7 +36,7 @@ export default function HelpPage() {
               </div>
               <div className="card-body">
                 <p className="mb-3">
-                  El primer paso para comenzar a usar MenuQR es crear un restaurante. Cada restaurante puede tener múltiples menús.
+                  El primer paso para comenzar a usar AppMenuQR es crear un restaurante. Cada restaurante puede tener múltiples menús.
                 </p>
                 <ol>
                   <li className="mb-2">
@@ -340,7 +340,7 @@ export default function HelpPage() {
               </div>
               <div className="card-body">
                 <p className="mb-4">
-                  Si encuentras algún error, bug o problema técnico en MenuQR, puedes reportarlo a nuestro equipo de soporte técnico.
+                  Si encuentras algún error, bug o problema técnico en AppMenuQR, puedes reportarlo a nuestro equipo de soporte técnico.
                 </p>
 
                 <h5 className="mb-3">📝 Información a incluir en tu reporte:</h5>
@@ -466,7 +466,7 @@ export default function HelpPage() {
             <div className="alert alert-light border">
               <h5 className="alert-heading">¿Necesitas ayuda adicional?</h5>
               <p className="mb-0">
-                Si tienes alguna pregunta sobre cómo usar MenuQR, revisa esta documentación completa. Para problemas técnicos o bugs, utiliza la sección de Soporte Técnico arriba.
+                Si tienes alguna pregunta sobre cómo usar AppMenuQR, revisa esta documentación completa. Para problemas técnicos o bugs, utiliza la sección de Soporte Técnico arriba.
               </p>
             </div>
           </div>

@@ -60,6 +60,8 @@ interface PricingPlansGridProps {
   loadingPlan?: string | null;
   /** Precios por región desde GET /pricing (moneda y proveedor según billing_country). */
   pricingData?: PricingData | null;
+  /** Textos de presentación bajo el nombre de cada plan (solo homepage / marketing). */
+  landingPlanTaglines?: boolean;
 }
 
 export default function PricingPlansGrid({
@@ -67,6 +69,7 @@ export default function PricingPlansGrid({
   onSelectPlan,
   loadingPlan = null,
   pricingData = null,
+  landingPlanTaglines = false,
 }: PricingPlansGridProps) {
   const router = useRouter();
   const isLanding = variant === 'landing';
@@ -231,7 +234,17 @@ export default function PricingPlansGrid({
               <span className="landing-pricing-amount">{formatCurrency(0, freeCurrency)}</span>
               <span className="landing-pricing-period">/mes</span>
             </div>
-            {(isLanding || isSubscription) && (
+            {landingPlanTaglines && (isLanding || isSubscription) ? (
+              <>
+                <p className="landing-pricing-plan-lead mb-1">
+                  <strong>Plan gratis de menú QR</strong>
+                </p>
+                <p className="landing-pricing-free-note mb-0">
+                  Perfecto para empezar con tu carta digital QR sin coste.
+                </p>
+              </>
+            ) : null}
+            {(isLanding || isSubscription) && !landingPlanTaglines && (
               <p className="landing-pricing-free-note mb-0">
                 Empeza gratis,
                 <br />
@@ -305,12 +318,21 @@ export default function PricingPlansGrid({
         </div>
       )}
 
+      {isLanding && showBillingToggle ? (
+        <h3 className="landing-pricing-grid-subheading">Haz tu menú QR más profesional</h3>
+      ) : null}
+
       {showBillingToggle && isLanding && BillingToggle}
 
       {/* Plan Starter */}
       <div className="landing-pricing-card">
         <div className="landing-pricing-header">
           <h3 className="landing-pricing-name">Starter</h3>
+          {landingPlanTaglines ? (
+            <p className="landing-pricing-plan-tagline small text-muted mb-2">
+              Funciones básicas para digitalizar tu menú.
+            </p>
+          ) : null}
           {renderPaidPriceBlock(planStarter, 'USD 3.49', 'USD', 3.49)}
         </div>
         <ul className="landing-pricing-features">
@@ -351,6 +373,11 @@ export default function PricingPlansGrid({
         <div className="landing-pricing-badge">Más Popular</div>
         <div className="landing-pricing-header">
           <h3 className="landing-pricing-name">Pro</h3>
+          {landingPlanTaglines ? (
+            <p className="landing-pricing-plan-tagline small text-muted mb-2">
+              Más personalización y control para tu menú QR restaurante.
+            </p>
+          ) : null}
           {renderPaidPriceBlock(planPro, 'USD 7.99', 'USD', 7.99)}
         </div>
         <ul className="landing-pricing-features">
@@ -407,6 +434,11 @@ export default function PricingPlansGrid({
       <div className="landing-pricing-card">
         <div className="landing-pricing-header">
           <h3 className="landing-pricing-name">Premium</h3>
+          {landingPlanTaglines ? (
+            <p className="landing-pricing-plan-tagline small text-muted mb-2">
+              Solución completa para negocios que buscan escalar.
+            </p>
+          ) : null}
           {renderPaidPriceBlock(planPremium, 'USD 15.99', 'USD', 15.99)}
         </div>
         <ul className="landing-pricing-features">

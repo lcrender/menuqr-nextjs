@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ========================================
-# MenuQR - Script de Restore de Base de Datos
+# AppMenuQR - Script de Restore de Base de Datos
 # ========================================
 
 # Configuración por defecto

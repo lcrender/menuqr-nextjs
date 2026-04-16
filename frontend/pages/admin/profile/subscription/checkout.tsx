@@ -281,7 +281,7 @@ export default function SubscriptionCheckoutPage() {
           <div className="card-body">
             <h2 className="h5 mb-3">{PLAN_LABEL[planSlug]}</h2>
             <p className="text-muted small mb-3">
-              Incluye los límites y funciones del plan <strong>{PLAN_LABEL[planSlug]}</strong> para tu cuenta MenuQR.
+              Incluye los límites y funciones del plan <strong>{PLAN_LABEL[planSlug]}</strong> para tu cuenta AppMenuQR.
             </p>
 
             <ul className="list-unstyled small mb-4">

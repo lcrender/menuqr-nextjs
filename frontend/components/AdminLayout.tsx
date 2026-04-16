@@ -106,7 +106,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <span />
             </span>
           </button>
-          <span className="admin-mobile-topbar-title">MenuQR</span>
+          <span className="admin-mobile-topbar-title">AppMenuQR</span>
         </header>
 
         {mobileNavOpen && (
@@ -143,7 +143,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </button>
               </div>
               <div className="admin-sidebar-header">
-              <h4>MenuQR</h4>
+              <h4>AppMenuQR</h4>
               <p className="small">{user?.email}</p>
               <span className="badge bg-primary mb-2">{user?.role}</span>
               {currentPlan != null && (

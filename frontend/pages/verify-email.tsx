@@ -56,7 +56,7 @@ export default function VerifyEmail() {
   return (
     <>
       <Head>
-        <title>Verificar Email - MenuQR</title>
+        <title>Verificar Email - AppMenuQR</title>
         <meta name="description" content="Verifica tu dirección de email" />
       </Head>
 
@@ -67,7 +67,7 @@ export default function VerifyEmail() {
             <div className="landing-nav-content">
               <Link href="/" className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </Link>
               <div className="landing-nav-actions">
                 <Link href="/login" className="landing-btn-secondary">
@@ -142,7 +142,7 @@ export default function VerifyEmail() {
             <div className="landing-footer-content">
               <div className="landing-footer-brand">
                 <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">MenuQR</span>
+                <span className="landing-logo-text">AppMenuQR</span>
               </div>
               <div className="landing-footer-links">
                 <Link href="/" className="landing-footer-link">Inicio</Link>
@@ -154,7 +154,7 @@ export default function VerifyEmail() {
               </div>
             </div>
             <div className="landing-footer-copyright">
-              <p>&copy; {new Date().getFullYear()} MenuQR. Todos los derechos reservados.</p>
+              <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
             </div>
           </div>
         </footer>

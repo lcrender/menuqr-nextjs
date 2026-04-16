@@ -1,5 +1,5 @@
 -- ========================================
--- MenuQR - Creación de Tablas
+-- AppMenuQR - Creación de Tablas
 -- ========================================
 
 -- Crear ENUMs

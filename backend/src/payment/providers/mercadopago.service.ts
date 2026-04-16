@@ -150,7 +150,7 @@ export class MercadoPagoService implements IPaymentProviderService {
     const backUrl = this.resolveMercadoPagoBackUrl(params.returnUrl);
 
     const preapprovalPayload = {
-      reason: `MenuQR - Plan ${priceRow.planName}${isYearly ? ' (anual)' : ''}`,
+      reason: `AppMenuQR - Plan ${priceRow.planName}${isYearly ? ' (anual)' : ''}`,
       payer_email: payerEmail,
       auto_recurring: {
         frequency: isYearly ? 12 : 1,

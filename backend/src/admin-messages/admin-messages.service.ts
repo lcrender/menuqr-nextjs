@@ -82,7 +82,7 @@ export class AdminMessagesService {
       throw new Error('Primero configurá un email válido en "Email destino".');
     }
 
-    const subject = '[MenuQR] Test de notificaciones de Mensajes';
+    const subject = '[AppMenuQR] Test de notificaciones de Mensajes';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -100,7 +100,7 @@ export class AdminMessagesService {
       <body>
         <div class="container">
           <div class="header">
-            <h1 style="margin:0;">🍽️ MenuQR</h1>
+            <h1 style="margin:0;">🍽️ AppMenuQR</h1>
           </div>
           <div class="content">
             <h2 style="margin-top:0;">Prueba de notificaciones</h2>
@@ -108,7 +108,7 @@ export class AdminMessagesService {
             <p><span class="tag">TEST OK</span></p>
             <p>Fecha: ${new Date().toISOString()}</p>
           </div>
-          <div class="footer">&copy; ${new Date().getFullYear()} MenuQR</div>
+          <div class="footer">&copy; ${new Date().getFullYear()} AppMenuQR</div>
         </div>
       </body>
       </html>
@@ -164,17 +164,17 @@ export class AdminMessagesService {
   private buildSubject(eventKey: AdminMessageEventKey, actorEmail: string): string {
     switch (eventKey) {
       case 'user_created':
-        return `[MenuQR] Nuevo usuario creado - ${actorEmail}`;
+        return `[AppMenuQR] Nuevo usuario creado - ${actorEmail}`;
       case 'user_email_verified':
-        return `[MenuQR] Usuario verificó email - ${actorEmail}`;
+        return `[AppMenuQR] Usuario verificó email - ${actorEmail}`;
       case 'subscription_created':
-        return `[MenuQR] Nueva suscripción - ${actorEmail}`;
+        return `[AppMenuQR] Nueva suscripción - ${actorEmail}`;
       case 'subscription_payment_succeeded':
-        return `[MenuQR] Pago de suscripción exitoso - ${actorEmail}`;
+        return `[AppMenuQR] Pago de suscripción exitoso - ${actorEmail}`;
       case 'subscription_payment_failed':
-        return `[MenuQR] Falló un pago de suscripción - ${actorEmail}`;
+        return `[AppMenuQR] Falló un pago de suscripción - ${actorEmail}`;
       default:
-        return `[MenuQR] Notificación - ${actorEmail}`;
+        return `[AppMenuQR] Notificación - ${actorEmail}`;
     }
   }
 
@@ -223,7 +223,7 @@ export class AdminMessagesService {
       <body>
         <div class="container">
           <div class="header">
-            <h1 style="margin:0; font-size: 20px;">🍽️ MenuQR - Notificaciones</h1>
+            <h1 style="margin:0; font-size: 20px;">🍽️ AppMenuQR - Notificaciones</h1>
             <div style="margin-top: 10px;">
               <span class="pill">${this.escapeHtml(eventLabel)}</span>
             </div>
@@ -243,7 +243,7 @@ export class AdminMessagesService {
             ${extraHtml}
           </div>
           <div class="footer">
-            &copy; ${new Date().getFullYear()} MenuQR. Todos los derechos reservados.
+            &copy; ${new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.
           </div>
         </div>
       </body>

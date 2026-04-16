@@ -1,5 +1,5 @@
 # ========================================
-# MenuQR - Docker Compose
+# AppMenuQR - Docker Compose
 # ========================================
 # Sin ports: — acceso solo por Traefik (hostname).
 # Postgres, Redis y MinIO solo por red Docker (root_default).

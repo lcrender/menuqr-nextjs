@@ -1,4 +1,4 @@
-# MenuQR: quitar puertos expuestos en el servidor
+# AppMenuQR: quitar puertos expuestos en el servidor
 
 Si actualmente ves `0.0.0.0:3000->3000`, `0.0.0.0:5432->5432`, etc., los servicios están publicados al host. Para que **solo Traefik** sea la puerta de entrada (por dominio):
 
@@ -26,7 +26,7 @@ docker compose up -d
 docker ps
 ```
 
-No deberías ver `0.0.0.0:3000`, `0.0.0.0:3001`, `0.0.0.0:5432`, `0.0.0.0:6379` ni `0.0.0.0:9000-9001` en la columna PORTS de los contenedores de MenuQR. Solo Traefik tendrá 80 y 443.
+No deberías ver `0.0.0.0:3000`, `0.0.0.0:3001`, `0.0.0.0:5432`, `0.0.0.0:6379` ni `0.0.0.0:9000-9001` en la columna PORTS de los contenedores de AppMenuQR. Solo Traefik tendrá 80 y 443.
 
 Acceso:
 
@@ -38,7 +38,7 @@ Acceso:
 
 | Antes (inseguro) | Después |
 |------------------|---------|
-| IP:3000 → MenuQR frontend | Solo por dominio vía Traefik |
+| IP:3000 → AppMenuQR frontend | Solo por dominio vía Traefik |
 | IP:3001 → API | Solo por dominio vía Traefik |
 | IP:5432 → Postgres expuesto | Solo red Docker |
 | IP:6379 → Redis expuesto | Solo red Docker |
