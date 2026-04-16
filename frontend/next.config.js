@@ -5,6 +5,9 @@ const nextConfig = {
   // ========================================
   reactStrictMode: true,
   swcMinify: true,
+  // Evita en producción (standalone + Node) que se cargue la build ESM de react-i18next
+  // contra react en CJS → "Named export 'Children' not found" en TransWithoutContext.js
+  transpilePackages: ['react-i18next', 'i18next', 'i18next-browser-languagedetector'],
   
   // ========================================
   // CONFIGURACIÓN DE IMÁGENES
