@@ -1,21 +1,16 @@
 import { useState, useCallback } from 'react';
-import Link from 'next/link';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
+import LandingNav from '../components/LandingNav';
+import LandingFooter from '../components/LandingFooter';
 import {
   TEMPLATES_CATALOG,
   PREVIEW_IMAGE_BASE,
   PREVIEW_DEFAULT_IMAGE,
 } from '../lib/templates-catalog';
 export default function DemosPage() {
-  const router = useRouter();
   const [previewSelectedId, setPreviewSelectedId] = useState<string | null>(null);
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
   const [previewImageError, setPreviewImageError] = useState<Record<string, boolean>>({});
-
-  const handleLogin = () => {
-    router.push('/login');
-  };
 
   const openPreview = (templateId: string) => {
     setPreviewSelectedId(templateId);
@@ -55,24 +50,7 @@ export default function DemosPage() {
       </Head>
 
       <div className="landing-page landing-demos-page">
-        <nav className="landing-nav">
-          <div className="container">
-            <div className="landing-nav-content">
-              <Link href="/" className="landing-logo">
-                <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">AppMenuQR</span>
-              </Link>
-              <div className="landing-nav-actions">
-                <Link href="/#precios" className="landing-nav-text-link">
-                  Precios
-                </Link>
-                <button type="button" onClick={handleLogin} className="landing-btn-secondary landing-nav-login-btn">
-                  Iniciar Sesión
-                </button>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <LandingNav />
 
         <section className="landing-demos-hero">
           <div className="container">
@@ -126,33 +104,7 @@ export default function DemosPage() {
           </div>
         </section>
 
-        <footer className="landing-footer">
-          <div className="container">
-            <div className="landing-footer-content">
-              <Link href="/" className="landing-footer-brand landing-logo">
-                <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">AppMenuQR</span>
-              </Link>
-              <div className="landing-footer-links">
-                <Link href="/login" className="landing-footer-link">
-                  Iniciar Sesión
-                </Link>
-                <Link href="/#precios" className="landing-footer-link">
-                  Precios
-                </Link>
-                <Link href="/legal/terminos-y-condiciones" className="landing-footer-link">
-                  Términos y Condiciones
-                </Link>
-                <Link href="/legal/politica-de-privacidad" className="landing-footer-link">
-                  Política de Privacidad
-                </Link>
-              </div>
-            </div>
-            <div className="landing-footer-copyright">
-              <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
-            </div>
-          </div>
-        </footer>
+        <LandingFooter />
       </div>
 
       {previewDrawerOpen && previewSelectedId && current && (

@@ -11,13 +11,14 @@
 # si usas proxy naranja en Cloudflare, en SSL/TLS suele ir "Full" o "Full (strict)".
 #
 # Subdominios a crear en DNS:
-#   appmenuqr.com, www.appmenuqr.com  → frontend
+#   appmenuqr.com, www.appmenuqr.com  → frontend (www redirige 301 a https://appmenuqr.com)
 #   api.appmenuqr.com                 → backend
 #   s3.appmenuqr.com                  → MinIO API (imágenes / S3)
 #   minio.appmenuqr.com               → consola MinIO (opcional)
 #
 # En .env de producción alinear URLs:
 #   FRONTEND_URL, BACKEND_URL, CORS_ORIGIN, NEXT_PUBLIC_*, MINIO_PUBLIC_URL
+#   NEXT_PUBLIC_APP_URL y FRONTEND_URL: usar https://appmenuqr.com (sin www), alineado con Traefik.
 #   MINIO_PUBLIC_URL=https://s3.appmenuqr.com  (sin path del bucket; el código concatena bucket/ruta)
 # ========================================
 
@@ -185,17 +186,38 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=root_default"
       - "traefik.http.services.menuqr-front.loadbalancer.server.port=3000"
-      - "traefik.http.routers.menuqr-front.rule=Host(`appmenuqr.com`) || Host(`www.appmenuqr.com`)"
+      # HTTPS canónico: solo apex (sin www)
+      - "traefik.http.routers.menuqr-front.rule=Host(`appmenuqr.com`)"
       - "traefik.http.routers.menuqr-front.entrypoints=websecure"
       - "traefik.http.routers.menuqr-front.tls=true"
       - "traefik.http.routers.menuqr-front.tls.certresolver=mytlschallenge"
       - "traefik.http.routers.menuqr-front.service=menuqr-front"
-      - "traefik.http.routers.menuqr-front-http.rule=Host(`appmenuqr.com`) || Host(`www.appmenuqr.com`)"
+      # HTTPS www → 301 a https://appmenuqr.com (misma ruta y query)
+      - "traefik.http.routers.menuqr-front-www.rule=Host(`www.appmenuqr.com`)"
+      - "traefik.http.routers.menuqr-front-www.entrypoints=websecure"
+      - "traefik.http.routers.menuqr-front-www.tls=true"
+      - "traefik.http.routers.menuqr-front-www.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.menuqr-front-www.middlewares=menuqr-front-www-to-apex"
+      - "traefik.http.routers.menuqr-front-www.service=noop@internal"
+      # redirectRegex opera sobre path + query; Host ya limita a www.
+      - "traefik.http.middlewares.menuqr-front-www-to-apex.redirectregex.regex=^(.*)$$"
+      - "traefik.http.middlewares.menuqr-front-www-to-apex.redirectregex.replacement=https://appmenuqr.com$$1"
+      - "traefik.http.middlewares.menuqr-front-www-to-apex.redirectregex.permanent=true"
+      # HTTP apex → HTTPS apex
+      - "traefik.http.routers.menuqr-front-http.rule=Host(`appmenuqr.com`)"
       - "traefik.http.routers.menuqr-front-http.entrypoints=web"
-      - "traefik.http.routers.menuqr-front-http.middlewares=menuqr-front-redirect"
+      - "traefik.http.routers.menuqr-front-http.middlewares=menuqr-front-http-to-https"
       - "traefik.http.routers.menuqr-front-http.service=menuqr-front"
-      - "traefik.http.middlewares.menuqr-front-redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.menuqr-front-redirect.redirectscheme.permanent=true"
+      - "traefik.http.middlewares.menuqr-front-http-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.menuqr-front-http-to-https.redirectscheme.permanent=true"
+      # HTTP www → HTTPS apex (una sola redirección)
+      - "traefik.http.routers.menuqr-front-http-www.rule=Host(`www.appmenuqr.com`)"
+      - "traefik.http.routers.menuqr-front-http-www.entrypoints=web"
+      - "traefik.http.routers.menuqr-front-http-www.middlewares=menuqr-front-http-www-to-apex"
+      - "traefik.http.routers.menuqr-front-http-www.service=noop@internal"
+      - "traefik.http.middlewares.menuqr-front-http-www-to-apex.redirectregex.regex=^(.*)$$"
+      - "traefik.http.middlewares.menuqr-front-http-www-to-apex.redirectregex.replacement=https://appmenuqr.com$$1"
+      - "traefik.http.middlewares.menuqr-front-http-www-to-apex.redirectregex.permanent=true"
 
 volumes:
   postgres_data:

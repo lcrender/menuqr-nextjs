@@ -1,12 +1,24 @@
 #!/bin/sh
 set -e
 cd /app
-# Si node_modules está vacío, instalar deps en el contenedor (no se puede rm: es un volumen montado)
-# Si ves error de bcrypt/musl, ejecutá: docker compose -f docker-compose.dev.yml down -v && docker compose -f docker-compose.dev.yml up
-if [ ! -f node_modules/.node_modules-ok ]; then
-  echo "Instalando dependencias en el contenedor..."
+# Volumen anónimo /app/node_modules: si agregás deps en package.json, el volumen viejo no las trae.
+# Re-ejecutamos npm install cuando cambia package.json / package-lock.json (mtime vs marca).
+# Si ves error de bcrypt/musl: docker compose -f docker-compose.dev.yml down -v && docker compose ... up
+STAMP="node_modules/.docker-dev-deps-stamp"
+need_install=
+if [ ! -f "$STAMP" ]; then
+  need_install=1
+elif [ package.json -nt "$STAMP" ]; then
+  need_install=1
+elif [ -f package-lock.json ] && [ package-lock.json -nt "$STAMP" ]; then
+  need_install=1
+fi
+
+if [ -n "$need_install" ]; then
+  echo "Sincronizando dependencias en el contenedor (npm install)..."
   npm install
   npm run db:generate
-  touch node_modules/.node_modules-ok
+  touch "$STAMP"
 fi
+
 exec "$@"

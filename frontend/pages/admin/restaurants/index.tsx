@@ -125,6 +125,9 @@ export default function Restaurants() {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [restaurantToDelete, setRestaurantToDelete] = useState<string | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  /** SUPER_ADMIN: tenant destino al crear restaurante (el backend lo exige). */
+  const [tenantsForWizard, setTenantsForWizard] = useState<Array<{ id: string; name?: string }>>([]);
+  const [selectedTenantIdForCreate, setSelectedTenantIdForCreate] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [alertData, setAlertData] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
@@ -160,6 +163,28 @@ export default function Restaurants() {
   };
 
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  useEffect(() => {
+    if (!isSuperAdmin || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get('/tenants', { params: { limit: 500 } });
+        const payload = res.data?.data ?? res.data;
+        const list = Array.isArray(payload) ? payload : [];
+        if (cancelled) return;
+        setTenantsForWizard(list);
+        if (list.length === 1 && list[0]?.id) {
+          setSelectedTenantIdForCreate((prev) => prev || list[0].id);
+        }
+      } catch {
+        if (!cancelled) setTenantsForWizard([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, isSuperAdmin]);
 
   // Refrescar plan desde la API (evita usar un plan viejo guardado en localStorage)
   useEffect(() => {
@@ -350,6 +375,19 @@ export default function Restaurants() {
       const editingStillInList =
         !!editingId && restaurants.some((r: { id: string }) => r.id === editingId);
       const shouldUpdate = Boolean(editing && editingStillInList);
+
+      if (!shouldUpdate && isSuperAdmin) {
+        if (!selectedTenantIdForCreate?.trim()) {
+          setAlertData({
+            title: 'Falta la cuenta',
+            message: 'Elegí en qué cuenta (tenant) se crea el restaurante.',
+            variant: 'error',
+          });
+          setShowAlert(true);
+          return;
+        }
+        data.tenantId = selectedTenantIdForCreate.trim();
+      }
 
       if (shouldUpdate) {
         await api.put(`/restaurants/${editingId}`, data);
@@ -814,6 +852,29 @@ export default function Restaurants() {
       ) : /* Mostrar wizard de restaurante si no hay restaurantes (sin filtro) o si se solicita crear uno nuevo */
       showWizard || (!loading && restaurants.length === 0 && !filterName) ? (
         <div className="restaurant-wizard-container">
+          {isSuperAdmin && (
+            <div className="mb-3 p-3 border rounded bg-light">
+              <label className="form-label fw-semibold mb-1" htmlFor="restaurant-create-tenant">
+                Cuenta (tenant)
+              </label>
+              <select
+                id="restaurant-create-tenant"
+                className="form-select"
+                value={selectedTenantIdForCreate}
+                onChange={(e) => setSelectedTenantIdForCreate(e.target.value)}
+              >
+                <option value="">Seleccioná la cuenta…</option>
+                {tenantsForWizard.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name || t.id}
+                  </option>
+                ))}
+              </select>
+              <p className="text-muted small mb-0 mt-2">
+                El restaurante se asocia al tenant elegido. Si solo tenés una cuenta, se selecciona sola.
+              </p>
+            </div>
+          )}
           <RestaurantWizard
             formData={formData}
             setFormData={setFormData}
@@ -1268,6 +1329,9 @@ export default function Restaurants() {
                   {/* Logo */}
                   <div className="mb-3">
                     <label className="form-label">Logo</label>
+                    <small className="form-text text-muted d-block mb-1">
+                      Recomendado: imagen cuadrada de al menos 400×400 px (PNG o JPG).
+                    </small>
                     <input
                       type="file"
                       className="form-control"

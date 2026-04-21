@@ -115,5 +115,13 @@ export class CreateRestaurantDto {
   @IsString()
   @IsOptional()
   secondaryColor?: string;
+
+  @ApiProperty({
+    description: 'ID del tenant donde crear el restaurante (obligatorio para SUPER_ADMIN)',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  tenantId?: string;
 }
 

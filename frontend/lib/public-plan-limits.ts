@@ -15,6 +15,8 @@ export type PublicPlanLimitsResponse = {
   plans: PublicPlanLimitRow[];
 };
 
+export type TenantPlanLimitsKey = PublicPlanLimitRow['key'];
+
 /** Valores por defecto (alineados con plan-limits.constants en backend) si falla el fetch. */
 export const DEFAULT_PUBLIC_PLAN_LIMITS: Record<
   'free' | 'starter' | 'pro' | 'pro_team' | 'premium',
@@ -71,6 +73,23 @@ export const DEFAULT_PUBLIC_PLAN_LIMITS: Record<
     productHighlightAllowed: true,
   },
 };
+
+/**
+ * Normaliza la clave de plan del tenant (BD / JWT / localStorage) para leer límites en UI.
+ * Alineado con `PlanLimitsService.normalizePlanKey` en el backend.
+ */
+export function normalizeTenantPlanKeyForUi(plan: string | null | undefined): TenantPlanLimitsKey {
+  const raw = String(plan || 'free')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  if (raw === 'basic') return 'starter';
+  if (raw === 'proteam' || raw === 'pro_team' || raw === 'pro__team') return 'pro_team';
+  if (raw === 'free' || raw === 'starter' || raw === 'pro' || raw === 'premium') {
+    return raw;
+  }
+  return 'free';
+}
 
 function toMap(
   rows: PublicPlanLimitRow[],

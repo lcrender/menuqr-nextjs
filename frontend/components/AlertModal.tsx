@@ -88,7 +88,7 @@ export default function AlertModal({
                 padding: '12px',
               }}
             >
-              <p style={{ marginBottom: 0, fontSize: '16px' }}>{message}</p>
+              <p style={{ marginBottom: 0, fontSize: '16px', whiteSpace: 'pre-line' }}>{message}</p>
             </div>
           </div>
           <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>

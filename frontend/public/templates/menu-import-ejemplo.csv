@@ -1,0 +1,4 @@
+nombre_seccion,nombre_producto,descripcion_producto,destacado,alergenos,moneda_1,etiqueta_1,precio_1,moneda_2,etiqueta_2,precio_2,moneda_3,etiqueta_3,precio_3
+Entradas,Ensalada mixta,Lechuga y vegetales frescos,no,vegetariano,USD,Normal,8.50,EUR,Menu del día,8.00,,
+Entradas,Croquetas,Croquetas caseras,si,,ARS,,1200,,,
+Principales,Pasta del día,Pasta con salsa de la casa,no,,ARS,Chica,4500,ARS,Grande,5500,,

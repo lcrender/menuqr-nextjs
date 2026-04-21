@@ -628,7 +628,9 @@ export default function RestaurantWizard({
         {currentStep === 3 && (
           <div className="wizard-step-content">
             <h3 className="wizard-step-title">Contacto</h3>
-            <p className="wizard-step-description">Agrega la información de contacto de tu restaurante</p>
+            <p className="wizard-step-description wizard-step-description--room-below">
+              Agrega la información de contacto de tu restaurante
+            </p>
 
             {/* Teléfono */}
             <div className="wizard-field">
@@ -760,9 +762,6 @@ export default function RestaurantWizard({
                 }}
                 placeholder="laparrilla22.com o https://www.restaurante.com (opcional)"
               />
-              <small className="wizard-help-text">
-                Puedes escribir solo el dominio (ej: laparrilla22.com) y se agregará https:// automáticamente
-              </small>
             </div>
           </div>
         )}
@@ -850,6 +849,9 @@ export default function RestaurantWizard({
               {/* Logo */}
               <div className="wizard-field">
                 <label className="wizard-label">Logo del restaurante</label>
+                <p className="small text-muted mb-2">
+                  Recomendado: imagen cuadrada de al menos 400×400 px (PNG o JPG).
+                </p>
                 <div
                   className={`wizard-image-upload-zone ${logoPreview ? 'has-image' : ''}`}
                   onClick={() => logoInputRef.current?.click()}

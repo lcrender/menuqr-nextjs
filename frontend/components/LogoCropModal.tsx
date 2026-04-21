@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Cropper from 'react-easy-crop';
-import type { Area } from 'react-easy-crop';
+import type { Area, MediaSize, Point, Size } from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
+import { getEasyCropPixelsForExport } from '../lib/easy-crop-area';
 import { exportLogoWebpFile } from '../lib/logo-image-export';
 
 type Props = {
@@ -11,15 +12,44 @@ type Props = {
   onComplete: (file: File) => void;
 };
 
+/**
+ * Flujo alineado con la documentación de react-easy-crop:
+ * misma `image` en el Cropper y en el canvas de export; `setMediaSize` / `setCropSize`
+ * para geometría; al guardar se recalcula el área en píxeles con crop+zoom del estado
+ * (misma fórmula que el Cropper) para evitar desfases con callbacks intermedios.
+ */
 export default function LogoCropModal({ show, imageSrc, onClose, onComplete }: Props) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mediaSizeRef = useRef<MediaSize | null>(null);
+  const cropSizeRef = useRef<Size | null>(null);
 
-  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
+  const onCropChange = useCallback((c: Point) => {
+    setCrop(c);
+  }, []);
+
+  const onZoomFromCropper = useCallback((z: number) => {
+    setZoom(z);
+  }, []);
+
+  const onCropComplete = useCallback((_croppedArea: Area, pixels: Area) => {
+    setCroppedAreaPixels(pixels);
+  }, []);
+
+  const syncMediaSize = useCallback((s: MediaSize) => {
+    mediaSizeRef.current = {
+      width: s.width,
+      height: s.height,
+      naturalWidth: s.naturalWidth,
+      naturalHeight: s.naturalHeight,
+    };
+  }, []);
+
+  const syncCropSize = useCallback((s: Size) => {
+    cropSizeRef.current = { width: s.width, height: s.height };
   }, []);
 
   useEffect(() => {
@@ -28,15 +58,39 @@ export default function LogoCropModal({ show, imageSrc, onClose, onComplete }: P
       setZoom(1);
       setCroppedAreaPixels(null);
       setError(null);
+      mediaSizeRef.current = null;
+      cropSizeRef.current = null;
     }
   }, [show, imageSrc]);
 
   const handleConfirm = async () => {
-    if (!imageSrc || !croppedAreaPixels) return;
+    if (!imageSrc) return;
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
+    const ms = mediaSizeRef.current;
+    const cs = cropSizeRef.current;
+    const frameAspect =
+      cs && cs.height > 0 ? (Math.abs(cs.width / cs.height - 1) < 1e-5 ? 1 : cs.width / cs.height) : 1;
+    const pixelCrop =
+      ms && cs
+        ? getEasyCropPixelsForExport({
+            crop,
+            zoom,
+            rotation: 0,
+            aspect: frameAspect,
+            mediaSize: ms,
+            cropSize: cs,
+            restrictPosition: false,
+          })
+        : croppedAreaPixels;
+    if (!pixelCrop) return;
     setBusy(true);
     setError(null);
     try {
-      const file = await exportLogoWebpFile(imageSrc, croppedAreaPixels);
+      const file = await exportLogoWebpFile(imageSrc, pixelCrop);
       onComplete(file);
       onClose();
     } catch (e: unknown) {
@@ -52,6 +106,8 @@ export default function LogoCropModal({ show, imageSrc, onClose, onComplete }: P
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setCroppedAreaPixels(null);
+    mediaSizeRef.current = null;
+    cropSizeRef.current = null;
     onClose();
   };
 
@@ -75,7 +131,13 @@ export default function LogoCropModal({ show, imageSrc, onClose, onComplete }: P
           </div>
           <div className="modal-body">
             <p className="text-muted small mb-2">
-              Ajustá el encuadre (cuadrado). Al guardar se generará una imagen 400×400 px en WebP (máx. 300 KB).
+              Ajustá el encuadre (cuadrado). Se generará una imagen <strong>400×400 px</strong> (máx. 300 KB).
+              Los bordes vacíos se rellenan en <strong>blanco</strong>.
+            </p>
+            <p className="text-muted small mb-2 border-start border-primary border-3 ps-2">
+              <strong>Recomendado antes de subir:</strong> logo de al menos <strong>400×400 px</strong> (o mayor,
+              proporción cuadrada) para máxima nitidez. Con imágenes más chicas podés alejar el zoom; el archivo final
+              sigue siendo 400×400 con márgenes blancos si hace falta.
             </p>
             <div
               className="position-relative"
@@ -91,12 +153,21 @@ export default function LogoCropModal({ show, imageSrc, onClose, onComplete }: P
                 image={imageSrc}
                 crop={crop}
                 zoom={zoom}
+                rotation={0}
+                minZoom={0.01}
+                maxZoom={3}
                 aspect={1}
+                objectFit="contain"
+                restrictPosition={false}
                 cropShape="rect"
                 showGrid={false}
-                onCropChange={setCrop}
+                zoomWithScroll={false}
+                onCropChange={onCropChange}
                 onCropComplete={onCropComplete}
-                onZoomChange={setZoom}
+                onCropAreaChange={onCropComplete}
+                onZoomChange={onZoomFromCropper}
+                setMediaSize={syncMediaSize}
+                setCropSize={syncCropSize}
               />
             </div>
             <div className="mt-3">
@@ -104,11 +175,13 @@ export default function LogoCropModal({ show, imageSrc, onClose, onComplete }: P
               <input
                 type="range"
                 className="form-range"
-                min={1}
+                min={0.01}
                 max={3}
-                step={0.02}
+                step={0.01}
                 value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
+                onChange={(e) => {
+                  setZoom(Number(e.target.value));
+                }}
                 disabled={busy}
               />
             </div>
@@ -118,7 +191,12 @@ export default function LogoCropModal({ show, imageSrc, onClose, onComplete }: P
             <button type="button" className="btn btn-secondary" onClick={handleClose} disabled={busy}>
               Cancelar
             </button>
-            <button type="button" className="btn btn-primary" onClick={handleConfirm} disabled={busy || !croppedAreaPixels}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleConfirm}
+              disabled={busy || !croppedAreaPixels}
+            >
               {busy ? 'Procesando…' : 'Guardar logo'}
             </button>
           </div>

@@ -1510,6 +1510,11 @@ body {
   line-height: 1.6;
 }
 
+/** Más aire entre la descripción del paso y el primer campo (p. ej. Contacto → Teléfono). */
+.wizard-step-description--room-below {
+  margin-bottom: 2rem;
+}
+
 .wizard-fields-container {
   display: flex;
   flex-direction: column;
@@ -1618,6 +1623,22 @@ body {
   padding: 0;
   border-style: solid;
   overflow: hidden;
+}
+
+/* CSV en wizard: mismo contenedor que imágenes, con archivo elegido (sin preview binaria) */
+.wizard-image-upload-zone.wizard-csv-upload-zone--has-file {
+  padding: 22px 24px;
+  border-style: solid;
+  border-color: var(--admin-primary);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.wizard-csv-file-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
 }
 
 .wizard-image-upload-zone .wizard-upload-placeholder {
@@ -2629,6 +2650,16 @@ body {
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
   margin-top: 40px;
+}
+
+.wizard-options.wizard-options--three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 1100px) {
+  .wizard-options.wizard-options--three {
+    grid-template-columns: 1fr;
+  }
 }
 
 .wizard-option-card {

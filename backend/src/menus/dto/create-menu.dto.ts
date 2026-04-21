@@ -26,5 +26,10 @@ export class CreateMenuDto {
   @IsDateString()
   @IsOptional()
   validTo?: string;
+
+  @ApiProperty({ description: 'Tenant (solo SUPER_ADMIN)', required: false })
+  @IsString()
+  @IsOptional()
+  tenantId?: string;
 }
 

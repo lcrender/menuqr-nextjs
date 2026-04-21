@@ -1,7 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
+import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../../../lib/axios';
+import {
+  DEFAULT_PUBLIC_PLAN_LIMITS,
+  fetchPublicPlanLimits,
+  normalizeTenantPlanKeyForUi,
+  type PublicPlanLimitRow,
+  type TenantPlanLimitsKey,
+} from '../../../lib/public-plan-limits';
 import AdminLayout from '../../../components/AdminLayout';
 import ProductWizard from '../../../components/ProductWizard';
 import MenuWizard from '../../../components/MenuWizard';
@@ -9,6 +17,7 @@ import ConfirmModal from '../../../components/ConfirmModal';
 import AlertModal from '../../../components/AlertModal';
 
 export default function Menus() {
+  const router = useRouter();
   const [menus, setMenus] = useState<any[]>([]);
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +55,10 @@ export default function Menus() {
   const [itemsPerPage] = useState<number>(50);
   const [showMenuWizard, setShowMenuWizard] = useState(false);
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
+  /** Límites por plan: defaults + overrides que edita el super admin (`tenant_plan_limit_overrides`). */
+  const [effectivePlanLimits, setEffectivePlanLimits] = useState<
+    Record<TenantPlanLimitsKey, PublicPlanLimitRow>
+  >(() => ({ ...DEFAULT_PUBLIC_PLAN_LIMITS }));
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [limitMessage, setLimitMessage] = useState({ limit: 0, current: 0, plan: '' });
   const [showConfirmDeleteMenu, setShowConfirmDeleteMenu] = useState(false);
@@ -77,6 +90,41 @@ export default function Menus() {
     }
   }, [user, filterMenuName, filterRestaurantName, filterTenantName, page, itemsPerPage]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !router.isReady) return;
+    const raw = sessionStorage.getItem('menuCsvImportFlash');
+    if (!raw) return;
+    let warnings: string[] = [];
+    try {
+      const j = JSON.parse(raw) as { ok?: boolean; warnings?: string[] };
+      if (j.ok === false) {
+        sessionStorage.removeItem('menuCsvImportFlash');
+        return;
+      }
+      warnings = Array.isArray(j.warnings) ? j.warnings : [];
+    } catch {
+      sessionStorage.removeItem('menuCsvImportFlash');
+      return;
+    }
+    sessionStorage.removeItem('menuCsvImportFlash');
+
+    const base =
+      'El menú se creó correctamente desde el CSV. Quedó en borrador: usá el botón «Publicar» en la fila de ese menú para que esté visible online. Si tu plan permite fotos en productos, podés cargarlas después desde la edición del menú.';
+    const warnText =
+      warnings.length > 0
+        ? `\n\nAvisos:\n${warnings.map((w) => `• ${w}`).join('\n')}`
+        : '';
+    setAlertData({
+      title: warnings.length ? 'Menú importado (con avisos)' : 'Menú importado',
+      message: base + warnText,
+      variant: warnings.length ? 'warning' : 'success',
+    });
+    setShowAlert(true);
+    if (user) {
+      void loadData();
+    }
+  }, [router.isReady, user]);
+
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const sortedMenus = useMemo(
@@ -85,17 +133,9 @@ export default function Menus() {
   );
 
   const getMenuLimit = () => {
-    if (isSuperAdmin) return -1; // SUPER_ADMIN puede crear ilimitados
-    
-    const plan = tenantPlan || 'free';
-    const limits: Record<string, number> = {
-      free: 3,
-      starter: 6,
-      basic: 6, // legacy (antes de renombrar a Starter)
-      pro: 30,
-      premium: -1, // Ilimitado
-    };
-    return limits[plan] ?? 3;
+    if (isSuperAdmin) return -1;
+    const key = normalizeTenantPlanKeyForUi(tenantPlan);
+    return effectivePlanLimits[key]?.menuLimit ?? DEFAULT_PUBLIC_PLAN_LIMITS[key].menuLimit;
   };
 
   const canCreateMenu = () => {
@@ -141,6 +181,21 @@ export default function Menus() {
         restaurantsData = restaurantsRes.data.data;
       }
       setRestaurants(Array.isArray(restaurantsData) ? restaurantsData : []);
+
+      if (!isSuperAdmin) {
+        try {
+          const dash = await api.get('/restaurants/dashboard-stats');
+          if (dash.data?.plan) setTenantPlan(dash.data.plan);
+        } catch {
+          /* mantener plan del localStorage */
+        }
+      }
+
+      fetchPublicPlanLimits()
+        .then((m) => setEffectivePlanLimits(m))
+        .catch(() => {
+          /* mantener último mapa efectivo */
+        });
     } catch (error) {
       console.error('Error cargando datos:', error);
     } finally {
@@ -747,7 +802,13 @@ export default function Menus() {
               const currentTotal = total ?? menus.length;
               if (!isSuperAdmin && limit !== -1 && currentTotal >= limit) {
                 const plan = tenantPlan || 'free';
-                setLimitMessage({ limit, current: currentTotal, plan: plan === 'free' ? 'gratuito' : plan });
+                const planLabel =
+                  plan === 'free'
+                    ? 'gratuito'
+                    : plan === 'pro_team'
+                      ? 'Pro Team'
+                      : plan;
+                setLimitMessage({ limit, current: currentTotal, plan: planLabel });
                 setShowLimitModal(true);
                 return;
               }
@@ -1502,6 +1563,7 @@ export default function Menus() {
           <MenuWizard
             restaurantId=""
             restaurants={restaurants}
+            showMenuEntryChoice
             onComplete={() => {
               setShowMenuWizard(false);
               loadData();

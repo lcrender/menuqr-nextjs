@@ -94,6 +94,20 @@ chmod 600 /opt/traefik/letsencrypt/acme.json
 2. Ver logs de Traefik: deberían aparecer mensajes de obtención de certificado para cada host (o errores claros si falla DNS o el puerto).
 3. Abrir `https://appmenuqr.com` y revisar el candado del navegador (certificado emitido por Let's Encrypt).
 
+### Redirecciones canónicas (frontend en producción)
+
+En `docker-compose.prod.yml`, el sitio público usa **`https://appmenuqr.com`** como host canónico (sin `www`):
+
+| Origen | Comportamiento |
+|--------|----------------|
+| `http://appmenuqr.com/...` | **301** a `https://appmenuqr.com/...` (`redirectscheme` a HTTPS). |
+| `http://www.appmenuqr.com/...` | **301** directo a `https://appmenuqr.com/...` (`redirectregex` sobre path + query). |
+| `https://www.appmenuqr.com/...` | **301** a `https://appmenuqr.com/...` (mismo path y query). |
+
+API, S3 y consola MinIO siguen con **HTTP → HTTPS** en el puerto 80. El stack `docker-compose.yml` (nip.io) añade routers análogos de HTTP→HTTPS para front, API, S3 y MinIO.
+
+Alineá **`NEXT_PUBLIC_APP_URL`** y **`FRONTEND_URL`** con `https://appmenuqr.com` (sin `www`) para coincidir con la canónica y con la etiqueta `<link rel="canonical">` del frontend.
+
 ## Errores que suelen verse en logs (producción)
 
 ### `Router uses a nonexistent certificate resolver certificateResolver=letsencrypt`

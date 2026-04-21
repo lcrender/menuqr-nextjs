@@ -39,6 +39,8 @@ git clone <repo-url>
 cd MenuQR-CURSOR
 cp .env.example .env
 # Editar .env con tus configuraciones
+# Front con `npm run dev` fuera de Docker: cp frontend/.env.example frontend/.env.local
+# Qué archivo usa cada servicio: docs/ENV-LOCAL.md
 ```
 
 ### 2. Levantar servicios
@@ -80,7 +82,7 @@ Después de ejecutar los seeds, puedes acceder con:
 
 ## 🌐 Variables de Entorno
 
-Ver `.env.example` para todas las variables disponibles. Las principales:
+Ver `.env.example` para todas las variables disponibles. Guía de **desarrollo local** (raíz vs `backend/` vs `frontend/.env.local`): [`docs/ENV-LOCAL.md`](docs/ENV-LOCAL.md). Las principales:
 
 ```bash
 # Database
@@ -164,6 +166,10 @@ await this.prisma.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, fa
   }
 }
 ```
+
+## 🍪 Consentimiento de cookies y GTM
+
+El frontend muestra un **banner único** de cookies y solo carga **Google Tag Manager** tras la opción **Aceptar**. Detalle de claves `localStorage`, variables `NEXT_PUBLIC_GTM_*` y archivos tocados: [`docs/COOKIE-CONSENT.md`](docs/COOKIE-CONSENT.md).
 
 ## 🎨 Plantillas de Menú
 

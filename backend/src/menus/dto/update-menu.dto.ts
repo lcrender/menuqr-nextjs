@@ -7,6 +7,11 @@ export class UpdateMenuDto {
   @IsOptional()
   restaurantId?: string;
 
+  @ApiProperty({ description: 'Tenant (solo SUPER_ADMIN)', required: false })
+  @IsString()
+  @IsOptional()
+  tenantId?: string;
+
   @ApiProperty({ description: 'Nombre del menú', required: false })
   @IsString()
   @IsOptional()

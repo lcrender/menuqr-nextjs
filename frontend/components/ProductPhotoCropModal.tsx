@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Cropper from 'react-easy-crop';
-import type { Area } from 'react-easy-crop';
+import type { Area, MediaSize, Point, Size } from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
+import { getEasyCropPixelsForExport } from '../lib/easy-crop-area';
 import { exportProductWebpFile } from '../lib/logo-image-export';
 
 type Props = {
@@ -17,9 +18,32 @@ export default function ProductPhotoCropModal({ show, imageSrc, onClose, onCompl
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mediaSizeRef = useRef<MediaSize | null>(null);
+  const cropSizeRef = useRef<Size | null>(null);
+
+  const onCropChange = useCallback((c: Point) => {
+    setCrop(c);
+  }, []);
+
+  const onZoomFromCropper = useCallback((z: number) => {
+    setZoom(z);
+  }, []);
 
   const onCropComplete = useCallback((_croppedArea: Area, pixels: Area) => {
     setCroppedAreaPixels(pixels);
+  }, []);
+
+  const syncMediaSize = useCallback((s: MediaSize) => {
+    mediaSizeRef.current = {
+      width: s.width,
+      height: s.height,
+      naturalWidth: s.naturalWidth,
+      naturalHeight: s.naturalHeight,
+    };
+  }, []);
+
+  const syncCropSize = useCallback((s: Size) => {
+    cropSizeRef.current = { width: s.width, height: s.height };
   }, []);
 
   useEffect(() => {
@@ -28,15 +52,39 @@ export default function ProductPhotoCropModal({ show, imageSrc, onClose, onCompl
       setZoom(1);
       setCroppedAreaPixels(null);
       setError(null);
+      mediaSizeRef.current = null;
+      cropSizeRef.current = null;
     }
   }, [show, imageSrc]);
 
   const handleConfirm = async () => {
-    if (!imageSrc || !croppedAreaPixels) return;
+    if (!imageSrc) return;
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
+    const ms = mediaSizeRef.current;
+    const cs = cropSizeRef.current;
+    const frameAspect =
+      cs && cs.height > 0 ? (Math.abs(cs.width / cs.height - 1) < 1e-5 ? 1 : cs.width / cs.height) : 1;
+    const pixelCrop =
+      ms && cs
+        ? getEasyCropPixelsForExport({
+            crop,
+            zoom,
+            rotation: 0,
+            aspect: frameAspect,
+            mediaSize: ms,
+            cropSize: cs,
+            restrictPosition: false,
+          })
+        : croppedAreaPixels;
+    if (!pixelCrop) return;
     setBusy(true);
     setError(null);
     try {
-      const file = await exportProductWebpFile(imageSrc, croppedAreaPixels);
+      const file = await exportProductWebpFile(imageSrc, pixelCrop);
       onComplete(file);
       onClose();
     } catch (e: unknown) {
@@ -52,6 +100,8 @@ export default function ProductPhotoCropModal({ show, imageSrc, onClose, onCompl
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setCroppedAreaPixels(null);
+    mediaSizeRef.current = null;
+    cropSizeRef.current = null;
     onClose();
   };
 
@@ -84,12 +134,21 @@ export default function ProductPhotoCropModal({ show, imageSrc, onClose, onCompl
                 image={imageSrc}
                 crop={crop}
                 zoom={zoom}
+                rotation={0}
+                minZoom={0.01}
+                maxZoom={3}
                 aspect={1}
+                objectFit="contain"
+                restrictPosition={false}
                 cropShape="rect"
                 showGrid={false}
-                onCropChange={setCrop}
+                zoomWithScroll={false}
+                onCropChange={onCropChange}
                 onCropComplete={onCropComplete}
-                onZoomChange={setZoom}
+                onCropAreaChange={onCropComplete}
+                onZoomChange={onZoomFromCropper}
+                setMediaSize={syncMediaSize}
+                setCropSize={syncCropSize}
               />
             </div>
 
@@ -98,9 +157,9 @@ export default function ProductPhotoCropModal({ show, imageSrc, onClose, onCompl
               <input
                 type="range"
                 className="form-range"
-                min={1}
+                min={0.01}
                 max={3}
-                step={0.02}
+                step={0.01}
                 value={zoom}
                 onChange={(e) => setZoom(Number(e.target.value))}
                 disabled={busy}
@@ -123,4 +182,3 @@ export default function ProductPhotoCropModal({ show, imageSrc, onClose, onCompl
     </div>
   );
 }
-

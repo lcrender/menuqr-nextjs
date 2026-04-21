@@ -8,7 +8,13 @@ import ProductWizard from '../../../components/ProductWizard';
 import ConfirmModal from '../../../components/ConfirmModal';
 import AlertModal from '../../../components/AlertModal';
 import ProductPhotoCropModal from '../../../components/ProductPhotoCropModal';
-import { fetchPublicPlanLimits } from '../../../lib/public-plan-limits';
+import {
+  DEFAULT_PUBLIC_PLAN_LIMITS,
+  fetchPublicPlanLimits,
+  normalizeTenantPlanKeyForUi,
+  type PublicPlanLimitRow,
+  type TenantPlanLimitsKey,
+} from '../../../lib/public-plan-limits';
 
 export default function Products() {
   const router = useRouter();
@@ -58,6 +64,10 @@ export default function Products() {
   const [itemsPerPage, setItemsPerPage] = useState<number>(50);
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
   const [planFetchedFromApi, setPlanFetchedFromApi] = useState(false);
+  /** Defaults + overrides (`tenant_plan_limit_overrides`) desde GET /public/plan-limits */
+  const [effectivePlanLimits, setEffectivePlanLimits] = useState<
+    Record<TenantPlanLimitsKey, PublicPlanLimitRow>
+  >(() => ({ ...DEFAULT_PUBLIC_PLAN_LIMITS }));
   const [canHighlightProducts, setCanHighlightProducts] = useState(false);
   const [tenants, setTenants] = useState<Array<{ id: string; name: string; plan: string; userCount?: number; restaurantCount?: number }>>([]);
   const [allRestaurants, setAllRestaurants] = useState<Array<{ id: string; name: string; tenantId?: string; tenant_id?: string; tenantName?: string }>>([]);
@@ -120,13 +130,9 @@ export default function Products() {
     fetchPublicPlanLimits()
       .then((m) => {
         if (cancelled) return;
-        const normalizedPlan = String(tenantPlan || 'free')
-          .trim()
-          .toLowerCase()
-          .replace(/[\s-]+/g, '_')
-          .replace(/_+/g, '_');
-        const planKey = normalizedPlan === 'proteam' ? 'pro_team' : normalizedPlan;
-        const row = (m as any)[planKey];
+        setEffectivePlanLimits(m);
+        const planKey = normalizeTenantPlanKeyForUi(tenantPlan);
+        const row = m[planKey];
         setCanHighlightProducts(!!row?.productHighlightAllowed);
       })
       .catch(() => {
@@ -185,22 +191,9 @@ export default function Products() {
 
   const getProductLimit = () => {
     if (isSuperAdmin) return -1;
-    if (!tenantPlan) return 30;
-    const normalizedPlan = String(tenantPlan || 'free')
-      .trim()
-      .toLowerCase()
-      .replace(/[\s-]+/g, '_')
-      .replace(/_+/g, '_');
-    const planKey = normalizedPlan === 'proteam' ? 'pro_team' : normalizedPlan;
-    const limits: Record<string, number> = {
-      free: 30,
-      starter: 60,
-      basic: 60,
-      pro: 300,
-      pro_team: 300,
-      premium: 1200,
-    };
-    return limits[planKey] ?? 30;
+    if (!tenantPlan) return DEFAULT_PUBLIC_PLAN_LIMITS.free.productLimit;
+    const planKey = normalizeTenantPlanKeyForUi(tenantPlan);
+    return effectivePlanLimits[planKey]?.productLimit ?? DEFAULT_PUBLIC_PLAN_LIMITS[planKey].productLimit;
   };
 
   const canCreateProduct = () => {
@@ -278,6 +271,10 @@ export default function Products() {
         { code: 'picante', label: 'Picante' },
         { code: 'sin-lactosa', label: 'Sin Lactosa' },
       ]);
+
+      fetchPublicPlanLimits()
+        .then((m) => setEffectivePlanLimits(m))
+        .catch(() => {});
     } catch (error) {
       console.error('Error cargando datos:', error);
     } finally {

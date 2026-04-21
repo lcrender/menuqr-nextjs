@@ -177,7 +177,7 @@ export class MenusService {
         r.name as "restaurantName",
         r.slug as "restaurantSlug"
       FROM menus m
-      INNER JOIN restaurants r ON r.id = m.restaurant_id
+      LEFT JOIN restaurants r ON r.id = m.restaurant_id AND r.deleted_at IS NULL
       WHERE m.id = $1 AND m.tenant_id = $2 AND m.deleted_at IS NULL
       LIMIT 1`,
       [id, tenantId]
@@ -626,6 +626,34 @@ export class MenusService {
         `Por favor, actualiza tu plan para crear más menús.`
       );
     }
+  }
+
+  /**
+   * Menús del tenant que se pueden asignar a un restaurante (sin asignar u asignados a otro local).
+   */
+  async findAssignableMenus(tenantId: string, targetRestaurantId: string): Promise<any[]> {
+    const r = await this.postgres.queryRaw<any>(
+      `SELECT id, name FROM restaurants WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [targetRestaurantId, tenantId],
+    );
+    if (!r[0]) {
+      throw new NotFoundException('Restaurante no encontrado o no pertenece al tenant');
+    }
+    const rows = await this.postgres.queryRaw<any>(
+      `SELECT m.id, m.name, m.description, m.slug, m.status, m.restaurant_id as "restaurantId",
+              r2.name as "assignedRestaurantName"
+       FROM menus m
+       LEFT JOIN restaurants r2 ON r2.id = m.restaurant_id AND r2.deleted_at IS NULL
+       WHERE m.tenant_id = $1 AND m.deleted_at IS NULL
+         AND (m.restaurant_id IS NULL OR m.restaurant_id <> $2)
+       ORDER BY (m.restaurant_id IS NULL) DESC, m.name ASC`,
+      [tenantId, targetRestaurantId],
+    );
+    return rows.map((m: any) => ({
+      ...m,
+      restaurantId: m.restaurant_id ?? m.restaurantId,
+      assignedRestaurantName: m.assignedRestaurantName || null,
+    }));
   }
 
 }

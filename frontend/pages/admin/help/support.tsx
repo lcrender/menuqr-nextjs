@@ -144,7 +144,7 @@ export default function SupportPage() {
             <div className="alert alert-light border">
               <h5 className="alert-heading">¿Necesitas ayuda adicional?</h5>
               <p className="mb-0">
-                Si tienes alguna pregunta sobre cómo usar AppMenuQR, revisa la <a href="/admin/help/documentation">documentación completa</a>. Para problemas técnicos o bugs, utiliza la información de contacto arriba.
+                Si tienes alguna pregunta sobre cómo usar AppMenuQR, revisa la <a href="/documentacion">documentación completa</a>. Para problemas técnicos o bugs, utiliza la información de contacto arriba.
               </p>
             </div>
           </div>

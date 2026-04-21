@@ -1,6 +1,21 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, Request, BadRequestException, UseInterceptors } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Query,
+  Request,
+  BadRequestException,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { MenusService } from './menus.service';
+import { MenusCsvImportService } from './menus-csv-import.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -10,7 +25,10 @@ import { Roles } from '../common/decorators/roles.decorator';
 @ApiBearerAuth()
 @Roles('ADMIN', 'SUPER_ADMIN')
 export class MenusController {
-  constructor(private readonly menusService: MenusService) {}
+  constructor(
+    private readonly menusService: MenusService,
+    private readonly menusCsvImportService: MenusCsvImportService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar menús del tenant' })
@@ -95,6 +113,59 @@ export class MenusController {
     } catch (error: any) {
       throw new BadRequestException(error.message || 'Error al actualizar el orden de los menús');
     }
+  }
+
+  @Get('assignable')
+  @ApiOperation({ summary: 'Menús del tenant asignables a un restaurante (sin local u otro local)' })
+  async findAssignable(
+    @Query('targetRestaurantId') targetRestaurantId: string,
+    @Query('tenantId') tenantIdQuery: string,
+    @Request() req: any,
+  ) {
+    if (!targetRestaurantId) {
+      throw new BadRequestException('Query targetRestaurantId es requerido');
+    }
+    const tenantId = req.user.role === 'SUPER_ADMIN' ? tenantIdQuery : req.user.tenantId;
+    if (!tenantId) {
+      throw new BadRequestException('tenantId en query es requerido para super admin');
+    }
+    return this.menusService.findAssignableMenus(tenantId, targetRestaurantId);
+  }
+
+  @Post('import-csv')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 3 * 1024 * 1024 } }))
+  @ApiOperation({ summary: 'Importar un menú completo desde CSV (un menú por archivo)' })
+  async importCsv(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('targetRestaurantId') targetRestaurantId: string,
+    @Body('tenantId') tenantIdBody: string | undefined,
+    @Body('menuName') menuNameBody: string | undefined,
+    @Body('menuDescription') menuDescriptionBody: string | undefined,
+    @Request() req: any,
+  ) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Archivo CSV requerido (campo multipart "file")');
+    }
+    if (!targetRestaurantId) {
+      throw new BadRequestException('targetRestaurantId es requerido');
+    }
+    const tenantId = req.user.role === 'SUPER_ADMIN' ? tenantIdBody : req.user.tenantId;
+    if (!tenantId) {
+      throw new BadRequestException('tenantId en body es requerido para super admin');
+    }
+    const menuName = typeof menuNameBody === 'string' ? menuNameBody.trim() : '';
+    const menuDescription =
+      typeof menuDescriptionBody === 'string' ? menuDescriptionBody.trim() : '';
+    const menuFromForm = menuName
+      ? { menuName, menuDescription: menuDescription || undefined }
+      : undefined;
+    return this.menusCsvImportService.importFromCsvBuffer(
+      tenantId,
+      targetRestaurantId,
+      file.buffer,
+      menuFromForm,
+    );
   }
 
   @Get(':id')

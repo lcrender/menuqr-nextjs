@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Request, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RestaurantsService } from './restaurants.service';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
@@ -92,13 +92,19 @@ export class RestaurantsController {
   @ApiResponse({ status: 201, description: 'Restaurante creado exitosamente' })
   @ApiResponse({ status: 400, description: 'Límite de restaurantes alcanzado' })
   async create(@Body() createRestaurantDto: CreateRestaurantDto, @Request() req) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
-    
+    const { tenantId: tenantIdFromBody, ...payload } = createRestaurantDto;
+    const tenantId =
+      req.user.role === 'SUPER_ADMIN' ? tenantIdFromBody : req.user.tenantId;
+
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException(
+        req.user.role === 'SUPER_ADMIN'
+          ? 'Indicá la cuenta (tenantId) donde crear el restaurante.'
+          : 'Tenant ID es requerido',
+      );
     }
 
-    return this.restaurantsService.create(tenantId, createRestaurantDto);
+    return this.restaurantsService.create(tenantId, payload);
   }
 
   @Put(':id')
@@ -130,7 +136,7 @@ export class RestaurantsController {
     }
     
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException('No se pudo determinar el tenant para actualizar el restaurante.');
     }
 
     return this.restaurantsService.update(id, tenantId, updateRestaurantDto);
@@ -140,10 +146,26 @@ export class RestaurantsController {
   @ApiOperation({ summary: 'Eliminar restaurante' })
   @ApiResponse({ status: 200, description: 'Restaurante eliminado exitosamente' })
   async remove(@Param('id') id: string, @Request() req) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
-    
+    let tenantId: string | undefined;
+
+    if (req.user.role === 'SUPER_ADMIN') {
+      tenantId = (req.query.tenantId as string) || undefined;
+      if (!tenantId) {
+        try {
+          const restaurant = await this.restaurantsService.findById(id);
+          tenantId = restaurant.tenantId || restaurant.tenant_id;
+        } catch {
+          tenantId = undefined;
+        }
+      }
+    } else {
+      tenantId = req.user.tenantId;
+    }
+
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException(
+        'No se pudo determinar el tenant del restaurante para eliminarlo.',
+      );
     }
 
     return this.restaurantsService.delete(id, tenantId);

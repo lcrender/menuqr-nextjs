@@ -40,6 +40,11 @@ docker compose -f docker-compose.dev.yml up --build
    Si el `.env` tiene valores raros en variables **no** sobrescritas por el compose, pueden romper el arranque. Revisá logs.
 4. **Conflicto de puerto**  
    Si otro proceso usa `3001` o corrés Nest **en la máquina** y Docker a la vez, uno de los dos falla.
+5. **Nest en watch pero no escucha (compilación con errores)**  
+   Si en los logs ves `Cannot find module '...'` o errores de TypeScript, el proceso **no llega a levantar** el HTTP y `/health` no responde. Suele pasar cuando el volumen anónimo de `node_modules` quedó **viejo** respecto a `package.json`.  
+   - Tras actualizar el repo: `docker compose -f docker-compose.dev.yml up -d --build backend` (el entrypoint reinstala si cambió `package.json` / `package-lock.json`).  
+   - Si sigue: `docker compose -f docker-compose.dev.yml exec backend npm install` y reiniciá el contenedor.  
+   - Último recurso (borra el volumen de `node_modules` del backend): `docker compose -f docker-compose.dev.yml down -v` y volvé a subir (**atención:** `-v` borra volúmenes nombrados del compose; revisá si tenés datos que quieras conservar).
 
 ### Frontend local + API en Docker
 

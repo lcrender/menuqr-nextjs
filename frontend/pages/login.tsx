@@ -33,8 +33,21 @@ export default function Login() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
     if (token && userData) {
-      router.replace('/admin');
-      return;
+      try {
+        const parsed = JSON.parse(userData);
+        if (parsed && typeof parsed === 'object' && parsed.id) {
+          router.replace('/admin');
+        } else {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+        }
+      } catch {
+        // Evita bucle login ↔ admin si `user` está corrupto
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+      }
     }
   }, [router]);
 
@@ -463,8 +476,8 @@ export default function Login() {
               </div>
               <div className="landing-footer-links">
                 <Link href="/" className="landing-footer-link">Inicio</Link>
-                <Link href="/admin/help/documentation" className="landing-footer-link">Documentación</Link>
-                <Link href="/admin/help/support" className="landing-footer-link">Soporte</Link>
+                <Link href="/documentacion" className="landing-footer-link">Documentación</Link>
+                <Link href="/soporte" className="landing-footer-link">Soporte</Link>
                 <Link href="/legal/terminos-y-condiciones" className="landing-footer-link">Términos y Condiciones</Link>
                 <Link href="/legal/politica-de-privacidad" className="landing-footer-link">Política de Privacidad</Link>
                 <Link href="/legal/politica-de-cookies" className="landing-footer-link">Política de Cookies</Link>

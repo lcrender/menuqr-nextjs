@@ -94,10 +94,20 @@ export class AuthService {
       // Generar tokens
       const tokens = await this.generateTokens(user);
 
-      // Obtener información del tenant si aplica
+      // Obtener información del tenant si aplica (datos huérfanos no deben impedir el login)
       let tenant = null;
       if (user.tenantId) {
-        tenant = await this.tenantsService.findById(user.tenantId);
+        try {
+          tenant = await this.tenantsService.findById(user.tenantId);
+        } catch (e) {
+          if (e instanceof NotFoundException) {
+            this.logger.warn(
+              `Login: tenant ${user.tenantId} no encontrado para ${email}; se devuelve sesión sin objeto tenant`,
+            );
+          } else {
+            throw e;
+          }
+        }
       }
 
       this.logger.log(`Usuario ${email} autenticado exitosamente`);
@@ -248,7 +258,17 @@ export class AuthService {
       const tokens = await this.generateTokens(user);
       let tenantInfo = null;
       if (user.tenantId) {
-        tenantInfo = await this.tenantsService.findById(user.tenantId);
+        try {
+          tenantInfo = await this.tenantsService.findById(user.tenantId);
+        } catch (e) {
+          if (e instanceof NotFoundException) {
+            this.logger.warn(
+              `Registro dev: tenant ${user.tenantId} no encontrado para ${normalizedEmail}; respuesta sin tenant`,
+            );
+          } else {
+            throw e;
+          }
+        }
       }
       return {
         message: 'Registro exitoso.',

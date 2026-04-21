@@ -23,35 +23,43 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+/** Relleno del cuadrado 400×400 cuando el recorte no llena el lienzo (JPEG sin alpha). */
+const LOGO_EXPORT_PAD_COLOR = '#ffffff';
+
 /**
- * Recorta la región indicada, escala a 400×400 y exporta JPEG (el backend optimiza a WebP).
+ * Recorta la región en píxeles naturales, la encaja con escala «contain» en 400×400 y exporta JPEG.
+ * Si el recorte es más bajo o más ancho que el lienzo, queda margen del color indicado (blanco).
  */
 export async function exportLogoWebpFile(imageSrc: string, pixelCrop: Area): Promise<File> {
   const image = await loadImage(imageSrc);
-  const cropCanvas = document.createElement('canvas');
-  cropCanvas.width = Math.max(1, Math.round(pixelCrop.width));
-  cropCanvas.height = Math.max(1, Math.round(pixelCrop.height));
-  const cctx = cropCanvas.getContext('2d');
-  if (!cctx) throw new Error('Canvas no disponible');
-  cctx.drawImage(
-    image,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    cropCanvas.width,
-    cropCanvas.height,
-  );
-
+  const cw = Math.max(1, Math.round(pixelCrop.width));
+  const ch = Math.max(1, Math.round(pixelCrop.height));
   const side = LOGO_OUTPUT_PX;
   const canvas = document.createElement('canvas');
   canvas.width = side;
   canvas.height = side;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas no disponible');
-  ctx.drawImage(cropCanvas, 0, 0, side, side);
+  ctx.fillStyle = LOGO_EXPORT_PAD_COLOR;
+  ctx.fillRect(0, 0, side, side);
+  const scale = Math.min(side / cw, side / ch);
+  const dw = Math.max(1, Math.round(cw * scale));
+  const dh = Math.max(1, Math.round(ch * scale));
+  const dx = Math.floor((side - dw) / 2);
+  const dy = Math.floor((side - dh) / 2);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    dx,
+    dy,
+    dw,
+    dh,
+  );
 
   const tryBlob = (c: HTMLCanvasElement, q: number): Promise<Blob | null> =>
     new Promise((resolve) => {

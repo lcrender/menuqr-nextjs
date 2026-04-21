@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import api from '../lib/axios';
 import AlertModal from './AlertModal';
-import { fetchPublicPlanLimits } from '../lib/public-plan-limits';
+import {
+  DEFAULT_PUBLIC_PLAN_LIMITS,
+  fetchPublicPlanLimits,
+  normalizeTenantPlanKeyForUi,
+  type PublicPlanLimitRow,
+  type TenantPlanLimitsKey,
+} from '../lib/public-plan-limits';
 import ProductPhotoCropModal from './ProductPhotoCropModal';
 
 interface ProductWizardProps {
@@ -253,18 +259,10 @@ export default function ProductWizard({
   const [dragOverItem, setDragOverItem] = useState<{ sectionId: string; itemId: string | null; position: 'before' | 'after' } | null>(null);
   const [restaurantCurrency, setRestaurantCurrency] = useState<string>(defaultCurrency);
 
-  const normalizePlanKey = (plan: string | null | undefined): string => {
-    const raw = String(plan || 'free')
-      .trim()
-      .toLowerCase()
-      .replace(/[\s-]+/g, '_')
-      .replace(/_+/g, '_');
-
-    // Homologación para variantes con espacio
-    if (raw === 'proteam' || raw === 'pro_team' || raw === 'pro__team') return 'pro_team';
-    if (raw === 'free' || raw === 'starter' || raw === 'pro' || raw === 'premium') return raw;
-    return 'free';
-  };
+  /** Defaults + overrides de super admin (`GET /public/plan-limits`). */
+  const [effectivePlanLimits, setEffectivePlanLimits] = useState<
+    Record<TenantPlanLimitsKey, PublicPlanLimitRow>
+  >(() => ({ ...DEFAULT_PUBLIC_PLAN_LIMITS }));
 
   // Obtener el plan del tenant: primero desde localStorage, luego desde la API para tener el actual
   useEffect(() => {
@@ -273,7 +271,7 @@ export default function ProductWizard({
       try {
         const parsedUser = JSON.parse(userData);
         if (parsedUser?.tenant?.plan) {
-          setTenantPlan(normalizePlanKey(parsedUser.tenant.plan));
+          setTenantPlan(normalizeTenantPlanKeyForUi(parsedUser.tenant.plan));
         }
         if (parsedUser?.role === 'SUPER_ADMIN') return;
       } catch (err) {
@@ -286,7 +284,7 @@ export default function ProductWizard({
         const res = await api.get('/restaurants/dashboard-stats');
         const plan = res.data?.plan ?? null;
         if (plan) {
-          const normalized = normalizePlanKey(plan);
+          const normalized = normalizeTenantPlanKeyForUi(plan);
           setTenantPlan(normalized);
           if (userData) {
             try {
@@ -311,7 +309,8 @@ export default function ProductWizard({
     fetchPublicPlanLimits()
       .then((m) => {
         if (cancelled) return;
-        const row = (m as any)[tenantPlan];
+        setEffectivePlanLimits(m);
+        const row = m[normalizeTenantPlanKeyForUi(tenantPlan)];
         setCanHighlightProducts(!!row?.productHighlightAllowed);
       })
       .catch(() => {
@@ -363,15 +362,6 @@ export default function ProductWizard({
   // Validar el límite cuando se abre el wizard con startWithCreate = true
   useEffect(() => {
     if (startWithCreate && currentStep === 1) {
-      const limits: Record<string, number> = {
-        free: 30,
-        starter: 60,
-        basic: 60,
-        pro: 300,
-        pro_team: 300,
-        premium: 1200,
-      };
-
       const validateLimit = async () => {
         const userData = localStorage.getItem('user');
         const parsedUser = userData ? (() => { try { return JSON.parse(userData); } catch { return null; } })() : null;
@@ -384,12 +374,14 @@ export default function ProductWizard({
           const res = await api.get('/restaurants/dashboard-stats');
           const apiPlan = res.data?.plan ?? null;
           if (apiPlan) {
-            planToUse = normalizePlanKey(apiPlan);
-            setTenantPlan(normalizePlanKey(apiPlan));
+            planToUse = normalizeTenantPlanKeyForUi(apiPlan);
+            setTenantPlan(normalizeTenantPlanKeyForUi(apiPlan));
           }
         } catch {
           // Si falla, usar tenantPlan de estado o localStorage
-          if (!planToUse && parsedUser?.tenant?.plan) planToUse = normalizePlanKey(parsedUser.tenant.plan);
+          if (!planToUse && parsedUser?.tenant?.plan) {
+            planToUse = normalizeTenantPlanKeyForUi(parsedUser.tenant.plan);
+          }
         }
         if (!planToUse) planToUse = 'free';
 
@@ -407,7 +399,16 @@ export default function ProductWizard({
           }
         }
 
-        const limit = limits[planToUse] ?? 30;
+        let limit: number;
+        try {
+          const map = await fetchPublicPlanLimits();
+          setEffectivePlanLimits(map);
+          const key = normalizeTenantPlanKeyForUi(planToUse);
+          limit = map[key]?.productLimit ?? DEFAULT_PUBLIC_PLAN_LIMITS[key].productLimit;
+        } catch {
+          const key = normalizeTenantPlanKeyForUi(planToUse);
+          limit = DEFAULT_PUBLIC_PLAN_LIMITS[key].productLimit;
+        }
         if (limit !== -1 && countToUse >= limit) {
           setShowLimitModal(true);
           setCurrentStep(0);
@@ -425,18 +426,10 @@ export default function ProductWizard({
     return undefined;
   }, [startWithCreate, currentStep, currentProductCount, tenantPlan]);
 
-  // Función para obtener el límite de productos
   const getProductLimit = () => {
-    if (!tenantPlan) return 30;
-    const limits: Record<string, number> = {
-      free: 30,
-      starter: 60,
-      basic: 60,
-      pro: 300,
-      pro_team: 300,
-      premium: 1200,
-    };
-    return limits[tenantPlan] ?? 30;
+    if (!tenantPlan) return DEFAULT_PUBLIC_PLAN_LIMITS.free.productLimit;
+    const key = normalizeTenantPlanKeyForUi(tenantPlan);
+    return effectivePlanLimits[key]?.productLimit ?? DEFAULT_PUBLIC_PLAN_LIMITS[key].productLimit;
   };
 
   // Función para verificar si se puede crear un producto
