@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import api from '../lib/axios';
 import AlertModal from './AlertModal';
@@ -11,9 +11,40 @@ import {
 } from '../lib/public-plan-limits';
 import ProductPhotoCropModal from './ProductPhotoCropModal';
 
-interface ProductWizardProps {
-  menuId: string;
+const getMenuRestaurantId = (m: any) =>
+  String(m?.restaurantId ?? m?.restaurant_id ?? '');
+
+const extractMenuItemsFromResponse = (res: any): any[] => {
+  const d = res?.data;
+  if (Array.isArray(d)) return d;
+  if (d?.data && Array.isArray(d.data)) return d.data;
+  return [];
+};
+
+function initialWizardRestaurant(opts: {
+  initialRestaurantId?: string;
+  initialMenuId?: string;
   menus: any[];
+  restaurants?: any[];
+}): string {
+  if (opts.initialRestaurantId) return String(opts.initialRestaurantId);
+  const rs = opts.restaurants ?? [];
+  if (rs.length === 1) return String(rs[0].id);
+  if (opts.initialMenuId && opts.menus?.length) {
+    const m = opts.menus.find((x: any) => x.id === opts.initialMenuId);
+    const rid = m?.restaurantId ?? m?.restaurant_id;
+    if (rid) return String(rid);
+  }
+  return '';
+}
+
+interface ProductWizardProps {
+  menuId?: string;
+  menus: any[];
+  /** Lista de locales para filtrar menús (y preselección si hay uno solo). */
+  restaurants?: any[];
+  /** Restaurante inicial (p. ej. filtro super admin o menú en edición). */
+  initialRestaurantId?: string;
   defaultCurrency?: string; // Moneda por defecto del restaurante
   onComplete: () => void;
   onCancel?: () => void;
@@ -164,8 +195,10 @@ const getDefaultCurrencyForUser = (): string => {
 };
 
 export default function ProductWizard({
-  menuId: initialMenuId,
+  menuId: initialMenuId = '',
   menus,
+  restaurants: restaurantsProp,
+  initialRestaurantId,
   defaultCurrency = 'USD',
   onComplete,
   onCancel,
@@ -204,6 +237,34 @@ export default function ProductWizard({
     iconCodes: [] as string[],
     highlighted: false,
   });
+
+  const [wizardRestaurantId, setWizardRestaurantId] = useState(() =>
+    initialWizardRestaurant({
+      initialMenuId,
+      menus,
+      restaurants: restaurantsProp ?? [],
+      ...(initialRestaurantId ? { initialRestaurantId } : {}),
+    }),
+  );
+
+  const resolvedRestaurantId = useMemo(() => {
+    if (wizardRestaurantId) return wizardRestaurantId;
+    const rs = restaurantsProp ?? [];
+    if (rs.length === 1) return String(rs[0].id);
+    return '';
+  }, [wizardRestaurantId, restaurantsProp]);
+
+  const filteredMenus = useMemo(() => {
+    const rs = restaurantsProp ?? [];
+    if (rs.length > 1) {
+      if (!wizardRestaurantId) return [];
+      return menus.filter((m) => getMenuRestaurantId(m) === String(wizardRestaurantId));
+    }
+    if (!resolvedRestaurantId) return menus;
+    return menus.filter((m) => getMenuRestaurantId(m) === resolvedRestaurantId);
+  }, [menus, resolvedRestaurantId, restaurantsProp, wizardRestaurantId]);
+
+  const showRestaurantPicker = (restaurantsProp ?? []).length > 1;
   
   // Estado para la moneda efectiva que se actualiza cuando cambia formData.menuId
   const [effectiveDefaultCurrency, setEffectiveDefaultCurrency] = useState<string>(initialEffectiveCurrency);
@@ -441,21 +502,49 @@ export default function ProductWizard({
     return currentProductCount < limit;
   };
 
-  // Si solo hay un menú y hay un initialMenuId, usar ese automáticamente
-  // Pero no asignar automáticamente si el usuario quiere crear sin menú
+  // Menú (y restaurante) que vienen del padre: edición de menú, menú recién creado, etc.
   useEffect(() => {
-    if (initialMenuId) {
-      setFormData(prev => {
-        // Solo actualizar si el menuId actual está vacío o es diferente
-        if (!prev.menuId || prev.menuId !== initialMenuId) {
-          return { ...prev, menuId: initialMenuId };
-        }
-        return prev;
-      });
+    if (!initialMenuId || !menus?.length) return;
+    const m = menus.find((x: any) => x.id === initialMenuId);
+    const rid = m?.restaurantId ?? m?.restaurant_id;
+    if (rid) {
+      setWizardRestaurantId(String(rid));
     }
-    // No asignar automáticamente el primer menú si no hay initialMenuId
-    // Esto permite al usuario elegir "Sin asignar"
-  }, [menus, initialMenuId]);
+    setFormData((prev) => {
+      if (prev.menuId === initialMenuId) return prev;
+      return { ...prev, menuId: initialMenuId, sectionIds: [] };
+    });
+  }, [initialMenuId, menus]);
+
+  // Un solo restaurante: usarlo sin que el usuario tenga que elegirlo
+  useEffect(() => {
+    const rs = restaurantsProp ?? [];
+    if (rs.length !== 1) return;
+    const only = String(rs[0].id);
+    setWizardRestaurantId((prev) => (prev ? prev : only));
+  }, [restaurantsProp]);
+
+  // Si hay un solo menú en el local resuelto, asignarlo (salvo que el padre fije menú vacío explícito)
+  useEffect(() => {
+    if (initialMenuId) return;
+    if (filteredMenus.length !== 1) return;
+    const onlyId = filteredMenus[0].id;
+    setFormData((prev) => {
+      if (prev.menuId === onlyId) return prev;
+      if (prev.menuId && filteredMenus.some((x) => x.id === prev.menuId)) return prev;
+      return { ...prev, menuId: onlyId };
+    });
+  }, [filteredMenus, initialMenuId]);
+
+  // El menú elegido debe seguir perteneciendo al restaurante filtrado
+  useEffect(() => {
+    setFormData((prev) => {
+      if (!prev.menuId) return prev;
+      const ok = filteredMenus.some((x) => x.id === prev.menuId);
+      if (ok) return prev;
+      return { ...prev, menuId: '', sectionIds: [] };
+    });
+  }, [filteredMenus]);
 
   // Actualizar la moneda por defecto cuando cambie la prop o la moneda del restaurante
   // Solo si hay un menú asignado (si no hay menú, se maneja en el otro useEffect)
@@ -995,12 +1084,95 @@ export default function ProductWizard({
     setLoadExistingSectionId(sections.length > 0 ? sections[0].id : '');
     setLoadingExistingProducts(true);
     try {
-      const res = await api.get('/menu-items');
-      const allItems = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
-      const currentRestaurantId = menus.find((m: any) => m.id === initialMenuId)?.restaurantId ?? menus.find((m: any) => m.id === initialMenuId)?.restaurant_id;
-      const otherMenuIds = (menus || []).filter((m: any) => (m.restaurantId ?? m.restaurant_id) === currentRestaurantId && m.id !== initialMenuId).map((m: any) => m.id);
-      const fromOtherMenus = allItems.filter((p: any) => otherMenuIds.includes(p.menuId || p.menu_id));
-      setExistingProductsPool(fromOtherMenus);
+      const targetMenuId = initialMenuId;
+      if (!targetMenuId) {
+        setLoadExistingError('No se pudo identificar el menú actual.');
+        return;
+      }
+
+      let currentMenu = menus.find((m: any) => m.id === targetMenuId);
+      let currentRestaurantId = String(
+        currentMenu?.restaurantId ?? currentMenu?.restaurant_id ?? '',
+      );
+      if (!currentRestaurantId) {
+        try {
+          const menuRes = await api.get(`/menus/${targetMenuId}`);
+          const m = menuRes.data;
+          currentRestaurantId = String(m?.restaurantId ?? m?.restaurant_id ?? '');
+          if (!currentMenu && m) currentMenu = m;
+        } catch {
+          // ignorar
+        }
+      }
+
+      if (!currentRestaurantId) {
+        setLoadExistingError('No se pudo determinar el restaurante de este menú.');
+        return;
+      }
+
+      const rid = currentRestaurantId;
+      const otherMenuIds = (menus || [])
+        .filter(
+          (m: any) =>
+            String(m.restaurantId ?? m.restaurant_id ?? '') === rid && m.id !== targetMenuId,
+        )
+        .map((m: any) => m.id);
+
+      if (otherMenuIds.length === 0) {
+        setExistingProductsPool([]);
+        return;
+      }
+
+      const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      const parsedUser = userData
+        ? (() => {
+            try {
+              return JSON.parse(userData);
+            } catch {
+              return null;
+            }
+          })()
+        : null;
+      const isSuperAdmin = parsedUser?.role === 'SUPER_ADMIN';
+      const tenantIdForQuery =
+        currentMenu?.tenantId ??
+        currentMenu?.tenant_id ??
+        parsedUser?.tenantId ??
+        parsedUser?.tenant?.id;
+
+      let pool: any[] = [];
+
+      if (isSuperAdmin) {
+        // En super admin, menuId en query no aplica a este branch del backend: pedimos por restaurante
+        // (sin limit por defecto) y filtramos por los otros menús del mismo local.
+        const params: Record<string, string> = { restaurantId: rid };
+        if (tenantIdForQuery) params.tenantId = String(tenantIdForQuery);
+        const res = await api.get('/menu-items', { params });
+        const allForRestaurant = extractMenuItemsFromResponse(res);
+        pool = allForRestaurant.filter((p: any) => {
+          const mid = p.menuId ?? p.menu_id;
+          return mid && otherMenuIds.includes(mid);
+        });
+      } else {
+        // Un solo GET sin menuId aplica el límite de productos del plan a TODA la consulta y recorta
+        // la lista; pedimos por cada menú para traer todos los ítems de esos menús.
+        const results = await Promise.all(
+          otherMenuIds.map((menuId: string) =>
+            api.get('/menu-items', { params: { menuId } }),
+          ),
+        );
+        const seen = new Set<string>();
+        for (const res of results) {
+          for (const p of extractMenuItemsFromResponse(res)) {
+            if (p.id && !seen.has(p.id)) {
+              seen.add(p.id);
+              pool.push(p);
+            }
+          }
+        }
+      }
+
+      setExistingProductsPool(pool);
     } catch (err: any) {
       setLoadExistingError(err.response?.data?.message || 'Error al cargar productos');
     } finally {
@@ -1926,24 +2098,69 @@ export default function ProductWizard({
             </div>
 
             <div className="wizard-fields-container">
-              {/* Selector de menú (opcional) */}
-              {menus.length > 0 && (
+              {/* Restaurante + menú (filtrado); con un solo local el restaurante no se muestra */}
+              {(menus.length > 0 || showRestaurantPicker) && (
                 <div className="wizard-field wizard-field-large">
-                  <label className="wizard-label">Menú (opcional)</label>
-                  <select
-                    className="admin-form-control wizard-input-large"
-                    value={formData.menuId}
-                    onChange={(e) => setFormData({ ...formData, menuId: e.target.value, sectionIds: [] })}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '12px 16px',
+                      alignItems: 'flex-end',
+                    }}
                   >
-                    <option value="">Sin asignar (crear producto independiente)</option>
-                    {menus.map((menu) => (
-                      <option key={menu.id} value={menu.id}>
-                        {menu.name}
-                      </option>
-                    ))}
-                  </select>
+                    {showRestaurantPicker && (
+                      <div style={{ flex: '1 1 200px', minWidth: 0 }}>
+                        <label className="wizard-label">Restaurante</label>
+                        <select
+                          className="admin-form-control wizard-input-large"
+                          value={wizardRestaurantId}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setWizardRestaurantId(v);
+                            setFormData((fd) => ({ ...fd, menuId: '', sectionIds: [] }));
+                          }}
+                        >
+                          <option value="">Elegí un restaurante</option>
+                          {(restaurantsProp ?? []).map((r: any) => (
+                            <option key={r.id} value={r.id}>
+                              {r.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {menus.length > 0 && (
+                      <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+                        <label className="wizard-label">Menú (opcional)</label>
+                        <select
+                          className="admin-form-control wizard-input-large"
+                          value={formData.menuId}
+                          disabled={showRestaurantPicker && !wizardRestaurantId}
+                          onChange={(e) =>
+                            setFormData((fd) => ({
+                              ...fd,
+                              menuId: e.target.value,
+                              sectionIds: [],
+                            }))
+                          }
+                        >
+                          <option value="">
+                            {showRestaurantPicker && !wizardRestaurantId
+                              ? 'Elegí un restaurante primero'
+                              : 'Sin asignar (producto independiente)'}
+                          </option>
+                          {filteredMenus.map((menu: any) => (
+                            <option key={menu.id} value={menu.id}>
+                              {menu.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
                   <small className="wizard-help-text">
-                    Puedes crear el producto sin asignarlo a un menú y asignarlo después
+                    Podés crear el producto sin menú y asignarlo después. Los menús se filtran por el local elegido.
                   </small>
                 </div>
               )}

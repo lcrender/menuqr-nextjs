@@ -58,7 +58,9 @@ export class MenuItemsService {
 
     query += ` ORDER BY mi.menu_id NULLS LAST, ms.sort NULLS LAST, mi.sort ASC, mi.created_at ASC`;
 
-    if (tenantId) {
+    // El límite del plan aplica al listado global de productos; si se pide un menú concreto,
+    // devolver todos los ítems de ese menú (p. ej. clonar desde otro menú, edición por menú).
+    if (tenantId && !menuId) {
       const plan = await this.getTenantPlan(tenantId);
       const itemLimit = await this.planLimits.getProductLimit(plan);
       if (itemLimit !== -1) {

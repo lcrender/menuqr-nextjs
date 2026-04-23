@@ -44,6 +44,15 @@ export default function Products() {
   const [copyTargetSectionId, setCopyTargetSectionId] = useState('');
   const [copySections, setCopySections] = useState<any[]>([]);
   const [copyLoading, setCopyLoading] = useState(false);
+  /** Selección múltiple y acciones en lote */
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState<string>('');
+  const [bulkTargetMenuId, setBulkTargetMenuId] = useState('');
+  const [bulkTargetSectionId, setBulkTargetSectionId] = useState('');
+  const [bulkCopySections, setBulkCopySections] = useState<any[]>([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkDeleteMode, setBulkDeleteMode] = useState<'delete' | 'copy_delete' | null>(null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertData, setAlertData] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' | 'info' } | null>(null);
   const [editing, setEditing] = useState<any>(null);
@@ -540,6 +549,206 @@ export default function Products() {
     }
   }, [showCopyModal, copyTargetMenuId]);
 
+  useEffect(() => {
+    if (!bulkTargetMenuId) {
+      setBulkCopySections([]);
+      return;
+    }
+    api
+      .get(`/menu-sections?menuId=${bulkTargetMenuId}`)
+      .then((res) => setBulkCopySections(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setBulkCopySections([]));
+  }, [bulkTargetMenuId]);
+
+  useEffect(() => {
+    const ids = new Set(products.map((p) => p.id));
+    setSelectedProductIds((prev) => prev.filter((id) => ids.has(id)));
+  }, [products]);
+
+  useEffect(() => {
+    if (bulkAction !== 'copy' && bulkAction !== 'copy_delete') {
+      setBulkTargetMenuId('');
+      setBulkTargetSectionId('');
+      setBulkCopySections([]);
+    }
+  }, [bulkAction]);
+
+  const getSelectedProducts = () => products.filter((p) => selectedProductIds.includes(p.id));
+
+  const allVisibleProductsSelected =
+    products.length > 0 && products.every((p) => selectedProductIds.includes(p.id));
+
+  const toggleSelectAllProducts = () => {
+    if (allVisibleProductsSelected) {
+      setSelectedProductIds([]);
+    } else {
+      setSelectedProductIds(products.map((p) => p.id));
+    }
+  };
+
+  const toggleProductSelected = (id: string) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const getRestaurantIdForProduct = (p: any): string | null => {
+    const mid = p.menuId || p.menu_id;
+    if (!mid) return null;
+    const menu = menus.find((m: any) => m.id === mid);
+    return (menu?.restaurantId ?? menu?.restaurant_id) ?? null;
+  };
+
+  const validateBulkSelection = (): string | null => {
+    const sel = getSelectedProducts();
+    if (sel.length === 0) return 'Seleccioná al menos un producto de la lista.';
+    if (!bulkAction) return 'Elegí una acción en el desplegable.';
+
+    if (bulkAction === 'copy' || bulkAction === 'copy_delete') {
+      for (const p of sel) {
+        if (!(p.menuId || p.menu_id)) {
+          return 'Para copiar en lote, todos los productos deben tener un menú asignado.';
+        }
+      }
+      const rids = new Set(
+        sel.map((p) => getRestaurantIdForProduct(p)).filter((x): x is string => Boolean(x)),
+      );
+      if (rids.size > 1) {
+        return 'Los productos seleccionados deben pertenecer al mismo restaurante.';
+      }
+      if (!bulkTargetMenuId || !bulkTargetSectionId) {
+        return 'Elegí menú y sección de destino.';
+      }
+      const destMenu = menus.find((m: any) => m.id === bulkTargetMenuId);
+      const destRid = destMenu?.restaurantId ?? destMenu?.restaurant_id;
+      const srcRid = sel[0] ? getRestaurantIdForProduct(sel[0]) : null;
+      if (destRid && srcRid && String(destRid) !== String(srcRid)) {
+        return 'El menú de destino debe ser del mismo restaurante que los productos seleccionados.';
+      }
+    }
+    return null;
+  };
+
+  const deleteProductRequest = async (id: string, p?: any) => {
+    const config =
+      isSuperAdmin && (p?.tenantId || p?.tenant_id)
+        ? { params: { tenantId: p.tenantId || p.tenant_id } }
+        : {};
+    await api.delete(`/menu-items/${id}`, config);
+  };
+
+  const executeBulkDelete = async () => {
+    const ids = [...selectedProductIds];
+    const n = ids.length;
+    setBulkLoading(true);
+    try {
+      for (const id of ids) {
+        const p = products.find((pr) => pr.id === id);
+        await deleteProductRequest(id, p);
+      }
+      setSelectedProductIds([]);
+      setBulkAction('');
+      setShowBulkDeleteConfirm(false);
+      setBulkDeleteMode(null);
+      await loadData();
+      setAlertData({
+        title: 'Listo',
+        message: `Se eliminaron ${n} producto(s).`,
+        variant: 'success',
+      });
+      setShowAlert(true);
+    } catch (err: any) {
+      setAlertData({
+        title: 'Error',
+        message: err.response?.data?.message || 'No se pudieron eliminar todos los productos.',
+        variant: 'error',
+      });
+      setShowAlert(true);
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const executeBulkCopy = async (deleteAfter: boolean) => {
+    const ids = [...selectedProductIds];
+    setBulkLoading(true);
+    try {
+      const copiedOk: string[] = [];
+      for (const id of ids) {
+        const p = products.find((pr) => pr.id === id);
+        const body: Record<string, string> = {
+          menuId: bulkTargetMenuId,
+          sectionId: bulkTargetSectionId,
+        };
+        if (isSuperAdmin && (p?.tenantId || p?.tenant_id)) {
+          body.tenantId = p.tenantId || p.tenant_id;
+        }
+        await api.post(`/menu-items/${id}/copy-to-menu`, body);
+        copiedOk.push(id);
+      }
+      if (deleteAfter) {
+        for (const id of copiedOk) {
+          const p = products.find((pr) => pr.id === id);
+          await deleteProductRequest(id, p);
+        }
+      }
+      setSelectedProductIds([]);
+      setBulkAction('');
+      setBulkTargetMenuId('');
+      setBulkTargetSectionId('');
+      setShowBulkDeleteConfirm(false);
+      setBulkDeleteMode(null);
+      await loadData();
+      setAlertData({
+        title: 'Listo',
+        message: deleteAfter
+          ? `Se copiaron ${copiedOk.length} producto(s) y se eliminaron los originales.`
+          : `Se copiaron ${copiedOk.length} producto(s) al menú indicado.`,
+        variant: 'success',
+      });
+      setShowAlert(true);
+    } catch (err: any) {
+      setAlertData({
+        title: 'Error',
+        message: err.response?.data?.message || 'Error al ejecutar la acción en lote.',
+        variant: 'error',
+      });
+      setShowAlert(true);
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkApply = () => {
+    const err = validateBulkSelection();
+    if (err) {
+      setAlertData({ title: 'Atención', message: err, variant: 'warning' });
+      setShowAlert(true);
+      return;
+    }
+    if (bulkAction === 'delete') {
+      setBulkDeleteMode('delete');
+      setShowBulkDeleteConfirm(true);
+      return;
+    }
+    if (bulkAction === 'copy_delete') {
+      setBulkDeleteMode('copy_delete');
+      setShowBulkDeleteConfirm(true);
+      return;
+    }
+    if (bulkAction === 'copy') {
+      void executeBulkCopy(false);
+    }
+  };
+
+  const handleBulkDeleteConfirm = () => {
+    if (bulkDeleteMode === 'delete') {
+      void executeBulkDelete();
+    } else if (bulkDeleteMode === 'copy_delete') {
+      void executeBulkCopy(true);
+    }
+  };
+
   const handleCopyToMenuSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!productToCopy || !copyTargetMenuId || !copyTargetSectionId) return;
@@ -676,15 +885,21 @@ export default function Products() {
 
   // Si se está mostrando el wizard, renderizarlo
   if (showProductWizard) {
-    const initialMenuId = menus.length > 0 ? menus[0].id : '';
-    const defaultCurrency = initialMenuId ? getDefaultCurrency(initialMenuId) : 'USD';
-    
+    const defaultCurrency =
+      restaurants.length === 1
+        ? restaurants[0].defaultCurrency || 'USD'
+        : 'USD';
+
     return (
       <AdminLayout>
         <div className="restaurant-wizard-container">
           <ProductWizard
-            menuId={initialMenuId}
+            menuId=""
             menus={menus}
+            restaurants={restaurants}
+            {...(isSuperAdmin && selectedRestaurantId
+              ? { initialRestaurantId: selectedRestaurantId }
+              : {})}
             defaultCurrency={defaultCurrency}
             startWithCreate={true}
             onComplete={() => {
@@ -1063,6 +1278,106 @@ export default function Products() {
         </div>
       </div>
 
+      {!loading && products.length > 0 && (
+        <div className="mb-3 p-3 border rounded bg-white admin-products-bulk-bar">
+          <div className="fw-semibold text-secondary small text-uppercase mb-2">Selección en lote</div>
+          <div className="d-flex flex-wrap align-items-end gap-2 gap-md-3">
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-primary"
+              onClick={toggleSelectAllProducts}
+            >
+              {allVisibleProductsSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}
+            </button>
+            <span className="text-muted small align-self-center mb-1 mb-md-2">
+              {selectedProductIds.length} seleccionado(s)
+            </span>
+            <div className="d-flex flex-column" style={{ minWidth: 200 }}>
+              <label className="form-label small mb-0 text-muted" htmlFor="bulk-action-select">
+                Acción
+              </label>
+              <select
+                id="bulk-action-select"
+                className="form-select form-select-sm"
+                value={bulkAction}
+                onChange={(e) => setBulkAction(e.target.value)}
+              >
+                <option value="">Elegí una acción…</option>
+                <option value="copy">Copiar a otro menú</option>
+                <option value="copy_delete">Copiar a otro menú y eliminar</option>
+                <option value="delete">Eliminar seleccionados</option>
+              </select>
+            </div>
+            {(bulkAction === 'copy' || bulkAction === 'copy_delete') && (() => {
+              const sel = getSelectedProducts();
+              const rid0 = sel[0] ? getRestaurantIdForProduct(sel[0]) : null;
+              const sameRestaurant =
+                rid0 &&
+                sel.length > 0 &&
+                sel.every((p) => getRestaurantIdForProduct(p) === rid0);
+              const menuOpts = sameRestaurant
+                ? menus.filter((m: any) => (m.restaurantId ?? m.restaurant_id) === rid0)
+                : [];
+              return (
+                <>
+                  <div className="d-flex flex-column" style={{ minWidth: 200 }}>
+                    <label className="form-label small mb-0 text-muted" htmlFor="bulk-target-menu">
+                      Menú destino
+                    </label>
+                    <select
+                      id="bulk-target-menu"
+                      className="form-select form-select-sm"
+                      value={bulkTargetMenuId}
+                      onChange={(e) => {
+                        setBulkTargetMenuId(e.target.value);
+                        setBulkTargetSectionId('');
+                      }}
+                      disabled={!sameRestaurant}
+                    >
+                      <option value="">
+                        {sameRestaurant ? 'Seleccioná un menú' : 'Productos deben ser del mismo restaurante'}
+                      </option>
+                      {menuOpts.map((m: any) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="d-flex flex-column" style={{ minWidth: 200 }}>
+                    <label className="form-label small mb-0 text-muted" htmlFor="bulk-target-section">
+                      Sección destino
+                    </label>
+                    <select
+                      id="bulk-target-section"
+                      className="form-select form-select-sm"
+                      value={bulkTargetSectionId}
+                      onChange={(e) => setBulkTargetSectionId(e.target.value)}
+                      disabled={!bulkTargetMenuId}
+                    >
+                      <option value="">{bulkTargetMenuId ? 'Seleccioná sección' : 'Primero el menú'}</option>
+                      {bulkCopySections.map((s: any) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              );
+            })()}
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              disabled={bulkLoading || selectedProductIds.length === 0 || !bulkAction}
+              onClick={handleBulkApply}
+            >
+              {bulkLoading ? 'Aplicando…' : 'Aplicar'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center">
           <div className="spinner-border" role="status">
@@ -1075,6 +1390,7 @@ export default function Products() {
           <table className="table table-admin-products">
             <thead>
               <tr>
+                <th style={{ width: '40px' }} className="text-center" aria-label="Seleccionar" />
                 <th style={{ width: '44px' }} aria-label="Arrastrar para ordenar" />
                 <th>Nombre</th>
                 {isSuperAdmin && <th>Tenant</th>}
@@ -1092,17 +1408,25 @@ export default function Products() {
               {products.map((product, index) => (
                 <tr
                   key={product.id}
-                  draggable
-                  onDragStart={() => handleProductDragStart(index)}
                   onDragOver={(e) => handleProductDragOver(e, index)}
                   onDrop={(e) => handleProductDrop(e, index)}
                   style={{
-                    cursor: 'move',
                     opacity: draggedProductIndex === index ? 0.5 : 1,
                     transition: 'opacity 0.2s ease',
                   }}
                 >
+                  <td className="text-center align-middle" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      checked={selectedProductIds.includes(product.id)}
+                      onChange={() => toggleProductSelected(product.id)}
+                      aria-label={`Seleccionar ${product.name}`}
+                    />
+                  </td>
                   <td
+                    draggable
+                    onDragStart={() => handleProductDragStart(index)}
                     style={{
                       cursor: 'grab',
                       fontSize: '18px',
@@ -1230,18 +1554,29 @@ export default function Products() {
               <div
                 key={product.id}
                 className="admin-products-mobile-card admin-card"
-                draggable
-                onDragStart={() => handleProductDragStart(index)}
                 onDragOver={(e) => handleProductDragOver(e, index)}
                 onDrop={(e) => handleProductDrop(e, index)}
                 style={{
-                  cursor: 'move',
                   opacity: draggedProductIndex === index ? 0.5 : 1,
                   transition: 'opacity 0.2s ease',
                 }}
               >
                 <div className="admin-products-mobile-head">
-                  <span className="admin-products-mobile-drag" aria-hidden>
+                  <input
+                    type="checkbox"
+                    className="form-check-input flex-shrink-0 mt-1"
+                    style={{ width: '1.15rem', height: '1.15rem' }}
+                    checked={selectedProductIds.includes(product.id)}
+                    onChange={() => toggleProductSelected(product.id)}
+                    aria-label={`Seleccionar ${product.name}`}
+                  />
+                  <span
+                    className="admin-products-mobile-drag"
+                    draggable
+                    onDragStart={() => handleProductDragStart(index)}
+                    style={{ cursor: 'grab' }}
+                    aria-hidden
+                  >
                     ☰
                   </span>
                   <div className="admin-products-mobile-head-text">
@@ -1937,6 +2272,24 @@ export default function Products() {
         onCancel={() => {
           setShowConfirmDelete(false);
           setProductToDelete(null);
+        }}
+      />
+
+      <ConfirmModal
+        show={showBulkDeleteConfirm}
+        title={bulkDeleteMode === 'copy_delete' ? 'Copiar y eliminar originales' : 'Eliminar productos seleccionados'}
+        message={
+          bulkDeleteMode === 'copy_delete'
+            ? `Se copiarán ${selectedProductIds.length} producto(s) al menú y sección elegidos y después se eliminarán los originales. Si necesitás conservar esa versión en el menú actual, tendrás que volver a crearlos o copiarlos de nuevo. ¿Continuar?`
+            : `Se eliminarán ${selectedProductIds.length} producto(s). Tendrás que volver a crearlos desde cero si los necesitas. Esta acción no se puede deshacer. ¿Continuar?`
+        }
+        confirmText="Aceptar"
+        cancelText="Cancelar"
+        variant="danger"
+        onConfirm={handleBulkDeleteConfirm}
+        onCancel={() => {
+          setShowBulkDeleteConfirm(false);
+          setBulkDeleteMode(null);
         }}
       />
 

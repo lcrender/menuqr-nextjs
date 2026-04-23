@@ -524,6 +524,10 @@ export default function MenuWizard({
       <ProductWizard
         menuId={newMenuId}
         menus={menus.length > 0 ? menus : []}
+        restaurants={restaurants}
+        {...(formData.restaurantId || initialRestaurantId
+          ? { initialRestaurantId: formData.restaurantId || initialRestaurantId }
+          : {})}
         defaultCurrency={getDefaultCurrency()}
         onComplete={handleProductWizardComplete}
         onCancel={handleProductWizardCancel}

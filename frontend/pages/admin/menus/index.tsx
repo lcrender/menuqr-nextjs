@@ -678,7 +678,9 @@ export default function Menus() {
         <div className="restaurant-wizard-container">
           <ProductWizard
             menuId={editingMenuId}
-            menus={[editingMenu].filter(Boolean)}
+            menus={menus}
+            restaurants={restaurants}
+            {...(restaurantId ? { initialRestaurantId: String(restaurantId) } : {})}
             defaultCurrency={defaultCurrency}
             onComplete={() => {
               setShowProductWizard(false);
