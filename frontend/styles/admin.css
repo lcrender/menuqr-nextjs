@@ -2076,6 +2076,10 @@ body {
   margin-bottom: 16px;
 }
 
+.wizard-price-row--reorderable {
+  grid-template-columns: auto 1fr 1fr 1fr auto;
+}
+
 .wizard-price-field {
   display: flex;
   flex-direction: column;
@@ -2910,6 +2914,10 @@ body {
   .wizard-price-row {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .wizard-price-row--reorderable {
+    grid-template-columns: 1fr;
   }
   
   .wizard-icons-grid {

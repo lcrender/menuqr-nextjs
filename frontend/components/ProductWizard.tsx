@@ -257,6 +257,7 @@ export default function ProductWizard({
   const [loadExistingError, setLoadExistingError] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<{ sectionId: string; itemId: string } | null>(null);
   const [dragOverItem, setDragOverItem] = useState<{ sectionId: string; itemId: string | null; position: 'before' | 'after' } | null>(null);
+  const [draggedPriceIndex, setDraggedPriceIndex] = useState<number | null>(null);
   const [restaurantCurrency, setRestaurantCurrency] = useState<string>(defaultCurrency);
 
   /** Defaults + overrides de super admin (`GET /public/plan-limits`). */
@@ -1269,6 +1270,30 @@ export default function ProductWizard({
     setFormData({ ...formData, prices: newPrices });
   };
 
+  const handlePriceDragStart = (index: number) => {
+    setDraggedPriceIndex(index);
+  };
+
+  const handlePriceDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handlePriceDrop = (dropIndex: number) => {
+    if (draggedPriceIndex === null || draggedPriceIndex === dropIndex) {
+      setDraggedPriceIndex(null);
+      return;
+    }
+    const next = [...formData.prices];
+    const removed = next.splice(draggedPriceIndex, 1)[0];
+    if (removed === undefined) {
+      setDraggedPriceIndex(null);
+      return;
+    }
+    next.splice(dropIndex, 0, removed);
+    setFormData({ ...formData, prices: next });
+    setDraggedPriceIndex(null);
+  };
+
   const toggleIcon = (iconCode: string) => {
     const iconCodes = formData.iconCodes.includes(iconCode)
       ? formData.iconCodes.filter(code => code !== iconCode)
@@ -2032,12 +2057,47 @@ export default function ProductWizard({
           <div className="wizard-step-content wizard-step-centered">
             <div className="wizard-step-header">
               <h3 className="wizard-step-title">Precios</h3>
-              <p className="wizard-step-description">Agrega uno o más precios para tu producto</p>
+              <p className="wizard-step-description">
+                Agrega uno o más precios para tu producto
+                {formData.prices.length > 1 ? ' · Arrastrá cada fila desde ☰ para ordenar cómo se muestran.' : ''}
+              </p>
             </div>
 
             <div className="wizard-fields-container">
               {formData.prices.map((price, index) => (
-                <div key={index} className="wizard-price-row">
+                <div
+                  key={index}
+                  className={`wizard-price-row${formData.prices.length > 1 ? ' wizard-price-row--reorderable' : ''}`}
+                  draggable={formData.prices.length > 1}
+                  onDragStart={() => handlePriceDragStart(index)}
+                  onDragOver={handlePriceDragOver}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handlePriceDrop(index);
+                  }}
+                  style={{
+                    cursor: formData.prices.length > 1 ? 'grab' : undefined,
+                    opacity: draggedPriceIndex === index ? 0.55 : 1,
+                    transition: 'opacity 0.15s ease',
+                  }}
+                >
+                  {formData.prices.length > 1 ? (
+                    <div
+                      className="wizard-price-drag"
+                      title="Arrastrar para reordenar"
+                      style={{
+                        alignSelf: 'center',
+                        fontSize: '1.1rem',
+                        color: '#6c757d',
+                        userSelect: 'none',
+                        paddingRight: '8px',
+                        flexShrink: 0,
+                      }}
+                      aria-hidden
+                    >
+                      ☰
+                    </div>
+                  ) : null}
                   <div className="wizard-price-field">
                     <label className="wizard-label">Moneda</label>
                     <select

@@ -411,17 +411,20 @@ export default function Menus() {
     }
 
     try {
-      const data = {
-        menuId: editing.id,
-        name: sectionFormData.name,
-        sort: sectionFormData.sort || 0,
-        isActive: sectionFormData.isActive !== false,
-      };
-
       if (editingSection) {
-        await api.put(`/menu-sections/${editingSection.id}`, data);
+        // UpdateMenuSectionDto no admite menuId (solo name, sort, isActive)
+        await api.put(`/menu-sections/${editingSection.id}`, {
+          name: sectionFormData.name,
+          sort: sectionFormData.sort || 0,
+          isActive: sectionFormData.isActive !== false,
+        });
       } else {
-        await api.post('/menu-sections', data);
+        await api.post('/menu-sections', {
+          menuId: editing.id,
+          name: sectionFormData.name,
+          sort: sectionFormData.sort || 0,
+          isActive: sectionFormData.isActive !== false,
+        });
       }
 
       setSectionFormData({ name: '', sort: 0, isActive: true });

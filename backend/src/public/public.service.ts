@@ -275,7 +275,7 @@ export class PublicService {
                     FROM item_prices ip
                     WHERE ip.item_id = $1
                       AND ip.deleted_at IS NULL
-                    ORDER BY ip.amount ASC`,
+                    ORDER BY ip.created_at ASC, ip.id ASC`,
                     [item.id],
                   ),
                   // Iconos

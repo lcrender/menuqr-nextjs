@@ -83,6 +83,7 @@ export default function Products() {
   const [productPhotoCropSrc, setProductPhotoCropSrc] = useState<string | null>(null);
   const [editImageDragging, setEditImageDragging] = useState(false);
   const [draggedProductIndex, setDraggedProductIndex] = useState<number | null>(null);
+  const [draggedPriceIndex, setDraggedPriceIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -613,6 +614,30 @@ export default function Products() {
     if (!existing) return;
     newPrices[index] = { ...existing, [field]: value };
     setFormData({ ...formData, prices: newPrices });
+  };
+
+  const handlePriceDragStart = (index: number) => {
+    setDraggedPriceIndex(index);
+  };
+
+  const handlePriceDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handlePriceDrop = (dropIndex: number) => {
+    if (draggedPriceIndex === null || draggedPriceIndex === dropIndex) {
+      setDraggedPriceIndex(null);
+      return;
+    }
+    const next = [...formData.prices];
+    const removed = next.splice(draggedPriceIndex, 1)[0];
+    if (removed === undefined) {
+      setDraggedPriceIndex(null);
+      return;
+    }
+    next.splice(dropIndex, 0, removed);
+    setFormData({ ...formData, prices: next });
+    setDraggedPriceIndex(null);
   };
 
   const toggleIcon = (iconCode: string) => {
@@ -1449,9 +1474,39 @@ export default function Products() {
                     <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Precios</h6>
                   <div className="mb-3">
                     <label className="form-label" style={{ marginBottom: '8px', fontWeight: 500, display: 'block' }}>Precios</label>
+                    {formData.prices.length > 1 && (
+                      <p className="text-muted small mb-2" style={{ fontSize: '0.8125rem' }}>
+                        Arrastrá cada fila desde ☰ para cambiar el orden en que se muestran los precios.
+                      </p>
+                    )}
                     {formData.prices.map((price, index) => (
-                      <div key={index} className="row mb-2">
-                        <div className="col-md-3">
+                      <div
+                        key={index}
+                        className="row mb-2 align-items-end"
+                        draggable={formData.prices.length > 1}
+                        onDragStart={() => handlePriceDragStart(index)}
+                        onDragOver={handlePriceDragOver}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          handlePriceDrop(index);
+                        }}
+                        style={{
+                          cursor: formData.prices.length > 1 ? 'grab' : undefined,
+                          opacity: draggedPriceIndex === index ? 0.55 : 1,
+                          transition: 'opacity 0.15s ease',
+                        }}
+                      >
+                        <div
+                          className="col-12 col-md-1 d-flex align-items-center justify-content-md-center pb-1 pb-md-0"
+                          title={formData.prices.length > 1 ? 'Arrastrar para reordenar' : undefined}
+                        >
+                          {formData.prices.length > 1 ? (
+                            <span style={{ fontSize: '1.1rem', color: '#6c757d', userSelect: 'none' }} aria-hidden>
+                              ☰
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="col-12 col-md-3">
                           <input
                             type="text"
                             className="form-control"
@@ -1461,7 +1516,7 @@ export default function Products() {
                             required
                           />
                         </div>
-                        <div className="col-md-3">
+                        <div className="col-12 col-md-3">
                           <input
                             type="text"
                             className="form-control"
@@ -1470,7 +1525,7 @@ export default function Products() {
                             onChange={(e) => updatePrice(index, 'label', e.target.value)}
                           />
                         </div>
-                        <div className="col-md-4">
+                        <div className="col-12 col-md-4">
                           <input
                             type="number"
                             className="form-control"
@@ -1496,7 +1551,7 @@ export default function Products() {
                             placeholder="Ej.: 12,50"
                           />
                         </div>
-                        <div className="col-md-2">
+                        <div className="col-12 col-md-1">
                           {formData.prices.length > 1 && (
                             <button
                               type="button"

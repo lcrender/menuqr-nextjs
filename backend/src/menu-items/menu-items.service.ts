@@ -77,7 +77,7 @@ export class MenuItemsService {
             `SELECT currency, label, amount 
              FROM item_prices 
              WHERE item_id = $1 AND deleted_at IS NULL 
-             ORDER BY amount ASC`,
+             ORDER BY created_at ASC, id ASC`,
             [item.id]
           ),
           this.postgres.queryRaw<any>(
@@ -195,7 +195,7 @@ export class MenuItemsService {
       items.map(async (item: any) => {
         const [prices, icons, photos] = await Promise.all([
           this.postgres.queryRaw<any>(
-            `SELECT currency, label, amount FROM item_prices WHERE item_id = $1 AND deleted_at IS NULL ORDER BY amount ASC`,
+            `SELECT currency, label, amount FROM item_prices WHERE item_id = $1 AND deleted_at IS NULL ORDER BY created_at ASC, id ASC`,
             [item.id]
           ),
           this.postgres.queryRaw<any>(
@@ -334,7 +334,7 @@ export class MenuItemsService {
             `SELECT currency, label, amount 
              FROM item_prices 
              WHERE item_id = $1 AND deleted_at IS NULL 
-             ORDER BY amount ASC`,
+             ORDER BY created_at ASC, id ASC`,
             [item.id]
           ),
           this.postgres.queryRaw<any>(
@@ -402,7 +402,7 @@ export class MenuItemsService {
         `SELECT currency, label, amount 
          FROM item_prices 
          WHERE item_id = $1 AND deleted_at IS NULL 
-         ORDER BY amount ASC`,
+         ORDER BY created_at ASC, id ASC`,
         [id]
       ),
       this.postgres.queryRaw<any>(
@@ -814,7 +814,7 @@ export class MenuItemsService {
     );
 
     const prices = await this.postgres.queryRaw<any>(
-      `SELECT currency, label, amount FROM item_prices WHERE item_id = $1 AND deleted_at IS NULL`,
+      `SELECT currency, label, amount FROM item_prices WHERE item_id = $1 AND deleted_at IS NULL ORDER BY created_at ASC, id ASC`,
       [id]
     );
     for (const p of prices) {
