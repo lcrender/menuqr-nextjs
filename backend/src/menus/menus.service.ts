@@ -75,7 +75,14 @@ export class MenusService {
     }));
   }
 
-  async findAllForSuperAdmin(menuName?: string, restaurantName?: string, tenantName?: string, limit?: number, offset?: number): Promise<{ data: any[]; total: number }> {
+  async findAllForSuperAdmin(
+    menuName?: string,
+    restaurantName?: string,
+    tenantName?: string,
+    limit?: number,
+    offset?: number,
+    restaurantId?: string,
+  ): Promise<{ data: any[]; total: number }> {
     // Query para contar el total
     let countQuery = `
       SELECT COUNT(DISTINCT m.id) as total
@@ -99,6 +106,11 @@ export class MenusService {
     if (tenantName) {
       countQuery += ` AND LOWER(t.name) LIKE LOWER($${countParams.length + 1})`;
       countParams.push(`%${tenantName}%`);
+    }
+
+    if (restaurantId) {
+      countQuery += ` AND m.restaurant_id = $${countParams.length + 1}`;
+      countParams.push(restaurantId);
     }
 
     const countResult = await this.postgres.queryRaw<{ total: string }>(countQuery, countParams);
@@ -135,6 +147,11 @@ export class MenusService {
     if (tenantName) {
       query += ` AND LOWER(t.name) LIKE LOWER($${params.length + 1})`;
       params.push(`%${tenantName}%`);
+    }
+
+    if (restaurantId) {
+      query += ` AND m.restaurant_id = $${params.length + 1}`;
+      params.push(restaurantId);
     }
 
     query += ` GROUP BY m.id, r.name, r.slug, r.template, t.name, t.id ORDER BY m.sort ASC, m.created_at DESC`;

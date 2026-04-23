@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import React from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -116,6 +116,8 @@ export default function Restaurants() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [showCoverCrop, setShowCoverCrop] = useState(false);
   const [coverCropSrc, setCoverCropSrc] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedRestaurantForQR, setSelectedRestaurantForQR] = useState<any>(null);
   const [filterName, setFilterName] = useState<string>('');
@@ -676,6 +678,34 @@ export default function Restaurants() {
       reader.readAsDataURL(file);
     }
     e.target.value = '';
+  };
+
+  const handleMediaDrop = (e: React.DragEvent, type: 'logo' | 'cover') => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      if (type === 'logo') {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setLogoCropSrc(reader.result as string);
+          setShowLogoCrop(true);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setCoverFile(null);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setCoverCropSrc(reader.result as string);
+          setShowCoverCrop(true);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const handleMediaDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const clearLogoSelection = () => {
@@ -1326,85 +1356,140 @@ export default function Restaurants() {
                     </small>
                   </div>
 
-                  {/* Logo */}
-                  <div className="mb-3">
-                    <label className="form-label">Logo</label>
-                    <small className="form-text text-muted d-block mb-1">
-                      Recomendado: imagen cuadrada de al menos 400×400 px (PNG o JPG).
-                    </small>
-                    <input
-                      type="file"
-                      className="form-control"
-                      accept="image/*"
-                      onChange={handleLogoChange}
-                    />
-                    {logoPreview && (
-                      <div className="mt-2 position-relative d-inline-block">
-                        <img 
-                          src={logoPreview} 
-                          alt="Logo preview" 
-                          style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'cover', borderRadius: '4px' }}
+                  {/* Logo y portada: misma UX que el wizard (arrastrar o clic) */}
+                  <div className="mb-3 wizard-media-grid-mobile">
+                    <div className="mb-4">
+                      <label className="form-label wizard-label">Logo</label>
+                      <small className="form-text text-muted d-block mb-2">
+                        Recomendado: imagen cuadrada de al menos 400×400 px (PNG o JPG).
+                      </small>
+                      <div
+                        className={`wizard-image-upload-zone ${logoPreview ? 'has-image' : ''}`}
+                        onClick={() => logoInputRef.current?.click()}
+                        onDrop={(e) => handleMediaDrop(e, 'logo')}
+                        onDragOver={handleMediaDragOver}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            logoInputRef.current?.click();
+                          }
+                        }}
+                      >
+                        <input
+                          ref={logoInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoChange}
+                          style={{ display: 'none' }}
                         />
-                        <button
-                          type="button"
-                          className="btn btn-danger btn-sm"
-                          onClick={clearLogoSelection}
-                          aria-label="Quitar logo"
-                          style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: '50%',
-                            padding: 0,
-                            lineHeight: 1,
-                            fontWeight: 700,
-                          }}
-                        >
-                          ×
-                        </button>
+                        {logoPreview ? (
+                          <div className="wizard-image-preview-wrap">
+                            <img src={logoPreview} alt="Vista previa del logo" className="wizard-preview-image" />
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-sm"
+                              onClick={(ev) => {
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                clearLogoSelection();
+                              }}
+                              aria-label="Quitar logo"
+                              style={{
+                                position: 'absolute',
+                                top: '8px',
+                                right: '8px',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                padding: 0,
+                                lineHeight: 1,
+                                fontWeight: 700,
+                                zIndex: 2,
+                              }}
+                            >
+                              ×
+                            </button>
+                            <div className="wizard-upload-change-overlay">
+                              <span className="wizard-upload-change-btn">Cambiar imagen</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="wizard-upload-placeholder">
+                            <div className="wizard-upload-icon">🖼️</div>
+                            <span className="wizard-upload-text">Arrastrá una imagen o hacé clic para elegir</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Foto de portada */}
-                  <div className="mb-3">
-                    <label className="form-label">Foto de Portada</label>
-                    <input
-                      type="file"
-                      className="form-control"
-                      accept="image/*"
-                      onChange={handleCoverChange}
-                    />
-                    {coverPreview && (
-                      <div className="mt-2 position-relative d-inline-block">
-                        <img 
-                          src={coverPreview} 
-                          alt="Cover preview" 
-                          style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '4px' }}
+                    <div className="mb-3">
+                      <label className="form-label wizard-label">Foto de portada</label>
+                      <div
+                        className={`wizard-image-upload-zone ${coverPreview ? 'has-image' : ''}`}
+                        onClick={() => coverInputRef.current?.click()}
+                        onDrop={(e) => handleMediaDrop(e, 'cover')}
+                        onDragOver={handleMediaDragOver}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            coverInputRef.current?.click();
+                          }
+                        }}
+                      >
+                        <input
+                          ref={coverInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCoverChange}
+                          style={{ display: 'none' }}
                         />
-                        <button
-                          type="button"
-                          className="btn btn-danger btn-sm"
-                          onClick={clearCoverSelection}
-                          aria-label="Quitar portada"
-                          style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: '50%',
-                            padding: 0,
-                            lineHeight: 1,
-                            fontWeight: 700,
-                          }}
-                        >
-                          ×
-                        </button>
+                        {coverPreview ? (
+                          <div className="wizard-image-preview-wrap">
+                            <img
+                              src={coverPreview}
+                              alt="Vista previa de portada"
+                              className="wizard-preview-image cover"
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-sm"
+                              onClick={(ev) => {
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                clearCoverSelection();
+                              }}
+                              aria-label="Quitar portada"
+                              style={{
+                                position: 'absolute',
+                                top: '8px',
+                                right: '8px',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                padding: 0,
+                                lineHeight: 1,
+                                fontWeight: 700,
+                                zIndex: 2,
+                              }}
+                            >
+                              ×
+                            </button>
+                            <div className="wizard-upload-change-overlay">
+                              <span className="wizard-upload-change-btn">Cambiar imagen</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="wizard-upload-placeholder">
+                            <div className="wizard-upload-icon">📷</div>
+                            <span className="wizard-upload-text">Arrastrá una imagen o hacé clic para elegir</span>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* País */}

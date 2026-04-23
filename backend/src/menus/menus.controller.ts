@@ -46,7 +46,15 @@ export class MenusController {
     if (req.user.role === 'SUPER_ADMIN' && !req.query.tenantId) {
       const limitNum = limit ? parseInt(limit, 10) : undefined;
       const offsetNum = offset ? parseInt(offset, 10) : undefined;
-      return this.menusService.findAllForSuperAdmin(menuName, restaurantName, tenantName, limitNum, offsetNum);
+      const restaurantIdQuery = req.query.restaurantId as string | undefined;
+      return this.menusService.findAllForSuperAdmin(
+        menuName,
+        restaurantName,
+        tenantName,
+        limitNum,
+        offsetNum,
+        restaurantIdQuery,
+      );
     }
     
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;

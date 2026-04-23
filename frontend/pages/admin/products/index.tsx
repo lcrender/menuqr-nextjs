@@ -47,6 +47,8 @@ export default function Products() {
   /** Selección múltiple y acciones en lote */
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [bulkAction, setBulkAction] = useState<string>('');
+  /** '' = mismo restaurante que la selección; si no, id de restaurante destino para listar menús */
+  const [bulkDestinationRestaurantId, setBulkDestinationRestaurantId] = useState('');
   const [bulkTargetMenuId, setBulkTargetMenuId] = useState('');
   const [bulkTargetSectionId, setBulkTargetSectionId] = useState('');
   const [bulkCopySections, setBulkCopySections] = useState<any[]>([]);
@@ -567,11 +569,17 @@ export default function Products() {
 
   useEffect(() => {
     if (bulkAction !== 'copy' && bulkAction !== 'copy_delete') {
+      setBulkDestinationRestaurantId('');
       setBulkTargetMenuId('');
       setBulkTargetSectionId('');
       setBulkCopySections([]);
     }
   }, [bulkAction]);
+
+  useEffect(() => {
+    setBulkTargetMenuId('');
+    setBulkTargetSectionId('');
+  }, [bulkDestinationRestaurantId]);
 
   const getSelectedProducts = () => products.filter((p) => selectedProductIds.includes(p.id));
 
@@ -599,6 +607,9 @@ export default function Products() {
     return (menu?.restaurantId ?? menu?.restaurant_id) ?? null;
   };
 
+  const getTenantIdFromProduct = (p: any): string | null =>
+    (p?.tenantId ?? p?.tenant_id) != null ? String(p.tenantId ?? p.tenant_id) : null;
+
   const validateBulkSelection = (): string | null => {
     const sel = getSelectedProducts();
     if (sel.length === 0) return 'Seleccioná al menos un producto de la lista.';
@@ -620,10 +631,29 @@ export default function Products() {
         return 'Elegí menú y sección de destino.';
       }
       const destMenu = menus.find((m: any) => m.id === bulkTargetMenuId);
+      const destTenant = destMenu?.tenantId ?? destMenu?.tenant_id;
+      const tenantIds = sel
+        .map((p) => getTenantIdFromProduct(p))
+        .filter((x): x is string => Boolean(x));
+      const uniqueTenants = new Set(tenantIds);
+      if (uniqueTenants.size > 1) {
+        return 'Los productos seleccionados deben ser de la misma organización para copiar en lote.';
+      }
+      if (destTenant != null && uniqueTenants.size === 1) {
+        const onlyT = tenantIds[0];
+        if (String(destTenant) !== String(onlyT)) {
+          return 'El menú de destino debe ser de la misma organización que los productos seleccionados.';
+        }
+      }
       const destRid = destMenu?.restaurantId ?? destMenu?.restaurant_id;
-      const srcRid = sel[0] ? getRestaurantIdForProduct(sel[0]) : null;
-      if (destRid && srcRid && String(destRid) !== String(srcRid)) {
-        return 'El menú de destino debe ser del mismo restaurante que los productos seleccionados.';
+      const expectedRid =
+        bulkDestinationRestaurantId === ''
+          ? sel[0]
+            ? getRestaurantIdForProduct(sel[0])
+            : null
+          : bulkDestinationRestaurantId;
+      if (expectedRid && destRid && String(destRid) !== String(expectedRid)) {
+        return 'El menú elegido no corresponde al restaurante de destino indicado.';
       }
     }
     return null;
@@ -694,6 +724,7 @@ export default function Products() {
       }
       setSelectedProductIds([]);
       setBulkAction('');
+      setBulkDestinationRestaurantId('');
       setBulkTargetMenuId('');
       setBulkTargetSectionId('');
       setShowBulkDeleteConfirm(false);
@@ -1315,11 +1346,62 @@ export default function Products() {
                 rid0 &&
                 sel.length > 0 &&
                 sel.every((p) => getRestaurantIdForProduct(p) === rid0);
-              const menuOpts = sameRestaurant
-                ? menus.filter((m: any) => (m.restaurantId ?? m.restaurant_id) === rid0)
-                : [];
+              const selTenant = sel[0] ? sel[0].tenantId || sel[0].tenant_id : null;
+              const restaurantPool = (restaurants || []).filter((r: any) => {
+                if (!selTenant) return true;
+                return String(r.tenantId || r.tenant_id || '') === String(selTenant);
+              });
+              const otherRestaurants = restaurantPool.filter(
+                (r: any) => rid0 == null || String(r.id) !== String(rid0),
+              );
+              const effectiveRid =
+                bulkDestinationRestaurantId === ''
+                  ? rid0
+                  : bulkDestinationRestaurantId || null;
+              const menuOpts =
+                effectiveRid && sameRestaurant
+                  ? menus.filter((m: any) => {
+                      const okR =
+                        String(m.restaurantId ?? m.restaurant_id ?? '') === String(effectiveRid);
+                      if (!selTenant) return okR;
+                      const mt = m.tenantId ?? m.tenant_id;
+                      return okR && String(mt ?? '') === String(selTenant);
+                    })
+                  : [];
+              const sameRestaurantLabel =
+                rid0 && restaurantPool.length
+                  ? (() => {
+                      const nm =
+                        restaurantPool.find((r: any) => String(r.id) === String(rid0))?.name ||
+                        'este local';
+                      return `Mismo restaurante (${nm})`;
+                    })()
+                  : 'Mismo restaurante (selección)';
+              const canListMenus = Boolean(sameRestaurant && effectiveRid);
+
               return (
                 <>
+                  <div className="d-flex flex-column" style={{ minWidth: 220 }}>
+                    <label className="form-label small mb-0 text-muted" htmlFor="bulk-dest-restaurant">
+                      Restaurante destino
+                    </label>
+                    <select
+                      id="bulk-dest-restaurant"
+                      className="form-select form-select-sm"
+                      value={bulkDestinationRestaurantId}
+                      onChange={(e) => setBulkDestinationRestaurantId(e.target.value)}
+                      disabled={!sameRestaurant}
+                    >
+                      <option value="">
+                        {sameRestaurant ? sameRestaurantLabel : 'Productos del mismo local'}
+                      </option>
+                      {otherRestaurants.map((r: any) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="d-flex flex-column" style={{ minWidth: 200 }}>
                     <label className="form-label small mb-0 text-muted" htmlFor="bulk-target-menu">
                       Menú destino
@@ -1332,10 +1414,14 @@ export default function Products() {
                         setBulkTargetMenuId(e.target.value);
                         setBulkTargetSectionId('');
                       }}
-                      disabled={!sameRestaurant}
+                      disabled={!canListMenus}
                     >
                       <option value="">
-                        {sameRestaurant ? 'Seleccioná un menú' : 'Productos deben ser del mismo restaurante'}
+                        {!sameRestaurant
+                          ? 'Productos deben ser del mismo restaurante'
+                          : canListMenus
+                            ? 'Seleccioná un menú'
+                            : 'Elegí restaurante arriba'}
                       </option>
                       {menuOpts.map((m: any) => (
                         <option key={m.id} value={m.id}>

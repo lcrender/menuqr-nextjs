@@ -25,6 +25,7 @@ export default function Menus() {
   const [filterMenuName] = useState<string>('');
   const [filterRestaurantName] = useState<string>('');
   const [filterTenantName] = useState<string>('');
+  const [filterRestaurantId, setFilterRestaurantId] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'sections'>('info');
@@ -88,7 +89,7 @@ export default function Menus() {
     if (user) {
       loadData();
     }
-  }, [user, filterMenuName, filterRestaurantName, filterTenantName, page, itemsPerPage]);
+  }, [user, filterMenuName, filterRestaurantName, filterTenantName, filterRestaurantId, page, itemsPerPage]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !router.isReady) return;
@@ -153,12 +154,14 @@ export default function Menus() {
         if (filterMenuName) params.menuName = filterMenuName;
         if (filterRestaurantName) params.restaurantName = filterRestaurantName;
         if (filterTenantName) params.tenantName = filterTenantName;
+        if (filterRestaurantId) params.restaurantId = filterRestaurantId;
         if (itemsPerPage) {
           params.limit = itemsPerPage;
           params.offset = (page - 1) * itemsPerPage;
         }
       } else {
         if (filterMenuName) params.menuName = filterMenuName;
+        if (filterRestaurantId) params.restaurantId = filterRestaurantId;
       }
 
       const [menusRes, restaurantsRes] = await Promise.all([
@@ -284,6 +287,16 @@ export default function Menus() {
     setShowEditMenuOptions(true);
   };
 
+  const populateMenuFormFromMenu = (menu: any) => {
+    setFormData({
+      restaurantId: menu.restaurantId || menu.restaurant_id || '',
+      name: menu.name || '',
+      description: menu.description || '',
+      validFrom: menu.validFrom ?? '',
+      validTo: menu.validTo ?? '',
+    });
+  };
+
   const handleEditOption = (option: 'info' | 'sections' | 'products') => {
     if (!selectedMenuForEdit) return;
     
@@ -293,21 +306,16 @@ export default function Menus() {
     if (option === 'info') {
       // Abrir formulario de información
       setEditing(selectedMenuForEdit);
-      setFormData({
-        restaurantId: selectedMenuForEdit.restaurantId || selectedMenuForEdit.restaurant_id || '',
-        name: selectedMenuForEdit.name || '',
-        description: selectedMenuForEdit.description || '',
-        validFrom: selectedMenuForEdit.validFrom ?? '',
-        validTo: selectedMenuForEdit.validTo ?? '',
-      });
+      populateMenuFormFromMenu(selectedMenuForEdit);
       setActiveTab('info');
       setShowModal(true);
       if (selectedMenuForEdit.id) {
         loadSections(selectedMenuForEdit.id);
       }
     } else if (option === 'sections') {
-      // Abrir gestión de secciones
+      // Misma carga que en «Información» para que nombre y datos no queden vacíos al cambiar de pestaña
       setEditing(selectedMenuForEdit);
+      populateMenuFormFromMenu(selectedMenuForEdit);
       setActiveTab('sections');
       setShowModal(true);
       if (selectedMenuForEdit.id) {
@@ -850,6 +858,33 @@ export default function Menus() {
         </div>
       )}
 
+      {restaurants.length > 0 && (
+        <div className="admin-card mb-3">
+          <label className="form-label fw-semibold mb-2" htmlFor="menus-filter-restaurant">
+            Restaurante
+          </label>
+          <select
+            id="menus-filter-restaurant"
+            className="form-select"
+            style={{ maxWidth: 'min(100%, 420px)' }}
+            value={filterRestaurantId}
+            onChange={(e) => {
+              setFilterRestaurantId(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">Todos los restaurantes</option>
+            {[...restaurants]
+              .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }))
+              .map((r: any) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
+
       {restaurants.length > 0 && (loading ? (
         <div className="text-center">
           <div className="spinner-border" role="status">
@@ -1127,12 +1162,20 @@ export default function Menus() {
                 padding: '32px 40px 24px 40px',
                 background: 'transparent'
               }}>
-                <h5 className="modal-title" style={{ 
-                  fontSize: '1.75rem',
-                  fontWeight: 800,
-                  color: 'var(--admin-text)',
-                  letterSpacing: '-0.02em'
-                }}>{editing ? 'Editar' : 'Nuevo'} Menú</h5>
+                <div>
+                  <h5 className="modal-title" style={{ 
+                    fontSize: '1.75rem',
+                    fontWeight: 800,
+                    color: 'var(--admin-text)',
+                    letterSpacing: '-0.02em',
+                    marginBottom: 0,
+                  }}>{editing ? 'Editar' : 'Nuevo'} Menú</h5>
+                  {editing?.id && (formData.name || editing.name) ? (
+                    <p className="text-muted small mb-0 mt-2" style={{ fontWeight: 600 }}>
+                      {formData.name || editing.name}
+                    </p>
+                  ) : null}
+                </div>
                 <button className="btn-close" onClick={() => {
                   setShowModal(false);
                   setActiveTab('info');
@@ -1157,7 +1200,27 @@ export default function Menus() {
                 <li className="nav-item">
                   <button
                     className={`nav-link ${activeTab === 'info' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('info')}
+                    onClick={() => {
+                      setActiveTab('info');
+                      if (editing?.id) {
+                        setFormData((prev) => {
+                          const hasName = prev.name != null && String(prev.name).trim() !== '';
+                          if (hasName) return prev;
+                          return {
+                            ...prev,
+                            restaurantId:
+                              prev.restaurantId ||
+                              editing.restaurantId ||
+                              editing.restaurant_id ||
+                              '',
+                            name: editing.name ?? prev.name ?? '',
+                            description: editing.description ?? prev.description ?? '',
+                            validFrom: editing.validFrom ?? prev.validFrom ?? '',
+                            validTo: editing.validTo ?? prev.validTo ?? '',
+                          };
+                        });
+                      }
+                    }}
                     type="button"
                   >
                     Información

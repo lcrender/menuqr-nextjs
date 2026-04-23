@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 import Script from 'next/script';
 import Link from 'next/link';
 
@@ -36,14 +37,24 @@ function readStoredConsent(): CookieConsentChoice | null {
   return null;
 }
 
+/** Menú público por QR: sin GTM ni banner (solo lectura del carta). */
+function isPublicRestaurantMenuRoute(pathname: string): boolean {
+  return pathname === '/r/[restaurantSlug]/[menuSlug]';
+}
+
 /**
  * Consentimiento de cookies: un solo banner para todos los visitantes.
  * GTM solo se carga si el usuario elige "Aceptar" y el contenedor está habilitado por entorno.
+ * En la URL pública del menú (/r/...) no se ofrece GTM ni banner para quien entra por QR.
  */
 export default function CookieConsentRoot() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [choice, setChoice] = useState<CookieConsentChoice | null>(null);
   const firstBtnRef = useRef<HTMLButtonElement>(null);
+
+  const isPublicMenu =
+    router.isReady && isPublicRestaurantMenuRoute(router.pathname);
 
   useEffect(() => {
     setChoice(readStoredConsent());
@@ -65,9 +76,13 @@ export default function CookieConsentRoot() {
   }, []);
 
   const gtmId = (process.env.NEXT_PUBLIC_GTM_CONTAINER_ID || GTM_DEFAULT_ID).trim();
-  const loadGtm = shouldOfferGtm() && choice === 'all';
+  const loadGtm = shouldOfferGtm() && choice === 'all' && !isPublicMenu;
 
-  const showBanner = mounted && choice === null;
+  const showBanner = mounted && router.isReady && choice === null && !isPublicMenu;
+
+  if (isPublicMenu) {
+    return null;
+  }
 
   return (
     <>
@@ -103,7 +118,7 @@ export default function CookieConsentRoot() {
             <div>
               <p id="cookie-consent-title" className="cookie-consent-bar__text">
                 Utilizamos cookies estrictamente necesarias para el funcionamiento de la plataforma y, solo si lo
-                acepta, cookies de terceros para medición y mejora del servicio (p. ej. Google Tag Manager).
+                acepta, cookies de terceros para medición y mejora del servicio.
               </p>
               <div className="cookie-consent-bar__links">
                 <Link href="/legal/politica-de-cookies">Política de cookies</Link>
