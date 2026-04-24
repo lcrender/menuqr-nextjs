@@ -239,6 +239,8 @@ model Menu {
   validTo    DateTime?   @map("valid_to")
   version    Int         @default(1)
   sort       Int         @default(0) // Orden de visualización
+  /// Metadatos de idiomas extra (label, bandera) para el panel Traducciones; ver API menu-translations
+  translationManifest Json?     @map("translation_manifest")
   isActive   Boolean     @default(true) @map("is_active")
   createdAt  DateTime    @default(now()) @map("created_at")
   updatedAt  DateTime    @updatedAt @map("updated_at")

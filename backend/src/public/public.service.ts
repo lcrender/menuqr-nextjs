@@ -21,6 +21,75 @@ export class PublicService {
     return rows[0]?.plan || 'free';
   }
 
+  /** Idiomas con filas en `translations` para este menú (público, sin auth). */
+  private async distinctLocalesForMenu(tenantId: string, menuId: string): Promise<string[]> {
+    const rows = await this.postgresService.queryRaw<{ locale: string }>(
+      `SELECT DISTINCT t.locale
+       FROM translations t
+       WHERE t.tenant_id = $1
+         AND (
+           (t.entity_type = 'menu' AND t.entity_id = $2)
+           OR (t.entity_type = 'menu_section' AND t.entity_id IN (
+                SELECT id FROM menu_sections WHERE menu_id = $2 AND deleted_at IS NULL
+           ))
+           OR (t.entity_type = 'menu_item' AND t.entity_id IN (
+                SELECT id FROM menu_items WHERE menu_id = $2 AND deleted_at IS NULL
+           ))
+         )
+       ORDER BY t.locale ASC`,
+      [tenantId, menuId],
+    );
+    const set = new Set(
+      rows
+        .map((r) => r.locale)
+        .filter((l): l is string => typeof l === 'string' && l.trim().length > 0),
+    );
+    if (!set.has('es-ES')) set.add('es-ES');
+    return Array.from(set).sort((a, b) => {
+      if (a === 'es-ES') return -1;
+      if (b === 'es-ES') return 1;
+      return a.localeCompare(b);
+    });
+  }
+
+  private parseLanguageManifest(
+    raw: unknown,
+  ): Array<{ locale: string; label?: string; flagCode?: string; enabledPublic?: boolean }> {
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      return raw
+        .filter((x) => x && typeof x === 'object' && typeof (x as { locale?: string }).locale === 'string')
+        .map((x) => {
+          const o = x as Record<string, unknown>;
+          const ep = o.enabledPublic;
+          const enabledPublic =
+            ep === false || ep === 'false' ? false : ep === true || ep === 'true' ? true : undefined;
+          return {
+            locale: String(o.locale),
+            label: typeof o.label === 'string' ? o.label : undefined,
+            flagCode: typeof o.flagCode === 'string' ? o.flagCode : undefined,
+            ...(enabledPublic !== undefined ? { enabledPublic } : {}),
+          };
+        });
+    }
+    return [];
+  }
+
+  /** Idiomas visibles en el menú público (`enabledPublic` en manifest; por defecto true). */
+  private filterPublicLocales(
+    allLocales: string[],
+    manifest: Array<{ locale: string; enabledPublic?: boolean }>,
+  ): string[] {
+    const map = new Map(manifest.map((e) => [e.locale, e]));
+    const out = allLocales.filter((loc) => {
+      const e = map.get(loc);
+      if (e && e.enabledPublic === false) return false;
+      return true;
+    });
+    if (out.length === 0) return ['es-ES'];
+    return out;
+  }
+
   async getRestaurantBySlug(slug: string, locale: string = 'es-ES') {
     try {
       // Obtener el restaurante con su tenant
@@ -149,6 +218,7 @@ export class PublicService {
           m.status,
           m.valid_from as "validFrom",
           m.valid_to as "validTo",
+          m.translation_manifest as "translationManifest",
           r.id as "restaurantId",
           r.name as "restaurantName",
           r.slug as "restaurantSlug",
@@ -370,8 +440,16 @@ export class PublicService {
         }),
       );
 
+      const allLocales = tenantId
+        ? await this.distinctLocalesForMenu(tenantId, menuData.id)
+        : ['es-ES'];
+      const translationLanguageManifest = this.parseLanguageManifest(menuData.translationManifest);
+      const availableLocales = this.filterPublicLocales(allLocales, translationLanguageManifest);
+
+      const { translationManifest: _omitManifest, ...menuBase } = menuData;
+
       return {
-        ...menuData,
+        ...menuBase,
         slug: menuData.slug,
         name: menuTranslations.name || menuData.name,
         description: menuTranslations.description || menuData.description || null,
@@ -379,6 +457,8 @@ export class PublicService {
         primaryColor: menuData.restaurantPrimaryColor || '#007bff',
         secondaryColor: menuData.restaurantSecondaryColor || '#0056b3',
         sections: sectionsWithTranslations,
+        availableLocales,
+        translationLanguageManifest,
       };
     } catch (error) {
       this.logger.error(`Error obteniendo menú por slug "${menuSlug}" del restaurante "${restaurantSlug}":`, error);

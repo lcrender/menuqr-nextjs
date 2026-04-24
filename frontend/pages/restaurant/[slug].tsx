@@ -1,9 +1,10 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { getApiBaseUrl } from '../../lib/config';
 import { changeLanguage, getCurrentLanguage, isLanguageAvailable } from '../../src/i18n/config';
+import { isBcp47MenuLocale, type MenuLangManifestEntry, buildTemplateMenuLocales } from '../../components/MenuLanguageSwitcher';
 import ClassicTemplate from '../../templates/classic/ClassicTemplate';
 import MinimalistTemplate from '../../templates/minimalist/MinimalistTemplate';
 import FoodieTemplate from '../../templates/foodie/FoodieTemplate';
@@ -106,6 +107,8 @@ interface Menu {
   restaurantName: string;
   restaurantSlug: string;
   sections: MenuSection[];
+  availableLocales?: string[];
+  translationLanguageManifest?: MenuLangManifestEntry[];
 }
 
 const iconLabels: { [key: string]: string } = {
@@ -127,9 +130,13 @@ const formatPrice = (price: ItemPrice) => {
   return `${price.currency} ${price.amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
+function restaurantLocaleStorageKey(restaurantSlug: string) {
+  return `menuqr-menu-content-locale:restaurant:${restaurantSlug}`;
+}
+
 export default function RestaurantPage() {
   const router = useRouter();
-  const { slug, lang } = router.query;
+  const { slug, lang, locale: localeQueryParam } = router.query;
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [menuList, setMenuList] = useState<{ id: string; name: string; slug: string; description?: string }[]>([]);
@@ -137,17 +144,82 @@ export default function RestaurantPage() {
   const [loadingMenu, setLoadingMenu] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [locale, setLocale] = useState<string>(() => getCurrentLanguage());
+  const [contentLocale, setContentLocale] = useState('es-ES');
+  const selectedMenuSlugRef = useRef<string | null>(null);
 
-  // Preparación i18n: si existe `?lang=...` en la URL, lo respetamos.
   useEffect(() => {
-    if (typeof lang === 'string' && isLanguageAvailable(lang)) {
-      changeLanguage(lang);
-      setLocale(lang);
+    if (!router.isReady || typeof slug !== 'string') return;
+    const qLoc = typeof localeQueryParam === 'string' ? localeQueryParam : '';
+    const qLang = typeof lang === 'string' ? lang : '';
+    if (isBcp47MenuLocale(qLoc)) {
+      setContentLocale(qLoc.trim());
       return;
     }
-    setLocale(getCurrentLanguage());
+    if (isBcp47MenuLocale(qLang)) {
+      setContentLocale(qLang.trim());
+      return;
+    }
+    try {
+      const stored = localStorage.getItem(restaurantLocaleStorageKey(slug));
+      if (stored && isBcp47MenuLocale(stored)) {
+        setContentLocale(stored.trim());
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
+    const ui = getCurrentLanguage();
+    if (isBcp47MenuLocale(ui)) setContentLocale(ui);
+    else setContentLocale('es-ES');
+  }, [router.isReady, slug, localeQueryParam, lang]);
+
+  useEffect(() => {
+    if (typeof lang === 'string' && isLanguageAvailable(lang)) {
+      void changeLanguage(lang);
+    }
   }, [lang]);
+
+  const handleMenuContentLocaleChange = (loc: string) => {
+    setContentLocale(loc);
+    if (typeof slug === 'string') {
+      try {
+        localStorage.setItem(restaurantLocaleStorageKey(slug), loc);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (router.isReady) {
+      void router.replace(
+        { pathname: router.pathname, query: { ...router.query, locale: loc } },
+        undefined,
+        { shallow: true },
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedMenu?.availableLocales?.length) return;
+    if (selectedMenu.availableLocales.includes(contentLocale)) return;
+    const fb: string = selectedMenu.availableLocales.includes('es-ES')
+      ? 'es-ES'
+      : (selectedMenu.availableLocales[0] ?? 'es-ES');
+    setContentLocale(fb);
+    if (typeof slug === 'string') {
+      try {
+        localStorage.setItem(restaurantLocaleStorageKey(slug), fb);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (router.isReady) {
+      void router.replace(
+        { pathname: router.pathname, query: { ...router.query, locale: fb } },
+        undefined,
+        { shallow: true },
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMenu?.id, selectedMenu?.availableLocales, contentLocale, slug]);
 
   useEffect(() => {
     if (!slug) return;
@@ -157,7 +229,7 @@ export default function RestaurantPage() {
         setLoading(true);
         const response = await axios.get(
           `${getApiBaseUrl()}/public/restaurants/${slug}`,
-          { params: { locale } },
+          { params: { locale: contentLocale } },
         );
         const data = response.data;
         
@@ -210,9 +282,13 @@ export default function RestaurantPage() {
         });
         setMenuList(sortedMenus);
         
-        // Si hay menús, cargar el primero por defecto
         if (sortedMenus.length > 0) {
-          loadMenu(sortedMenus[0].slug);
+          const prefer = selectedMenuSlugRef.current;
+          const slugToLoad =
+            prefer && sortedMenus.some((m: { slug: string }) => m.slug === prefer)
+              ? prefer
+              : sortedMenus[0].slug;
+          await loadMenu(slugToLoad);
         }
       } catch (err: any) {
         if (err.response?.status === 404) {
@@ -226,7 +302,7 @@ export default function RestaurantPage() {
     };
 
     fetchRestaurant();
-  }, [slug, locale]);
+  }, [slug, contentLocale]);
 
   // Título de página para que se vea "Menu QR Nombre del restaurante"
   // en el navegador (importante cuando se comparte/abre el link del restaurante).
@@ -238,12 +314,13 @@ export default function RestaurantPage() {
 
   const loadMenu = async (menuSlug: string) => {
     if (!slug) return;
-    
+    selectedMenuSlugRef.current = menuSlug;
+
     setLoadingMenu(true);
     try {
       const response = await axios.get(
         `${getApiBaseUrl()}/public/restaurants/${slug}/menus/${menuSlug}`,
-        { params: { locale } },
+        { params: { locale: contentLocale } },
       );
       setSelectedMenu(response.data);
     } catch (err: any) {
@@ -277,94 +354,49 @@ export default function RestaurantPage() {
 
   const template = restaurant.template || 'classic';
 
+  const menuLocales = selectedMenu
+    ? buildTemplateMenuLocales(selectedMenu, restaurant, template, contentLocale, handleMenuContentLocaleChange)
+    : undefined;
+
+  const templateProps = {
+    restaurant,
+    menuList,
+    selectedMenu,
+    onMenuSelect: loadMenu,
+    formatPrice,
+    formatWhatsAppForLink,
+    iconLabels,
+    ...(menuLocales ? { menuLocales } : {}),
+  };
+
   // Usar el componente ClassicTemplate si el template es 'classic'
   if (template === 'classic') {
-    return (
-      <ClassicTemplate
-        restaurant={restaurant}
-        menuList={menuList}
-        selectedMenu={selectedMenu}
-        onMenuSelect={loadMenu}
-        formatPrice={formatPrice}
-        formatWhatsAppForLink={formatWhatsAppForLink}
-        iconLabels={iconLabels}
-      />
-    );
+    return <ClassicTemplate {...templateProps} />;
   }
 
   // Usar el componente MinimalistTemplate si el template es 'minimalist'
   if (template === 'minimalist') {
-    return (
-      <MinimalistTemplate
-        restaurant={restaurant}
-        menuList={menuList}
-        selectedMenu={selectedMenu}
-        onMenuSelect={loadMenu}
-        formatPrice={formatPrice}
-        formatWhatsAppForLink={formatWhatsAppForLink}
-        iconLabels={iconLabels}
-      />
-    );
+    return <MinimalistTemplate {...templateProps} />;
   }
 
   // Usar el componente FoodieTemplate si el template es 'foodie'
   if (template === 'foodie') {
-    return (
-      <FoodieTemplate
-        restaurant={restaurant}
-        menuList={menuList}
-        selectedMenu={selectedMenu}
-        onMenuSelect={loadMenu}
-        formatPrice={formatPrice}
-        formatWhatsAppForLink={formatWhatsAppForLink}
-        iconLabels={iconLabels}
-      />
-    );
+    return <FoodieTemplate {...templateProps} />;
   }
 
   // Usar el componente BurgersTemplate si el template es 'burgers'
   if (template === 'burgers') {
-    return (
-      <BurgersTemplate
-        restaurant={restaurant}
-        menuList={menuList}
-        selectedMenu={selectedMenu}
-        onMenuSelect={loadMenu}
-        formatPrice={formatPrice}
-        formatWhatsAppForLink={formatWhatsAppForLink}
-        iconLabels={iconLabels}
-      />
-    );
+    return <BurgersTemplate {...templateProps} />;
   }
 
   // Usar el componente GourmetTemplate si el template es 'gourmet'
   if (template === 'gourmet') {
-    return (
-      <GourmetTemplate
-        restaurant={restaurant}
-        menuList={menuList}
-        selectedMenu={selectedMenu}
-        onMenuSelect={loadMenu}
-        formatPrice={formatPrice}
-        formatWhatsAppForLink={formatWhatsAppForLink}
-        iconLabels={iconLabels}
-      />
-    );
+    return <GourmetTemplate {...templateProps} />;
   }
 
   // Usar el componente ItalianFoodTemplate si el template es 'italianFood'
   if (template === 'italianFood') {
-    return (
-      <ItalianFoodTemplate
-        restaurant={restaurant}
-        menuList={menuList}
-        selectedMenu={selectedMenu}
-        onMenuSelect={loadMenu}
-        formatPrice={formatPrice}
-        formatWhatsAppForLink={formatWhatsAppForLink}
-        iconLabels={iconLabels}
-      />
-    );
+    return <ItalianFoodTemplate {...templateProps} />;
   }
 
   // Para otros templates, mantener el código actual (temporalmente)

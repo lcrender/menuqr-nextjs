@@ -1,4 +1,5 @@
 import React from 'react';
+import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 
 interface BurgersTemplateProps {
   restaurant: {
@@ -40,6 +41,7 @@ interface BurgersTemplateProps {
   formatPrice: (price: { currency: string; label?: string; amount: number }) => string;
   formatWhatsAppForLink: (whatsapp: string, country?: string) => string;
   iconLabels: { [key: string]: string };
+  menuLocales?: TemplateMenuLocalesProps;
 }
 
 const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
@@ -50,6 +52,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
   formatPrice,
   formatWhatsAppForLink,
   iconLabels,
+  menuLocales,
 }) => {
   const primaryColor = restaurant.primaryColor || '#e74c3c';
   const secondaryColor = restaurant.secondaryColor || '#c0392b';
@@ -239,6 +242,8 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
             )}
           </div>
         </div>
+
+        {menuLocales && <MenuLanguageSwitcher {...menuLocales} />}
 
         {/* Menu Tabs */}
         {menuList.length > 0 && (

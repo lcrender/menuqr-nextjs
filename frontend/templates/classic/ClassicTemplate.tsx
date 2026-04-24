@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 
 interface ClassicTemplateProps {
   restaurant: {
@@ -42,6 +43,8 @@ interface ClassicTemplateProps {
   formatPrice: (price: { currency: string; label?: string; amount: number }) => string;
   formatWhatsAppForLink: (whatsapp: string, country?: string) => string;
   iconLabels: { [key: string]: string };
+  /** Selector de idioma del menú (mismo estilo que pestañas de menú) */
+  menuLocales?: TemplateMenuLocalesProps;
 }
 
 const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
@@ -52,6 +55,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
   formatPrice,
   formatWhatsAppForLink,
   iconLabels,
+  menuLocales,
 }) => {
   const primaryColor = restaurant.primaryColor || '#007bff';
   const secondaryColor = restaurant.secondaryColor || '#0056b3';
@@ -150,6 +154,8 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
             />
           )}
         </div>
+
+        {menuLocales && <MenuLanguageSwitcher {...menuLocales} />}
 
         {/* Menu Tabs */}
         {menuList.length > 0 && (

@@ -20,6 +20,7 @@ import { MetricsModule } from './metrics/metrics.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { PaymentModule } from './payment/payment.module';
 import { AdminMessagesModule } from './admin-messages/admin-messages.module';
+import { MenuTranslationsModule } from './menu-translations/menu-translations.module';
 
 // Módulos comunes
 import { DatabaseModule } from './common/database/database.module';
@@ -105,6 +106,7 @@ import { PlanLimitsModule } from './common/plan-limits/plan-limits.module';
     TrackingModule,
     PaymentModule,
     AdminMessagesModule,
+    MenuTranslationsModule,
   ],
   controllers: [AppController],
   providers: [],

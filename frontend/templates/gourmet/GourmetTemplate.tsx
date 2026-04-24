@@ -1,4 +1,5 @@
 import React from 'react';
+import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 
 const FONT_FAMILIES: Record<string, string> = {
   serif: 'Georgia, "Times New Roman", Times, serif',
@@ -51,6 +52,7 @@ interface GourmetTemplateProps {
   formatPrice: (price: { currency: string; label?: string; amount: number }) => string;
   formatWhatsAppForLink: (whatsapp: string, country?: string) => string;
   iconLabels: { [key: string]: string };
+  menuLocales?: TemplateMenuLocalesProps;
 }
 
 const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
@@ -61,6 +63,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
   formatPrice,
   formatWhatsAppForLink,
   iconLabels,
+  menuLocales,
 }) => {
   const primaryColor = restaurant.primaryColor || '#2c3e50';
   const secondaryColor = restaurant.secondaryColor || '#34495e';
@@ -69,7 +72,8 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
   const showLogo = tc.showLogo !== false;
   const showProductImages = tc.showProductImages !== false;
   const fontKey = (tc.fontFamily as string) || 'serif';
-  const fontFamily = FONT_FAMILIES[fontKey] || FONT_FAMILIES.serif;
+  const fontFamily =
+    (fontKey in FONT_FAMILIES ? FONT_FAMILIES[fontKey] : undefined) ?? FONT_FAMILIES.serif;
 
   return (
     <div className="template-gourmet restaurant-container" style={{ minHeight: '100vh', width: '100%', background: '#f8f9fa', fontFamily }}>
@@ -191,6 +195,8 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
       </div>
 
       <div style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '0 40px 60px 40px' }}>
+        {menuLocales && <MenuLanguageSwitcher {...menuLocales} gourmetFontFamily={fontFamily} />}
+
         {menuList.length > 0 && (
           <div className="mb-5" style={{ marginBottom: '50px' }}>
             <div className="d-flex flex-wrap gap-2" style={{ gap: '12px', justifyContent: 'center' }}>

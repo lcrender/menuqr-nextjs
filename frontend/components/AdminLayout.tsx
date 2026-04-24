@@ -88,6 +88,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const planFromUser = user?.tenant?.plan;
+  const effectivePlanForNav = (currentPlan ?? planFromUser ?? '').toString().toLowerCase().replace(/\s+/g, '_');
+  const showTranslationsNav =
+    isSuperAdmin || effectivePlanForNav === 'pro' || effectivePlanForNav === 'pro_team';
 
   return (
     <div className="container-fluid admin-container">
@@ -201,6 +205,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   Menús
                 </Link>
               </li>
+
+              {showTranslationsNav && (
+                <li className="admin-nav-item">
+                  <Link
+                    href="/admin/translations"
+                    className={`admin-nav-link ${currentPath.startsWith('/admin/translations') ? 'active' : ''}`}
+                  >
+                    Traducciones
+                  </Link>
+                </li>
+              )}
 
               <li className="admin-nav-item">
                 <Link 

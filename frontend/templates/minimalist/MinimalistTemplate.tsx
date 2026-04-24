@@ -1,4 +1,5 @@
 import React from 'react';
+import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 
 interface MinimalistTemplateProps {
   restaurant: {
@@ -41,6 +42,7 @@ interface MinimalistTemplateProps {
   formatPrice: (price: { currency: string; label?: string; amount: number }) => string;
   formatWhatsAppForLink: (whatsapp: string, country?: string) => string;
   iconLabels: { [key: string]: string };
+  menuLocales?: TemplateMenuLocalesProps;
 }
 
 const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
@@ -51,6 +53,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
   formatPrice,
   formatWhatsAppForLink,
   iconLabels,
+  menuLocales,
 }) => {
   const primaryColor = restaurant.primaryColor || '#667eea';
   const secondaryColor = restaurant.secondaryColor || '#764ba2';
@@ -120,6 +123,8 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
             />
           )}
         </div>
+
+        {menuLocales && <MenuLanguageSwitcher {...menuLocales} />}
 
         {/* Menu Tabs */}
         {menuList.length > 0 && (

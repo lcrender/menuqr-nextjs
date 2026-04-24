@@ -102,7 +102,7 @@ En `docker-compose.prod.yml`, el sitio público usa **`https://appmenuqr.com`** 
 |--------|----------------|
 | `http://appmenuqr.com/...` | **301** a `https://appmenuqr.com/...` (`redirectscheme` a HTTPS). |
 | `http://www.appmenuqr.com/...` | **301** directo a `https://appmenuqr.com/...` (`redirectregex` sobre path + query). |
-| `https://www.appmenuqr.com/...` | **301** a `https://appmenuqr.com/...` (mismo path y query). |
+| `https://www.appmenuqr.com/...` | **301** a `https://appmenuqr.com/...` (mismo path y query). El `redirectRegex` debe matchear la URL completa y capturar solo el path, p. ej. `^https?://www\\.appmenuqr\\.com(.*)$` → `https://appmenuqr.com$1`; un `^(.*)$` captura toda la URL y duplica el destino. |
 
 API, S3 y consola MinIO siguen con **HTTP → HTTPS** en el puerto 80. El stack `docker-compose.yml` (nip.io) añade routers análogos de HTTP→HTTPS para front, API, S3 y MinIO.
 

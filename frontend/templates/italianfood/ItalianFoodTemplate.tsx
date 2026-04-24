@@ -1,4 +1,5 @@
 import React from 'react';
+import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 
 interface ItalianFoodTemplateProps {
   restaurant: {
@@ -40,6 +41,7 @@ interface ItalianFoodTemplateProps {
   formatPrice: (price: { currency: string; label?: string; amount: number }) => string;
   formatWhatsAppForLink: (whatsapp: string, country?: string) => string;
   iconLabels: { [key: string]: string };
+  menuLocales?: TemplateMenuLocalesProps;
 }
 
 const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
@@ -50,6 +52,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
   formatPrice,
   formatWhatsAppForLink,
   iconLabels,
+  menuLocales,
 }) => {
   // Colores fijos de la bandera italiana - no personalizables
   const primaryColor = '#009246';
@@ -187,6 +190,8 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
             )}
           </div>
         </div>
+
+        {menuLocales && <MenuLanguageSwitcher {...menuLocales} />}
 
         {/* Menu Tabs */}
         {menuList.length > 0 && (
