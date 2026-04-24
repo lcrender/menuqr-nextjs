@@ -229,24 +229,15 @@ export default function CitySelector({ country, province, value, onChange, class
         autoComplete="off"
       />
       {isOpen && filteredCities.length > 0 && (
-        <div
-          className="position-absolute w-100 bg-white border rounded shadow-lg"
-          style={{ zIndex: 1000, maxHeight: '200px', overflowY: 'auto', top: '100%', marginTop: '2px' }}
-        >
+        <div className="admin-select-dropdown w-100" role="listbox" aria-label="Lista de ciudades">
           {filteredCities.map((city) => (
             <div
               key={city}
-              className="p-2 cursor-pointer hover-bg-light"
-              style={{
-                cursor: 'pointer',
-                backgroundColor: value === city ? '#e7f3ff' : 'white',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f8f9fa';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = value === city ? '#e7f3ff' : 'white';
-              }}
+              role="option"
+              aria-selected={value === city}
+              className={`admin-select-dropdown__item ${
+                value === city ? 'admin-select-dropdown__item--selected' : ''
+              }`}
               onClick={() => handleSelect(city)}
             >
               {city}
@@ -255,11 +246,7 @@ export default function CitySelector({ country, province, value, onChange, class
         </div>
       )}
       {isOpen && (
-        <div
-          className="position-fixed"
-          style={{ top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
-          onClick={handleOverlayClick}
-        />
+        <div className="admin-select-dropdown-overlay" aria-hidden onClick={handleOverlayClick} />
       )}
     </div>
   );

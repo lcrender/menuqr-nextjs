@@ -16,6 +16,9 @@ import {
   type TenantPlanLimitsKey,
 } from '../../../lib/public-plan-limits';
 
+/** Valor del `<select>` de sección destino: crear sección nueva al copiar */
+const SECTION_DEST_NEW = '__new_section__';
+
 export default function Products() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
@@ -43,6 +46,7 @@ export default function Products() {
   const [copyTargetMenuId, setCopyTargetMenuId] = useState('');
   const [copyTargetSectionId, setCopyTargetSectionId] = useState('');
   const [copySections, setCopySections] = useState<any[]>([]);
+  const [copyNewSectionName, setCopyNewSectionName] = useState('');
   const [copyLoading, setCopyLoading] = useState(false);
   /** Selección múltiple y acciones en lote */
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -51,6 +55,7 @@ export default function Products() {
   const [bulkDestinationRestaurantId, setBulkDestinationRestaurantId] = useState('');
   const [bulkTargetMenuId, setBulkTargetMenuId] = useState('');
   const [bulkTargetSectionId, setBulkTargetSectionId] = useState('');
+  const [bulkNewSectionName, setBulkNewSectionName] = useState('');
   const [bulkCopySections, setBulkCopySections] = useState<any[]>([]);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
@@ -486,6 +491,7 @@ export default function Products() {
     setProductToCopy(product);
     setCopyTargetMenuId('');
     setCopyTargetSectionId('');
+    setCopyNewSectionName('');
     setCopySections([]);
     setShowCopyModal(true);
   };
@@ -543,24 +549,50 @@ export default function Products() {
   };
 
   useEffect(() => {
-    if (showCopyModal && copyTargetMenuId) {
-      api.get(`/menu-sections?menuId=${copyTargetMenuId}`).then(res => {
+    if (!showCopyModal || !copyTargetMenuId) {
+      if (!showCopyModal) setCopySections([]);
+      return;
+    }
+    const tid =
+      isSuperAdmin && productToCopy
+        ? String(productToCopy.tenantId || productToCopy.tenant_id || '')
+        : '';
+    const params: Record<string, string> = { menuId: copyTargetMenuId };
+    if (tid) params.tenantId = tid;
+    api
+      .get('/menu-sections', { params })
+      .then((res) => {
         setCopySections(Array.isArray(res.data) ? res.data : []);
         setCopyTargetSectionId('');
-      }).catch(() => setCopySections([]));
-    }
-  }, [showCopyModal, copyTargetMenuId]);
+      })
+      .catch(() => setCopySections([]));
+  }, [showCopyModal, copyTargetMenuId, isSuperAdmin, productToCopy]);
 
   useEffect(() => {
     if (!bulkTargetMenuId) {
       setBulkCopySections([]);
       return;
     }
+    const sel = products.filter((p) => selectedProductIds.includes(p.id));
+    const tid =
+      isSuperAdmin && sel[0]
+        ? String(sel[0].tenantId || sel[0].tenant_id || '')
+        : '';
+    const params: Record<string, string> = { menuId: bulkTargetMenuId };
+    if (tid) params.tenantId = tid;
+    let cancelled = false;
     api
-      .get(`/menu-sections?menuId=${bulkTargetMenuId}`)
-      .then((res) => setBulkCopySections(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setBulkCopySections([]));
-  }, [bulkTargetMenuId]);
+      .get('/menu-sections', { params })
+      .then((res) => {
+        if (!cancelled) setBulkCopySections(Array.isArray(res.data) ? res.data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setBulkCopySections([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [bulkTargetMenuId, isSuperAdmin, products, selectedProductIds]);
 
   useEffect(() => {
     const ids = new Set(products.map((p) => p.id));
@@ -572,6 +604,7 @@ export default function Products() {
       setBulkDestinationRestaurantId('');
       setBulkTargetMenuId('');
       setBulkTargetSectionId('');
+      setBulkNewSectionName('');
       setBulkCopySections([]);
     }
   }, [bulkAction]);
@@ -579,6 +612,7 @@ export default function Products() {
   useEffect(() => {
     setBulkTargetMenuId('');
     setBulkTargetSectionId('');
+    setBulkNewSectionName('');
   }, [bulkDestinationRestaurantId]);
 
   const getSelectedProducts = () => products.filter((p) => selectedProductIds.includes(p.id));
@@ -627,7 +661,14 @@ export default function Products() {
       if (rids.size > 1) {
         return 'Los productos seleccionados deben pertenecer al mismo restaurante.';
       }
-      if (!bulkTargetMenuId || !bulkTargetSectionId) {
+      if (!bulkTargetMenuId) {
+        return 'Elegí menú y sección de destino.';
+      }
+      if (bulkTargetSectionId === SECTION_DEST_NEW) {
+        if (!bulkNewSectionName.trim()) {
+          return 'Escribí el nombre de la nueva sección.';
+        }
+      } else if (!bulkTargetSectionId) {
         return 'Elegí menú y sección de destino.';
       }
       const destMenu = menus.find((m: any) => m.id === bulkTargetMenuId);
@@ -703,12 +744,35 @@ export default function Products() {
     const ids = [...selectedProductIds];
     setBulkLoading(true);
     try {
+      let resolvedSectionId = bulkTargetSectionId;
+      if (resolvedSectionId === SECTION_DEST_NEW) {
+        const destMenu = menus.find((m: any) => m.id === bulkTargetMenuId);
+        const firstP = products.find((pr) => pr.id === ids[0]);
+        const createBody: Record<string, string> = {
+          menuId: bulkTargetMenuId,
+          name: bulkNewSectionName.trim(),
+        };
+        if (isSuperAdmin) {
+          const tid =
+            destMenu?.tenantId ??
+            destMenu?.tenant_id ??
+            firstP?.tenantId ??
+            firstP?.tenant_id;
+          if (tid != null && tid !== '') createBody.tenantId = String(tid);
+        }
+        const secRes = await api.post('/menu-sections', createBody);
+        resolvedSectionId = secRes.data?.id;
+        if (!resolvedSectionId) {
+          throw new Error('No se obtuvo el id de la nueva sección.');
+        }
+      }
+
       const copiedOk: string[] = [];
       for (const id of ids) {
         const p = products.find((pr) => pr.id === id);
         const body: Record<string, string> = {
           menuId: bulkTargetMenuId,
-          sectionId: bulkTargetSectionId,
+          sectionId: resolvedSectionId,
         };
         if (isSuperAdmin && (p?.tenantId || p?.tenant_id)) {
           body.tenantId = p.tenantId || p.tenant_id;
@@ -727,6 +791,7 @@ export default function Products() {
       setBulkDestinationRestaurantId('');
       setBulkTargetMenuId('');
       setBulkTargetSectionId('');
+      setBulkNewSectionName('');
       setShowBulkDeleteConfirm(false);
       setBulkDeleteMode(null);
       await loadData();
@@ -782,17 +847,52 @@ export default function Products() {
 
   const handleCopyToMenuSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!productToCopy || !copyTargetMenuId || !copyTargetSectionId) return;
+    if (!productToCopy || !copyTargetMenuId) return;
+    if (copyTargetSectionId === SECTION_DEST_NEW) {
+      if (!copyNewSectionName.trim()) {
+        setAlertData({
+          title: 'Atención',
+          message: 'Escribí el nombre de la nueva sección.',
+          variant: 'warning',
+        });
+        setShowAlert(true);
+        return;
+      }
+    } else if (!copyTargetSectionId) {
+      return;
+    }
     setCopyLoading(true);
     try {
-      await api.post(`/menu-items/${productToCopy.id}/copy-to-menu`, {
+      let sectionId = copyTargetSectionId;
+      if (sectionId === SECTION_DEST_NEW) {
+        const destMenu = menus.find((m: any) => m.id === copyTargetMenuId);
+        const createBody: Record<string, string> = {
+          menuId: copyTargetMenuId,
+          name: copyNewSectionName.trim(),
+        };
+        if (isSuperAdmin && destMenu) {
+          const tid = destMenu.tenantId ?? destMenu.tenant_id;
+          if (tid != null && tid !== '') createBody.tenantId = String(tid);
+        }
+        const secRes = await api.post('/menu-sections', createBody);
+        sectionId = secRes.data?.id;
+        if (!sectionId) {
+          throw new Error('No se obtuvo el id de la nueva sección.');
+        }
+      }
+      const copyBody: Record<string, string> = {
         menuId: copyTargetMenuId,
-        sectionId: copyTargetSectionId,
-      });
+        sectionId,
+      };
+      if (isSuperAdmin && (productToCopy.tenantId || productToCopy.tenant_id)) {
+        copyBody.tenantId = productToCopy.tenantId || productToCopy.tenant_id;
+      }
+      await api.post(`/menu-items/${productToCopy.id}/copy-to-menu`, copyBody);
       setShowCopyModal(false);
       setProductToCopy(null);
       setCopyTargetMenuId('');
       setCopyTargetSectionId('');
+      setCopyNewSectionName('');
       loadData();
       setAlertData({ title: 'Listo', message: 'Producto copiado al menú indicado.', variant: 'success' });
       setShowAlert(true);
@@ -1413,6 +1513,7 @@ export default function Products() {
                       onChange={(e) => {
                         setBulkTargetMenuId(e.target.value);
                         setBulkTargetSectionId('');
+                        setBulkNewSectionName('');
                       }}
                       disabled={!canListMenus}
                     >
@@ -1447,8 +1548,26 @@ export default function Products() {
                           {s.name}
                         </option>
                       ))}
+                      <option value={SECTION_DEST_NEW}>+ Nueva sección…</option>
                     </select>
                   </div>
+                  {bulkTargetSectionId === SECTION_DEST_NEW && bulkTargetMenuId ? (
+                    <div className="d-flex flex-column" style={{ minWidth: 220 }}>
+                      <label className="form-label small mb-0 text-muted" htmlFor="bulk-new-section-name">
+                        Nombre de la nueva sección
+                      </label>
+                      <input
+                        id="bulk-new-section-name"
+                        type="text"
+                        className="form-control form-control-sm"
+                        value={bulkNewSectionName}
+                        onChange={(e) => setBulkNewSectionName(e.target.value)}
+                        placeholder="Ej. Entrantes, Bebidas…"
+                        maxLength={160}
+                        autoComplete="off"
+                      />
+                    </div>
+                  ) : null}
                 </>
               );
             })()}
@@ -2287,7 +2406,16 @@ export default function Products() {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Copiar a otro menú</h5>
-                <button type="button" className="btn-close" onClick={() => { setShowCopyModal(false); setProductToCopy(null); }} aria-label="Cerrar" />
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowCopyModal(false);
+                    setProductToCopy(null);
+                    setCopyNewSectionName('');
+                  }}
+                  aria-label="Cerrar"
+                />
               </div>
               <form onSubmit={handleCopyToMenuSubmit}>
                 <div className="modal-body">
@@ -2299,7 +2427,11 @@ export default function Products() {
                     <select
                       className="form-select"
                       value={copyTargetMenuId}
-                      onChange={(e) => setCopyTargetMenuId(e.target.value)}
+                      onChange={(e) => {
+                        setCopyTargetMenuId(e.target.value);
+                        setCopyTargetSectionId('');
+                        setCopyNewSectionName('');
+                      }}
                       required
                     >
                       <option value="">Seleccione un menú</option>
@@ -2329,14 +2461,49 @@ export default function Products() {
                       {copySections.map(s => (
                         <option key={s.id} value={s.id}>{s.name}</option>
                       ))}
+                      <option value={SECTION_DEST_NEW}>+ Nueva sección…</option>
                     </select>
                   </div>
+                  {copyTargetSectionId === SECTION_DEST_NEW && copyTargetMenuId ? (
+                    <div className="mb-0">
+                      <label className="form-label" htmlFor="copy-new-section-name">
+                        Nombre de la nueva sección
+                      </label>
+                      <input
+                        id="copy-new-section-name"
+                        type="text"
+                        className="form-control"
+                        value={copyNewSectionName}
+                        onChange={(e) => setCopyNewSectionName(e.target.value)}
+                        placeholder="Ej. Postres, Vinos…"
+                        maxLength={160}
+                        autoComplete="off"
+                      />
+                    </div>
+                  ) : null}
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => { setShowCopyModal(false); setProductToCopy(null); }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowCopyModal(false);
+                      setProductToCopy(null);
+                      setCopyNewSectionName('');
+                    }}
+                  >
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={copyLoading || !copyTargetMenuId || !copyTargetSectionId}>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={
+                      copyLoading ||
+                      !copyTargetMenuId ||
+                      !copyTargetSectionId ||
+                      (copyTargetSectionId === SECTION_DEST_NEW && !copyNewSectionName.trim())
+                    }
+                  >
                     {copyLoading ? 'Copiando…' : 'Copiar'}
                   </button>
                 </div>

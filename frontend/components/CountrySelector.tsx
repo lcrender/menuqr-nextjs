@@ -161,34 +161,23 @@ export default function CountrySelector({ value, onChange, required = false, cla
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="position-absolute w-100 bg-white border rounded shadow-lg"
-          style={{
-            zIndex: 1000,
-            maxHeight: '300px',
-            overflowY: 'auto',
-            top: '100%',
-            marginTop: '2px',
-          }}
+          className="admin-select-dropdown w-100"
+          role="listbox"
+          aria-label="Lista de países"
         >
           {filteredCountries.length > 0 ? (
             filteredCountries.map((country) => (
               <div
                 key={country.code}
-                className="px-3 py-2 cursor-pointer"
-                style={{
-                  cursor: 'pointer',
-                  backgroundColor: selectedCountry?.code === country.code ? '#f0f0f0' : 'transparent',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f0f0f0';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = selectedCountry?.code === country.code ? '#f0f0f0' : 'transparent';
-                }}
+                role="option"
+                aria-selected={selectedCountry?.code === country.code}
+                className={`admin-select-dropdown__item ${
+                  selectedCountry?.code === country.code ? 'admin-select-dropdown__item--selected' : ''
+                }`}
                 onClick={() => handleSelect(country)}
               >
-                <div className="d-flex align-items-center">
-                  <span className="me-2" style={{ fontSize: '1.2em' }}>
+                <div className="d-flex align-items-center gap-2">
+                  <span aria-hidden style={{ fontSize: '1.25rem', lineHeight: 1 }}>
                     {getCountryFlag(country.code)}
                   </span>
                   <span>{country.name}</span>
@@ -196,7 +185,7 @@ export default function CountrySelector({ value, onChange, required = false, cla
               </div>
             ))
           ) : (
-            <div className="px-3 py-2 text-muted">No se encontraron países</div>
+            <div className="admin-select-dropdown__empty">No se encontraron países</div>
           )}
         </div>
       )}

@@ -22,5 +22,10 @@ export class CreateMenuSectionDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @ApiProperty({ description: 'Solo SUPER_ADMIN: tenant del menú', required: false })
+  @IsString()
+  @IsOptional()
+  tenantId?: string;
 }
 

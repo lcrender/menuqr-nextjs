@@ -495,6 +495,7 @@ export default function Login() {
         title="Registro exitoso"
         message="Por favor, verifica tu email. Hemos enviado un enlace de verificación a tu dirección de correo electrónico."
         variant="success"
+        toastAutoHideMs={10000}
         onClose={() => setShowRegisterSuccessModal(false)}
       />
     </>

@@ -3727,3 +3727,189 @@ body {
   }
 }
 
+/* —— Listas desplegables de País / Provincia / Ciudad (autocomplete) —— */
+.admin-select-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 2002;
+  max-height: min(320px, 55vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px;
+  margin: 0;
+  list-style: none;
+  background: var(--admin-bg-card-hover);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 6px -1px rgba(15, 23, 42, 0.06),
+    0 18px 48px -12px rgba(15, 23, 42, 0.14);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.35) transparent;
+}
+
+.admin-select-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-select-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.35);
+  border-radius: 6px;
+}
+
+.admin-select-dropdown__item {
+  padding: 10px 12px;
+  margin: 2px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  color: var(--admin-text);
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.admin-select-dropdown__item:hover {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.admin-select-dropdown__item:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 1px;
+}
+
+.admin-select-dropdown__item--selected {
+  background: rgba(99, 102, 241, 0.14);
+  font-weight: 600;
+  color: var(--admin-primary-dark);
+}
+
+.admin-select-dropdown__empty {
+  padding: 14px 12px;
+  color: var(--admin-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Cierre al tocar fuera: capa suave por debajo del panel */
+.admin-select-dropdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Aviso de éxito fijo arriba (reemplaza modal "Aceptar" para variant success) */
+.admin-flash-toast {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 11000;
+  padding: 0.65rem 0.75rem;
+  padding-top: max(0.65rem, env(safe-area-inset-top, 0px));
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  pointer-events: none;
+  animation: admin-flash-toast-in 0.28s ease-out;
+}
+
+@keyframes admin-flash-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-flash-toast--success {
+  background: linear-gradient(135deg, #059669 0%, #047857 48%, #065f46 100%);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.admin-flash-toast__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  pointer-events: auto;
+}
+
+.admin-flash-toast__icon {
+  flex-shrink: 0;
+  line-height: 1;
+  padding-top: 2px;
+}
+
+.admin-flash-toast__check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.admin-flash-toast__close-x {
+  display: inline-block;
+  font-size: 1.35rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.admin-flash-toast__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-flash-toast__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  margin-bottom: 0.2rem;
+}
+
+.admin-flash-toast__message {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  opacity: 0.95;
+  white-space: pre-line;
+}
+
+.admin-flash-toast__actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.admin-flash-toast__link {
+  white-space: nowrap;
+  border: none !important;
+}
+
+.admin-flash-toast__dismiss {
+  opacity: 0.85;
+  text-decoration: none !important;
+  line-height: 1;
+}
+
+.admin-flash-toast__dismiss:hover {
+  opacity: 1;
+  color: #fff !important;
+}
+
