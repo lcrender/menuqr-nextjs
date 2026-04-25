@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../../../lib/axios';
+import { MenuLocaleFlagGlyph } from '../../../lib/menu-locale-flag';
 import AdminLayout from '../../../components/AdminLayout';
 import AlertModal from '../../../components/AlertModal';
 
@@ -56,6 +57,9 @@ function suggestedFlagCodeFromLocale(locale: string): string {
 
 /** Misma regla que el backend (`menu-locale.constants.ts`). */
 const MENU_LOCALE_BCP47_RE = /^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})+$/;
+
+/** Código de bandera / etiqueta corta (alineado con backend). */
+const MENU_FLAG_CODE_RE = /^[A-Z0-9]{2,10}$/;
 
 const ADD_LOCALE_CUSTOM = '__custom__';
 
@@ -196,12 +200,9 @@ const LOCALE_PRESET_GROUPS: { label: string; items: { locale: string; title: str
   },
 ];
 
-function flagEmoji(flagCode?: string | null, locale?: string): string {
-  const code = (flagCode || regionFromLocale(locale || '') || '').toUpperCase();
-  if (code.length !== 2 || !/^[A-Z]{2}$/.test(code)) return '🌐';
-  const A = 0x1f1e6;
-  return String.fromCodePoint(A + code.charCodeAt(0) - 65, A + code.charCodeAt(1) - 65);
-}
+const FLAT_LOCALE_PRESETS: { locale: string; title: string; group: string }[] = LOCALE_PRESET_GROUPS.flatMap((g) =>
+  g.items.map((it) => ({ ...it, group: g.label })),
+);
 
 function manifestMap(manifest: ManifestEntry[] | null | undefined): Record<string, ManifestEntry> {
   const m: Record<string, ManifestEntry> = {};
@@ -241,12 +242,12 @@ function buildTranslationManifestPayload(
         : (mm[locale]?.label || '').trim();
     const label = loc === 'es-ES' ? rawLabel || DEFAULT_ES_MANIFEST_LABEL : rawLabel || undefined;
     let fc = ((mm[locale]?.flagCode ?? '') as string).trim().toUpperCase();
-    if (locale === 'es-ES' && (!fc || !/^[A-Z]{2}$/.test(fc))) fc = 'ES';
+    if (locale === 'es-ES' && (!fc || !MENU_FLAG_CODE_RE.test(fc))) fc = 'ES';
     let enabledPublic = mm[locale]?.enabledPublic !== false;
     if (localePatch && localePatch.locale === locale) {
       enabledPublic = localePatch.enabledPublic;
     }
-    const flagOk = fc && /^[A-Z]{2}$/.test(fc) ? fc : undefined;
+    const flagOk = fc && MENU_FLAG_CODE_RE.test(fc) ? fc : undefined;
     return {
       locale: loc,
       ...(label !== undefined ? { label } : {}),
@@ -282,6 +283,8 @@ export default function AdminTranslationsPage() {
   const [addFlag, setAddFlag] = useState('');
   const [addSaving, setAddSaving] = useState(false);
   const [addVisiblePublic, setAddVisiblePublic] = useState(true);
+  const [addLocaleSearch, setAddLocaleSearch] = useState('');
+  const [deleteLocaleBusy, setDeleteLocaleBusy] = useState<{ menuId: string; locale: string } | null>(null);
 
   const [localeToggleKey, setLocaleToggleKey] = useState<string | null>(null);
 
@@ -368,6 +371,17 @@ export default function AdminTranslationsPage() {
     setShowAlert(true);
   }, []);
 
+  const filteredLocalePresets = useMemo(() => {
+    const q = addLocaleSearch.trim().toLowerCase();
+    if (!q) return FLAT_LOCALE_PRESETS;
+    return FLAT_LOCALE_PRESETS.filter(
+      (it) =>
+        it.title.toLowerCase().includes(q) ||
+        it.locale.toLowerCase().includes(q) ||
+        it.group.toLowerCase().includes(q),
+    );
+  }, [addLocaleSearch]);
+
   const loadRestaurants = useCallback(
     async (searchName?: string) => {
       try {
@@ -432,11 +446,42 @@ export default function AdminTranslationsPage() {
     const initial = 'en-US';
     setAddLocalePreset(initial);
     setAddLocaleCustom('');
+    setAddLocaleSearch('');
     setAddLabel('');
     setAddFlag(suggestedFlagCodeFromLocale(initial) || 'US');
     setAddVisiblePublic(true);
     setAddOpen(true);
   };
+
+  const deleteMenuLocale = useCallback(
+    async (m: MenuRow, locale: string) => {
+      if (locale === 'es-ES') return;
+      if (
+        !window.confirm(
+          `¿Eliminar el idioma «${locale}» y todas sus traducciones de este menú? Esta acción no se puede deshacer.`,
+        )
+      ) {
+        return;
+      }
+      setDeleteLocaleBusy({ menuId: m.id, locale });
+      try {
+        const params: Record<string, string> = { locale };
+        if (isSuperAdmin && tenantIdForApi) params.tenantId = tenantIdForApi;
+        await api.delete(`/menu-translations/menus/${m.id}/locales`, { params });
+        showAlertMsg('Idioma eliminado', `Se quitó ${locale} del menú.`, 'success');
+        await loadMenus();
+      } catch (e: unknown) {
+        const msg =
+          (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          (e as Error)?.message ||
+          'Error';
+        showAlertMsg('Eliminar idioma', String(msg), 'error');
+      } finally {
+        setDeleteLocaleBusy(null);
+      }
+    },
+    [isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg],
+  );
 
   const submitAddLocale = async () => {
     if (!addMenuId) return;
@@ -460,8 +505,12 @@ export default function AdminTranslationsPage() {
       return;
     }
     const fc = addFlag.trim().toUpperCase();
-    if (fc && !/^[A-Z]{2}$/.test(fc)) {
-      showAlertMsg('Bandera', 'El código de país debe ser 2 letras mayúsculas (ej. US, ES).', 'warning');
+    if (fc && !MENU_FLAG_CODE_RE.test(fc)) {
+      showAlertMsg(
+        'Bandera / etiqueta',
+        'Usá 2–10 letras o números (ej. ES, US, CAT). Para emoji de país usá el código ISO de 2 letras.',
+        'warning',
+      );
       return;
     }
     setAddSaving(true);
@@ -520,8 +569,12 @@ export default function AdminTranslationsPage() {
     if (!settingsMenu) return;
     for (const r of settingsManifestRows) {
       const fc = (r.flagCode || '').trim().toUpperCase();
-      if (fc && !/^[A-Z]{2}$/.test(fc)) {
-        showAlertMsg('Bandera', `Código país inválido para ${r.locale}: usá 2 letras (ej. US, ES).`, 'warning');
+      if (fc && !MENU_FLAG_CODE_RE.test(fc)) {
+        showAlertMsg(
+          'Bandera / etiqueta',
+          `Código inválido para ${r.locale}: 2–10 caracteres alfanuméricos (ej. ES, CAT).`,
+          'warning',
+        );
         return;
       }
     }
@@ -535,11 +588,11 @@ export default function AdminTranslationsPage() {
           const rawLabel = (r.label || '').trim();
           const label = loc === 'es-ES' ? rawLabel || DEFAULT_ES_MANIFEST_LABEL : rawLabel || undefined;
           let fc = (r.flagCode || '').trim().toUpperCase();
-          if (loc === 'es-ES' && (!fc || !/^[A-Z]{2}$/.test(fc))) fc = 'ES';
+          if (loc === 'es-ES' && (!fc || !MENU_FLAG_CODE_RE.test(fc))) fc = 'ES';
           return {
             locale: loc,
             label,
-            flagCode: fc && /^[A-Z]{2}$/.test(fc) ? fc : undefined,
+            flagCode: fc && MENU_FLAG_CODE_RE.test(fc) ? fc : undefined,
             ...(r.enabledPublic === false ? { enabledPublic: false } : {}),
           };
         });
@@ -548,11 +601,11 @@ export default function AdminTranslationsPage() {
       await api.patch(`/menu-translations/menus/${settingsMenu.id}/settings`, body);
 
       if (renameFrom && renameTo.trim() && renameFrom !== renameTo.trim()) {
-        const to = renameTo.trim();
-        if (!/^[a-z]{2}-[A-Z]{2}$/.test(to)) {
+        const to = normalizeMenuLocaleInput(renameTo);
+        if (!MENU_LOCALE_BCP47_RE.test(to)) {
           showAlertMsg(
             'Código de idioma',
-            'El nuevo código debe ser BCP-47 con región en mayúsculas, ej. en-US, pt-BR.',
+            'El nuevo código debe ser BCP-47 válido (ej. en-US, es-MX, zh-CN).',
             'warning',
           );
           setSettingsSaving(false);
@@ -563,7 +616,7 @@ export default function AdminTranslationsPage() {
           fromLocale: renameFrom,
           toLocale: to,
           label: renameLabel.trim() || undefined,
-          flagCode: rf && /^[A-Z]{2}$/.test(rf) ? rf : undefined,
+          flagCode: rf && MENU_FLAG_CODE_RE.test(rf) ? rf : undefined,
         };
         if (isSuperAdmin && tenantIdForApi) renameBody.tenantId = tenantIdForApi;
         await api.patch(`/menu-translations/menus/${settingsMenu.id}/locales/rename`, renameBody);
@@ -878,7 +931,7 @@ export default function AdminTranslationsPage() {
                             >
                               <div className="d-flex align-items-center gap-1 flex-wrap">
                                 <span title={loc} style={{ fontSize: '1.25rem', lineHeight: 1 }}>
-                                  {flagEmoji(meta?.flagCode, loc)}
+                                  <MenuLocaleFlagGlyph flagCode={meta?.flagCode} locale={loc} />
                                 </span>
                                 <span className="text-muted">{defaultManifestDisplayLabel(loc, meta?.label)}</span>
                               </div>
@@ -897,15 +950,31 @@ export default function AdminTranslationsPage() {
                                   Menú público
                                 </label>
                               </div>
-                              <div className="mt-auto">
+                              <div className="mt-auto d-flex flex-wrap gap-2 align-items-center">
                                 {!isBase ? (
-                                  <button
-                                    type="button"
-                                    className="btn btn-link btn-sm p-0"
-                                    onClick={() => void openWorkbench(m.id, loc)}
-                                  >
-                                    Traducir
-                                  </button>
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="btn btn-link btn-sm p-0"
+                                      onClick={() => void openWorkbench(m.id, loc)}
+                                    >
+                                      Traducir
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-link btn-sm p-0 text-danger"
+                                      disabled={
+                                        !!deleteLocaleBusy &&
+                                        deleteLocaleBusy.menuId === m.id &&
+                                        deleteLocaleBusy.locale === loc
+                                      }
+                                      onClick={() => void deleteMenuLocale(m, loc)}
+                                    >
+                                      {deleteLocaleBusy?.menuId === m.id && deleteLocaleBusy?.locale === loc
+                                        ? 'Borrando…'
+                                        : 'Borrar idioma'}
+                                    </button>
+                                  </>
                                 ) : (
                                   <Link href="/admin/menus" className="btn btn-link btn-sm p-0">
                                     Editar base
@@ -1001,31 +1070,59 @@ export default function AdminTranslationsPage() {
                 </p>
                 <div className="mb-3">
                   <label className="form-label">Idioma (BCP-47)</label>
-                  <select
-                    className="form-select"
-                    value={addLocalePreset === ADD_LOCALE_CUSTOM ? ADD_LOCALE_CUSTOM : addLocalePreset}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (v === ADD_LOCALE_CUSTOM) {
-                        setAddLocalePreset(ADD_LOCALE_CUSTOM);
-                        setAddFlag('');
-                      } else {
-                        setAddLocalePreset(v);
-                        setAddFlag(suggestedFlagCodeFromLocale(v));
-                      }
-                    }}
-                  >
-                    {LOCALE_PRESET_GROUPS.map((g) => (
-                      <optgroup key={g.label} label={g.label}>
-                        {g.items.map((p) => (
-                          <option key={p.locale} value={p.locale}>
-                            {p.title} ({p.locale})
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                    <option value={ADD_LOCALE_CUSTOM}>Otro… (escribir código BCP-47)</option>
-                  </select>
+                  <input
+                    type="search"
+                    className="form-control form-control-sm mb-2"
+                    placeholder="Buscar por nombre o código (ej. catal, ca-ES)…"
+                    value={addLocaleSearch}
+                    onChange={(e) => setAddLocaleSearch(e.target.value)}
+                    autoComplete="off"
+                  />
+                  <div className="border rounded bg-white" style={{ maxHeight: 260 }}>
+                    <div className="list-group list-group-flush overflow-auto" style={{ maxHeight: 200 }}>
+                      {filteredLocalePresets.map((p) => (
+                        <button
+                          key={p.locale}
+                          type="button"
+                          className={`list-group-item list-group-item-action py-2 px-3 w-100 text-start small ${
+                            addLocalePreset === p.locale && addLocalePreset !== ADD_LOCALE_CUSTOM ? 'active' : ''
+                          }`}
+                          onClick={() => {
+                            setAddLocalePreset(p.locale);
+                            setAddFlag(suggestedFlagCodeFromLocale(p.locale));
+                          }}
+                        >
+                          <span className="fw-semibold">{p.title}</span>{' '}
+                          <span className="text-muted">{p.locale}</span>
+                          <span className="d-block text-muted" style={{ fontSize: '0.7rem' }}>
+                            {p.group}
+                          </span>
+                        </button>
+                      ))}
+                      {filteredLocalePresets.length === 0 && (
+                        <div className="p-3 small text-muted">Sin coincidencias. Usá «Otro» abajo.</div>
+                      )}
+                    </div>
+                    <div className="border-top p-2 bg-light">
+                      <button
+                        type="button"
+                        className={`btn btn-sm w-100 ${
+                          addLocalePreset === ADD_LOCALE_CUSTOM ? 'btn-primary' : 'btn-outline-secondary'
+                        }`}
+                        onClick={() => {
+                          setAddLocalePreset(ADD_LOCALE_CUSTOM);
+                          setAddFlag('');
+                        }}
+                      >
+                        Otro… (código BCP-47 manual)
+                      </button>
+                    </div>
+                  </div>
+                  {addLocalePreset !== ADD_LOCALE_CUSTOM && (
+                    <p className="form-text small text-muted mb-0 mt-1">
+                      Seleccionado: <strong>{addLocalePreset}</strong>
+                    </p>
+                  )}
                 </div>
                 {addLocalePreset === ADD_LOCALE_CUSTOM && (
                   <div className="mb-3">
@@ -1060,15 +1157,15 @@ export default function AdminTranslationsPage() {
                   <label className="form-label">Código país para bandera (opcional, ISO 3166-1, 2 letras)</label>
                   <input
                     className="form-control"
-                    maxLength={2}
+                    maxLength={10}
                     value={addFlag}
                     onChange={(e) => setAddFlag(e.target.value.toUpperCase())}
-                    placeholder="ES para ca-ES, US para en-US…"
+                    placeholder="ES, US o CAT…"
                   />
                   <p className="form-text small text-muted mb-0">
-                    Elegí el idioma arriba: la bandera sugerida sale de la región del código (p. ej. catalán{' '}
-                    <code>ca-ES</code> → <strong>ES</strong>). En ISO, <strong>CA</strong> es Canadá 🇨🇦, no
-                    Cataluña. Podés dejar vacío y se usará la región del BCP-47 si aplica.
+                    <strong>2 letras ISO</strong> (ej. ES) = emoji de bandera. <strong>Más caracteres</strong> (ej. CAT)
+                    = insignia de texto en el panel y carta. Podés dejar vacío y se usará la región del BCP-47 si
+                    aplica.
                   </p>
                 </div>
                 <div className="form-check form-switch mb-0">
@@ -1116,14 +1213,16 @@ export default function AdminTranslationsPage() {
                 <p className="small text-muted">
                   Ajustá cómo se muestra cada idioma en el panel y en el menú público. Incluye el idioma base (es-ES);
                   por defecto se muestra como «{DEFAULT_ES_MANIFEST_LABEL}». El código de país debe ser ISO de 2 letras
-                  (US, ES, IT…). Para <code>ca-ES</code> usá <strong>ES</strong> (no CA: es Canadá). Desmarcá «Visible en
-                  menú público» para ocultar un idioma en la carta (sigue disponible en el editor).
+                  (US, ES, IT…).                   Para <code>ca-ES</code> podés usar <strong>ES</strong> (bandera) o una etiqueta como <strong>CAT</strong>.
+                  Desmarcá «Visible en menú público» para ocultar un idioma en la carta (sigue disponible en el editor).
                 </p>
                 {settingsManifestRows.map((row, idx) => (
                   <div key={row.locale} className="row g-2 align-items-end mb-2">
-                    <div className="col-md-2">
+                      <div className="col-md-2">
                       <label className="form-label small mb-0">{row.locale}</label>
-                      <div className="form-control-plaintext fw-semibold">{flagEmoji(row.flagCode, row.locale)}</div>
+                      <div className="form-control-plaintext fw-semibold d-flex align-items-center" style={{ minHeight: 32 }}>
+                        <MenuLocaleFlagGlyph flagCode={row.flagCode} locale={row.locale} />
+                      </div>
                     </div>
                     <div className="col-md-4">
                       <label className="form-label small">Etiqueta</label>
@@ -1142,7 +1241,7 @@ export default function AdminTranslationsPage() {
                       <label className="form-label small">Código país (bandera)</label>
                       <input
                         className="form-control form-control-sm"
-                        maxLength={2}
+                        maxLength={10}
                         value={row.flagCode || ''}
                         onChange={(e) => {
                           const v = e.target.value.toUpperCase();
@@ -1218,10 +1317,10 @@ export default function AdminTranslationsPage() {
                     <label className="form-label small">País</label>
                     <input
                       className="form-control form-control-sm"
-                      maxLength={2}
+                      maxLength={10}
                       value={renameFlag}
                       onChange={(e) => setRenameFlag(e.target.value.toUpperCase())}
-                      placeholder="US"
+                      placeholder="ES o CAT"
                     />
                   </div>
                 </div>

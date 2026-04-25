@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import type { CSSProperties } from 'react';
+import { MenuLocaleFlagGlyph } from '../lib/menu-locale-flag';
 
 export type MenuLangManifestEntry = {
   locale: string;
@@ -74,20 +75,6 @@ const BCP47 = /^[a-z]{2}-[A-Z]{2}$/;
 
 export function isBcp47MenuLocale(s: string): boolean {
   return BCP47.test((s || '').trim());
-}
-
-function regionFromLocale(locale: string): string | undefined {
-  const parts = locale.split('-').filter(Boolean);
-  if (parts.length < 2) return undefined;
-  const tail = parts[parts.length - 1] ?? '';
-  return tail.length === 2 ? tail.toUpperCase() : undefined;
-}
-
-function flagEmoji(flagCode?: string, locale?: string): string {
-  const code = (flagCode || regionFromLocale(locale || '') || '').toUpperCase();
-  if (code.length !== 2 || !/^[A-Z]{2}$/.test(code)) return '🌐';
-  const A = 0x1f1e6;
-  return String.fromCodePoint(A + code.charCodeAt(0) - 65, A + code.charCodeAt(1) - 65);
 }
 
 function menuTabButtonStyle(
@@ -247,7 +234,7 @@ export default function MenuLanguageSwitcher({
                 style={menuTabButtonStyle(variant, active, primary, secondary, gourmetFontFamily)}
               >
                 <span className="me-1" aria-hidden>
-                  {flagEmoji(mo?.flagCode, loc)}
+                  <MenuLocaleFlagGlyph flagCode={mo?.flagCode} locale={loc} />
                 </span>
                 <span>{labelFor(loc, mo)}</span>
               </button>
@@ -281,7 +268,7 @@ export default function MenuLanguageSwitcher({
             aria-pressed={active}
           >
             <span className="me-1" aria-hidden>
-              {flagEmoji(mo?.flagCode, loc)}
+              <MenuLocaleFlagGlyph flagCode={mo?.flagCode} locale={loc} />
             </span>
             <span>{labelFor(loc, mo)}</span>
           </button>

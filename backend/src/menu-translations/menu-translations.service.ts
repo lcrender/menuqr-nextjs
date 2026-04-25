@@ -10,6 +10,7 @@ import { AddMenuLocaleDto } from './dto/add-menu-locale.dto';
 import { RenameMenuLocaleDto } from './dto/rename-menu-locale.dto';
 import { SaveMenuLocaleWorkbenchDto } from './dto/save-menu-locale-workbench.dto';
 import { PatchMenuTranslationSettingsDto } from './dto/patch-menu-translation-settings.dto';
+import { MENU_LOCALE_BCP47_REGEX } from './menu-locale.constants';
 
 export type ManifestEntry = { locale: string; label?: string; flagCode?: string; enabledPublic?: boolean };
 
@@ -466,6 +467,60 @@ export class MenuTranslationsService {
       });
       await this.writeManifest(menuId, tenantId, next);
     }
+    this.i18n.clearCache(tenantId);
+    return { ok: true, locales: await this.distinctLocalesForMenu(tenantId, menuId) };
+  }
+
+  private normalizeMenuLocaleTag(raw: string): string {
+    const t = raw.trim().replace(/_/g, '-');
+    if (!t) return '';
+    const parts = t.split('-').filter(Boolean);
+    if (parts.length === 0) return '';
+    const lang = parts[0]!.toLowerCase();
+    const rest = parts.slice(1).map((p) => {
+      if (/^[0-9]{3}$/.test(p)) return p;
+      if (p.length === 2 && /^[a-zA-Z]{2}$/.test(p)) return p.toUpperCase();
+      return p.toLowerCase();
+    });
+    return [lang, ...rest].join('-');
+  }
+
+  /**
+   * Elimina todas las filas de `translations` para un locale del menú (menú, secciones, ítems)
+   * y la entrada correspondiente en `translation_manifest`. No afecta es-ES.
+   */
+  async removeLocale(tenantId: string, menuId: string, localeRaw: string) {
+    const locale = this.normalizeMenuLocaleTag(localeRaw);
+    if (!locale || !MENU_LOCALE_BCP47_REGEX.test(locale)) {
+      throw new BadRequestException('Código de idioma (locale) inválido.');
+    }
+    if (locale === 'es-ES') {
+      throw new BadRequestException('No se puede eliminar el idioma base (es-ES).');
+    }
+    await this.assertMenuBelongs(tenantId, menuId);
+    const distinct = await this.distinctLocalesForMenu(tenantId, menuId);
+    if (!distinct.includes(locale)) {
+      throw new NotFoundException('Ese idioma no está configurado en este menú.');
+    }
+
+    const entityIds = await this.collectEntityIdsForMenu(menuId);
+    const placeholders = entityIds.map((_, i) => `$${i + 3}`).join(', ');
+    await this.postgres.executeRaw(
+      `DELETE FROM translations WHERE tenant_id = $1 AND locale = $2 AND entity_id IN (${placeholders})`,
+      [tenantId, locale, ...entityIds],
+    );
+
+    if (await this.menusHaveTranslationManifestColumn()) {
+      const manifest = this.parseManifest(
+        (await this.postgres.queryRaw<any>(
+          `SELECT translation_manifest FROM menus WHERE id = $1 LIMIT 1`,
+          [menuId],
+        ))[0]?.translation_manifest,
+      );
+      const next = manifest.filter((e) => e.locale !== locale);
+      await this.writeManifest(menuId, tenantId, next);
+    }
+
     this.i18n.clearCache(tenantId);
     return { ok: true, locales: await this.distinctLocalesForMenu(tenantId, menuId) };
   }

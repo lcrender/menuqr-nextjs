@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -85,6 +86,21 @@ export class MenuTranslationsController {
   ) {
     const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, body.tenantId);
     return this.menuTranslationsService.addLocale(tenantId, menuId, body);
+  }
+
+  @Delete('menus/:menuId/locales')
+  @ApiOperation({ summary: 'Quitar un idioma del menú (borra traducciones y manifest; no permite es-ES)' })
+  @ApiQuery({ name: 'locale', required: true, example: 'en-US' })
+  @ApiQuery({ name: 'tenantId', required: false, description: 'Solo SUPER_ADMIN' })
+  async removeLocale(
+    @Param('menuId') menuId: string,
+    @Query('locale') locale: string,
+    @Query('tenantId') tenantIdQuery: string | undefined,
+    @Request() req: any,
+  ) {
+    if (!locale?.trim()) throw new BadRequestException('locale es requerido');
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, undefined, tenantIdQuery);
+    return this.menuTranslationsService.removeLocale(tenantId, menuId, locale);
   }
 
   @Patch('menus/:menuId/locales/rename')

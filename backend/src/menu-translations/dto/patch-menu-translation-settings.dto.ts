@@ -1,7 +1,12 @@
 import { IsString, IsOptional, MaxLength, Matches, IsArray, ValidateNested, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { MENU_LOCALE_BCP47_REGEX, MENU_LOCALE_MAX_LENGTH } from '../menu-locale.constants';
+import {
+  MENU_FLAG_CODE_MAX_LENGTH,
+  MENU_FLAG_CODE_REGEX,
+  MENU_LOCALE_BCP47_REGEX,
+  MENU_LOCALE_MAX_LENGTH,
+} from '../menu-locale.constants';
 
 class ManifestEntryDto {
   @ApiProperty({ example: 'en-US' })
@@ -18,9 +23,14 @@ class ManifestEntryDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    const t = value.trim().toUpperCase();
+    return t.length === 0 ? undefined : t;
+  })
   @IsString()
-  @MaxLength(2)
-  @Matches(/^[A-Z]{2}$/)
+  @MaxLength(MENU_FLAG_CODE_MAX_LENGTH)
+  @Matches(MENU_FLAG_CODE_REGEX)
   flagCode?: string;
 
   @ApiProperty({ required: false, description: 'Si es false, el idioma no aparece en el menú público' })

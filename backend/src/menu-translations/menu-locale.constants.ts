@@ -5,3 +5,7 @@
 export const MENU_LOCALE_BCP47_REGEX = /^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})+$/;
 
 export const MENU_LOCALE_MAX_LENGTH = 24;
+
+/** Código mostrado en la UI: ISO país 2 letras (emoji) o etiqueta corta (ej. CAT). */
+export const MENU_FLAG_CODE_MAX_LENGTH = 10;
+export const MENU_FLAG_CODE_REGEX = /^[A-Z0-9]{2,10}$/;

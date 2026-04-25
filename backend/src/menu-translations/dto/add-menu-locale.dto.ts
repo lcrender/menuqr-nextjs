@@ -1,6 +1,12 @@
+import { Transform } from 'class-transformer';
 import { IsString, IsOptional, Matches, MaxLength, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { MENU_LOCALE_BCP47_REGEX, MENU_LOCALE_MAX_LENGTH } from '../menu-locale.constants';
+import {
+  MENU_FLAG_CODE_MAX_LENGTH,
+  MENU_FLAG_CODE_REGEX,
+  MENU_LOCALE_BCP47_REGEX,
+  MENU_LOCALE_MAX_LENGTH,
+} from '../menu-locale.constants';
 
 export class AddMenuLocaleDto {
   @ApiProperty({ example: 'en-US' })
@@ -17,11 +23,21 @@ export class AddMenuLocaleDto {
   @MaxLength(120)
   label?: string;
 
-  @ApiProperty({ required: false, description: 'ISO 3166-1 alpha-2 para bandera (ej. US, ES)' })
+  @ApiProperty({
+    required: false,
+    description: 'ISO país 2 letras para emoji regional (ES, US) o etiqueta corta (ej. CAT), 2–10 caracteres.',
+  })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    const t = value.trim().toUpperCase();
+    return t.length === 0 ? undefined : t;
+  })
   @IsString()
-  @MaxLength(2)
-  @Matches(/^[A-Z]{2}$/, { message: 'flagCode debe ser 2 letras mayúsculas' })
+  @MaxLength(MENU_FLAG_CODE_MAX_LENGTH)
+  @Matches(MENU_FLAG_CODE_REGEX, {
+    message: 'flagCode: 2–10 letras o dígitos (ej. ES, CAT).',
+  })
   flagCode?: string;
 
   @ApiProperty({ required: false, description: 'Si es false, no se muestra en el menú público' })
