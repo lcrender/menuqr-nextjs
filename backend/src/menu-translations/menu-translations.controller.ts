@@ -9,6 +9,7 @@ import {
   Query,
   Request,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -17,13 +18,18 @@ import { AddMenuLocaleDto } from './dto/add-menu-locale.dto';
 import { RenameMenuLocaleDto } from './dto/rename-menu-locale.dto';
 import { SaveMenuLocaleWorkbenchDto } from './dto/save-menu-locale-workbench.dto';
 import { PatchMenuTranslationSettingsDto } from './dto/patch-menu-translation-settings.dto';
+import { PostAutoTranslateDto } from './dto/post-auto-translate.dto';
+import { AutoTranslateService } from '../auto-translate/auto-translate.service';
 
 @ApiTags('menu-translations')
 @Controller('menu-translations')
 @ApiBearerAuth()
 @Roles('ADMIN', 'SUPER_ADMIN')
 export class MenuTranslationsController {
-  constructor(private readonly menuTranslationsService: MenuTranslationsService) {}
+  constructor(
+    private readonly menuTranslationsService: MenuTranslationsService,
+    private readonly autoTranslateService: AutoTranslateService,
+  ) {}
 
   @Get('menus')
   @ApiOperation({ summary: 'Listar menús de un restaurante con idiomas detectados (Pro / Pro Team / Super Admin)' })
@@ -96,5 +102,46 @@ export class MenuTranslationsController {
   ) {
     const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, body.tenantId);
     return this.menuTranslationsService.patchMenuSettings(tenantId, menuId, body);
+  }
+
+  @Get('menus/:menuId/auto-translate/status')
+  @ApiOperation({ summary: 'Estado para traducción automática (beta): límites, flags, configuración' })
+  @ApiQuery({ name: 'locale', required: true, example: 'en-US' })
+  @ApiQuery({ name: 'tenantId', required: false })
+  async getAutoTranslateStatus(
+    @Param('menuId') menuId: string,
+    @Query('locale') locale: string,
+    @Request() req: any,
+  ) {
+    if (!locale) throw new BadRequestException('locale es requerido');
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req);
+    const userId = req.user?.id as string | undefined;
+    if (!userId) throw new ForbiddenException();
+    const plan = await this.menuTranslationsService.getTenantPlan(tenantId);
+    return this.autoTranslateService.getStatus(tenantId, menuId, userId, locale, plan);
+  }
+
+  @Post('menus/:menuId/auto-translate')
+  @ApiOperation({ summary: 'Traducción automática (beta) desde es-ES al locale indicado (Google Cloud, servidor)' })
+  async postAutoTranslate(
+    @Param('menuId') menuId: string,
+    @Body() body: PostAutoTranslateDto,
+    @Request() req: any,
+  ) {
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, body.tenantId);
+    const userId = req.user?.id as string | undefined;
+    if (!userId) throw new ForbiddenException();
+    const plan = await this.menuTranslationsService.getTenantPlan(tenantId);
+    if (!this.autoTranslateService.planAllowsAutoTranslateForTenantPlan(plan)) {
+      throw new ForbiddenException('Disponible solo en planes Pro, Pro Team o Premium.');
+    }
+    return this.autoTranslateService.runForMenu({
+      tenantId,
+      menuId,
+      userId,
+      targetLocale: body.targetLocale,
+      force: !!body.force,
+      tenantPlan: plan,
+    });
   }
 }

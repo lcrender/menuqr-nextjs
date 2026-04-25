@@ -55,7 +55,15 @@ export class MenuTranslationsService {
 
   planAllowsTranslations(plan: string | null | undefined): boolean {
     const p = this.normalizePlan(plan);
-    return p === 'pro' || p === 'pro_team';
+    return p === 'pro' || p === 'pro_team' || p === 'premium';
+  }
+
+  async getTenantPlan(tenantId: string): Promise<string> {
+    const rows = await this.postgres.queryRaw<{ plan: string }>(
+      `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [tenantId],
+    );
+    return rows[0]?.plan || 'free';
   }
 
   async resolveTenantIdForRequest(req: any, bodyTenantId?: string): Promise<string> {
@@ -83,7 +91,7 @@ export class MenuTranslationsService {
     const plan = rows[0]?.plan;
     if (!this.planAllowsTranslations(plan)) {
       throw new ForbiddenException(
-        'Las traducciones de menú están disponibles solo en planes Pro y Pro Team.',
+        'Las traducciones de menú están disponibles solo en planes Pro, Pro Team y Premium.',
       );
     }
     return tenantId;
@@ -106,11 +114,13 @@ export class MenuTranslationsService {
     const hasManifestCol = await this.menusHaveTranslationManifestColumn();
     const menus = await this.postgres.queryRaw<any>(
       hasManifestCol
-        ? `SELECT id, name, slug, translation_manifest, restaurant_id, status
+        ? `SELECT id, name, slug, translation_manifest, restaurant_id, status,
+                  COALESCE(auto_translated, false) AS auto_translated
            FROM menus
            WHERE tenant_id = $1 AND restaurant_id = $2 AND deleted_at IS NULL
            ORDER BY sort ASC, created_at DESC`
-        : `SELECT id, name, slug, restaurant_id, status
+        : `SELECT id, name, slug, restaurant_id, status,
+                  COALESCE(auto_translated, false) AS auto_translated
            FROM menus
            WHERE tenant_id = $1 AND restaurant_id = $2 AND deleted_at IS NULL
            ORDER BY sort ASC, created_at DESC`,
@@ -125,6 +135,7 @@ export class MenuTranslationsService {
         slug: m.slug,
         status: m.status,
         translationManifest: hasManifestCol ? (m.translation_manifest ?? null) : null,
+        autoTranslated: !!m.auto_translated,
         locales,
       });
     }
@@ -173,6 +184,7 @@ export class MenuTranslationsService {
     const m0 = menuRow[0];
     const baseMenu = await this.i18n.getTranslations(tenantId, 'menu', menuId, 'es-ES');
     const curMenu = await this.i18n.getTranslations(tenantId, 'menu', menuId, locale);
+    const menuStale = await this.i18n.getStaleKeyMap(tenantId, 'menu', menuId, locale);
 
     const sections = await this.postgres.queryRaw<any>(
       `SELECT id, name FROM menu_sections WHERE menu_id = $1 AND deleted_at IS NULL ORDER BY sort ASC, created_at ASC`,
@@ -182,10 +194,12 @@ export class MenuTranslationsService {
       sections.map(async (s: any) => {
         const base = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, 'es-ES');
         const cur = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, locale);
+        const st = await this.i18n.getStaleKeyMap(tenantId, 'menu_section', s.id, locale);
         return {
           id: s.id,
           baseName: (base.name as string) || s.name,
           name: (cur.name as string) || s.name,
+          nameStale: !!st.name,
         };
       }),
     );
@@ -198,6 +212,7 @@ export class MenuTranslationsService {
       items.map(async (it: any) => {
         const base = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, 'es-ES');
         const cur = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, locale);
+        const st = await this.i18n.getStaleKeyMap(tenantId, 'menu_item', it.id, locale);
         return {
           id: it.id,
           sectionId: it.section_id,
@@ -205,6 +220,8 @@ export class MenuTranslationsService {
           baseDescription: (base.description as string) || it.description || '',
           name: (cur.name as string) || it.name,
           description: (cur.description as string) || it.description || '',
+          nameStale: !!st.name,
+          descriptionStale: !!st.description,
         };
       }),
     );
@@ -218,6 +235,8 @@ export class MenuTranslationsService {
         baseDescription: (baseMenu.description as string) || m0.description || '',
         name: (curMenu.name as string) || m0.name,
         description: (curMenu.description as string) || m0.description || '',
+        nameStale: !!menuStale.name,
+        descriptionStale: !!menuStale.description,
       },
       sections: sectionRows,
       items: itemRows,

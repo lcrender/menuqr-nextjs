@@ -20,6 +20,7 @@ export type PlanLimitPersistPayload = {
   restaurantLimit: number;
   menuLimit: number;
   productLimit: number;
+  autoTranslateMonthlyPerUser: number;
   gourmetTemplate: boolean;
   productPhotosAllowed: boolean;
   productHighlightAllowed: boolean;
@@ -35,6 +36,7 @@ type OverrideRow = {
   product_photos_allowed: boolean;
   product_highlight_allowed: boolean;
   pro_only_templates: unknown;
+  auto_translate_monthly_per_user?: number | null;
 };
 
 @Injectable()
@@ -83,11 +85,16 @@ export class PlanLimitsService {
   }
 
   private mergeRow(base: TenantPlanLimitsRow, o: OverrideRow): TenantPlanLimitsRow {
+    const at =
+      typeof o.auto_translate_monthly_per_user === 'number' && Number.isFinite(o.auto_translate_monthly_per_user)
+        ? o.auto_translate_monthly_per_user
+        : base.autoTranslateMonthlyPerUser;
     return {
       ...base,
       restaurantLimit: o.restaurant_limit,
       menuLimit: o.menu_limit,
       productLimit: o.product_limit,
+      autoTranslateMonthlyPerUser: at,
       gourmetTemplate: o.gourmet_template,
       productPhotosAllowed: o.product_photos_allowed,
       productHighlightAllowed: o.product_highlight_allowed,
@@ -105,7 +112,8 @@ export class PlanLimitsService {
     try {
       overrides = await this.postgres.queryRaw<OverrideRow>(
         `SELECT plan_key, restaurant_limit, menu_limit, product_limit,
-                gourmet_template, product_photos_allowed, product_highlight_allowed, pro_only_templates
+                gourmet_template, product_photos_allowed, product_highlight_allowed, pro_only_templates,
+                auto_translate_monthly_per_user
          FROM tenant_plan_limit_overrides`,
       );
     } catch (e) {
@@ -200,8 +208,9 @@ export class PlanLimitsService {
       await this.postgres.executeRaw(
         `INSERT INTO tenant_plan_limit_overrides (
            plan_key, restaurant_limit, menu_limit, product_limit,
-           gourmet_template, product_photos_allowed, product_highlight_allowed, pro_only_templates, updated_at
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, NOW())
+           gourmet_template, product_photos_allowed, product_highlight_allowed, pro_only_templates,
+           auto_translate_monthly_per_user, updated_at
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, NOW())
          ON CONFLICT (plan_key) DO UPDATE SET
            restaurant_limit = EXCLUDED.restaurant_limit,
            menu_limit = EXCLUDED.menu_limit,
@@ -210,6 +219,7 @@ export class PlanLimitsService {
            product_photos_allowed = EXCLUDED.product_photos_allowed,
            product_highlight_allowed = EXCLUDED.product_highlight_allowed,
            pro_only_templates = EXCLUDED.pro_only_templates,
+           auto_translate_monthly_per_user = EXCLUDED.auto_translate_monthly_per_user,
            updated_at = NOW()`,
         [
           p.planKey,
@@ -220,6 +230,7 @@ export class PlanLimitsService {
           p.productPhotosAllowed,
           p.productHighlightAllowed,
           JSON.stringify(p.proOnlyTemplatesInAdmin),
+          p.autoTranslateMonthlyPerUser,
         ],
       );
     }
@@ -231,6 +242,7 @@ export class PlanLimitsService {
       ['restaurantLimit', p.restaurantLimit],
       ['menuLimit', p.menuLimit],
       ['productLimit', p.productLimit],
+      ['autoTranslateMonthlyPerUser', p.autoTranslateMonthlyPerUser],
     ] as const;
     for (const [name, v] of nums) {
       if (!Number.isInteger(v) || v < -1) {
@@ -242,5 +254,10 @@ export class PlanLimitsService {
   async allowsProductHighlight(plan: string): Promise<boolean> {
     const row = await this.getEffectiveRow(plan);
     return row.productHighlightAllowed;
+  }
+
+  async getAutoTranslateMonthlyPerUser(plan: string): Promise<number> {
+    const row = await this.getEffectiveRow(plan);
+    return row.autoTranslateMonthlyPerUser;
   }
 }

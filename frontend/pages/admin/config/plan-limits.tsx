@@ -9,6 +9,7 @@ type PlanRow = {
   restaurantLimit: number;
   menuLimit: number;
   productLimit: number;
+  autoTranslateMonthlyPerUser: number;
   gourmetTemplate: boolean;
   productPhotosAllowed: boolean;
   productHighlightAllowed: boolean;
@@ -55,7 +56,13 @@ export default function AdminConfigPlanLimits() {
     setError(null);
     try {
       const res = await api.get<ApiResponse>('/admin/plan-limits');
-      setPlans(res.data.plans || []);
+      setPlans(
+        (res.data.plans || []).map((p: PlanRow) => ({
+          ...p,
+          autoTranslateMonthlyPerUser:
+            typeof p.autoTranslateMonthlyPerUser === 'number' ? p.autoTranslateMonthlyPerUser : 6,
+        })),
+      );
       setLegend(res.data.legend);
     } catch (e: any) {
       setError(e.response?.data?.message || 'No se pudieron cargar los límites');
@@ -92,6 +99,8 @@ export default function AdminConfigPlanLimits() {
           restaurantLimit: p.restaurantLimit,
           menuLimit: p.menuLimit,
           productLimit: p.productLimit,
+          autoTranslateMonthlyPerUser:
+            typeof p.autoTranslateMonthlyPerUser === 'number' ? p.autoTranslateMonthlyPerUser : 6,
           gourmetTemplate: p.gourmetTemplate,
           productPhotosAllowed: p.productPhotosAllowed,
           productHighlightAllowed: p.productHighlightAllowed,
@@ -131,6 +140,10 @@ export default function AdminConfigPlanLimits() {
           <ul className="small text-muted mb-4">
             {legend.unlimited && <li>{legend.unlimited}</li>}
             {legend.templates && <li>{legend.templates}</li>}
+            <li>
+              Traducción automática (beta): <strong>autoTranslateMonthlyPerUser</strong> = ejecuciones por usuario al
+              mes (todos los menús). 0 = desactivado; -1 = ilimitado.
+            </li>
           </ul>
         )}
 
@@ -200,6 +213,18 @@ export default function AdminConfigPlanLimits() {
                         value={p.productLimit}
                         min={-1}
                         onChange={(e) => updatePlan(p.key, { productLimit: parseInt(e.target.value, 10) || 0 })}
+                      />
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label small">Trad. automática / usuario / mes (0=off, -1=∞)</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={p.autoTranslateMonthlyPerUser ?? 6}
+                        min={-1}
+                        onChange={(e) =>
+                          updatePlan(p.key, { autoTranslateMonthlyPerUser: parseInt(e.target.value, 10) || 0 })
+                        }
                       />
                     </div>
                     <div className="col-md-6">

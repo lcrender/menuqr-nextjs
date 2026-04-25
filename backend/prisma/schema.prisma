@@ -55,6 +55,8 @@ model User {
   emailChangeExpiresAt     DateTime? @map("email_change_expires_at")
   pendingPlan              String?   @map("pending_plan")
   pendingBillingCycle      PlanType? @map("pending_billing_cycle")
+  /// null = heredar política global; false = desactivar traducción automática para este usuario; true = explícito activo
+  autoTranslateEnabled     Boolean?  @map("auto_translate_enabled")
   lastLoginAt              DateTime? @map("last_login_at")
   revokedSessionsBefore  DateTime? @map("revoked_sessions_before")
   registrationCountry     String?   @map("registration_country") // detectado por IP al registrarse
@@ -69,6 +71,7 @@ model User {
   subscriptions              Subscription[]
   subscriptionCheckoutSessions SubscriptionCheckoutSession[]
   paymentAttempts           PaymentAttempt[]
+  autoTranslateUsages        AutoTranslateUsage[]
 
   // Índices y constraints
   @@unique([tenantId, email])
@@ -194,6 +197,8 @@ model TenantPlanLimitOverride {
   productPhotosAllowed Boolean  @map("product_photos_allowed")
   productHighlightAllowed Boolean @default(false) @map("product_highlight_allowed")
   proOnlyTemplates     Json     @default("[]") @map("pro_only_templates")
+  /// Máximo de ejecuciones de traducción automática por usuario al mes (-1 = ilimitado). Default 6.
+  autoTranslateMonthlyPerUser Int      @default(6) @map("auto_translate_monthly_per_user")
   updatedAt            DateTime @updatedAt @map("updated_at")
 
   @@map("tenant_plan_limit_overrides")
@@ -241,6 +246,8 @@ model Menu {
   sort       Int         @default(0) // Orden de visualización
   /// Metadatos de idiomas extra (label, bandera) para el panel Traducciones; ver API menu-translations
   translationManifest Json?     @map("translation_manifest")
+  /// Si true, ya se ejecutó traducción automática al menos una vez (salvo “forzar retraducción”).
+  autoTranslated Boolean   @default(false) @map("auto_translated")
   isActive   Boolean     @default(true) @map("is_active")
   createdAt  DateTime    @default(now()) @map("created_at")
   updatedAt  DateTime    @updatedAt @map("updated_at")
@@ -402,6 +409,9 @@ model Translation {
   locale     String   @default("es-ES")
   key        String
   value      String
+  /// true si el texto base (es-ES) cambió después de guardar esta traducción (solo locales != es-ES).
+  stale      Boolean  @default(false)
+  staleAt    DateTime? @map("stale_at")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
@@ -411,6 +421,38 @@ model Translation {
   // Índices y constraints
   @@unique([tenantId, entityType, entityId, locale, key])
   @@map("translations")
+}
+
+/// Caché global texto → traducción (reduce llamadas a Google Cloud Translation).
+model TranslationTextCache {
+  id              String   @id @default(cuid())
+  sourceLocale    String   @map("source_locale")
+  targetLocale    String   @map("target_locale")
+  sourceHash      String   @map("source_hash") @db.Char(64)
+  translatedText  String   @map("translated_text") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([sourceLocale, targetLocale, sourceHash], map: "translation_text_cache_src_tgt_hash_key")
+  @@map("translation_text_cache")
+}
+
+/// Cada ejecución de traducción automática (métricas y límite mensual por usuario).
+model AutoTranslateUsage {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  tenantId      String   @map("tenant_id")
+  menuId        String   @map("menu_id")
+  targetLocale  String   @map("target_locale")
+  forced        Boolean  @default(false)
+  segmentCount  Int      @default(0) @map("segment_count")
+  apiUnits      Int      @default(0) @map("api_units")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([tenantId, createdAt])
+  @@map("auto_translate_usage")
 }
 
 model AuditLog {

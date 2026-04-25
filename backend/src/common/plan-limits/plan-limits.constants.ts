@@ -11,6 +11,11 @@ export interface TenantPlanLimitsRow {
   restaurantLimit: number;
   menuLimit: number;
   productLimit: number;
+  /**
+   * Máximo de ejecuciones de traducción automática (beta) por usuario al mes (todos los menús).
+   * 0 = deshabilitado; -1 = ilimitado.
+   */
+  autoTranslateMonthlyPerUser: number;
   /** Puede usar plantilla Gourmet */
   gourmetTemplate: boolean;
   /** Fotos en productos (MinIO) */
@@ -42,6 +47,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       restaurantLimit: 1,
       menuLimit: 3,
       productLimit: 30,
+      autoTranslateMonthlyPerUser: 0,
       gourmetTemplate: false,
       productPhotosAllowed: false,
       productHighlightAllowed: false,
@@ -53,6 +59,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       restaurantLimit: 1,
       menuLimit: 6,
       productLimit: 60,
+      autoTranslateMonthlyPerUser: 0,
       gourmetTemplate: false,
       productPhotosAllowed: false,
       productHighlightAllowed: false,
@@ -64,6 +71,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       restaurantLimit: 3,
       menuLimit: 30,
       productLimit: 300,
+      autoTranslateMonthlyPerUser: 6,
       gourmetTemplate: true,
       productPhotosAllowed: true,
       productHighlightAllowed: true,
@@ -75,6 +83,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       restaurantLimit: 3,
       menuLimit: 30,
       productLimit: 300,
+      autoTranslateMonthlyPerUser: 6,
       gourmetTemplate: true,
       productPhotosAllowed: true,
       productHighlightAllowed: true,
@@ -87,6 +96,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       restaurantLimit: 10,
       menuLimit: -1,
       productLimit: 1200,
+      autoTranslateMonthlyPerUser: 6,
       gourmetTemplate: true,
       productPhotosAllowed: true,
       productHighlightAllowed: true,

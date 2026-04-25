@@ -14,9 +14,11 @@ type MenuRow = {
   status?: string;
   translationManifest: ManifestEntry[] | null;
   locales: string[];
+  /** Ya se ejecutó traducción automática (beta) al menos una vez */
+  autoTranslated?: boolean;
 };
 
-type WorkbenchSection = { id: string; baseName: string; name: string };
+type WorkbenchSection = { id: string; baseName: string; name: string; nameStale?: boolean };
 type WorkbenchItem = {
   id: string;
   sectionId: string;
@@ -24,6 +26,8 @@ type WorkbenchItem = {
   baseDescription: string;
   name: string;
   description: string;
+  nameStale?: boolean;
+  descriptionStale?: boolean;
 };
 
 function normalizePlanKey(plan: string | null | undefined): string {
@@ -34,7 +38,7 @@ function normalizePlanKey(plan: string | null | undefined): string {
 
 function planAllowsTranslations(plan: string | null | undefined): boolean {
   const p = normalizePlanKey(plan);
-  return p === 'pro' || p === 'pro_team';
+  return p === 'pro' || p === 'pro_team' || p === 'premium';
 }
 
 function regionFromLocale(locale: string): string | undefined {
@@ -145,6 +149,10 @@ export default function AdminTranslationsPage() {
 
   const [localeToggleKey, setLocaleToggleKey] = useState<string | null>(null);
 
+  const [autoBusyMenuId, setAutoBusyMenuId] = useState<string | null>(null);
+  const [autoLocalePick, setAutoLocalePick] = useState<Record<string, string>>({});
+  const [autoForce, setAutoForce] = useState<Record<string, boolean>>({});
+
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsMenu, setSettingsMenu] = useState<MenuRow | null>(null);
   const [settingsName, setSettingsName] = useState('');
@@ -160,6 +168,10 @@ export default function AdminTranslationsPage() {
   const [benchLocale, setBenchLocale] = useState('');
   const [benchMenuName, setBenchMenuName] = useState('');
   const [benchMenuDesc, setBenchMenuDesc] = useState('');
+  const [benchMenuStale, setBenchMenuStale] = useState<{ name: boolean; description: boolean }>({
+    name: false,
+    description: false,
+  });
   const [benchSections, setBenchSections] = useState<WorkbenchSection[]>([]);
   const [benchItems, setBenchItems] = useState<WorkbenchItem[]>([]);
   const [benchLoading, setBenchLoading] = useState(false);
@@ -434,6 +446,74 @@ export default function AdminTranslationsPage() {
     [isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg],
   );
 
+  useEffect(() => {
+    setAutoLocalePick((prev) => {
+      const next = { ...prev };
+      for (const m of menus) {
+        if (!next[m.id]) {
+          const f = (m.locales || []).find((l) => l !== 'es-ES');
+          if (f) next[m.id] = f;
+        }
+      }
+      return next;
+    });
+  }, [menus]);
+
+  const runMenuAutoTranslate = useCallback(
+    async (m: MenuRow) => {
+      const loc =
+        autoLocalePick[m.id] || (m.locales || []).find((l) => l !== 'es-ES');
+      if (!loc) {
+        showAlertMsg('Traducción automática', 'Agregá al menos un idioma distinto de es-ES.', 'warning');
+        return;
+      }
+      const force = !!autoForce[m.id];
+      setAutoBusyMenuId(m.id);
+      try {
+        const params: Record<string, string> = { locale: loc };
+        if (isSuperAdmin && tenantIdForApi) params.tenantId = tenantIdForApi;
+        const stRes = await api.get(`/menu-translations/menus/${m.id}/auto-translate/status`, { params });
+        const st = stRes.data as {
+          canRun?: boolean;
+          reason?: string;
+          monthlyUsed?: number;
+          monthlyLimit?: number;
+        };
+        if (!st.canRun) {
+          showAlertMsg('Traducción automática', st.reason || 'No se puede ejecutar.', 'warning');
+          return;
+        }
+        const extra = st.monthlyLimit != null ? ` Usos este mes: ${st.monthlyUsed}/${st.monthlyLimit}.` : '';
+        if (
+          !window.confirm(
+            `Se traducirá el menú desde español a ${loc}.${force ? ' Modo forzar: consume un uso aunque el menú ya tenga traducción automática previa.' : ''}${extra} ¿Continuar?`,
+          )
+        ) {
+          return;
+        }
+        const body: Record<string, unknown> = { targetLocale: loc, force };
+        if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
+        const res = await api.post(`/menu-translations/menus/${m.id}/auto-translate`, body);
+        const d = res.data as { segmentCount?: number; apiUnits?: number; cacheHits?: number };
+        showAlertMsg(
+          'Traducción automática',
+          `Listo: ${d.segmentCount ?? 0} segmentos. Llamadas nuevas a la API: ${d.apiUnits ?? 0}. Reutilizados desde caché: ${d.cacheHits ?? 0}.`,
+          'success',
+        );
+        await loadMenus();
+      } catch (e: unknown) {
+        const msg =
+          (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          (e as Error)?.message ||
+          'Error';
+        showAlertMsg('Traducción automática', String(msg), 'error');
+      } finally {
+        setAutoBusyMenuId(null);
+      }
+    },
+    [autoLocalePick, autoForce, isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg],
+  );
+
   const openWorkbench = async (menuId: string, locale: string) => {
     if (locale === 'es-ES') {
       showAlertMsg(
@@ -454,6 +534,10 @@ export default function AdminTranslationsPage() {
       const d = res.data;
       setBenchMenuName(d.menu?.name ?? '');
       setBenchMenuDesc(d.menu?.description ?? '');
+      setBenchMenuStale({
+        name: !!d.menu?.nameStale,
+        description: !!d.menu?.descriptionStale,
+      });
       setBenchSections(Array.isArray(d.sections) ? d.sections : []);
       setBenchItems(Array.isArray(d.items) ? d.items : []);
     } catch (e: any) {
@@ -511,6 +595,13 @@ export default function AdminTranslationsPage() {
     return map;
   }, [benchItems]);
 
+  const benchHasStaleTranslations = useMemo(() => {
+    if (benchMenuStale.name || benchMenuStale.description) return true;
+    if (benchSections.some((s) => s.nameStale)) return true;
+    if (benchItems.some((it) => it.nameStale || it.descriptionStale)) return true;
+    return false;
+  }, [benchMenuStale, benchSections, benchItems]);
+
   if (loadingPage || !user) {
     return (
       <div className="container mt-5 text-center">
@@ -543,7 +634,9 @@ export default function AdminTranslationsPage() {
         <p className="text-muted small mb-4">
           Gestioná idiomas por menú: banderas, editor por idioma y corrección del código BCP-47 si hubo un error al
           crear el idioma. Usá el interruptor <strong>Menú público</strong> en cada idioma para mostrarlo u ocultarlo en
-          la carta QR (sigue disponible en el editor aunque esté oculto).
+          la carta QR (sigue disponible en el editor aunque esté oculto). En planes <strong>Pro</strong>,{' '}
+          <strong>Pro Team</strong> y <strong>Premium</strong> aparece <strong>Traducción automática (beta)</strong>{' '}
+          por menú (límite mensual por usuario según límites de planes).
         </p>
 
         <div className="row g-3 mb-4">
@@ -666,6 +759,67 @@ export default function AdminTranslationsPage() {
                           );
                         })}
                       </div>
+                      {canAccessPage && (m.locales || []).some((l) => l !== 'es-ES') && (
+                        <div className="mt-3 pt-3 border-top">
+                          <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <h3 className="h6 text-muted mb-0">Traducción automática (beta)</h3>
+                            {m.autoTranslated && (
+                              <span className="badge bg-info text-dark">Ya ejecutada en este menú</span>
+                            )}
+                          </div>
+                          <p className="small text-muted mb-2">
+                            Traduce todos los textos desde <strong>es-ES</strong> al idioma elegido (Google Cloud,
+                            servidor). Consumo mensual según tu plan (configurable por super admin en límites). Podés
+                            editar después a mano en «Traducir».
+                          </p>
+                          <div className="row g-2 align-items-end">
+                            <div className="col-md-4">
+                              <label className="form-label small mb-0">Idioma destino</label>
+                              <select
+                                className="form-select form-select-sm"
+                                value={autoLocalePick[m.id] || (m.locales || []).find((l) => l !== 'es-ES') || ''}
+                                onChange={(e) =>
+                                  setAutoLocalePick((prev) => ({ ...prev, [m.id]: e.target.value }))
+                                }
+                              >
+                                {(m.locales || [])
+                                  .filter((l) => l !== 'es-ES')
+                                  .map((l) => (
+                                    <option key={l} value={l}>
+                                      {defaultManifestDisplayLabel(l, mm[l]?.label)} ({l})
+                                    </option>
+                                  ))}
+                              </select>
+                            </div>
+                            <div className="col-md-4">
+                              <div className="form-check mt-2">
+                                <input
+                                  className="form-check-input"
+                                  type="checkbox"
+                                  id={`auto-force-${m.id}`}
+                                  checked={!!autoForce[m.id]}
+                                  onChange={(e) =>
+                                    setAutoForce((prev) => ({ ...prev, [m.id]: e.target.checked }))
+                                  }
+                                />
+                                <label className="form-check-label small" htmlFor={`auto-force-${m.id}`}>
+                                  Forzar retraducción (consume un uso aunque ya se haya traducido)
+                                </label>
+                              </div>
+                            </div>
+                            <div className="col-md-4">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-primary w-100"
+                                disabled={autoBusyMenuId === m.id}
+                                onClick={() => void runMenuAutoTranslate(m)}
+                              >
+                                {autoBusyMenuId === m.id ? 'Procesando…' : 'Traducir automáticamente'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -907,14 +1061,31 @@ export default function AdminTranslationsPage() {
                   </div>
                 ) : (
                   <>
+                    {benchHasStaleTranslations && (
+                      <div className="alert alert-warning py-2 small mb-3" role="status">
+                        Hay textos marcados como <strong>desactualizados</strong>: cambió el contenido en español
+                        (base) después de la última traducción. Revisalos y guardá para confirmar que siguen siendo
+                        correctos en {benchLocale}.
+                      </div>
+                    )}
                     <div className="mb-4 p-3 border rounded bg-light">
                       <h6 className="text-muted small text-uppercase">Menú</h6>
                       <div className="mb-2">
-                        <label className="form-label small">Nombre</label>
+                        <label className="form-label small d-flex align-items-center gap-2 flex-wrap">
+                          Nombre
+                          {benchMenuStale.name && (
+                            <span className="badge bg-warning text-dark">Desactualizado</span>
+                          )}
+                        </label>
                         <input className="form-control" value={benchMenuName} onChange={(e) => setBenchMenuName(e.target.value)} />
                       </div>
                       <div>
-                        <label className="form-label small">Descripción</label>
+                        <label className="form-label small d-flex align-items-center gap-2 flex-wrap">
+                          Descripción
+                          {benchMenuStale.description && (
+                            <span className="badge bg-warning text-dark">Desactualizado</span>
+                          )}
+                        </label>
                         <textarea
                           className="form-control"
                           rows={2}
@@ -928,6 +1099,9 @@ export default function AdminTranslationsPage() {
                         <div className="d-flex align-items-baseline gap-2 mb-2">
                           <h6 className="mb-0">Sección</h6>
                           <span className="small text-muted">(referencia: {sec.baseName})</span>
+                          {sec.nameStale && (
+                            <span className="badge bg-warning text-dark small">Nombre desactualizado</span>
+                          )}
                         </div>
                         <input
                           className="form-control mb-3"
@@ -941,13 +1115,23 @@ export default function AdminTranslationsPage() {
                                 Ref: {it.baseName}
                                 {it.baseDescription ? ` — ${it.baseDescription.slice(0, 80)}${it.baseDescription.length > 80 ? '…' : ''}` : ''}
                               </div>
-                              <label className="form-label small mb-0">Nombre</label>
+                              <label className="form-label small mb-0 d-flex align-items-center gap-2 flex-wrap">
+                                Nombre
+                                {it.nameStale && (
+                                  <span className="badge bg-warning text-dark">Desactualizado</span>
+                                )}
+                              </label>
                               <input
                                 className="form-control form-control-sm mb-2"
                                 value={it.name}
                                 onChange={(e) => updateItem(it.id, { name: e.target.value })}
                               />
-                              <label className="form-label small mb-0">Descripción</label>
+                              <label className="form-label small mb-0 d-flex align-items-center gap-2 flex-wrap">
+                                Descripción
+                                {it.descriptionStale && (
+                                  <span className="badge bg-warning text-dark">Desactualizado</span>
+                                )}
+                              </label>
                               <textarea
                                 className="form-control form-control-sm"
                                 rows={2}

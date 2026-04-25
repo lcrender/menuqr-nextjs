@@ -75,6 +75,15 @@ export const validationSchema = Joi.object({
   CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
   CORS_CREDENTIALS: Joi.boolean().default(true),
 
+  /** Opcional: API key de Google Cloud Translation v2 (solo backend). Reservado; el proveedor activo es Microsoft. */
+  GOOGLE_TRANSLATE_API_KEY: Joi.string().optional().allow(''),
+
+  /** Microsoft Translator (Azure Cognitive Services): clave y región del recurso. */
+  MICROSOFT_TRANSLATOR_KEY: Joi.string().optional().allow(''),
+  MICROSOFT_TRANSLATOR_REGION: Joi.string().optional().allow(''),
+  /** Opcional; por defecto https://api.cognitive.microsofttranslator.com */
+  MICROSOFT_TRANSLATOR_ENDPOINT: Joi.string().optional().allow(''),
+
   // ========================================
   // SEGURIDAD
   // ========================================

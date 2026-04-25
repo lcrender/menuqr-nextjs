@@ -25,6 +25,14 @@ export class PlanLimitItemDto {
   @Min(-1)
   productLimit!: number;
 
+  @ApiProperty({
+    description:
+      'Máximo de traducciones automáticas (beta) por usuario al mes (todos los menús). 0 = desactivado; -1 = ilimitado.',
+  })
+  @IsInt()
+  @Min(-1)
+  autoTranslateMonthlyPerUser!: number;
+
   @ApiProperty()
   @IsBoolean()
   gourmetTemplate!: boolean;
