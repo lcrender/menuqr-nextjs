@@ -59,13 +59,30 @@ export function tenantPlanAllowsTranslationFlagToggle(plan: string | null | unde
   return p === 'pro' || p === 'pro_team' || p === 'premium';
 }
 
+function normalizeTemplateConfigForFlags(templateConfig: Record<string, unknown> | string | null | undefined) {
+  if (templateConfig === undefined || templateConfig === null) return undefined;
+  if (typeof templateConfig === 'object' && !Array.isArray(templateConfig)) {
+    return templateConfig as Record<string, unknown>;
+  }
+  if (typeof templateConfig === 'string') {
+    try {
+      const o = JSON.parse(templateConfig) as unknown;
+      if (o && typeof o === 'object' && !Array.isArray(o)) return o as Record<string, unknown>;
+    } catch {
+      /* ignore */
+    }
+  }
+  return undefined;
+}
+
 /** Si el plan no califica, siempre true (mostrar banderas). */
 export function resolveShowTranslationFlagGlyphs(
   tenantPlan: string | null | undefined,
-  templateConfig: Record<string, unknown> | null | undefined,
+  templateConfig: Record<string, unknown> | string | null | undefined,
 ): boolean {
   if (!tenantPlanAllowsTranslationFlagToggle(tenantPlan)) return true;
-  const v = templateConfig?.showTranslationFlags;
+  const cfg = normalizeTemplateConfigForFlags(templateConfig);
+  const v = cfg?.showTranslationFlags;
   if (v === false) return false;
   return true;
 }

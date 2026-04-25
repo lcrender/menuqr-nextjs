@@ -5,7 +5,11 @@ import QRCode from 'react-qr-code';
 import api from '../../lib/axios';
 import AdminLayout from '../../components/AdminLayout';
 import PlanBadge from '../../components/profile/PlanBadge';
-import { buildTemplateConfigSummaryLines } from '../../lib/dashboard-template-config-summary';
+import {
+  buildTemplateConfigSummaryLines,
+  partitionTemplateSummaryLines,
+  type TemplateConfigSummaryLine,
+} from '../../lib/dashboard-template-config-summary';
 
 export type MenuSummary = {
   id: string;
@@ -70,28 +74,12 @@ function templateLabelFromSlug(card: DashboardRestaurantCard): string {
   return t || '';
 }
 
-function DashboardTemplateConfigSummary({ card }: { card: DashboardRestaurantCard }) {
-  const lines = useMemo(
-    () =>
-      buildTemplateConfigSummaryLines(
-        card.restaurantTemplate,
-        card.restaurantTemplateConfig,
-        card.restaurantPrimaryColor,
-        card.restaurantSecondaryColor,
-      ),
-    [
-      card.restaurantTemplate,
-      card.restaurantTemplateConfig,
-      card.restaurantPrimaryColor,
-      card.restaurantSecondaryColor,
-    ],
-  );
-
+function DashboardTemplateConfigLinesList({ lines }: { lines: TemplateConfigSummaryLine[] }) {
   if (lines.length === 0) return null;
 
   return (
     <ul
-      className="list-unstyled mb-0 mt-2 ps-0"
+      className="list-unstyled mb-0 ps-0"
       style={{
         fontSize: '0.75rem',
         lineHeight: 1.45,
@@ -144,24 +132,63 @@ function DashboardRestaurantTemplateBlock({
   card: DashboardRestaurantCard;
   templateLabel: string;
 }) {
+  const allLines = useMemo(
+    () =>
+      buildTemplateConfigSummaryLines(
+        card.restaurantTemplate,
+        card.restaurantTemplateConfig,
+        card.restaurantPrimaryColor,
+        card.restaurantSecondaryColor,
+      ),
+    [
+      card.restaurantTemplate,
+      card.restaurantTemplateConfig,
+      card.restaurantPrimaryColor,
+      card.restaurantSecondaryColor,
+    ],
+  );
+
+  const { generalLines, visibilityLines } = useMemo(
+    () => partitionTemplateSummaryLines(allLines),
+    [allLines],
+  );
+
   return (
-    <div className="flex-grow-1" style={{ minWidth: 0, maxWidth: 440 }}>
+    <div className="flex-grow-1 w-100" style={{ minWidth: 0 }}>
       <div>
         <span className="small text-muted">Plantilla: </span>
         <span className="small fw-semibold text-dark">{templateLabel || '—'}</span>
       </div>
-      <DashboardTemplateConfigSummary card={card} />
-      <div className="d-flex flex-wrap gap-2 mt-2">
-        <Link
-          href={`/admin/templates/configure/${card.restaurantId}`}
-          className="btn btn-sm btn-outline-primary"
-          style={{ fontWeight: 600, textDecoration: 'none' }}
-        >
-          Configuración de plantilla
-        </Link>
-        <Link href="/admin/templates" className="btn btn-sm btn-outline-secondary" style={{ textDecoration: 'none' }}>
-          Cambiar plantilla
-        </Link>
+      <div className="row g-2 g-md-3 mt-2 align-items-start">
+        <div className="col-12 col-md-4">
+          <DashboardTemplateConfigLinesList lines={generalLines} />
+        </div>
+        <div className="col-12 col-md-4">
+          <DashboardTemplateConfigLinesList lines={visibilityLines} />
+        </div>
+        <div className="col-12 col-md-4">
+          <div className="d-flex flex-column gap-2">
+            <Link
+              href={`/admin/templates/configure/${card.restaurantId}`}
+              className="btn btn-sm btn-primary text-white w-100"
+              style={{ fontWeight: 600, textDecoration: 'none', border: 'none' }}
+            >
+              Configuración de plantilla
+            </Link>
+            <Link
+              href="/admin/templates"
+              className="btn btn-sm text-white w-100"
+              style={{
+                fontWeight: 600,
+                textDecoration: 'none',
+                backgroundColor: '#495057',
+                border: '1px solid #3d4449',
+              }}
+            >
+              Cambiar plantilla
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

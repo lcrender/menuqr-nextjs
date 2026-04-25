@@ -82,3 +82,29 @@ export function buildTemplateConfigSummaryLines(
 
   return lines;
 }
+
+/** Opciones «Mostrar…» / visibilidad para columna dedicada en el dashboard (desktop). */
+const DASHBOARD_VISIBILITY_COLUMN_ORDER = [
+  'showCoverImage',
+  'showLogo',
+  'showRestaurantName',
+  'showRestaurantDescription',
+  'showTranslationFlags',
+  'showProductImages',
+] as const;
+
+/**
+ * Separa colores/tipografía del bloque de visibilidad (portada, logo, nombre, etc.).
+ */
+export function partitionTemplateSummaryLines(lines: TemplateConfigSummaryLine[]): {
+  generalLines: TemplateConfigSummaryLine[];
+  visibilityLines: TemplateConfigSummaryLine[];
+} {
+  const visibilityIds = new Set<string>(DASHBOARD_VISIBILITY_COLUMN_ORDER);
+  const byId = new Map(lines.map((l) => [l.id, l]));
+  const visibilityLines = DASHBOARD_VISIBILITY_COLUMN_ORDER.map((id) => byId.get(id)).filter(
+    (l): l is TemplateConfigSummaryLine => l !== undefined,
+  );
+  const generalLines = lines.filter((l) => !visibilityIds.has(l.id));
+  return { generalLines, visibilityLines };
+}

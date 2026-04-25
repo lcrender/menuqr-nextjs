@@ -273,6 +273,7 @@ export default function RestaurantPage() {
           primaryColor: data.primaryColor || '#007bff',
           secondaryColor: data.secondaryColor || '#0056b3',
           templateConfig: data.templateConfig ?? undefined,
+          tenantPlan: data.tenantPlan,
         });
         
         // Ordenar menús por sort (si existe) o mantener el orden del backend
