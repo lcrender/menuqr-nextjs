@@ -248,6 +248,8 @@ model Menu {
   translationManifest Json?     @map("translation_manifest")
   /// Si true, ya se ejecutó traducción automática al menos una vez (salvo “forzar retraducción”).
   autoTranslated Boolean   @default(false) @map("auto_translated")
+  /// Locales (BCP-47) que ya se tradujeron automáticamente para este menú.
+  autoTranslatedLocales Json     @default("[]") @map("auto_translated_locales")
   isActive   Boolean     @default(true) @map("is_active")
   createdAt  DateTime    @default(now()) @map("created_at")
   updatedAt  DateTime    @updatedAt @map("updated_at")

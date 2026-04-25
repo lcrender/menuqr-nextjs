@@ -20,6 +20,8 @@ export class MenuTranslationsService {
   private translationManifestColumn: boolean | null = null;
   /** Cache: columna `menus.auto_translated` (migración traducción automática beta). */
   private autoTranslatedColumn: boolean | null = null;
+  /** Cache: columna `menus.auto_translated_locales`. */
+  private autoTranslatedLocalesColumn: boolean | null = null;
 
   constructor(
     private readonly postgres: PostgresService,
@@ -60,6 +62,29 @@ export class MenuTranslationsService {
     } catch {
       return false;
     }
+  }
+
+  private async menusHaveAutoTranslatedLocalesColumn(): Promise<boolean> {
+    if (this.autoTranslatedLocalesColumn === true) return true;
+    try {
+      const rows = await this.postgres.queryRaw<{ n: string }>(
+        `SELECT COUNT(*)::text AS n
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'menus'
+           AND column_name = 'auto_translated_locales'`,
+      );
+      const ok = parseInt(rows[0]?.n || '0', 10) > 0;
+      if (ok) this.autoTranslatedLocalesColumn = true;
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+
+  private parseJsonbLocaleArray(raw: unknown): string[] {
+    if (!Array.isArray(raw)) return [];
+    return raw.map((x) => String(x));
   }
 
   private manifestMissingMessage() {
@@ -137,9 +162,13 @@ export class MenuTranslationsService {
   async listMenusForRestaurant(tenantId: string, restaurantId: string) {
     const hasManifestCol = await this.menusHaveTranslationManifestColumn();
     const hasAutoTranslatedCol = await this.menusHaveAutoTranslatedColumn();
+    const hasAutoTranslatedLocalesCol = await this.menusHaveAutoTranslatedLocalesColumn();
     const cols = ['id', 'name', 'slug', 'restaurant_id', 'status'];
     if (hasManifestCol) cols.push('translation_manifest');
     if (hasAutoTranslatedCol) cols.push('COALESCE(auto_translated, false) AS auto_translated');
+    if (hasAutoTranslatedLocalesCol) {
+      cols.push(`COALESCE(auto_translated_locales, '[]'::jsonb) AS auto_translated_locales`);
+    }
     const selectList = cols.join(', ');
     const menus = await this.postgres.queryRaw<any>(
       `SELECT ${selectList}
@@ -158,6 +187,7 @@ export class MenuTranslationsService {
         status: m.status,
         translationManifest: hasManifestCol ? (m.translation_manifest ?? null) : null,
         autoTranslated: hasAutoTranslatedCol ? !!m.auto_translated : false,
+        autoTranslatedLocales: hasAutoTranslatedLocalesCol ? this.parseJsonbLocaleArray(m.auto_translated_locales) : [],
         locales,
       });
     }

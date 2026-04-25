@@ -74,6 +74,7 @@ interface Restaurant {
   primaryColor?: string;
   secondaryColor?: string;
   templateConfig?: Record<string, unknown>;
+  tenantPlan?: string;
 }
 
 interface MenuSection {

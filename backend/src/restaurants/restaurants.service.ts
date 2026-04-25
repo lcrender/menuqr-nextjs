@@ -15,6 +15,21 @@ export class RestaurantsService {
     private readonly i18nService: I18nService,
   ) {}
 
+  private parseTemplateConfigJson(raw: unknown): Record<string, unknown> {
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      return raw as Record<string, unknown>;
+    }
+    if (typeof raw === 'string') {
+      try {
+        const o = JSON.parse(raw);
+        if (o && typeof o === 'object' && !Array.isArray(o)) return o as Record<string, unknown>;
+      } catch {
+        /* ignore */
+      }
+    }
+    return {};
+  }
+
   /**
    * Lista todos los restaurantes del tenant (sin límite por plan).
    * El límite del plan aplica a cuántos pueden estar activos a la vez; el usuario ve todos y elige cuál usar.
@@ -166,6 +181,9 @@ export class RestaurantsService {
     restaurantEmail?: string | null;
     restaurantPhone?: string | null;
     restaurantWebsite?: string | null;
+    restaurantPrimaryColor?: string | null;
+    restaurantSecondaryColor?: string | null;
+    restaurantTemplateConfig?: Record<string, unknown>;
     menusSummary?: { id: string; name: string; status: string; productCount: number }[];
   }> {
     const empty = {
@@ -225,6 +243,9 @@ export class RestaurantsService {
     restaurantEmail?: string | null;
     restaurantPhone?: string | null;
     restaurantWebsite?: string | null;
+    restaurantPrimaryColor?: string | null;
+    restaurantSecondaryColor?: string | null;
+    restaurantTemplateConfig?: Record<string, unknown>;
     menusSummary?: { id: string; name: string; status: string; productCount: number }[];
   }> {
     const belongs = await this.postgres.queryRaw<{ id: string }>(
@@ -262,9 +283,24 @@ export class RestaurantsService {
     if (hasMenu) progressPercentage = 66;
     if (hasProductLinkedToMenu) progressPercentage = 100;
 
-    const restaurantRow = await this.postgres.queryRaw<{ is_active: boolean; slug: string | null; name: string | null; address: string | null; logo_url: string | null; template: string | null; email: string | null; phone: string | null; website: string | null }>(
-      `SELECT is_active, slug, name, address, logo_url, template, email, phone, website FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
-      [restaurantId]
+    const restaurantRow = await this.postgres.queryRaw<{
+      is_active: boolean;
+      slug: string | null;
+      name: string | null;
+      address: string | null;
+      logo_url: string | null;
+      template: string | null;
+      email: string | null;
+      phone: string | null;
+      website: string | null;
+      primary_color: string | null;
+      secondary_color: string | null;
+      template_config: unknown;
+    }>(
+      `SELECT is_active, slug, name, address, logo_url, template, email, phone, website,
+              primary_color, secondary_color, template_config
+       FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [restaurantId],
     );
     const restaurantIsActive = restaurantRow[0]?.is_active ?? true;
     const restaurantSlug = restaurantRow[0]?.slug ?? null;
@@ -275,6 +311,9 @@ export class RestaurantsService {
     const restaurantEmail = restaurantRow[0]?.email ?? null;
     const restaurantPhone = restaurantRow[0]?.phone ?? null;
     const restaurantWebsite = restaurantRow[0]?.website ?? null;
+    const restaurantPrimaryColor = restaurantRow[0]?.primary_color ?? null;
+    const restaurantSecondaryColor = restaurantRow[0]?.secondary_color ?? null;
+    const restaurantTemplateConfig = this.parseTemplateConfigJson(restaurantRow[0]?.template_config);
 
     const menusSummaryRows = await this.postgres.queryRaw<any>(
       `SELECT m.id, m.name, m.status, COUNT(mi.id)::text as product_count
@@ -307,6 +346,9 @@ export class RestaurantsService {
       restaurantEmail,
       restaurantPhone,
       restaurantWebsite,
+      restaurantPrimaryColor,
+      restaurantSecondaryColor,
+      restaurantTemplateConfig,
       menusSummary,
     };
   }
@@ -330,6 +372,9 @@ export class RestaurantsService {
     restaurantEmail?: string | null;
     restaurantPhone?: string | null;
     restaurantWebsite?: string | null;
+    restaurantPrimaryColor?: string | null;
+    restaurantSecondaryColor?: string | null;
+    restaurantTemplateConfig?: Record<string, unknown>;
     menusSummary?: { id: string; name: string; status: string; productCount: number }[];
   }>> {
     const rows = await this.postgres.queryRaw<{ id: string }>(
@@ -346,11 +391,18 @@ export class RestaurantsService {
     return cards;
   }
 
+  private planAllowsTemplateTranslationFlags(plan: string | null | undefined): boolean {
+    const raw = (plan || 'free').toString().toLowerCase().trim().replace(/\s+/g, '_');
+    const n = raw === 'proteam' ? 'pro_team' : raw;
+    return n === 'pro' || n === 'pro_team' || n === 'premium';
+  }
+
   async findById(id: string, tenantId?: string) {
     let query = `
       SELECT 
         r.id,
         r.tenant_id as "tenantId",
+        (SELECT t.plan FROM tenants t WHERE t.id = r.tenant_id AND t.deleted_at IS NULL LIMIT 1) as "tenantPlan",
         r.name,
         r.slug,
         r.description,
@@ -520,7 +572,10 @@ export class RestaurantsService {
     return this.findById(id, tenantId);
   }
 
-  async update(id: string, tenantId: string, data: {
+  async update(
+    id: string,
+    tenantId: string,
+    data: {
     name?: string;
     description?: string;
     street?: string;
@@ -541,7 +596,9 @@ export class RestaurantsService {
     additionalCurrencies?: string[];
     primaryColor?: string;
     secondaryColor?: string;
-  }) {
+  },
+    opts?: { userRole?: string },
+  ) {
     const restaurant = await this.findById(id, tenantId);
 
     const updates: string[] = [];
@@ -599,8 +656,19 @@ export class RestaurantsService {
       this.logger.debug(`Actualizando secondary_color a: ${data.secondaryColor}`);
     }
     if (data.templateConfig !== undefined) {
+      const plan = await this.getTenantPlan(tenantId);
+      const canSetTranslationFlags =
+        opts?.userRole === 'SUPER_ADMIN' || this.planAllowsTemplateTranslationFlags(plan);
+      const prevTc =
+        typeof restaurant.templateConfig === 'object' && restaurant.templateConfig !== null
+          ? (restaurant.templateConfig as Record<string, unknown>)
+          : {};
+      const merged: Record<string, unknown> = { ...prevTc, ...data.templateConfig };
+      if (!canSetTranslationFlags) {
+        delete merged.showTranslationFlags;
+      }
       updates.push(`template_config = $${paramIndex++}`);
-      params.push(JSON.stringify(data.templateConfig));
+      params.push(JSON.stringify(merged));
     }
 
     // Manejar dirección: si se proporcionan campos individuales, construir dirección completa

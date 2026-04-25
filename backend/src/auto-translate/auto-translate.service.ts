@@ -71,6 +71,8 @@ type TextSegment = {
 @Injectable()
 export class AutoTranslateService {
   private readonly logger = new Logger(AutoTranslateService.name);
+  /** Cache: columna `menus.auto_translated_locales`. */
+  private autoTranslatedLocalesColumn: boolean | null = null;
 
   constructor(
     private readonly postgres: PostgresService,
@@ -206,6 +208,61 @@ export class AutoTranslateService {
     return n === 'pro' || n === 'pro_team' || n === 'premium';
   }
 
+  private async menusHaveAutoTranslatedLocalesColumn(): Promise<boolean> {
+    if (this.autoTranslatedLocalesColumn === true) return true;
+    try {
+      const rows = await this.postgres.queryRaw<{ n: string }>(
+        `SELECT COUNT(*)::text AS n
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'menus'
+           AND column_name = 'auto_translated_locales'`,
+      );
+      const ok = parseInt(rows[0]?.n || '0', 10) > 0;
+      if (ok) this.autoTranslatedLocalesColumn = true;
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+
+  private parseJsonbLocaleArray(raw: unknown): string[] {
+    if (!Array.isArray(raw)) return [];
+    return raw.map((x) => String(x));
+  }
+
+  private async readMenuAutoTranslateState(
+    tenantId: string,
+    menuId: string,
+  ): Promise<{ id: string; auto_translated: boolean; locales: string[] | null }> {
+    const hasLocalesCol = await this.menusHaveAutoTranslatedLocalesColumn();
+    if (hasLocalesCol) {
+      const rows = await this.postgres.queryRaw<{
+        id: string;
+        auto_translated: boolean;
+        j: unknown;
+      }>(
+        `SELECT id, COALESCE(auto_translated, false) AS auto_translated,
+                COALESCE(auto_translated_locales, '[]'::jsonb) AS j
+         FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+        [menuId, tenantId],
+      );
+      if (!rows[0]) throw new NotFoundException('Menú no encontrado');
+      return {
+        id: rows[0].id,
+        auto_translated: !!rows[0].auto_translated,
+        locales: this.parseJsonbLocaleArray(rows[0].j),
+      };
+    }
+    const rows = await this.postgres.queryRaw<{ id: string; auto_translated: boolean }>(
+      `SELECT id, COALESCE(auto_translated, false) AS auto_translated
+       FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [menuId, tenantId],
+    );
+    if (!rows[0]) throw new NotFoundException('Menú no encontrado');
+    return { id: rows[0].id, auto_translated: !!rows[0].auto_translated, locales: null };
+  }
+
   async countMonthlyUsageUtc(userId: string): Promise<number> {
     const rows = await this.postgres.queryRaw<{ n: string }>(
       `SELECT COUNT(*)::text AS n
@@ -216,16 +273,6 @@ export class AutoTranslateService {
       [userId],
     );
     return parseInt(rows[0]?.n || '0', 10) || 0;
-  }
-
-  private async assertMenuBelongs(tenantId: string, menuId: string): Promise<{ id: string; auto_translated: boolean }> {
-    const rows = await this.postgres.queryRaw<{ id: string; auto_translated: boolean }>(
-      `SELECT id, COALESCE(auto_translated, false) AS auto_translated
-       FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [menuId, tenantId],
-    );
-    if (!rows[0]) throw new NotFoundException('Menú no encontrado');
-    return rows[0];
   }
 
   async getStatus(
@@ -246,8 +293,9 @@ export class AutoTranslateService {
     const monthlyUsed = await this.countMonthlyUsageUtc(userId);
     let menuAutoTranslated = false;
     try {
-      const m = await this.assertMenuBelongs(tenantId, menuId);
-      menuAutoTranslated = !!m.auto_translated;
+      const st = await this.readMenuAutoTranslateState(tenantId, menuId);
+      menuAutoTranslated =
+        st.locales !== null ? st.locales.includes(targetLocale) : !!st.auto_translated;
     } catch {
       /* not found handled elsewhere */
     }
@@ -337,11 +385,19 @@ export class AutoTranslateService {
     if (targetLocale === 'es-ES') {
       throw new BadRequestException('No se puede traducir al idioma base.');
     }
-    const menu = await this.assertMenuBelongs(tenantId, menuId);
-    if (menu.auto_translated && !force) {
-      throw new BadRequestException(
-        'Este menú ya fue traducido automáticamente. Marcá “Forzar retraducción” para volver a ejecutar (consume un uso).',
-      );
+    const st = await this.readMenuAutoTranslateState(tenantId, menuId);
+    if (!force) {
+      if (st.locales !== null) {
+        if (st.locales.includes(targetLocale)) {
+          throw new BadRequestException(
+            'Este idioma del menú ya fue traducido automáticamente. Marcá “Forzar retraducción” para volver a ejecutar (consume un uso).',
+          );
+        }
+      } else if (st.auto_translated) {
+        throw new BadRequestException(
+          'Este menú ya fue traducido automáticamente. Marcá “Forzar retraducción” para volver a ejecutar (consume un uso).',
+        );
+      }
     }
     const locales = await this.distinctLocalesForMenu(tenantId, menuId);
     if (!locales.includes(targetLocale)) {
@@ -349,7 +405,7 @@ export class AutoTranslateService {
         `El idioma ${targetLocale} no está agregado al menú. Agregalo primero en Traducciones.`,
       );
     }
-    return menu;
+    return { id: st.id };
   }
 
   private async distinctLocalesForMenu(tenantId: string, menuId: string): Promise<string[]> {
@@ -617,10 +673,26 @@ export class AutoTranslateService {
       await this.i18n.saveTranslations(tenantId, entityType, entityId, payload, targetLocale);
     }
 
-    await this.postgres.executeRaw(
-      `UPDATE menus SET auto_translated = true, updated_at = NOW() WHERE id = $1 AND tenant_id = $2`,
-      [menuId, tenantId],
-    );
+    const hasLocalesCol = await this.menusHaveAutoTranslatedLocalesColumn();
+    if (hasLocalesCol) {
+      await this.postgres.executeRaw(
+        `UPDATE menus SET
+          auto_translated_locales = CASE
+            WHEN COALESCE(auto_translated_locales, '[]'::jsonb) @> to_jsonb($3::text)
+            THEN COALESCE(auto_translated_locales, '[]'::jsonb)
+            ELSE COALESCE(auto_translated_locales, '[]'::jsonb) || to_jsonb($3::text)
+          END,
+          auto_translated = true,
+          updated_at = NOW()
+         WHERE id = $1 AND tenant_id = $2`,
+        [menuId, tenantId, targetLocale],
+      );
+    } else {
+      await this.postgres.executeRaw(
+        `UPDATE menus SET auto_translated = true, updated_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+        [menuId, tenantId],
+      );
+    }
 
     await this.postgres.executeRaw(
       `INSERT INTO auto_translate_usage (id, user_id, tenant_id, menu_id, target_locale, forced, segment_count, api_units, created_at)

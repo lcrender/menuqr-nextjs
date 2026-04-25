@@ -17,6 +17,8 @@ export interface TemplateConfigOption {
   type: TemplateConfigOptionType;
   default: unknown;
   options?: TemplateConfigOptionSelect[];
+  /** Solo planes Pro / Pro Team / Premium o rol SUPER_ADMIN (panel plantilla). */
+  restrictToPaidPlans?: boolean;
 }
 
 export const TEMPLATE_NAMES: Record<string, string> = {
@@ -78,6 +80,19 @@ const VISIBILITY_OPTIONS: TemplateConfigOption[] = [
   },
 ];
 
+/** Visible solo en planes de pago indicados (y super admin); en planes inferiores el menú público sigue mostrando banderas. */
+const TRANSLATION_FLAGS_TEMPLATE_OPTIONS: TemplateConfigOption[] = [
+  {
+    id: 'showTranslationFlags',
+    label: 'Mostrar banderas de traducciones',
+    description:
+      'Si está desactivado, se ocultan los iconos de bandera en el selector de idiomas del menú público cuando hay varias traducciones.',
+    type: 'boolean',
+    default: true,
+    restrictToPaidPlans: true,
+  },
+];
+
 /** Opciones Gourmet: colores, tipografía clásica y visibilidad (logo, portada, fotos de productos). */
 const GOURMET_OPTIONS: TemplateConfigOption[] = [
   ...COMMON_COLOR_OPTIONS,
@@ -105,10 +120,10 @@ const GOURMET_OPTIONS: TemplateConfigOption[] = [
  * classic, minimalist y foodie incluyen además opciones de visibilidad (portada, logo, nombre, descripción).
  */
 export const TEMPLATE_CONFIG_SCHEMAS: Record<string, TemplateConfigOption[]> = {
-  classic: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS],
-  minimalist: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS],
-  foodie: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS],
-  burgers: [...COMMON_COLOR_OPTIONS],
-  italianFood: [...COMMON_COLOR_OPTIONS],
-  gourmet: GOURMET_OPTIONS,
+  classic: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  minimalist: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  foodie: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  burgers: [...COMMON_COLOR_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  italianFood: [...COMMON_COLOR_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  gourmet: [...GOURMET_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
 };

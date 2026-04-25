@@ -1,9 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../../../../lib/axios';
 import AdminLayout from '../../../../components/AdminLayout';
 import { TEMPLATE_CONFIG_SCHEMAS, TEMPLATE_NAMES, TemplateConfigOption } from '../../../../lib/template-config-schema';
+
+function normalizePlanKeyForTemplate(plan: string | null | undefined): string {
+  const raw = (plan || 'free').toString().toLowerCase().trim().replace(/\s+/g, '_');
+  return raw === 'proteam' ? 'pro_team' : raw;
+}
+
+function planAllowsTranslationFlagTemplateOption(plan: string | null | undefined): boolean {
+  const p = normalizePlanKeyForTemplate(plan);
+  return p === 'pro' || p === 'pro_team' || p === 'premium';
+}
 
 export default function ConfigureTemplate() {
   const router = useRouter();
@@ -15,12 +25,23 @@ export default function ConfigureTemplate() {
     primaryColor?: string | null;
     secondaryColor?: string | null;
     templateConfig?: Record<string, unknown>;
+    tenantPlan?: string | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [viewer, setViewer] = useState<{ role?: string } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) setViewer(JSON.parse(raw));
+    } catch {
+      setViewer(null);
+    }
+  }, []);
 
   useEffect(() => {
     if (!restaurantId || typeof restaurantId !== 'string') return;
@@ -85,11 +106,20 @@ export default function ConfigureTemplate() {
     }
   };
 
-  if (!restaurantId) return null;
-
   const templateId = restaurant?.template || 'classic';
   const schema = TEMPLATE_CONFIG_SCHEMAS[templateId] || [];
+  const visibleSchema = useMemo(() => {
+    if (!restaurant) return schema;
+    return schema.filter(
+      (opt) =>
+        !opt.restrictToPaidPlans ||
+        viewer?.role === 'SUPER_ADMIN' ||
+        planAllowsTranslationFlagTemplateOption(restaurant.tenantPlan),
+    );
+  }, [restaurant, schema, viewer?.role]);
   const templateLabel = TEMPLATE_NAMES[templateId] || templateId;
+
+  if (!restaurantId) return null;
 
   return (
     <AdminLayout>
@@ -145,7 +175,7 @@ export default function ConfigureTemplate() {
                     {successMessage}
                   </div>
                 )}
-                {schema.map((opt) => (
+                {visibleSchema.map((opt) => (
                   <Field key={opt.id} option={opt} value={formValues[opt.id]} onChange={(v) => handleChange(opt.id, v)} />
                 ))}
                 <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>

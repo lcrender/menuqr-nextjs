@@ -139,7 +139,7 @@ export class RestaurantsController {
       throw new BadRequestException('No se pudo determinar el tenant para actualizar el restaurante.');
     }
 
-    return this.restaurantsService.update(id, tenantId, updateRestaurantDto);
+    return this.restaurantsService.update(id, tenantId, updateRestaurantDto, { userRole: req.user.role });
   }
 
   @Delete(':id')

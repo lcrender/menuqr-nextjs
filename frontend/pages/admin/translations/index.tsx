@@ -17,6 +17,8 @@ type MenuRow = {
   locales: string[];
   /** Ya se ejecutó traducción automática (beta) al menos una vez */
   autoTranslated?: boolean;
+  /** Locales que ya se tradujeron automáticamente (cuando la BD lo soporta). */
+  autoTranslatedLocales?: string[];
 };
 
 type WorkbenchSection = { id: string; baseName: string; name: string; nameStale?: boolean };
@@ -934,6 +936,11 @@ export default function AdminTranslationsPage() {
                                   <MenuLocaleFlagGlyph flagCode={meta?.flagCode} locale={loc} />
                                 </span>
                                 <span className="text-muted">{defaultManifestDisplayLabel(loc, meta?.label)}</span>
+                                {!isBase && (m.autoTranslatedLocales || []).includes(loc) && (
+                                  <span className="badge bg-info text-dark ms-1" title="Traducción automática ya ejecutada para este idioma">
+                                    Auto
+                                  </span>
+                                )}
                               </div>
                               <div className="form-check form-switch mt-2 mb-1">
                                 <input
@@ -989,14 +996,10 @@ export default function AdminTranslationsPage() {
                         <div className="mt-3 pt-3 border-top">
                           <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
                             <h3 className="h6 text-muted mb-0">Traducción automática (beta)</h3>
-                            {m.autoTranslated && (
-                              <span className="badge bg-info text-dark">Ya ejecutada en este menú</span>
-                            )}
                           </div>
                           <p className="small text-muted mb-2">
-                            Traduce todos los textos desde <strong>es-ES</strong> al idioma elegido (Google Cloud,
-                            servidor). Consumo mensual según tu plan (configurable por super admin en límites). Podés
-                            editar después a mano en «Traducir».
+                            Traduce todos los textos desde <strong>es-ES</strong> al idioma elegido. El consumo mensual
+                            depende de tu plan. Podés editar después a mano en «Traducir».
                           </p>
                           <div className="row g-2 align-items-end">
                             <div className="col-md-4">

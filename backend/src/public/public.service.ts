@@ -112,7 +112,8 @@ export class PublicService {
           r.cover_url as "coverUrl",
           r.is_active as "isActive",
           r.template_config as "templateConfig",
-          t.name as "tenantName"
+          t.name as "tenantName",
+          t.plan as "tenantPlan"
         FROM restaurants r
         INNER JOIN tenants t ON r.tenant_id = t.id
         WHERE r.slug = $1 

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import QRCode from 'react-qr-code';
 import api from '../../lib/axios';
 import AdminLayout from '../../components/AdminLayout';
 import PlanBadge from '../../components/profile/PlanBadge';
+import { buildTemplateConfigSummaryLines } from '../../lib/dashboard-template-config-summary';
 
 export type MenuSummary = {
   id: string;
@@ -27,6 +28,9 @@ export type RestaurantConfigState = {
   restaurantEmail?: string | null;
   restaurantPhone?: string | null;
   restaurantWebsite?: string | null;
+  restaurantPrimaryColor?: string | null;
+  restaurantSecondaryColor?: string | null;
+  restaurantTemplateConfig?: Record<string, unknown>;
   menusSummary?: MenuSummary[];
 };
 
@@ -61,7 +65,75 @@ function templateLabelFromSlug(card: DashboardRestaurantCard): string {
   if (t === 'minimalist') return 'Minimalist';
   if (t === 'foodie') return 'Foodie';
   if (t === 'burgers') return 'Burgers';
+  if (t === 'gourmet') return 'Gourmet';
   return t || '';
+}
+
+function DashboardTemplateConfigSummary({ card }: { card: DashboardRestaurantCard }) {
+  const lines = useMemo(
+    () =>
+      buildTemplateConfigSummaryLines(
+        card.restaurantTemplate,
+        card.restaurantTemplateConfig,
+        card.restaurantPrimaryColor,
+        card.restaurantSecondaryColor,
+      ),
+    [
+      card.restaurantTemplate,
+      card.restaurantTemplateConfig,
+      card.restaurantPrimaryColor,
+      card.restaurantSecondaryColor,
+    ],
+  );
+
+  if (lines.length === 0) return null;
+
+  return (
+    <ul
+      className="list-unstyled mb-0 mt-2 ps-0"
+      style={{
+        fontSize: '0.75rem',
+        lineHeight: 1.45,
+        letterSpacing: '0.01em',
+      }}
+    >
+      {lines.map((ln) => (
+        <li
+          key={ln.id}
+          className="d-flex align-items-start gap-2"
+          style={{
+            color: 'var(--admin-text-muted, #6c757d)',
+            opacity: ln.isDefault ? 0.78 : 1,
+          }}
+        >
+          {ln.colorSwatch ? (
+            <span
+              title={ln.valueText}
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 2,
+                background: ln.colorSwatch,
+                border: '1px solid rgba(0,0,0,0.12)',
+                flexShrink: 0,
+                marginTop: '0.2em',
+              }}
+              aria-hidden
+            />
+          ) : null}
+          <span style={{ minWidth: 0 }}>
+            <span className="text-dark" style={{ fontWeight: 500 }}>
+              {ln.label}
+            </span>
+            <span style={{ margin: '0 0.35rem', opacity: 0.4 }} aria-hidden>
+              ·
+            </span>
+            <span>{ln.valueText}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 export default function Admin() {
@@ -482,16 +554,19 @@ export default function Admin() {
                         </ul>
                       </div>
                     )}
-                    <div className="border-top pt-3 mt-3 text-start d-flex flex-wrap align-items-center gap-3">
-                      <span>
+                    <div className="border-top pt-3 mt-3 text-start d-flex flex-wrap align-items-start gap-3 gap-md-4">
+                      <span className="flex-shrink-0">
                         <span className="small text-muted">Suscripción: </span>
                         <PlanBadge plan={stats?.plan ?? user?.tenant?.plan} />
                       </span>
                       {templateLabel ? (
-                        <span>
-                          <span className="small text-muted">Plantilla: </span>
-                          <span className="small">{templateLabel}</span>
-                        </span>
+                        <div className="flex-grow-1" style={{ minWidth: 0, maxWidth: 440 }}>
+                          <div>
+                            <span className="small text-muted">Plantilla: </span>
+                            <span className="small fw-semibold text-dark">{templateLabel}</span>
+                          </div>
+                          <DashboardTemplateConfigSummary card={card} />
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -599,16 +674,19 @@ export default function Admin() {
                       </div>
                     </div>
                   </div>
-                  <div className="border-top pt-3 mt-3 text-start d-flex flex-wrap align-items-center gap-3">
-                    <span>
+                  <div className="border-top pt-3 mt-3 text-start d-flex flex-wrap align-items-start gap-3 gap-md-4">
+                    <span className="flex-shrink-0">
                       <span className="small text-muted">Suscripción: </span>
                       <PlanBadge plan={stats?.plan ?? user?.tenant?.plan} />
                     </span>
                     {templateLabel ? (
-                      <span>
-                        <span className="small text-muted">Plantilla: </span>
-                        <span className="small">{templateLabel}</span>
-                      </span>
+                      <div className="flex-grow-1" style={{ minWidth: 0, maxWidth: 440 }}>
+                        <div>
+                          <span className="small text-muted">Plantilla: </span>
+                          <span className="small fw-semibold text-dark">{templateLabel}</span>
+                        </div>
+                        <DashboardTemplateConfigSummary card={card} />
+                      </div>
                     ) : null}
                   </div>
                 </div>

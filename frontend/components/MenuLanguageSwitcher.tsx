@@ -22,6 +22,8 @@ export type TemplateMenuLocalesProps = {
   menuTabVariant: MenuTabVariant;
   /** Gourmet: misma fuente que las pestañas de menú */
   gourmetFontFamily?: string | undefined;
+  /** Si false, no se muestran glifos de bandera (solo etiquetas). Por defecto true. */
+  showTranslationFlags?: boolean;
 };
 
 export function normalizeMenuTabVariant(template: string | undefined): MenuTabVariant {
@@ -42,7 +44,31 @@ type MenuLocalesMenu = {
 type MenuLocalesRestaurant = {
   primaryColor?: string;
   secondaryColor?: string;
+  tenantPlan?: string | null;
+  templateConfig?: Record<string, unknown> | null;
 };
+
+function normalizeTenantPlanKeyForFlags(plan: string | null | undefined): string {
+  const raw = (plan || 'free').toString().toLowerCase().trim().replace(/\s+/g, '_');
+  return raw === 'proteam' ? 'pro_team' : raw;
+}
+
+/** Solo estos planes pueden ocultar banderas vía plantilla; el resto siempre muestra banderas. */
+export function tenantPlanAllowsTranslationFlagToggle(plan: string | null | undefined): boolean {
+  const p = normalizeTenantPlanKeyForFlags(plan);
+  return p === 'pro' || p === 'pro_team' || p === 'premium';
+}
+
+/** Si el plan no califica, siempre true (mostrar banderas). */
+export function resolveShowTranslationFlagGlyphs(
+  tenantPlan: string | null | undefined,
+  templateConfig: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!tenantPlanAllowsTranslationFlagToggle(tenantPlan)) return true;
+  const v = templateConfig?.showTranslationFlags;
+  if (v === false) return false;
+  return true;
+}
 
 /** Props para pasar a las plantillas; `undefined` si no hay selector (un solo idioma público). */
 export function buildTemplateMenuLocales(
@@ -60,6 +86,7 @@ export function buildTemplateMenuLocales(
     primary = '#009246';
     secondary = '#CE2B37';
   }
+  const showTranslationFlags = resolveShowTranslationFlagGlyphs(restaurant.tenantPlan, restaurant.templateConfig ?? undefined);
   return {
     locales: menu.availableLocales,
     manifest: menu.translationLanguageManifest || [],
@@ -68,6 +95,7 @@ export function buildTemplateMenuLocales(
     primaryColor: primary,
     secondaryColor: secondary,
     menuTabVariant: tab,
+    showTranslationFlags,
   };
 }
 
@@ -198,7 +226,9 @@ export default function MenuLanguageSwitcher({
   secondaryColor,
   menuTabVariant,
   gourmetFontFamily,
+  showTranslationFlags: showFlagsProp,
 }: Props) {
+  const showTranslationFlags = showFlagsProp !== false;
   const changeLocale = onChange ?? (() => {});
   const meta = useMemo(() => {
     const m: Record<string, MenuLangManifestEntry> = {};
@@ -233,9 +263,11 @@ export default function MenuLanguageSwitcher({
                 className="btn"
                 style={menuTabButtonStyle(variant, active, primary, secondary, gourmetFontFamily)}
               >
-                <span className="me-1" aria-hidden>
-                  <MenuLocaleFlagGlyph flagCode={mo?.flagCode} locale={loc} />
-                </span>
+                {showTranslationFlags && (
+                  <span className="me-1" aria-hidden>
+                    <MenuLocaleFlagGlyph flagCode={mo?.flagCode} locale={loc} />
+                  </span>
+                )}
                 <span>{labelFor(loc, mo)}</span>
               </button>
             );
@@ -267,9 +299,11 @@ export default function MenuLanguageSwitcher({
             onClick={() => changeLocale(loc)}
             aria-pressed={active}
           >
-            <span className="me-1" aria-hidden>
-              <MenuLocaleFlagGlyph flagCode={mo?.flagCode} locale={loc} />
-            </span>
+            {showTranslationFlags && (
+              <span className="me-1" aria-hidden>
+                <MenuLocaleFlagGlyph flagCode={mo?.flagCode} locale={loc} />
+              </span>
+            )}
             <span>{labelFor(loc, mo)}</span>
           </button>
         );
