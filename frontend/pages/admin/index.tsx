@@ -155,13 +155,22 @@ function DashboardRestaurantTemplateBlock({
 
   return (
     <div className="flex-grow-1 w-100" style={{ minWidth: 0 }}>
-      <div>
-        <span className="small text-muted">Plantilla: </span>
-        <span className="small fw-semibold text-dark">{templateLabel || '—'}</span>
-      </div>
-      <div className="row g-2 g-md-3 mt-2 align-items-start">
+      <div className="row g-2 g-md-3 align-items-start">
         <div className="col-12 col-md-4">
-          <DashboardTemplateConfigLinesList lines={generalLines} />
+          <div
+            className="mb-0"
+            style={{
+              fontSize: '0.75rem',
+              lineHeight: 1.45,
+              letterSpacing: '0.01em',
+            }}
+          >
+            <span className="text-muted">Plantilla: </span>
+            <span className="text-dark fw-semibold">{templateLabel || '—'}</span>
+          </div>
+          <div className="mt-1">
+            <DashboardTemplateConfigLinesList lines={generalLines} />
+          </div>
         </div>
         <div className="col-12 col-md-4">
           <DashboardTemplateConfigLinesList lines={visibilityLines} />
@@ -177,13 +186,8 @@ function DashboardRestaurantTemplateBlock({
             </Link>
             <Link
               href="/admin/templates"
-              className="btn btn-sm text-white w-100"
-              style={{
-                fontWeight: 600,
-                textDecoration: 'none',
-                backgroundColor: '#495057',
-                border: '1px solid #3d4449',
-              }}
+              className="btn btn-sm btn-primary text-white w-100"
+              style={{ fontWeight: 600, textDecoration: 'none', border: 'none' }}
             >
               Cambiar plantilla
             </Link>
