@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import QRCode from 'react-qr-code';
 import api from '../../lib/axios';
@@ -133,6 +134,36 @@ function DashboardTemplateConfigSummary({ card }: { card: DashboardRestaurantCar
         </li>
       ))}
     </ul>
+  );
+}
+
+function DashboardRestaurantTemplateBlock({
+  card,
+  templateLabel,
+}: {
+  card: DashboardRestaurantCard;
+  templateLabel: string;
+}) {
+  return (
+    <div className="flex-grow-1" style={{ minWidth: 0, maxWidth: 440 }}>
+      <div>
+        <span className="small text-muted">Plantilla: </span>
+        <span className="small fw-semibold text-dark">{templateLabel || '—'}</span>
+      </div>
+      <DashboardTemplateConfigSummary card={card} />
+      <div className="d-flex flex-wrap gap-2 mt-2">
+        <Link
+          href={`/admin/templates/configure/${card.restaurantId}`}
+          className="btn btn-sm btn-outline-primary"
+          style={{ fontWeight: 600, textDecoration: 'none' }}
+        >
+          Configuración de plantilla
+        </Link>
+        <Link href="/admin/templates" className="btn btn-sm btn-outline-secondary" style={{ textDecoration: 'none' }}>
+          Cambiar plantilla
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -559,15 +590,7 @@ export default function Admin() {
                         <span className="small text-muted">Suscripción: </span>
                         <PlanBadge plan={stats?.plan ?? user?.tenant?.plan} />
                       </span>
-                      {templateLabel ? (
-                        <div className="flex-grow-1" style={{ minWidth: 0, maxWidth: 440 }}>
-                          <div>
-                            <span className="small text-muted">Plantilla: </span>
-                            <span className="small fw-semibold text-dark">{templateLabel}</span>
-                          </div>
-                          <DashboardTemplateConfigSummary card={card} />
-                        </div>
-                      ) : null}
+                      <DashboardRestaurantTemplateBlock card={card} templateLabel={templateLabel} />
                     </div>
                   </div>
                 </div>
@@ -679,15 +702,7 @@ export default function Admin() {
                       <span className="small text-muted">Suscripción: </span>
                       <PlanBadge plan={stats?.plan ?? user?.tenant?.plan} />
                     </span>
-                    {templateLabel ? (
-                      <div className="flex-grow-1" style={{ minWidth: 0, maxWidth: 440 }}>
-                        <div>
-                          <span className="small text-muted">Plantilla: </span>
-                          <span className="small fw-semibold text-dark">{templateLabel}</span>
-                        </div>
-                        <DashboardTemplateConfigSummary card={card} />
-                      </div>
-                    ) : null}
+                    <DashboardRestaurantTemplateBlock card={card} templateLabel={templateLabel} />
                   </div>
                 </div>
               </div>
