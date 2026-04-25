@@ -35,11 +35,15 @@ export class MenuTranslationsController {
   @ApiOperation({ summary: 'Listar menús de un restaurante con idiomas detectados (Pro / Pro Team / Super Admin)' })
   @ApiQuery({ name: 'restaurantId', required: true })
   @ApiQuery({ name: 'tenantId', required: false, description: 'Solo SUPER_ADMIN' })
-  async listMenus(@Query('restaurantId') restaurantId: string, @Request() req: any) {
+  async listMenus(
+    @Query('restaurantId') restaurantId: string,
+    @Query('tenantId') tenantIdQuery: string | undefined,
+    @Request() req: any,
+  ) {
     if (!restaurantId) {
       throw new BadRequestException('restaurantId es requerido');
     }
-    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req);
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, undefined, tenantIdQuery);
     return this.menuTranslationsService.listMenusForRestaurant(tenantId, restaurantId);
   }
 
@@ -50,10 +54,11 @@ export class MenuTranslationsController {
   async getWorkbench(
     @Param('menuId') menuId: string,
     @Query('locale') locale: string,
+    @Query('tenantId') tenantIdQuery: string | undefined,
     @Request() req: any,
   ) {
     if (!locale) throw new BadRequestException('locale es requerido');
-    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req);
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, undefined, tenantIdQuery);
     return this.menuTranslationsService.getWorkbench(tenantId, menuId, locale);
   }
 
@@ -111,10 +116,11 @@ export class MenuTranslationsController {
   async getAutoTranslateStatus(
     @Param('menuId') menuId: string,
     @Query('locale') locale: string,
+    @Query('tenantId') tenantIdQuery: string | undefined,
     @Request() req: any,
   ) {
     if (!locale) throw new BadRequestException('locale es requerido');
-    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req);
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, undefined, tenantIdQuery);
     const userId = req.user?.id as string | undefined;
     if (!userId) throw new ForbiddenException();
     const plan = await this.menuTranslationsService.getTenantPlan(tenantId);

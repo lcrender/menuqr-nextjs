@@ -17,6 +17,8 @@ export type ManifestEntry = { locale: string; label?: string; flagCode?: string;
 export class MenuTranslationsService {
   /** Cache: si la columna `menus.translation_manifest` existe en la BD (evita 500 si falta la migración). */
   private translationManifestColumn: boolean | null = null;
+  /** Cache: columna `menus.auto_translated` (migración traducción automática beta). */
+  private autoTranslatedColumn: boolean | null = null;
 
   constructor(
     private readonly postgres: PostgresService,
@@ -35,6 +37,24 @@ export class MenuTranslationsService {
       );
       const ok = parseInt(rows[0]?.n || '0', 10) > 0;
       if (ok) this.translationManifestColumn = true;
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+
+  private async menusHaveAutoTranslatedColumn(): Promise<boolean> {
+    if (this.autoTranslatedColumn === true) return true;
+    try {
+      const rows = await this.postgres.queryRaw<{ n: string }>(
+        `SELECT COUNT(*)::text AS n
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'menus'
+           AND column_name = 'auto_translated'`,
+      );
+      const ok = parseInt(rows[0]?.n || '0', 10) > 0;
+      if (ok) this.autoTranslatedColumn = true;
       return ok;
     } catch {
       return false;
@@ -66,9 +86,12 @@ export class MenuTranslationsService {
     return rows[0]?.plan || 'free';
   }
 
-  async resolveTenantIdForRequest(req: any, bodyTenantId?: string): Promise<string> {
+  async resolveTenantIdForRequest(req: any, bodyTenantId?: string, queryTenantId?: string): Promise<string> {
     if (req.user?.role === 'SUPER_ADMIN') {
-      const tid = (req.query?.tenantId as string) || bodyTenantId;
+      const qDecorated = (queryTenantId ?? '').toString().trim();
+      const qReq = ((req.query?.tenantId as string) || '').toString().trim();
+      const fromBody = (bodyTenantId ?? '').toString().trim();
+      const tid = qDecorated || qReq || fromBody;
       if (!tid) {
         throw new BadRequestException('Indicá tenantId (query o body) para operar como super admin.');
       }
@@ -79,8 +102,8 @@ export class MenuTranslationsService {
     return tid;
   }
 
-  async assertTranslationsFeature(req: any, bodyTenantId?: string): Promise<string> {
-    const tenantId = await this.resolveTenantIdForRequest(req, bodyTenantId);
+  async assertTranslationsFeature(req: any, bodyTenantId?: string, queryTenantId?: string): Promise<string> {
+    const tenantId = await this.resolveTenantIdForRequest(req, bodyTenantId, queryTenantId);
     if (req.user?.role === 'SUPER_ADMIN') {
       return tenantId;
     }
@@ -112,18 +135,16 @@ export class MenuTranslationsService {
 
   async listMenusForRestaurant(tenantId: string, restaurantId: string) {
     const hasManifestCol = await this.menusHaveTranslationManifestColumn();
+    const hasAutoTranslatedCol = await this.menusHaveAutoTranslatedColumn();
+    const cols = ['id', 'name', 'slug', 'restaurant_id', 'status'];
+    if (hasManifestCol) cols.push('translation_manifest');
+    if (hasAutoTranslatedCol) cols.push('COALESCE(auto_translated, false) AS auto_translated');
+    const selectList = cols.join(', ');
     const menus = await this.postgres.queryRaw<any>(
-      hasManifestCol
-        ? `SELECT id, name, slug, translation_manifest, restaurant_id, status,
-                  COALESCE(auto_translated, false) AS auto_translated
-           FROM menus
-           WHERE tenant_id = $1 AND restaurant_id = $2 AND deleted_at IS NULL
-           ORDER BY sort ASC, created_at DESC`
-        : `SELECT id, name, slug, restaurant_id, status,
-                  COALESCE(auto_translated, false) AS auto_translated
-           FROM menus
-           WHERE tenant_id = $1 AND restaurant_id = $2 AND deleted_at IS NULL
-           ORDER BY sort ASC, created_at DESC`,
+      `SELECT ${selectList}
+       FROM menus
+       WHERE tenant_id = $1 AND restaurant_id = $2 AND deleted_at IS NULL
+       ORDER BY sort ASC, created_at DESC`,
       [tenantId, restaurantId],
     );
     const out = [];
@@ -135,7 +156,7 @@ export class MenuTranslationsService {
         slug: m.slug,
         status: m.status,
         translationManifest: hasManifestCol ? (m.translation_manifest ?? null) : null,
-        autoTranslated: !!m.auto_translated,
+        autoTranslated: hasAutoTranslatedCol ? !!m.auto_translated : false,
         locales,
       });
     }
