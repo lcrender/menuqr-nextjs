@@ -227,8 +227,69 @@ export class AutoTranslateService {
   }
 
   private parseJsonbLocaleArray(raw: unknown): string[] {
-    if (!Array.isArray(raw)) return [];
-    return raw.map((x) => String(x));
+    if (Array.isArray(raw)) {
+      return raw.map((x) => String(x).trim()).filter(Boolean);
+    }
+    if (typeof raw === 'string') {
+      try {
+        const p = JSON.parse(raw) as unknown;
+        if (Array.isArray(p)) return p.map((x) => String(x).trim()).filter(Boolean);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
+
+  private normalizeMenuLocale(locale: string | null | undefined): string {
+    return (locale || '').trim().replace(/_/g, '-');
+  }
+
+  private normalizeLocaleDedupe(locales: string[]): string[] {
+    return Array.from(
+      new Set(locales.map((x) => this.normalizeMenuLocale(x)).filter((x) => x.length > 0)),
+    );
+  }
+
+  private isSameMenuLocale(a: string, b: string): boolean {
+    return this.normalizeMenuLocale(a) === this.normalizeMenuLocale(b);
+  }
+
+  private async listDistinctAutoTranslateUsageLocales(menuId: string): Promise<string[]> {
+    try {
+      const rows = await this.postgres.queryRaw<{ locale: string }>(
+        `SELECT DISTINCT target_locale AS locale
+         FROM auto_translate_usage
+         WHERE menu_id = $1
+         ORDER BY target_locale ASC`,
+        [menuId],
+      );
+      return (rows || []).map((r) => String(r.locale || '').trim()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Locales que ya tienen traducción automática registrada (columna JSON + historial de uso).
+   * Evita bloquear un idioma nuevo si la columna quedó vacía o desincronizada respecto a `auto_translate_usage`.
+   */
+  async getCompletedAutoTranslateLocales(tenantId: string, menuId: string): Promise<string[]> {
+    const fromUsage = await this.listDistinctAutoTranslateUsageLocales(menuId);
+    const hasCol = await this.menusHaveAutoTranslatedLocalesColumn();
+    if (!hasCol) {
+      return this.normalizeLocaleDedupe(fromUsage);
+    }
+    const rows = await this.postgres.queryRaw<{ j: unknown }>(
+      `SELECT COALESCE(auto_translated_locales, '[]'::jsonb) AS j
+       FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [menuId, tenantId],
+    );
+    if (!rows[0]) {
+      return this.normalizeLocaleDedupe(fromUsage);
+    }
+    const fromCol = this.parseJsonbLocaleArray(rows[0].j);
+    return this.normalizeLocaleDedupe([...fromCol, ...fromUsage]);
   }
 
   private async readMenuAutoTranslateState(
@@ -293,9 +354,8 @@ export class AutoTranslateService {
     const monthlyUsed = await this.countMonthlyUsageUtc(userId);
     let menuAutoTranslated = false;
     try {
-      const st = await this.readMenuAutoTranslateState(tenantId, menuId);
-      menuAutoTranslated =
-        st.locales !== null ? st.locales.includes(targetLocale) : !!st.auto_translated;
+      const completed = await this.getCompletedAutoTranslateLocales(tenantId, menuId);
+      menuAutoTranslated = completed.some((l) => this.isSameMenuLocale(l, targetLocale));
     } catch {
       /* not found handled elsewhere */
     }
@@ -387,15 +447,10 @@ export class AutoTranslateService {
     }
     const st = await this.readMenuAutoTranslateState(tenantId, menuId);
     if (!force) {
-      if (st.locales !== null) {
-        if (st.locales.includes(targetLocale)) {
-          throw new BadRequestException(
-            'Este idioma del menú ya fue traducido automáticamente. Marcá “Forzar retraducción” para volver a ejecutar (consume un uso).',
-          );
-        }
-      } else if (st.auto_translated) {
+      const completed = await this.getCompletedAutoTranslateLocales(tenantId, menuId);
+      if (completed.some((l) => this.isSameMenuLocale(l, targetLocale))) {
         throw new BadRequestException(
-          'Este menú ya fue traducido automáticamente. Marcá “Forzar retraducción” para volver a ejecutar (consume un uso).',
+          'Este idioma del menú ya fue traducido automáticamente. Marcá “Forzar retraducción” para volver a ejecutar (consume un uso).',
         );
       }
     }
