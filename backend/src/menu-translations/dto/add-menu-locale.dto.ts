@@ -1,11 +1,14 @@
 import { IsString, IsOptional, Matches, MaxLength, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { MENU_LOCALE_BCP47_REGEX, MENU_LOCALE_MAX_LENGTH } from '../menu-locale.constants';
 
 export class AddMenuLocaleDto {
   @ApiProperty({ example: 'en-US' })
   @IsString()
-  @MaxLength(20)
-  @Matches(/^[a-z]{2}-[A-Z]{2}$/, { message: 'locale debe ser BCP-47, ej. en-US, pt-BR' })
+  @MaxLength(MENU_LOCALE_MAX_LENGTH)
+  @Matches(MENU_LOCALE_BCP47_REGEX, {
+    message: 'locale debe ser BCP-47 con subtag (ej. en-US, es-MX, zh-CN, zh-Hans-CN).',
+  })
   locale!: string;
 
   @ApiProperty({ required: false, description: 'Etiqueta visible en el panel' })

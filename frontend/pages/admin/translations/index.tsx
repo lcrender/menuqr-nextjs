@@ -48,25 +48,160 @@ function regionFromLocale(locale: string): string | undefined {
   return tail.length === 2 ? tail.toUpperCase() : undefined;
 }
 
+/** ISO 3166-1 alpha-2 para el emoji regional: p. ej. ca-ES → ES. No usar «CA» pensando en Cataluña: CA es Canadá. */
+function suggestedFlagCodeFromLocale(locale: string): string {
+  const r = regionFromLocale(locale);
+  return r && /^[A-Z]{2}$/.test(r) ? r : '';
+}
+
+/** Misma regla que el backend (`menu-locale.constants.ts`). */
+const MENU_LOCALE_BCP47_RE = /^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})+$/;
+
+const ADD_LOCALE_CUSTOM = '__custom__';
+
+function normalizeMenuLocaleInput(raw: string): string {
+  const t = raw.trim().replace(/_/g, '-');
+  if (!t) return '';
+  const parts = t.split('-').filter(Boolean);
+  if (parts.length === 0) return '';
+  const lang = parts[0]!.toLowerCase();
+  const rest = parts.slice(1).map((p) => {
+    if (/^[0-9]{3}$/.test(p)) return p;
+    if (p.length === 2 && /^[a-zA-Z]{2}$/.test(p)) return p.toUpperCase();
+    return p.toLowerCase();
+  });
+  return [lang, ...rest].join('-');
+}
+
+/** Presets agrupados para el selector «Agregar idioma» (BCP-47). */
+const LOCALE_PRESET_GROUPS: { label: string; items: { locale: string; title: string }[] }[] = [
+  {
+    label: 'Inglés y germánicos',
+    items: [
+      { locale: 'en-US', title: 'Inglés (EE.UU.)' },
+      { locale: 'en-GB', title: 'Inglés (Reino Unido)' },
+      { locale: 'en-CA', title: 'Inglés (Canadá)' },
+      { locale: 'en-AU', title: 'Inglés (Australia)' },
+      { locale: 'en-NZ', title: 'Inglés (Nueva Zelanda)' },
+      { locale: 'en-IE', title: 'Inglés (Irlanda)' },
+      { locale: 'de-DE', title: 'Alemán (Alemania)' },
+      { locale: 'de-AT', title: 'Alemán (Austria)' },
+      { locale: 'de-CH', title: 'Alemán (Suiza)' },
+      { locale: 'nl-NL', title: 'Neerlandés (Países Bajos)' },
+      { locale: 'nl-BE', title: 'Neerlandés (Bélgica)' },
+      { locale: 'sv-SE', title: 'Sueco' },
+      { locale: 'da-DK', title: 'Danés' },
+      { locale: 'fi-FI', title: 'Finlandés' },
+      { locale: 'is-IS', title: 'Islandés' },
+      { locale: 'nb-NO', title: 'Noruego (bokmål)' },
+      { locale: 'nn-NO', title: 'Noruego (nynorsk)' },
+    ],
+  },
+  {
+    label: 'Romances',
+    items: [
+      { locale: 'fr-FR', title: 'Francés (Francia)' },
+      { locale: 'fr-CA', title: 'Francés (Canadá)' },
+      { locale: 'fr-BE', title: 'Francés (Bélgica)' },
+      { locale: 'fr-CH', title: 'Francés (Suiza)' },
+      { locale: 'it-IT', title: 'Italiano (Italia)' },
+      { locale: 'it-CH', title: 'Italiano (Suiza)' },
+      { locale: 'pt-BR', title: 'Portugués (Brasil)' },
+      { locale: 'pt-PT', title: 'Portugués (Portugal)' },
+      { locale: 'ro-RO', title: 'Rumano' },
+      { locale: 'ca-ES', title: 'Catalán' },
+      { locale: 'gl-ES', title: 'Gallego' },
+      { locale: 'eu-ES', title: 'Euskera' },
+    ],
+  },
+  {
+    label: 'Español regional',
+    items: [
+      { locale: 'es-MX', title: 'Español (México)' },
+      { locale: 'es-AR', title: 'Español (Argentina)' },
+      { locale: 'es-CO', title: 'Español (Colombia)' },
+      { locale: 'es-CL', title: 'Español (Chile)' },
+      { locale: 'es-PE', title: 'Español (Perú)' },
+      { locale: 'es-VE', title: 'Español (Venezuela)' },
+      { locale: 'es-EC', title: 'Español (Ecuador)' },
+      { locale: 'es-GT', title: 'Español (Guatemala)' },
+      { locale: 'es-CR', title: 'Español (Costa Rica)' },
+      { locale: 'es-PA', title: 'Español (Panamá)' },
+      { locale: 'es-DO', title: 'Español (Rep. Dominicana)' },
+      { locale: 'es-UY', title: 'Español (Uruguay)' },
+      { locale: 'es-PY', title: 'Español (Paraguay)' },
+      { locale: 'es-BO', title: 'Español (Bolivia)' },
+      { locale: 'es-419', title: 'Español (Latinoamérica, genérico)' },
+    ],
+  },
+  {
+    label: 'Europa central y oriental',
+    items: [
+      { locale: 'pl-PL', title: 'Polaco' },
+      { locale: 'cs-CZ', title: 'Checo' },
+      { locale: 'sk-SK', title: 'Eslovaco' },
+      { locale: 'hu-HU', title: 'Húngaro' },
+      { locale: 'bg-BG', title: 'Búlgaro' },
+      { locale: 'hr-HR', title: 'Croata' },
+      { locale: 'sl-SI', title: 'Esloveno' },
+      { locale: 'sr-RS', title: 'Serbio (Serbia)' },
+      { locale: 'bs-BA', title: 'Bosnio' },
+      { locale: 'mk-MK', title: 'Macedonio' },
+      { locale: 'sq-AL', title: 'Albanés' },
+      { locale: 'el-GR', title: 'Griego' },
+      { locale: 'uk-UA', title: 'Ucraniano' },
+      { locale: 'ru-RU', title: 'Ruso' },
+      { locale: 'be-BY', title: 'Bielorruso' },
+      { locale: 'lt-LT', title: 'Lituano' },
+      { locale: 'lv-LV', title: 'Letón' },
+      { locale: 'et-EE', title: 'Estonio' },
+    ],
+  },
+  {
+    label: 'Asia y Pacífico',
+    items: [
+      { locale: 'zh-CN', title: 'Chino (simplificado, China)' },
+      { locale: 'zh-TW', title: 'Chino (tradicional, Taiwán)' },
+      { locale: 'zh-HK', title: 'Chino (Hong Kong)' },
+      { locale: 'ja-JP', title: 'Japonés' },
+      { locale: 'ko-KR', title: 'Coreano' },
+      { locale: 'hi-IN', title: 'Hindi (India)' },
+      { locale: 'bn-IN', title: 'Bengalí (India)' },
+      { locale: 'ta-IN', title: 'Tamil (India)' },
+      { locale: 'ur-PK', title: 'Urdu (Pakistán)' },
+      { locale: 'th-TH', title: 'Tailandés' },
+      { locale: 'vi-VN', title: 'Vietnamita' },
+      { locale: 'id-ID', title: 'Indonesio' },
+      { locale: 'ms-MY', title: 'Malayo' },
+      { locale: 'fil-PH', title: 'Filipino' },
+      { locale: 'km-KH', title: 'Jemer' },
+      { locale: 'my-MM', title: 'Birmano' },
+    ],
+  },
+  {
+    label: 'Oriente Medio y África',
+    items: [
+      { locale: 'ar-SA', title: 'Árabe (Arabia Saudita)' },
+      { locale: 'ar-AE', title: 'Árabe (Emiratos)' },
+      { locale: 'ar-EG', title: 'Árabe (Egipto)' },
+      { locale: 'ar-MA', title: 'Árabe (Marruecos)' },
+      { locale: 'ar-DZ', title: 'Árabe (Argelia)' },
+      { locale: 'fa-IR', title: 'Persa (Irán)' },
+      { locale: 'he-IL', title: 'Hebreo' },
+      { locale: 'tr-TR', title: 'Turco' },
+      { locale: 'sw-KE', title: 'Suajili (Kenia)' },
+      { locale: 'af-ZA', title: 'Afrikáans' },
+      { locale: 'am-ET', title: 'Amárico' },
+    ],
+  },
+];
+
 function flagEmoji(flagCode?: string | null, locale?: string): string {
   const code = (flagCode || regionFromLocale(locale || '') || '').toUpperCase();
   if (code.length !== 2 || !/^[A-Z]{2}$/.test(code)) return '🌐';
   const A = 0x1f1e6;
   return String.fromCodePoint(A + code.charCodeAt(0) - 65, A + code.charCodeAt(1) - 65);
 }
-
-const PRESET_LOCALES: { locale: string; title: string }[] = [
-  { locale: 'en-US', title: 'Inglés (EE.UU.)' },
-  { locale: 'en-GB', title: 'Inglés (Reino Unido)' },
-  { locale: 'fr-FR', title: 'Francés' },
-  { locale: 'de-DE', title: 'Alemán' },
-  { locale: 'it-IT', title: 'Italiano' },
-  { locale: 'pt-BR', title: 'Portugués (Brasil)' },
-  { locale: 'pt-PT', title: 'Portugués (Portugal)' },
-  { locale: 'ca-ES', title: 'Catalán' },
-  { locale: 'eu-ES', title: 'Euskera' },
-  { locale: 'gl-ES', title: 'Gallego' },
-];
 
 function manifestMap(manifest: ManifestEntry[] | null | undefined): Record<string, ManifestEntry> {
   const m: Record<string, ManifestEntry> = {};
@@ -141,7 +276,8 @@ export default function AdminTranslationsPage() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [addMenuId, setAddMenuId] = useState<string | null>(null);
-  const [addLocale, setAddLocale] = useState('en-US');
+  const [addLocalePreset, setAddLocalePreset] = useState('en-US');
+  const [addLocaleCustom, setAddLocaleCustom] = useState('');
   const [addLabel, setAddLabel] = useState('');
   const [addFlag, setAddFlag] = useState('');
   const [addSaving, setAddSaving] = useState(false);
@@ -293,15 +429,36 @@ export default function AdminTranslationsPage() {
 
   const openAddLocale = (menuId: string) => {
     setAddMenuId(menuId);
-    setAddLocale('en-US');
+    const initial = 'en-US';
+    setAddLocalePreset(initial);
+    setAddLocaleCustom('');
     setAddLabel('');
-    setAddFlag('US');
+    setAddFlag(suggestedFlagCodeFromLocale(initial) || 'US');
     setAddVisiblePublic(true);
     setAddOpen(true);
   };
 
   const submitAddLocale = async () => {
     if (!addMenuId) return;
+    const rawLocale =
+      addLocalePreset === ADD_LOCALE_CUSTOM ? addLocaleCustom : addLocalePreset;
+    const locale = normalizeMenuLocaleInput(rawLocale);
+    if (!locale) {
+      showAlertMsg('Idioma', 'Elegí un idioma de la lista o escribí un código BCP-47.', 'warning');
+      return;
+    }
+    if (!MENU_LOCALE_BCP47_RE.test(locale)) {
+      showAlertMsg(
+        'Idioma',
+        'Código no válido. Usá al menos idioma + región u otro subtag (ej. en-US, es-MX, zh-CN, fil-PH).',
+        'warning',
+      );
+      return;
+    }
+    if (locale === 'es-ES') {
+      showAlertMsg('Idioma', 'es-ES ya es el idioma base del menú.', 'warning');
+      return;
+    }
     const fc = addFlag.trim().toUpperCase();
     if (fc && !/^[A-Z]{2}$/.test(fc)) {
       showAlertMsg('Bandera', 'El código de país debe ser 2 letras mayúsculas (ej. US, ES).', 'warning');
@@ -310,7 +467,7 @@ export default function AdminTranslationsPage() {
     setAddSaving(true);
     try {
       const body: any = {
-        locale: addLocale.trim(),
+        locale,
         label: addLabel.trim() || undefined,
         flagCode: fc || undefined,
         ...(addVisiblePublic ? {} : { enabledPublic: false }),
@@ -844,14 +1001,52 @@ export default function AdminTranslationsPage() {
                 </p>
                 <div className="mb-3">
                   <label className="form-label">Idioma (BCP-47)</label>
-                  <select className="form-select" value={addLocale} onChange={(e) => setAddLocale(e.target.value)}>
-                    {PRESET_LOCALES.map((p) => (
-                      <option key={p.locale} value={p.locale}>
-                        {p.title} ({p.locale})
-                      </option>
+                  <select
+                    className="form-select"
+                    value={addLocalePreset === ADD_LOCALE_CUSTOM ? ADD_LOCALE_CUSTOM : addLocalePreset}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === ADD_LOCALE_CUSTOM) {
+                        setAddLocalePreset(ADD_LOCALE_CUSTOM);
+                        setAddFlag('');
+                      } else {
+                        setAddLocalePreset(v);
+                        setAddFlag(suggestedFlagCodeFromLocale(v));
+                      }
+                    }}
+                  >
+                    {LOCALE_PRESET_GROUPS.map((g) => (
+                      <optgroup key={g.label} label={g.label}>
+                        {g.items.map((p) => (
+                          <option key={p.locale} value={p.locale}>
+                            {p.title} ({p.locale})
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
+                    <option value={ADD_LOCALE_CUSTOM}>Otro… (escribir código BCP-47)</option>
                   </select>
                 </div>
+                {addLocalePreset === ADD_LOCALE_CUSTOM && (
+                  <div className="mb-3">
+                    <label className="form-label">Código BCP-47 manual</label>
+                    <input
+                      className="form-control font-monospace"
+                      value={addLocaleCustom}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setAddLocaleCustom(v);
+                        const n = normalizeMenuLocaleInput(v);
+                        if (n) setAddFlag(suggestedFlagCodeFromLocale(n));
+                      }}
+                      placeholder="ej. sr-Latn-RS, zh-Hans-CN, lb-LU"
+                    />
+                    <p className="form-text small text-muted mb-0">
+                      Idioma en minúsculas y subtags separados por guiones. Si no está en la lista, podés pegar el
+                      código exacto que necesites (respetando el límite de caracteres del servidor).
+                    </p>
+                  </div>
+                )}
                 <div className="mb-3">
                   <label className="form-label">Etiqueta en panel (opcional)</label>
                   <input
@@ -862,14 +1057,19 @@ export default function AdminTranslationsPage() {
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Código país para bandera (opcional, 2 letras)</label>
+                  <label className="form-label">Código país para bandera (opcional, ISO 3166-1, 2 letras)</label>
                   <input
                     className="form-control"
                     maxLength={2}
                     value={addFlag}
                     onChange={(e) => setAddFlag(e.target.value.toUpperCase())}
-                    placeholder="US"
+                    placeholder="ES para ca-ES, US para en-US…"
                   />
+                  <p className="form-text small text-muted mb-0">
+                    Elegí el idioma arriba: la bandera sugerida sale de la región del código (p. ej. catalán{' '}
+                    <code>ca-ES</code> → <strong>ES</strong>). En ISO, <strong>CA</strong> es Canadá 🇨🇦, no
+                    Cataluña. Podés dejar vacío y se usará la región del BCP-47 si aplica.
+                  </p>
                 </div>
                 <div className="form-check form-switch mb-0">
                   <input
@@ -916,8 +1116,8 @@ export default function AdminTranslationsPage() {
                 <p className="small text-muted">
                   Ajustá cómo se muestra cada idioma en el panel y en el menú público. Incluye el idioma base (es-ES);
                   por defecto se muestra como «{DEFAULT_ES_MANIFEST_LABEL}». El código de país debe ser ISO de 2 letras
-                  (US, ES, IT…). Desmarcá «Visible en menú público» para ocultar un idioma en la carta (sigue disponible
-                  en el editor).
+                  (US, ES, IT…). Para <code>ca-ES</code> usá <strong>ES</strong> (no CA: es Canadá). Desmarcá «Visible en
+                  menú público» para ocultar un idioma en la carta (sigue disponible en el editor).
                 </p>
                 {settingsManifestRows.map((row, idx) => (
                   <div key={row.locale} className="row g-2 align-items-end mb-2">

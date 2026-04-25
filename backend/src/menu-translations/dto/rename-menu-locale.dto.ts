@@ -1,17 +1,18 @@
 import { IsString, Matches, MaxLength, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { MENU_LOCALE_BCP47_REGEX, MENU_LOCALE_MAX_LENGTH } from '../menu-locale.constants';
 
 export class RenameMenuLocaleDto {
   @ApiProperty({ example: 'it-IT' })
   @IsString()
-  @MaxLength(20)
-  @Matches(/^[a-z]{2}-[A-Z]{2}$/)
+  @MaxLength(MENU_LOCALE_MAX_LENGTH)
+  @Matches(MENU_LOCALE_BCP47_REGEX)
   fromLocale!: string;
 
   @ApiProperty({ example: 'en-US' })
   @IsString()
-  @MaxLength(20)
-  @Matches(/^[a-z]{2}-[A-Z]{2}$/)
+  @MaxLength(MENU_LOCALE_MAX_LENGTH)
+  @Matches(MENU_LOCALE_BCP47_REGEX)
   toLocale!: string;
 
   @ApiProperty({ required: false })

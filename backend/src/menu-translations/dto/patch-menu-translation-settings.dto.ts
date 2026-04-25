@@ -1,12 +1,13 @@
 import { IsString, IsOptional, MaxLength, Matches, IsArray, ValidateNested, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { MENU_LOCALE_BCP47_REGEX, MENU_LOCALE_MAX_LENGTH } from '../menu-locale.constants';
 
 class ManifestEntryDto {
   @ApiProperty({ example: 'en-US' })
   @IsString()
-  @MaxLength(20)
-  @Matches(/^[a-z]{2}-[A-Z]{2}$/)
+  @MaxLength(MENU_LOCALE_MAX_LENGTH)
+  @Matches(MENU_LOCALE_BCP47_REGEX)
   locale!: string;
 
   @ApiProperty({ required: false })
