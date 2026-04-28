@@ -1,8 +1,9 @@
-import { Controller, Get, Param, HttpCode, HttpStatus, Query, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Param, HttpCode, HttpStatus, Query, UseInterceptors, Body, Post, Req } from '@nestjs/common';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { PublicService } from './public.service';
 import { Public } from '../common/decorators/public.decorator';
+import { PublicContactDto } from './dto/public-contact.dto';
 
 @ApiTags('public')
 @Controller('public')
@@ -76,6 +77,19 @@ export class PublicController {
     @Query('locale') locale?: string,
   ) {
     return this.publicService.getMenuById(id, locale || 'es-ES');
+  }
+
+  @Post('contact')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Enviar formulario de contacto público (legal)' })
+  @ApiResponse({ status: 200, description: 'Mensaje enviado' })
+  async submitContactForm(@Body() body: PublicContactDto, @Req() req: any) {
+    return this.publicService.submitPublicContactForm({
+      ...body,
+      ip: req?.ip || req?.headers?.['x-forwarded-for'] || undefined,
+      userAgent: req?.headers?.['user-agent'] || undefined,
+    });
   }
 }
 

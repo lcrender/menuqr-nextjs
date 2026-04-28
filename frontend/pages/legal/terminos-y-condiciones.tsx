@@ -57,7 +57,10 @@ export default function TerminosYCondiciones() {
                   <p style={{ marginBottom: 0 }}>Alejandro Chazarreta</p>
                   <p style={{ marginBottom: 0 }}>CUIT: 20-31832578-3</p>
                   <p style={{ marginBottom: 0 }}>Ciudad: Buenos Aires, Argentina</p>
-                  <p>Email de contacto: lcrender@gmail.com</p>
+                  <p>
+                    Formulario de contacto:{' '}
+                    <Link href="/contacto?from=terminos">Abrir formulario</Link>
+                  </p>
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>2. Descripción del Servicio</h2>
                   <p>
@@ -247,7 +250,9 @@ export default function TerminosYCondiciones() {
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>15. Contacto</h2>
                   <p>Para consultas relacionadas con estos términos:</p>
-                  <p style={{ marginBottom: 0 }}>Email: lcrender@gmail.com</p>
+                  <p style={{ marginBottom: 0 }}>
+                    Formulario: <Link href="/contacto?from=terminos">Abrir formulario de contacto</Link>
+                  </p>
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>16. Disponibilidad del Servicio</h2>
                   <p>

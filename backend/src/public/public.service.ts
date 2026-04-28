@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PostgresService } from '../common/database/postgres.service';
 import { I18nService } from '../common/i18n/i18n.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
+import { EmailService } from '../common/email/email.service';
 
 @Injectable()
 export class PublicService {
@@ -11,6 +13,8 @@ export class PublicService {
     private postgresService: PostgresService,
     private i18nService: I18nService,
     private readonly planLimits: PlanLimitsService,
+    private readonly config: ConfigService,
+    private readonly emailService: EmailService,
   ) {}
 
   private async getTenantPlan(tenantId: string): Promise<string> {
@@ -512,6 +516,84 @@ export class PublicService {
       this.logger.error(`Error obteniendo menú por ID "${id}":`, error);
       throw error;
     }
+  }
+
+  async submitPublicContactForm(input: {
+    fullName: string;
+    phone: string;
+    email: string;
+    message: string;
+    recaptchaToken: string;
+    sourcePage: string;
+    ip?: string;
+    userAgent?: string;
+  }) {
+    const secret = (this.config.get<string>('GOOGLE_RECAPTCHA_SECRET_KEY') || '').trim();
+    if (!secret) {
+      throw new BadRequestException(
+        'No se puede enviar el formulario en este momento. Falta configurar reCAPTCHA en el servidor.',
+      );
+    }
+
+    const verifyRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        secret,
+        response: input.recaptchaToken,
+        ...(input.ip ? { remoteip: input.ip } : {}),
+      }),
+    });
+    if (!verifyRes.ok) {
+      throw new BadRequestException('No se pudo validar reCAPTCHA. Intentá nuevamente.');
+    }
+    const verifyJson = (await verifyRes.json()) as {
+      success?: boolean;
+      score?: number;
+      action?: string;
+      'error-codes'?: string[];
+    };
+    const score = typeof verifyJson.score === 'number' ? verifyJson.score : 1;
+    if (!verifyJson.success || score < 0.5) {
+      throw new BadRequestException('No se pudo validar reCAPTCHA. Intentá nuevamente.');
+    }
+
+    const receiver = (
+      this.config.get<string>('CONTACT_FORM_RECEIVER_EMAIL') ||
+      this.config.get<string>('SMTP_FROM') ||
+      'lcrender@gmail.com'
+    ).trim();
+
+    const escaped = (s: string) =>
+      s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
+        <h2 style="margin:0 0 16px">Nuevo mensaje de contacto (sitio público)</h2>
+        <p><strong>Nombre:</strong> ${escaped(input.fullName)}</p>
+        <p><strong>Teléfono:</strong> ${escaped(input.phone)}</p>
+        <p><strong>Email:</strong> ${escaped(input.email)}</p>
+        <p><strong>Página de origen:</strong> ${escaped(input.sourcePage)}</p>
+        <p><strong>IP:</strong> ${escaped(input.ip || '-')}</p>
+        <p><strong>User-Agent:</strong> ${escaped(input.userAgent || '-')}</p>
+        <hr />
+        <p><strong>Mensaje:</strong></p>
+        <div style="white-space:pre-wrap;border:1px solid #e5e7eb;padding:12px;border-radius:6px;background:#f9fafb">${escaped(input.message)}</div>
+      </div>
+    `;
+
+    await this.emailService.sendAdminNotificationEmail(
+      receiver,
+      `Contacto web (${input.sourcePage}) - ${input.fullName}`,
+      html,
+    );
+
+    return { ok: true };
   }
 }
 

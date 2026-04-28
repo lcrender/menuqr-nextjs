@@ -114,7 +114,9 @@ export default function PoliticaDeCookies() {
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>6. Contacto</h2>
                   <p>Para consultas relacionadas con esta Política de Cookies:</p>
-                  <p style={{ marginBottom: 0 }}>Email: lcrender@gmail.com</p>
+                  <p style={{ marginBottom: 0 }}>
+                    Formulario: <Link href="/contacto?from=cookies">Abrir formulario de contacto</Link>
+                  </p>
                 </div>
               </div>
             </div>

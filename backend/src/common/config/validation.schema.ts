@@ -124,6 +124,12 @@ export const validationSchema = Joi.object({
   MERCADOPAGO_PUBLIC_FRONTEND_URL: Joi.string().uri().optional().allow('', null),
 
   // ========================================
+  // FORMULARIO DE CONTACTO PÚBLICO
+  // ========================================
+  GOOGLE_RECAPTCHA_SECRET_KEY: Joi.string().optional().allow(''),
+  CONTACT_FORM_RECEIVER_EMAIL: Joi.string().email().optional().allow(''),
+
+  // ========================================
   // DESARROLLO
   // ========================================
   DEBUG: Joi.boolean().default(false),

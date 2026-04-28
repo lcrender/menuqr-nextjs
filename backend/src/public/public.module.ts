@@ -5,12 +5,14 @@ import { PublicService } from './public.service';
 import { DatabaseModule } from '../common/database/database.module';
 import { I18nModule } from '../common/i18n/i18n.module';
 import { PlanLimitsModule } from '../common/plan-limits/plan-limits.module';
+import { EmailModule } from '../common/email/email.module';
 
 @Module({
   imports: [
     DatabaseModule,
     I18nModule,
     PlanLimitsModule,
+    EmailModule,
     CacheModule.register(),
   ],
   controllers: [PublicController],

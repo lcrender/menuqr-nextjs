@@ -58,7 +58,10 @@ export default function PoliticaDePrivacidad() {
                   <p style={{ marginBottom: 0 }}>Alejandro Chazarreta</p>
                   <p style={{ marginBottom: 0 }}>CUIT: 20-31832578-3</p>
                   <p style={{ marginBottom: 0 }}>Ciudad: Buenos Aires, Argentina</p>
-                  <p>Email de contacto: lcrender@gmail.com</p>
+                  <p>
+                    Formulario de contacto:{' '}
+                    <Link href="/contacto?from=privacidad">Abrir formulario</Link>
+                  </p>
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>2. Información que Recopilamos</h2>
                   <p>
@@ -133,8 +136,8 @@ export default function PoliticaDePrivacidad() {
                     <li>solicitar la eliminación de sus datos</li>
                   </ul>
                   <p>
-                    Las solicitudes pueden realizarse enviando un correo electrónico a:{' '}
-                    <strong>lcrender@gmail.com</strong>.
+                    Las solicitudes pueden realizarse desde el{' '}
+                    <Link href="/contacto?from=privacidad"><strong>formulario de contacto</strong></Link>.
                   </p>
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>7. Seguridad de la Información</h2>
@@ -155,7 +158,9 @@ export default function PoliticaDePrivacidad() {
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>9. Contacto</h2>
                   <p>Para consultas relacionadas con esta Política de Privacidad o el tratamiento de datos personales:</p>
-                  <p style={{ marginBottom: 0 }}>Email: lcrender@gmail.com</p>
+                  <p style={{ marginBottom: 0 }}>
+                    Formulario: <Link href="/contacto?from=privacidad">Abrir formulario de contacto</Link>
+                  </p>
                 </div>
               </div>
             </div>
