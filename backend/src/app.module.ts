@@ -21,6 +21,7 @@ import { TrackingModule } from './tracking/tracking.module';
 import { PaymentModule } from './payment/payment.module';
 import { AdminMessagesModule } from './admin-messages/admin-messages.module';
 import { MenuTranslationsModule } from './menu-translations/menu-translations.module';
+import { SupportTicketsModule } from './support-tickets/support-tickets.module';
 
 // Módulos comunes
 import { DatabaseModule } from './common/database/database.module';
@@ -107,6 +108,7 @@ import { PlanLimitsModule } from './common/plan-limits/plan-limits.module';
     PaymentModule,
     AdminMessagesModule,
     MenuTranslationsModule,
+    SupportTicketsModule,
   ],
   controllers: [AppController],
   providers: [],

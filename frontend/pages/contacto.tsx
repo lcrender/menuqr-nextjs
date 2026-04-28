@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import { getApiBaseUrl } from '../lib/config';
+import type { GetServerSideProps } from 'next';
 
 const SOURCE_PATHS: Record<string, string> = {
   privacidad: '/legal/politica-de-privacidad',
@@ -83,7 +84,7 @@ export default function ContactoLegalPage() {
           name="description"
           content="Formulario de contacto para consultas relacionadas con privacidad, cookies y términos de AppMenuQR."
         />
-        <meta name="robots" content="noindex, follow" />
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
       </Head>
       {siteKey ? (
         <Script
@@ -189,6 +190,11 @@ export default function ContactoLegalPage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
+  return { props: {} };
+};
 
 declare global {
   interface Window {

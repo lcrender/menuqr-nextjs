@@ -129,6 +129,9 @@ export const validationSchema = Joi.object({
   GOOGLE_RECAPTCHA_SECRET_KEY: Joi.string().optional().allow(''),
   CONTACT_FORM_RECEIVER_EMAIL: Joi.string().email().optional().allow(''),
 
+  /** Opcional: email para notificaciones de nuevos tickets de soporte (si falta, se usa CONTACT_FORM_RECEIVER_EMAIL o el primer SUPER_ADMIN). */
+  SUPPORT_TICKETS_ADMIN_EMAIL: Joi.string().email().optional().allow(''),
+
   // ========================================
   // DESARROLLO
   // ========================================

@@ -369,6 +369,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                             Pagos y eventos
                           </Link>
                         </li>
+                        <li className="admin-nav-item">
+                          <Link
+                            href="/admin/config/support-tickets"
+                            className={`admin-nav-link ${currentPath.startsWith('/admin/config/support-tickets') ? 'active' : ''}`}
+                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            Tickets de soporte
+                          </Link>
+                        </li>
                       </ul>
                     )}
                   </div>

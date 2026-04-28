@@ -72,6 +72,8 @@ model User {
   subscriptionCheckoutSessions SubscriptionCheckoutSession[]
   paymentAttempts           PaymentAttempt[]
   autoTranslateUsages        AutoTranslateUsage[]
+  supportTickets             SupportTicket[]
+  supportTicketMessages      SupportTicketMessage[] @relation("TicketMessageAuthor")
 
   // Índices y constraints
   @@unique([tenantId, email])
@@ -516,6 +518,51 @@ enum PaymentAttemptStatus {
   completed
   failed
   pending
+}
+
+enum SupportTicketStatus {
+  open
+  in_progress
+  closed
+}
+
+/// Ticket de soporte interno (usuario logueado → Super Admin).
+model SupportTicket {
+  id               String              @id @default(cuid())
+  ticketNumber     Int                 @unique @default(autoincrement()) @map("ticket_number")
+  userId           String              @map("user_id")
+  subject          String              @db.VarChar(200)
+  /// Mensaje inicial (duplicado como primer ítem del hilo).
+  message          String              @db.Text
+  status           SupportTicketStatus @default(open)
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  closedAt         DateTime?           @map("closed_at")
+  lastReplyAt      DateTime?           @map("last_reply_at")
+  lastReplyByRole  String?             @map("last_reply_by_role")
+
+  user     User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages SupportTicketMessage[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+model SupportTicketMessage {
+  id             String   @id @default(cuid())
+  ticketId       String   @map("ticket_id")
+  authorUserId   String   @map("author_user_id")
+  authorRole     UserRole @map("author_role")
+  message        String   @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User          @relation("TicketMessageAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("support_ticket_messages")
 }
 
 // ========================================
