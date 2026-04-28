@@ -11,6 +11,7 @@ type TicketRow = {
   createdAt: string;
   updatedAt: string;
   lastReplyAt: string | null;
+  attachmentCount?: number;
   user: { id: string; email: string; firstName: string | null; lastName: string | null; role: string };
 };
 
@@ -125,6 +126,7 @@ export default function AdminSupportTicketsPage() {
                       <th>Usuario</th>
                       <th>Asunto</th>
                       <th>Estado</th>
+                      <th>Img</th>
                       <th>Creado</th>
                       <th />
                     </tr>
@@ -143,6 +145,7 @@ export default function AdminSupportTicketsPage() {
                         <td>
                           <span className="badge bg-secondary">{STATUS_LABEL[t.status] ?? t.status}</span>
                         </td>
+                        <td className="small text-muted">{t.attachmentCount ?? 0}</td>
                         <td className="small text-muted text-nowrap">{new Date(t.createdAt).toLocaleString()}</td>
                         <td className="text-end">
                           <Link href={`/admin/config/support-tickets/${t.id}`} className="btn btn-sm btn-outline-primary">

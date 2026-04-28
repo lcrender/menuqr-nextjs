@@ -1,6 +1,8 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import Script from 'next/script';
+import LandingNav from '../components/LandingNav';
+import LandingFooter from '../components/LandingFooter';
 import { useMemo, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
@@ -94,16 +96,7 @@ export default function ContactoLegalPage() {
       ) : null}
 
       <div className="landing-page">
-        <nav className="landing-nav">
-          <div className="container">
-            <div className="landing-nav-content">
-              <Link href="/" className="landing-logo">
-                <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">AppMenuQR</span>
-              </Link>
-            </div>
-          </div>
-        </nav>
+        <LandingNav />
 
         <section className="landing-auth">
           <div className="container">
@@ -186,6 +179,8 @@ export default function ContactoLegalPage() {
             </div>
           </div>
         </section>
+
+        <LandingFooter />
       </div>
     </>
   );

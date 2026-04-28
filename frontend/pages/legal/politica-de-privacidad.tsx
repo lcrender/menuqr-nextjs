@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import LegalPlanLimitsSummary from '../../components/LegalPlanLimitsSummary';
+import LandingFooter from '../../components/LandingFooter';
 
 export default function PoliticaDePrivacidad() {
   return (
@@ -97,9 +97,9 @@ export default function PoliticaDePrivacidad() {
                   </p>
                   <p style={{ marginTop: '16px' }}>
                     La cantidad de restaurantes, menús y productos que puede gestionar cada cuenta depende del plan
-                    contratado. Los topes numéricos vigentes (referencia) son:
+                    contratado. Los límites y precios vigentes se publican en la{' '}
+                    <Link href="/precios">página de precios</Link> de la Plataforma.
                   </p>
-                  <LegalPlanLimitsSummary />
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>4. Servicios de Terceros</h2>
                   <p>La Plataforma puede utilizar servicios de terceros para su funcionamiento, incluyendo:</p>
@@ -167,28 +167,7 @@ export default function PoliticaDePrivacidad() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="landing-footer">
-          <div className="container">
-            <div className="landing-footer-content">
-              <div className="landing-footer-brand">
-                <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">AppMenuQR</span>
-              </div>
-              <div className="landing-footer-links">
-                <Link href="/" className="landing-footer-link">Inicio</Link>
-                <Link href="/documentacion" className="landing-footer-link">Documentación</Link>
-                <Link href="/soporte" className="landing-footer-link">Soporte</Link>
-                <Link href="/legal/terminos-y-condiciones" className="landing-footer-link">Términos y Condiciones</Link>
-                <Link href="/legal/politica-de-privacidad" className="landing-footer-link">Política de Privacidad</Link>
-                <Link href="/legal/politica-de-cookies" className="landing-footer-link">Política de Cookies</Link>
-              </div>
-            </div>
-            <div className="landing-footercopyright">
-              <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
-            </div>
-          </div>
-        </footer>
+        <LandingFooter />
       </div>
     </>
   );

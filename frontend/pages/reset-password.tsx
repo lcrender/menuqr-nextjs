@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import api from '../lib/axios';
+import LandingFooter from '../components/LandingFooter';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -159,6 +160,8 @@ export default function ResetPasswordPage() {
             </div>
           </div>
         </section>
+
+        <LandingFooter />
       </div>
     </>
   );

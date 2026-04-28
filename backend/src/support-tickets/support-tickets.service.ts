@@ -4,11 +4,13 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, SupportTicketStatus, UserRole } from '@prisma/client';
 import { PrismaService } from '../common/database/prisma.service';
 import { EmailService } from '../common/email/email.service';
+import { MinioService } from '../common/minio/minio.service';
 import { CreateSupportTicketDto } from './dto/create-support-ticket.dto';
 import { ReplySupportTicketDto } from './dto/reply-support-ticket.dto';
 
@@ -22,6 +24,8 @@ export interface AdminTicketListFilters {
   limit?: number;
   offset?: number;
 }
+
+const IMAGE_MIME = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/pjpeg']);
 
 function escapeHtml(s: string): string {
   return s
@@ -40,10 +44,51 @@ export class SupportTicketsService {
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
     private readonly config: ConfigService,
+    private readonly minio: MinioService,
   ) {}
 
   private mapStatus(s: SupportTicketStatus): PublicTicketStatus {
     return s as PublicTicketStatus;
+  }
+
+  private rethrowPrismaIfMissingSchema(e: unknown): void {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (
+        e.code === 'P2021' ||
+        e.code === 'P2022' ||
+        e.code === 'P2010' ||
+        e.message?.includes('support_tickets') ||
+        e.message?.includes('attachment_urls')
+      ) {
+        this.logger.error(`Prisma (tickets): ${e.code} — ${e.message}`);
+        throw new ServiceUnavailableException(
+          'Las tablas de tickets no están en la base de datos o el cliente Prisma está desactualizado. En el servidor ejecutá: npx prisma migrate deploy y redeploy del backend con build que incluya prisma generate.',
+        );
+      }
+    }
+  }
+
+  private normalizeAttachmentUrls(raw: unknown): string[] {
+    if (raw == null) return [];
+    if (!Array.isArray(raw)) return [];
+    return raw.filter((x): x is string => typeof x === 'string' && x.length > 0 && x.length <= 2048);
+  }
+
+  private assertAttachmentUrlsForUser(userId: string, urls: string[]): string[] {
+    if (urls.length > 5) throw new BadRequestException('Máximo 5 imágenes por ticket.');
+    const needle = `/support-tickets/${userId}/`;
+    for (const u of urls) {
+      try {
+        const parsed = new URL(u);
+        if (!parsed.href.includes(needle)) {
+          throw new BadRequestException('Una o más URLs de adjuntos no son válidas para tu usuario.');
+        }
+      } catch (err) {
+        if (err instanceof BadRequestException) throw err;
+        throw new BadRequestException('URL de adjunto inválida.');
+      }
+    }
+    return urls;
   }
 
   private async resolveAdminNotificationEmail(): Promise<string | null> {
@@ -65,6 +110,7 @@ export class SupportTicketsService {
     message: string;
     authorEmail: string;
     authorName: string;
+    attachmentUrls: string[];
   }): Promise<void> {
     const to = await this.resolveAdminNotificationEmail();
     if (!to) {
@@ -75,6 +121,12 @@ export class SupportTicketsService {
     }
     const adminUrl = `${this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')}/admin/config/support-tickets`;
     const subject = `[AppMenuQR] Nuevo ticket #${params.ticketNumber} — ${params.subject.slice(0, 80)}`;
+    const imgs =
+      params.attachmentUrls.length > 0
+        ? `<p><strong>Adjuntos:</strong></p><ul>${params.attachmentUrls
+            .map((u) => `<li><a href="${escapeHtml(u)}">Ver imagen</a></li>`)
+            .join('')}</ul>`
+        : '';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -88,6 +140,7 @@ export class SupportTicketsService {
         <pre style="white-space: pre-wrap; background:#f3f4f6; padding:12px; border-radius:8px;">${escapeHtml(
           params.message,
         )}</pre>
+        ${imgs}
         <p><a href="${escapeHtml(adminUrl)}">Abrir panel de tickets</a></p>
       </body>
       </html>
@@ -99,9 +152,36 @@ export class SupportTicketsService {
     }
   }
 
+  async uploadAttachment(userId: string, file: Express.Multer.File) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException(
+        'No se recibió la imagen. Si usás multipart, el campo debe llamarse "file".',
+      );
+    }
+    const mime = (file.mimetype || '').toLowerCase();
+    if (!IMAGE_MIME.has(mime)) {
+      throw new BadRequestException('Solo se permiten imágenes JPEG o PNG.');
+    }
+    const ext = mime === 'image/png' ? '.png' : '.jpg';
+    const folder = `support-tickets/${userId}`;
+    const filename = `img-${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`;
+    try {
+      return await this.minio.uploadBuffer(file.buffer, {
+        folder,
+        filename,
+        contentType: mime === 'image/png' ? 'image/png' : 'image/jpeg',
+      });
+    } catch (e) {
+      this.logger.error(`MinIO upload ticket attachment: ${e}`);
+      throw new ServiceUnavailableException('No se pudo subir la imagen al almacenamiento. Revisá MinIO.');
+    }
+  }
+
   async create(authorUserId: string, authorRole: UserRole, dto: CreateSupportTicketDto) {
     const subject = dto.subject.trim();
     const message = dto.message.trim();
+    const rawUrls = dto.attachmentUrls?.length ? dto.attachmentUrls.map((u) => u.trim()).filter(Boolean) : [];
+    const attachmentUrls = this.assertAttachmentUrlsForUser(authorUserId, rawUrls);
 
     const user = await this.prisma.user.findFirst({
       where: { id: authorUserId, deletedAt: null },
@@ -109,27 +189,35 @@ export class SupportTicketsService {
     });
     if (!user) throw new NotFoundException('Usuario no encontrado');
 
-    const ticket = await this.prisma.$transaction(async (tx) => {
-      const t = await tx.supportTicket.create({
-        data: {
-          userId: authorUserId,
-          subject,
-          message,
-          status: SupportTicketStatus.open,
-          lastReplyAt: new Date(),
-          lastReplyByRole: authorRole,
-        },
+    const roleStr = String(authorRole);
+    let ticket: Awaited<ReturnType<typeof this.prisma.supportTicket.create>>;
+    try {
+      ticket = await this.prisma.$transaction(async (tx) => {
+        const t = await tx.supportTicket.create({
+          data: {
+            userId: authorUserId,
+            subject,
+            message,
+            attachmentUrls: attachmentUrls as unknown as Prisma.InputJsonValue,
+            status: SupportTicketStatus.open,
+            lastReplyAt: new Date(),
+            lastReplyByRole: roleStr,
+          },
+        });
+        await tx.supportTicketMessage.create({
+          data: {
+            ticketId: t.id,
+            authorUserId,
+            authorRole,
+            message,
+          },
+        });
+        return t;
       });
-      await tx.supportTicketMessage.create({
-        data: {
-          ticketId: t.id,
-          authorUserId,
-          authorRole,
-          message,
-        },
-      });
-      return t;
-    });
+    } catch (e) {
+      this.rethrowPrismaIfMissingSchema(e);
+      throw e;
+    }
 
     const authorName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
     void this.notifyNewTicket({
@@ -138,6 +226,7 @@ export class SupportTicketsService {
       message,
       authorEmail: user.email,
       authorName,
+      attachmentUrls,
     });
 
     return this.serializeTicketSummary(ticket);
@@ -146,66 +235,86 @@ export class SupportTicketsService {
   async listMine(userId: string, limit = 50, offset = 0) {
     const take = Math.min(Math.max(limit, 1), 100);
     const skip = Math.max(offset, 0);
-    const [rows, total] = await Promise.all([
-      this.prisma.supportTicket.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        take,
-        skip,
-        select: {
-          id: true,
-          ticketNumber: true,
-          subject: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
-          lastReplyAt: true,
-        },
-      }),
-      this.prisma.supportTicket.count({ where: { userId } }),
-    ]);
-    return {
-      items: rows.map((r) => ({
-        id: r.id,
-        ticketNumber: r.ticketNumber,
-        subject: r.subject,
-        status: this.mapStatus(r.status),
-        createdAt: r.createdAt.toISOString(),
-        updatedAt: r.updatedAt.toISOString(),
-        lastReplyAt: r.lastReplyAt?.toISOString() ?? null,
-      })),
-      total,
-    };
+    try {
+      const [rows, total] = await Promise.all([
+        this.prisma.supportTicket.findMany({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+          take,
+          skip,
+          select: {
+            id: true,
+            ticketNumber: true,
+            subject: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+            lastReplyAt: true,
+            attachmentUrls: true,
+          },
+        }),
+        this.prisma.supportTicket.count({ where: { userId } }),
+      ]);
+      return {
+        items: rows.map((r) => ({
+          id: r.id,
+          ticketNumber: r.ticketNumber,
+          subject: r.subject,
+          status: this.mapStatus(r.status),
+          createdAt: r.createdAt.toISOString(),
+          updatedAt: r.updatedAt.toISOString(),
+          lastReplyAt: r.lastReplyAt?.toISOString() ?? null,
+          attachmentUrls: this.normalizeAttachmentUrls(r.attachmentUrls),
+        })),
+        total,
+      };
+    } catch (e) {
+      this.rethrowPrismaIfMissingSchema(e);
+      throw e;
+    }
   }
 
   async getMine(userId: string, ticketId: string) {
-    const ticket = await this.prisma.supportTicket.findFirst({
-      where: { id: ticketId, userId },
-      include: {
-        messages: { orderBy: { createdAt: 'asc' } },
-      },
-    });
-    if (!ticket) throw new NotFoundException('Ticket no encontrado');
-    return this.serializeTicketDetail(ticket, false);
+    try {
+      const ticket = await this.prisma.supportTicket.findFirst({
+        where: { id: ticketId, userId },
+        include: {
+          messages: { orderBy: { createdAt: 'asc' } },
+        },
+      });
+      if (!ticket) throw new NotFoundException('Ticket no encontrado');
+      return this.serializeTicketDetail(ticket, false);
+    } catch (e) {
+      if (e instanceof NotFoundException) throw e;
+      this.rethrowPrismaIfMissingSchema(e);
+      throw e;
+    }
   }
 
   async replyMine(userId: string, authorRole: UserRole, ticketId: string, dto: ReplySupportTicketDto) {
     const text = dto.message.trim();
-    const ticket = await this.prisma.supportTicket.findFirst({ where: { id: ticketId, userId } });
-    if (!ticket) throw new NotFoundException('Ticket no encontrado');
-    if (ticket.status === SupportTicketStatus.closed) {
-      throw new BadRequestException('El ticket está cerrado. No se pueden agregar mensajes.');
+    const roleStr = String(authorRole);
+    try {
+      const ticket = await this.prisma.supportTicket.findFirst({ where: { id: ticketId, userId } });
+      if (!ticket) throw new NotFoundException('Ticket no encontrado');
+      if (ticket.status === SupportTicketStatus.closed) {
+        throw new BadRequestException('El ticket está cerrado. No se pueden agregar mensajes.');
+      }
+      await this.prisma.$transaction([
+        this.prisma.supportTicketMessage.create({
+          data: { ticketId, authorUserId: userId, authorRole, message: text },
+        }),
+        this.prisma.supportTicket.update({
+          where: { id: ticketId },
+          data: { lastReplyAt: new Date(), lastReplyByRole: roleStr },
+        }),
+      ]);
+      return this.getMine(userId, ticketId);
+    } catch (e) {
+      if (e instanceof NotFoundException || e instanceof BadRequestException) throw e;
+      this.rethrowPrismaIfMissingSchema(e);
+      throw e;
     }
-    await this.prisma.$transaction([
-      this.prisma.supportTicketMessage.create({
-        data: { ticketId, authorUserId: userId, authorRole, message: text },
-      }),
-      this.prisma.supportTicket.update({
-        where: { id: ticketId },
-        data: { lastReplyAt: new Date(), lastReplyByRole: authorRole },
-      }),
-    ]);
-    return this.getMine(userId, ticketId);
   }
 
   async listAdmin(filters: AdminTicketListFilters) {
@@ -222,84 +331,104 @@ export class SupportTicketsService {
       if (filters.to) where.createdAt.lte = filters.to;
     }
     if (filters.userEmail?.trim()) {
-      where.user = { email: { contains: filters.userEmail.trim(), mode: 'insensitive' } };
+      const term = filters.userEmail.trim();
+      where.user = { email: { contains: term, mode: 'insensitive' } };
     }
 
-    const [rows, total] = await Promise.all([
-      this.prisma.supportTicket.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        take,
-        skip,
-        include: {
-          user: { select: { id: true, email: true, firstName: true, lastName: true, role: true } },
-        },
-      }),
-      this.prisma.supportTicket.count({ where }),
-    ]);
+    try {
+      const [rows, total] = await Promise.all([
+        this.prisma.supportTicket.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          take,
+          skip,
+          include: {
+            user: { select: { id: true, email: true, firstName: true, lastName: true, role: true } },
+          },
+        }),
+        this.prisma.supportTicket.count({ where }),
+      ]);
 
-    return {
-      items: rows.map((t) => ({
-        id: t.id,
-        ticketNumber: t.ticketNumber,
-        subject: t.subject,
-        status: this.mapStatus(t.status),
-        createdAt: t.createdAt.toISOString(),
-        updatedAt: t.updatedAt.toISOString(),
-        lastReplyAt: t.lastReplyAt?.toISOString() ?? null,
-        user: t.user,
-      })),
-      total,
-    };
+      return {
+        items: rows.map((t) => ({
+          id: t.id,
+          ticketNumber: t.ticketNumber,
+          subject: t.subject,
+          status: this.mapStatus(t.status),
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+          lastReplyAt: t.lastReplyAt?.toISOString() ?? null,
+          attachmentCount: this.normalizeAttachmentUrls(t.attachmentUrls).length,
+          user: t.user,
+        })),
+        total,
+      };
+    } catch (e) {
+      this.rethrowPrismaIfMissingSchema(e);
+      throw e;
+    }
   }
 
   async getAdmin(ticketId: string) {
-    const ticket = await this.prisma.supportTicket.findUnique({
-      where: { id: ticketId },
-      include: {
-        messages: { orderBy: { createdAt: 'asc' } },
-        user: {
-          include: {
-            tenant: { select: { id: true, name: true, plan: true, status: true } },
-            subscriptions: {
-              orderBy: { updatedAt: 'desc' },
-              take: 10,
-              select: {
-                id: true,
-                paymentProvider: true,
-                status: true,
-                planType: true,
-                subscriptionPlan: true,
-                currentPeriodEnd: true,
-                updatedAt: true,
+    try {
+      const ticket = await this.prisma.supportTicket.findUnique({
+        where: { id: ticketId },
+        include: {
+          messages: { orderBy: { createdAt: 'asc' } },
+          user: {
+            include: {
+              tenant: { select: { id: true, name: true, plan: true, status: true } },
+              subscriptions: {
+                orderBy: { updatedAt: 'desc' },
+                take: 10,
+                select: {
+                  id: true,
+                  paymentProvider: true,
+                  status: true,
+                  planType: true,
+                  subscriptionPlan: true,
+                  currentPeriodEnd: true,
+                  updatedAt: true,
+                },
               },
             },
           },
         },
-      },
-    });
-    if (!ticket) throw new NotFoundException('Ticket no encontrado');
-    return this.serializeTicketDetail(ticket, true);
+      });
+      if (!ticket) throw new NotFoundException('Ticket no encontrado');
+      return this.serializeTicketDetail(ticket, true);
+    } catch (e) {
+      if (e instanceof NotFoundException) throw e;
+      this.rethrowPrismaIfMissingSchema(e);
+      throw e;
+    }
   }
 
   async replyAdmin(adminUserId: string, adminRole: UserRole, ticketId: string, dto: ReplySupportTicketDto) {
     if (adminRole !== UserRole.SUPER_ADMIN) throw new ForbiddenException();
     const text = dto.message.trim();
-    const ticket = await this.prisma.supportTicket.findUnique({ where: { id: ticketId } });
-    if (!ticket) throw new NotFoundException('Ticket no encontrado');
-    if (ticket.status === SupportTicketStatus.closed) {
-      throw new BadRequestException('El ticket está cerrado. Cambiá el estado para reabrirlo antes de responder.');
+    const roleStr = String(adminRole);
+    try {
+      const ticket = await this.prisma.supportTicket.findUnique({ where: { id: ticketId } });
+      if (!ticket) throw new NotFoundException('Ticket no encontrado');
+      if (ticket.status === SupportTicketStatus.closed) {
+        throw new BadRequestException('El ticket está cerrado. Cambiá el estado para reabrirlo antes de responder.');
+      }
+      await this.prisma.$transaction([
+        this.prisma.supportTicketMessage.create({
+          data: { ticketId, authorUserId: adminUserId, authorRole: adminRole, message: text },
+        }),
+        this.prisma.supportTicket.update({
+          where: { id: ticketId },
+          data: { lastReplyAt: new Date(), lastReplyByRole: roleStr },
+        }),
+      ]);
+      return this.getAdmin(ticketId);
+    } catch (e) {
+      if (e instanceof NotFoundException || e instanceof BadRequestException || e instanceof ForbiddenException) throw e;
+      this.rethrowPrismaIfMissingSchema(e);
+      throw e;
     }
-    await this.prisma.$transaction([
-      this.prisma.supportTicketMessage.create({
-        data: { ticketId, authorUserId: adminUserId, authorRole: adminRole, message: text },
-      }),
-      this.prisma.supportTicket.update({
-        where: { id: ticketId },
-        data: { lastReplyAt: new Date(), lastReplyByRole: adminRole },
-      }),
-    ]);
-    return this.getAdmin(ticketId);
   }
 
   async updateStatusAdmin(
@@ -308,23 +437,38 @@ export class SupportTicketsService {
     status: PublicTicketStatus,
   ) {
     if (adminRole !== UserRole.SUPER_ADMIN) throw new ForbiddenException();
-    const ticket = await this.prisma.supportTicket.findUnique({ where: { id: ticketId } });
-    if (!ticket) throw new NotFoundException('Ticket no encontrado');
+    try {
+      const ticket = await this.prisma.supportTicket.findUnique({ where: { id: ticketId } });
+      if (!ticket) throw new NotFoundException('Ticket no encontrado');
 
-    const next = status as SupportTicketStatus;
-    const closedAt = next === SupportTicketStatus.closed ? new Date() : null;
+      const next = status as SupportTicketStatus;
+      const closedAt = next === SupportTicketStatus.closed ? new Date() : null;
 
-    await this.prisma.supportTicket.update({
-      where: { id: ticketId },
-      data: {
-        status: next,
-        closedAt,
-      },
-    });
-    return this.getAdmin(ticketId);
+      await this.prisma.supportTicket.update({
+        where: { id: ticketId },
+        data: {
+          status: next,
+          closedAt,
+        },
+      });
+      return this.getAdmin(ticketId);
+    } catch (e) {
+      if (e instanceof NotFoundException || e instanceof ForbiddenException) throw e;
+      this.rethrowPrismaIfMissingSchema(e);
+      throw e;
+    }
   }
 
-  private serializeTicketSummary(t: { id: string; ticketNumber: number; subject: string; status: SupportTicketStatus; createdAt: Date; updatedAt: Date; lastReplyAt: Date | null }) {
+  private serializeTicketSummary(t: {
+    id: string;
+    ticketNumber: number;
+    subject: string;
+    status: SupportTicketStatus;
+    createdAt: Date;
+    updatedAt: Date;
+    lastReplyAt: Date | null;
+    attachmentUrls?: unknown;
+  }) {
     return {
       id: t.id,
       ticketNumber: t.ticketNumber,
@@ -333,15 +477,18 @@ export class SupportTicketsService {
       createdAt: t.createdAt.toISOString(),
       updatedAt: t.updatedAt.toISOString(),
       lastReplyAt: t.lastReplyAt?.toISOString() ?? null,
+      attachmentUrls: this.normalizeAttachmentUrls(t.attachmentUrls),
     };
   }
 
   private serializeTicketDetail(ticket: any, admin: boolean) {
+    const attachmentUrls = this.normalizeAttachmentUrls(ticket.attachmentUrls);
     const base = {
       id: ticket.id,
       ticketNumber: ticket.ticketNumber,
       subject: ticket.subject,
       initialMessage: ticket.message,
+      attachmentUrls,
       status: this.mapStatus(ticket.status),
       createdAt: ticket.createdAt.toISOString(),
       updatedAt: ticket.updatedAt.toISOString(),

@@ -534,6 +534,8 @@ model SupportTicket {
   subject          String              @db.VarChar(200)
   /// Mensaje inicial (duplicado como primer ítem del hilo).
   message          String              @db.Text
+  /// URLs públicas de imágenes (JPEG/PNG) subidas por el usuario al crear el ticket.
+  attachmentUrls   Json                @default("[]") @map("attachment_urls")
   status           SupportTicketStatus @default(open)
   createdAt        DateTime            @default(now()) @map("created_at")
   updatedAt        DateTime            @updatedAt @map("updated_at")

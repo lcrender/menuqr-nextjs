@@ -86,7 +86,7 @@ export default function LandingNav() {
               <Link href="/#beneficios" className="landing-nav-text-link">
                 Beneficios
               </Link>
-              <Link href="/#precios" className="landing-nav-text-link">
+              <Link href="/precios" className="landing-nav-text-link">
                 Precios
               </Link>
               <Link href="/#como-funciona" className="landing-nav-text-link">
@@ -129,7 +129,7 @@ export default function LandingNav() {
           <Link href="/#beneficios" className="landing-nav-mobile-link" onClick={closeMobileNav}>
             Beneficios
           </Link>
-          <Link href="/#precios" className="landing-nav-mobile-link" onClick={closeMobileNav}>
+          <Link href="/precios" className="landing-nav-mobile-link" onClick={closeMobileNav}>
             Precios
           </Link>
           <Link href="/#como-funciona" className="landing-nav-mobile-link" onClick={closeMobileNav}>

@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import LegalPlanLimitsSummary from '../../components/LegalPlanLimitsSummary';
+import LandingFooter from '../../components/LandingFooter';
 
 export default function TerminosYCondiciones() {
   return (
@@ -113,9 +113,9 @@ export default function TerminosYCondiciones() {
                   </p>
                   <p className="mb-2">
                     Los cupos de restaurantes, menús y productos, así como el uso de fotos en productos y plantillas
-                    avanzadas, dependen del plan contratado. A modo de referencia, los límites vigentes son:
+                    avanzadas, dependen del plan contratado. Consultá los límites y precios vigentes en la{' '}
+                    <Link href="/precios">página de precios</Link> de la Plataforma.
                   </p>
-                  <LegalPlanLimitsSummary />
                   <p>
                     Las funcionalidades comerciales o de marketing adicionales (por ejemplo idiomas, soporte, plantillas
                     concretas) se describen en la página principal de la Plataforma y pueden actualizarse sin perjuicio de
@@ -306,26 +306,7 @@ export default function TerminosYCondiciones() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="landing-footer">
-          <div className="container">
-            <div className="landing-footer-content">
-              <div className="landing-footer-brand">
-                <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">AppMenuQR</span>
-              </div>
-              <div className="landing-footer-links">
-                <Link href="/" className="landing-footer-link">Inicio</Link>
-                <Link href="/documentacion" className="landing-footer-link">Documentación</Link>
-                <Link href="/soporte" className="landing-footer-link">Soporte</Link>
-                <Link href="/legal/terminos-y-condiciones" className="landing-footer-link">Términos y Condiciones</Link>
-              </div>
-            </div>
-            <div className="landing-footer-copyright">
-              <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
-            </div>
-          </div>
-        </footer>
+        <LandingFooter />
       </div>
     </>
   );

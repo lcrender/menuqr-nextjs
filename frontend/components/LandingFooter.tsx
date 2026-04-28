@@ -1,5 +1,9 @@
 import Link from 'next/link';
 
+/**
+ * Footer público unificado (landing, legales, login, etc.):
+ * Iniciar sesión, Documentación, Soporte, Precios, legales.
+ */
 export default function LandingFooter() {
   return (
     <footer className="landing-footer">
@@ -11,7 +15,7 @@ export default function LandingFooter() {
           </div>
           <div className="landing-footer-links">
             <Link href="/login" className="landing-footer-link">
-              Iniciar Sesión
+              Iniciar sesión
             </Link>
             <Link href="/documentacion" className="landing-footer-link">
               Documentación
@@ -19,11 +23,17 @@ export default function LandingFooter() {
             <Link href="/soporte" className="landing-footer-link">
               Soporte
             </Link>
+            <Link href="/precios" className="landing-footer-link">
+              Precios
+            </Link>
             <Link href="/legal/terminos-y-condiciones" className="landing-footer-link">
               Términos y Condiciones
             </Link>
             <Link href="/legal/politica-de-privacidad" className="landing-footer-link">
               Política de Privacidad
+            </Link>
+            <Link href="/legal/politica-de-cookies" className="landing-footer-link">
+              Política de Cookies
             </Link>
           </div>
         </div>

@@ -37,6 +37,7 @@ type AdminTicketDetail = {
   ticketNumber: number;
   subject: string;
   initialMessage: string;
+  attachmentUrls?: string[];
   status: 'open' | 'in_progress' | 'closed';
   createdAt: string;
   updatedAt: string;
@@ -177,6 +178,19 @@ export default function AdminSupportTicketDetailPage() {
                   </button>
                 </div>
               </div>
+
+              {ticket.attachmentUrls && ticket.attachmentUrls.length > 0 ? (
+                <div className="card mb-4">
+                  <div className="card-header">Imágenes adjuntas</div>
+                  <div className="card-body d-flex flex-wrap gap-3">
+                    {ticket.attachmentUrls.map((u) => (
+                      <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="d-block">
+                        <img src={u} alt="" className="img-thumbnail" style={{ maxWidth: 220, maxHeight: 220, objectFit: 'cover' }} />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="card mb-4">
                 <div className="card-header">Historial</div>

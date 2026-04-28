@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import LandingFooter from '../components/LandingFooter';
 
 export default function VerifyEmailRequiredPage() {
   const router = useRouter();
@@ -40,6 +41,8 @@ export default function VerifyEmailRequiredPage() {
             </div>
           </div>
         </section>
+
+        <LandingFooter />
       </div>
     </>
   );

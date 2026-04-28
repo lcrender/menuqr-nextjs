@@ -17,6 +17,7 @@ type TicketDetail = {
   ticketNumber: number;
   subject: string;
   initialMessage: string;
+  attachmentUrls?: string[];
   status: 'open' | 'in_progress' | 'closed';
   createdAt: string;
   updatedAt: string;
@@ -81,8 +82,6 @@ export default function SupportTicketDetailPage() {
     }
   };
 
-  const closed = ticket?.status === 'closed';
-
   return (
     <AdminLayout>
       <div className="container-fluid py-4">
@@ -115,6 +114,19 @@ export default function SupportTicketDetailPage() {
               </div>
             </div>
 
+            {ticket.attachmentUrls && ticket.attachmentUrls.length > 0 ? (
+              <div className="card mb-4">
+                <div className="card-header">Imágenes adjuntas</div>
+                <div className="card-body d-flex flex-wrap gap-3">
+                  {ticket.attachmentUrls.map((u) => (
+                    <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="d-block">
+                      <img src={u} alt="" className="img-thumbnail" style={{ maxWidth: 220, maxHeight: 220, objectFit: 'cover' }} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="card mb-4">
               <div className="card-header">Historial</div>
               <ul className="list-group list-group-flush">
@@ -132,7 +144,7 @@ export default function SupportTicketDetailPage() {
               </ul>
             </div>
 
-            {closed ? (
+            {ticket.status === 'closed' ? (
               <div className="alert alert-secondary">Este ticket está cerrado. No se pueden enviar más mensajes.</div>
             ) : (
               <div className="card mb-4">

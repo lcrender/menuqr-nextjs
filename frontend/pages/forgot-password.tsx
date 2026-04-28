@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import api from '../lib/axios';
+import LandingFooter from '../components/LandingFooter';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -99,6 +100,8 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
         </section>
+
+        <LandingFooter />
       </div>
     </>
   );
