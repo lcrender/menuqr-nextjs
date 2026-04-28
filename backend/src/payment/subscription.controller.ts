@@ -170,6 +170,7 @@ export class SubscriptionController {
       planType: body.planType,
       returnUrl: body.returnUrl,
       cancelUrl: body.cancelUrl,
+      mercadoPagoEmail: body.mercadoPagoEmail,
       acceptedTerms: body.acceptedTerms,
       firstName: body.firstName,
       lastName: body.lastName,

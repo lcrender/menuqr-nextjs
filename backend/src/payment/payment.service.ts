@@ -82,6 +82,7 @@ export class PaymentService {
     planSlug: string;
     returnUrl: string;
     cancelUrl: string;
+    payerEmail?: string;
   }): Promise<CreateSubscriptionResult> {
     const user = await this.usersService.findById(params.userId);
     if (!user) throw new NotFoundException('User not found');
@@ -138,7 +139,7 @@ export class PaymentService {
       ...params,
       returnUrl,
       cancelUrl,
-      payerEmail: user.email ?? undefined,
+      payerEmail: params.payerEmail?.trim() || (user.email ?? undefined),
       metadata: { userId: params.userId },
     });
   }
@@ -152,6 +153,7 @@ export class PaymentService {
     planType: PlanType;
     returnUrl: string;
     cancelUrl: string;
+    mercadoPagoEmail?: string;
     acceptedTerms: boolean;
     firstName: string;
     lastName: string;
@@ -203,6 +205,7 @@ export class PaymentService {
         planType: params.planType,
         returnUrl: params.returnUrl,
         cancelUrl: params.cancelUrl,
+        payerEmail: params.mercadoPagoEmail?.trim() || undefined,
       });
       const sub = await this.subscriptionService.findByExternalId(provider, result.subscriptionId);
       if (sub) {

@@ -1,4 +1,4 @@
-import { Equals, IsIn, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { Equals, IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 
 export class SubscriptionCheckoutDto {
   @IsIn(['starter', 'pro', 'premium'])
@@ -12,6 +12,10 @@ export class SubscriptionCheckoutDto {
 
   @IsString()
   cancelUrl: string;
+
+  @IsOptional()
+  @IsEmail({}, { message: 'Ingresá un email válido para Mercado Pago.' })
+  mercadoPagoEmail?: string;
 
   @Equals(true, { message: 'Debés aceptar los términos y condiciones y la política de privacidad.' })
   acceptedTerms: boolean;

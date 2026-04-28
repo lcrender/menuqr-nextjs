@@ -45,6 +45,7 @@ export default function SubscriptionCheckoutPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [billingData, setBillingData] = useState({
+    mercadoPagoEmail: '',
     firstName: '',
     lastName: '',
     documentType: 'DNI',
@@ -95,6 +96,21 @@ export default function SubscriptionCheckoutPage() {
         }
       } catch {
         // No bloquear checkout si no existe/está caído; solo se pierde el autocompletado.
+      }
+
+      // Prefill desde sesión local para evitar que el usuario lo escriba manualmente.
+      try {
+        const raw = localStorage.getItem('user');
+        const user = raw ? JSON.parse(raw) : null;
+        const email = typeof user?.email === 'string' ? user.email.trim() : '';
+        if (email) {
+          setBillingData((prev) => ({
+            ...prev,
+            mercadoPagoEmail: prev.mercadoPagoEmail || email,
+          }));
+        }
+      } catch {
+        // ignore
       }
     })();
   }, []);
@@ -175,6 +191,13 @@ export default function SubscriptionCheckoutPage() {
     if (!billingData.state.trim()) nextErrors.state = 'La provincia o estado es obligatoria.';
     if (!billingData.postalCode.trim()) nextErrors.postalCode = 'El código postal es obligatorio.';
     if (!billingData.country.trim()) nextErrors.country = 'El país es obligatorio.';
+    if (pricingData?.paymentProvider === 'mercadopago') {
+      const mpEmail = billingData.mercadoPagoEmail.trim();
+      if (!mpEmail) nextErrors.mercadoPagoEmail = 'El email de Mercado Pago es obligatorio.';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mpEmail)) {
+        nextErrors.mercadoPagoEmail = 'Ingresá un email válido.';
+      }
+    }
     if (isArgentina) {
       if (!billingData.documentType) nextErrors.documentType = 'El tipo de documento es obligatorio para Argentina.';
       if (!billingData.documentNumber.trim()) nextErrors.documentNumber = 'El número de documento es obligatorio para Argentina.';
@@ -200,6 +223,7 @@ export default function SubscriptionCheckoutPage() {
         returnUrl,
         cancelUrl,
         acceptedTerms: true,
+        mercadoPagoEmail: billingData.mercadoPagoEmail.trim() || undefined,
         firstName: billingData.firstName.trim(),
         lastName: billingData.lastName.trim(),
         documentType: billingData.documentType,
@@ -295,6 +319,21 @@ export default function SubscriptionCheckoutPage() {
             <div className="border-top pt-3 mb-3">
               <span className="small text-muted d-block mb-2">Datos de facturación</span>
               <div className="row g-2 mb-3">
+                {pricingData?.paymentProvider === 'mercadopago' && (
+                  <div className="col-12">
+                    <input
+                      className="form-control"
+                      type="email"
+                      placeholder="Email de tu cuenta de Mercado Pago"
+                      value={billingData.mercadoPagoEmail}
+                      onChange={(e) => setBillingData((p) => ({ ...p, mercadoPagoEmail: e.target.value }))}
+                    />
+                    {fieldErrors.mercadoPagoEmail && <small className="text-danger">{fieldErrors.mercadoPagoEmail}</small>}
+                    <small className="text-muted d-block mt-1">
+                      Debe coincidir con la cuenta con la que vas a pagar en Mercado Pago.
+                    </small>
+                  </div>
+                )}
                 <div className="col-12 col-md-6">
                   <input className="form-control" placeholder="Nombre" value={billingData.firstName} onChange={(e) => setBillingData((p) => ({ ...p, firstName: e.target.value }))} />
                   {fieldErrors.firstName && <small className="text-danger">{fieldErrors.firstName}</small>}
