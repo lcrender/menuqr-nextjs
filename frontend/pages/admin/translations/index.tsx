@@ -827,12 +827,83 @@ export default function AdminTranslationsPage() {
   if (!canAccessPage) {
     return (
       <AdminLayout>
-        <div className="py-4">
+        <div className="py-4 px-2 px-md-0">
           <h1 className="h3 mb-3">Traducciones</h1>
-          <div className="alert alert-info">
-            Las traducciones de menú están disponibles en planes <strong>Pro</strong> y{' '}
-            <strong>Pro Team</strong>. Podés revisar o cambiar tu plan en{' '}
-            <Link href="/admin/profile/subscription">Mi perfil → Suscripción</Link>.
+          <p className="lead text-muted mb-2" style={{ fontSize: '1.05rem' }}>
+            Podés traducir tu menú a <strong>varios idiomas</strong> para que tus clientes elijan la carta en su lengua.
+          </p>
+          <p className="text-muted mb-4">
+            Es una opción pensada para cartas multilingües.{' '}
+            <strong>Está disponible para planes Pro y Premium</strong> (editor por idioma, límites según tu suscripción y traducción automática en beta).
+          </p>
+
+          <div className="row g-4 align-items-stretch">
+            <div className="col-12 col-md-4">
+              <div className="card h-100 border-secondary shadow-sm" style={{ opacity: 0.92 }}>
+                <div className="card-body d-flex flex-column">
+                  <h2 className="h5 mb-2">Traducciones</h2>
+                  <p className="small text-muted flex-grow-1 mb-3">
+                    Gestioná idiomas por menú, banderas en la carta y editá textos para cada idioma.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary w-100"
+                    disabled
+                    tabIndex={-1}
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    Disponible en Pro y Premium
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-12 col-md-4">
+              <div className="card h-100 border-secondary shadow-sm" style={{ opacity: 0.92 }}>
+                <div className="card-body d-flex flex-column">
+                  <h2 className="h5 mb-2">
+                    Traducción automática <span className="badge bg-info text-dark">beta</span>
+                  </h2>
+                  <p className="small text-muted flex-grow-1 mb-3">
+                    Generá borradores automáticos para ahorrar tiempo; revisá y publicá cuando esté listo.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary w-100"
+                    disabled
+                    tabIndex={-1}
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    Disponible en Pro y Premium
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-12 col-md-4">
+              <div
+                className="admin-stat-card h-100 d-flex flex-column justify-content-center"
+                style={{
+                  background: 'linear-gradient(135deg, #e8f4fd 0%, #d4ebfa 100%)',
+                  border: '2px solid var(--bs-primary, #0d6efd)',
+                  boxShadow: '0 4px 12px rgba(13, 110, 253, 0.2)',
+                }}
+              >
+                <p className="admin-stat-title mb-2" style={{ fontSize: '1rem' }}>
+                  Pasá a Pro o Premium y probá traducciones y muchas funciones más
+                </p>
+                <p className="small text-muted mb-3" style={{ lineHeight: 1.4 }}>
+                  Los planes superiores desbloquean cartas multilingües, más capacidad y herramientas extra; compará opciones y elegí la que mejor encaje en tu negocio.
+                </p>
+                <Link
+                  href="/admin/profile/subscription"
+                  className="btn btn-primary btn-sm align-self-start"
+                  style={{ textDecoration: 'none', fontWeight: 600 }}
+                >
+                  Gestionar suscripción
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </AdminLayout>

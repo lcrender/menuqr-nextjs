@@ -8,6 +8,22 @@ export const API_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
+ * URL base para peticiones desde Node (`getServerSideProps`, Route Handlers).
+ * Si `NEXT_PUBLIC_API_URL` es relativo (`/api-proxy`), el servidor no puede usarlo tal cual:
+ * se usa `INTERNAL_API_URL` (mismo criterio que `rewrites` en `next.config.js`).
+ */
+export function getServerApiBaseUrl(): string {
+  const pub = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(
+    /\/$/,
+    '',
+  );
+  if (pub.startsWith('http://') || pub.startsWith('https://')) {
+    return pub;
+  }
+  return (process.env.INTERNAL_API_URL || 'http://127.0.0.1:3001').replace(/\/$/, '');
+}
+
+/**
  * Base URL para llamar a la API desde el navegador (axios, fetch).
  * Si la página es HTTPS (p. ej. ngrok) y NEXT_PUBLIC_API_URL apunta a http://localhost,
  * el navegador bloquea mixed content; usamos el proxy de Next (/api-proxy).

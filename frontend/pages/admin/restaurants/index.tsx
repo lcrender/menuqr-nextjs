@@ -31,6 +31,9 @@ const countryCodes: { [key: string]: string } = {
   'Venezuela': '58',
 };
 
+/** Frase exacta que el usuario debe escribir para confirmar el cambio de nombre (afecta al QR). */
+const RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE = 'MODIFICARQR';
+
 // Monedas oficiales por país
 const countryCurrencies: { [key: string]: string } = {
   'Argentina': 'ARS',
@@ -118,6 +121,10 @@ export default function Restaurants() {
   const [coverCropSrc, setCoverCropSrc] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  /** Nombre del restaurante al abrir el modal de edición (para detectar cambio y avisar del QR). */
+  const nameWhenEditSessionStartedRef = useRef('');
+  const [showQrNameWarningModal, setShowQrNameWarningModal] = useState(false);
+  const [qrNameConfirmInput, setQrNameConfirmInput] = useState('');
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedRestaurantForQR, setSelectedRestaurantForQR] = useState<any>(null);
   const [filterName, setFilterName] = useState<string>('');
@@ -325,8 +332,7 @@ export default function Restaurants() {
     return websiteValue;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const executeRestaurantSave = async () => {
     try {
       // Construir dirección con el nuevo formato
       const addressParts = [
@@ -456,6 +462,42 @@ export default function Restaurants() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const editingIdEarly = editing?.id;
+    const editingStillInListEarly =
+      !!editingIdEarly && restaurants.some((r: { id: string }) => r.id === editingIdEarly);
+    const shouldUpdateEarly = Boolean(editing && editingStillInListEarly);
+
+    const nameChangedWhileEditing =
+      shouldUpdateEarly &&
+      formData.name.trim() !== (nameWhenEditSessionStartedRef.current || '').trim();
+
+    if (nameChangedWhileEditing) {
+      setShowQrNameWarningModal(true);
+      setQrNameConfirmInput('');
+      return;
+    }
+
+    await executeRestaurantSave();
+  };
+
+  const handleConfirmQrNameChange = async () => {
+    if (qrNameConfirmInput !== RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE) {
+      setAlertData({
+        title: 'Confirmación incorrecta',
+        message: `Debés escribir exactamente ${RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE} para continuar.`,
+        variant: 'warning',
+      });
+      setShowAlert(true);
+      return;
+    }
+    setShowQrNameWarningModal(false);
+    setQrNameConfirmInput('');
+    await executeRestaurantSave();
+  };
+
   // Función para parsear la dirección completa en campos individuales
   const parseAddress = (address: string | null | undefined) => {
     if (!address) {
@@ -580,7 +622,8 @@ export default function Restaurants() {
       const fullRestaurant = res.data;
       
       setEditing(fullRestaurant);
-      
+      nameWhenEditSessionStartedRef.current = (fullRestaurant.name || '').trim();
+
       // Parsear la dirección
       const addressParts = parseAddress(fullRestaurant.address || null);
       
@@ -1796,6 +1839,79 @@ export default function Restaurants() {
           </div>
         </div>
       )}
+
+      {showQrNameWarningModal && (
+        <div
+          className="modal show d-block"
+          style={{ backgroundColor: 'rgba(0,0,0,0.55)', zIndex: 1060 }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="qr-name-warning-title"
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-warning" style={{ borderWidth: '2px' }}>
+              <div className="modal-header bg-warning bg-opacity-25">
+                <h5 className="modal-title" id="qr-name-warning-title">
+                  Cambio de nombre y código QR
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Cerrar"
+                  onClick={() => {
+                    setShowQrNameWarningModal(false);
+                    setQrNameConfirmInput('');
+                  }}
+                />
+              </div>
+              <div className="modal-body">
+                <p className="mb-3">
+                  <strong>Advertencia:</strong> si cambiás el nombre del restaurante, el{' '}
+                  <strong>código QR y el enlace público</strong> pueden dejar de coincidir con el material que ya imprimiste o compartiste.
+                  Quien use un QR o enlace antiguo podría ver un error o una página distinta.
+                </p>
+                <p className="mb-3 small text-muted mb-4">
+                  Para confirmar que entendés las consecuencias, escribí exactamente la siguiente palabra en mayúsculas (sin espacios):
+                </p>
+                <label className="form-label fw-semibold" htmlFor="qr-name-confirm-input">
+                  Confirmación ({RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE})
+                </label>
+                <input
+                  id="qr-name-confirm-input"
+                  type="text"
+                  className="form-control font-monospace"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder={RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE}
+                  value={qrNameConfirmInput}
+                  onChange={(e) => setQrNameConfirmInput(e.target.value)}
+                />
+              </div>
+              <div className="modal-footer flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowQrNameWarningModal(false);
+                    setQrNameConfirmInput('');
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-warning"
+                  disabled={qrNameConfirmInput !== RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE}
+                  onClick={() => void handleConfirmQrNameChange()}
+                >
+                  Confirmar y guardar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal para mostrar QR del restaurante */}
       {showQRModal && selectedRestaurantForQR && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex={-1}>

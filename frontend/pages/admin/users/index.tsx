@@ -3,6 +3,7 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
+import { getMenuStatusLabelEs } from '../../../lib/menu-status-label';
 
 interface UserStats {
   id: string;
@@ -583,10 +584,9 @@ export default function Users() {
                                   <td>
                                     <span className={`badge ${
                                       menu.status === 'PUBLISHED' ? 'bg-success' : 
-                                      menu.status === 'DRAFT' ? 'bg-warning' : 'bg-secondary'
+                                      menu.status === 'DRAFT' ? 'bg-warning text-dark' : 'bg-secondary'
                                     }`}>
-                                      {menu.status === 'PUBLISHED' ? 'Publicado' : 
-                                       menu.status === 'DRAFT' ? 'Borrador' : 'Archivado'}
+                                      {getMenuStatusLabelEs(menu.status)}
                                     </span>
                                   </td>
                                 </tr>

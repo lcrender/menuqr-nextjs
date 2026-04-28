@@ -15,6 +15,7 @@ import ProductWizard from '../../../components/ProductWizard';
 import MenuWizard from '../../../components/MenuWizard';
 import ConfirmModal from '../../../components/ConfirmModal';
 import AlertModal from '../../../components/AlertModal';
+import { getMenuStatusLabelEs } from '../../../lib/menu-status-label';
 
 export default function Menus() {
   const router = useRouter();
@@ -966,11 +967,16 @@ export default function Menus() {
                     </td>
                   )}
                   <td>
-                    <span className={`badge ${
-                      menu.status === 'PUBLISHED' ? 'bg-success' : 
-                      menu.status === 'DRAFT' ? 'bg-warning' : 'bg-secondary'
-                    }`}>
-                      {menu.status || 'DRAFT'}
+                    <span
+                      className={`badge ${
+                        menu.status === 'PUBLISHED'
+                          ? 'bg-success'
+                          : menu.status === 'DRAFT'
+                            ? 'bg-warning text-dark'
+                            : 'bg-secondary'
+                      }`}
+                    >
+                      {getMenuStatusLabelEs(menu.status)}
                     </span>
                   </td>
                   <td>{menu.sectionCount || 0}</td>
@@ -1014,10 +1020,10 @@ export default function Menus() {
             const menuUrl = getMenuPublicUrl(menu);
             const statusBadge =
               menu.status === 'PUBLISHED'
-                ? { className: 'bg-success', label: 'PUBLICADO' }
+                ? { className: 'bg-success', label: getMenuStatusLabelEs(menu.status) }
                 : menu.status === 'DRAFT'
-                  ? { className: 'bg-warning text-dark', label: 'BORRADOR' }
-                  : { className: 'bg-secondary', label: menu.status || 'DRAFT' };
+                  ? { className: 'bg-warning text-dark', label: getMenuStatusLabelEs(menu.status) }
+                  : { className: 'bg-secondary', label: getMenuStatusLabelEs(menu.status) };
             const templateShort = menu.restaurantTemplate
               ? menu.restaurantTemplate === 'italianFood'
                 ? 'Italian Food'

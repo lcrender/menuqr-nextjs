@@ -734,7 +734,7 @@ export default function MenuWizard({
             <p className="mb-0" style={{ lineHeight: 1.55 }}>
               Si querés más información sobre la importación con CSV, visitá la{' '}
               <a
-                href="/documentacion#importarMenuCsv"
+                href="/documentacion/importar-menu-csv"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: 'var(--admin-primary)', fontWeight: 600 }}

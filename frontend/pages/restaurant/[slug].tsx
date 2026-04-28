@@ -1,8 +1,19 @@
 import { useRouter } from 'next/router';
+import type { GetServerSideProps } from 'next';
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { getApiBaseUrl } from '../../lib/config';
+import { PublicHtmlSeoHead } from '../../components/PublicHtmlSeoHead';
+import {
+  APP_MENU_QR_TITLE_SUFFIX,
+  buildMetaDescription,
+  buildPublicRestaurantTitle,
+  type PublicHtmlSeo,
+  robotsContent,
+  sectionNamesForMeta,
+} from '../../lib/public-restaurant-meta';
+import { buildRestaurantHubSsrSeo } from '../../lib/ssr-public-restaurant-seo';
 import { changeLanguage, getCurrentLanguage, isLanguageAvailable } from '../../src/i18n/config';
 import { isBcp47MenuLocale, type MenuLangManifestEntry, buildTemplateMenuLocales } from '../../components/MenuLanguageSwitcher';
 import ClassicTemplate from '../../templates/classic/ClassicTemplate';
@@ -135,7 +146,7 @@ function restaurantLocaleStorageKey(restaurantSlug: string) {
   return `menuqr-menu-content-locale:restaurant:${restaurantSlug}`;
 }
 
-export default function RestaurantPage() {
+export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
   const router = useRouter();
   const { slug, lang, locale: localeQueryParam } = router.query;
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -306,14 +317,6 @@ export default function RestaurantPage() {
     fetchRestaurant();
   }, [slug, contentLocale]);
 
-  // Título de página para que se vea "Menu QR Nombre del restaurante"
-  // en el navegador (importante cuando se comparte/abre el link del restaurante).
-  useEffect(() => {
-    if (restaurant?.name) {
-      document.title = `Menu QR ${restaurant.name}`;
-    }
-  }, [restaurant?.name]);
-
   const loadMenu = async (menuSlug: string) => {
     if (!slug) return;
     selectedMenuSlugRef.current = menuSlug;
@@ -332,25 +335,51 @@ export default function RestaurantPage() {
     }
   };
 
+  const displaySeo: PublicHtmlSeo = (() => {
+    if (loading) return seo;
+    if (error || !restaurant)
+      return {
+        title: APP_MENU_QR_TITLE_SUFFIX,
+        description: '',
+        robots: 'noindex, nofollow',
+        canonicalUrl: seo.canonicalUrl,
+      };
+    return {
+      title: buildPublicRestaurantTitle(restaurant.name),
+      description: buildMetaDescription({
+        restaurantDescription: restaurant.description,
+        sectionNames: sectionNamesForMeta(selectedMenu?.sections),
+      }),
+      robots: robotsContent(menuList.length > 0),
+      canonicalUrl: seo.canonicalUrl,
+    };
+  })();
+
   if (loading) {
     return (
-      <div className="container mt-5">
-        <div className="text-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Cargando...</span>
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <div className="container mt-5">
+          <div className="text-center">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error || !restaurant) {
     return (
-      <div className="container mt-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Restaurante no encontrado'}
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <div className="container mt-5">
+          <div className="alert alert-danger" role="alert">
+            {error || 'Restaurante no encontrado'}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -373,37 +402,69 @@ export default function RestaurantPage() {
 
   // Usar el componente ClassicTemplate si el template es 'classic'
   if (template === 'classic') {
-    return <ClassicTemplate {...templateProps} />;
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <ClassicTemplate {...templateProps} />
+      </>
+    );
   }
 
   // Usar el componente MinimalistTemplate si el template es 'minimalist'
   if (template === 'minimalist') {
-    return <MinimalistTemplate {...templateProps} />;
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <MinimalistTemplate {...templateProps} />
+      </>
+    );
   }
 
   // Usar el componente FoodieTemplate si el template es 'foodie'
   if (template === 'foodie') {
-    return <FoodieTemplate {...templateProps} />;
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <FoodieTemplate {...templateProps} />
+      </>
+    );
   }
 
   // Usar el componente BurgersTemplate si el template es 'burgers'
   if (template === 'burgers') {
-    return <BurgersTemplate {...templateProps} />;
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <BurgersTemplate {...templateProps} />
+      </>
+    );
   }
 
   // Usar el componente GourmetTemplate si el template es 'gourmet'
   if (template === 'gourmet') {
-    return <GourmetTemplate {...templateProps} />;
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <GourmetTemplate {...templateProps} />
+      </>
+    );
   }
 
   // Usar el componente ItalianFoodTemplate si el template es 'italianFood'
   if (template === 'italianFood') {
-    return <ItalianFoodTemplate {...templateProps} />;
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <ItalianFoodTemplate {...templateProps} />
+      </>
+    );
   }
 
   // Para otros templates, mantener el código actual (temporalmente)
   return (
-    <div className={`template-${template} restaurant-container`} style={{ minHeight: '100vh' }}>
+    <>
+      <PublicHtmlSeoHead seo={displaySeo} />
+      <div className={`template-${template} restaurant-container`} style={{ minHeight: '100vh' }}>
       <div className="container mt-4">
       {/* Cover Image */}
       {restaurant.coverUrl && (
@@ -649,5 +710,11 @@ export default function RestaurantPage() {
       ) : null}
       </div>
     </div>
+    </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps<{ seo: PublicHtmlSeo }> = async (ctx) => {
+  const seo = await buildRestaurantHubSsrSeo(ctx);
+  return { props: { seo } };
+};

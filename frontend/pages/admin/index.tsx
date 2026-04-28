@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import QRCode from 'react-qr-code';
 import api from '../../lib/axios';
 import AdminLayout from '../../components/AdminLayout';
+import { getMenuStatusLabelEs } from '../../lib/menu-status-label';
 import PlanBadge from '../../components/profile/PlanBadge';
 import {
   buildTemplateConfigSummaryLines,
@@ -609,7 +610,7 @@ export default function Admin() {
                             <li key={m.id}>
                               <span className="text-dark">{m.name}</span>
                               {' — '}
-                              {m.status === 'PUBLISHED' ? 'Publicado' : 'Borrador'}
+                              {getMenuStatusLabelEs(m.status)}
                               {`, ${m.productCount} producto(s)`}
                             </li>
                           ))}

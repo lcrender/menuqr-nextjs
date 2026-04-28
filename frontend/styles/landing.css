@@ -1639,3 +1639,12 @@
   }
 }
 
+/* Documentación: títulos de grupo del sidebar (color principal de la marca) */
+.documentation-shell .docs-nav-group-label {
+  color: var(--landing-primary);
+}
+
+.documentation-shell.documentation-shell--admin .docs-nav-group-label {
+  color: var(--admin-primary);
+}
+

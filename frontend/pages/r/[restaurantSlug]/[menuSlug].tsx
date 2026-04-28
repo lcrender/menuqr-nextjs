@@ -1,8 +1,19 @@
 import { useRouter } from 'next/router';
+import type { GetServerSideProps } from 'next';
 import { useEffect, useState, type ReactNode } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { getApiBaseUrl } from '../../../lib/config';
+import { PublicHtmlSeoHead } from '../../../components/PublicHtmlSeoHead';
+import {
+  APP_MENU_QR_TITLE_SUFFIX,
+  buildMetaDescription,
+  buildPublicRestaurantTitle,
+  type PublicHtmlSeo,
+  robotsContent,
+  sectionNamesForMeta,
+} from '../../../lib/public-restaurant-meta';
+import { buildPublicMenuSsrSeo } from '../../../lib/ssr-public-restaurant-seo';
 import { changeLanguage, getCurrentLanguage, isLanguageAvailable } from '../../../src/i18n/config';
 import { isBcp47MenuLocale, type MenuLangManifestEntry, buildTemplateMenuLocales } from '../../../components/MenuLanguageSwitcher';
 import ClassicTemplate from '../../../templates/classic/ClassicTemplate';
@@ -122,7 +133,7 @@ function menuLocaleStorageKey(restaurantSlug: string, menuSlug: string) {
   return `menuqr-menu-content-locale:${restaurantSlug}:${menuSlug}`;
 }
 
-export default function MenuPage() {
+export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
   const router = useRouter();
   const { restaurantSlug, menuSlug, lang, locale: localeQueryParam } = router.query;
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -268,40 +279,69 @@ export default function MenuPage() {
     fetchData();
   }, [restaurantSlug, menuSlug, contentLocale]);
 
+  const displaySeo: PublicHtmlSeo = (() => {
+    if (loading) return seo;
+    if (error || !menu || !restaurant)
+      return {
+        title: APP_MENU_QR_TITLE_SUFFIX,
+        description: '',
+        robots: 'noindex, nofollow',
+        canonicalUrl: seo.canonicalUrl,
+      };
+    return {
+      title: buildPublicRestaurantTitle(restaurant.name),
+      description: buildMetaDescription({
+        restaurantDescription: restaurant.description,
+        sectionNames: sectionNamesForMeta(menu.sections),
+      }),
+      robots: robotsContent(true),
+      canonicalUrl: seo.canonicalUrl,
+    };
+  })();
+
   if (loading) {
     return (
-      <div className="container mt-5">
-        <div className="text-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Cargando...</span>
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <div className="container mt-5">
+          <div className="text-center">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error || !menu) {
     return (
-      <div className="container mt-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Menú no encontrado'}
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <div className="container mt-5">
+          <div className="alert alert-danger" role="alert">
+            {error || 'Menú no encontrado'}
+          </div>
+          <Link href="/" className="btn btn-primary mt-3">
+            Volver al inicio
+          </Link>
         </div>
-        <Link href="/" className="btn btn-primary mt-3">
-          Volver al inicio
-        </Link>
-      </div>
+      </>
     );
   }
 
   if (!restaurant) {
     return (
-      <div className="container mt-5">
-        <div className="text-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Cargando...</span>
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <div className="container mt-5">
+          <div className="text-center">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -361,5 +401,15 @@ export default function MenuPage() {
     templateBody = <ClassicTemplate {...templateProps} />;
   }
 
-  return <>{templateBody}</>;
+  return (
+    <>
+      <PublicHtmlSeoHead seo={displaySeo} />
+      {templateBody}
+    </>
+  );
 }
+
+export const getServerSideProps: GetServerSideProps<{ seo: PublicHtmlSeo }> = async (ctx) => {
+  const seo = await buildPublicMenuSsrSeo(ctx);
+  return { props: { seo } };
+};
