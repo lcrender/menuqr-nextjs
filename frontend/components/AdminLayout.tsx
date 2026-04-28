@@ -359,6 +359,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                             Mensajes
                           </Link>
                         </li>
+                        <li className="admin-nav-item">
+                          <Link
+                            href="/admin/config/payment-events"
+                            className={`admin-nav-link ${currentPath === '/admin/config/payment-events' ? 'active' : ''}`}
+                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            Pagos y eventos
+                          </Link>
+                        </li>
                       </ul>
                     )}
                   </div>

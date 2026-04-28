@@ -139,6 +139,143 @@ export class SubscriptionController {
     });
   }
 
+  @Get('admin/subscriptions')
+  @Roles('SUPER_ADMIN')
+  @ApiOperation({ summary: 'Suscripciones de todos los usuarios (Super Admin) con filtros' })
+  async listAdminSubscriptions(
+    @Query()
+    query: {
+      userId?: string;
+      paymentProvider?: 'paypal' | 'mercadopago' | 'internal' | string;
+      status?: 'active' | 'canceled' | 'past_due' | 'incomplete' | 'expired' | string;
+      planSlug?: string;
+      planType?: 'monthly' | 'yearly' | string;
+      limit?: string;
+      offset?: string;
+    },
+  ) {
+    const allowedProviders = new Set<('paypal' | 'mercadopago' | 'internal')>(['paypal', 'mercadopago', 'internal']);
+    const paymentProvider =
+      typeof query.paymentProvider === 'string' && allowedProviders.has(query.paymentProvider as any)
+        ? (query.paymentProvider as any)
+        : undefined;
+    const allowedStatuses = new Set<('active' | 'canceled' | 'past_due' | 'incomplete' | 'expired')>([
+      'active',
+      'canceled',
+      'past_due',
+      'incomplete',
+      'expired',
+    ]);
+    const status =
+      typeof query.status === 'string' && allowedStatuses.has(query.status as any)
+        ? (query.status as any)
+        : undefined;
+    const planType =
+      query.planType === 'monthly' || query.planType === 'yearly' ? (query.planType as any) : undefined;
+    const limit = query.limit ? parseInt(query.limit, 10) : undefined;
+    const offset = query.offset ? parseInt(query.offset, 10) : undefined;
+
+    return this.subscriptionService.listForAdmin({
+      userId: query.userId,
+      paymentProvider,
+      status,
+      planSlug: query.planSlug,
+      planType,
+      limit,
+      offset,
+    });
+  }
+
+  @Get('admin/events')
+  @Roles('SUPER_ADMIN')
+  @ApiOperation({ summary: 'Eventos de pagos y webhooks (Mercado Pago/PayPal) para auditoría Super Admin' })
+  async listAdminEvents(
+    @Query()
+    query: {
+      userId?: string;
+      paymentProvider?: 'paypal' | 'mercadopago' | 'internal' | string;
+      status?: string;
+      planSlug?: string;
+      planType?: 'monthly' | 'yearly' | string;
+      from?: string;
+      to?: string;
+      limit?: string;
+      offset?: string;
+    },
+  ) {
+    const allowedStatuses = new Set<PaymentAttemptStatus>(['completed', 'failed', 'pending']);
+    const status = typeof query.status === 'string' && allowedStatuses.has(query.status as PaymentAttemptStatus)
+      ? (query.status as PaymentAttemptStatus)
+      : undefined;
+    const allowedProviders = new Set<('paypal' | 'mercadopago' | 'internal')>(['paypal', 'mercadopago', 'internal']);
+    const paymentProvider =
+      typeof query.paymentProvider === 'string' && allowedProviders.has(query.paymentProvider as any)
+        ? (query.paymentProvider as any)
+        : undefined;
+    const planType =
+      query.planType === 'monthly' || query.planType === 'yearly' ? (query.planType as any) : undefined;
+    const fromRaw = query.from ? new Date(query.from) : undefined;
+    const toRaw = query.to ? new Date(query.to) : undefined;
+    const from = fromRaw && !isNaN(fromRaw.getTime()) ? fromRaw : undefined;
+    const to = toRaw && !isNaN(toRaw.getTime()) ? toRaw : undefined;
+    const limit = query.limit ? parseInt(query.limit, 10) : 100;
+    const offset = query.offset ? parseInt(query.offset, 10) : 0;
+
+    const paymentEvents = await this.paymentHistoryService.listEventsForAdmin({
+      userId: query.userId,
+      paymentProvider,
+      status,
+      planSlug: query.planSlug,
+      planType,
+      from,
+      to,
+      limit,
+      offset,
+    });
+    const webhookEvents = await this.subscriptionService.listWebhookEventsForAdmin({
+      provider: paymentProvider,
+      from,
+      to,
+      limit,
+      offset,
+    });
+
+    const normalizedPayments = paymentEvents.map((e: any) => ({
+      source: 'payment_attempt',
+      date: e.date,
+      paymentProvider: e.paymentProvider,
+      eventId: e.providerEventId || e.externalPaymentId,
+      status: e.status,
+      message: e.failureReason || e.providerStatus || null,
+      userId: e.userId,
+      userEmail: e.userEmail,
+      externalPaymentId: e.externalPaymentId,
+      amount: e.amount,
+      currency: e.currency,
+      planSlug: e.planSlug,
+      planType: e.planType,
+    }));
+    const normalizedWebhooks = webhookEvents.map((e: any) => ({
+      source: 'webhook',
+      date: e.processedAt,
+      paymentProvider: e.provider,
+      eventId: e.eventId,
+      status: 'processed',
+      message: null,
+      userId: null,
+      userEmail: null,
+      externalPaymentId: null,
+      amount: null,
+      currency: null,
+      planSlug: null,
+      planType: null,
+    }));
+
+    return [...normalizedPayments, ...normalizedWebhooks]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, limit);
+  }
+
   @Post('create')
   @ApiOperation({
     summary:

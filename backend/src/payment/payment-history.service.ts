@@ -214,5 +214,54 @@ export class PaymentHistoryService {
 
     return this.list({ where, params, limit, offset });
   }
+
+  async listEventsForAdmin(filters: PaymentAttemptListFilters) {
+    const where: string[] = [];
+    const params: any[] = [];
+    let i = 1;
+
+    const add = (cond: string, value: any) => {
+      where.push(cond.replace('$X', `$${i}`));
+      params.push(value);
+      i++;
+    };
+
+    if (filters.userId) add('pa.user_id = $X::text', filters.userId);
+    if (filters.status) add('pa.status = $X::"PaymentAttemptStatus"', filters.status);
+    if (filters.paymentProvider) add('pa.payment_provider = $X::"PaymentProvider"', filters.paymentProvider);
+    if (filters.planSlug) add('pa.plan_slug = $X', filters.planSlug);
+    if (filters.planType) add('pa.plan_type = $X::"PlanType"', filters.planType);
+    if (filters.from) add('pa.occurred_at >= $X::timestamptz', filters.from);
+    if (filters.to) add('pa.occurred_at <= $X::timestamptz', filters.to);
+
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const limit = filters.limit ?? 100;
+    const offset = filters.offset ?? 0;
+
+    return this.postgres.queryRaw<any>(
+      `SELECT
+        pa.id,
+        pa.occurred_at as "date",
+        pa.user_id as "userId",
+        u.email as "userEmail",
+        pa.payment_provider as "paymentProvider",
+        pa.external_payment_id as "externalPaymentId",
+        pa.provider_event_id as "providerEventId",
+        pa.provider_status as "providerStatus",
+        pa.status,
+        pa.plan_slug as "planSlug",
+        pa.plan_type as "planType",
+        pa.amount,
+        pa.currency,
+        pa.failure_reason as "failureReason"
+      FROM payment_attempts pa
+      LEFT JOIN users u ON u.id = pa.user_id
+      ${whereSql}
+      ORDER BY pa.occurred_at DESC NULLS LAST, pa.created_at DESC
+      LIMIT $${params.length + 1}
+      OFFSET $${params.length + 2}`,
+      [...params, limit, offset],
+    );
+  }
 }
 

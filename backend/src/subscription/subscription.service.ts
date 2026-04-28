@@ -23,6 +23,16 @@ export interface SubscriptionRow {
   updatedAt: Date;
 }
 
+export interface AdminSubscriptionListFilters {
+  userId?: string;
+  paymentProvider?: PaymentProvider;
+  status?: SubscriptionStatus;
+  planSlug?: string;
+  planType?: PlanType;
+  limit?: number;
+  offset?: number;
+}
+
 @Injectable()
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
@@ -55,6 +65,59 @@ export class SubscriptionService {
       [userId]
     );
     return rows.map((r: any) => this.mapRow(r));
+  }
+
+  async listForAdmin(filters: AdminSubscriptionListFilters = {}) {
+    const where: string[] = [];
+    const params: any[] = [];
+    let i = 1;
+
+    const add = (cond: string, value: any) => {
+      where.push(cond.replace('$X', `$${i}`));
+      params.push(value);
+      i++;
+    };
+
+    if (filters.userId) add('s.user_id = $X::text', filters.userId);
+    if (filters.paymentProvider) add('s.payment_provider = $X::"PaymentProvider"', filters.paymentProvider);
+    if (filters.status) add('s.status = $X::"SubscriptionStatus"', filters.status);
+    if (filters.planSlug) add('s.subscription_plan = $X', filters.planSlug);
+    if (filters.planType) add('s.plan_type = $X::"PlanType"', filters.planType);
+
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const limit = filters.limit ?? 100;
+    const offset = filters.offset ?? 0;
+
+    const rows = await this.postgres.queryRaw<any>(
+      `SELECT
+         s.id,
+         s.user_id as "userId",
+         u.email as "userEmail",
+         s.payment_provider as "paymentProvider",
+         s.external_subscription_id as "externalSubscriptionId",
+         s.billing_country as "billingCountry",
+         s.currency,
+         s.status,
+         s.plan_type as "planType",
+         s.subscription_plan as "subscriptionPlan",
+         s.current_period_start as "currentPeriodStart",
+         s.current_period_end as "currentPeriodEnd",
+         s.cancel_at_period_end as "cancelAtPeriodEnd",
+         s.created_at as "createdAt",
+         s.updated_at as "updatedAt"
+       FROM subscriptions s
+       LEFT JOIN users u ON u.id = s.user_id
+       ${whereSql}
+       ORDER BY s.updated_at DESC, s.created_at DESC
+       LIMIT $${params.length + 1}
+       OFFSET $${params.length + 2}`,
+      [...params, limit, offset],
+    );
+
+    return rows.map((r: any) => ({
+      ...this.mapRow(r),
+      userEmail: r.userEmail ?? null,
+    }));
   }
 
   async create(data: {
@@ -220,6 +283,39 @@ export class SubscriptionService {
       [provider, eventId]
     );
     return !!rows[0];
+  }
+
+  async listWebhookEventsForAdmin(filters: {
+    provider?: PaymentProvider;
+    from?: Date;
+    to?: Date;
+    limit?: number;
+    offset?: number;
+  }) {
+    const where: string[] = [];
+    const params: any[] = [];
+    let i = 1;
+    const add = (cond: string, value: any) => {
+      where.push(cond.replace('$X', `$${i}`));
+      params.push(value);
+      i++;
+    };
+    if (filters.provider) add('provider = $X::text', filters.provider);
+    if (filters.from) add('processed_at >= $X::timestamptz', filters.from);
+    if (filters.to) add('processed_at <= $X::timestamptz', filters.to);
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const limit = filters.limit ?? 100;
+    const offset = filters.offset ?? 0;
+
+    return this.postgres.queryRaw<any>(
+      `SELECT provider, event_id as "eventId", processed_at as "processedAt"
+       FROM webhook_events
+       ${whereSql}
+       ORDER BY processed_at DESC
+       LIMIT $${params.length + 1}
+       OFFSET $${params.length + 2}`,
+      [...params, limit, offset],
+    );
   }
 
   /** Registro de checkout antes de redirigir a Mercado Pago / PayPal (precio y términos). */
