@@ -193,8 +193,7 @@ export default function SubscriptionCheckoutPage() {
     if (!billingData.country.trim()) nextErrors.country = 'El país es obligatorio.';
     if (pricingData?.paymentProvider === 'mercadopago') {
       const mpEmail = billingData.mercadoPagoEmail.trim();
-      if (!mpEmail) nextErrors.mercadoPagoEmail = 'El email de Mercado Pago es obligatorio.';
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mpEmail)) {
+      if (mpEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mpEmail)) {
         nextErrors.mercadoPagoEmail = 'Ingresá un email válido.';
       }
     }
@@ -330,7 +329,7 @@ export default function SubscriptionCheckoutPage() {
                     />
                     {fieldErrors.mercadoPagoEmail && <small className="text-danger">{fieldErrors.mercadoPagoEmail}</small>}
                     <small className="text-muted d-block mt-1">
-                      Debe coincidir con la cuenta con la que vas a pagar en Mercado Pago.
+                      Opcional. Si lo dejás vacío, se usa el email de tu cuenta en la app.
                     </small>
                   </div>
                 )}
