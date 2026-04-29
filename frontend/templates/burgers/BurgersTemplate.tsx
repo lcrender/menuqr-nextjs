@@ -1,6 +1,25 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 
+const BURGERS_SECTION_TITLE_PRESETS = {
+  small: { fontSize: '1.65rem', marginBottom: '28px', paddingBottom: '14px' },
+  medium: { fontSize: '2rem', marginBottom: '32px', paddingBottom: '16px' },
+  large: { fontSize: '2.5rem', marginBottom: '40px', paddingBottom: '20px' },
+  xlarge: { fontSize: '3rem', marginBottom: '44px', paddingBottom: '22px' },
+} as const;
+
+type BurgersSectionTitleKey = keyof typeof BURGERS_SECTION_TITLE_PRESETS;
+
+function resolveBurgersSectionTitleStyle(
+  templateConfig: Record<string, unknown> | undefined,
+): (typeof BURGERS_SECTION_TITLE_PRESETS)[BurgersSectionTitleKey] {
+  const raw = templateConfig?.sectionTitleFontSize;
+  if (typeof raw === 'string' && raw in BURGERS_SECTION_TITLE_PRESETS) {
+    return BURGERS_SECTION_TITLE_PRESETS[raw as BurgersSectionTitleKey];
+  }
+  return BURGERS_SECTION_TITLE_PRESETS.large;
+}
+
 interface BurgersTemplateProps {
   restaurant: {
     id: string;
@@ -17,6 +36,7 @@ interface BurgersTemplateProps {
     country?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    templateConfig?: Record<string, unknown>;
   };
   menuList: Array<{ id: string; name: string; slug: string; description?: string }>;
   selectedMenu: {
@@ -56,6 +76,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
 }) => {
   const primaryColor = restaurant.primaryColor || '#e74c3c';
   const secondaryColor = restaurant.secondaryColor || '#c0392b';
+  const sectionTitleLayout = resolveBurgersSectionTitleStyle(restaurant.templateConfig);
 
   const hexToRgba = (hex: string, a: number) => {
     const h = hex.replace('#', '');
@@ -327,17 +348,20 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                 }}>
                   🍔
                 </div>
-                <h2 className="template-burgers menu-section-title" style={{ 
-                  fontSize: '2.5rem', 
-                  fontWeight: '800', 
-                  marginBottom: '40px',
-                  paddingBottom: '20px',
-                  borderBottom: `4px solid ${primaryColor}`,
-                  textTransform: 'uppercase',
-                  letterSpacing: '2px',
-                  position: 'relative',
-                  zIndex: 1
-                }}>
+                <h2
+                  className="template-burgers menu-section-title"
+                  style={{
+                    fontSize: sectionTitleLayout.fontSize,
+                    fontWeight: '800',
+                    marginBottom: sectionTitleLayout.marginBottom,
+                    paddingBottom: sectionTitleLayout.paddingBottom,
+                    borderBottom: `4px solid ${primaryColor}`,
+                    textTransform: 'uppercase',
+                    letterSpacing: '2px',
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                >
                   {section.name}
                 </h2>
                 <div className="row g-4">

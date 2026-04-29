@@ -42,7 +42,7 @@ RUN npm run build
 
 # ========================================
 # Producción: ejecuta server.js del standalone
-# (incluye todas las rutas /pages, p. ej. /demos)
+# (incluye todas las rutas /pages, p. ej. /plantillas)
 # ========================================
 FROM node:18-alpine AS production
 

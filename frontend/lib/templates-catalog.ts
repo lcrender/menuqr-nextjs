@@ -1,5 +1,5 @@
 /**
- * Catálogo de plantillas para admin y páginas públicas (demos).
+ * Catálogo de plantillas para admin y páginas públicas (catálogo /plantillas).
  * Mantener sincronizado con las plantillas disponibles en el backend.
  */
 export interface TemplateCatalogItem {

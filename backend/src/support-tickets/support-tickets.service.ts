@@ -74,6 +74,10 @@ export class SupportTicketsService {
     return raw.filter((x): x is string => typeof x === 'string' && x.length > 0 && x.length <= 2048);
   }
 
+  private getCaseGroupId(ticket: { id: string; caseGroupId?: string | null }): string {
+    return ticket.caseGroupId || ticket.id;
+  }
+
   private assertAttachmentUrlsForUser(userId: string, urls: string[]): string[] {
     if (urls.length > 5) throw new BadRequestException('Máximo 5 imágenes por ticket.');
     const needle = `/support-tickets/${userId}/`;
@@ -152,6 +156,44 @@ export class SupportTicketsService {
     }
   }
 
+  private async notifyUserTicketReply(params: {
+    userEmail: string;
+    firstName?: string | null;
+    ticketNumber: number;
+    ticketSubject: string;
+    adminMessage: string;
+  }): Promise<void> {
+    const to = (params.userEmail || '').trim();
+    if (!to) return;
+
+    const frontendBase = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000').replace(/\/$/, '');
+    const loginUrl = `${frontendBase}/login`;
+    const firstName = (params.firstName || '').trim() || 'Hola';
+    const subject = `[AppMenuQR] Respuesta a tu ticket #${params.ticketNumber}`;
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8" /></head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #111827;">
+        <h2 style="margin-top:0;">${escapeHtml(firstName)}, tenemos una respuesta a tu ticket</h2>
+        <p><strong>Ticket:</strong> #${params.ticketNumber} — ${escapeHtml(params.ticketSubject)}</p>
+        <p><strong>Respuesta del equipo:</strong></p>
+        <pre style="white-space: pre-wrap; background:#f3f4f6; padding:12px; border-radius:8px;">${escapeHtml(
+          params.adminMessage,
+        )}</pre>
+        <p>Podés iniciar sesión para seguir el hilo y responder desde el panel de soporte.</p>
+        <p><a href="${escapeHtml(loginUrl)}">Ir a iniciar sesión</a></p>
+      </body>
+      </html>
+    `;
+
+    try {
+      await this.emailService.sendAdminNotificationEmail(to, subject, html);
+    } catch (e) {
+      this.logger.error(`Error enviando notificación al usuario por ticket #${params.ticketNumber}: ${e}`);
+    }
+  }
+
   async uploadAttachment(userId: string, file: Express.Multer.File) {
     if (!file?.buffer?.length) {
       throw new BadRequestException(
@@ -202,6 +244,7 @@ export class SupportTicketsService {
             status: SupportTicketStatus.open,
             lastReplyAt: new Date(),
             lastReplyByRole: roleStr,
+            caseGroupId: null,
           },
         });
         await tx.supportTicketMessage.create({
@@ -396,7 +439,23 @@ export class SupportTicketsService {
         },
       });
       if (!ticket) throw new NotFoundException('Ticket no encontrado');
-      return this.serializeTicketDetail(ticket, true);
+      const caseGroupId = this.getCaseGroupId(ticket);
+      const relatedTickets = await this.prisma.supportTicket.findMany({
+        where: {
+          OR: [{ id: caseGroupId }, { caseGroupId }],
+        },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          ticketNumber: true,
+          subject: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+        },
+      });
+      return this.serializeTicketDetail(ticket, true, relatedTickets);
     } catch (e) {
       if (e instanceof NotFoundException) throw e;
       this.rethrowPrismaIfMissingSchema(e);
@@ -409,7 +468,14 @@ export class SupportTicketsService {
     const text = dto.message.trim();
     const roleStr = String(adminRole);
     try {
-      const ticket = await this.prisma.supportTicket.findUnique({ where: { id: ticketId } });
+      const ticket = await this.prisma.supportTicket.findUnique({
+        where: { id: ticketId },
+        include: {
+          user: {
+            select: { email: true, firstName: true },
+          },
+        },
+      });
       if (!ticket) throw new NotFoundException('Ticket no encontrado');
       if (ticket.status === SupportTicketStatus.closed) {
         throw new BadRequestException('El ticket está cerrado. Cambiá el estado para reabrirlo antes de responder.');
@@ -423,6 +489,13 @@ export class SupportTicketsService {
           data: { lastReplyAt: new Date(), lastReplyByRole: roleStr },
         }),
       ]);
+      void this.notifyUserTicketReply({
+        userEmail: ticket.user?.email || '',
+        firstName: ticket.user?.firstName,
+        ticketNumber: ticket.ticketNumber,
+        ticketSubject: ticket.subject,
+        adminMessage: text,
+      });
       return this.getAdmin(ticketId);
     } catch (e) {
       if (e instanceof NotFoundException || e instanceof BadRequestException || e instanceof ForbiddenException) throw e;
@@ -459,6 +532,58 @@ export class SupportTicketsService {
     }
   }
 
+  async linkCaseAdmin(adminRole: UserRole, sourceTicketId: string, targetTicketNumber: number) {
+    if (adminRole !== UserRole.SUPER_ADMIN) throw new ForbiddenException();
+    try {
+      const [source, target] = await Promise.all([
+        this.prisma.supportTicket.findUnique({
+          where: { id: sourceTicketId },
+          select: { id: true, ticketNumber: true, caseGroupId: true },
+        }),
+        this.prisma.supportTicket.findFirst({
+          where: { ticketNumber: targetTicketNumber },
+          select: { id: true, ticketNumber: true, caseGroupId: true },
+        }),
+      ]);
+      if (!source) throw new NotFoundException('Ticket origen no encontrado');
+      if (!target) throw new NotFoundException('Ticket destino no encontrado');
+      if (source.id === target.id) {
+        throw new BadRequestException('No podés unir un ticket consigo mismo.');
+      }
+
+      const sourceGroup = this.getCaseGroupId(source);
+      const targetGroup = this.getCaseGroupId(target);
+      if (sourceGroup === targetGroup) {
+        return this.getAdmin(sourceTicketId);
+      }
+
+      await this.prisma.$transaction([
+        this.prisma.supportTicket.updateMany({
+          where: {
+            OR: [{ id: sourceGroup }, { caseGroupId: sourceGroup }],
+          },
+          data: { caseGroupId: targetGroup },
+        }),
+        this.prisma.supportTicket.update({
+          where: { id: source.id },
+          data: { caseGroupId: targetGroup },
+        }),
+      ]);
+
+      return this.getAdmin(sourceTicketId);
+    } catch (e) {
+      if (
+        e instanceof NotFoundException ||
+        e instanceof ForbiddenException ||
+        e instanceof BadRequestException
+      ) {
+        throw e;
+      }
+      this.rethrowPrismaIfMissingSchema(e);
+      throw e;
+    }
+  }
+
   private serializeTicketSummary(t: {
     id: string;
     ticketNumber: number;
@@ -481,11 +606,13 @@ export class SupportTicketsService {
     };
   }
 
-  private serializeTicketDetail(ticket: any, admin: boolean) {
+  private serializeTicketDetail(ticket: any, admin: boolean, relatedTickets: any[] = []) {
     const attachmentUrls = this.normalizeAttachmentUrls(ticket.attachmentUrls);
+    const caseGroupId = this.getCaseGroupId(ticket);
     const base = {
       id: ticket.id,
       ticketNumber: ticket.ticketNumber,
+      caseGroupId,
       subject: ticket.subject,
       initialMessage: ticket.message,
       attachmentUrls,
@@ -534,6 +661,15 @@ export class SupportTicketsService {
         })),
         effectivePlan: tenantPlan ?? primarySub?.subscriptionPlan ?? null,
       },
+      relatedTickets: relatedTickets.map((t) => ({
+        id: t.id,
+        ticketNumber: t.ticketNumber,
+        subject: t.subject,
+        status: this.mapStatus(t.status),
+        createdAt: t.createdAt.toISOString(),
+        updatedAt: t.updatedAt.toISOString(),
+        userId: t.userId,
+      })),
     };
   }
 }

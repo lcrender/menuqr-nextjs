@@ -48,8 +48,9 @@ export class AuthController {
       if (typeof v === 'string') headers[k] = v;
       else if (Array.isArray(v) && v[0]) headers[k] = v[0];
     }
-    const registrationCountry = await this.geoService.getCountryFromRequest(req.ip || req.socket?.remoteAddress, headers);
-    return this.authService.register(registerDto, registrationCountry ?? undefined);
+    const clientIp = this.geoService.resolveClientIp(headers, req.ip || req.socket?.remoteAddress);
+    const registrationCountry = await this.geoService.getCountryFromRequest(clientIp, headers);
+    return this.authService.register(registerDto, registrationCountry ?? undefined, clientIp);
   }
 
   @Post('refresh')

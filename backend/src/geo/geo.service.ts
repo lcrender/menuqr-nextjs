@@ -14,6 +14,13 @@ export class GeoService {
    * @param clientIp IP del cliente (ej. req.ip)
    * @param headers Headers de la request (ej. para CF-IPCountry)
    */
+  /** IP del cliente para reCAPTCHA `remoteip` (misma heurística que geo). */
+  resolveClientIp(headers: Record<string, string>, expressIp?: string): string | undefined {
+    const fromHeaders = this.getBestClientIpFromHeaders(headers);
+    const candidate = fromHeaders || this.normalizeIp(expressIp);
+    return candidate || undefined;
+  }
+
   async getCountryFromRequest(clientIp: string | undefined, headers: Record<string, string>): Promise<string | null> {
     const fromHeaders = this.getBestClientIpFromHeaders(headers);
     const candidateIp = fromHeaders || this.normalizeIp(clientIp);

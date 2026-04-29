@@ -542,6 +542,8 @@ model SupportTicket {
   closedAt         DateTime?           @map("closed_at")
   lastReplyAt      DateTime?           @map("last_reply_at")
   lastReplyByRole  String?             @map("last_reply_by_role")
+  /// Grupo/caso compartido para seguimiento de tickets relacionados.
+  caseGroupId      String?             @map("case_group_id")
 
   user     User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages SupportTicketMessage[]
@@ -549,6 +551,7 @@ model SupportTicket {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([caseGroupId])
   @@map("support_tickets")
 }
 

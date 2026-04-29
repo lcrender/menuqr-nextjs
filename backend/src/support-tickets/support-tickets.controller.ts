@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AdminListSupportTicketsQueryDto } from './dto/admin-list-support-tickets.query.dto';
 import { CreateSupportTicketDto } from './dto/create-support-ticket.dto';
+import { LinkSupportTicketDto } from './dto/link-support-ticket.dto';
 import { ReplySupportTicketDto } from './dto/reply-support-ticket.dto';
 import { UpdateTicketStatusDto } from './dto/update-ticket-status.dto';
 import { SupportTicketsService } from './support-tickets.service';
@@ -67,6 +68,13 @@ export class SupportTicketsController {
   @ApiOperation({ summary: 'Responder ticket como Super Admin' })
   async adminReply(@Request() req: any, @Param('id') id: string, @Body() body: ReplySupportTicketDto) {
     return this.supportTickets.replyAdmin(req.user.id, req.user.role as UserRole, id, body);
+  }
+
+  @Patch('admin/:id/link-case')
+  @Roles('SUPER_ADMIN')
+  @ApiOperation({ summary: 'Unir ticket a un caso/ticket principal por número (Super Admin)' })
+  async adminLinkCase(@Request() req: any, @Param('id') id: string, @Body() body: LinkSupportTicketDto) {
+    return this.supportTickets.linkCaseAdmin(req.user.role as UserRole, id, body.targetTicketNumber);
   }
 
   // --- Usuario (ADMIN / SUPER_ADMIN de la app) ---

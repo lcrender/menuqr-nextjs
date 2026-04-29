@@ -35,6 +35,7 @@ type UserBlock = {
 type AdminTicketDetail = {
   id: string;
   ticketNumber: number;
+  caseGroupId: string;
   subject: string;
   initialMessage: string;
   attachmentUrls?: string[];
@@ -45,6 +46,15 @@ type AdminTicketDetail = {
   lastReplyAt: string | null;
   lastReplyByRole: string | null;
   messages: MessageRow[];
+  relatedTickets?: Array<{
+    id: string;
+    ticketNumber: number;
+    subject: string;
+    status: 'open' | 'in_progress' | 'closed';
+    createdAt: string;
+    updatedAt: string;
+    userId: string;
+  }>;
   user: UserBlock;
 };
 
@@ -66,6 +76,9 @@ export default function AdminSupportTicketDetailPage() {
   const [replyError, setReplyError] = useState('');
   const [sending, setSending] = useState(false);
   const [statusSaving, setStatusSaving] = useState(false);
+  const [linkNumber, setLinkNumber] = useState('');
+  const [linking, setLinking] = useState(false);
+  const [linkError, setLinkError] = useState('');
 
   const load = useCallback(async () => {
     if (!ticketId) return;
@@ -118,6 +131,30 @@ export default function AdminSupportTicketDetailPage() {
     }
   };
 
+  const linkCase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ticketId) return;
+    setLinkError('');
+    const n = parseInt(linkNumber, 10);
+    if (!Number.isFinite(n) || n <= 0) {
+      setLinkError('Ingresá un número de ticket válido.');
+      return;
+    }
+    setLinking(true);
+    try {
+      await api.patch(`/support-tickets/admin/${ticketId}/link-case`, {
+        targetTicketNumber: n,
+      });
+      setLinkNumber('');
+      await load();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      setLinkError(Array.isArray(msg) ? msg.join(' ') : msg || 'No se pudo unir el ticket.');
+    } finally {
+      setLinking(false);
+    }
+  };
+
   const u = ticket?.user;
 
   return (
@@ -150,6 +187,7 @@ export default function AdminSupportTicketDetailPage() {
                     Creado {new Date(ticket.createdAt).toLocaleString()} ·{' '}
                     <span className="badge bg-secondary">{STATUS_LABEL[ticket.status] ?? ticket.status}</span>
                   </p>
+                  <p className="text-muted small mb-0">Caso: {ticket.caseGroupId}</p>
                 </div>
                 <div className="btn-group btn-group-sm">
                   <button
@@ -178,6 +216,71 @@ export default function AdminSupportTicketDetailPage() {
                   </button>
                 </div>
               </div>
+
+              <div className="card mb-4">
+                <div className="card-header">Unir ticket a otro caso</div>
+                <div className="card-body">
+                  <form className="row g-2 align-items-end" onSubmit={(ev) => void linkCase(ev)}>
+                    <div className="col-md-6">
+                      <label className="form-label mb-1">Número de ticket principal</label>
+                      <input
+                        type="number"
+                        min={1}
+                        className="form-control"
+                        placeholder="Ej: 1042"
+                        value={linkNumber}
+                        onChange={(e) => setLinkNumber(e.target.value)}
+                      />
+                    </div>
+                    <div className="col-md-4">
+                      <button type="submit" className="btn btn-outline-primary" disabled={linking}>
+                        {linking ? 'Uniendo…' : 'Unir tickets'}
+                      </button>
+                    </div>
+                  </form>
+                  {linkError ? <div className="alert alert-danger py-2 mt-3 mb-0">{linkError}</div> : null}
+                </div>
+              </div>
+
+              {ticket.relatedTickets && ticket.relatedTickets.length > 1 ? (
+                <div className="card mb-4">
+                  <div className="card-header">Tickets del mismo caso</div>
+                  <div className="table-responsive">
+                    <table className="table table-sm table-hover mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th>#</th>
+                          <th>Asunto</th>
+                          <th>Estado</th>
+                          <th>Actualizado</th>
+                          <th />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ticket.relatedTickets.map((rt) => (
+                          <tr key={rt.id}>
+                            <td>#{rt.ticketNumber}</td>
+                            <td>{rt.subject}</td>
+                            <td>
+                              <span className="badge bg-secondary">{STATUS_LABEL[rt.status] ?? rt.status}</span>
+                            </td>
+                            <td className="small text-muted">{new Date(rt.updatedAt).toLocaleString()}</td>
+                            <td className="text-end">
+                              {rt.id === ticket.id ? (
+                                <span className="small text-muted">Actual</span>
+                              ) : (
+                                <Link href={`/admin/config/support-tickets/${rt.id}`} className="btn btn-sm btn-outline-primary">
+                                  Abrir
+                                </Link>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : null}
 
               {ticket.attachmentUrls && ticket.attachmentUrls.length > 0 ? (
                 <div className="card mb-4">

@@ -40,6 +40,8 @@ export interface PreviewRestaurant {
   template?: string;
   primaryColor?: string;
   secondaryColor?: string;
+  /** Misma forma que en el menú público (opciones guardadas por plantilla). */
+  templateConfig?: Record<string, unknown>;
 }
 
 export interface PreviewMenu {
@@ -504,6 +506,9 @@ const burgersData: { restaurant: PreviewRestaurant; menu: PreviewMenu } = {
     country: 'Argentina',
     logoUrl: '/preview/logo-burgers.jpg',
     coverUrl: '/preview/portada-burgers.jpg',
+    templateConfig: {
+      sectionTitleFontSize: 'large',
+    },
   },
   menu: {
     id: 'preview-burgers-menu',
@@ -825,4 +830,18 @@ export function getPreviewData(templateId: string): PreviewDataResult | null {
 
 export function getPreviewTemplateIds(): PreviewTemplateId[] {
   return [...TEMPLATE_IDS];
+}
+
+/** Orden fijo de `TEMPLATE_IDS`; anterior/siguiente con bucle. */
+export function getAdjacentPreviewTemplateIds(
+  templateId: string,
+): { prevId: PreviewTemplateId; nextId: PreviewTemplateId } | null {
+  const ids = getPreviewTemplateIds();
+  const idx = ids.indexOf(templateId as PreviewTemplateId);
+  if (idx < 0) return null;
+  const len = ids.length;
+  const prevId = ids[(idx - 1 + len) % len];
+  const nextId = ids[(idx + 1) % len];
+  if (prevId == null || nextId == null) return null;
+  return { prevId, nextId };
 }

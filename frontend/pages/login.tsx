@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import Script from 'next/script';
 import api from '../lib/axios';
 import Head from 'next/head';
 import AlertModal from '../components/AlertModal';
 import LandingFooter from '../components/LandingFooter';
+import { consumeTemplateAfterAuth } from '../lib/consume-template-after-auth';
+import {
+  buildIntentFromPreviewTemplateId,
+  parseTemplateQueryParam,
+  readTemplateIntent,
+  saveTemplateIntent,
+} from '../lib/template-selection-intent';
 
 // Ocultar credenciales de prueba: en build de producción (NODE_ENV) o si se define NEXT_PUBLIC_APP_ENV=production
 const isProduction =
@@ -13,6 +21,7 @@ const isProduction =
 
 export default function Login() {
   const router = useRouter();
+  const siteKey = (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '').trim();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,29 +37,63 @@ export default function Login() {
   const [showRegisterSuccessModal, setShowRegisterSuccessModal] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<'starter' | 'pro' | 'premium' | null>(null);
   const [pendingBillingCycle, setPendingBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [templateIntentHint, setTemplateIntentHint] = useState<string | null>(null);
+
+  /** Persistir plantilla desde URL (/login?template=gourmet&plan=pro). */
+  useEffect(() => {
+    if (!router.isReady) return;
+    const raw = parseTemplateQueryParam(router.query.template);
+    if (raw) {
+      const intent = buildIntentFromPreviewTemplateId(raw);
+      if (intent) {
+        saveTemplateIntent(intent);
+        setTemplateIntentHint(`Seguirás con la plantilla «${intent.displayName}» al entrar.`);
+        return;
+      }
+    }
+    const stored = readTemplateIntent();
+    if (stored) {
+      setTemplateIntentHint(`Seguirás con la plantilla «${stored.displayName}» al entrar.`);
+    }
+  }, [router.isReady, router.query.template]);
 
   useEffect(() => {
-    // Si ya hay sesión, redirigir al admin (respeta sesión al abrir nueva pestaña)
+    if (!router.isReady) return;
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-    if (token && userData) {
+    if (!token || !userData) return;
+
+    let cancelled = false;
+    (async () => {
       try {
         const parsed = JSON.parse(userData);
-        if (parsed && typeof parsed === 'object' && parsed.id) {
-          router.replace('/admin');
-        } else {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
+        if (!parsed || typeof parsed !== 'object' || !parsed.id) {
+          throw new Error('invalid user');
         }
+        const tpl = await consumeTemplateAfterAuth(api, {
+          isSuperAdmin: parsed.role === 'SUPER_ADMIN',
+        });
+        if (cancelled) return;
+        if (tpl.action === 'needs_upgrade') {
+          router.replace(tpl.upgradeHref);
+          return;
+        }
+        if (tpl.action === 'needs_restaurant') {
+          router.replace(tpl.wizardHref);
+          return;
+        }
+        router.replace('/admin');
       } catch {
-        // Evita bucle login ↔ admin si `user` está corrupto
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
       }
-    }
-  }, [router]);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router.isReady]);
 
   useEffect(() => {
     // Verificar si viene con action=register
@@ -78,6 +121,28 @@ export default function Login() {
     if (resolvedPlan) setPendingPlan(resolvedPlan as 'starter' | 'pro' | 'premium');
     setPendingBillingCycle(resolvedBilling as 'monthly' | 'yearly');
   }, [router.query]);
+
+  const navigateAfterAuth = async (authUser: any) => {
+    const planCheckout = pendingPlan;
+    if (planCheckout) {
+      localStorage.removeItem('pendingPlan');
+      localStorage.removeItem('pendingBillingCycle');
+      router.push(`/admin/profile/subscription/checkout?plan=${planCheckout}&billing=${pendingBillingCycle}`);
+      return;
+    }
+    const tpl = await consumeTemplateAfterAuth(api, {
+      isSuperAdmin: authUser?.role === 'SUPER_ADMIN',
+    });
+    if (tpl.action === 'needs_upgrade') {
+      router.push(tpl.upgradeHref);
+      return;
+    }
+    if (tpl.action === 'needs_restaurant') {
+      router.push(tpl.wizardHref);
+      return;
+    }
+    router.push('/admin');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,6 +204,33 @@ export default function Login() {
       return;
     }
 
+    if (isRegister && isProduction && !siteKey) {
+      setError('El registro no está disponible en este momento (falta configuración de seguridad).');
+      setLoading(false);
+      return;
+    }
+
+    let recaptchaToken: string | undefined;
+    if (isRegister && siteKey) {
+      if (typeof window === 'undefined' || !window.grecaptcha) {
+        setError('No se pudo cargar reCAPTCHA. Recargá la página e intentá de nuevo.');
+        setLoading(false);
+        return;
+      }
+      try {
+        recaptchaToken = await window.grecaptcha.execute(siteKey, { action: 'register_submit' });
+      } catch {
+        setError('No se pudo validar reCAPTCHA.');
+        setLoading(false);
+        return;
+      }
+      if (!recaptchaToken) {
+        setError('No se pudo validar reCAPTCHA.');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       if (isRegister) {
         // Registrar nuevo usuario
@@ -149,6 +241,7 @@ export default function Login() {
           lastName: trimmedLastName,
           pendingPlan: pendingPlan ?? undefined,
           pendingBillingCycle: pendingPlan ? pendingBillingCycle : undefined,
+          ...(recaptchaToken ? { recaptchaToken } : {}),
         });
 
         // Si el registro requiere verificación de email
@@ -166,13 +259,7 @@ export default function Login() {
           localStorage.setItem('accessToken', response.data.accessToken);
           localStorage.setItem('refreshToken', response.data.refreshToken);
           localStorage.setItem('user', JSON.stringify(response.data.user));
-          if (pendingPlan) {
-            localStorage.removeItem('pendingPlan');
-            localStorage.removeItem('pendingBillingCycle');
-            router.push(`/admin/profile/subscription/checkout?plan=${pendingPlan}&billing=${pendingBillingCycle}`);
-          } else {
-            router.push('/admin');
-          }
+          await navigateAfterAuth(response.data.user);
         }
       } else {
         // Login
@@ -186,15 +273,7 @@ export default function Login() {
         localStorage.setItem('refreshToken', response.data.refreshToken);
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
-        // Si venía con plan pendiente y ya está autenticado/verificado, ir directo a checkout.
-        const plan = pendingPlan;
-        if (plan) {
-          localStorage.removeItem('pendingPlan');
-          localStorage.removeItem('pendingBillingCycle');
-          router.push(`/admin/profile/subscription/checkout?plan=${plan}&billing=${pendingBillingCycle}`);
-        } else {
-          router.push('/admin');
-        }
+        await navigateAfterAuth(response.data.user);
       }
     } catch (err: any) {
       const apiMessage = err.response?.data?.message;
@@ -237,6 +316,12 @@ export default function Login() {
         <meta name="description" content={isRegister ? 'Crea tu cuenta gratis en AppMenuQR' : 'Inicia sesión en AppMenuQR'} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
+      {siteKey ? (
+        <Script
+          src={`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`}
+          strategy="afterInteractive"
+        />
+      ) : null}
 
       <div className="landing-page">
         {/* Navigation */}
@@ -270,6 +355,22 @@ export default function Login() {
                       ? 'Únete a AppMenuQR y comienza a crear menús digitales en minutos'
                       : 'Bienvenido de vuelta a AppMenuQR'}
                   </p>
+                  {templateIntentHint ? (
+                    <p
+                      className="landing-auth-subtitle"
+                      style={{
+                        marginTop: '12px',
+                        padding: '12px 14px',
+                        background: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        borderRadius: '10px',
+                        color: '#1e3a8a',
+                        fontSize: '0.95rem',
+                      }}
+                    >
+                      {templateIntentHint}
+                    </p>
+                  ) : null}
                 </div>
 
                 {/* Tabs para Login/Registro */}
@@ -480,4 +581,12 @@ export default function Login() {
       />
     </>
   );
+}
+
+declare global {
+  interface Window {
+    grecaptcha?: {
+      execute: (key: string, opts: { action: string }) => Promise<string>;
+    };
+  }
 }

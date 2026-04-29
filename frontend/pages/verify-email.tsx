@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../lib/axios';
+import { consumeTemplateAfterAuth } from '../lib/consume-template-after-auth';
 import Head from 'next/head';
 import LandingFooter from '../components/LandingFooter';
 
@@ -36,10 +37,20 @@ export default function VerifyEmail() {
 
       const pendingPlan = response.data?.pendingPlan as string | null | undefined;
       const pendingBillingCycle = (response.data?.pendingBillingCycle as string | null | undefined) ?? 'monthly';
-      const target =
+      const verifiedUser = response.data?.user as { role?: string } | undefined;
+
+      let target =
         pendingPlan && (pendingBillingCycle === 'monthly' || pendingBillingCycle === 'yearly')
           ? `/admin/profile/subscription/checkout?plan=${pendingPlan}&billing=${pendingBillingCycle}`
           : '/admin';
+
+      if (!pendingPlan) {
+        const tpl = await consumeTemplateAfterAuth(api, {
+          isSuperAdmin: verifiedUser?.role === 'SUPER_ADMIN',
+        });
+        if (tpl.action === 'needs_upgrade') target = tpl.upgradeHref;
+        else if (tpl.action === 'needs_restaurant') target = tpl.wizardHref;
+      }
 
       // Redirigir al destino correspondiente después de 2 segundos
       setTimeout(() => {

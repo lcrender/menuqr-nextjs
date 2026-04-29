@@ -80,6 +80,21 @@ const VISIBILITY_OPTIONS: TemplateConfigOption[] = [
   },
 ];
 
+/** Solo plantilla Burgers: tamaño de los títulos de categoría (H2) en el menú público. */
+const BURGERS_SECTION_TITLE_SIZE: TemplateConfigOption = {
+  id: 'sectionTitleFontSize',
+  label: 'Tamaño de letra de los títulos de sección',
+  description: 'Tamaño del texto de las categorías del menú (por ejemplo: Hamburguesas, Acompañamientos).',
+  type: 'select',
+  default: 'large',
+  options: [
+    { value: 'small', label: 'Pequeño' },
+    { value: 'medium', label: 'Mediano' },
+    { value: 'large', label: 'Grande' },
+    { value: 'xlarge', label: 'Extra grande' },
+  ],
+};
+
 /** Visible solo en planes de pago indicados (y super admin); en planes inferiores el menú público sigue mostrando banderas. */
 const TRANSLATION_FLAGS_TEMPLATE_OPTIONS: TemplateConfigOption[] = [
   {
@@ -123,7 +138,7 @@ export const TEMPLATE_CONFIG_SCHEMAS: Record<string, TemplateConfigOption[]> = {
   classic: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   minimalist: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   foodie: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  burgers: [...COMMON_COLOR_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  burgers: [...COMMON_COLOR_OPTIONS, BURGERS_SECTION_TITLE_SIZE, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   italianFood: [...COMMON_COLOR_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   gourmet: [...GOURMET_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
 };

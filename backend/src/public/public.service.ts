@@ -4,6 +4,7 @@ import { PostgresService } from '../common/database/postgres.service';
 import { I18nService } from '../common/i18n/i18n.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import { EmailService } from '../common/email/email.service';
+import { RecaptchaService } from '../common/recaptcha/recaptcha.service';
 
 @Injectable()
 export class PublicService {
@@ -15,6 +16,7 @@ export class PublicService {
     private readonly planLimits: PlanLimitsService,
     private readonly config: ConfigService,
     private readonly emailService: EmailService,
+    private readonly recaptcha: RecaptchaService,
   ) {}
 
   private async getTenantPlan(tenantId: string): Promise<string> {
@@ -528,35 +530,7 @@ export class PublicService {
     ip?: string;
     userAgent?: string;
   }) {
-    const secret = (this.config.get<string>('GOOGLE_RECAPTCHA_SECRET_KEY') || '').trim();
-    if (!secret) {
-      throw new BadRequestException(
-        'No se puede enviar el formulario en este momento. Falta configurar reCAPTCHA en el servidor.',
-      );
-    }
-
-    const verifyRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        secret,
-        response: input.recaptchaToken,
-        ...(input.ip ? { remoteip: input.ip } : {}),
-      }),
-    });
-    if (!verifyRes.ok) {
-      throw new BadRequestException('No se pudo validar reCAPTCHA. Intentá nuevamente.');
-    }
-    const verifyJson = (await verifyRes.json()) as {
-      success?: boolean;
-      score?: number;
-      action?: string;
-      'error-codes'?: string[];
-    };
-    const score = typeof verifyJson.score === 'number' ? verifyJson.score : 1;
-    if (!verifyJson.success || score < 0.5) {
-      throw new BadRequestException('No se pudo validar reCAPTCHA. Intentá nuevamente.');
-    }
+    await this.recaptcha.verifyRequired(input.recaptchaToken, input.ip);
 
     const receiver = (
       this.config.get<string>('CONTACT_FORM_RECEIVER_EMAIL') ||

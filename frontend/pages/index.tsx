@@ -9,10 +9,10 @@ import LandingFooter from '../components/LandingFooter';
 import api from '../lib/axios';
 import { getPublicAppOrigin } from '../lib/config';
 
-function demosUrlFromEnv(): string | null {
+function plantillasCatalogUrlFromEnv(): string | null {
   const base = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   if (!base || !/^https?:\/\//i.test(base)) return null;
-  return `${base}/demos`;
+  return `${base}/plantillas`;
 }
 
 const LANDING_FAQ_ITEMS: readonly { question: string; answer: string }[] = [
@@ -75,7 +75,9 @@ const LANDING_FAQ_PAGE_JSON_LD = JSON.stringify({
 export default function Home() {
   const router = useRouter();
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
-  const [demosAbsoluteUrl, setDemosAbsoluteUrl] = useState<string | null>(demosUrlFromEnv);
+  const [plantillasCatalogAbsoluteUrl, setPlantillasCatalogAbsoluteUrl] = useState<string | null>(
+    plantillasCatalogUrlFromEnv,
+  );
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -94,11 +96,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (demosAbsoluteUrl) return;
+    if (plantillasCatalogAbsoluteUrl) return;
     const origin = getPublicAppOrigin() || (typeof window !== 'undefined' ? window.location.origin : '');
     if (!origin) return;
-    setDemosAbsoluteUrl(`${origin.replace(/\/$/, '')}/demos`);
-  }, [demosAbsoluteUrl]);
+    setPlantillasCatalogAbsoluteUrl(`${origin.replace(/\/$/, '')}/plantillas`);
+  }, [plantillasCatalogAbsoluteUrl]);
 
   const handleTryFree = () => {
     router.push('/login?action=register');
@@ -146,19 +148,19 @@ export default function Home() {
                 permite a tus clientes acceder al menú desde el móvil sin descargar aplicaciones. Fácil, rápido y
                 profesional.
               </p>
-              {demosAbsoluteUrl ? (
-                <div className="landing-hero-demos-qr">
+              {plantillasCatalogAbsoluteUrl ? (
+                <div className="landing-hero-plantillas-qr">
                   <a
-                    href={demosAbsoluteUrl}
+                    href={plantillasCatalogAbsoluteUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="landing-hero-demos-qr-frame"
-                    aria-label="Escanea el QR o haz clic para ver demos (se abre en una pestaña nueva)"
+                    className="landing-hero-plantillas-qr-frame"
+                    aria-label="Escanea el QR o haz clic para ver el catálogo de plantillas (se abre en una pestaña nueva)"
                   >
-                    <QRCode value={demosAbsoluteUrl} size={176} level="M" />
+                    <QRCode value={plantillasCatalogAbsoluteUrl} size={176} level="M" />
                   </a>
-                  <p className="landing-hero-demos-caption">
-                    Escanea el QR o haz clic para ver demos.
+                  <p className="landing-hero-plantillas-caption">
+                    Escanea el QR o haz clic para ver plantillas.
                   </p>
                 </div>
               ) : null}
@@ -397,8 +399,8 @@ export default function Home() {
                 Digitaliza tu restaurante hoy mismo. Crea tu menú QR online y mejora la experiencia de tus clientes.
               </p>
               <div className="landing-cta-buttons">
-                <Link href="/demos" className="landing-btn-secondary landing-btn-large landing-btn-cta-outline">
-                  Ver ejemplos
+                <Link href="/plantillas" className="landing-btn-secondary landing-btn-large landing-btn-cta-outline">
+                  Ver plantillas
                 </Link>
                 <button onClick={handleTryFree} className="landing-btn-primary landing-btn-large landing-btn-cta">
                   Crear menú QR gratis

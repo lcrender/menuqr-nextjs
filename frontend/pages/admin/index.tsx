@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import QRCode from 'react-qr-code';
@@ -11,6 +11,8 @@ import {
   partitionTemplateSummaryLines,
   type TemplateConfigSummaryLine,
 } from '../../lib/dashboard-template-config-summary';
+import { consumeTemplateAfterAuth } from '../../lib/consume-template-after-auth';
+import { readTemplateIntent, takeTemplateAppliedBanner } from '../../lib/template-selection-intent';
 
 export type MenuSummary = {
   id: string;
@@ -205,6 +207,31 @@ export default function Admin() {
   const [stats, setStats] = useState<any>(null);
   const [dashboardCards, setDashboardCards] = useState<DashboardRestaurantCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [templateWelcomeName, setTemplateWelcomeName] = useState<string | null>(null);
+  const templateBannerReadRef = useRef(false);
+
+  useEffect(() => {
+    if (loading || user?.role !== 'ADMIN' || templateBannerReadRef.current) return;
+    templateBannerReadRef.current = true;
+    const msg = takeTemplateAppliedBanner();
+    if (msg) setTemplateWelcomeName(msg);
+  }, [loading, user?.role]);
+
+  useEffect(() => {
+    if (loading || user?.role !== 'ADMIN') return;
+    if (!readTemplateIntent()) return;
+    let cancelled = false;
+    (async () => {
+      const r = await consumeTemplateAfterAuth(api, { isSuperAdmin: false });
+      if (cancelled) return;
+      if (r.action === 'needs_upgrade') router.push(r.upgradeHref);
+      else if (r.action === 'needs_restaurant') router.replace(r.wizardHref);
+      else if (r.action === 'applied') setTemplateWelcomeName(r.displayName);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, user?.role, router]);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -476,6 +503,25 @@ export default function Admin() {
   return (
     <AdminLayout>
       <h1 className="admin-title">Dashboard</h1>
+
+      {templateWelcomeName ? (
+        <div className="alert alert-success d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-4">
+          <span>
+            Tu plantilla <strong>{templateWelcomeName}</strong> ya está aplicada. Podés afinarla en{' '}
+            <a href="/admin/templates" className="alert-link">
+              Plantillas
+            </a>
+            .
+          </span>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-success"
+            onClick={() => setTemplateWelcomeName(null)}
+          >
+            Cerrar
+          </button>
+        </div>
+      ) : null}
 
       {user?.role === 'ADMIN' && stats && (
         <>

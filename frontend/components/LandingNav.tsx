@@ -80,8 +80,8 @@ export default function LandingNav() {
               </span>
             </button>
             <div className="landing-nav-actions d-none d-md-flex">
-              <Link href="/demos" className="landing-nav-text-link">
-                Demos
+              <Link href="/plantillas" className="landing-nav-text-link">
+                Plantillas
               </Link>
               <Link href="/#beneficios" className="landing-nav-text-link">
                 Beneficios
@@ -123,8 +123,8 @@ export default function LandingNav() {
           </button>
         </div>
         <div className="landing-nav-mobile-links">
-          <Link href="/demos" className="landing-nav-mobile-link" onClick={closeMobileNav}>
-            Demos
+          <Link href="/plantillas" className="landing-nav-mobile-link" onClick={closeMobileNav}>
+            Plantillas
           </Link>
           <Link href="/#beneficios" className="landing-nav-mobile-link" onClick={closeMobileNav}>
             Beneficios

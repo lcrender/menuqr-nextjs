@@ -69,5 +69,13 @@ export class RegisterDto {
   @IsOptional()
   @IsIn(['monthly', 'yearly'])
   pendingBillingCycle?: 'monthly' | 'yearly';
+
+  @ApiProperty({
+    description: 'Token reCAPTCHA v3 (obligatorio si el servidor tiene GOOGLE_RECAPTCHA_SECRET_KEY)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  recaptchaToken?: string;
 }
 

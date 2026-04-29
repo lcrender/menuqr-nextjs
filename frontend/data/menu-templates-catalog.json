@@ -1,0 +1,56 @@
+[
+  {
+    "slug": "classic",
+    "nombre": "Clásica",
+    "categoria": "restaurante",
+    "estilos": ["clasico", "elegante"],
+    "tags": ["tradicional"],
+    "plan": "free",
+    "imagen": "/preview/preview-classic.jpg"
+  },
+  {
+    "slug": "minimalista",
+    "nombre": "Minimalista",
+    "categoria": "restaurante",
+    "estilos": ["minimalista", "elegante"],
+    "tags": ["limpio"],
+    "plan": "free",
+    "imagen": "/preview/preview-minimalist.jpg"
+  },
+  {
+    "slug": "foodie",
+    "nombre": "Foodie",
+    "categoria": "restaurante",
+    "estilos": ["moderno", "visual"],
+    "tags": ["atractivo", "instagram"],
+    "plan": "free",
+    "imagen": "/preview/preview-foodie.jpg"
+  },
+  {
+    "slug": "gourmet",
+    "nombre": "Gourmet",
+    "categoria": "gourmet",
+    "estilos": ["elegante", "visual"],
+    "tags": ["alta_cocina", "con_imagenes", "pro"],
+    "plan": "pro",
+    "imagen": "/preview/preview-gourmet.jpg"
+  },
+  {
+    "slug": "burgers",
+    "nombre": "Burgers",
+    "categoria": "hamburguesas",
+    "estilos": ["moderno"],
+    "tags": ["casual", "street_food", "comida_rapida"],
+    "plan": "free",
+    "imagen": "/preview/preview-burgers.jpg"
+  },
+  {
+    "slug": "italian-food",
+    "nombre": "Italian Food",
+    "categoria": "italiano",
+    "estilos": ["clasico", "elegante"],
+    "tags": ["pasta", "tradicional"],
+    "plan": "free",
+    "imagen": "/preview/preview-italianFood.jpg"
+  }
+]

@@ -11,6 +11,7 @@ import RestaurantWizard from '../../../components/RestaurantWizard';
 import MenuWizard from '../../../components/MenuWizard';
 import QRCode from 'react-qr-code';
 import AlertModal from '../../../components/AlertModal';
+import { isValidApiTemplateId, readTemplateIntent } from '../../../lib/template-selection-intent';
 import LogoCropModal from '../../../components/LogoCropModal';
 import CoverCropModal from '../../../components/CoverCropModal';
 
@@ -256,14 +257,25 @@ export default function Restaurants() {
     if (!user || loading) return;
     if (router.query.wizard === 'true') {
       setEditing(null);
+      const it =
+        typeof router.query.intentTemplate === 'string' && isValidApiTemplateId(router.query.intentTemplate)
+          ? router.query.intentTemplate
+          : readTemplateIntent()?.apiTemplateId;
+      if (it && isValidApiTemplateId(it)) {
+        setFormData((prev) => ({ ...prev, template: it }));
+      }
       setShowWizard(true);
       router.replace('/admin/restaurants', undefined, { shallow: true });
     } else if (restaurants.length === 0 && !filterName) {
       // Sin restaurantes: modo creación. Limpiar editing para no hacer PUT a un id ya borrado.
       setEditing(null);
+      const fromIntent = readTemplateIntent()?.apiTemplateId;
+      if (fromIntent && isValidApiTemplateId(fromIntent)) {
+        setFormData((prev) => ({ ...prev, template: fromIntent }));
+      }
       setShowWizard(true);
     }
-  }, [user, loading, restaurants.length, filterName, router.query.wizard]);
+  }, [user, loading, restaurants.length, filterName, router.query.wizard, router.query.intentTemplate]);
 
   // Actualizar moneda por defecto cuando cambia el país (solo al crear, no al editar)
   useEffect(() => {

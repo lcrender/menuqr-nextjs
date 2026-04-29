@@ -17,6 +17,7 @@ import { TenantsService } from '../tenants/tenants.service';
 import { EmailService } from '../common/email/email.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { AdminMessagesService } from '../admin-messages/admin-messages.service';
+import { RecaptchaService } from '../common/recaptcha/recaptcha.service';
 
 // Entidades
 import { User, UserRole } from '@prisma/client';
@@ -40,6 +41,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly subscriptionService: SubscriptionService,
     private readonly adminMessages: AdminMessagesService,
+    private readonly recaptchaService: RecaptchaService,
   ) {}
 
   // ========================================
@@ -138,10 +140,15 @@ export class AuthService {
    * Registro de nuevo usuario.
    * registrationCountry: detectado por IP al registrarse (opcional).
    */
-  async register(registerDto: RegisterDto, registrationCountry?: string) {
+  async register(registerDto: RegisterDto, registrationCountry?: string, clientIp?: string) {
     try {
-      const { email, password, firstName, lastName, tenantName, pendingPlan, pendingBillingCycle } = registerDto;
+      const { email, password, firstName, lastName, tenantName, pendingPlan, pendingBillingCycle, recaptchaToken } =
+        registerDto;
       const normalizedEmail = (email || '').trim().toLowerCase();
+
+      await this.recaptchaService.verifyOptionalForRegister(recaptchaToken, clientIp, {
+        expectedAction: 'register_submit',
+      });
 
       // Verificar si el email ya existe
       const existingUser = await this.usersService.findByEmail(normalizedEmail);
