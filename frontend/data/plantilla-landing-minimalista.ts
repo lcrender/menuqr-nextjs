@@ -8,7 +8,7 @@ export const PLANTILLA_MINIMALISTA_LANDING: PlantillaLandingContent = {
     description:
       'Plantilla de menú QR minimalista para restaurantes. Diseño limpio, moderno y fácil de leer. Personaliza colores y crea tu carta digital en minutos.',
   },
-  previewPath: '/preview/minimalist',
+  previewPath: '/preview/minimalista',
   header: {
     h1: 'Plantilla de menú QR minimalista',
     intro:

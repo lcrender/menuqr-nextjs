@@ -1,3 +1,5 @@
+import Head from 'next/head';
+import type { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useState, useMemo, useEffect } from 'react';
@@ -9,7 +11,10 @@ import BurgersTemplate from '../../templates/burgers/BurgersTemplate';
 import ItalianFoodTemplate from '../../templates/italianfood/ItalianFoodTemplate';
 import GourmetTemplate from '../../templates/gourmet/GourmetTemplate';
 import type { ItemPrice } from '../../data/preview-data';
-import { previewTemplateIdToCatalogSlug } from '../../lib/menu-template-preview-route';
+import {
+  normalizePreviewTemplateSlug,
+  previewTemplateIdToCatalogSlug,
+} from '../../lib/menu-template-preview-route';
 import PreviewTemplateCtaBar from '../../components/preview/PreviewTemplateCtaBar';
 
 const formatPrice = (price: ItemPrice) => {
@@ -38,10 +43,10 @@ const formatWhatsAppForLink = (whatsapp: string, country?: string): string => {
 /** Nombres cortos para accesibilidad y barra móvil */
 const PREVIEW_SLUG_LABELS: Record<string, string> = {
   classic: 'Clásica',
-  minimalist: 'Minimalista',
+  minimalista: 'Minimalista',
   foodie: 'Foodie',
   burgers: 'Burgers',
-  italianFood: 'Italian Food',
+  'italian-food': 'Italian Food',
   gourmet: 'Gourmet',
 };
 
@@ -69,7 +74,7 @@ export default function PreviewPage() {
         <div className="alert alert-warning" role="alert">
           {slug && !data
             ? `Plantilla "${slug}" no encontrada. Usa: ${validIds.join(', ')}`
-            : 'Especifica una plantilla en la URL: /preview/classic, /preview/minimalist, etc.'}
+            : 'Especifica una plantilla en la URL: /preview/classic, /preview/minimalista, etc.'}
         </div>
         <p className="mt-3 d-flex flex-wrap gap-2">
           <Link href="/plantillas" className="btn btn-outline-primary">
@@ -162,6 +167,9 @@ export default function PreviewPage() {
 
   return (
     <>
+      <Head>
+        <meta name="robots" content="noindex, follow" />
+      </Head>
       <nav className="preview-nav-land" aria-label="Salir de la vista previa">
         <div className="preview-nav-land-inner">
           <Link href={plantillaDetalleHref} className="preview-nav-land-link">
@@ -409,3 +417,30 @@ export default function PreviewPage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async ({ params, query }) => {
+  const raw = typeof params?.templateSlug === 'string' ? params.templateSlug : '';
+  const normalized = normalizePreviewTemplateSlug(raw);
+  if (!normalized) {
+    return { notFound: true };
+  }
+  if (normalized !== raw) {
+    const qs = new URLSearchParams();
+    for (const [k, v] of Object.entries(query || {})) {
+      if (k === 'templateSlug') continue;
+      if (Array.isArray(v)) {
+        for (const item of v) qs.append(k, item);
+      } else if (typeof v === 'string') {
+        qs.set(k, v);
+      }
+    }
+    const suffix = qs.toString();
+    return {
+      redirect: {
+        destination: `/preview/${encodeURIComponent(normalized)}${suffix ? `?${suffix}` : ''}`,
+        permanent: true,
+      },
+    };
+  }
+  return { props: {} };
+};

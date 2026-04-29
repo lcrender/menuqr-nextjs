@@ -33,10 +33,11 @@ function isAuthenticated(): boolean {
 
 function buildRegisterHref(previewId: string): string {
   const intent = buildIntentFromPreviewTemplateId(previewId);
+  const templateId = intent?.apiTemplateId ?? previewId;
   const plan = intent?.requiredPlan ?? 'free';
   const qs = new URLSearchParams();
   qs.set('action', 'register');
-  qs.set('template', previewId);
+  qs.set('template', templateId);
   qs.set('plan', plan);
   return `/login?${qs.toString()}`;
 }

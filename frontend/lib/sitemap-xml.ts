@@ -1,11 +1,11 @@
 import { getAllTemplateSlugs } from './menu-templates-catalog';
 import { DOCUMENTATION_SLUGS_STATIC } from './documentation-nav';
-import { getPreviewTemplateIds } from '../data/preview-data';
 
 export type SitemapEntry = {
   path: string;
   changefreq: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
   priority: string;
+  lastmod: string;
 };
 
 function xmlEscape(s: string): string {
@@ -21,16 +21,17 @@ function xmlEscape(s: string): string {
  * Ajustar prioridades según importancia de negocio.
  */
 export function buildSitemapEntries(): SitemapEntry[] {
+  const today = new Date().toISOString().slice(0, 10);
   const out: SitemapEntry[] = [
-    { path: '/', changefreq: 'weekly', priority: '1.0' },
-    { path: '/plantillas', changefreq: 'weekly', priority: '0.9' },
-    { path: '/precios', changefreq: 'weekly', priority: '0.9' },
-    { path: '/contacto', changefreq: 'monthly', priority: '0.8' },
-    { path: '/soporte', changefreq: 'weekly', priority: '0.7' },
-    { path: '/documentacion', changefreq: 'weekly', priority: '0.8' },
-    { path: '/legal/politica-de-privacidad', changefreq: 'yearly', priority: '0.4' },
-    { path: '/legal/terminos-y-condiciones', changefreq: 'yearly', priority: '0.4' },
-    { path: '/legal/politica-de-cookies', changefreq: 'yearly', priority: '0.4' },
+    { path: '/', changefreq: 'weekly', priority: '1.0', lastmod: today },
+    { path: '/plantillas', changefreq: 'weekly', priority: '0.9', lastmod: today },
+    { path: '/precios', changefreq: 'weekly', priority: '0.9', lastmod: today },
+    { path: '/contacto', changefreq: 'monthly', priority: '0.8', lastmod: today },
+    { path: '/soporte', changefreq: 'weekly', priority: '0.7', lastmod: today },
+    { path: '/documentacion', changefreq: 'weekly', priority: '0.8', lastmod: today },
+    { path: '/legal/politica-de-privacidad', changefreq: 'yearly', priority: '0.4', lastmod: today },
+    { path: '/legal/terminos-y-condiciones', changefreq: 'yearly', priority: '0.4', lastmod: today },
+    { path: '/legal/politica-de-cookies', changefreq: 'yearly', priority: '0.4', lastmod: today },
   ];
 
   for (const slug of getAllTemplateSlugs()) {
@@ -38,6 +39,7 @@ export function buildSitemapEntries(): SitemapEntry[] {
       path: `/plantillas/${encodeURIComponent(slug)}`,
       changefreq: 'weekly',
       priority: '0.85',
+      lastmod: today,
     });
   }
 
@@ -46,14 +48,7 @@ export function buildSitemapEntries(): SitemapEntry[] {
       path: `/documentacion/${encodeURIComponent(slug)}`,
       changefreq: 'monthly',
       priority: '0.75',
-    });
-  }
-
-  for (const id of getPreviewTemplateIds()) {
-    out.push({
-      path: `/preview/${encodeURIComponent(id)}`,
-      changefreq: 'monthly',
-      priority: '0.6',
+      lastmod: today,
     });
   }
 
@@ -67,6 +62,7 @@ export function renderSitemapXml(absoluteBaseUrl: string, entries: SitemapEntry[
       const loc = xmlEscape(`${base}${e.path.startsWith('/') ? e.path : `/${e.path}`}`);
       return `  <url>
     <loc>${loc}</loc>
+    <lastmod>${e.lastmod}</lastmod>
     <changefreq>${e.changefreq}</changefreq>
     <priority>${e.priority}</priority>
   </url>`;

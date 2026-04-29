@@ -40,14 +40,15 @@ export function catalogSlugToApiTemplateId(catalogSlug: string): string {
 }
 
 export function buildIntentFromPreviewTemplateId(previewId: string): TemplateSelectionIntent | null {
-  if (!VALID_API_IDS.has(previewId)) return null;
   const catalogSlug = previewTemplateIdToCatalogSlug(previewId);
+  const apiTemplateId = catalogSlugToApiTemplateId(catalogSlug);
+  if (!VALID_API_IDS.has(apiTemplateId)) return null;
   const row = getTemplateBySlug(catalogSlug);
   const requiredPlan: TemplatePlanTier = row?.plan === 'pro' ? 'pro' : 'free';
   return {
-    apiTemplateId: previewId,
+    apiTemplateId,
     requiredPlan,
-    displayName: row?.nombre ?? previewId,
+    displayName: row?.nombre ?? apiTemplateId,
     catalogSlug,
   };
 }
@@ -55,7 +56,9 @@ export function buildIntentFromPreviewTemplateId(previewId: string): TemplateSel
 export function parseTemplateQueryParam(raw: unknown): string | null {
   if (typeof raw !== 'string' || !raw.trim()) return null;
   const id = raw.trim();
-  return VALID_API_IDS.has(id) ? id : null;
+  if (VALID_API_IDS.has(id)) return id;
+  const fromPreview = buildIntentFromPreviewTemplateId(id);
+  return fromPreview?.apiTemplateId ?? null;
 }
 
 export function saveTemplateIntent(intent: TemplateSelectionIntent): void {

@@ -4,6 +4,7 @@ export function buildRobotsTxt(absoluteBaseUrl: string): string {
   return `User-agent: *
 Disallow: /admin/
 Disallow: /api/
+Disallow: /preview/
 
 Allow: /
 

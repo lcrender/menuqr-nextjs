@@ -8,7 +8,7 @@ export const PLANTILLA_ITALIAN_FOOD_LANDING: PlantillaLandingContent = {
     description:
       'Plantilla de menú QR estilo italiano. Ideal para pizzerías, restaurantes italianos, pastas, trattorias y más. Diseño elegante con identidad italiana.',
   },
-  previewPath: '/preview/italianFood',
+  previewPath: '/preview/italian-food',
   badgeStrip: ['pizza', 'mediterráneo', 'trattoria'],
   header: {
     h1: 'Plantilla de menú QR estilo italiano',

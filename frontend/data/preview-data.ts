@@ -1,3 +1,4 @@
+import { normalizePreviewTemplateSlug } from '../lib/menu-template-preview-route';
 /**
  * Datos de ejemplo para la vista previa de cada plantilla.
  * Cada plantilla tiene un restaurante de fantasía con menú y precios en la moneda indicada.
@@ -56,7 +57,7 @@ export interface PreviewMenu {
   sections: MenuSection[];
 }
 
-const TEMPLATE_IDS = ['classic', 'minimalist', 'foodie', 'burgers', 'italianFood', 'gourmet'] as const;
+const TEMPLATE_IDS = ['classic', 'minimalista', 'foodie', 'burgers', 'italian-food', 'gourmet'] as const;
 export type PreviewTemplateId = typeof TEMPLATE_IDS[number];
 
 /** Clásica: Bodegón Argentino, ARS */
@@ -814,16 +815,17 @@ export type PreviewDataResult = { restaurant: PreviewRestaurant; menu: PreviewMe
 
 const previewData: Record<PreviewTemplateId, PreviewDataResult> = {
   classic: classicData,
-  minimalist: minimalistData,
+  minimalista: minimalistData,
   foodie: foodieData,
   burgers: burgersData,
-  italianFood: italianFoodData,
+  'italian-food': italianFoodData,
   gourmet: gourmetData,
 };
 
 export function getPreviewData(templateId: string): PreviewDataResult | null {
-  if (TEMPLATE_IDS.includes(templateId as PreviewTemplateId)) {
-    return previewData[templateId as PreviewTemplateId];
+  const normalized = normalizePreviewTemplateSlug(templateId);
+  if (normalized && TEMPLATE_IDS.includes(normalized as PreviewTemplateId)) {
+    return previewData[normalized as PreviewTemplateId];
   }
   return null;
 }
