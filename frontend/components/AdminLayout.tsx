@@ -331,6 +331,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         </li>
                         <li className="admin-nav-item">
                           <Link
+                            href="/admin/config/paypal"
+                            className={`admin-nav-link ${currentPath === '/admin/config/paypal' ? 'active' : ''}`}
+                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            PayPal
+                          </Link>
+                        </li>
+                        <li className="admin-nav-item">
+                          <Link
                             href="/admin/config/plan-limits"
                             className={`admin-nav-link ${currentPath === '/admin/config/plan-limits' ? 'active' : ''}`}
                             style={{ fontSize: '0.9rem', paddingLeft: '30px' }}

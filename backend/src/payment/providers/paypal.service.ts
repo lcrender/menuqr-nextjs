@@ -12,6 +12,7 @@ import { SubscriptionService } from '../../subscription/subscription.service';
 import { PaymentHistoryService, type PaymentAttemptStatus } from '../payment-history.service';
 import { UsersService } from '../../users/users.service';
 import { AdminMessagesService } from '../../admin-messages/admin-messages.service';
+import { AppSettingsService } from '../../app-settings/app-settings.service';
 
 const PAYPAL_API_BASE = (mode: string) =>
   mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
@@ -23,14 +24,23 @@ export class PayPalService implements IPaymentProviderService {
 
   constructor(
     private readonly config: ConfigService,
+    private readonly appSettings: AppSettingsService,
     private readonly subscriptionService: SubscriptionService,
     private readonly paymentHistory: PaymentHistoryService,
     private readonly usersService: UsersService,
     private readonly adminMessages: AdminMessagesService,
   ) {}
 
-  private get baseUrl(): string {
-    return PAYPAL_API_BASE(this.config.get('PAYPAL_MODE', 'sandbox'));
+  /** Modo efectivo: preferencia en BD (super admin); si no hay fila, `PAYPAL_MODE` del entorno. */
+  private async resolvePayPalApiMode(): Promise<'sandbox' | 'live'> {
+    const stored = await this.appSettings.getStoredPayPalMode();
+    if (stored !== null) return stored;
+    return this.config.get<string>('PAYPAL_MODE', 'sandbox') === 'live' ? 'live' : 'sandbox';
+  }
+
+  private async getBaseUrl(): Promise<string> {
+    const mode = await this.resolvePayPalApiMode();
+    return PAYPAL_API_BASE(mode);
   }
 
   private getPlanIdForSlug(planSlug: string, planType: PlanType): string | null {
@@ -49,7 +59,8 @@ export class PayPalService implements IPaymentProviderService {
       throw new BadRequestException('PayPal is not configured');
     }
     const auth = Buffer.from(`${clientId}:${secret}`).toString('base64');
-    const res = await fetch(`${this.baseUrl}/v1/oauth2/token`, {
+    const baseUrl = await this.getBaseUrl();
+    const res = await fetch(`${baseUrl}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -94,7 +105,8 @@ export class PayPalService implements IPaymentProviderService {
       },
       custom_id: params.userId,
     };
-    const res = await fetch(`${this.baseUrl}/v1/billing/subscriptions`, {
+    const baseUrl = await this.getBaseUrl();
+    const res = await fetch(`${baseUrl}/v1/billing/subscriptions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -122,8 +134,9 @@ export class PayPalService implements IPaymentProviderService {
   }): Promise<CancelSubscriptionResult> {
     const token = await this.getAccessToken();
     const reason = params.cancelAtPeriodEnd ? 'Customer requested cancel at period end' : 'Customer requested cancellation';
+    const baseUrl = await this.getBaseUrl();
     const res = await fetch(
-      `${this.baseUrl}/v1/billing/subscriptions/${params.externalSubscriptionId}/cancel`,
+      `${baseUrl}/v1/billing/subscriptions/${params.externalSubscriptionId}/cancel`,
       {
         method: 'POST',
         headers: {
@@ -211,7 +224,8 @@ export class PayPalService implements IPaymentProviderService {
       return false;
     }
     const token = await this.getAccessToken();
-    const res = await fetch(`${this.baseUrl}/v1/notifications/verify-webhook-signature`, {
+    const baseUrl = await this.getBaseUrl();
+    const res = await fetch(`${baseUrl}/v1/notifications/verify-webhook-signature`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

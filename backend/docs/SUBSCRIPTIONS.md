@@ -71,9 +71,13 @@ También puedes ejecutar el contenido de `scripts/backfill-free-subscriptions.sq
 
 ## Configuración PayPal
 
+El modo **sandbox** vs **live** lo puede fijar el super admin en el panel (**Configuración → PayPal**, `/admin/config/paypal`): se guarda en `app_settings` (`paypal_mode`). Si no hay valor guardado, se usa `PAYPAL_MODE` del entorno (por defecto `sandbox`).
+
+**GET** y **PATCH** `/admin/paypal-config` (JWT, `SUPER_ADMIN`). PATCH body: `{ "mode": "sandbox" | "live" }`.
+
 En `.env`:
 
-- `PAYPAL_MODE`: sandbox | live
+- `PAYPAL_MODE`: sandbox | live (fallback cuando no hay fila en BD)
 - `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`
 - `PAYPAL_WEBHOOK_ID`: ID del webhook en el dashboard (para verificar firma)
 - `PAYPAL_PLAN_ID_MONTHLY`, `PAYPAL_PLAN_ID_YEARLY`: IDs de planes creados en PayPal
@@ -105,6 +109,7 @@ Eventos: autorización de preapproval, pagos creados, preapproval cancelado. Al 
 - **GET `/admin/plan-catalog`** (JWT, rol `SUPER_ADMIN`): devuelve límites por plan de tenant (alineados con `plan-limits.constants.ts`), plantillas estándar vs Pro, y filas de `plans` / `plan_prices` (ARS + Mercado Pago, USD + PayPal).
 - En el frontend: **Admin → Configuración → Suscripciones** (`/admin/config/subscriptions`).
 - **Mercado Pago (modo prueba/producción)**: **GET** y **PATCH** `/admin/mercadopago-config` (JWT, `SUPER_ADMIN`). PATCH body: `{ "mode": "sandbox" | "production" }`. Respuesta incluye `hasProductionTokenConfigured` / `hasTestTokenConfigured` (sin exponer secretos). UI: `/admin/config/mercadopago`.
+- **PayPal (sandbox / live)**: **GET** y **PATCH** `/admin/paypal-config` (JWT, `SUPER_ADMIN`). PATCH body: `{ "mode": "sandbox" | "live" }`. UI: `/admin/config/paypal`.
 - **Límites por plan de tenant**: **GET** y **PUT** `/admin/plan-limits` (`SUPER_ADMIN`). Persistencia en `tenant_plan_limit_overrides`; sin filas se usan los defaults de `plan-limits.constants.ts`. La API (restaurantes, menús, productos, menú público, fotos, downgrade de plan) lee límites vía `PlanLimitsService`. UI: `/admin/config/plan-limits`.
 
 ## Sincronización con Tenant
