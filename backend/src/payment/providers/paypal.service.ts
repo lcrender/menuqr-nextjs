@@ -18,6 +18,17 @@ import { readEnvTrimmed } from '../../common/config/read-env-trimmed';
 const PAYPAL_API_BASE = (mode: string) =>
   mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
 
+/**
+ * IDs de plan de facturación recurrente en PayPal REST v1: prefijo `P-` (Billing plan).
+ * No confundir con producto (`PROD-`) ni con una suscripción concreta (`I-`).
+ */
+function normalizePayPalBillingPlanId(raw: string): string {
+  return raw
+    .trim()
+    .replace(/^[\s"'`]+|[\s"'`]+$/g, '')
+    .trim();
+}
+
 /** Extrae mensaje legible del JSON de error de PayPal para la respuesta API y soporte. */
 function parsePayPalApiErrorBody(raw: string): string | null {
   try {
@@ -85,11 +96,30 @@ export class PayPalService implements IPaymentProviderService {
     const envSlug = planSlug === 'starter' ? 'BASIC' : planSlug.toUpperCase();
     const baseKey = `PAYPAL_PLAN_ID_${envSlug}_${suffix}`;
     const value = this.readPayPalPlanEnv(baseKey, envMode);
-    if (value) return value;
+    if (value) return normalizePayPalBillingPlanId(value);
     const fallbackMonthly = this.readPayPalPlanEnv('PAYPAL_PLAN_ID_MONTHLY', envMode);
     const fallbackYearly = this.readPayPalPlanEnv('PAYPAL_PLAN_ID_YEARLY', envMode);
-    if (planType === 'yearly') return fallbackYearly || null;
-    return fallbackMonthly || null;
+    if (planType === 'yearly') return fallbackYearly ? normalizePayPalBillingPlanId(fallbackYearly) : null;
+    return fallbackMonthly ? normalizePayPalBillingPlanId(fallbackMonthly) : null;
+  }
+
+  /** Valida antes de llamar a PayPal; mensajes claros si copiaste PROD-/I- o el ID está corrupto. */
+  private assertBillingPlanId(planId: string): void {
+    if (planId.startsWith('PROD-')) {
+      throw new BadRequestException(
+        'PayPal: el valor es un ID de producto (PROD-...). En PAYPAL_PLAN_ID_* debe ir el ID del plan de suscripción (Billing plan), que empieza con P-, no el del catálogo de productos.',
+      );
+    }
+    if (planId.startsWith('I-')) {
+      throw new BadRequestException(
+        'PayPal: parece un ID de suscripción (I-...). Las variables PAYPAL_PLAN_ID_* deben contener el Plan ID fijo (P-...), no una suscripción ya creada.',
+      );
+    }
+    if (!/^P-[A-Za-z0-9]+$/.test(planId)) {
+      throw new BadRequestException(
+        `PayPal: Plan ID inválido (debe ser como P-xxxxxxxx). Revisá el .env: sin comillas rotas, espacios ni pegar otro tipo de ID. Valor: "${planId.slice(0, 24)}${planId.length > 24 ? '…' : ''}"`,
+      );
+    }
   }
 
   private async getAccessTokenForMode(mode: 'sandbox' | 'live'): Promise<string> {
@@ -155,6 +185,7 @@ export class PayPalService implements IPaymentProviderService {
         'PayPal aún no esta disponible en tu regíon, comunicate con soporte para poder mejorar tu suscripcion.',
       );
     }
+    this.assertBillingPlanId(planId);
     const token = await this.getAccessToken();
     const body = {
       plan_id: planId,
