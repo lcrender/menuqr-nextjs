@@ -106,6 +106,8 @@ En el dashboard de PayPal configurar la URL del webhook:
 
 Eventos recomendados: BILLING.SUBSCRIPTION.ACTIVATED, BILLING.SUBSCRIPTION.CANCELLED, BILLING.SUBSCRIPTION.SUSPENDED, BILLING.SUBSCRIPTION.PAYMENT.FAILED, PAYMENT.SALE.COMPLETED.
 
+Si al suscribirte aparece un error de PayPal, el backend devuelve el detalle que envía la API (en inglés). Causas típicas: **Plan ID** de live usado en modo sandbox (o al revés); plan **inactivo** en el dashboard; `return_url` / `cancel_url` no HTTPS en producción; credenciales del entorno equivocado.
+
 ## Configuración MercadoPago (Argentina)
 
 En `.env`:

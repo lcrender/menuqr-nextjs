@@ -18,6 +18,30 @@ import { readEnvTrimmed } from '../../common/config/read-env-trimmed';
 const PAYPAL_API_BASE = (mode: string) =>
   mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
 
+/** Extrae mensaje legible del JSON de error de PayPal para la respuesta API y soporte. */
+function parsePayPalApiErrorBody(raw: string): string | null {
+  try {
+    const j = JSON.parse(raw) as {
+      message?: string;
+      name?: string;
+      details?: Array<{ issue?: string; description?: string; field?: string }>;
+    };
+    const parts: string[] = [];
+    if (j.name && j.name !== 'UNKNOWN') parts.push(j.name);
+    if (j.message) parts.push(j.message);
+    const d = j.details?.[0];
+    if (d?.issue) parts.push(d.issue);
+    if (d?.description && d.description !== d.issue) parts.push(d.description);
+    if (d?.field) parts.push(`(${d.field})`);
+    const out = parts.filter(Boolean).join(' — ');
+    return out.length ? out : null;
+  } catch {
+    const t = raw.trim();
+    if (t.length > 0 && t.length < 600) return t;
+    return null;
+  }
+}
+
 @Injectable()
 export class PayPalService implements IPaymentProviderService {
   readonly provider: PaymentProviderType = 'paypal';
@@ -138,6 +162,8 @@ export class PayPalService implements IPaymentProviderService {
         return_url: params.returnUrl,
         cancel_url: params.cancelUrl,
         brand_name: this.config.get('PAYPAL_BRAND_NAME', 'AppMenuQR'),
+        user_action: 'SUBSCRIBE_NOW',
+        shipping_preference: 'NO_SHIPPING',
       },
       custom_id: params.userId,
     };
@@ -152,8 +178,13 @@ export class PayPalService implements IPaymentProviderService {
     });
     if (!res.ok) {
       const err = await res.text();
-      this.logger.error(`PayPal create subscription error: ${err}`);
-      throw new BadRequestException('Failed to create PayPal subscription');
+      this.logger.error(`PayPal create subscription (${res.status}): ${err}`);
+      const detail = parsePayPalApiErrorBody(err);
+      throw new BadRequestException(
+        detail
+          ? `No se pudo crear la suscripción en PayPal: ${detail}`
+          : 'No se pudo crear la suscripción en PayPal. Revisá los Plan IDs, credenciales y que el modo (sandbox/live) coincida con PayPal.',
+      );
     }
     const data = await res.json();
     const approvalUrl = data.links?.find((l: { rel: string }) => l.rel === 'approve')?.href;
