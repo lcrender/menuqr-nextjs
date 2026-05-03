@@ -75,13 +75,31 @@ El modo **sandbox** vs **live** lo puede fijar el super admin en el panel (**Con
 
 **GET** y **PATCH** `/admin/paypal-config` (JWT, `SUPER_ADMIN`). PATCH body: `{ "mode": "sandbox" | "live" }`.
 
-En `.env`:
+En `.env` podés cargar **live** y **sandbox** a la vez; el modo activo lo elige el super admin (o `PAYPAL_MODE` si no hay fila en BD).
 
-- `PAYPAL_MODE`: sandbox | live (fallback cuando no hay fila en BD)
-- `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`
-- `PAYPAL_WEBHOOK_ID`: ID del webhook en el dashboard (para verificar firma)
-- `PAYPAL_PLAN_ID_MONTHLY`, `PAYPAL_PLAN_ID_YEARLY`: IDs de planes creados en PayPal
-- Opcional: `PAYPAL_PLAN_ID_BASIC_MONTHLY` (plan Starter), `PAYPAL_PLAN_ID_PRO_MONTHLY`, `PAYPAL_PLAN_ID_PREMIUM_MONTHLY` para mapear a subscription_plan (starter/pro/premium)
+**Credenciales**
+
+- Live: `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`
+- Sandbox: `PAYPAL_CLIENT_ID_SANDBOX`, `PAYPAL_SECRET_SANDBOX`
+
+**Webhooks (verificación de firma)**
+
+- Live: `PAYPAL_WEBHOOK_ID`
+- Sandbox: `PAYPAL_WEBHOOK_ID_SANDBOX`  
+  Si el mismo endpoint recibe eventos de ambos entornos, el backend prueba verificar con ambos IDs.
+
+**Planes de suscripción (6 por entorno)** — el slug `starter` usa el prefijo `BASIC` en el nombre de variable:
+
+| Variable (live) |
+|-----------------|
+| `PAYPAL_PLAN_ID_BASIC_MONTHLY` |
+| `PAYPAL_PLAN_ID_BASIC_YEARLY` |
+| `PAYPAL_PLAN_ID_PRO_MONTHLY` |
+| `PAYPAL_PLAN_ID_PRO_YEARLY` |
+| `PAYPAL_PLAN_ID_PREMIUM_MONTHLY` |
+| `PAYPAL_PLAN_ID_PREMIUM_YEARLY` |
+
+Para sandbox, los mismos con sufijo `_SANDBOX` (ej. `PAYPAL_PLAN_ID_PRO_MONTHLY_SANDBOX`). Opcional: `PAYPAL_PLAN_ID_MONTHLY` / `PAYPAL_PLAN_ID_YEARLY` y `PAYPAL_PLAN_ID_MONTHLY_SANDBOX` / `PAYPAL_PLAN_ID_YEARLY_SANDBOX` como respaldo genérico.
 
 En el dashboard de PayPal configurar la URL del webhook:  
 `https://tu-dominio.com/payment/webhooks/paypal`
@@ -109,7 +127,7 @@ Eventos: autorización de preapproval, pagos creados, preapproval cancelado. Al 
 - **GET `/admin/plan-catalog`** (JWT, rol `SUPER_ADMIN`): devuelve límites por plan de tenant (alineados con `plan-limits.constants.ts`), plantillas estándar vs Pro, y filas de `plans` / `plan_prices` (ARS + Mercado Pago, USD + PayPal).
 - En el frontend: **Admin → Configuración → Suscripciones** (`/admin/config/subscriptions`).
 - **Mercado Pago (modo prueba/producción)**: **GET** y **PATCH** `/admin/mercadopago-config` (JWT, `SUPER_ADMIN`). PATCH body: `{ "mode": "sandbox" | "production" }`. Respuesta incluye `hasProductionTokenConfigured` / `hasTestTokenConfigured` (sin exponer secretos). UI: `/admin/config/mercadopago`.
-- **PayPal (sandbox / live)**: **GET** y **PATCH** `/admin/paypal-config` (JWT, `SUPER_ADMIN`). PATCH body: `{ "mode": "sandbox" | "live" }`. UI: `/admin/config/paypal`.
+- **PayPal (sandbox / live)**: **GET** y **PATCH** `/admin/paypal-config` (JWT, `SUPER_ADMIN`). PATCH body: `{ "mode": "sandbox" | "live" }`. Respuesta incluye `hasLiveCredentialsConfigured` y `hasSandboxCredentialsConfigured` (sin exponer secretos). UI: `/admin/config/paypal`.
 - **Límites por plan de tenant**: **GET** y **PUT** `/admin/plan-limits` (`SUPER_ADMIN`). Persistencia en `tenant_plan_limit_overrides`; sin filas se usan los defaults de `plan-limits.constants.ts`. La API (restaurantes, menús, productos, menú público, fotos, downgrade de plan) lee límites vía `PlanLimitsService`. UI: `/admin/config/plan-limits`.
 
 ## Sincronización con Tenant

@@ -24,14 +24,23 @@ export class PayPalConfigController {
     const envRaw = this.config.get<string>('PAYPAL_MODE', 'sandbox');
     const environmentFallbackMode = envRaw === 'live' ? 'live' : 'sandbox';
     const effectiveMode = databaseMode ?? environmentFallbackMode;
-    const clientId = readEnvTrimmed('PAYPAL_CLIENT_ID', this.config);
-    const secret = readEnvTrimmed('PAYPAL_SECRET', this.config);
+    const liveId = readEnvTrimmed('PAYPAL_CLIENT_ID', this.config);
+    const liveSec = readEnvTrimmed('PAYPAL_SECRET', this.config);
+    const sbId = readEnvTrimmed('PAYPAL_CLIENT_ID_SANDBOX', this.config);
+    const sbSec = readEnvTrimmed('PAYPAL_SECRET_SANDBOX', this.config);
+    const hasLiveCredentialsConfigured = !!(liveId && liveSec);
+    const hasSandboxCredentialsConfigured =
+      !!(sbId && sbSec) || (!(sbId && sbSec) && !!(liveId && liveSec));
+    const hasCredentialsConfigured =
+      effectiveMode === 'live' ? hasLiveCredentialsConfigured : hasSandboxCredentialsConfigured;
     return {
       mode: effectiveMode,
       databaseMode,
       environmentFallbackMode,
       savedInDatabase: databaseMode !== null,
-      hasCredentialsConfigured: !!(clientId && secret),
+      hasLiveCredentialsConfigured,
+      hasSandboxCredentialsConfigured,
+      hasCredentialsConfigured,
     };
   }
 
@@ -42,14 +51,23 @@ export class PayPalConfigController {
     const databaseMode = await this.appSettings.setPayPalMode(body.mode);
     const envRaw = this.config.get<string>('PAYPAL_MODE', 'sandbox');
     const environmentFallbackMode = envRaw === 'live' ? 'live' : 'sandbox';
-    const clientId = readEnvTrimmed('PAYPAL_CLIENT_ID', this.config);
-    const secret = readEnvTrimmed('PAYPAL_SECRET', this.config);
+    const liveId = readEnvTrimmed('PAYPAL_CLIENT_ID', this.config);
+    const liveSec = readEnvTrimmed('PAYPAL_SECRET', this.config);
+    const sbId = readEnvTrimmed('PAYPAL_CLIENT_ID_SANDBOX', this.config);
+    const sbSec = readEnvTrimmed('PAYPAL_SECRET_SANDBOX', this.config);
+    const hasLiveCredentialsConfigured = !!(liveId && liveSec);
+    const hasSandboxCredentialsConfigured =
+      !!(sbId && sbSec) || (!(sbId && sbSec) && !!(liveId && liveSec));
+    const hasCredentialsConfigured =
+      databaseMode === 'live' ? hasLiveCredentialsConfigured : hasSandboxCredentialsConfigured;
     return {
       mode: databaseMode,
       databaseMode,
       environmentFallbackMode,
       savedInDatabase: true,
-      hasCredentialsConfigured: !!(clientId && secret),
+      hasLiveCredentialsConfigured,
+      hasSandboxCredentialsConfigured,
+      hasCredentialsConfigured,
     };
   }
 }

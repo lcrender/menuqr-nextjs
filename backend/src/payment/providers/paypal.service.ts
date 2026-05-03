@@ -13,6 +13,7 @@ import { PaymentHistoryService, type PaymentAttemptStatus } from '../payment-his
 import { UsersService } from '../../users/users.service';
 import { AdminMessagesService } from '../../admin-messages/admin-messages.service';
 import { AppSettingsService } from '../../app-settings/app-settings.service';
+import { readEnvTrimmed } from '../../common/config/read-env-trimmed';
 
 const PAYPAL_API_BASE = (mode: string) =>
   mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
@@ -43,23 +44,53 @@ export class PayPalService implements IPaymentProviderService {
     return PAYPAL_API_BASE(mode);
   }
 
-  private getPlanIdForSlug(planSlug: string, planType: PlanType): string | null {
-    const suffix = planType === 'yearly' ? 'YEARLY' : 'MONTHLY';
-    const envSlug = planSlug === 'starter' ? 'BASIC' : planSlug.toUpperCase();
-    const key = `PAYPAL_PLAN_ID_${envSlug}_${suffix}`;
-    const value = this.config.get(key);
-    if (value) return value;
-    return this.config.get('PAYPAL_PLAN_ID_MONTHLY') || this.config.get('PAYPAL_PLAN_ID_YEARLY') || null;
+  /** Plan ID para live o sandbox (`*_SANDBOX` opcional con fallback al mismo nombre sin sufijo). */
+  private readPayPalPlanEnv(baseKey: string, mode: 'live' | 'sandbox'): string | undefined {
+    if (mode === 'sandbox') {
+      const s = readEnvTrimmed(`${baseKey}_SANDBOX`, this.config);
+      if (s) return s;
+      return readEnvTrimmed(baseKey, this.config);
+    }
+    return readEnvTrimmed(baseKey, this.config);
   }
 
-  private async getAccessToken(): Promise<string> {
-    const clientId = this.config.get('PAYPAL_CLIENT_ID');
-    const secret = this.config.get('PAYPAL_SECRET');
+  private async getPlanIdForSlug(planSlug: string, planType: PlanType): Promise<string | null> {
+    const apiMode = await this.resolvePayPalApiMode();
+    const envMode: 'live' | 'sandbox' = apiMode === 'live' ? 'live' : 'sandbox';
+    const suffix = planType === 'yearly' ? 'YEARLY' : 'MONTHLY';
+    const envSlug = planSlug === 'starter' ? 'BASIC' : planSlug.toUpperCase();
+    const baseKey = `PAYPAL_PLAN_ID_${envSlug}_${suffix}`;
+    const value = this.readPayPalPlanEnv(baseKey, envMode);
+    if (value) return value;
+    const fallbackMonthly = this.readPayPalPlanEnv('PAYPAL_PLAN_ID_MONTHLY', envMode);
+    const fallbackYearly = this.readPayPalPlanEnv('PAYPAL_PLAN_ID_YEARLY', envMode);
+    if (planType === 'yearly') return fallbackYearly || null;
+    return fallbackMonthly || null;
+  }
+
+  private async getAccessTokenForMode(mode: 'sandbox' | 'live'): Promise<string> {
+    let clientId: string | undefined;
+    let secret: string | undefined;
+    if (mode === 'sandbox') {
+      clientId = readEnvTrimmed('PAYPAL_CLIENT_ID_SANDBOX', this.config);
+      secret = readEnvTrimmed('PAYPAL_SECRET_SANDBOX', this.config);
+      if (!clientId || !secret) {
+        clientId = readEnvTrimmed('PAYPAL_CLIENT_ID', this.config);
+        secret = readEnvTrimmed('PAYPAL_SECRET', this.config);
+      }
+    } else {
+      clientId = readEnvTrimmed('PAYPAL_CLIENT_ID', this.config);
+      secret = readEnvTrimmed('PAYPAL_SECRET', this.config);
+    }
     if (!clientId || !secret) {
-      throw new BadRequestException('PayPal is not configured');
+      throw new BadRequestException(
+        mode === 'sandbox'
+          ? 'PayPal sandbox: definí PAYPAL_CLIENT_ID_SANDBOX y PAYPAL_SECRET_SANDBOX (o temporalmente PAYPAL_CLIENT_ID y PAYPAL_SECRET) en el servidor (.env).'
+          : 'PayPal live: definí PAYPAL_CLIENT_ID y PAYPAL_SECRET en el servidor (.env).',
+      );
     }
     const auth = Buffer.from(`${clientId}:${secret}`).toString('base64');
-    const baseUrl = await this.getBaseUrl();
+    const baseUrl = PAYPAL_API_BASE(mode);
     const res = await fetch(`${baseUrl}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
@@ -77,6 +108,11 @@ export class PayPalService implements IPaymentProviderService {
     return data.access_token;
   }
 
+  private async getAccessToken(): Promise<string> {
+    const mode = await this.resolvePayPalApiMode();
+    return this.getAccessTokenForMode(mode === 'live' ? 'live' : 'sandbox');
+  }
+
   async createSubscription(params: {
     userId: string;
     payerEmail?: string;
@@ -89,7 +125,7 @@ export class PayPalService implements IPaymentProviderService {
     if (params.planSlug === 'free') {
       throw new BadRequestException('El plan Free no requiere suscripción de pago.');
     }
-    const planId = this.getPlanIdForSlug(params.planSlug, params.planType);
+    const planId = await this.getPlanIdForSlug(params.planSlug, params.planType);
     if (!planId) {
       throw new BadRequestException(
         'PayPal aún no esta disponible en tu regíon, comunicate con soporte para poder mejorar tu suscripcion.',
@@ -169,8 +205,9 @@ export class PayPalService implements IPaymentProviderService {
       return { processed: true, idempotencyKey: eventId };
     }
 
-    const webhookId = this.config.get('PAYPAL_WEBHOOK_ID');
-    if (webhookId) {
+    const webhookLive = readEnvTrimmed('PAYPAL_WEBHOOK_ID', this.config);
+    const webhookSandbox = readEnvTrimmed('PAYPAL_WEBHOOK_ID_SANDBOX', this.config);
+    if (webhookLive || webhookSandbox) {
       const verified = await this.verifyWebhookSignature(rawBody, params.headers);
       if (!verified) {
         this.logger.warn('PayPal webhook signature verification failed');
@@ -213,41 +250,58 @@ export class PayPalService implements IPaymentProviderService {
     return { processed: true, idempotencyKey: eventId };
   }
 
+  /**
+   * Prueba verificación con sandbox y/o live (mismo URL de webhook en ambos entornos).
+   */
   private async verifyWebhookSignature(rawBody: Buffer, headers: Record<string, string>): Promise<boolean> {
-    const webhookId = this.config.get('PAYPAL_WEBHOOK_ID');
     const transmissionId = headers['paypal-transmission-id'];
     const transmissionTime = headers['paypal-transmission-time'];
     const certUrl = headers['paypal-cert-url'];
     const sig = headers['paypal-transmission-sig'];
     const authAlgo = headers['paypal-auth-algo'];
-    if (!transmissionId || !transmissionTime || !certUrl || !sig || !webhookId) {
+    if (!transmissionId || !transmissionTime || !certUrl || !sig) {
       return false;
     }
-    const token = await this.getAccessToken();
-    const baseUrl = await this.getBaseUrl();
-    const res = await fetch(`${baseUrl}/v1/notifications/verify-webhook-signature`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        auth_algo: authAlgo,
-        cert_url: certUrl,
-        transmission_id: transmissionId,
-        transmission_sig: sig,
-        transmission_time: transmissionTime,
-        webhook_id: webhookId,
-        webhook_event: JSON.parse(rawBody.toString()),
-      }),
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      this.logger.warn(`PayPal verify webhook failed: ${err}`);
-      return false;
+    const attempts: Array<{ mode: 'sandbox' | 'live'; webhookId: string | undefined }> = [
+      { mode: 'sandbox', webhookId: readEnvTrimmed('PAYPAL_WEBHOOK_ID_SANDBOX', this.config) },
+      { mode: 'live', webhookId: readEnvTrimmed('PAYPAL_WEBHOOK_ID', this.config) },
+    ];
+    for (const { mode, webhookId } of attempts) {
+      if (!webhookId) continue;
+      const token = await this.getAccessTokenForMode(mode);
+      const baseUrl = PAYPAL_API_BASE(mode);
+      const res = await fetch(`${baseUrl}/v1/notifications/verify-webhook-signature`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          auth_algo: authAlgo,
+          cert_url: certUrl,
+          transmission_id: transmissionId,
+          transmission_sig: sig,
+          transmission_time: transmissionTime,
+          webhook_id: webhookId,
+          webhook_event: JSON.parse(rawBody.toString()),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        this.logger.warn(`PayPal verify webhook (${mode}) failed: ${err}`);
+        continue;
+      }
+      const data = await res.json();
+      if (data.verification_status === 'SUCCESS') return true;
     }
-    const data = await res.json();
-    return data.verification_status === 'SUCCESS';
+    return false;
+  }
+
+  /** Mismo plan_id puede existir en live o sandbox (IDs distintos). */
+  private planEnvKeyMatches(planId: string, baseKey: string): boolean {
+    const live = readEnvTrimmed(baseKey, this.config);
+    const sb = readEnvTrimmed(`${baseKey}_SANDBOX`, this.config);
+    return planId === live || planId === sb;
   }
 
   private async handleSubscriptionActivated(subscriptionId: string, resource: any): Promise<void> {
@@ -473,21 +527,32 @@ export class PayPalService implements IPaymentProviderService {
   }
 
   private planTypeFromPayPal(planId: string): 'monthly' | 'yearly' {
-    const yearlyId = this.config.get('PAYPAL_PLAN_ID_YEARLY');
-    return yearlyId && planId === yearlyId ? 'yearly' : 'monthly';
+    const yearlyKeys = [
+      'PAYPAL_PLAN_ID_YEARLY',
+      'PAYPAL_PLAN_ID_BASIC_YEARLY',
+      'PAYPAL_PLAN_ID_PRO_YEARLY',
+      'PAYPAL_PLAN_ID_PREMIUM_YEARLY',
+    ];
+    for (const k of yearlyKeys) {
+      if (this.planEnvKeyMatches(planId, k)) return 'yearly';
+    }
+    return 'monthly';
   }
 
   private planSlugFromPayPalPlan(planId: string): string {
-    const basicMonthly = this.config.get('PAYPAL_PLAN_ID_BASIC_MONTHLY');
-    const basicYearly = this.config.get('PAYPAL_PLAN_ID_BASIC_YEARLY');
-    const proMonthly = this.config.get('PAYPAL_PLAN_ID_PRO_MONTHLY');
-    const proYearly = this.config.get('PAYPAL_PLAN_ID_PRO_YEARLY');
-    const premiumMonthly = this.config.get('PAYPAL_PLAN_ID_PREMIUM_MONTHLY');
-    const premiumYearly = this.config.get('PAYPAL_PLAN_ID_PREMIUM_YEARLY');
-    const defaultPlan = this.config.get('PAYPAL_PLAN_ID_MONTHLY');
-    if (planId === premiumMonthly || planId === premiumYearly) return 'premium';
-    if (planId === proMonthly || planId === proYearly) return 'pro';
-    if (planId === basicMonthly || planId === basicYearly || planId === defaultPlan) return 'starter';
+    if (this.planEnvKeyMatches(planId, 'PAYPAL_PLAN_ID_PREMIUM_MONTHLY') || this.planEnvKeyMatches(planId, 'PAYPAL_PLAN_ID_PREMIUM_YEARLY')) {
+      return 'premium';
+    }
+    if (this.planEnvKeyMatches(planId, 'PAYPAL_PLAN_ID_PRO_MONTHLY') || this.planEnvKeyMatches(planId, 'PAYPAL_PLAN_ID_PRO_YEARLY')) {
+      return 'pro';
+    }
+    if (
+      this.planEnvKeyMatches(planId, 'PAYPAL_PLAN_ID_BASIC_MONTHLY') ||
+      this.planEnvKeyMatches(planId, 'PAYPAL_PLAN_ID_BASIC_YEARLY') ||
+      this.planEnvKeyMatches(planId, 'PAYPAL_PLAN_ID_MONTHLY')
+    ) {
+      return 'starter';
+    }
     return 'starter';
   }
 }

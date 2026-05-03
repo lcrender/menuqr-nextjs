@@ -10,6 +10,8 @@ type PayPalConfigResponse = {
   databaseMode: PayPalMode | null;
   environmentFallbackMode: PayPalMode;
   savedInDatabase: boolean;
+  hasLiveCredentialsConfigured: boolean;
+  hasSandboxCredentialsConfigured: boolean;
   hasCredentialsConfigured: boolean;
 };
 
@@ -140,9 +142,10 @@ export default function AdminConfigPayPal() {
               <h2 className="h5 mb-3">Modo de operación</h2>
               <p className="small text-muted mb-3">
                 El valor se guarda en la base de datos (clave <code>paypal_mode</code>). Si nunca guardaste aquí, se usa{' '}
-                <code>PAYPAL_MODE</code> del servidor (<code>.env</code>). Las credenciales siguen siendo{' '}
-                <code>PAYPAL_CLIENT_ID</code> y <code>PAYPAL_SECRET</code>; en sandbox usá credenciales de la app Sandbox
-                de PayPal y los <code>PAYPAL_PLAN_ID_*</code> creados en ese entorno.
+                <code>PAYPAL_MODE</code> del <code>.env</code> como respaldo. Podés definir <strong>live</strong> y{' '}
+                <strong>sandbox</strong> a la vez: <code>PAYPAL_CLIENT_ID</code> + <code>PAYPAL_SECRET</code> (live) y{' '}
+                <code>PAYPAL_CLIENT_ID_SANDBOX</code> + <code>PAYPAL_SECRET_SANDBOX</code> (sandbox). Los Plan IDs de
+                sandbox usan el sufijo <code>_SANDBOX</code> (ver documentación en el repo).
               </p>
 
               {!config.savedInDatabase && (
@@ -173,24 +176,39 @@ export default function AdminConfigPayPal() {
 
               <ul className="small text-muted mb-0">
                 <li>
-                  Credenciales en servidor:{' '}
-                  {config.hasCredentialsConfigured ? (
-                    <span className="text-success">client id + secret configurados</span>
+                  Live:{' '}
+                  {config.hasLiveCredentialsConfigured ? (
+                    <span className="text-success">PAYPAL_CLIENT_ID + PAYPAL_SECRET</span>
                   ) : (
-                    <span className="text-warning">faltan PAYPAL_CLIENT_ID / PAYPAL_SECRET</span>
+                    <span className="text-warning">faltan credenciales live</span>
                   )}
                 </li>
                 <li>
-                  Modo efectivo actual: <strong>{config.mode}</strong>
+                  Sandbox:{' '}
+                  {config.hasSandboxCredentialsConfigured ? (
+                    <span className="text-success">PAYPAL_CLIENT_ID_SANDBOX + PAYPAL_SECRET_SANDBOX</span>
+                  ) : (
+                    <span className="text-warning">faltan credenciales sandbox</span>
+                  )}
+                </li>
+                <li>
+                  Modo efectivo: <strong>{config.mode}</strong>
                   {config.savedInDatabase && config.databaseMode != null && (
                     <span className="text-muted"> (guardado en BD)</span>
                   )}
                 </li>
               </ul>
 
-              {!config.hasCredentialsConfigured && (
+              {config.mode === 'live' && !config.hasLiveCredentialsConfigured && (
                 <div className="alert alert-warning mt-3 mb-0 small">
-                  Definí <code>PAYPAL_CLIENT_ID</code> y <code>PAYPAL_SECRET</code> en el servidor y reiniciá el backend.
+                  Modo <strong>live</strong>: definí <code>PAYPAL_CLIENT_ID</code> y <code>PAYPAL_SECRET</code> y reiniciá
+                  el backend.
+                </div>
+              )}
+              {config.mode === 'sandbox' && !config.hasSandboxCredentialsConfigured && (
+                <div className="alert alert-warning mt-3 mb-0 small">
+                  Modo <strong>sandbox</strong>: definí <code>PAYPAL_CLIENT_ID_SANDBOX</code> y{' '}
+                  <code>PAYPAL_SECRET_SANDBOX</code> y reiniciá el backend.
                 </div>
               )}
             </div>

@@ -133,6 +133,34 @@ export const validationSchema = Joi.object({
   SUPPORT_TICKETS_ADMIN_EMAIL: Joi.string().email().optional().allow(''),
 
   // ========================================
+  // PAYPAL (opcional; resto del mundo)
+  // ========================================
+  PAYPAL_MODE: Joi.string().valid('sandbox', 'live').optional(),
+  PAYPAL_CLIENT_ID: Joi.string().optional().allow(''),
+  PAYPAL_SECRET: Joi.string().optional().allow(''),
+  PAYPAL_CLIENT_ID_SANDBOX: Joi.string().optional().allow(''),
+  PAYPAL_SECRET_SANDBOX: Joi.string().optional().allow(''),
+  PAYPAL_WEBHOOK_ID: Joi.string().optional().allow(''),
+  PAYPAL_WEBHOOK_ID_SANDBOX: Joi.string().optional().allow(''),
+  PAYPAL_BRAND_NAME: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_MONTHLY: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_YEARLY: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_BASIC_MONTHLY: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_BASIC_YEARLY: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_PRO_MONTHLY: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_PRO_YEARLY: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_PREMIUM_MONTHLY: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_PREMIUM_YEARLY: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_MONTHLY_SANDBOX: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_YEARLY_SANDBOX: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_BASIC_MONTHLY_SANDBOX: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_BASIC_YEARLY_SANDBOX: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_PRO_MONTHLY_SANDBOX: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_PRO_YEARLY_SANDBOX: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_PREMIUM_MONTHLY_SANDBOX: Joi.string().optional().allow(''),
+  PAYPAL_PLAN_ID_PREMIUM_YEARLY_SANDBOX: Joi.string().optional().allow(''),
+
+  // ========================================
   // DESARROLLO
   // ========================================
   DEBUG: Joi.boolean().default(false),
