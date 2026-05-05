@@ -166,7 +166,9 @@ export default function SubscriptionCheckoutPage() {
     return rows.filter((r) => r.ok);
   }, [planSlug, limits]);
 
-  const paymentLabel = pricingData?.paymentProvider === 'mercadopago' ? 'Mercado Pago' : 'PayPal';
+  const paymentProvider = pricingData?.paymentProvider ?? 'paypal';
+  const isMercadoPago = paymentProvider === 'mercadopago';
+  const paymentLabel = isMercadoPago ? 'Mercado Pago' : 'PayPal';
   const isArs = planRow?.currency === 'ARS';
   const activePaid = subscriptions.find(
     (s) =>
@@ -191,7 +193,7 @@ export default function SubscriptionCheckoutPage() {
     if (!billingData.state.trim()) nextErrors.state = 'La provincia o estado es obligatoria.';
     if (!billingData.postalCode.trim()) nextErrors.postalCode = 'El código postal es obligatorio.';
     if (!billingData.country.trim()) nextErrors.country = 'El país es obligatorio.';
-    if (pricingData?.paymentProvider === 'mercadopago') {
+    if (isMercadoPago) {
       const mpEmail = billingData.mercadoPagoEmail.trim();
       if (mpEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mpEmail)) {
         nextErrors.mercadoPagoEmail = 'Ingresá un email válido.';
@@ -296,9 +298,22 @@ export default function SubscriptionCheckoutPage() {
         </div>
 
         <h1 className="h3 mb-4">Confirmar suscripción</h1>
-        <p className="text-muted small mb-4">
-          Revisá el resumen, elegí la facturación y aceptá los términos antes de ir al pago con {paymentLabel}.
-        </p>
+        <div
+          className={`rounded-3 border py-3 px-3 px-md-4 mb-4 shadow-sm ${
+            isMercadoPago
+              ? 'border-warning border-3 bg-warning bg-opacity-10'
+              : 'border-primary border-3 bg-primary bg-opacity-10'
+          }`}
+          role="status"
+        >
+          <div className={`fw-semibold mb-2 ${isMercadoPago ? 'text-dark' : 'text-primary'}`}>
+            Antes de continuar al pago con {paymentLabel}
+          </div>
+          <p className="mb-0">
+            Revisá el resumen, elegí la facturación y aceptá los términos antes de ir al pago con{' '}
+            <strong>{paymentLabel}</strong>.
+          </p>
+        </div>
 
         <div className="card shadow-sm mb-4">
           <div className="card-body">
@@ -318,7 +333,7 @@ export default function SubscriptionCheckoutPage() {
             <div className="border-top pt-3 mb-3">
               <span className="small text-muted d-block mb-2">Datos de facturación</span>
               <div className="row g-2 mb-3">
-                {pricingData?.paymentProvider === 'mercadopago' && (
+                {isMercadoPago && (
                   <div className="col-12">
                     <input
                       className="form-control"
@@ -477,6 +492,29 @@ export default function SubscriptionCheckoutPage() {
             >
               {submitting ? 'Redirigiendo…' : 'Suscribirme'}
             </button>
+            <div className="text-center mt-3 pt-3 border-top">
+              <p className="small text-muted mb-1">Pagos realizados mediante:</p>
+              <div
+                className="mx-auto d-flex align-items-center justify-content-center"
+                style={{
+                  width: 'min(100%, 720px)',
+                  height: 160,
+                }}
+              >
+                <img
+                  src={isMercadoPago ? '/images/mercadopago.webp' : '/images/paypal.webp'}
+                  alt={paymentLabel}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                  }}
+                  decoding="async"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
