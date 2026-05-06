@@ -38,6 +38,7 @@ export default function PlantillasCatalogoPage() {
       <Head>
         <title>Plantillas de menú QR para restaurantes | AppMenuQR</title>
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        <meta name="robots" content="index, follow" />
         <meta
           name="description"
           content="Catálogo de plantillas visuales para menús QR: elegí estilo, categoría y plan. Ideal para restaurantes, bares y negocios gastronómicos."

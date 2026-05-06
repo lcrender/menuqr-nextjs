@@ -18,6 +18,7 @@ export default function DocumentacionIndexPage() {
       <Head>
         <title>{meta.metaTitlePublic}</title>
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        <meta name="robots" content="index, follow" />
         <meta name="description" content={meta.metaDescription} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>

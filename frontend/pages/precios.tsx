@@ -32,6 +32,7 @@ export default function PreciosPage() {
       <Head>
         <title>Precios y planes | AppMenuQR</title>
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        <meta name="robots" content="index, follow" />
         <meta
           name="description"
           content="Planes y precios para crear tu menú QR: compará Starter, Pro y Premium con precios actualizados."
