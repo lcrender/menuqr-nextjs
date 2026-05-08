@@ -4,6 +4,7 @@ import LandingFooter from '../../components/LandingFooter';
 import { DocumentationShell } from '../../components/documentation/DocumentationShell';
 import { DOC_BODY_BY_SLUG } from '../../components/documentation/DocumentationBodies';
 import { getDocBySlug } from '../../lib/documentation-nav';
+import { buildDocumentacionJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
 
 const BASE = '/documentacion';
 
@@ -12,6 +13,11 @@ export default function DocumentacionIndexPage() {
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   const canonicalUrl =
     canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}/documentacion` : null;
+  const docsJsonLd = (() => {
+    const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
+    if (!base) return null;
+    return buildDocumentacionJsonLd(base, { title: meta.metaTitlePublic });
+  })();
 
   return (
     <>
@@ -21,6 +27,7 @@ export default function DocumentacionIndexPage() {
         <meta name="robots" content="index, follow" />
         <meta name="description" content={meta.metaDescription} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {docsJsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: docsJsonLd }} /> : null}
       </Head>
       <div className="landing-page">
         <LandingNav />

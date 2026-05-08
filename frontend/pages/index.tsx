@@ -8,6 +8,7 @@ import LandingNav from '../components/LandingNav';
 import LandingFooter from '../components/LandingFooter';
 import api from '../lib/axios';
 import { getPublicAppOrigin } from '../lib/config';
+import { buildLandingJsonLd, siteJsonLdBaseUrl } from '../lib/json-ld-appmenuqr';
 
 function plantillasCatalogUrlFromEnv(): string | null {
   const base = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
@@ -58,20 +59,6 @@ const LANDING_FAQ_ITEMS: readonly { question: string; answer: string }[] = [
   },
 ];
 
-/** JSON-LD FAQPage (rich results); misma fuente que el acordeón de la página. */
-const LANDING_FAQ_PAGE_JSON_LD = JSON.stringify({
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: LANDING_FAQ_ITEMS.map((item) => ({
-    '@type': 'Question',
-    name: item.question,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: item.answer,
-    },
-  })),
-});
-
 export default function Home() {
   const router = useRouter();
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
@@ -116,6 +103,12 @@ export default function Home() {
     return `${base}/`;
   })();
 
+  const landingJsonLd = (() => {
+    const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
+    if (!base) return null;
+    return buildLandingJsonLd(base, LANDING_FAQ_ITEMS);
+  })();
+
   return (
     <>
       <Head>
@@ -126,10 +119,9 @@ export default function Home() {
           content="Crea tu menú QR gratis para restaurantes. Genera tu código QR, digitaliza tu carta y permite a tus clientes acceder desde el móvil fácilmente."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: LANDING_FAQ_PAGE_JSON_LD }}
-        />
+        {landingJsonLd ? (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: landingJsonLd }} />
+        ) : null}
       </Head>
 
       <div className="landing-page">

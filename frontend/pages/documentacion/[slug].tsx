@@ -10,6 +10,7 @@ import {
   isValidDocSlug,
   type DocSection,
 } from '../../lib/documentation-nav';
+import { buildDocumentacionJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
 
 const BASE = '/documentacion';
 
@@ -23,6 +24,11 @@ export default function DocumentacionSlugPage({ slug }: Props) {
     canonicalBase && /^https?:\/\//i.test(canonicalBase)
       ? `${canonicalBase}/documentacion/${slug}`
       : null;
+  const docsJsonLd = (() => {
+    const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
+    if (!base) return null;
+    return buildDocumentacionJsonLd(base, { slug, title: meta.metaTitlePublic });
+  })();
 
   return (
     <>
@@ -31,6 +37,7 @@ export default function DocumentacionSlugPage({ slug }: Props) {
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
         <meta name="description" content={meta.metaDescription} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {docsJsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: docsJsonLd }} /> : null}
       </Head>
       <div className="landing-page">
         <LandingNav />

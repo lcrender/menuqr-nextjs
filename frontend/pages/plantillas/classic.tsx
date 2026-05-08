@@ -4,6 +4,7 @@ import LandingNav from '../../components/LandingNav';
 import PlantillaLandingArticle from '../../components/plantillas/detail/PlantillaLandingArticle';
 import styles from '../../components/plantillas/detail/plantilla-detail.module.css';
 import { PLANTILLA_CLASSIC_LANDING } from '../../data/plantilla-landing-classic';
+import { buildPlantillaDetalleJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
 import { getTemplateBySlug } from '../../lib/menu-templates-catalog';
 
 const L = PLANTILLA_CLASSIC_LANDING;
@@ -13,6 +14,11 @@ export default function PlantillaClasicaPage() {
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   const canonicalUrl =
     canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}/plantillas/classic` : null;
+  const plantillaJsonLd = (() => {
+    const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
+    if (!base) return null;
+    return buildPlantillaDetalleJsonLd(base, { slug: 'classic', nombre: L.header.h1 });
+  })();
 
   return (
     <>
@@ -21,6 +27,7 @@ export default function PlantillaClasicaPage() {
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
         <meta name="description" content={L.seo.description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {plantillaJsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: plantillaJsonLd }} /> : null}
       </Head>
       <div className="landing-page">
         <LandingNav />

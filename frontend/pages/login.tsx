@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { GetServerSidePropsContext, InferGetServerSidePropsType } from 'next';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -19,10 +20,30 @@ const isProduction =
   typeof process !== 'undefined' &&
   (process.env.NEXT_PUBLIC_APP_ENV === 'production' || process.env.NODE_ENV === 'production');
 
-export default function Login() {
+/** Textos SEO distintos entre login y registro (evita duplicados en auditorías y refuerza intención). */
+const LOGIN_META_DESCRIPTION =
+  'Accedé al panel de AppMenuQR para administrar tu menú digital, códigos QR y carta. Iniciá sesión con tu email y contraseña de titular o staff.';
+const REGISTER_META_DESCRIPTION =
+  'Alta gratuita en AppMenuQR: menú digital con código QR, plantillas y categorías para tu local. Registrate y publicá platos en minutos, sin papel.';
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const initialIsRegister = context.query.action === 'register';
+  return { props: { initialIsRegister } };
+}
+
+type LoginPageProps = InferGetServerSidePropsType<typeof getServerSideProps>;
+
+export default function Login({ initialIsRegister }: LoginPageProps) {
   const router = useRouter();
   const siteKey = (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '').trim();
-  const [isRegister, setIsRegister] = useState(false);
+  /** Modo alineado con la URL (SSR usa initialIsRegister hasta que el router esté listo). */
+  const registerFromUrl = !router.isReady ? initialIsRegister : router.query.action === 'register';
+  const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
+  /** Una sola URL canónica evita “contenido duplicado” entre /login y ?action=register. */
+  const canonicalUrl =
+    canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}/login` : null;
+  const pageTitle = registerFromUrl ? 'Registrarse - AppMenuQR' : 'Iniciar Sesión - AppMenuQR';
+  const pageDescription = registerFromUrl ? REGISTER_META_DESCRIPTION : LOGIN_META_DESCRIPTION;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -96,10 +117,6 @@ export default function Login() {
   }, [router.isReady]);
 
   useEffect(() => {
-    // Verificar si viene con action=register
-    if (router.query.action === 'register') {
-      setIsRegister(true);
-    }
     const qpPlan = typeof router.query.pendingPlan === 'string' ? router.query.pendingPlan.toLowerCase() : '';
     const qpBilling =
       typeof router.query.pendingBillingCycle === 'string'
@@ -166,11 +183,11 @@ export default function Login() {
       nextFieldErrors.password = 'La contraseña es obligatoria';
     }
 
-    if (!isRegister && password && password.length < 8) {
+    if (!registerFromUrl && password && password.length < 8) {
       nextFieldErrors.password = 'La contraseña debe tener al menos 8 caracteres';
     }
 
-    if (isRegister) {
+    if (registerFromUrl) {
       if (!trimmedFirstName) {
         nextFieldErrors.firstName = 'El nombre es obligatorio';
       } else if (trimmedFirstName.length < 2) {
@@ -204,14 +221,14 @@ export default function Login() {
       return;
     }
 
-    if (isRegister && isProduction && !siteKey) {
+    if (registerFromUrl && isProduction && !siteKey) {
       setError('El registro no está disponible en este momento (falta configuración de seguridad).');
       setLoading(false);
       return;
     }
 
     let recaptchaToken: string | undefined;
-    if (isRegister && siteKey) {
+    if (registerFromUrl && siteKey) {
       if (typeof window === 'undefined' || !window.grecaptcha) {
         setError('No se pudo cargar reCAPTCHA. Recargá la página e intentá de nuevo.');
         setLoading(false);
@@ -232,7 +249,7 @@ export default function Login() {
     }
 
     try {
-      if (isRegister) {
+      if (registerFromUrl) {
         // Registrar nuevo usuario
         const response = await api.post('/auth/register', {
           email: trimmedEmail,
@@ -291,7 +308,7 @@ export default function Login() {
         if (lower.includes('apellido')) backendFieldErrors.lastName = msg;
       });
 
-      if (isRegister && normalizedMessage.includes('ya hay una cuenta con ese email')) {
+      if (registerFromUrl && normalizedMessage.includes('ya hay una cuenta con ese email')) {
         setFieldErrors((prev) => ({ ...prev, email: 'Ya hay un usuario con ese email' }));
       } else if (Object.keys(backendFieldErrors).length > 0) {
         setFieldErrors((prev) => ({ ...prev, ...backendFieldErrors }));
@@ -299,7 +316,7 @@ export default function Login() {
         setError(messageList.join(' '));
       } else {
         setError(
-          isRegister
+          registerFromUrl
             ? 'Error al registrarse. Por favor, revisa los datos e intenta nuevamente.'
             : 'Error al iniciar sesión. Verifica tus credenciales.',
         );
@@ -312,8 +329,16 @@ export default function Login() {
   return (
     <>
       <Head>
-        <title>{isRegister ? 'Registrarse - AppMenuQR' : 'Iniciar Sesión - AppMenuQR'}</title>
-        <meta name="description" content={isRegister ? 'Crea tu cuenta gratis en AppMenuQR' : 'Inicia sesión en AppMenuQR'} />
+        <title>{pageTitle}</title>
+        {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        <meta name="description" content={pageDescription} />
+        <meta property="og:type" content="website" />
+        {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
       {siteKey ? (
@@ -348,12 +373,12 @@ export default function Login() {
               <div className="landing-auth-card">
                 <div className="landing-auth-header">
                   <h1 className="landing-auth-title">
-                    {isRegister ? 'Crear Cuenta Gratis' : 'Iniciar Sesión'}
+                    {registerFromUrl ? 'Crear Cuenta Gratis' : 'Iniciar Sesión'}
                   </h1>
                   <p className="landing-auth-subtitle">
-                    {isRegister 
-                      ? 'Únete a AppMenuQR y comienza a crear menús digitales en minutos'
-                      : 'Bienvenido de vuelta a AppMenuQR'}
+                    {registerFromUrl
+                      ? 'Empezá gratis: plantillas, categorías y menú listo para mostrar con QR en tu mesa o vidriera.'
+                      : 'Gestioná platos, precios y el código QR de tu menú desde cualquier dispositivo.'}
                   </p>
                   {templateIntentHint ? (
                     <p
@@ -377,15 +402,24 @@ export default function Login() {
                 <div className="landing-auth-tabs">
                   <button
                     type="button"
-                    className={`landing-auth-tab ${!isRegister ? 'landing-auth-tab-active' : ''}`}
-                    onClick={() => setIsRegister(false)}
+                    className={`landing-auth-tab ${!registerFromUrl ? 'landing-auth-tab-active' : ''}`}
+                    onClick={() => {
+                      const { action: _a, ...queryRest } = router.query;
+                      void router.replace({ pathname: '/login', query: queryRest }, undefined, { shallow: true });
+                    }}
                   >
                     Iniciar Sesión
                   </button>
                   <button
                     type="button"
-                    className={`landing-auth-tab ${isRegister ? 'landing-auth-tab-active' : ''}`}
-                    onClick={() => setIsRegister(true)}
+                    className={`landing-auth-tab ${registerFromUrl ? 'landing-auth-tab-active' : ''}`}
+                    onClick={() => {
+                      void router.replace(
+                        { pathname: '/login', query: { ...router.query, action: 'register' } },
+                        undefined,
+                        { shallow: true },
+                      );
+                    }}
                   >
                     Registrarse
                   </button>
@@ -412,7 +446,7 @@ export default function Login() {
                 )}
 
                 <form onSubmit={handleSubmit} className="landing-auth-form">
-                  {isRegister && (
+                  {registerFromUrl && (
                     <>
                       <div className="landing-auth-field">
                         <label htmlFor="firstName" className="landing-auth-label">
@@ -496,14 +530,14 @@ export default function Login() {
                       </button>
                     </div>
                     {fieldErrors.password && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.password}</small>}
-                    {isRegister && (
+                    {registerFromUrl && (
                       <small className="landing-auth-hint">
                         Mínimo 8 caracteres
                       </small>
                     )}
                   </div>
 
-                  {isRegister && (
+                  {registerFromUrl && (
                     <div className="landing-auth-field">
                       <label htmlFor="confirmPassword" className="landing-auth-label">
                         Confirmar Contraseña
@@ -540,12 +574,12 @@ export default function Login() {
                     disabled={loading}
                   >
                     {loading 
-                      ? (isRegister ? 'Creando cuenta...' : 'Iniciando sesión...')
-                      : (isRegister ? 'Crear Cuenta Gratis' : 'Iniciar Sesión')
+                      ? (registerFromUrl ? 'Creando cuenta...' : 'Iniciando sesión...')
+                      : (registerFromUrl ? 'Crear Cuenta Gratis' : 'Iniciar Sesión')
                     }
                   </button>
 
-                  {!isRegister && (
+                  {!registerFromUrl && (
                     <div className="landing-auth-help">
                       <Link href="/forgot-password" className="landing-auth-help-link">
                         ¿Perdiste tu contraseña?
@@ -554,7 +588,7 @@ export default function Login() {
                   )}
                 </form>
 
-                {!isRegister && !isProduction && (
+                {!registerFromUrl && !isProduction && (
                   <div className="landing-auth-footer">
                     <p className="landing-auth-footer-text">
                       <strong>Credenciales de prueba:</strong><br />

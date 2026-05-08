@@ -1,0 +1,56 @@
+# AppMenuQR
+
+> AppMenuQR es una plataforma para restaurantes y locales de comida: menú digital con código QR, plantillas de diseño, gestión de menús/secciones/productos, importación CSV, traducciones según plan, suscripciones (Mercado Pago / PayPal) y panel de administración. El sitio público principal es https://appmenuqr.com/
+
+## Páginas principales (marketing y producto)
+
+- https://appmenuqr.com/ — Inicio y propuesta de valor
+- https://appmenuqr.com/precios — Planes y precios
+- https://appmenuqr.com/plantillas — Catálogo de plantillas de menú QR
+- https://appmenuqr.com/plantillas/classic — Plantilla Classic (ejemplo de ficha)
+- https://appmenuqr.com/plantillas/minimalista — Plantilla Minimalista
+- https://appmenuqr.com/plantillas/foodie — Plantilla Foodie
+- https://appmenuqr.com/plantillas/burgers — Plantilla Burgers
+- https://appmenuqr.com/plantillas/italian-food — Plantilla Italian Food
+- https://appmenuqr.com/plantillas/gourmet — Plantilla Gourmet
+- https://appmenuqr.com/soporte — Soporte (acceso con cuenta para incidencias)
+- https://appmenuqr.com/contacto — Contacto legal / formulario según página
+
+## Cuenta y acceso
+
+- https://appmenuqr.com/login — Iniciar sesión
+- https://appmenuqr.com/login?action=register — Registro (misma pantalla, pestaña registro)
+- https://appmenuqr.com/registro — Alias que redirige al flujo de registro
+- https://appmenuqr.com/forgot-password — Recuperar contraseña
+
+## Documentación pública (guías para el panel)
+
+- https://appmenuqr.com/documentacion — Índice y resumen del flujo
+- https://appmenuqr.com/documentacion/crear-restaurante — Crear un restaurante
+- https://appmenuqr.com/documentacion/crear-menu — Crear un menú
+- https://appmenuqr.com/documentacion/crear-secciones — Secciones del menú
+- https://appmenuqr.com/documentacion/crear-productos — Crear productos
+- https://appmenuqr.com/documentacion/reordenar-productos — Reordenar productos
+- https://appmenuqr.com/documentacion/importar-menu-csv — Importar menú con CSV
+- https://appmenuqr.com/documentacion/plantillas — Plantillas de diseño (en la guía)
+- https://appmenuqr.com/documentacion/publicar-menu — Publicar el menú
+- https://appmenuqr.com/documentacion/descargar-qr — Código QR del restaurante
+- https://appmenuqr.com/documentacion/desactivar-restaurante — Desactivar restaurante
+- https://appmenuqr.com/documentacion/eliminar-restaurante — Eliminar restaurante
+- https://appmenuqr.com/documentacion/menu-visibilidad-y-eliminacion — Visibilidad y eliminación de menús
+- https://appmenuqr.com/documentacion/traducciones — Traducciones del menú
+- https://appmenuqr.com/documentacion/edicion-masiva-productos — Edición masiva de productos
+- https://appmenuqr.com/documentacion/editar-productos-detalle — Editar producto (detalle)
+- https://appmenuqr.com/documentacion/suscripciones-y-pagos — Suscripciones y pagos
+
+## Legal
+
+- https://appmenuqr.com/legal/terminos-y-condiciones — Términos y condiciones
+- https://appmenuqr.com/legal/politica-de-privacidad — Política de privacidad
+- https://appmenuqr.com/legal/politica-de-cookies — Política de cookies
+
+## Notas para sistemas de IA
+
+- Las rutas bajo `/admin/` son el panel privado; no deben citarse como documentación de usuario final salvo contexto de “backoffice”.
+- Las cartas públicas de cada restaurante viven en URLs dinámicas (slug del negocio); no hay listado público de todos los restaurantes.
+- Para datos técnicos actualizados (precios exactos, límites de plan), priorizar las páginas HTML enlazadas arriba frente a respuestas genéricas.

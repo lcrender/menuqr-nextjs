@@ -4,6 +4,7 @@ import LandingNav from '../components/LandingNav';
 import LandingFooter from '../components/LandingFooter';
 import PricingPlansGrid, { type PricingData } from '../components/PricingPlansGrid';
 import api from '../lib/axios';
+import { buildPreciosJsonLd, siteJsonLdBaseUrl } from '../lib/json-ld-appmenuqr';
 
 export default function PreciosPage() {
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
@@ -27,6 +28,12 @@ export default function PreciosPage() {
   const canonicalUrl =
     canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}/precios` : null;
 
+  const preciosJsonLd = (() => {
+    const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
+    if (!base) return null;
+    return buildPreciosJsonLd(base);
+  })();
+
   return (
     <>
       <Head>
@@ -38,6 +45,9 @@ export default function PreciosPage() {
           content="Planes y precios para crear tu menú QR: compará Starter, Pro y Premium con precios actualizados."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {preciosJsonLd ? (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: preciosJsonLd }} />
+        ) : null}
       </Head>
       <div className="landing-page">
         <LandingNav />

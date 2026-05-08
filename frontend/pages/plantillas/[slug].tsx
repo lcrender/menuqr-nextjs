@@ -6,6 +6,7 @@ import LandingFooter from '../../components/LandingFooter';
 import LandingNav from '../../components/LandingNav';
 import styles from '../../components/plantillas/Plantillas.module.css';
 import { getAllTemplateSlugs, getTemplateBySlug } from '../../lib/menu-templates-catalog';
+import { buildPlantillaDetalleJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
 import { PLANTILLA_STATIC_DETAIL_SLUGS } from '../../lib/plantilla-static-detail-slugs';
 import { catalogSlugToPreviewTemplateId } from '../../lib/menu-template-preview-route';
 import type { MenuTemplateCatalogItem } from '../../types/menu-template-catalog';
@@ -28,6 +29,11 @@ export default function PlantillaDetallePage({ template }: PlantillaDetalleProps
   const metaDescription = `Plantilla de menú QR «${template.nombre}» (${template.categoria}). Estilos: ${template.estilos.join(
     ', ',
   )}. Descubrí más en AppMenuQR.`;
+  const plantillaJsonLd = (() => {
+    const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
+    if (!base) return null;
+    return buildPlantillaDetalleJsonLd(base, { slug: template.slug, nombre: template.nombre });
+  })();
 
   return (
     <>
@@ -36,6 +42,9 @@ export default function PlantillaDetallePage({ template }: PlantillaDetalleProps
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
         <meta name="description" content={metaDescription} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {plantillaJsonLd ? (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: plantillaJsonLd }} />
+        ) : null}
       </Head>
       <div className="landing-page">
         <LandingNav />

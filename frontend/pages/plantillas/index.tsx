@@ -12,6 +12,7 @@ import {
   deriveFilterOptions,
   filterTemplates,
 } from '../../lib/menu-templates-catalog';
+import { buildPlantillasCatalogJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
 import type { TemplateListFilters } from '../../types/menu-template-catalog';
 
 const INITIAL_FILTERS: TemplateListFilters = {
@@ -29,6 +30,12 @@ export default function PlantillasCatalogoPage() {
     [filters],
   );
 
+  const plantillasJsonLd = useMemo(() => {
+    const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
+    if (!base) return null;
+    return buildPlantillasCatalogJsonLd(base, MENU_TEMPLATES_CATALOG);
+  }, []);
+
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   const canonicalUrl =
     canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}/plantillas` : null;
@@ -44,6 +51,9 @@ export default function PlantillasCatalogoPage() {
           content="Catálogo de plantillas visuales para menús QR: elegí estilo, categoría y plan. Ideal para restaurantes, bares y negocios gastronómicos."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {plantillasJsonLd ? (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: plantillasJsonLd }} />
+        ) : null}
       </Head>
       <div className="landing-page">
         <LandingNav />
