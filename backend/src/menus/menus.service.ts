@@ -50,15 +50,6 @@ export class MenusService {
 
     query += ` GROUP BY m.id, r.name, r.slug, r.template, t.name, t.id ORDER BY m.sort ASC, m.created_at DESC`;
 
-    if (tenantId) {
-      const plan = await this.getTenantPlan(tenantId);
-      const menuLimit = await this.planLimits.getMenuLimit(plan);
-      if (menuLimit !== -1) {
-        query += ` LIMIT $${params.length + 1}`;
-        params.push(menuLimit);
-      }
-    }
-
     const menus = await this.postgres.queryRaw<any>(query, params);
     
     // Mapear campos de snake_case a camelCase

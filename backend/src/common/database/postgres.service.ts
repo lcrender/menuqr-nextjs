@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Pool, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryResult } from 'pg';
 
 @Injectable()
 export class PostgresService implements OnModuleInit {
@@ -44,6 +44,35 @@ export class PostgresService implements OnModuleInit {
 
   async executeRaw(text: string, params?: any[]): Promise<void> {
     await this.pool.query(text, params);
+  }
+
+  async withTransaction<T>(
+    callback: (tx: {
+      queryRaw: <R = any>(text: string, params?: any[]) => Promise<R[]>;
+      executeRaw: (text: string, params?: any[]) => Promise<void>;
+    }) => Promise<T>,
+  ): Promise<T> {
+    const client: PoolClient = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const tx = {
+        queryRaw: async <R = any>(text: string, params?: any[]): Promise<R[]> => {
+          const result = await client.query<R>(text, params);
+          return result.rows;
+        },
+        executeRaw: async (text: string, params?: any[]): Promise<void> => {
+          await client.query(text, params);
+        },
+      };
+      const out = await callback(tx);
+      await client.query('COMMIT');
+      return out;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async close(): Promise<void> {

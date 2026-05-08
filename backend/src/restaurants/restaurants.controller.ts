@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { RestaurantsService } from './restaurants.service';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
+import { TransferRestaurantOwnerDto } from './dto/transfer-restaurant-owner.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiTags('restaurants')
@@ -105,6 +106,18 @@ export class RestaurantsController {
     }
 
     return this.restaurantsService.create(tenantId, payload);
+  }
+
+  @Post(':id/transfer-ownership')
+  @Roles('SUPER_ADMIN')
+  @ApiOperation({ summary: 'Transferir restaurante (con menús/productos) a otro usuario/tenant' })
+  @ApiResponse({ status: 200, description: 'Restaurante transferido exitosamente' })
+  async transferOwnership(
+    @Param('id') id: string,
+    @Body() dto: TransferRestaurantOwnerDto,
+    @Request() req,
+  ) {
+    return this.restaurantsService.transferOwnershipToUser(id, dto.targetUserId, req.user?.id);
   }
 
   @Put(':id')

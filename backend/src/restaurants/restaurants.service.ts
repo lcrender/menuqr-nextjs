@@ -814,6 +814,280 @@ export class RestaurantsService {
     return { message: 'Restaurante eliminado exitosamente' };
   }
 
+  /**
+   * Transfiere un restaurante completo a otro usuario (tenant destino), incluyendo menús, secciones,
+   * productos, precios, media y traducciones asociadas. Conserva IDs/QR y aplica límite de productos
+   * activos del plan destino desactivando excedentes del restaurante transferido.
+   */
+  async transferOwnershipToUser(restaurantId: string, targetUserId: string, actorUserId?: string) {
+    if (!restaurantId || !targetUserId) {
+      throw new BadRequestException('restaurantId y targetUserId son requeridos');
+    }
+
+    const targetUserRows = await this.postgres.queryRaw<{
+      id: string;
+      tenant_id: string | null;
+      role: string;
+      is_active: boolean;
+      deleted_at: Date | null;
+      email: string;
+    }>(
+      `SELECT id, tenant_id, role, is_active, deleted_at, email
+       FROM users
+       WHERE id = $1
+       LIMIT 1`,
+      [targetUserId],
+    );
+    const targetUser = targetUserRows[0];
+    if (!targetUser || targetUser.deleted_at) {
+      throw new NotFoundException('Usuario destino no encontrado');
+    }
+    if (!targetUser.is_active) {
+      throw new BadRequestException('El usuario destino está desactivado');
+    }
+    if (!targetUser.tenant_id) {
+      throw new BadRequestException('El usuario destino no tiene tenant asignado');
+    }
+    if (targetUser.role === 'SUPER_ADMIN') {
+      throw new BadRequestException('Seleccioná un usuario con tenant (no SUPER_ADMIN)');
+    }
+
+    const restaurantRows = await this.postgres.queryRaw<{
+      id: string;
+      tenant_id: string;
+      name: string;
+      slug: string;
+      deleted_at: Date | null;
+    }>(
+      `SELECT id, tenant_id, name, slug, deleted_at
+       FROM restaurants
+       WHERE id = $1
+       LIMIT 1`,
+      [restaurantId],
+    );
+    const restaurant = restaurantRows[0];
+    if (!restaurant || restaurant.deleted_at) {
+      throw new NotFoundException('Restaurante no encontrado');
+    }
+
+    const sourceTenantId = restaurant.tenant_id;
+    const targetTenantId = targetUser.tenant_id;
+    if (sourceTenantId === targetTenantId) {
+      return {
+        message: 'El restaurante ya pertenece al tenant del usuario destino',
+        restaurantId,
+        sourceTenantId,
+        targetTenantId,
+        moved: false,
+      };
+    }
+
+    const tenantRows = await this.postgres.queryRaw<{ id: string; plan: string }>(
+      `SELECT id, plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [targetTenantId],
+    );
+    const targetTenant = tenantRows[0];
+    if (!targetTenant) {
+      throw new BadRequestException('Tenant destino inválido o eliminado');
+    }
+
+    const slugConflict = await this.postgres.queryRaw<{ id: string }>(
+      `SELECT id
+       FROM restaurants
+       WHERE tenant_id = $1 AND slug = $2 AND deleted_at IS NULL
+       LIMIT 1`,
+      [targetTenantId, restaurant.slug],
+    );
+    if (slugConflict.length > 0) {
+      throw new BadRequestException(
+        `No se puede transferir: ya existe un restaurante con slug "${restaurant.slug}" en el tenant destino.`,
+      );
+    }
+
+    const transferSummary = await this.postgres.withTransaction(async (tx) => {
+      const existingActiveRows = await tx.queryRaw<{ total: string }>(
+        `SELECT COUNT(*)::text as total
+         FROM menu_items
+         WHERE tenant_id = $1 AND deleted_at IS NULL AND active = true`,
+        [targetTenantId],
+      );
+      const existingActiveInTarget = parseInt(existingActiveRows[0]?.total || '0', 10);
+
+      const menuRows = await tx.queryRaw<{ id: string }>(
+        `SELECT id FROM menus WHERE restaurant_id = $1 AND deleted_at IS NULL`,
+        [restaurantId],
+      );
+      const menuIds = menuRows.map((m) => m.id);
+
+      const itemRows =
+        menuIds.length > 0
+          ? await tx.queryRaw<{ id: string }>(
+              `SELECT id
+               FROM menu_items
+               WHERE menu_id = ANY($1::text[]) AND deleted_at IS NULL`,
+              [menuIds],
+            )
+          : [];
+      const itemIds = itemRows.map((it) => it.id);
+
+      await tx.executeRaw(
+        `UPDATE restaurants
+         SET tenant_id = $1, updated_at = NOW()
+         WHERE id = $2 AND deleted_at IS NULL`,
+        [targetTenantId, restaurantId],
+      );
+
+      await tx.executeRaw(
+        `UPDATE menus
+         SET tenant_id = $1, updated_at = NOW()
+         WHERE restaurant_id = $2 AND deleted_at IS NULL`,
+        [targetTenantId, restaurantId],
+      );
+
+      if (menuIds.length > 0) {
+        await tx.executeRaw(
+          `UPDATE menu_sections
+           SET tenant_id = $1, updated_at = NOW()
+           WHERE menu_id = ANY($2::text[]) AND deleted_at IS NULL`,
+          [targetTenantId, menuIds],
+        );
+      }
+
+      if (menuIds.length > 0) {
+        await tx.executeRaw(
+          `UPDATE menu_items
+           SET tenant_id = $1, updated_at = NOW()
+           WHERE menu_id = ANY($2::text[]) AND deleted_at IS NULL`,
+          [targetTenantId, menuIds],
+        );
+      }
+
+      if (itemIds.length > 0) {
+        await tx.executeRaw(
+          `UPDATE item_prices
+           SET tenant_id = $1, updated_at = NOW()
+           WHERE item_id = ANY($2::text[]) AND deleted_at IS NULL`,
+          [targetTenantId, itemIds],
+        );
+        await tx.executeRaw(
+          `UPDATE media_assets
+           SET tenant_id = $1, updated_at = NOW()
+           WHERE item_id = ANY($2::text[]) AND deleted_at IS NULL`,
+          [targetTenantId, itemIds],
+        );
+      }
+
+      await tx.executeRaw(
+        `UPDATE translations
+         SET tenant_id = $1, updated_at = NOW()
+         WHERE tenant_id = $2
+           AND (
+             (entity_type = 'restaurant' AND entity_id = $3)
+             OR (entity_type = 'menu' AND entity_id IN (
+               SELECT id FROM menus WHERE restaurant_id = $3 AND deleted_at IS NULL
+             ))
+             OR (entity_type = 'menu_item' AND entity_id IN (
+               SELECT mi.id
+               FROM menu_items mi
+               INNER JOIN menus m ON m.id = mi.menu_id
+               WHERE m.restaurant_id = $3 AND mi.deleted_at IS NULL AND m.deleted_at IS NULL
+             ))
+           )`,
+        [targetTenantId, sourceTenantId, restaurantId],
+      );
+
+      if (menuIds.length > 0) {
+        await tx.executeRaw(
+          `UPDATE auto_translate_usage
+           SET tenant_id = $1
+           WHERE tenant_id = $2 AND menu_id = ANY($3::text[])`,
+          [targetTenantId, sourceTenantId, menuIds],
+        );
+      }
+
+      const planLimit = await this.planLimits.getProductLimit(targetTenant.plan || 'free');
+      let deactivatedByLimit = 0;
+      if (planLimit !== -1) {
+        const activeFromTransferredRows = await tx.queryRaw<{ total: string }>(
+          `SELECT COUNT(*)::text as total
+           FROM menu_items mi
+           INNER JOIN menus m ON m.id = mi.menu_id AND m.deleted_at IS NULL
+           WHERE mi.tenant_id = $1
+             AND mi.deleted_at IS NULL
+             AND mi.active = true
+             AND m.restaurant_id = $2`,
+          [targetTenantId, restaurantId],
+        );
+        const activeFromTransferred = parseInt(activeFromTransferredRows[0]?.total || '0', 10);
+        const remainingActiveSlots = Math.max(0, planLimit - existingActiveInTarget);
+        const shouldDeactivate = Math.max(0, activeFromTransferred - remainingActiveSlots);
+
+        if (shouldDeactivate > 0) {
+          await tx.executeRaw(
+            `WITH ranked AS (
+               SELECT mi.id,
+                      ROW_NUMBER() OVER (
+                        ORDER BY COALESCE(mi.sort, 0) ASC, mi.created_at ASC, mi.id ASC
+                      ) AS rn
+               FROM menu_items mi
+               INNER JOIN menus m ON m.id = mi.menu_id AND m.deleted_at IS NULL
+               WHERE mi.tenant_id = $1
+                 AND mi.deleted_at IS NULL
+                 AND mi.active = true
+                 AND m.restaurant_id = $2
+             )
+             UPDATE menu_items mi
+             SET active = false, updated_at = NOW()
+             FROM ranked r
+             WHERE mi.id = r.id
+               AND r.rn > $3`,
+            [targetTenantId, restaurantId, remainingActiveSlots],
+          );
+          deactivatedByLimit = shouldDeactivate;
+        }
+      }
+
+      if (actorUserId) {
+        const auditId = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+        await tx.executeRaw(
+          `INSERT INTO audit_logs (
+             id, tenant_id, actor_user_id, action, entity, entity_id, payload, created_at
+           ) VALUES ($1, NULL, $2, 'TRANSFER_OWNERSHIP', 'restaurant', $3, $4::jsonb, NOW())`,
+          [
+            auditId,
+            actorUserId,
+            restaurantId,
+            JSON.stringify({
+              sourceTenantId,
+              targetTenantId,
+              targetUserId,
+              restaurantName: restaurant.name,
+              deactivatedByLimit,
+            }),
+          ],
+        );
+      }
+
+      return {
+        menuCount: menuIds.length,
+        productCount: itemIds.length,
+        deactivatedByLimit,
+      };
+    });
+
+    return {
+      message: 'Restaurante transferido exitosamente',
+      restaurantId,
+      restaurantName: restaurant.name,
+      sourceTenantId,
+      targetTenantId,
+      targetUserId,
+      targetUserEmail: targetUser.email,
+      moved: true,
+      ...transferSummary,
+    };
+  }
+
   private async getTenantPlan(tenantId: string): Promise<string> {
     const tenant = await this.postgres.queryRaw<any>(
       `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,

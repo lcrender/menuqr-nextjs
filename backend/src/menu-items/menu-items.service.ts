@@ -58,17 +58,6 @@ export class MenuItemsService {
 
     query += ` ORDER BY mi.menu_id NULLS LAST, ms.sort NULLS LAST, mi.sort ASC, mi.created_at ASC`;
 
-    // El límite del plan aplica al listado global de productos; si se pide un menú concreto,
-    // devolver todos los ítems de ese menú (p. ej. clonar desde otro menú, edición por menú).
-    if (tenantId && !menuId) {
-      const plan = await this.getTenantPlan(tenantId);
-      const itemLimit = await this.planLimits.getProductLimit(plan);
-      if (itemLimit !== -1) {
-        query += ` LIMIT $${params.length + 1}`;
-        params.push(itemLimit);
-      }
-    }
-
     const items = await this.postgres.queryRaw<any>(query, params);
 
     // Para cada item, obtener precios, iconos y fotos
@@ -447,8 +436,8 @@ export class MenuItemsService {
   }) {
     const highlightWanted = data.highlighted === true;
 
-    // Validar límite de productos según el plan
-    await this.validateMenuItemLimit(tenantId);
+    // Validar límite de productos activos según el plan (si el nuevo se crea activo).
+    await this.validateMenuItemLimit(tenantId, data.active !== false);
 
     if (highlightWanted) {
       const plan = await this.getTenantPlan(tenantId);
@@ -600,6 +589,10 @@ export class MenuItemsService {
       updates.push(`description = $${paramIndex++}`);
       params.push(data.description);
     }
+    if (data.active === true) {
+      await this.validateMenuItemLimit(tenantId, true, id);
+    }
+
     if (data.active !== undefined) {
       updates.push(`active = $${paramIndex++}`);
       params.push(data.active);
@@ -789,7 +782,7 @@ export class MenuItemsService {
     );
     if (!section[0]) throw new NotFoundException('Sección de destino no encontrada o no pertenece al menú');
 
-    await this.validateMenuItemLimit(tenantId);
+    await this.validateMenuItemLimit(tenantId, source.active !== false);
 
     const maxSortResult = await this.postgres.queryRaw<{ max_sort: number }>(
       `SELECT COALESCE(MAX(sort), -1) as max_sort FROM menu_items WHERE section_id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
@@ -960,7 +953,9 @@ export class MenuItemsService {
     return tenant[0]?.plan || 'free';
   }
 
-  private async validateMenuItemLimit(tenantId: string) {
+  private async validateMenuItemLimit(tenantId: string, wantsActive: boolean, excludeItemId?: string) {
+    if (!wantsActive) return;
+
     const plan = await this.getTenantPlan(tenantId);
 
     // Obtener límite según el plan
@@ -971,23 +966,31 @@ export class MenuItemsService {
       return;
     }
 
-    // Contar productos activos del tenant (solo los no eliminados)
+    // Contar productos activos del tenant (solo los no eliminados).
+    let query = `SELECT COUNT(*) as total
+       FROM menu_items
+       WHERE tenant_id = $1 AND deleted_at IS NULL AND active = true`;
+    const params: any[] = [tenantId];
+    if (excludeItemId) {
+      query += ` AND id != $2`;
+      params.push(excludeItemId);
+    }
     const count = await this.postgres.queryRaw<any>(
-      `SELECT COUNT(*) as total 
-       FROM menu_items 
-       WHERE tenant_id = $1 AND deleted_at IS NULL`,
-      [tenantId]
+      query,
+      params,
     );
 
     const total = parseInt(count[0].total) || 0;
 
-    this.logger.log(`Validando límite de productos: tenantId=${tenantId}, plan=${plan}, limit=${limit}, total=${total}`);
+    this.logger.log(
+      `Validando límite de productos activos: tenantId=${tenantId}, plan=${plan}, limit=${limit}, active=${total}`,
+    );
 
     if (total >= limit) {
       throw new BadRequestException(
-        `Has alcanzado el límite de ${limit} producto(s) para el plan ${plan}. ` +
-        `Actualmente tienes ${total} producto(s) creado(s). ` +
-        `Por favor, actualiza tu plan para crear más productos.`
+        `Has alcanzado el límite de ${limit} producto(s) activos para el plan ${plan}. ` +
+          `Actualmente tienes ${total} activo(s). ` +
+          `Desactivá uno para poder activar o crear otro producto activo.`
       );
     }
   }
