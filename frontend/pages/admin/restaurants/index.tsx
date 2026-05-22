@@ -35,6 +35,20 @@ const countryCodes: { [key: string]: string } = {
 /** Frase exacta que el usuario debe escribir para confirmar el cambio de nombre (afecta al QR). */
 const RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE = 'MODIFICARQR';
 
+/** Frase para confirmar traspaso de restaurante a otro usuario (solo SUPER_ADMIN). */
+const RESTAURANT_TRANSFER_CONFIRM_PHRASE = 'TRANSFERIR';
+
+interface TransferCandidateUser {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  tenantId: string | null;
+  tenantName: string | null;
+  role: string;
+  isActive: boolean;
+}
+
 // Monedas oficiales por país
 const countryCurrencies: { [key: string]: string } = {
   'Argentina': 'ARS',
@@ -135,6 +149,14 @@ export default function Restaurants() {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [restaurantToDelete, setRestaurantToDelete] = useState<string | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [restaurantToTransfer, setRestaurantToTransfer] = useState<any>(null);
+  const [transferTargetUserId, setTransferTargetUserId] = useState('');
+  const [transferUserFilter, setTransferUserFilter] = useState('');
+  const [transferUsers, setTransferUsers] = useState<TransferCandidateUser[]>([]);
+  const [transferUsersLoading, setTransferUsersLoading] = useState(false);
+  const [transferLoading, setTransferLoading] = useState(false);
+  const [transferConfirmText, setTransferConfirmText] = useState('');
   /** SUPER_ADMIN: tenant destino al crear restaurante (el backend lo exige). */
   const [tenantsForWizard, setTenantsForWizard] = useState<Array<{ id: string; name?: string }>>([]);
   const [selectedTenantIdForCreate, setSelectedTenantIdForCreate] = useState('');
@@ -779,6 +801,100 @@ export default function Restaurants() {
     setCoverPreview(null);
   };
 
+  const loadTransferUsers = async () => {
+    setTransferUsersLoading(true);
+    try {
+      const res = await api.get('/users', { params: { limit: 500 } });
+      const payload = res.data?.data ?? res.data;
+      const list: TransferCandidateUser[] = Array.isArray(payload) ? payload : [];
+      setTransferUsers(
+        list.filter(
+          (u) =>
+            u.isActive &&
+            u.tenantId &&
+            u.role !== 'SUPER_ADMIN',
+        ),
+      );
+    } catch {
+      setTransferUsers([]);
+    } finally {
+      setTransferUsersLoading(false);
+    }
+  };
+
+  const handleTransferClick = (restaurant: any) => {
+    setRestaurantToTransfer(restaurant);
+    setTransferTargetUserId('');
+    setTransferUserFilter('');
+    setTransferConfirmText('');
+    setShowTransferModal(true);
+    loadTransferUsers();
+  };
+
+  const closeTransferModal = () => {
+    setShowTransferModal(false);
+    setRestaurantToTransfer(null);
+    setTransferTargetUserId('');
+    setTransferUserFilter('');
+    setTransferConfirmText('');
+  };
+
+  const getFilteredTransferUsers = () => {
+    const q = transferUserFilter.trim().toLowerCase();
+    if (!q) return transferUsers;
+    return transferUsers.filter((u) => {
+      const name = `${u.firstName || ''} ${u.lastName || ''}`.trim().toLowerCase();
+      const tenant = (u.tenantName || '').toLowerCase();
+      return (
+        u.email.toLowerCase().includes(q) ||
+        name.includes(q) ||
+        tenant.includes(q)
+      );
+    });
+  };
+
+  const handleTransferConfirm = async () => {
+    if (!restaurantToTransfer?.id || !transferTargetUserId) return;
+    setTransferLoading(true);
+    try {
+      const res = await api.post(
+        `/restaurants/${restaurantToTransfer.id}/transfer-ownership`,
+        { targetUserId: transferTargetUserId },
+      );
+      const data = res.data || {};
+      if (data.moved === false) {
+        setAlertData({
+          title: 'Sin cambios',
+          message: data.message || 'El restaurante ya pertenece al tenant del usuario seleccionado.',
+          variant: 'info',
+        });
+      } else {
+        const deactivated = data.deactivatedByLimit ?? 0;
+        const extra =
+          deactivated > 0
+            ? ` Se desactivaron ${deactivated} producto(s) por el límite del plan del destino.`
+            : '';
+        setAlertData({
+          title: 'Transferencia completada',
+          message: `Restaurante transferido a ${data.targetUserEmail || 'el usuario destino'}.${extra}`,
+          variant: 'success',
+        });
+      }
+      setShowAlert(true);
+      closeTransferModal();
+      loadRestaurants();
+    } catch (error: any) {
+      setAlertData({
+        title: 'Error al transferir',
+        message: error.response?.data?.message || 'No se pudo transferir el restaurante',
+        variant: 'error',
+      });
+      setShowAlert(true);
+    } finally {
+      setTransferLoading(false);
+    }
+  };
+
   const handleDeleteClick = (id: string) => {
     setRestaurantToDelete(id);
     setDeleteConfirmText('');
@@ -1163,6 +1279,16 @@ export default function Restaurants() {
                     >
                       {restaurant.isActive ? 'Desactivar' : 'Activar'}
                     </button>
+                    {isSuperAdmin && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => handleTransferClick(restaurant)}
+                        title="Transferir restaurante a otro usuario"
+                      >
+                        Transferir
+                      </button>
+                    )}
                     <button 
                       type="button"
                       className="btn btn-sm btn-danger d-none d-md-inline-block" 
@@ -1243,6 +1369,15 @@ export default function Restaurants() {
                 >
                   {restaurant.isActive ? 'Desactivar' : 'Activar'}
                 </button>
+                {isSuperAdmin && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-primary"
+                    onClick={() => handleTransferClick(restaurant)}
+                  >
+                    Transferir
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -2076,6 +2211,122 @@ export default function Restaurants() {
                   onClick={() => setShowLimitModal(false)}
                 >
                   Por el momento no me interesa
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal transferir restaurante (solo SUPER_ADMIN) */}
+      {showTransferModal && restaurantToTransfer && (
+        <div
+          className="modal show"
+          style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={closeTransferModal}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Transferir restaurante</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={closeTransferModal}
+                  aria-label="Cerrar"
+                  disabled={transferLoading}
+                />
+              </div>
+              <div className="modal-body">
+                <p className="mb-2">
+                  Vas a mover <strong>{restaurantToTransfer.name}</strong>
+                  {restaurantToTransfer.tenantName ? (
+                    <> (cuenta actual: <span className="text-muted">{restaurantToTransfer.tenantName}</span>)</>
+                  ) : null}{' '}
+                  con todos sus menús y productos a la cuenta de otro usuario.
+                </p>
+                <ul className="small text-muted mb-3">
+                  <li>El enlace y el QR del restaurante no cambian.</li>
+                  <li>Si el plan del destino tiene límite de productos activos, los excedentes quedarán desactivados.</li>
+                  <li>El usuario destino debe tener cuenta activa con tenant (no super admin).</li>
+                </ul>
+
+                <label htmlFor="transferUserFilter" className="form-label">
+                  Buscar usuario destino
+                </label>
+                <input
+                  id="transferUserFilter"
+                  type="text"
+                  className="form-control mb-2"
+                  placeholder="Email, nombre o tenant..."
+                  value={transferUserFilter}
+                  onChange={(e) => setTransferUserFilter(e.target.value)}
+                  disabled={transferLoading || transferUsersLoading}
+                />
+
+                <label htmlFor="transferTargetUser" className="form-label">
+                  Usuario destino
+                </label>
+                {transferUsersLoading ? (
+                  <div className="text-muted small py-2">Cargando usuarios...</div>
+                ) : (
+                  <select
+                    id="transferTargetUser"
+                    className="form-select"
+                    value={transferTargetUserId}
+                    onChange={(e) => setTransferTargetUserId(e.target.value)}
+                    disabled={transferLoading}
+                  >
+                    <option value="">Seleccioná un usuario...</option>
+                    {getFilteredTransferUsers().map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.email}
+                        {u.tenantName ? ` — ${u.tenantName}` : ''}
+                        {(u.firstName || u.lastName)
+                          ? ` (${[u.firstName, u.lastName].filter(Boolean).join(' ')})`
+                          : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {!transferUsersLoading && getFilteredTransferUsers().length === 0 && (
+                  <p className="text-muted small mt-2 mb-0">
+                    No hay usuarios que coincidan. Probá otro término de búsqueda.
+                  </p>
+                )}
+
+                <p className="mt-3 mb-2">
+                  Escribe <strong>{RESTAURANT_TRANSFER_CONFIRM_PHRASE}</strong> para confirmar.
+                </p>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder={RESTAURANT_TRANSFER_CONFIRM_PHRASE}
+                  value={transferConfirmText}
+                  onChange={(e) => setTransferConfirmText(e.target.value)}
+                  disabled={transferLoading}
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={closeTransferModal}
+                  disabled={transferLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleTransferConfirm}
+                  disabled={
+                    transferLoading ||
+                    !transferTargetUserId ||
+                    transferConfirmText.trim() !== RESTAURANT_TRANSFER_CONFIRM_PHRASE
+                  }
+                >
+                  {transferLoading ? 'Transfiriendo...' : 'Confirmar transferencia'}
                 </button>
               </div>
             </div>
