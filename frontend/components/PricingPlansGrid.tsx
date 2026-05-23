@@ -237,10 +237,10 @@ export default function PricingPlansGrid({
             {landingPlanTaglines && (isLanding || isSubscription) ? (
               <>
                 <p className="landing-pricing-plan-lead mb-1">
-                  <strong>Plan gratis de menú QR</strong>
+                  <strong>Para probar tu carta digital</strong>
                 </p>
                 <p className="landing-pricing-free-note mb-0">
-                  Perfecto para empezar con tu carta digital QR sin coste.
+                  Ideal para configurar tu menú digital y código QR sin compromiso inicial.
                 </p>
               </>
             ) : null}
@@ -319,7 +319,7 @@ export default function PricingPlansGrid({
       )}
 
       {isLanding && showBillingToggle ? (
-        <h3 className="landing-pricing-grid-subheading">Haz tu menú QR más profesional</h3>
+        <h3 className="landing-pricing-grid-subheading">Más capacidad para tu carta digital</h3>
       ) : null}
 
       {showBillingToggle && isLanding && BillingToggle}
@@ -330,7 +330,7 @@ export default function PricingPlansGrid({
           <h3 className="landing-pricing-name">Starter</h3>
           {landingPlanTaglines ? (
             <p className="landing-pricing-plan-tagline small text-muted mb-2">
-              Funciones básicas para digitalizar tu menú.
+              Más productos y control para tu carta digital en crecimiento.
             </p>
           ) : null}
           {renderPaidPriceBlock(planStarter, 'USD 3.49', 'USD', 3.49)}
@@ -375,7 +375,7 @@ export default function PricingPlansGrid({
           <h3 className="landing-pricing-name">Pro</h3>
           {landingPlanTaglines ? (
             <p className="landing-pricing-plan-tagline small text-muted mb-2">
-              Más personalización y control para tu menú QR restaurante.
+              Fotos, idiomas y plantillas Pro para un menú digital más completo.
             </p>
           ) : null}
           {renderPaidPriceBlock(planPro, 'USD 7.99', 'USD', 7.99)}
@@ -436,7 +436,7 @@ export default function PricingPlansGrid({
           <h3 className="landing-pricing-name">Premium</h3>
           {landingPlanTaglines ? (
             <p className="landing-pricing-plan-tagline small text-muted mb-2">
-              Solución completa para negocios que buscan escalar.
+              Máxima escala para cadenas y locales con carta digital exigente.
             </p>
           ) : null}
           {renderPaidPriceBlock(planPremium, 'USD 15.99', 'USD', 15.99)}

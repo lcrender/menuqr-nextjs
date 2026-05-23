@@ -139,7 +139,7 @@ export default function LandingNav() {
             Preguntas frecuentes
           </Link>
           <button type="button" className="landing-btn-primary landing-nav-mobile-cta" onClick={handleTryFree}>
-            Crear menú QR gratis
+            Crear mi carta digital
           </button>
           <button type="button" className="landing-btn-secondary landing-nav-mobile-cta" onClick={handleLogin}>
             Iniciar sesión

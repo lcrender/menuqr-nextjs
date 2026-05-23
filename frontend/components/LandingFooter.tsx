@@ -1,5 +1,12 @@
 import Link from 'next/link';
 
+/** Segunda fila del footer: landings SEO (solo texto ancla = keyword). */
+const FOOTER_SEO_LANDINGS = [
+  { href: '/carta-digital-restaurante-qr', label: 'Carta digital restaurante QR' },
+  { href: '/menu-qr-restaurante', label: 'Menú QR restaurante' },
+  { href: '/software-carta-digital-restaurante', label: 'Software carta digital restaurante' },
+] as const;
+
 /**
  * Footer público unificado (landing, legales, login, etc.):
  * Iniciar sesión, Documentación, Soporte, Precios, legales.
@@ -37,6 +44,13 @@ export default function LandingFooter() {
             </Link>
           </div>
         </div>
+        <nav className="landing-footer-seo-nav" aria-label="Temas relacionados">
+          {FOOTER_SEO_LANDINGS.map((item) => (
+            <Link key={item.href} href={item.href} className="landing-footer-link">
+              {item.label}
+            </Link>
+          ))}
+        </nav>
         <div className="landing-footer-copyright">
           <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
         </div>

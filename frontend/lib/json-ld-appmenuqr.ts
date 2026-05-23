@@ -31,7 +31,7 @@ export function buildOrganizationNode(base: string): {
       url: `${b}/favicon.svg`,
     },
     description:
-      'Plataforma SaaS para menús digitales con código QR: restaurantes, bares y negocios gastronómicos crean cartas online, plantillas de diseño y panel de gestión.',
+      'Software SaaS de carta digital para restaurantes con código QR: gestión de productos, menú digital, plantillas y panel de administración para bares y locales gastronómicos.',
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer support',
@@ -54,7 +54,7 @@ export function buildLandingJsonLd(base: string, faqItems: readonly FaqPair[]): 
       url: b,
       name: ORG_NAME,
       description:
-        'Menú QR para restaurantes: crear carta digital, código QR para mesas y plantillas. Los clientes acceden desde el móvil sin instalar aplicaciones.',
+        'Carta digital restaurante QR: software con gestión de productos, actualización en tiempo real y menú digital accesible desde el móvil sin instalar aplicaciones.',
       publisher: { '@id': orgId },
       inLanguage: 'es',
     },
@@ -65,7 +65,7 @@ export function buildLandingJsonLd(base: string, faqItems: readonly FaqPair[]): 
       operatingSystem: 'Web browser',
       url: b,
       description:
-        'Software de menú digital con QR: gestión de restaurantes, menús, secciones, productos, importación CSV, traducciones y suscripción.',
+        'Software gastronómico para carta digital con QR: gestión de restaurantes, categorías, productos, activación de platos, traducciones y planes de suscripción.',
       offers: {
         '@type': 'Offer',
         url: `${b}/precios`,
@@ -132,6 +132,62 @@ export function buildPreciosJsonLd(base: string): string {
       ],
     },
   ];
+
+  return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
+}
+
+/** Landing SEO temática: Organization + WebPage + BreadcrumbList + FAQPage opcional. */
+export function buildSeoLandingJsonLd(
+  base: string,
+  path: string,
+  pageName: string,
+  pageDescription: string,
+  faqItems: readonly FaqPair[],
+): string {
+  const b = base.replace(/\/$/, '');
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const pageUrl = `${b}${normalizedPath}`;
+  const org = buildOrganizationNode(b);
+  const orgId = org['@id'];
+  const breadcrumbName = pageName.split('|')[0]?.trim() || pageName;
+
+  const graph: Record<string, unknown>[] = [
+    org,
+    {
+      '@type': 'WebSite',
+      '@id': `${b}/#website`,
+      url: b,
+      name: ORG_NAME,
+    },
+    {
+      '@type': 'WebPage',
+      '@id': `${pageUrl}#webpage`,
+      url: pageUrl,
+      name: pageName,
+      description: pageDescription,
+      isPartOf: { '@id': `${b}/#website` },
+      publisher: { '@id': orgId },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: b },
+        { '@type': 'ListItem', position: 2, name: breadcrumbName, item: pageUrl },
+      ],
+    },
+  ];
+
+  if (faqItems.length > 0) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': `${pageUrl}#faq`,
+      mainEntity: faqItems.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: { '@type': 'Answer', text: item.answer },
+      })),
+    });
+  }
 
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
 }

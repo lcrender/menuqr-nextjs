@@ -1,5 +1,6 @@
 import { getAllTemplateSlugs } from './menu-templates-catalog';
 import { DOCUMENTATION_SLUGS_STATIC } from './documentation-nav';
+import { SEO_LANDING_SLUGS } from './seo-landings-config';
 
 export type SitemapEntry = {
   path: string;
@@ -29,6 +30,12 @@ export function buildSitemapEntries(): SitemapEntry[] {
     { path: '/contacto', changefreq: 'monthly', priority: '0.8', lastmod: today },
     { path: '/soporte', changefreq: 'weekly', priority: '0.7', lastmod: today },
     { path: '/documentacion', changefreq: 'weekly', priority: '0.8', lastmod: today },
+    ...SEO_LANDING_SLUGS.map((slug) => ({
+      path: `/${slug}`,
+      changefreq: 'monthly' as const,
+      priority: '0.88',
+      lastmod: today,
+    })),
     { path: '/legal/politica-de-privacidad', changefreq: 'yearly', priority: '0.4', lastmod: today },
     { path: '/legal/terminos-y-condiciones', changefreq: 'yearly', priority: '0.4', lastmod: today },
     { path: '/legal/politica-de-cookies', changefreq: 'yearly', priority: '0.4', lastmod: today },

@@ -1,12 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="22" fill="#6366f1"/>
-  <!-- Mismo icono que landing: plato y cubiertos (U+1F37D) -->
-  <text
-    x="50"
-    y="50"
-    dominant-baseline="central"
-    text-anchor="middle"
-    font-size="50"
-    font-family="Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji, sans-serif"
-  >&#x1F37D;&#xFE0F;</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="AppMenuQR">
+  <rect width="100" height="100" rx="20" fill="#6366f1"/>
+  <!-- Código QR estilizado (legible en 16–32px) -->
+  <g fill="#ffffff">
+    <!-- Zona silenciosa + módulos -->
+    <!-- Esquina superior izquierda -->
+    <rect x="18" y="18" width="22" height="22" rx="2"/>
+    <rect x="23" y="23" width="12" height="12" rx="1" fill="#6366f1"/>
+    <rect x="26" y="26" width="6" height="6" rx="1"/>
+    <!-- Esquina superior derecha -->
+    <rect x="60" y="18" width="22" height="22" rx="2"/>
+    <rect x="65" y="23" width="12" height="12" rx="1" fill="#6366f1"/>
+    <rect x="68" y="26" width="6" height="6" rx="1"/>
+    <!-- Esquina inferior izquierda -->
+    <rect x="18" y="60" width="22" height="22" rx="2"/>
+    <rect x="23" y="65" width="12" height="12" rx="1" fill="#6366f1"/>
+    <rect x="26" y="68" width="6" height="6" rx="1"/>
+    <!-- Datos centrales -->
+    <rect x="46" y="46" width="8" height="8" rx="1"/>
+    <rect x="58" y="46" width="6" height="6" rx="1"/>
+    <rect x="46" y="58" width="6" height="6" rx="1"/>
+    <rect x="58" y="60" width="10" height="10" rx="1"/>
+    <rect x="72" y="58" width="6" height="6" rx="1"/>
+    <rect x="44" y="72" width="8" height="8" rx="1"/>
+    <rect x="56" y="74" width="6" height="6" rx="1"/>
+    <rect x="66" y="72" width="8" height="8" rx="1"/>
+    <!-- Alineación horizontal superior -->
+    <rect x="46" y="26" width="6" height="6" rx="1"/>
+    <rect x="56" y="28" width="4" height="4" rx="1"/>
+  </g>
 </svg>

@@ -1,10 +1,13 @@
 # AppMenuQR
 
-> AppMenuQR es una plataforma para restaurantes y locales de comida: menú digital con código QR, plantillas de diseño, gestión de menús/secciones/productos, importación CSV, traducciones según plan, suscripciones (Mercado Pago / PayPal) y panel de administración. El sitio público principal es https://appmenuqr.com/
+> AppMenuQR es software de carta digital para restaurantes con código QR: gestión de productos y categorías, menú digital, actualización en tiempo real, plantillas de diseño, importación CSV, traducciones según plan, suscripciones (Mercado Pago / PayPal) y panel de administración. El sitio público principal es https://appmenuqr.com/
 
 ## Páginas principales (marketing y producto)
 
-- https://appmenuqr.com/ — Inicio y propuesta de valor
+- https://appmenuqr.com/ — Inicio: carta digital para restaurantes con QR (software SaaS gastronómico)
+- https://appmenuqr.com/carta-digital-restaurante-qr — Carta digital restaurante QR (gestión profesional, mesas, tiempo real)
+- https://appmenuqr.com/menu-qr-restaurante — Menú QR restaurante (creación rápida, móvil, experiencia cliente)
+- https://appmenuqr.com/software-carta-digital-restaurante — Software carta digital restaurante (SaaS, panel, escalabilidad)
 - https://appmenuqr.com/precios — Planes y precios
 - https://appmenuqr.com/plantillas — Catálogo de plantillas de menú QR
 - https://appmenuqr.com/plantillas/classic — Plantilla Classic (ejemplo de ficha)
