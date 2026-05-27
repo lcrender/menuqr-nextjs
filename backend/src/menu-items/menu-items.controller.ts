@@ -224,9 +224,6 @@ export class MenuItemsController {
   ) {
     let tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
 
-    if (req.user.role === 'SUPER_ADMIN' && !tenantId && updateMenuItemDto.menuId) {
-      tenantId = (await this.menuItemsService.resolveTenantIdFromMenu(updateMenuItemDto.menuId)) ?? undefined;
-    }
     if (req.user.role === 'SUPER_ADMIN' && !tenantId && updateMenuItemDto.sectionId) {
       tenantId =
         (await this.menuItemsService.resolveTenantIdFromSection(updateMenuItemDto.sectionId)) ?? undefined;
@@ -238,7 +235,7 @@ export class MenuItemsController {
     if (!tenantId) {
       throw new BadRequestException(
         req.user.role === 'SUPER_ADMIN'
-          ? 'Indicá tenantId o un menuId/sectionId válido.'
+          ? 'Indicá tenantId, sectionId o un id de producto válido.'
           : 'Tenant ID es requerido',
       );
     }
