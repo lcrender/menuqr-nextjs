@@ -212,6 +212,26 @@ export class MenusService {
     return menu;
   }
 
+  async resolveTenantIdFromRestaurant(restaurantId: string): Promise<string | null> {
+    const rows = await this.postgres.queryRaw<{ tenant_id: string }>(
+      `SELECT tenant_id FROM restaurants
+       WHERE id = $1 AND deleted_at IS NULL
+       LIMIT 1`,
+      [restaurantId],
+    );
+    return rows[0]?.tenant_id ?? null;
+  }
+
+  async resolveTenantIdFromMenu(menuId: string): Promise<string | null> {
+    const rows = await this.postgres.queryRaw<{ tenant_id: string }>(
+      `SELECT tenant_id FROM menus
+       WHERE id = $1 AND deleted_at IS NULL
+       LIMIT 1`,
+      [menuId],
+    );
+    return rows[0]?.tenant_id ?? null;
+  }
+
   async create(tenantId: string, data: {
     restaurantId: string | null;
     name: string;

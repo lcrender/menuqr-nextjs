@@ -189,10 +189,18 @@ export class MenusController {
   @ApiOperation({ summary: 'Crear nuevo menú' })
   @ApiResponse({ status: 201, description: 'Menú creado exitosamente' })
   async create(@Body() createMenuDto: CreateMenuDto, @Request() req) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
-    
+    let tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
+
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && createMenuDto.restaurantId) {
+      tenantId = await this.menusService.resolveTenantIdFromRestaurant(createMenuDto.restaurantId);
+    }
+
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException(
+        req.user.role === 'SUPER_ADMIN'
+          ? 'Indicá tenantId o un restaurantId válido.'
+          : 'Tenant ID es requerido',
+      );
     }
 
     return this.menusService.create(tenantId, {

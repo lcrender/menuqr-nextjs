@@ -25,6 +25,16 @@ export class MenuSectionsService {
     );
   }
 
+  async resolveTenantIdFromMenu(menuId: string): Promise<string | null> {
+    const rows = await this.postgres.queryRaw<{ tenant_id: string }>(
+      `SELECT tenant_id FROM menus
+       WHERE id = $1 AND deleted_at IS NULL
+       LIMIT 1`,
+      [menuId],
+    );
+    return rows[0]?.tenant_id ?? null;
+  }
+
   async findById(id: string, tenantId: string) {
     const result = await this.postgres.queryRaw<any>(
       `SELECT * FROM menu_sections 

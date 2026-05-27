@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, Request, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { MenuSectionsService } from './menu-sections.service';
 import { CreateMenuSectionDto } from './dto/create-menu-section.dto';
@@ -37,10 +37,18 @@ export class MenuSectionsController {
   @ApiOperation({ summary: 'Crear nueva sección de menú' })
   @ApiResponse({ status: 201, description: 'Sección creada exitosamente' })
   async create(@Body() createMenuSectionDto: CreateMenuSectionDto, @Request() req) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
-    
+    let tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
+
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && createMenuSectionDto.menuId) {
+      tenantId = await this.menuSectionsService.resolveTenantIdFromMenu(createMenuSectionDto.menuId);
+    }
+
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException(
+        req.user.role === 'SUPER_ADMIN'
+          ? 'Indicá tenantId o un menuId válido.'
+          : 'Tenant ID es requerido',
+      );
     }
 
     return this.menuSectionsService.create(tenantId, createMenuSectionDto);

@@ -121,14 +121,14 @@ export default function MenuWizard({
       try {
         const u = JSON.parse(localStorage.getItem('user') || 'null');
         if (u?.role !== 'SUPER_ADMIN') return null;
-        const rid = restaurantId || initialRestaurantId;
+        const rid = restaurantId || initialRestaurantId || formData.restaurantId;
         const r = restaurants.find((x) => x.id === rid);
         return r?.tenantId ?? r?.tenant_id ?? null;
       } catch {
         return null;
       }
     },
-    [restaurants, initialRestaurantId],
+    [restaurants, initialRestaurantId, formData.restaurantId],
   );
 
   const assignFetchRestaurantId =
@@ -451,7 +451,7 @@ export default function MenuWizard({
       setLoading(true);
       try {
         // Primero crear el menú
-        const tenantId = getTenantIdForSuperAdmin();
+        const tenantId = getTenantIdForSuperAdmin(formData.restaurantId);
         const menuData: Record<string, unknown> = {
           restaurantId: formData.restaurantId,
           name: formData.name,
@@ -470,6 +470,7 @@ export default function MenuWizard({
               name: section.name,
               sort: index,
               isActive: section.isActive,
+              ...(tenantId ? { tenantId } : {}),
             })
           );
           
