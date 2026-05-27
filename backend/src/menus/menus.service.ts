@@ -3,6 +3,7 @@ import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import { QRService } from '../qr/qr.service';
 import { I18nService } from '../common/i18n/i18n.service';
+import { assertMenuAccessible } from '../common/menu-tenant-sync';
 
 @Injectable()
 export class MenusService {
@@ -34,7 +35,7 @@ export class MenusService {
     const params: any[] = [];
 
     if (tenantId) {
-      query += ` AND m.tenant_id = $${params.length + 1}`;
+      query += ` AND (m.tenant_id = $${params.length + 1} OR r.tenant_id = $${params.length + 1})`;
       params.push(tenantId);
     }
 
@@ -179,6 +180,8 @@ export class MenusService {
   }
 
   async findById(id: string, tenantId: string) {
+    await assertMenuAccessible(this.postgres, id, tenantId);
+
     const result = await this.postgres.queryRaw<any>(
       `SELECT 
         m.*,
@@ -186,9 +189,9 @@ export class MenusService {
         r.slug as "restaurantSlug"
       FROM menus m
       LEFT JOIN restaurants r ON r.id = m.restaurant_id AND r.deleted_at IS NULL
-      WHERE m.id = $1 AND m.tenant_id = $2 AND m.deleted_at IS NULL
+      WHERE m.id = $1 AND m.deleted_at IS NULL
       LIMIT 1`,
-      [id, tenantId]
+      [id]
     );
 
     if (!result[0]) {

@@ -73,7 +73,7 @@ export class RestaurantsController {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
     
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException('Tenant ID es requerido');
     }
 
     return this.restaurantsService.findAll(tenantId);

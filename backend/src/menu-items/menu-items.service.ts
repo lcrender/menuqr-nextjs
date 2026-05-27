@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import { I18nService } from '../common/i18n/i18n.service';
+import { assertMenuAccessible, assertSectionAccessible } from '../common/menu-tenant-sync';
 
 @Injectable()
 export class MenuItemsService {
@@ -424,6 +425,36 @@ export class MenuItemsService {
     };
   }
 
+  async resolveTenantIdFromMenu(menuId: string): Promise<string | null> {
+    const rows = await this.postgres.queryRaw<{ tenant_id: string }>(
+      `SELECT tenant_id FROM menus
+       WHERE id = $1 AND deleted_at IS NULL
+       LIMIT 1`,
+      [menuId],
+    );
+    return rows[0]?.tenant_id ?? null;
+  }
+
+  async resolveTenantIdFromSection(sectionId: string): Promise<string | null> {
+    const rows = await this.postgres.queryRaw<{ tenant_id: string }>(
+      `SELECT tenant_id FROM menu_sections
+       WHERE id = $1 AND deleted_at IS NULL
+       LIMIT 1`,
+      [sectionId],
+    );
+    return rows[0]?.tenant_id ?? null;
+  }
+
+  async resolveTenantIdFromItem(itemId: string): Promise<string | null> {
+    const rows = await this.postgres.queryRaw<{ tenant_id: string }>(
+      `SELECT tenant_id FROM menu_items
+       WHERE id = $1 AND deleted_at IS NULL
+       LIMIT 1`,
+      [itemId],
+    );
+    return rows[0]?.tenant_id ?? null;
+  }
+
   async create(tenantId: string, data: {
     menuId?: string;
     sectionId?: string;
@@ -447,33 +478,12 @@ export class MenuItemsService {
       }
     }
 
-    // Si se proporciona menuId, verificar que pertenece al tenant
     if (data.menuId) {
-      const menu = await this.postgres.queryRaw<any>(
-        `SELECT id FROM menus 
-         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL 
-         LIMIT 1`,
-        [data.menuId, tenantId]
-      );
+      await assertMenuAccessible(this.postgres, data.menuId, tenantId);
 
-      if (!menu[0]) {
-        throw new NotFoundException('Menú no encontrado o no pertenece al tenant');
-      }
-
-      // Si también se proporciona sectionId, verificar que pertenece al menú
       if (data.sectionId) {
-        const section = await this.postgres.queryRaw<any>(
-          `SELECT id FROM menu_sections 
-           WHERE id = $1 AND menu_id = $2 AND tenant_id = $3 AND deleted_at IS NULL 
-           LIMIT 1`,
-          [data.sectionId, data.menuId, tenantId]
-        );
-
-        if (!section[0]) {
-          throw new NotFoundException('Sección no encontrada o no pertenece al menú');
-        }
+        await assertSectionAccessible(this.postgres, data.sectionId, data.menuId, tenantId);
       }
-      // Si hay menuId pero no sectionId, permitir (el producto se guardará pero no se mostrará en el menú)
     } else if (data.sectionId) {
       // Si solo se proporciona sectionId sin menuId, es un error
       throw new BadRequestException('Si se proporciona sectionId, también debe proporcionarse menuId');
@@ -608,12 +618,16 @@ export class MenuItemsService {
       // `menu_items.section_id` es NOT NULL en BD.
       // Si llega vacío por UI/cliente, mantenemos la sección actual para evitar error 500.
       if (data.sectionId !== null && data.sectionId !== '') {
-        // Obtener la sección y su menú asociado
+        const menuIdForSection = item.menu_id;
+        if (!menuIdForSection) {
+          throw new BadRequestException('El producto no tiene menú asociado para cambiar de sección');
+        }
+        await assertSectionAccessible(this.postgres, data.sectionId, menuIdForSection, tenantId);
         const section = await this.postgres.queryRaw<any>(
           `SELECT menu_id FROM menu_sections 
-           WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL 
+           WHERE id = $1 AND menu_id = $2 AND deleted_at IS NULL 
            LIMIT 1`,
-          [data.sectionId, tenantId]
+          [data.sectionId, menuIdForSection]
         );
 
         if (!section[0]) {
@@ -980,7 +994,7 @@ export class MenuItemsService {
       params,
     );
 
-    const total = parseInt(count[0].total) || 0;
+    const total = parseInt(count[0]?.total || '0', 10) || 0;
 
     this.logger.log(
       `Validando límite de productos activos: tenantId=${tenantId}, plan=${plan}, limit=${limit}, active=${total}`,

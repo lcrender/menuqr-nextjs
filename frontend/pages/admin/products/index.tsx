@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import api from '../../../lib/axios';
+import api, { type AxiosErrorWithMessage } from '../../../lib/axios';
+import { getApiErrorMessage } from '../../../lib/api-error-message';
 import AdminLayout from '../../../components/AdminLayout';
 import ProductWizard from '../../../components/ProductWizard';
 import ConfirmModal from '../../../components/ConfirmModal';
@@ -398,10 +399,12 @@ export default function Products() {
         highlighted: false,
       });
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setAlertData({
         title: 'Error',
-        message: error.response?.data?.message || 'Error guardando producto',
+        message:
+          (error as AxiosErrorWithMessage).userMessage ||
+          getApiErrorMessage(error, 'Error guardando producto'),
         variant: 'error',
       });
       setShowAlert(true);

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { EmailService } from '../common/email/email.service';
 
@@ -79,7 +79,7 @@ export class AdminMessagesService {
     const settings = await this.getSettings();
     const to = (settings.receiverEmail || '').trim();
     if (!this.validateReceiverEmail(to)) {
-      throw new Error('Primero configurá un email válido en "Email destino".');
+      throw new BadRequestException('Primero configurá un email válido en "Email destino".');
     }
 
     const subject = '[AppMenuQR] Test de notificaciones de Mensajes';

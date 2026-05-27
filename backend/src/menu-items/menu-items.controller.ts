@@ -35,10 +35,18 @@ export class MenuItemsController {
   })
   @ApiResponse({ status: 200, description: 'Orden actualizado exitosamente' })
   async reorder(@Body() body: any, @Request() req) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? body.tenantId : req.user.tenantId;
-    
+    let tenantId = req.user.role === 'SUPER_ADMIN' ? body.tenantId : req.user.tenantId;
+
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && body.itemOrders?.[0]?.id) {
+      tenantId = (await this.menuItemsService.resolveTenantIdFromItem(body.itemOrders[0].id)) ?? undefined;
+    }
+
     if (!tenantId) {
-      throw new BadRequestException('Tenant ID es requerido');
+      throw new BadRequestException(
+        req.user.role === 'SUPER_ADMIN'
+          ? 'Indicá tenantId o productos válidos en itemOrders.'
+          : 'Tenant ID es requerido',
+      );
     }
 
     // Validación manual
@@ -101,6 +109,20 @@ export class MenuItemsController {
       );
     }
 
+    // SUPER_ADMIN con menuId/sectionId: listar productos del menú/sección (inferir tenant)
+    if (req.user.role === 'SUPER_ADMIN' && !tenantIdQuery && !restaurantIdQuery && (menuId || sectionId)) {
+      let resolvedTenant = (req.query.tenantId as string) || undefined;
+      if (!resolvedTenant && menuId) {
+        resolvedTenant = (await this.menuItemsService.resolveTenantIdFromMenu(menuId)) ?? undefined;
+      }
+      if (!resolvedTenant && sectionId) {
+        resolvedTenant = (await this.menuItemsService.resolveTenantIdFromSection(sectionId)) ?? undefined;
+      }
+      if (resolvedTenant) {
+        return this.menuItemsService.findAll(resolvedTenant, menuId, sectionId, productName);
+      }
+    }
+
     // SUPER_ADMIN sin IDs: búsqueda por nombres (comportamiento anterior)
     if (req.user.role === 'SUPER_ADMIN' && !tenantIdQuery && !restaurantIdQuery) {
       const limitNum = limit ? parseInt(limit, 10) : undefined;
@@ -108,10 +130,21 @@ export class MenuItemsController {
       return this.menuItemsService.findAllForSuperAdmin(productName, menuName, restaurantName, tenantName, sectionName, limitNum, offsetNum);
     }
 
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
+    let tenantId = req.user.role === 'SUPER_ADMIN' ? (req.query.tenantId as string) : req.user.tenantId;
+
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && menuId) {
+      tenantId = (await this.menuItemsService.resolveTenantIdFromMenu(menuId)) ?? undefined;
+    }
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && sectionId) {
+      tenantId = (await this.menuItemsService.resolveTenantIdFromSection(sectionId)) ?? undefined;
+    }
 
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException(
+        req.user.role === 'SUPER_ADMIN'
+          ? 'Indicá tenantId o un menuId/sectionId válido.'
+          : 'Tenant ID es requerido',
+      );
     }
 
     const restaurantIdTenant = req.user.role !== 'SUPER_ADMIN' ? (req.query.restaurantId as string | undefined) : undefined;
@@ -127,8 +160,22 @@ export class MenuItemsController {
     @Body() body: { menuId: string; sectionId: string; tenantId?: string },
     @Request() req,
   ) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? body.tenantId : req.user.tenantId;
-    if (!tenantId) throw new BadRequestException('Tenant ID es requerido');
+    let tenantId = req.user.role === 'SUPER_ADMIN' ? body.tenantId : req.user.tenantId;
+
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && body.menuId) {
+      tenantId = (await this.menuItemsService.resolveTenantIdFromMenu(body.menuId)) ?? undefined;
+    }
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId) {
+      tenantId = (await this.menuItemsService.resolveTenantIdFromItem(id)) ?? undefined;
+    }
+
+    if (!tenantId) {
+      throw new BadRequestException(
+        req.user.role === 'SUPER_ADMIN'
+          ? 'Indicá tenantId o un menuId válido.'
+          : 'Tenant ID es requerido',
+      );
+    }
     if (!body.menuId || !body.sectionId) throw new BadRequestException('menuId y sectionId son requeridos');
     return this.menuItemsService.copyToMenu(id, tenantId, { menuId: body.menuId, sectionId: body.sectionId });
   }
@@ -146,10 +193,22 @@ export class MenuItemsController {
   @ApiOperation({ summary: 'Crear nuevo item de menú' })
   @ApiResponse({ status: 201, description: 'Item creado exitosamente' })
   async create(@Body() createMenuItemDto: CreateMenuItemDto, @Request() req) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
-    
+    let tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
+
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && createMenuItemDto.menuId) {
+      tenantId = (await this.menuItemsService.resolveTenantIdFromMenu(createMenuItemDto.menuId)) ?? undefined;
+    }
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && createMenuItemDto.sectionId) {
+      tenantId =
+        (await this.menuItemsService.resolveTenantIdFromSection(createMenuItemDto.sectionId)) ?? undefined;
+    }
+
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException(
+        req.user.role === 'SUPER_ADMIN'
+          ? 'Indicá tenantId o un menuId/sectionId válido.'
+          : 'Tenant ID es requerido',
+      );
     }
 
     return this.menuItemsService.create(tenantId, createMenuItemDto);
@@ -163,10 +222,25 @@ export class MenuItemsController {
     @Body() updateMenuItemDto: UpdateMenuItemDto,
     @Request() req,
   ) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
-    
+    let tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
+
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && updateMenuItemDto.menuId) {
+      tenantId = (await this.menuItemsService.resolveTenantIdFromMenu(updateMenuItemDto.menuId)) ?? undefined;
+    }
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && updateMenuItemDto.sectionId) {
+      tenantId =
+        (await this.menuItemsService.resolveTenantIdFromSection(updateMenuItemDto.sectionId)) ?? undefined;
+    }
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId) {
+      tenantId = (await this.menuItemsService.resolveTenantIdFromItem(id)) ?? undefined;
+    }
+
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException(
+        req.user.role === 'SUPER_ADMIN'
+          ? 'Indicá tenantId o un menuId/sectionId válido.'
+          : 'Tenant ID es requerido',
+      );
     }
 
     return this.menuItemsService.update(id, tenantId, updateMenuItemDto);
@@ -176,10 +250,18 @@ export class MenuItemsController {
   @ApiOperation({ summary: 'Eliminar item de menú' })
   @ApiResponse({ status: 200, description: 'Item eliminado exitosamente' })
   async remove(@Param('id') id: string, @Request() req) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
-    
+    let tenantId = req.user.role === 'SUPER_ADMIN' ? (req.query.tenantId as string) : req.user.tenantId;
+
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId) {
+      tenantId = (await this.menuItemsService.resolveTenantIdFromItem(id)) ?? undefined;
+    }
+
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException(
+        req.user.role === 'SUPER_ADMIN'
+          ? 'Indicá tenantId en query o un id de producto válido.'
+          : 'Tenant ID es requerido',
+      );
     }
 
     return this.menuItemsService.delete(id, tenantId);

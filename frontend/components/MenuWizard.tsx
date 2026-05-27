@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
-import api from '../lib/axios';
+import api, { type AxiosErrorWithMessage } from '../lib/axios';
+import { getApiErrorMessage } from '../lib/api-error-message';
 import ProductWizard from './ProductWizard';
 
 interface MenuWizardProps {
@@ -489,7 +490,10 @@ export default function MenuWizard({
         setNewMenuId(createdMenuId);
         setShowProductWizard(true);
       } catch (error: any) {
-        alert(error.response?.data?.message || 'Error creando menú');
+        alert(
+          (error as AxiosErrorWithMessage).userMessage ||
+            getApiErrorMessage(error, 'Error creando menú'),
+        );
       } finally {
         setLoading(false);
       }

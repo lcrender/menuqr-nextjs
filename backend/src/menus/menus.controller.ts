@@ -60,7 +60,7 @@ export class MenusController {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
     
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException('Tenant ID es requerido');
     }
 
     return this.menusService.findAll(tenantId, restaurantId, menuName);
@@ -223,7 +223,7 @@ export class MenusController {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
     
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException('Tenant ID es requerido');
     }
 
     return this.menusService.update(id, tenantId, {
@@ -256,7 +256,7 @@ export class MenusController {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
     
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException('Tenant ID es requerido');
     }
 
     return this.menusService.delete(id, tenantId);

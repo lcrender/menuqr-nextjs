@@ -16,10 +16,22 @@ export class MenuSectionsController {
   @ApiOperation({ summary: 'Listar secciones de menú' })
   @ApiResponse({ status: 200, description: 'Lista de secciones' })
   async findAll(@Query('menuId') menuId: string, @Request() req) {
-    const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
-    
-    if (!tenantId || !menuId) {
-      throw new Error('Tenant ID y Menu ID son requeridos');
+    let tenantId = req.user.role === 'SUPER_ADMIN' ? (req.query.tenantId as string) : req.user.tenantId;
+
+    if (req.user.role === 'SUPER_ADMIN' && !tenantId && menuId) {
+      tenantId = (await this.menuSectionsService.resolveTenantIdFromMenu(menuId)) ?? undefined;
+    }
+
+    if (!menuId) {
+      throw new BadRequestException('Menu ID es requerido');
+    }
+
+    if (!tenantId) {
+      throw new BadRequestException(
+        req.user.role === 'SUPER_ADMIN'
+          ? 'Indicá tenantId o un menuId válido.'
+          : 'Tenant ID es requerido',
+      );
     }
 
     return this.menuSectionsService.findAll(tenantId, menuId);
@@ -65,7 +77,7 @@ export class MenuSectionsController {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.body.tenantId : req.user.tenantId;
     
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException('Tenant ID es requerido');
     }
 
     return this.menuSectionsService.update(id, tenantId, updateMenuSectionDto);
@@ -78,7 +90,7 @@ export class MenuSectionsController {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
     
     if (!tenantId) {
-      throw new Error('Tenant ID es requerido');
+      throw new BadRequestException('Tenant ID es requerido');
     }
 
     return this.menuSectionsService.delete(id, tenantId);

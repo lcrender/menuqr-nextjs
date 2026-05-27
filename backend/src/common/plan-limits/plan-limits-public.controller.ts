@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, InternalServerErrorException } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Public } from '../decorators/public.decorator';
 import { PlanLimitsService } from './plan-limits.service';
@@ -23,7 +23,9 @@ export class PlanLimitsPublicController {
     const plans = PUBLIC_PLAN_KEYS.map((key) => {
       const row = byKey.get(key);
       if (!row) {
-        throw new Error(`Plan limits missing for key: ${key}`);
+        throw new InternalServerErrorException(
+          `Configuración incompleta: faltan límites del plan "${key}".`,
+        );
       }
       return {
         key: row.key,

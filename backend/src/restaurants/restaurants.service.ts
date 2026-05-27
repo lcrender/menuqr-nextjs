@@ -3,6 +3,7 @@ import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService, RESTAURANT_TEMPLATE_IDS } from '../common/plan-limits/plan-limits.service';
 import { ConfigService } from '@nestjs/config';
 import { I18nService } from '../common/i18n/i18n.service';
+import { syncRestaurantMenuHierarchyTenant } from '../common/menu-tenant-sync';
 
 @Injectable()
 export class RestaurantsService {
@@ -1074,6 +1075,8 @@ export class RestaurantsService {
         deactivatedByLimit,
       };
     });
+
+    await syncRestaurantMenuHierarchyTenant(this.postgres, restaurantId, targetTenantId);
 
     return {
       message: 'Restaurante transferido exitosamente',

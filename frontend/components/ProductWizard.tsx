@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import api from '../lib/axios';
+import api, { type AxiosErrorWithMessage } from '../lib/axios';
+import { getApiErrorMessage } from '../lib/api-error-message';
 import AlertModal from './AlertModal';
 import {
   DEFAULT_PUBLIC_PLAN_LIMITS,
@@ -304,6 +305,46 @@ export default function ProductWizard({
   const [loading, setLoading] = useState(false);
   const [loadingSections, setLoadingSections] = useState(false);
   const [menuData, setMenuData] = useState<any>(null);
+
+  const getTenantIdForSuperAdmin = useCallback((): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || 'null');
+      if (u?.role !== 'SUPER_ADMIN') return null;
+
+      const menuId = formData.menuId || initialMenuId || menuData?.id;
+      const menu =
+        menus.find((m) => m.id === menuId) ?? (menuData?.id === menuId ? menuData : null);
+      const fromMenu = menu?.tenantId ?? menu?.tenant_id;
+      if (fromMenu) return String(fromMenu);
+
+      const rid =
+        wizardRestaurantId ||
+        resolvedRestaurantId ||
+        (menu ? getMenuRestaurantId(menu) : '');
+      const r = (restaurantsProp ?? []).find((x) => String(x.id) === String(rid));
+      const fromRestaurant = r?.tenantId ?? r?.tenant_id;
+      if (fromRestaurant) return String(fromRestaurant);
+
+      return null;
+    } catch {
+      return null;
+    }
+  }, [
+    menus,
+    formData.menuId,
+    initialMenuId,
+    menuData,
+    wizardRestaurantId,
+    resolvedRestaurantId,
+    restaurantsProp,
+  ]);
+
+  const superAdminTenantParams = useCallback((): Record<string, string> => {
+    const tid = getTenantIdForSuperAdmin();
+    return tid ? { tenantId: tid } : {};
+  }, [getTenantIdForSuperAdmin]);
+
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [loadingMenu, setLoadingMenu] = useState(false);
   const [publishingMenu, setPublishingMenu] = useState(false);
@@ -707,12 +748,16 @@ export default function ProductWizard({
       }
       
       // Cargar secciones del menú
-      const sectionsRes = await api.get(`/menu-sections?menuId=${menuIdToLoad}`);
+      const sectionsRes = await api.get('/menu-sections', {
+        params: { menuId: menuIdToLoad, ...superAdminTenantParams() },
+      });
       const sectionsData = sectionsRes.data.sort((a: any, b: any) => a.sort - b.sort);
       setSections(sectionsData);
       
       // Cargar productos del menú
-      const itemsRes = await api.get(`/menu-items?menuId=${menuIdToLoad}`);
+      const itemsRes = await api.get('/menu-items', {
+        params: { menuId: menuIdToLoad, ...superAdminTenantParams() },
+      });
       setMenuItems(itemsRes.data);
     } catch (error) {
       console.error('Error cargando datos del menú:', error);
@@ -940,7 +985,10 @@ export default function ProductWizard({
         
         // Guardar en el backend (sin recargar si todo va bien)
         try {
-          await api.post('/menu-items/reorder', { itemOrders });
+          await api.post('/menu-items/reorder', {
+            itemOrders,
+            ...superAdminTenantParams(),
+          });
           // No recargar si la actualización fue exitosa
         } catch (error: any) {
           console.error('Error guardando orden:', error);
@@ -972,6 +1020,7 @@ export default function ProductWizard({
           description: currentItem.description || undefined,
           active: currentItem.active !== false,
           sectionId: targetSectionId === 'no-section' ? null : targetSectionId,
+          ...superAdminTenantParams(),
         });
         // Recargar solo cuando se mueve entre secciones
         await loadMenuData();
@@ -989,7 +1038,9 @@ export default function ProductWizard({
   const loadSections = async (menuId: string) => {
     setLoadingSections(true);
     try {
-      const res = await api.get(`/menu-sections?menuId=${menuId}`);
+      const res = await api.get('/menu-sections', {
+        params: { menuId, ...superAdminTenantParams() },
+      });
       setSections(res.data);
     } catch (error) {
       console.error('Error cargando secciones:', error);
@@ -1016,6 +1067,7 @@ export default function ProductWizard({
         menuId: formData.menuId,
         name: newSectionName.trim(),
         isActive: true,
+        ...superAdminTenantParams(),
       });
       
       // Recargar las secciones
@@ -1195,7 +1247,11 @@ export default function ProductWizard({
     try {
       await Promise.all(
         Array.from(selectedExistingIds).map((id) =>
-          api.post(`/menu-items/${id}/copy-to-menu`, { menuId: initialMenuId, sectionId: loadExistingSectionId })
+          api.post(`/menu-items/${id}/copy-to-menu`, {
+            menuId: initialMenuId,
+            sectionId: loadExistingSectionId,
+            ...superAdminTenantParams(),
+          })
         )
       );
       setShowLoadExistingModal(false);
@@ -1245,7 +1301,9 @@ export default function ProductWizard({
           setSelectedMenuForModal(selectedMenu);
           // Cargar secciones del menú
           try {
-            const sectionsRes = await api.get(`/menu-sections?menuId=${formData.menuId}`);
+            const sectionsRes = await api.get('/menu-sections', {
+              params: { menuId: formData.menuId, ...superAdminTenantParams() },
+            });
             const sectionsData = sectionsRes.data.sort((a: any, b: any) => a.sort - b.sort);
             setMenuSectionsForModal(sectionsData);
             setShowSectionModal(true);
@@ -1286,6 +1344,7 @@ export default function ProductWizard({
         prices: validPrices.length > 0 ? validPrices : undefined,
         iconCodes: formData.iconCodes.length > 0 ? formData.iconCodes : undefined,
         highlighted: formData.highlighted,
+        ...superAdminTenantParams(),
       };
 
       let createdItemId: string | null = null;
@@ -1393,7 +1452,9 @@ export default function ProductWizard({
       } else {
         setAlertData({
           title: 'Error',
-          message: error.response?.data?.message || 'Error creando producto',
+          message:
+            (error as AxiosErrorWithMessage).userMessage ||
+            getApiErrorMessage(error, 'Error creando producto'),
           variant: 'error',
         });
         setShowAlert(true);

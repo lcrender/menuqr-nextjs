@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { I18nService } from '../common/i18n/i18n.service';
+import { assertMenuAccessible } from '../common/menu-tenant-sync';
 
 @Injectable()
 export class MenuSectionsService {
@@ -12,16 +13,17 @@ export class MenuSectionsService {
   ) {}
 
   async findAll(tenantId: string, menuId: string) {
+    await assertMenuAccessible(this.postgres, menuId, tenantId);
     return this.postgres.queryRaw<any>(
       `SELECT 
         ms.*,
         COUNT(DISTINCT mi.id) as "itemCount"
       FROM menu_sections ms
       LEFT JOIN menu_items mi ON mi.section_id = ms.id AND mi.deleted_at IS NULL
-      WHERE ms.menu_id = $1 AND ms.tenant_id = $2 AND ms.deleted_at IS NULL
+      WHERE ms.menu_id = $1 AND ms.deleted_at IS NULL
       GROUP BY ms.id
       ORDER BY ms.sort ASC, ms.created_at ASC`,
-      [menuId, tenantId]
+      [menuId]
     );
   }
 
@@ -56,17 +58,7 @@ export class MenuSectionsService {
     sort?: number;
     isActive?: boolean;
   }) {
-    // Verificar que el menú pertenece al tenant
-    const menu = await this.postgres.queryRaw<any>(
-      `SELECT id FROM menus 
-       WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL 
-       LIMIT 1`,
-      [data.menuId, tenantId]
-    );
-
-    if (!menu[0]) {
-      throw new NotFoundException('Menú no encontrado o no pertenece al tenant');
-    }
+    await assertMenuAccessible(this.postgres, data.menuId, tenantId);
 
     // Obtener el siguiente sort si no se proporciona
     let sort = data.sort;

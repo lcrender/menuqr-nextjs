@@ -1,5 +1,7 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { validationExceptionFactory } from './common/filters/validation-exception.factory';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
@@ -121,6 +123,8 @@ async function bootstrap() {
       }
     }
 
+    app.useGlobalFilters(new AllExceptionsFilter());
+
     app.useGlobalPipes(
       new CustomValidationPipe({
         whitelist: true,
@@ -129,6 +133,7 @@ async function bootstrap() {
         transformOptions: {
           enableImplicitConversion: true,
         },
+        exceptionFactory: validationExceptionFactory,
       }),
     );
 

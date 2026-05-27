@@ -1,5 +1,14 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { getApiBaseUrl } from './config';
+import { getApiErrorMessage } from './api-error-message';
+
+export type AxiosErrorWithMessage = AxiosError & { userMessage?: string };
+
+function attachUserMessage(error: AxiosError): AxiosErrorWithMessage {
+  const enriched = error as AxiosErrorWithMessage;
+  enriched.userMessage = getApiErrorMessage(error);
+  return enriched;
+}
 
 const api = axios.create({
   baseURL: '',
@@ -44,14 +53,14 @@ api.interceptors.response.use(
       }
       // Si no tiene validateStatus, devolver el error pero sin que se registre en consola
       // El error se manejará en el catch del código que hace la petición
-      return Promise.reject(error);
+      return Promise.reject(attachUserMessage(error));
     }
 
     // No intentar refrescar token en login/register: el 401 es "credenciales inválidas"
     // y debe mostrarse en el formulario, no redirigir y perder el mensaje
     const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register');
     if (isAuthEndpoint) {
-      return Promise.reject(error);
+      return Promise.reject(attachUserMessage(error));
     }
 
     // GET públicos (precios, límites): token caducado no debe vaciar sesión ni mandar a login (landing / legales).
@@ -101,7 +110,7 @@ api.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(attachUserMessage(error));
   }
 );
 

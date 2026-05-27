@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PostgresService } from '../database/postgres.service';
 
 export interface TranslationData {
@@ -166,7 +166,9 @@ export class I18nService {
       }
     } catch (error) {
       this.logger.error(`Error guardando traducciones: ${error}`);
-      throw error;
+      throw new BadRequestException(
+        'No se pudieron guardar las traducciones. Verificá los datos e intentá de nuevo.',
+      );
     }
   }
 
