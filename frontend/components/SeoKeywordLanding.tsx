@@ -32,13 +32,17 @@ export default function SeoKeywordLanding({ config }: Props) {
     router.push('/login?action=register');
   };
 
+  const robotsContent = config.noIndex
+    ? 'noindex, nofollow, noarchive, nosnippet, noimageindex'
+    : 'index, follow';
+
   return (
     <>
       <Head>
         <title>{config.meta.title}</title>
-        {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        {canonicalUrl && !config.noIndex ? <link rel="canonical" href={canonicalUrl} /> : null}
         <meta name="description" content={config.meta.description} />
-        <meta name="robots" content="index, follow" />
+        <meta name="robots" content={robotsContent} />
         <meta property="og:type" content="website" />
         {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
         <meta property="og:title" content={config.meta.title} />

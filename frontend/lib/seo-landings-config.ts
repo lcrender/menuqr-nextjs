@@ -63,6 +63,8 @@ export type SeoLandingConfig = {
     outro?: string;
   };
   faq: SeoLandingFaq[];
+  /** Si true, no indexar en buscadores y excluir del sitemap.xml */
+  noIndex?: boolean;
 };
 
 /** Recursos enlazados desde el bloque «Recursos» de cada landing SEO. */
@@ -270,6 +272,7 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
 
   'software-carta-digital-restaurante': {
     slug: 'software-carta-digital-restaurante',
+    noIndex: true,
     primaryKeyword: 'software carta digital restaurante',
     searchIntent: 'Comercial B2B: busca una plataforma o app para administrar la carta digital del negocio.',
     meta: {
