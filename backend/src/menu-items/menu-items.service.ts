@@ -572,6 +572,7 @@ export class MenuItemsService {
     name?: string;
     description?: string;
     active?: boolean;
+    menuId?: string;
     sectionId?: string;
     prices?: Array<{ currency: string; label?: string; amount: number }>;
     iconCodes?: string[];
@@ -618,9 +619,12 @@ export class MenuItemsService {
       // `menu_items.section_id` es NOT NULL en BD.
       // Si llega vacío por UI/cliente, mantenemos la sección actual para evitar error 500.
       if (data.sectionId !== null && data.sectionId !== '') {
-        const menuIdForSection = item.menu_id;
+        const menuIdForSection =
+          data.menuId !== undefined && data.menuId !== null && data.menuId !== ''
+            ? data.menuId
+            : item.menu_id;
         if (!menuIdForSection) {
-          throw new BadRequestException('El producto no tiene menú asociado para cambiar de sección');
+          throw new BadRequestException('Seleccioná un menú para asignar el producto a una sección');
         }
         await assertSectionAccessible(this.postgres, data.sectionId, menuIdForSection, tenantId);
         const section = await this.postgres.queryRaw<any>(
@@ -631,8 +635,10 @@ export class MenuItemsService {
         );
 
         if (!section[0]) {
-          throw new BadRequestException('Sección no encontrada');
+          throw new BadRequestException('Sección no encontrada o no pertenece al menú seleccionado');
         }
+
+        const resolvedMenuId = section[0].menu_id;
 
         // Si se está cambiando de sección, asignar el siguiente sort en la nueva sección
         if (item.section_id !== data.sectionId) {
@@ -648,13 +654,19 @@ export class MenuItemsService {
           params.push(nextSort);
         }
 
-        // Actualizar tanto section_id como menu_id (el menu_id viene de la sección)
         updates.push(`section_id = $${paramIndex++}`);
         params.push(data.sectionId);
         
         updates.push(`menu_id = $${paramIndex++}`);
-        params.push(section[0].menu_id);
+        params.push(resolvedMenuId);
       }
+    } else if (
+      data.menuId !== undefined &&
+      data.menuId !== null &&
+      data.menuId !== '' &&
+      data.menuId !== item.menu_id
+    ) {
+      throw new BadRequestException('Al cambiar de menú debés seleccionar también una sección');
     }
 
     // Actualizar precios si se proporcionan

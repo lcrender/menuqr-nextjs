@@ -289,7 +289,7 @@ export default function SubscriptionManagement() {
               variant="subscription"
               onSelectPlan={handleSelectPlan}
               pricingData={pricingData}
-              promoCode={promoFromUrl || undefined}
+              {...(promoFromUrl ? { promoCode: promoFromUrl } : {})}
             />
           </div>
         </section>

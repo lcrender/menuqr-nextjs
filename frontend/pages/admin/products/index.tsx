@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -19,6 +19,42 @@ import {
 
 /** Valor del `<select>` de sección destino: crear sección nueva al copiar */
 const SECTION_DEST_NEW = '__new_section__';
+
+type ProductTableColumnKey =
+  | 'tenant'
+  | 'restaurant'
+  | 'template'
+  | 'menu'
+  | 'section'
+  | 'prices'
+  | 'icons'
+  | 'status';
+
+const DEFAULT_VISIBLE_COLUMNS: Record<ProductTableColumnKey, boolean> = {
+  tenant: true,
+  restaurant: true,
+  template: true,
+  menu: true,
+  section: true,
+  prices: true,
+  icons: true,
+  status: true,
+};
+
+const PRODUCT_COLUMNS_STORAGE_KEY = 'admin-products-visible-columns-v1';
+
+function loadVisibleColumnsFromStorage(): Record<ProductTableColumnKey, boolean> {
+  if (typeof window === 'undefined') return { ...DEFAULT_VISIBLE_COLUMNS };
+  try {
+    const raw = localStorage.getItem(PRODUCT_COLUMNS_STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_VISIBLE_COLUMNS };
+    const parsed = JSON.parse(raw) as Partial<Record<string, boolean>>;
+    const { name: _ignored, ...rest } = parsed;
+    return { ...DEFAULT_VISIBLE_COLUMNS, ...rest };
+  } catch {
+    return { ...DEFAULT_VISIBLE_COLUMNS };
+  }
+}
 
 export default function Products() {
   const router = useRouter();
@@ -101,6 +137,41 @@ export default function Products() {
   const [editImageDragging, setEditImageDragging] = useState(false);
   const [draggedProductIndex, setDraggedProductIndex] = useState<number | null>(null);
   const [draggedPriceIndex, setDraggedPriceIndex] = useState<number | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<Record<ProductTableColumnKey, boolean>>(
+    () => ({ ...DEFAULT_VISIBLE_COLUMNS }),
+  );
+  const columnsPrefsReady = useRef(false);
+
+  useEffect(() => {
+    setVisibleColumns(loadVisibleColumnsFromStorage());
+    columnsPrefsReady.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!columnsPrefsReady.current || typeof window === 'undefined') return;
+    localStorage.setItem(PRODUCT_COLUMNS_STORAGE_KEY, JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
+
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  const productColumnDefs = useMemo(
+    () =>
+      [
+        ...(isSuperAdmin ? [{ key: 'tenant' as const, label: 'Tenant' }] : []),
+        { key: 'restaurant' as const, label: 'Restaurante' },
+        ...(isSuperAdmin ? [{ key: 'template' as const, label: 'Plantilla' }] : []),
+        { key: 'menu' as const, label: 'Menú' },
+        { key: 'section' as const, label: 'Sección' },
+        { key: 'prices' as const, label: 'Precios' },
+        { key: 'icons' as const, label: 'Íconos' },
+        { key: 'status' as const, label: 'Estado' },
+      ] satisfies { key: ProductTableColumnKey; label: string }[],
+    [isSuperAdmin],
+  );
+
+  const showProductColumn = (key: ProductTableColumnKey) => visibleColumns[key] !== false;
+
+  const resetVisibleColumns = () => setVisibleColumns({ ...DEFAULT_VISIBLE_COLUMNS });
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -116,8 +187,6 @@ export default function Products() {
       }
     }
   }, []);
-
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   // Obtener el plan actual desde la API (por si cambió, ej. super admin actualizó el plan)
   useEffect(() => {
@@ -350,11 +419,16 @@ export default function Products() {
           name: formData.name,
           description: formData.description,
           active: formData.active,
-          sectionId: formData.sectionId || undefined,
           prices: validPrices,
           iconCodes: formData.iconCodes,
           highlighted: formData.highlighted,
         };
+        if (formData.menuId) {
+          dataToUpdate.menuId = formData.menuId;
+        }
+        if (formData.sectionId) {
+          dataToUpdate.sectionId = formData.sectionId;
+        }
         if (isSuperAdmin) {
           dataToUpdate.tenantId = editing.tenantId || editing.tenant_id || selectedTenantId || undefined;
         }
@@ -1052,7 +1126,8 @@ export default function Products() {
 
   return (
     <AdminLayout>
-      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div className="admin-products-page">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 admin-products-header">
         <h1 className="admin-title mb-0">Productos</h1>
         <div className="admin-quick-links">
           <button
@@ -1256,10 +1331,10 @@ export default function Products() {
       {/* Sección de filtros: nombre, restaurante, menú, sección */}
       <div className="mb-3 p-3 bg-light rounded border admin-products-filters">
         <h6 className="mb-3 fw-semibold">Filtros</h6>
-        <div className="d-flex align-items-center gap-3 flex-wrap admin-products-filters-row">
-          <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
-            <label htmlFor="filterProductName" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
-              Nombre:
+        <div className="admin-products-filters-grid">
+          <div className="admin-products-filter-item">
+            <label htmlFor="filterProductName" className="form-label mb-1 small text-muted admin-products-filter-label">
+              Nombre
             </label>
             <input
               id="filterProductName"
@@ -1273,9 +1348,9 @@ export default function Products() {
           </div>
           {isSuperAdmin ? (
             <>
-              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
-                <label htmlFor="filterRestaurantName" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
-                  Restaurante:
+              <div className="admin-products-filter-item">
+                <label htmlFor="filterRestaurantName" className="form-label mb-1 small text-muted admin-products-filter-label">
+                  Restaurante
                 </label>
                 <input
                   id="filterRestaurantName"
@@ -1287,9 +1362,9 @@ export default function Products() {
                   onChange={(e) => setFilterRestaurantName(e.target.value)}
                 />
               </div>
-              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
-                <label htmlFor="filterMenuName" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
-                  Menú:
+              <div className="admin-products-filter-item">
+                <label htmlFor="filterMenuName" className="form-label mb-1 small text-muted admin-products-filter-label">
+                  Menú
                 </label>
                 <input
                   id="filterMenuName"
@@ -1301,9 +1376,9 @@ export default function Products() {
                   onChange={(e) => setFilterMenuName(e.target.value)}
                 />
               </div>
-              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
-                <label htmlFor="filterSectionName" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
-                  Sección:
+              <div className="admin-products-filter-item">
+                <label htmlFor="filterSectionName" className="form-label mb-1 small text-muted admin-products-filter-label">
+                  Sección
                 </label>
                 <input
                   id="filterSectionName"
@@ -1315,9 +1390,9 @@ export default function Products() {
                   onChange={(e) => setFilterSectionName(e.target.value)}
                 />
               </div>
-              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
-                <label htmlFor="filterTenantName" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
-                  Tenant:
+              <div className="admin-products-filter-item">
+                <label htmlFor="filterTenantName" className="form-label mb-1 small text-muted admin-products-filter-label">
+                  Tenant
                 </label>
                 <input
                   id="filterTenantName"
@@ -1332,9 +1407,9 @@ export default function Products() {
             </>
           ) : (
             <>
-              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
-                <label htmlFor="filterRestaurantId" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
-                  Restaurante:
+              <div className="admin-products-filter-item">
+                <label htmlFor="filterRestaurantId" className="form-label mb-1 small text-muted admin-products-filter-label">
+                  Restaurante
                 </label>
                 <select
                   id="filterRestaurantId"
@@ -1353,9 +1428,9 @@ export default function Products() {
                   ))}
                 </select>
               </div>
-              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
-                <label htmlFor="filterMenuId" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
-                  Menú:
+              <div className="admin-products-filter-item">
+                <label htmlFor="filterMenuId" className="form-label mb-1 small text-muted admin-products-filter-label">
+                  Menú
                 </label>
                 <select
                   id="filterMenuId"
@@ -1370,9 +1445,9 @@ export default function Products() {
                   ))}
                 </select>
               </div>
-              <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 admin-products-filter-item">
-                <label htmlFor="filterSectionId" className="form-label mb-0 d-none d-md-block" style={{ whiteSpace: 'nowrap' }}>
-                  Sección:
+              <div className="admin-products-filter-item">
+                <label htmlFor="filterSectionId" className="form-label mb-1 small text-muted admin-products-filter-label">
+                  Sección
                 </label>
                 <select
                   id="filterSectionId"
@@ -1391,9 +1466,10 @@ export default function Products() {
             </>
           )}
           {(filterProductName || filterMenuName || filterRestaurantName || filterTenantName || filterSectionName || filterRestaurantId || filterMenuId || filterSectionId) && (
+            <div className="admin-products-filter-item admin-products-filter-item--clear">
             <button
               type="button"
-              className="btn btn-sm btn-outline-secondary admin-products-filters-clear"
+              className="btn btn-sm btn-outline-secondary admin-products-filters-clear w-100"
               onClick={() => {
                 setFilterProductName('');
                 setFilterMenuName('');
@@ -1408,14 +1484,16 @@ export default function Products() {
             >
               ✕ Limpiar filtros
             </button>
+            </div>
           )}
         </div>
       </div>
 
       {!loading && products.length > 0 && (
-        <div className="mb-3 p-3 border rounded bg-white admin-products-bulk-bar">
+        <div className="admin-products-tools-row mb-3">
+          <div className="admin-products-tools-panel admin-products-bulk-bar p-3 border rounded bg-white">
           <div className="fw-semibold text-secondary small text-uppercase mb-2">Selección en lote</div>
-          <div className="d-flex flex-wrap align-items-end gap-2 gap-md-3">
+          <div className="admin-products-bulk-toolbar">
             <button
               type="button"
               className="btn btn-sm btn-outline-primary"
@@ -1423,10 +1501,12 @@ export default function Products() {
             >
               {allVisibleProductsSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}
             </button>
-            <span className="text-muted small align-self-center mb-1 mb-md-2">
+            <span className="text-muted small">
               {selectedProductIds.length} seleccionado(s)
             </span>
-            <div className="d-flex flex-column" style={{ minWidth: 200 }}>
+          </div>
+          <div className="admin-products-bulk-grid">
+            <div className="admin-products-bulk-field">
               <label className="form-label small mb-0 text-muted" htmlFor="bulk-action-select">
                 Acción
               </label>
@@ -1484,7 +1564,7 @@ export default function Products() {
 
               return (
                 <>
-                  <div className="d-flex flex-column" style={{ minWidth: 220 }}>
+                  <div className="admin-products-bulk-field">
                     <label className="form-label small mb-0 text-muted" htmlFor="bulk-dest-restaurant">
                       Restaurante destino
                     </label>
@@ -1505,7 +1585,7 @@ export default function Products() {
                       ))}
                     </select>
                   </div>
-                  <div className="d-flex flex-column" style={{ minWidth: 200 }}>
+                  <div className="admin-products-bulk-field">
                     <label className="form-label small mb-0 text-muted" htmlFor="bulk-target-menu">
                       Menú destino
                     </label>
@@ -1534,7 +1614,7 @@ export default function Products() {
                       ))}
                     </select>
                   </div>
-                  <div className="d-flex flex-column" style={{ minWidth: 200 }}>
+                  <div className="admin-products-bulk-field">
                     <label className="form-label small mb-0 text-muted" htmlFor="bulk-target-section">
                       Sección destino
                     </label>
@@ -1555,7 +1635,7 @@ export default function Products() {
                     </select>
                   </div>
                   {bulkTargetSectionId === SECTION_DEST_NEW && bulkTargetMenuId ? (
-                    <div className="d-flex flex-column" style={{ minWidth: 220 }}>
+                    <div className="admin-products-bulk-field">
                       <label className="form-label small mb-0 text-muted" htmlFor="bulk-new-section-name">
                         Nombre de la nueva sección
                       </label>
@@ -1574,14 +1654,45 @@ export default function Products() {
                 </>
               );
             })()}
+            <div className="admin-products-bulk-field admin-products-bulk-field--apply">
             <button
               type="button"
-              className="btn btn-sm btn-primary"
+              className="btn btn-sm btn-primary w-100"
               disabled={bulkLoading || selectedProductIds.length === 0 || !bulkAction}
               onClick={handleBulkApply}
             >
               {bulkLoading ? 'Aplicando…' : 'Aplicar'}
             </button>
+            </div>
+          </div>
+          </div>
+
+          <div className="admin-products-tools-panel admin-products-columns-bar p-3 border rounded bg-white d-none d-lg-flex flex-column">
+            <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+              <div className="fw-semibold text-secondary small text-uppercase">Columnas visibles</div>
+              <button type="button" className="btn btn-link btn-sm p-0 text-decoration-none" onClick={resetVisibleColumns}>
+                Mostrar todas
+              </button>
+            </div>
+            <p className="text-muted small mb-2 mb-lg-3">Elegí qué columnas ver en la tabla de escritorio.</p>
+            <div className="admin-products-columns-grid">
+              {productColumnDefs.map((col) => (
+                <div key={col.key} className="form-check admin-products-column-check mb-0">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id={`product-col-${col.key}`}
+                    checked={showProductColumn(col.key)}
+                    onChange={(e) =>
+                      setVisibleColumns((prev) => ({ ...prev, [col.key]: e.target.checked }))
+                    }
+                  />
+                  <label className="form-check-label" htmlFor={`product-col-${col.key}`}>
+                    {col.label}
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1594,22 +1705,22 @@ export default function Products() {
         </div>
       ) : (
         <>
-        <div className="d-none d-md-block table-responsive admin-products-table-wrap">
+        <div className="d-none d-lg-block table-responsive admin-products-table-wrap">
           <table className="table table-admin-products">
             <thead>
               <tr>
                 <th style={{ width: '40px' }} className="text-center" aria-label="Seleccionar" />
                 <th style={{ width: '44px' }} aria-label="Arrastrar para ordenar" />
                 <th>Nombre</th>
-                {isSuperAdmin && <th>Tenant</th>}
-                <th>Restaurante</th>
-                {isSuperAdmin && <th>Plantilla</th>}
-                <th>Menú</th>
-                <th>Sección</th>
-                <th style={{ minWidth: '160px' }}>Precios</th>
-                <th>Íconos</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                {isSuperAdmin && showProductColumn('tenant') && <th>Tenant</th>}
+                {showProductColumn('restaurant') && <th>Restaurante</th>}
+                {isSuperAdmin && showProductColumn('template') && <th>Plantilla</th>}
+                {showProductColumn('menu') && <th>Menú</th>}
+                {showProductColumn('section') && <th>Sección</th>}
+                {showProductColumn('prices') && <th className="admin-products-col-prices">Precios</th>}
+                {showProductColumn('icons') && <th className="admin-products-col-icons">Íconos</th>}
+                {showProductColumn('status') && <th>Estado</th>}
+                <th className="admin-products-col-actions">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -1646,8 +1757,8 @@ export default function Products() {
                   >
                     ☰
                   </td>
-                  <td>{product.name}</td>
-                  {isSuperAdmin && (
+                  <td className="admin-products-cell-name">{product.name}</td>
+                  {isSuperAdmin && showProductColumn('tenant') && (
                     <td>
                       {product.tenantName ? (
                         <span className="badge bg-info">{product.tenantName}</span>
@@ -1656,25 +1767,32 @@ export default function Products() {
                       )}
                     </td>
                   )}
-                  <td>
+                  {showProductColumn('restaurant') && (
+                  <td className="admin-products-cell-truncate">
                     {product.restaurantName ? (
                       <span>{product.restaurantName}</span>
                     ) : (
                       <span className="text-muted">Sin restaurante</span>
                     )}
                   </td>
-                  {isSuperAdmin && (
+                  )}
+                  {isSuperAdmin && showProductColumn('template') && (
                     <td>
                       <span className="badge bg-secondary">
                         {product.restaurantTemplate ? (product.restaurantTemplate === 'italianFood' ? 'Italian Food' : product.restaurantTemplate.charAt(0).toUpperCase() + product.restaurantTemplate.slice(1)) : 'Clásico'}
                       </span>
                     </td>
                   )}
-                  <td>{product.menuName || (product.menuId || product.menu_id ? getMenuName(product.menuId || product.menu_id) : <span className="text-muted">Sin asignar</span>)}</td>
-                  <td>{product.sectionName || (product.sectionId || product.section_id ? getSectionName(product.sectionId || product.section_id) : <span className="text-muted">-</span>)}</td>
-                  <td style={{ minWidth: '160px' }}>
+                  {showProductColumn('menu') && (
+                  <td className="admin-products-cell-truncate">{product.menuName || (product.menuId || product.menu_id ? getMenuName(product.menuId || product.menu_id) : <span className="text-muted">Sin asignar</span>)}</td>
+                  )}
+                  {showProductColumn('section') && (
+                  <td className="admin-products-cell-truncate">{product.sectionName || (product.sectionId || product.section_id ? getSectionName(product.sectionId || product.section_id) : <span className="text-muted">-</span>)}</td>
+                  )}
+                  {showProductColumn('prices') && (
+                  <td className="admin-products-col-prices">
                     {product.prices && product.prices.length > 0 ? (
-                      <div className="prices-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                      <div className="admin-products-prices-badges">
                         {product.prices.map((price: any, idx: number) => (
                           <span key={idx} className="badge bg-primary" style={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}>
                             {formatPrice(price)}
@@ -1685,9 +1803,11 @@ export default function Products() {
                       <span className="text-muted">-</span>
                     )}
                   </td>
-                  <td>
+                  )}
+                  {showProductColumn('icons') && (
+                  <td className="admin-products-col-icons">
                     {product.icons && product.icons.length > 0 ? (
-                      <div className="icons-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxWidth: '200px' }}>
+                      <div className="admin-products-icons-badges">
                         {product.icons.map((icon: string, idx: number) => (
                           <span key={idx} className="badge bg-info" style={{ margin: '2px 0' }}>
                             {icon}
@@ -1698,39 +1818,41 @@ export default function Products() {
                       <span className="text-muted">-</span>
                     )}
                   </td>
+                  )}
+                  {showProductColumn('status') && (
                   <td>
-                    <div className="d-flex align-items-center" style={{ gap: '8px' }}>
-                      <span className={`badge ${product.active ? 'bg-success' : 'bg-secondary'}`}>
-                        {product.active ? 'Activo' : 'Inactivo'}
-                      </span>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline-secondary btn-toggle-active"
-                        onClick={async () => {
-                          try {
-                            await api.put(`/menu-items/${product.id}`, {
-                              active: !product.active,
-                            });
-                            loadData();
-                          } catch (error: any) {
-                            alert(error.response?.data?.message || 'Error al cambiar el estado del producto');
-                          }
-                        }}
-                      >
-                        {product.active ? 'Desactivar' : 'Activar'}
-                      </button>
-                    </div>
+                    <span className={`badge ${product.active ? 'bg-success' : 'bg-secondary'}`}>
+                      {product.active ? 'Activo' : 'Inactivo'}
+                    </span>
                   </td>
-                  <td>
-                    <button className="btn btn-sm btn-primary me-1" onClick={() => handleEdit(product)}>
+                  )}
+                  <td className="admin-products-col-actions">
+                    <div className="admin-products-actions">
+                    <button className="btn btn-sm btn-primary" onClick={() => handleEdit(product)}>
                       Editar
                     </button>
                     <button
                       type="button"
-                      className="btn btn-sm btn-outline-secondary btn-copy-menu me-1"
+                      className="btn btn-sm btn-outline-secondary btn-copy-menu"
                       onClick={() => handleCopyToMenuClick(product)}
                     >
-                      Copiar a otro menú
+                      Copiar
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary btn-toggle-active"
+                      onClick={async () => {
+                        try {
+                          await api.put(`/menu-items/${product.id}`, {
+                            active: !product.active,
+                          });
+                          loadData();
+                        } catch (error: any) {
+                          alert(error.response?.data?.message || 'Error al cambiar el estado del producto');
+                        }
+                      }}
+                    >
+                      {product.active ? 'Desactivar' : 'Activar'}
                     </button>
                     <button 
                       className="btn btn-sm btn-danger" 
@@ -1738,6 +1860,7 @@ export default function Products() {
                     >
                       Eliminar
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1745,7 +1868,7 @@ export default function Products() {
           </table>
         </div>
 
-        <div className="d-md-none admin-products-mobile-list">
+        <div className="d-lg-none admin-products-mobile-list">
           {products.map((product, index) => {
             const templateShort = product.restaurantTemplate
               ? product.restaurantTemplate === 'italianFood'
@@ -1926,6 +2049,11 @@ export default function Products() {
           </nav>
         </div>
       )}
+
+        </>
+      )}
+
+      </div>
 
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -2311,9 +2439,6 @@ export default function Products() {
             </div>
           </div>
         </div>
-      )}
-
-        </>
       )}
 
       {/* Modal de límite de productos */}

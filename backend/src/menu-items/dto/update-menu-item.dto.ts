@@ -35,6 +35,11 @@ export class UpdateMenuItemDto {
   @IsOptional()
   active?: boolean;
 
+  @ApiProperty({ description: 'ID del menú', required: false })
+  @IsString()
+  @IsOptional()
+  menuId?: string;
+
   @ApiProperty({ description: 'ID de la sección', required: false })
   @IsString()
   @IsOptional()
