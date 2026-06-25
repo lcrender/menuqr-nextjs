@@ -92,6 +92,25 @@ export class EmailService implements OnModuleInit {
     }
   }
 
+  async sendUserTransactionalEmail(to: string, subject: string, html: string): Promise<void> {
+    if (this.transporter) {
+      try {
+        await this.transporter.sendMail({
+          from: this.getFrom(),
+          to,
+          subject,
+          html,
+        });
+        this.logger.log(`Email transaccional enviado a ${to} (${subject})`);
+      } catch (err) {
+        this.logger.error(`Error enviando email transaccional a ${to}:`, err);
+        throw err;
+      }
+    } else {
+      this.logger.log(`[DEV] Email transaccional a ${to} (${subject})`);
+    }
+  }
+
   async sendAdminNotificationEmail(to: string, subject: string, html: string): Promise<void> {
     if (this.transporter) {
       try {

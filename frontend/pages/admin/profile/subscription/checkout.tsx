@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../../../../lib/axios';
@@ -6,6 +6,7 @@ import { getPublicAppOrigin } from '../../../../lib/config';
 import AdminLayout from '../../../../components/AdminLayout';
 import AlertModal from '../../../../components/AlertModal';
 import { formatCurrency } from '../../../../lib/format-currency';
+import { getApiErrorMessage } from '../../../../lib/api-error-message';
 import {
   DEFAULT_PUBLIC_PLAN_LIMITS,
   fetchPublicPlanLimits,
@@ -13,6 +14,7 @@ import {
   formatProductsLine,
   formatRestaurantsLine,
 } from '../../../../lib/public-plan-limits';
+import { getPromoCodeFromQuery } from '../../../../lib/promo-query';
 import type { PricingData } from '../../../../components/PricingPlansGrid';
 
 type PlanSlug = 'starter' | 'pro' | 'premium';
@@ -59,6 +61,21 @@ export default function SubscriptionCheckoutPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState<{ title: string; message: string; variant: 'success' | 'error' } | null>(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoValidating, setPromoValidating] = useState(false);
+  const [promoRedeeming, setPromoRedeeming] = useState(false);
+  const [promoPreview, setPromoPreview] = useState<{
+    valid: boolean;
+    planMismatch: boolean;
+    grantPlan?: string;
+    grantPlanLabel: string;
+    applicablePlans: string[];
+    applicablePlanLabels: string[];
+    grantDurationMonths: number;
+    benefitEndsAt: string | null;
+    codeValidUntil: string;
+    message?: string;
+  } | null>(null);
 
   useEffect(() => {
     let c = false;
@@ -180,6 +197,86 @@ export default function SubscriptionCheckoutPage() {
     !!activePaid &&
     !!planSlug &&
     String(activePaid.subscriptionPlan ?? '').toLowerCase() === planSlug;
+
+  const promoFromUrl = useMemo(
+    () => (router.isReady ? getPromoCodeFromQuery(router.query) : ''),
+    [router.isReady, router.query.promo, router.query.code],
+  );
+  const promoAutoValidated = useRef(false);
+
+  useEffect(() => {
+    if (!promoFromUrl) return;
+    setPromoCode(promoFromUrl);
+  }, [promoFromUrl]);
+
+  useEffect(() => {
+    if (!router.isReady || !planSlug || !promoFromUrl || promoAutoValidated.current) return;
+    promoAutoValidated.current = true;
+
+    (async () => {
+      setPromoValidating(true);
+      setPromoPreview(null);
+      try {
+        const res = await api.post('/subscriptions/validate-promo-code', {
+          code: promoFromUrl,
+          contextPlanSlug: planSlug,
+        });
+        setPromoPreview(res.data);
+      } catch {
+        setPromoPreview(null);
+      } finally {
+        setPromoValidating(false);
+      }
+    })();
+  }, [router.isReady, planSlug, promoFromUrl]);
+
+  const promoReady =
+    !!promoPreview?.valid && !promoPreview.planMismatch && !!planSlug;
+
+  const handleValidatePromo = async () => {
+    const trimmed = promoCode.trim();
+    if (!trimmed || !planSlug) return;
+    setPromoValidating(true);
+    setPromoPreview(null);
+    try {
+      const res = await api.post('/subscriptions/validate-promo-code', {
+        code: trimmed,
+        contextPlanSlug: planSlug,
+      });
+      setPromoPreview(res.data);
+    } catch (err: any) {
+      setPromoPreview(null);
+      setAlert({
+        title: 'Código no válido',
+        message: getApiErrorMessage(err, 'No se pudo validar el código promocional.'),
+        variant: 'error',
+      });
+    } finally {
+      setPromoValidating(false);
+    }
+  };
+
+  const handleRedeemPromo = async () => {
+    const trimmed = promoCode.trim();
+    if (!trimmed || !planSlug || !promoReady) return;
+    setPromoRedeeming(true);
+    try {
+      await api.post('/subscriptions/redeem-promo-code', {
+        code: trimmed,
+        contextPlanSlug: planSlug,
+      });
+      const grantPlan = promoPreview?.grantPlan || planSlug;
+      router.push(`/admin?promo=1&plan=${encodeURIComponent(grantPlan)}`);
+    } catch (err: any) {
+      setAlert({
+        title: 'No se pudo activar',
+        message: getApiErrorMessage(err, 'No se pudo canjear el código promocional.'),
+        variant: 'error',
+      });
+    } finally {
+      setPromoRedeeming(false);
+    }
+  };
 
   const handleSubscribe = async () => {
     if (!planSlug || !acceptedTerms || !planRow || isSameActivePlan) return;
@@ -330,6 +427,63 @@ export default function SubscriptionCheckoutPage() {
               ))}
             </ul>
 
+            <div className="border-top pt-3 mb-3">
+              <span className="small text-muted d-block mb-2">Código promocional</span>
+              <div className="input-group mb-2">
+                <input
+                  className="form-control"
+                  placeholder="¿Tenés un código promocional?"
+                  value={promoCode}
+                  onChange={(e) => {
+                    setPromoCode(e.target.value.toUpperCase());
+                    setPromoPreview(null);
+                  }}
+                  disabled={promoValidating || promoRedeeming || submitting}
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={handleValidatePromo}
+                  disabled={!promoCode.trim() || promoValidating || promoRedeeming || submitting}
+                >
+                  {promoValidating ? 'Validando…' : 'Validar'}
+                </button>
+              </div>
+              {promoPreview?.planMismatch && (
+                <div className="alert alert-warning small py-2 mb-2" role="status">
+                  {promoPreview.message}
+                  {promoPreview.applicablePlans?.length === 1 && (
+                    <>
+                      {' '}
+                      <Link
+                        href={`/admin/profile/subscription/checkout?plan=${promoPreview.applicablePlans[0]}${promoCode.trim() ? `&promo=${encodeURIComponent(promoCode.trim())}` : ''}`}
+                      >
+                        Ir al checkout {promoPreview.applicablePlanLabels[0]}
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+              {promoPreview?.valid && !promoPreview.planMismatch && (
+                <div className="alert alert-success small py-2 mb-2" role="status">
+                  <span className="badge bg-success me-2">Plan: {promoPreview.grantPlanLabel}</span>
+                  {promoPreview.grantPlanLabel} gratis por {promoPreview.grantDurationMonths} mes(es)
+                  {promoPreview.benefitEndsAt && (
+                    <> (hasta {new Date(promoPreview.benefitEndsAt).toLocaleDateString('es-AR')})</>
+                  )}
+                  . Código canjeable hasta{' '}
+                  {new Date(promoPreview.codeValidUntil).toLocaleDateString('es-AR')}.
+                </div>
+              )}
+              {promoPreview && !promoPreview.valid && !promoPreview.planMismatch && promoPreview.message && (
+                <div className="alert alert-danger small py-2 mb-2" role="alert">
+                  {promoPreview.message}
+                </div>
+              )}
+            </div>
+
+            {!promoReady && (
+            <>
             <div className="border-top pt-3 mb-3">
               <span className="small text-muted d-block mb-2">Datos de facturación</span>
               <div className="row g-2 mb-3">
@@ -515,6 +669,26 @@ export default function SubscriptionCheckoutPage() {
                 />
               </div>
             </div>
+            </>
+            )}
+
+            {promoReady && (
+              <>
+                <div className="rounded bg-light p-3 mb-3 text-center">
+                  <p className="mb-2">
+                    Este código activa <strong>{promoPreview?.grantPlanLabel}</strong> gratis sin pago.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-success btn-lg w-100"
+                  disabled={promoRedeeming}
+                  onClick={handleRedeemPromo}
+                >
+                  {promoRedeeming ? 'Activando…' : 'Activar código promocional'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

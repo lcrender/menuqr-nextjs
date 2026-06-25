@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, Request, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RestaurantsService } from './restaurants.service';
+import { DashboardWelcomeService } from '../dashboard-welcome/dashboard-welcome.service';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 import { TransferRestaurantOwnerDto } from './dto/transfer-restaurant-owner.dto';
@@ -11,7 +12,10 @@ import { Roles } from '../common/decorators/roles.decorator';
 @ApiBearerAuth()
 @Roles('ADMIN', 'SUPER_ADMIN')
 export class RestaurantsController {
-  constructor(private readonly restaurantsService: RestaurantsService) {}
+  constructor(
+    private readonly restaurantsService: RestaurantsService,
+    private readonly dashboardWelcome: DashboardWelcomeService,
+  ) {}
 
   @Get('config-state')
   @ApiOperation({ summary: 'Estado de configuración del restaurante seleccionado' })
@@ -46,6 +50,18 @@ export class RestaurantsController {
       };
     }
     return this.restaurantsService.getDashboardStats(tenantId);
+  }
+
+  @Get('dashboard-welcome')
+  @ApiOperation({ summary: 'Mensaje de bienvenida del dashboard según plan del tenant' })
+  async getDashboardWelcome(@Request() req: any, @Query('plan') plan?: string) {
+    return this.dashboardWelcome.resolveForUser(req.user.id, plan);
+  }
+
+  @Get('dashboard-cta-card')
+  @ApiOperation({ summary: 'Contenido de la card promocional del dashboard según plan' })
+  async getDashboardCtaCard(@Request() req: any, @Query('plan') plan?: string) {
+    return this.dashboardWelcome.getCtaCardForUser(req.user.id, plan);
   }
 
   @Get('dashboard-cards')

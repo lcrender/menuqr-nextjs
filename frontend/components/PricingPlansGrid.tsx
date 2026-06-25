@@ -8,6 +8,7 @@ import {
   formatProductsLine,
   formatRestaurantsLine,
 } from '../lib/public-plan-limits';
+import { appendPromoToCheckoutUrl } from '../lib/promo-query';
 
 type PlanSlug = 'free' | 'starter' | 'pro' | 'premium';
 
@@ -60,6 +61,8 @@ interface PricingPlansGridProps {
   loadingPlan?: string | null;
   /** Precios por región desde GET /pricing (moneda y proveedor según billing_country). */
   pricingData?: PricingData | null;
+  /** Código promocional a preservar al ir al checkout (?promo=). */
+  promoCode?: string;
   /** Textos de presentación bajo el nombre de cada plan (solo homepage / marketing). */
   landingPlanTaglines?: boolean;
 }
@@ -69,6 +72,7 @@ export default function PricingPlansGrid({
   onSelectPlan,
   loadingPlan = null,
   pricingData = null,
+  promoCode,
   landingPlanTaglines = false,
 }: PricingPlansGridProps) {
   const router = useRouter();
@@ -109,7 +113,12 @@ export default function PricingPlansGrid({
   const handleCta = (planSlug?: PlanSlug) => {
     const isPaidPlan = planSlug === 'starter' || planSlug === 'pro' || planSlug === 'premium';
     if (isSubscription && planSlug && planSlug !== 'free') {
-      router.push(`/admin/profile/subscription/checkout?plan=${planSlug}&billing=${billingCycle}`);
+      router.push(
+        appendPromoToCheckoutUrl(
+          `/admin/profile/subscription/checkout?plan=${planSlug}&billing=${billingCycle}`,
+          promoCode,
+        ),
+      );
       return;
     }
     if (isSubscription && planSlug && onSelectPlan) {
@@ -126,7 +135,12 @@ export default function PricingPlansGrid({
           const token = localStorage.getItem('accessToken');
           const user = localStorage.getItem('user');
           if (token && user) {
-            router.push(`/admin/profile/subscription/checkout?plan=${planSlug}&billing=${billingCycle}`);
+            router.push(
+              appendPromoToCheckoutUrl(
+                `/admin/profile/subscription/checkout?plan=${planSlug}&billing=${billingCycle}`,
+                promoCode,
+              ),
+            );
             return;
           }
           localStorage.setItem('pendingPlan', String(planSlug));

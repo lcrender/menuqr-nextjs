@@ -208,7 +208,45 @@ export default function Admin() {
   const [dashboardCards, setDashboardCards] = useState<DashboardRestaurantCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [templateWelcomeName, setTemplateWelcomeName] = useState<string | null>(null);
+  const [promoAppliedMessage, setPromoAppliedMessage] = useState<string | null>(null);
+  const [dashboardWelcomeHtml, setDashboardWelcomeHtml] = useState<string | null>(null);
+  const [dashboardCtaCard, setDashboardCtaCard] = useState<{
+    title: string;
+    description: string;
+    buttonLink: string;
+    buttonText: string;
+  } | null>(null);
   const templateBannerReadRef = useRef(false);
+
+  const PROMO_PLAN_LABELS: Record<string, string> = {
+    starter: 'Starter',
+    pro: 'Pro',
+    premium: 'Premium',
+  };
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const { promo, plan } = router.query;
+    if (promo !== '1') return;
+
+    const planSlug = typeof plan === 'string' ? plan.toLowerCase() : '';
+    const planLabel = PROMO_PLAN_LABELS[planSlug] ?? (planSlug || 'tu plan');
+    setPromoAppliedMessage(
+      `Tu código promocional se aplicó correctamente. Ya tenés el plan ${planLabel} activo.`,
+    );
+    router.replace('/admin', undefined, { shallow: true });
+
+    const token = localStorage.getItem('accessToken');
+    const userData = localStorage.getItem('user');
+    if (token && userData) {
+      try {
+        const userObj = JSON.parse(userData);
+        loadStats(token, userObj);
+      } catch {
+        // ignore
+      }
+    }
+  }, [router.isReady, router.query]);
 
   useEffect(() => {
     if (loading || user?.role !== 'ADMIN' || templateBannerReadRef.current) return;
@@ -316,6 +354,35 @@ export default function Admin() {
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
   };
 
+  const loadDashboardCtaCard = async (planOverride?: string) => {
+    try {
+      const res = await api.get<{
+        title: string;
+        description: string;
+        buttonLink: string;
+        buttonText: string;
+      }>('/restaurants/dashboard-cta-card', {
+        params: planOverride ? { plan: planOverride } : undefined,
+      });
+      setDashboardCtaCard(res.data);
+    } catch (e) {
+      console.warn('No se pudo cargar la card del dashboard:', e);
+      setDashboardCtaCard(null);
+    }
+  };
+
+  const loadDashboardWelcome = async (planOverride?: string) => {
+    try {
+      const res = await api.get<{ html: string }>('/restaurants/dashboard-welcome', {
+        params: planOverride ? { plan: planOverride } : undefined,
+      });
+      setDashboardWelcomeHtml(res.data?.html ?? null);
+    } catch (e) {
+      console.warn('No se pudo cargar el mensaje de bienvenida del dashboard:', e);
+      setDashboardWelcomeHtml(null);
+    }
+  };
+
   const loadStats = async (_token: string, user: any) => {
     try {
       if (user.role === 'SUPER_ADMIN') {
@@ -350,6 +417,8 @@ export default function Admin() {
               console.warn('No se pudo actualizar el plan en localStorage:', e);
             }
           }
+          await loadDashboardWelcome(currentPlan);
+          await loadDashboardCtaCard(currentPlan);
         } catch (innerError) {
           console.error('Error cargando estadísticas (dashboard-stats):', innerError);
           setStats({
@@ -525,13 +594,26 @@ export default function Admin() {
 
       {user?.role === 'ADMIN' && stats && (
         <>
-          {!showEmptyTenantWizard && (
+          {(!showEmptyTenantWizard || promoAppliedMessage) && (
             <div className="admin-card mb-4">
-              <h5 className="admin-card-title">Bienvenido, {user?.firstName || user?.email}</h5>
+              {dashboardWelcomeHtml ? (
+                <div
+                  className="admin-card-title dashboard-welcome-html mb-0"
+                  dangerouslySetInnerHTML={{ __html: dashboardWelcomeHtml }}
+                />
+              ) : (
+                <h5 className="admin-card-title">Bienvenido, {user?.firstName || user?.email}</h5>
+              )}
+              {promoAppliedMessage ? (
+                <p className="text-success mb-0 mt-2" role="status">
+                  {promoAppliedMessage}
+                </p>
+              ) : null}
             </div>
           )}
 
-          <div className="row g-4 mb-4">
+          {!showEmptyTenantWizard && (
+            <div className="row g-4 mb-4">
             {stats.totalRestaurants !== undefined && stats.restaurantLimit !== undefined && (
               <div className="col-md-3 col-sm-6">
                 <div className="admin-stat-card h-100 d-flex flex-column">
@@ -587,21 +669,22 @@ export default function Admin() {
                 }}
               >
                 <p className="admin-stat-title mb-2" style={{ fontSize: '1rem' }}>
-                  ¿Necesitás crear más productos?
+                  {dashboardCtaCard?.title ?? '¿Necesitás crear más productos?'}
                 </p>
                 <p className="small text-muted mb-3" style={{ lineHeight: 1.4 }}>
-                  Probá por 30 días cualquiera de nuestros planes.
+                  {dashboardCtaCard?.description ?? 'Probá por 30 días cualquiera de nuestros planes.'}
                 </p>
                 <a
-                  href="/admin/profile/subscription"
+                  href={dashboardCtaCard?.buttonLink ?? '/admin/profile/subscription'}
                   className="btn btn-primary btn-sm align-self-start"
                   style={{ textDecoration: 'none', fontWeight: 600 }}
                 >
-                  Gestionar suscripción
+                  {dashboardCtaCard?.buttonText ?? 'Gestionar suscripción'}
                 </a>
               </div>
             </div>
           </div>
+          )}
         </>
       )}
 

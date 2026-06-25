@@ -17,8 +17,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const currentPath = router.pathname;
   const isHelpSection = currentPath.startsWith('/admin/help');
   const isConfigSection = currentPath.startsWith('/admin/config');
+  const isDashboardConfigSection = currentPath.startsWith('/admin/config/dashboard');
   const [helpMenuOpen, setHelpMenuOpen] = useState(isHelpSection);
   const [configMenuOpen, setConfigMenuOpen] = useState(isConfigSection);
+  const [dashboardConfigMenuOpen, setDashboardConfigMenuOpen] = useState(isDashboardConfigSection);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -67,6 +69,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       setConfigMenuOpen(true);
     }
   }, [isConfigSection]);
+
+  useEffect(() => {
+    if (isDashboardConfigSection) {
+      setDashboardConfigMenuOpen(true);
+      setConfigMenuOpen(true);
+    }
+  }, [isDashboardConfigSection]);
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -348,6 +357,68 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                           >
                             Límites de planes
                           </Link>
+                        </li>
+                        <li className="admin-nav-item">
+                          <Link
+                            href="/admin/config/promo-codes"
+                            className={`admin-nav-link ${currentPath === '/admin/config/promo-codes' ? 'active' : ''}`}
+                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            Códigos promo
+                          </Link>
+                        </li>
+                        <li className="admin-nav-item">
+                          <button
+                            type="button"
+                            className={`admin-nav-link w-100 text-start d-flex justify-content-between align-items-center ${isDashboardConfigSection ? 'active' : ''}`}
+                            onClick={() => setDashboardConfigMenuOpen(!dashboardConfigMenuOpen)}
+                            style={{
+                              fontSize: '0.9rem',
+                              paddingLeft: '30px',
+                              border: 'none',
+                              cursor: 'pointer',
+                              background: 'transparent',
+                            }}
+                          >
+                            <span>Dashboard</span>
+                            <span
+                              style={{
+                                transform: dashboardConfigMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.3s',
+                                fontSize: '0.75rem',
+                              }}
+                            >
+                              ▼
+                            </span>
+                          </button>
+                          {dashboardConfigMenuOpen && (
+                            <ul
+                              className="admin-subnav"
+                              style={{ listStyle: 'none', paddingLeft: '20px', marginTop: '4px' }}
+                            >
+                              <li className="admin-nav-item">
+                                <Link
+                                  href="/admin/config/dashboard/welcome-messages"
+                                  className={`admin-nav-link ${currentPath === '/admin/config/dashboard/welcome-messages' ? 'active' : ''}`}
+                                  style={{ fontSize: '0.85rem', paddingLeft: '40px' }}
+                                  onClick={() => setMobileNavOpen(false)}
+                                >
+                                  Mensajes bienvenida
+                                </Link>
+                              </li>
+                              <li className="admin-nav-item">
+                                <Link
+                                  href="/admin/config/dashboard/cta-card"
+                                  className={`admin-nav-link ${currentPath === '/admin/config/dashboard/cta-card' ? 'active' : ''}`}
+                                  style={{ fontSize: '0.85rem', paddingLeft: '40px' }}
+                                  onClick={() => setMobileNavOpen(false)}
+                                >
+                                  Mensaje card
+                                </Link>
+                              </li>
+                            </ul>
+                          )}
                         </li>
                         <li className="admin-nav-item">
                           <Link

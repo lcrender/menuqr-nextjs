@@ -157,6 +157,40 @@ export class SubscriptionService {
     return sub;
   }
 
+  async cancelActiveInternalSubscriptions(
+    userId: string,
+    exceptExternalId?: string,
+  ): Promise<void> {
+    await this.postgres.executeRaw(
+      `UPDATE subscriptions SET status = 'canceled', updated_at = NOW()
+       WHERE user_id = $1 AND payment_provider = 'internal'::"PaymentProvider" AND status = 'active'::"SubscriptionStatus"
+       AND ($2::text IS NULL OR external_subscription_id != $2)`,
+      [userId, exceptExternalId ?? null],
+    );
+  }
+
+  async expireDuePromoSubscriptions(): Promise<number> {
+    const rows = await this.postgres.queryRaw<any>(
+      `SELECT id, user_id as "userId", external_subscription_id as "externalSubscriptionId"
+       FROM subscriptions
+       WHERE status = 'active'::"SubscriptionStatus"
+         AND payment_provider = 'internal'::"PaymentProvider"
+         AND external_subscription_id LIKE 'promo-%'
+         AND current_period_end IS NOT NULL
+         AND current_period_end < NOW()`,
+    );
+
+    for (const row of rows) {
+      await this.postgres.executeRaw(
+        `UPDATE subscriptions SET status = 'expired'::"SubscriptionStatus", updated_at = NOW() WHERE id = $1`,
+        [row.id],
+      );
+      await this.syncTenantPlanFromSubscription(row.userId);
+      this.logger.log(`Promo subscription expired: ${row.externalSubscriptionId} user=${row.userId}`);
+    }
+    return rows.length;
+  }
+
   async updateStatus(
     provider: PaymentProvider,
     externalSubscriptionId: string,

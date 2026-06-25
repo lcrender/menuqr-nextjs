@@ -7,6 +7,8 @@ import { SubscriptionService } from '../subscription/subscription.service';
 import { SubscriptionCheckoutDto } from './dto/subscription-checkout.dto';
 import { PaymentHistoryService } from './payment-history.service';
 import type { PaymentAttemptStatus } from './payment-history.service';
+import { PromoCodesService } from '../promo-codes/promo-codes.service';
+import { ValidatePromoCodeDto, RedeemPromoCodeDto } from '../promo-codes/dto/promo-code-action.dto';
 
 @ApiTags('subscriptions')
 @Controller('subscriptions')
@@ -18,6 +20,7 @@ export class SubscriptionController {
     private readonly paymentService: PaymentService,
     private readonly subscriptionService: SubscriptionService,
     private readonly paymentHistoryService: PaymentHistoryService,
+    private readonly promoCodesService: PromoCodesService,
   ) {}
 
   @Get('me')
@@ -274,6 +277,18 @@ export class SubscriptionController {
     return [...normalizedPayments, ...normalizedWebhooks]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, limit);
+  }
+
+  @Post('validate-promo-code')
+  @ApiOperation({ summary: 'Validar código promocional (preview)' })
+  async validatePromoCode(@Body() body: ValidatePromoCodeDto) {
+    return this.promoCodesService.validateCode(body.code, body.contextPlanSlug);
+  }
+
+  @Post('redeem-promo-code')
+  @ApiOperation({ summary: 'Canjear código promocional 100% gratis' })
+  async redeemPromoCode(@Request() req: any, @Body() body: RedeemPromoCodeDto) {
+    return this.promoCodesService.redeemCode(req.user.id, body.code, body.contextPlanSlug);
   }
 
   @Post('create')

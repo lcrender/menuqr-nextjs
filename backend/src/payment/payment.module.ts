@@ -17,6 +17,7 @@ import { AppSettingsModule } from '../app-settings/app-settings.module';
 import { PlanLimitsModule } from '../common/plan-limits/plan-limits.module';
 import { PaymentHistoryService } from './payment-history.service';
 import { AdminMessagesModule } from '../admin-messages/admin-messages.module';
+import { PromoCodesModule } from '../promo-codes/promo-codes.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AdminMessagesModule } from '../admin-messages/admin-messages.module';
     AppSettingsModule,
     PlanLimitsModule,
     AdminMessagesModule,
+    PromoCodesModule,
   ],
   controllers: [
     WebhooksController,

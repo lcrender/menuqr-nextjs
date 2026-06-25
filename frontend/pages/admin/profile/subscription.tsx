@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../../../lib/axios';
@@ -6,6 +6,7 @@ import AdminLayout from '../../../components/AdminLayout';
 import AlertModal from '../../../components/AlertModal';
 import { formatCurrency } from '../../../lib/format-currency';
 import PricingPlansGrid, { type BillingCycle, type PricingData } from '../../../components/PricingPlansGrid';
+import { getPromoCodeFromQuery } from '../../../lib/promo-query';
 
 type SubItem = {
   id: string;
@@ -92,6 +93,25 @@ export default function SubscriptionManagement() {
       });
     }
   };
+
+  const promoFromUrl = useMemo(
+    () => (router.isReady ? getPromoCodeFromQuery(router.query) : ''),
+    [router.isReady, router.query.promo, router.query.code],
+  );
+
+  useEffect(() => {
+    if (!router.isReady || !promoFromUrl) return;
+    const planRaw = typeof router.query.plan === 'string' ? router.query.plan.toLowerCase() : '';
+    if (planRaw === 'starter' || planRaw === 'pro' || planRaw === 'premium') {
+      const billing =
+        typeof router.query.billing === 'string' && router.query.billing.toLowerCase() === 'yearly'
+          ? 'yearly'
+          : 'monthly';
+      router.replace(
+        `/admin/profile/subscription/checkout?plan=${encodeURIComponent(planRaw)}&billing=${billing}&promo=${encodeURIComponent(promoFromUrl)}`,
+      );
+    }
+  }, [router.isReady, promoFromUrl, router.query.plan, router.query.billing]);
 
   useEffect(() => {
     const { success, cancel } = router.query;
@@ -255,6 +275,11 @@ export default function SubscriptionManagement() {
             <p className="text-muted small mb-3">
               Elige otro plan. Los precios y el proveedor de pago dependen de tu región (Argentina: MercadoPago / ARS; resto: PayPal / USD).
             </p>
+            {promoFromUrl && (
+              <div className="alert alert-secondary small py-2 mb-3" role="status">
+                Código promocional detectado: <strong>{promoFromUrl}</strong>. Elegí un plan de pago para continuar al checkout con el código ya cargado.
+              </div>
+            )}
             {hasActivePaidSubscription && (
               <div className="alert alert-info small py-2 mb-3" role="status">
                 Tenés una suscripción activa. Para contratar otro plan, primero cancelá la actual arriba; el sistema no permite dos suscripciones de pago activas a la vez.
@@ -264,6 +289,7 @@ export default function SubscriptionManagement() {
               variant="subscription"
               onSelectPlan={handleSelectPlan}
               pricingData={pricingData}
+              promoCode={promoFromUrl || undefined}
             />
           </div>
         </section>
