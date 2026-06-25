@@ -28,6 +28,12 @@ export default function Templates() {
   const normalizedPlan = (currentPlan || '').toLowerCase().replace(/[\s-]+/g, '_');
   const hasProTemplatesAccess =
     normalizedPlan === 'pro' || normalizedPlan === 'pro_team' || normalizedPlan === 'premium';
+  const previewSelectedTemplate = previewSelectedId
+    ? templates.find((t) => t.id === previewSelectedId)
+    : null;
+  const showUnlockProInPreview =
+    !!previewSelectedTemplate?.requiresProOrPremium && !hasProTemplatesAccess;
+  const proCheckoutHref = '/admin/profile/subscription/checkout?plan=pro';
 
   const openPreviewDrawer = () => {
     if (typeof window === 'undefined') return;
@@ -479,6 +485,14 @@ export default function Templates() {
               >
                 Abrir en nueva pestaña →
               </a>
+              {showUnlockProInPreview && (
+                <Link
+                  href={proCheckoutHref}
+                  className="admin-btn admin-templates-preview-drawer-unlock"
+                >
+                  Desbloquear plantillas Pro
+                </Link>
+              )}
             </div>
           </div>
         </div>
