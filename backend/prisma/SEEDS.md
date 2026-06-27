@@ -119,7 +119,54 @@ Este seed está pensado para que, dado un usuario concreto (por email), puedas d
 
 ---
 
-## 4. Notas y buenas prácticas
+## 4. Seed Lumina (plantilla Gourmet)
+
+### 4.1. `seed-lumina-gourmet.ts`
+
+Script: `prisma/seed-lumina-gourmet.ts`
+
+Datos alineados con la vista previa de la plantilla Gourmet (`frontend/data/preview-data.ts`): restaurante **Lumina**, menú **Carta**, 15 productos con descripciones, precios en EUR, iconos dietéticos y fotos de `/images/*.jpg`.
+
+Ejemplo de uso:
+
+```bash
+cd backend
+npm run db:seed:lumina -- usuario@ejemplo.com
+# o
+npx ts-node --project prisma/tsconfig.json prisma/seed-lumina-gourmet.ts usuario@ejemplo.com
+```
+
+En producción (Docker):
+
+```bash
+cd /opt/menuqr
+docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
+  'npm install ts-node@10.9.1 typescript@5.1.3 @types/node --no-save'
+docker compose -f docker-compose.prod.yml exec backend sh -c \
+  './node_modules/.bin/ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-lumina-gourmet.ts usuario@ejemplo.com'
+```
+
+Parámetro:
+
+- Email del usuario cuyo `tenantId` recibirá el restaurante.
+
+Lo que crea:
+
+1. Restaurante **Lumina** (`slug: lumina`, plantilla `gourmet`, colores, logo y portada de preview).
+2. Menú **Carta** (`slug: carta-gourmet`, publicado).
+3. Secciones: Entradas, Platos principales, Postres, Bebidas.
+4. 15 productos con precios, iconos (`vegetariano`, `vegano`) y fotos en `media_assets` (rutas `/images/...` servidas por el frontend).
+
+Es idempotente: si el restaurante o los productos ya existen, los reutiliza sin duplicar.
+
+Archivos:
+
+- `prisma/seed-lumina-gourmet.ts`
+- `prisma/data/lumina-gourmet-data.ts`
+
+---
+
+## 5. Notas y buenas prácticas
 
 - Todos los seeds usan `PrismaClient`, por lo que `DATABASE_URL` en tu `.env` debe apuntar al entorno correcto (desarrollo, staging, etc.).
 - Evita ejecutar seeds de ejemplo en producción salvo que sepas exactamente qué datos crean.

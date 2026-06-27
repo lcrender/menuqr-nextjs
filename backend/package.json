@@ -25,6 +25,7 @@
     "db:migrate:reset": "prisma migrate reset",
     "db:seed": "ts-node prisma/seed.ts",
     "db:seed:examples": "ts-node prisma/seed-examples.ts",
+    "db:seed:lumina": "ts-node --project prisma/tsconfig.json prisma/seed-lumina-gourmet.ts",
     "create-admin": "node scripts/create-admin.js",
     "list-super-admins": "node scripts/list-super-admins.js",
     "db:studio": "prisma studio",
