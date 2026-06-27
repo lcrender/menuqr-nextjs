@@ -4187,3 +4187,142 @@ body {
   color: #fff !important;
 }
 
+/* Modal editar producto */
+.admin-product-price-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-product-price-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-product-price-drag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding-bottom: 6px;
+}
+
+.admin-product-price-remove {
+  flex-shrink: 0;
+  min-width: 34px;
+  padding-inline: 0.55rem;
+}
+
+.admin-product-photo-preview {
+  position: relative;
+  width: 160px;
+  max-width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--admin-border, #dee2e6);
+  background: #f8f9fa;
+}
+
+.admin-product-photo-preview img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+.admin-product-photo-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(33, 37, 41, 0.78);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.admin-product-photo-remove-btn:hover {
+  background: rgba(220, 53, 69, 0.92);
+  transform: scale(1.04);
+}
+
+.admin-product-status-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-product-status-switches .form-check.form-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 1.75rem;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.admin-product-status-switches .form-check-input {
+  width: 2.5em;
+  height: 1.35em;
+  margin-left: 0;
+  margin-top: 0;
+  float: none;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.admin-product-status-switches .form-check-label {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--admin-text, #495057);
+}
+
+@media (max-width: 991.98px) {
+  .admin-product-edit-modal .modal-dialog {
+    margin: 0.75rem;
+    max-width: calc(100% - 1.5rem);
+  }
+
+  .admin-product-edit-modal .modal-body {
+    padding: 18px 16px !important;
+    max-height: calc(100vh - 140px) !important;
+  }
+
+  .admin-product-price-row {
+    gap: 8px;
+  }
+
+  .admin-product-price-fields {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .admin-product-price-fields .form-control {
+    font-size: 0.875rem;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .admin-product-photo-preview {
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  .admin-product-photo-dropzone {
+    width: 100%;
+  }
+}
+

@@ -77,6 +77,7 @@ export default function Products() {
   const [showProductWizard, setShowProductWizard] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showConfirmDeleteImage, setShowConfirmDeleteImage] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [productToCopy, setProductToCopy] = useState<any>(null);
@@ -2057,11 +2058,11 @@ export default function Products() {
 
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-lg">
+          <div className="modal-dialog modal-lg admin-product-edit-modal">
             <div className="modal-content" style={{ borderRadius: '10px', overflow: 'hidden' }}>
               <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
                 <h5 className="modal-title" style={{ margin: 0, fontWeight: 600, fontSize: '1.15rem' }}>{editing ? 'Editar' : 'Nuevo'} Producto</h5>
-                <button type="button" className="btn-close" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); }} aria-label="Cerrar"></button>
+                <button type="button" className="btn-close" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); setShowConfirmDeleteImage(false); }} aria-label="Cerrar"></button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="modal-body" style={{ padding: '24px 28px', maxHeight: '70vh', overflowY: 'auto' }}>
@@ -2144,16 +2145,15 @@ export default function Products() {
                   <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
                     <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Precios</h6>
                   <div className="mb-3">
-                    <label className="form-label" style={{ marginBottom: '8px', fontWeight: 500, display: 'block' }}>Precios</label>
                     {formData.prices.length > 1 && (
-                      <p className="text-muted small mb-2" style={{ fontSize: '0.8125rem' }}>
+                      <p className="text-muted small mb-2 admin-product-price-reorder-hint" style={{ fontSize: '0.8125rem' }}>
                         Arrastrá cada fila desde ☰ para cambiar el orden en que se muestran los precios.
                       </p>
                     )}
                     {formData.prices.map((price, index) => (
                       <div
                         key={index}
-                        className="row mb-2 align-items-end"
+                        className={`admin-product-price-row${formData.prices.length > 1 ? ' admin-product-price-row--reorderable' : ''}`}
                         draggable={formData.prices.length > 1}
                         onDragStart={() => handlePriceDragStart(index)}
                         onDragOver={handlePriceDragOver}
@@ -2167,39 +2167,35 @@ export default function Products() {
                           transition: 'opacity 0.15s ease',
                         }}
                       >
-                        <div
-                          className="col-12 col-md-1 d-flex align-items-center justify-content-md-center pb-1 pb-md-0"
-                          title={formData.prices.length > 1 ? 'Arrastrar para reordenar' : undefined}
-                        >
-                          {formData.prices.length > 1 ? (
+                        {formData.prices.length > 1 ? (
+                          <div
+                            className="admin-product-price-drag"
+                            title="Arrastrar para reordenar"
+                          >
                             <span style={{ fontSize: '1.1rem', color: '#6c757d', userSelect: 'none' }} aria-hidden>
                               ☰
                             </span>
-                          ) : null}
-                        </div>
-                        <div className="col-12 col-md-3">
+                          </div>
+                        ) : null}
+                        <div className="admin-product-price-fields">
                           <input
                             type="text"
-                            className="form-control"
+                            className="form-control admin-product-price-currency"
                             placeholder="Moneda (USD, ARS)"
                             value={price.currency}
                             onChange={(e) => updatePrice(index, 'currency', e.target.value)}
                             required
                           />
-                        </div>
-                        <div className="col-12 col-md-3">
                           <input
                             type="text"
-                            className="form-control"
+                            className="form-control admin-product-price-label"
                             placeholder="Etiqueta (Opcional)"
                             value={price.label}
                             onChange={(e) => updatePrice(index, 'label', e.target.value)}
                           />
-                        </div>
-                        <div className="col-12 col-md-4">
                           <input
                             type="number"
-                            className="form-control"
+                            className="form-control admin-product-price-amount"
                             inputMode="decimal"
                             value={price.amount === null || price.amount === undefined ? '' : price.amount}
                             onChange={(e) => {
@@ -2222,17 +2218,16 @@ export default function Products() {
                             placeholder="Ej.: 12,50"
                           />
                         </div>
-                        <div className="col-12 col-md-1">
-                          {formData.prices.length > 1 && (
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-danger"
-                              onClick={() => removePrice(index)}
-                            >
-                              ×
-                            </button>
-                          )}
-                        </div>
+                        {formData.prices.length > 1 ? (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-danger admin-product-price-remove"
+                            onClick={() => removePrice(index)}
+                            aria-label="Eliminar precio"
+                          >
+                            ×
+                          </button>
+                        ) : null}
                       </div>
                     ))}
                     <button type="button" className="btn btn-sm btn-secondary" onClick={addPrice} style={{ marginTop: '8px' }}>
@@ -2241,30 +2236,9 @@ export default function Products() {
                   </div>
                   </section>
 
-                  <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
-                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Íconos</h6>
-                  <div className="mb-0">
-                    <label className="form-label" style={{ marginBottom: '8px', fontWeight: 500, display: 'block' }}>Íconos</label>
-                    <div className="d-flex flex-wrap gap-2">
-                      {availableIcons.map((icon) => (
-                        <button
-                          key={icon.code}
-                          type="button"
-                          className={`btn btn-sm ${
-                            formData.iconCodes.includes(icon.code) ? 'btn-primary' : 'btn-outline-primary'
-                          }`}
-                          onClick={() => toggleIcon(icon.code)}
-                        >
-                          {icon.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  </section>
-
                   {editing && (
                     <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
-                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Imágenes del producto</h6>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Imagen de producto</h6>
                     <div className="mb-0">
                       {!canAddEditPhotos ? (
                         <div
@@ -2326,6 +2300,7 @@ export default function Products() {
                         <>
                           {editPhotos.length === 0 ? (
                           <div
+                            className="admin-product-photo-dropzone"
                             style={{
                               border: `2px dashed ${editImageDragging ? '#007bff' : '#ccc'}`,
                               borderRadius: '8px',
@@ -2358,41 +2333,25 @@ export default function Products() {
                               Arrastra una imagen o haz clic para seleccionar
                             </p>
                           </div>
-                          ) : (
-                            <div style={{ marginBottom: '12px' }}>
-                              <p style={{ margin: 0, color: '#666', fontSize: '13px' }}>
-                                Una imagen por producto. Elimina la actual para subir otra (la imagen se borra del sistema).
-                              </p>
-                            </div>
-                          )}
+                          ) : null}
                           {editPhotos.length > 0 && editPhotos[0] && (
-                            <div className="mt-2" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                              <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
-                                <img
-                                  src={editPhotos[0].preview}
-                                  alt=""
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    borderRadius: '8px',
-                                    border: '1px solid #ddd',
-                                  }}
-                                />
-                              </div>
-                              <div>
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-danger"
-                                  onClick={(e) => { e.preventDefault(); removeEditImage(); }}
-                                  title="Eliminar imagen (se borra del sistema)"
-                                >
-                                  Eliminar imagen
-                                </button>
-                                <p style={{ margin: '6px 0 0', color: '#666', fontSize: '12px' }}>
-                                  Elimina esta imagen para poder subir otra.
-                                </p>
-                              </div>
+                            <div className="admin-product-photo-preview">
+                              <img
+                                src={editPhotos[0].preview}
+                                alt=""
+                              />
+                              <button
+                                type="button"
+                                className="admin-product-photo-remove-btn"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setShowConfirmDeleteImage(true);
+                                }}
+                                aria-label="Eliminar imagen"
+                                title="Eliminar imagen"
+                              >
+                                ×
+                              </button>
                             </div>
                           )}
                         </>
@@ -2401,34 +2360,62 @@ export default function Products() {
                     </section>
                   )}
 
+                  <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Íconos</h6>
+                  <div className="mb-0">
+                    <div className="d-flex flex-wrap gap-2">
+                      {availableIcons.map((icon) => (
+                        <button
+                          key={icon.code}
+                          type="button"
+                          className={`btn btn-sm ${
+                            formData.iconCodes.includes(icon.code) ? 'btn-primary' : 'btn-outline-primary'
+                          }`}
+                          onClick={() => toggleIcon(icon.code)}
+                        >
+                          {icon.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  </section>
+
                   <section style={{ marginBottom: 0 }}>
                     <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Estado</h6>
-                  <div className="mb-0">
-                    <div className="form-check" style={{ paddingLeft: '1.6em', marginTop: '4px' }}>
+                  <div className="mb-0 admin-product-status-switches">
+                    <div className="form-check form-switch">
                       <input
                         className="form-check-input"
                         type="checkbox"
+                        role="switch"
+                        id="product-active-switch"
                         checked={formData.active}
                         onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                       />
-                      <label className="form-check-label">Producto activo</label>
+                      <label className="form-check-label" htmlFor="product-active-switch">
+                        Producto activo
+                      </label>
                     </div>
                     {canHighlightProducts && (
-                      <div className="form-check" style={{ paddingLeft: '1.6em', marginTop: '8px' }}>
+                      <div className="form-check form-switch">
                         <input
                           className="form-check-input"
                           type="checkbox"
+                          role="switch"
+                          id="product-highlighted-switch"
                           checked={formData.highlighted}
                           onChange={(e) => setFormData({ ...formData, highlighted: e.target.checked })}
                         />
-                        <label className="form-check-label">Producto destacado</label>
+                        <label className="form-check-label" htmlFor="product-highlighted-switch">
+                          Producto destacado
+                        </label>
                       </div>
                     )}
                   </div>
                   </section>
                 </div>
                 <div className="modal-footer" style={{ padding: '16px 28px', borderTop: '1px solid #dee2e6', backgroundColor: '#f8f9fa', gap: '10px' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); setShowConfirmDeleteImage(false); }}>
                     Cancelar
                   </button>
                   <button type="submit" className="btn btn-primary">
@@ -2642,6 +2629,20 @@ export default function Products() {
       )}
 
       {/* Modal de confirmación para eliminar producto */}
+      <ConfirmModal
+        show={showConfirmDeleteImage}
+        title="Eliminar imagen"
+        message="¿Eliminar la imagen de este producto? Se borrará del sistema y podrás subir otra."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        onConfirm={async () => {
+          setShowConfirmDeleteImage(false);
+          await removeEditImage();
+        }}
+        onCancel={() => setShowConfirmDeleteImage(false)}
+      />
+
       <ConfirmModal
         show={showConfirmDelete}
         title="Eliminar Producto"
