@@ -2060,12 +2060,12 @@ export default function Products() {
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-lg admin-product-edit-modal">
             <div className="modal-content" style={{ borderRadius: '10px', overflow: 'hidden' }}>
-              <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
+              <div className="modal-header admin-product-edit-modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
                 <h5 className="modal-title" style={{ margin: 0, fontWeight: 600, fontSize: '1.15rem' }}>{editing ? 'Editar' : 'Nuevo'} Producto</h5>
                 <button type="button" className="btn-close" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); setShowConfirmDeleteImage(false); }} aria-label="Cerrar"></button>
               </div>
               <form onSubmit={handleSubmit}>
-                <div className="modal-body" style={{ padding: '24px 28px', maxHeight: '70vh', overflowY: 'auto' }}>
+                <div className="modal-body admin-product-edit-modal-body" style={{ padding: '24px 28px', maxHeight: '70vh', overflowY: 'auto' }}>
                   <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
                     <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Asignación</h6>
                   <div className="mb-3">
@@ -2414,7 +2414,7 @@ export default function Products() {
                   </div>
                   </section>
                 </div>
-                <div className="modal-footer" style={{ padding: '16px 28px', borderTop: '1px solid #dee2e6', backgroundColor: '#f8f9fa', gap: '10px' }}>
+                <div className="modal-footer admin-product-edit-modal-footer" style={{ padding: '16px 28px', borderTop: '1px solid #dee2e6', backgroundColor: '#f8f9fa', gap: '10px' }}>
                   <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); setShowConfirmDeleteImage(false); }}>
                     Cancelar
                   </button>

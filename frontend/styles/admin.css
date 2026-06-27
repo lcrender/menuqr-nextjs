@@ -4293,27 +4293,105 @@ body {
 
 @media (max-width: 991.98px) {
   .admin-product-edit-modal .modal-dialog {
-    margin: 0.75rem;
-    max-width: calc(100% - 1.5rem);
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+    height: calc(100dvh - 1rem);
+    max-height: calc(100dvh - 1rem);
   }
 
-  .admin-product-edit-modal .modal-body {
-    padding: 18px 16px !important;
-    max-height: calc(100vh - 140px) !important;
+  .admin-product-edit-modal .modal-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .admin-product-edit-modal-header {
+    padding: 12px 14px !important;
+    flex-shrink: 0;
+  }
+
+  .admin-product-edit-modal-header .modal-title {
+    font-size: 1rem !important;
+  }
+
+  .admin-product-edit-modal-body {
+    padding: 12px 14px !important;
+    max-height: none !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .admin-product-edit-modal-body > section {
+    margin-bottom: 12px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .admin-product-edit-modal-body > section:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .admin-product-edit-modal-body section h6 {
+    margin-bottom: 8px !important;
+    font-size: 0.8125rem !important;
+  }
+
+  .admin-product-edit-modal-body .mb-3 {
+    margin-bottom: 0.6rem !important;
+  }
+
+  .admin-product-edit-modal-body .form-label {
+    margin-bottom: 4px !important;
+    font-size: 0.875rem;
+  }
+
+  .admin-product-edit-modal-body .form-control,
+  .admin-product-edit-modal-body .form-select {
+    font-size: 0.875rem;
+    padding: 0.45rem 0.6rem;
+  }
+
+  .admin-product-edit-modal-body textarea.form-control {
+    min-height: 4.5rem;
+  }
+
+  .admin-product-edit-modal-body .text-muted.small {
+    margin-top: 4px !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 0.75rem !important;
   }
 
   .admin-product-price-row {
     gap: 8px;
+    margin-bottom: 8px;
   }
 
   .admin-product-price-fields {
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
-    gap: 8px;
+    gap: 6px;
   }
 
   .admin-product-price-fields .form-control {
-    font-size: 0.875rem;
-    padding: 0.45rem 0.55rem;
+    font-size: 0.8125rem;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .admin-product-edit-modal-body section .btn-sm.btn-secondary {
+    margin-top: 4px !important;
+  }
+
+  .admin-product-edit-modal-body .d-flex.flex-wrap.gap-2 {
+    gap: 6px !important;
+  }
+
+  .admin-product-edit-modal-body .d-flex.flex-wrap.gap-2 .btn-sm {
+    font-size: 0.8125rem;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .admin-product-status-switches {
+    gap: 8px;
   }
 
   .admin-product-photo-preview {
@@ -4321,8 +4399,31 @@ body {
     margin-inline: 0;
   }
 
+  .admin-product-photo-preview img {
+    aspect-ratio: 2 / 1;
+  }
+
   .admin-product-photo-dropzone {
     width: 100%;
+    padding: 14px !important;
+  }
+
+  .admin-product-photo-dropzone p {
+    font-size: 0.8125rem !important;
+  }
+
+  .admin-product-edit-modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 14px !important;
+    gap: 8px !important;
+    flex-shrink: 0;
+  }
+
+  .admin-product-edit-modal-footer .btn {
+    width: 100%;
+    margin: 0;
+    min-height: 44px;
   }
 }
 
