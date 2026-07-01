@@ -10,6 +10,7 @@ import {
   Max,
   Min,
   Validate,
+  ValidateIf,
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
@@ -56,10 +57,15 @@ export class UpdatePromoCodeDto {
   validUntil?: string;
 
   @IsOptional()
+  @IsBoolean()
+  unlimitedDuration?: boolean;
+
+  @ValidateIf((o: UpdatePromoCodeDto) => o.unlimitedDuration !== true)
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(120)
-  grantDurationMonths?: number;
+  grantDurationMonths?: number | null;
 
   @IsOptional()
   @IsInt()

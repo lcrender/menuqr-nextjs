@@ -13,6 +13,7 @@ import {
   addMonths,
   formatDateEsAr,
   formatPlanList,
+  isPromoUnlimitedDuration,
   normalizePromoCode,
   PLAN_LABELS,
   PROMO_PLAN_SLUGS,
@@ -28,7 +29,7 @@ export type PromoCodeRow = {
   applicablePlanSlugs: string[];
   validFrom: Date;
   validUntil: Date;
-  grantDurationMonths: number;
+  grantDurationMonths: number | null;
   maxRedemptions: number | null;
   maxRedemptionsPerUser: number;
   redemptionCount: number;
@@ -45,7 +46,8 @@ export type PromoValidateResult = {
   grantPlanLabel: string;
   applicablePlans: string[];
   applicablePlanLabels: string[];
-  grantDurationMonths: number;
+  grantDurationMonths: number | null;
+  unlimitedDuration: boolean;
   benefitEndsAt: string | null;
   codeValidUntil: string;
   planMismatch: boolean;
@@ -165,6 +167,12 @@ export class PromoCodesService {
       throw new BadRequestException('La fecha de expiración debe ser posterior a la fecha de inicio');
     }
 
+    const unlimited = dto.unlimitedDuration === true;
+    const grantMonths = unlimited ? null : (dto.grantDurationMonths ?? null);
+    if (!unlimited && grantMonths == null) {
+      throw new BadRequestException('Indicá los meses de beneficio o activá duración ilimitada');
+    }
+
     const id = `pc_${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
     await this.postgres.executeRaw(
       `INSERT INTO promo_codes (
@@ -182,7 +190,7 @@ export class PromoCodesService {
         JSON.stringify(dto.applicablePlanSlugs),
         validFrom,
         validUntil,
-        dto.grantDurationMonths,
+        grantMonths,
         dto.maxRedemptions ?? null,
         dto.maxRedemptionsPerUser ?? 1,
         dto.isActive !== false,
@@ -217,7 +225,11 @@ export class PromoCodesService {
     }
     if (dto.validFrom !== undefined) add('valid_from', new Date(dto.validFrom));
     if (dto.validUntil !== undefined) add('valid_until', new Date(dto.validUntil));
-    if (dto.grantDurationMonths !== undefined) add('grant_duration_months', dto.grantDurationMonths);
+    if (dto.unlimitedDuration === true) {
+      add('grant_duration_months', null);
+    } else if (dto.grantDurationMonths !== undefined) {
+      add('grant_duration_months', dto.grantDurationMonths);
+    }
     if (dto.maxRedemptions !== undefined) add('max_redemptions', dto.maxRedemptions);
     if (dto.maxRedemptionsPerUser !== undefined) add('max_redemptions_per_user', dto.maxRedemptionsPerUser);
     if (dto.isActive !== undefined) add('is_active', dto.isActive);
@@ -309,7 +321,11 @@ export class PromoCodesService {
       message = this.buildPlanMismatchMessage(promo, contextPlanSlug!);
     }
 
-    const benefitEndsAt = valid && !planMismatch ? addMonths(now, promo.grantDurationMonths) : null;
+    const unlimited = isPromoUnlimitedDuration(promo.grantDurationMonths);
+    const benefitEndsAt =
+      valid && !planMismatch && !unlimited && promo.grantDurationMonths != null
+        ? addMonths(now, promo.grantDurationMonths)
+        : null;
 
     return {
       valid: valid && !planMismatch,
@@ -319,6 +335,7 @@ export class PromoCodesService {
       applicablePlans: promo.applicablePlanSlugs,
       applicablePlanLabels: promo.applicablePlanSlugs.map((s) => PLAN_LABELS[s] ?? s),
       grantDurationMonths: promo.grantDurationMonths,
+      unlimitedDuration: unlimited,
       benefitEndsAt: benefitEndsAt ? benefitEndsAt.toISOString() : null,
       codeValidUntil: promo.validUntil.toISOString(),
       planMismatch,
@@ -331,7 +348,7 @@ export class PromoCodesService {
     userId: string,
     code: string,
     contextPlanSlug?: string,
-  ): Promise<{ subscriptionId: string; grantPlan: string; expiresAt: string }> {
+  ): Promise<{ subscriptionId: string; grantPlan: string; expiresAt: string | null }> {
     const preview = await this.validateCode(code, contextPlanSlug);
     if (!preview.valid) {
       throw new BadRequestException(preview.message ?? 'No se puede canjear este código');
@@ -368,7 +385,11 @@ export class PromoCodesService {
     const tenantId = userRows[0]?.tenantId ?? null;
 
     const now = new Date();
-    const expiresAt = addMonths(now, promo.grantDurationMonths);
+    const unlimited = isPromoUnlimitedDuration(promo.grantDurationMonths);
+    const expiresAt =
+      unlimited || promo.grantDurationMonths == null
+        ? null
+        : addMonths(now, promo.grantDurationMonths);
     const redemptionId = `pcr_${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
     const externalSubscriptionId = `promo-${redemptionId}`;
 
@@ -415,7 +436,7 @@ export class PromoCodesService {
     return {
       subscriptionId: subscription.id,
       grantPlan: promo.grantPlanSlug,
-      expiresAt: expiresAt.toISOString(),
+      expiresAt: expiresAt ? expiresAt.toISOString() : null,
     };
   }
 

@@ -1,12 +1,21 @@
-export const PROMO_PLAN_SLUGS = ['starter', 'pro', 'premium'] as const;
+export const PROMO_PLAN_SLUGS = ['starter', 'pro', 'pro_team', 'premium'] as const;
 export type PromoPlanSlug = (typeof PROMO_PLAN_SLUGS)[number];
+
+/** Planes con checkout de pago (no incluye pro_team). */
+export const PROMO_CHECKOUT_PLAN_SLUGS = ['starter', 'pro', 'premium'] as const;
+export type PromoCheckoutPlanSlug = (typeof PROMO_CHECKOUT_PLAN_SLUGS)[number];
 
 export const PLAN_LABELS: Record<string, string> = {
   starter: 'Starter',
   pro: 'Pro',
+  pro_team: 'Pro Team',
   premium: 'Premium',
   free: 'Free',
 };
+
+export function isPromoUnlimitedDuration(months: number | null | undefined): boolean {
+  return months == null;
+}
 
 export function normalizePromoCode(code: string): string {
   return code.trim().toUpperCase().replace(/\s+/g, '');

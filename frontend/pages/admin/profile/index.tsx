@@ -6,6 +6,7 @@ import AlertModal from '../../../components/AlertModal';
 import ProfilePersonalInfo, { type ProfileMe } from '../../../components/profile/ProfilePersonalInfo';
 import ProfileSecurity from '../../../components/profile/ProfileSecurity';
 import ProfileSubscription, { type SubscriptionItem } from '../../../components/profile/ProfileSubscription';
+import ProfileCoupons from '../../../components/profile/ProfileCoupons';
 import ProfilePaymentHistory from '../../../components/profile/ProfilePaymentHistory';
 
 export default function Profile() {
@@ -113,6 +114,8 @@ export default function Profile() {
               feedback={feedback}
               onClearFeedback={() => setFeedback(null)}
             />
+
+            <ProfileCoupons />
 
             {/* 4. Historial de pagos */}
             <ProfilePaymentHistory />

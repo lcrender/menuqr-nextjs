@@ -4,7 +4,7 @@ import AdminLayout from '../../../components/AdminLayout';
 import api from '../../../lib/axios';
 import { getApiErrorMessage } from '../../../lib/api-error-message';
 
-type PlanSlug = 'starter' | 'pro' | 'premium';
+type PlanSlug = 'starter' | 'pro' | 'pro_team' | 'premium';
 
 type PromoCode = {
   id: string;
@@ -14,7 +14,7 @@ type PromoCode = {
   applicablePlanSlugs: PlanSlug[];
   validFrom: string;
   validUntil: string;
-  grantDurationMonths: number;
+  grantDurationMonths: number | null;
   maxRedemptions: number | null;
   maxRedemptionsPerUser: number;
   redemptionCount: number;
@@ -35,6 +35,7 @@ type ReminderSettings = {
 const PLAN_OPTIONS: { slug: PlanSlug; label: string }[] = [
   { slug: 'starter', label: 'Starter' },
   { slug: 'pro', label: 'Pro' },
+  { slug: 'pro_team', label: 'Pro Team' },
   { slug: 'premium', label: 'Premium' },
 ];
 
@@ -46,6 +47,7 @@ const EMPTY_FORM = {
   validFrom: '',
   validUntil: '',
   grantDurationMonths: 3,
+  unlimitedDuration: false,
   maxRedemptions: '' as string | number,
   maxRedemptionsPerUser: 1,
   isActive: true,
@@ -140,7 +142,8 @@ export default function AdminConfigPromoCodes() {
       applicablePlanSlugs: [...c.applicablePlanSlugs],
       validFrom: formatDateInput(c.validFrom),
       validUntil: formatDateInput(c.validUntil),
-      grantDurationMonths: c.grantDurationMonths,
+      grantDurationMonths: c.grantDurationMonths ?? 3,
+      unlimitedDuration: c.grantDurationMonths == null,
       maxRedemptions: c.maxRedemptions ?? '',
       maxRedemptionsPerUser: c.maxRedemptionsPerUser,
       isActive: c.isActive,
@@ -163,6 +166,10 @@ export default function AdminConfigPromoCodes() {
       setError('El plan otorgado debe estar marcado en "Aplica en checkout de".');
       return;
     }
+    if (!form.unlimitedDuration && (!form.grantDurationMonths || form.grantDurationMonths < 1)) {
+      setError('Indicá los meses de beneficio o activá tiempo ilimitado.');
+      return;
+    }
     setSavingCode(true);
     setError(null);
     setSuccess(null);
@@ -174,7 +181,8 @@ export default function AdminConfigPromoCodes() {
         applicablePlanSlugs: form.applicablePlanSlugs,
         validFrom: new Date(form.validFrom).toISOString(),
         validUntil: new Date(form.validUntil).toISOString(),
-        grantDurationMonths: form.grantDurationMonths,
+        unlimitedDuration: form.unlimitedDuration,
+        grantDurationMonths: form.unlimitedDuration ? undefined : form.grantDurationMonths,
         maxRedemptions: form.maxRedemptions === '' ? undefined : Number(form.maxRedemptions),
         maxRedemptionsPerUser: form.maxRedemptionsPerUser,
         isActive: form.isActive,
@@ -365,7 +373,7 @@ export default function AdminConfigPromoCodes() {
                                 </span>
                               ))}
                             </td>
-                            <td>{c.grantDurationMonths}</td>
+                            <td>{c.grantDurationMonths == null ? 'Ilimitado' : c.grantDurationMonths}</td>
                             <td>{formatDisplayDate(c.validUntil)}</td>
                             <td>
                               {c.redemptionCount}
@@ -526,9 +534,11 @@ export default function AdminConfigPromoCodes() {
                       value={form.grantPlanSlug}
                       onChange={(e) => {
                         const slug = e.target.value as PlanSlug;
+                        const unlimited = slug === 'pro_team';
                         setForm((p) => ({
                           ...p,
                           grantPlanSlug: slug,
+                          unlimitedDuration: unlimited ? true : p.unlimitedDuration,
                           applicablePlanSlugs: p.applicablePlanSlugs.includes(slug)
                             ? p.applicablePlanSlugs
                             : [...p.applicablePlanSlugs, slug],
@@ -543,19 +553,45 @@ export default function AdminConfigPromoCodes() {
                     </select>
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label">Meses de plan gratis</label>
-                    <input
-                      type="number"
-                      min={1}
-                      className="form-control"
-                      value={form.grantDurationMonths}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          grantDurationMonths: parseInt(e.target.value, 10) || 1,
-                        }))
-                      }
-                    />
+                    <label className="form-label">Duración del beneficio</label>
+                    <div className="form-check form-switch mb-2">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="promo-unlimited-duration"
+                        checked={form.unlimitedDuration}
+                        onChange={(e) =>
+                          setForm((p) => ({
+                            ...p,
+                            unlimitedDuration: e.target.checked,
+                          }))
+                        }
+                      />
+                      <label className="form-check-label" htmlFor="promo-unlimited-duration">
+                        Tiempo ilimitado
+                      </label>
+                    </div>
+                    {!form.unlimitedDuration && (
+                      <input
+                        type="number"
+                        min={1}
+                        className="form-control"
+                        value={form.grantDurationMonths}
+                        onChange={(e) =>
+                          setForm((p) => ({
+                            ...p,
+                            grantDurationMonths: parseInt(e.target.value, 10) || 1,
+                          }))
+                        }
+                        placeholder="Meses de plan gratis"
+                      />
+                    )}
+                    {form.unlimitedDuration && (
+                      <p className="small text-muted mb-0">
+                        El plan no vencerá automáticamente (recomendado para Pro Team).
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="mb-3">

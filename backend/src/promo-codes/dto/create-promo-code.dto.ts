@@ -11,6 +11,7 @@ import {
   Min,
   MinLength,
   Validate,
+  ValidateIf,
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
@@ -27,6 +28,19 @@ class GrantInApplicableConstraint implements ValidatorConstraintInterface {
 
   defaultMessage() {
     return 'El plan otorgado debe estar incluido en los planes aplicables';
+  }
+}
+
+@ValidatorConstraint({ name: 'promoDurationOrUnlimited', async: false })
+class PromoDurationOrUnlimitedConstraint implements ValidatorConstraintInterface {
+  validate(_: unknown, args: ValidationArguments) {
+    const obj = args.object as CreatePromoCodeDto;
+    if (obj.unlimitedDuration === true) return true;
+    return typeof obj.grantDurationMonths === 'number' && obj.grantDurationMonths >= 1;
+  }
+
+  defaultMessage() {
+    return 'Indicá los meses de beneficio o activá duración ilimitada';
   }
 }
 
@@ -56,10 +70,18 @@ export class CreatePromoCodeDto {
   @IsDateString()
   validUntil!: string;
 
+  @IsOptional()
+  @IsBoolean()
+  unlimitedDuration?: boolean;
+
+  @ValidateIf((o: CreatePromoCodeDto) => !o.unlimitedDuration)
   @IsInt()
   @Min(1)
   @Max(120)
-  grantDurationMonths!: number;
+  grantDurationMonths?: number;
+
+  @Validate(PromoDurationOrUnlimitedConstraint)
+  private readonly _durationCheck?: boolean;
 
   @IsOptional()
   @IsInt()
