@@ -25,6 +25,7 @@ export default function PlantillaGourmetPage() {
       <Head>
         <title>{L.seo.title}</title>
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        <meta name="robots" content="index, follow" />
         <meta name="description" content={L.seo.description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {plantillaJsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: plantillaJsonLd }} /> : null}

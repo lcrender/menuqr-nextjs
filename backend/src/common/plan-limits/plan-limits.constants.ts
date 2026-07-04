@@ -34,10 +34,14 @@ export const STANDARD_TEMPLATE_IDS = [
   'foodie',
   'burgers',
   'italianFood',
+  'nightClub',
 ] as const;
 
 /** Solo Pro, Pro Team o Premium (restaurants.service). */
 export const GOURMET_TEMPLATE_ID = 'gourmet';
+
+/** Plantilla PRO con layout móvil (tabs laterales). Solo Pro, Pro Team o Premium. */
+export const PRO_MOBILE_TEMPLATE_ID = 'proMobile';
 
 export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
   return [
@@ -75,7 +79,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       gourmetTemplate: true,
       productPhotosAllowed: true,
       productHighlightAllowed: true,
-      proOnlyTemplatesInAdmin: ['gourmet'],
+      proOnlyTemplatesInAdmin: ['gourmet', 'proMobile'],
     },
     {
       key: 'pro_team',
@@ -87,7 +91,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       gourmetTemplate: true,
       productPhotosAllowed: true,
       productHighlightAllowed: true,
-      proOnlyTemplatesInAdmin: ['gourmet'],
+      proOnlyTemplatesInAdmin: ['gourmet', 'proMobile'],
       note: 'Asignación manual por super admin; no se sobrescribe por webhooks de suscripción.',
     },
     {
@@ -100,7 +104,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       gourmetTemplate: true,
       productPhotosAllowed: true,
       productHighlightAllowed: true,
-      proOnlyTemplatesInAdmin: ['gourmet'],
+      proOnlyTemplatesInAdmin: ['gourmet', 'proMobile'],
     },
   ];
 }

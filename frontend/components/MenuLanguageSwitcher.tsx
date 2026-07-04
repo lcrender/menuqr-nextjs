@@ -10,7 +10,7 @@ export type MenuLangManifestEntry = {
   enabledPublic?: boolean;
 };
 
-export type MenuTabVariant = 'classic' | 'minimalist' | 'foodie' | 'gourmet' | 'burgers' | 'italianFood';
+export type MenuTabVariant = 'classic' | 'minimalist' | 'foodie' | 'gourmet' | 'burgers' | 'italianFood' | 'proMobile' | 'nightClub';
 
 export type TemplateMenuLocalesProps = {
   locales: string[];
@@ -33,6 +33,8 @@ export function normalizeMenuTabVariant(template: string | undefined): MenuTabVa
   if (x === 'foodie') return 'foodie';
   if (x === 'burgers') return 'burgers';
   if (x === 'gourmet') return 'gourmet';
+  if (x === 'promobile') return 'proMobile';
+  if (x === 'nightclub') return 'nightClub';
   return 'classic';
 }
 
@@ -185,6 +187,20 @@ function menuTabButtonStyle(
         background: active ? primary : 'transparent',
         ...(variant === 'gourmet' && gourmetFontFamily ? { fontFamily: gourmetFontFamily } : {}),
       };
+    case 'proMobile':
+    case 'nightClub':
+      return {
+        ...base,
+        borderRadius: '7px',
+        padding: '8px 18px',
+        fontSize: '0.9rem',
+        fontWeight: active ? 600 : 500,
+        boxShadow: active ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+        border: active ? 'none' : `1px solid ${primary}`,
+        color: active ? 'white' : primary,
+        background: active ? primary : 'transparent',
+        lineHeight: 1.3,
+      };
     case 'classic':
     default:
       return {
@@ -208,6 +224,9 @@ function localeTabsWrapperStyle(variant: MenuTabVariant): CSSProperties {
     case 'foodie':
     case 'gourmet':
       return { marginBottom: '50px' };
+    case 'proMobile':
+    case 'nightClub':
+      return { marginBottom: '32px' };
     case 'italianFood':
       return { marginBottom: '40px' };
     case 'minimalist':
@@ -221,6 +240,9 @@ function localeTabsWrapperStyle(variant: MenuTabVariant): CSSProperties {
 function localeTabsGap(variant: MenuTabVariant): string {
   if (variant === 'burgers' || variant === 'foodie' || variant === 'gourmet' || variant === 'italianFood') {
     return '12px';
+  }
+  if (variant === 'proMobile' || variant === 'nightClub') {
+    return '10px';
   }
   return '10px';
 }

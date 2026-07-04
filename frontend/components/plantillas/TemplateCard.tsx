@@ -18,7 +18,13 @@ export default function TemplateCard({ template }: TemplateCardProps) {
           alt={`Vista previa plantilla menú QR ${template.nombre}`}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className={styles.cardImage}
+          className={`${styles.cardImage} ${
+            template.slug === 'modern-food'
+              ? styles.cardImageBiasTop
+              : template.slug === 'night-club'
+                ? styles.cardImageNightClub
+                : ''
+          }`}
           priority={false}
         />
       </div>

@@ -24,6 +24,8 @@ export const VALID_API_TEMPLATE_IDS = [
   'burgers',
   'italianFood',
   'gourmet',
+  'proMobile',
+  'nightClub',
 ] as const;
 
 const VALID_API_IDS = new Set<string>(VALID_API_TEMPLATE_IDS);
@@ -36,6 +38,9 @@ export function isValidApiTemplateId(id: string): boolean {
 export function catalogSlugToApiTemplateId(catalogSlug: string): string {
   if (catalogSlug === 'minimalista') return 'minimalist';
   if (catalogSlug === 'italian-food') return 'italianFood';
+  if (catalogSlug === 'pro-mobile') return 'proMobile';
+  if (catalogSlug === 'modern-food') return 'proMobile';
+  if (catalogSlug === 'night-club') return 'nightClub';
   return catalogSlug;
 }
 

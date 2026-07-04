@@ -45,7 +45,11 @@ export default function PlantillaLandingArticle({
 
       <header>
         <h1 className={styles.heroTitle}>{L.header.h1}</h1>
-        <p className={styles.lead}>{L.header.intro}</p>
+        {L.header.intro.split(/\n\n+/).map((paragraph) => (
+          <p key={paragraph} className={styles.lead}>
+            {paragraph}
+          </p>
+        ))}
       </header>
 
       {catalog ? (
@@ -55,7 +59,9 @@ export default function PlantillaLandingArticle({
             alt={`Vista previa de la plantilla menú QR ${catalog.nombre}`}
             fill
             sizes="(max-width: 720px) 100vw, 42rem"
-            className={styles.heroImage}
+            className={`${styles.heroImage} ${
+              catalog.slug === 'modern-food' ? styles.heroImageBiasTop : ''
+            }`}
             priority
           />
         </div>
@@ -134,11 +140,13 @@ export default function PlantillaLandingArticle({
               {p}
             </p>
           ))}
-          <ul className={styles.list}>
-            {L.imagenesProductos.items.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
+          {L.imagenesProductos.items.length > 0 ? (
+            <ul className={styles.list}>
+              {L.imagenesProductos.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
 
@@ -209,11 +217,13 @@ export default function PlantillaLandingArticle({
               {p}
             </p>
           ))}
-          <ul className={styles.list}>
-            {L.identidadVisual.items.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
+          {L.identidadVisual.items.length > 0 ? (
+            <ul className={styles.list}>
+              {L.identidadVisual.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
 
@@ -265,7 +275,9 @@ export default function PlantillaLandingArticle({
           <h2 className={styles.h2} id={`${idPrefix}-cta`}>
             {L.cta.heading}
           </h2>
-          <p>{L.cta.body}</p>
+          {L.cta.body.split(/\n\n+/).map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
           <Link href={L.cta.primaryHref} className={styles.btnPrimary}>
             {L.cta.primaryLabel}
           </Link>

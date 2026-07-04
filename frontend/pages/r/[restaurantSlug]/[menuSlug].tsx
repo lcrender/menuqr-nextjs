@@ -22,6 +22,8 @@ import FoodieTemplate from '../../../templates/foodie/FoodieTemplate';
 import BurgersTemplate from '../../../templates/burgers/BurgersTemplate';
 import ItalianFoodTemplate from '../../../templates/italianfood/ItalianFoodTemplate';
 import GourmetTemplate from '../../../templates/gourmet/GourmetTemplate';
+import ProMobileTemplate from '../../../templates/promobile/ProMobileTemplate';
+import NightClubTemplate from '../../../templates/nightclub/NightClubTemplate';
 
 interface MenuSection {
   id: string;
@@ -395,6 +397,10 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
     templateBody = <BurgersTemplate {...templateProps} />;
   } else if (template === 'gourmet') {
     templateBody = <GourmetTemplate {...templateProps} />;
+  } else if (template === 'proMobile') {
+    templateBody = <ProMobileTemplate {...templateProps} />;
+  } else if (template === 'nightClub') {
+    templateBody = <NightClubTemplate {...templateProps} />;
   } else if (template === 'italianFood') {
     templateBody = <ItalianFoodTemplate {...templateProps} />;
   } else {

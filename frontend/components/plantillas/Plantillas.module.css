@@ -159,6 +159,15 @@
 
 .cardImage {
   object-fit: cover;
+  object-position: center center;
+}
+
+.cardImageBiasTop {
+  object-position: center calc(50% + 60px);
+}
+
+.cardImageNightClub {
+  object-position: center calc(50% - 160px);
 }
 
 .cardBody {

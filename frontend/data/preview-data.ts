@@ -57,7 +57,7 @@ export interface PreviewMenu {
   sections: MenuSection[];
 }
 
-const TEMPLATE_IDS = ['classic', 'minimalista', 'foodie', 'burgers', 'italian-food', 'gourmet'] as const;
+const TEMPLATE_IDS = ['classic', 'minimalista', 'foodie', 'burgers', 'italian-food', 'gourmet', 'modern-food', 'night-club'] as const;
 export type PreviewTemplateId = typeof TEMPLATE_IDS[number];
 
 /** Clásica: Bodegón Argentino, ARS */
@@ -811,6 +811,302 @@ const gourmetData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: Pr
   menus: [gourmetMenu],
 };
 
+const proMobileMenuDesayunosEs: PreviewMenu = {
+  id: 'preview-modern-food-desayunos-es',
+  slug: 'es-desayunos',
+  name: 'Desayunos',
+  description: 'Opciones para empezar el día, de 8:00 a 12:00.',
+  restaurantId: 'preview-pro-mobile',
+  restaurantName: 'Lumina',
+  restaurantSlug: 'preview-pro-mobile',
+  template: 'proMobile',
+  sections: [
+    {
+      id: 'mf-d-clasicos',
+      name: 'Clásicos',
+      items: [
+        { id: 'mf-d1', name: 'Café con leche', description: 'Con medialunas o tostadas.', prices: [{ currency: 'ARS', amount: 5500 }], icons: ['vegetariano'] },
+        { id: 'mf-d2', name: 'Cortado', description: 'Espresso con un toque de leche.', prices: [{ currency: 'ARS', amount: 4800 }], icons: ['vegetariano'] },
+        { id: 'mf-d3', name: 'Tostadas con manteca y mermelada', description: 'Pan de masa madre. Dos unidades.', prices: [{ currency: 'ARS', amount: 6500 }], icons: ['vegetariano'] },
+        { id: 'mf-d4', name: 'Medialunas', description: 'Dos unidades. Manteca o crema.', prices: [{ currency: 'ARS', amount: 4200 }], icons: ['vegetariano'] },
+        { id: 'mf-d5', name: 'Huevos revueltos', description: 'Con tostadas de campo y hierbas frescas.', prices: [{ currency: 'ARS', amount: 11000 }], icons: ['vegetariano'] },
+        { id: 'mf-d6', name: 'Omelette jamón y queso', description: 'Tres huevos, jamón cocido y queso cremoso.', prices: [{ currency: 'ARS', amount: 13500 }], icons: [] },
+      ],
+    },
+    {
+      id: 'mf-d-saludable',
+      name: 'Saludable',
+      items: [
+        { id: 'mf-d7', name: 'Avocado toast', description: 'Pan tostado, palta, huevo poché y semillas.', prices: [{ currency: 'ARS', amount: 12500 }], icons: ['vegetariano'] },
+        { id: 'mf-d8', name: 'Yogur con granola y frutas', description: 'Yogur natural, granola casera y fruta de estación.', prices: [{ currency: 'ARS', amount: 9800 }], icons: ['vegetariano'] },
+        { id: 'mf-d9', name: 'Bowl de açaí', description: 'Açaí, banana, granola y miel.', prices: [{ currency: 'ARS', amount: 11200 }], icons: ['vegano', 'vegetariano'] },
+      ],
+    },
+    {
+      id: 'mf-d-bebidas',
+      name: 'Bebidas',
+      items: [
+        { id: 'mf-d10', name: 'Jugo de naranja exprimido', description: 'Vaso 300 ml.', prices: [{ currency: 'ARS', label: '300 ml', amount: 6200 }], icons: ['vegano', 'vegetariano'] },
+        { id: 'mf-d11', name: 'Licuado de frutas', description: 'Banana, frutilla o mix. Con leche o agua.', prices: [{ currency: 'ARS', amount: 7500 }], icons: ['vegetariano'] },
+        { id: 'mf-d12', name: 'Té o infusión', description: 'Variedades a elección.', prices: [{ currency: 'ARS', amount: 3800 }], icons: ['vegano', 'vegetariano'] },
+      ],
+    },
+  ],
+};
+
+const proMobileMenuPrincipalEs: PreviewMenu = {
+  id: 'preview-modern-food-menu-principal-es',
+  slug: 'es-menu-principal',
+  name: 'Menú principal',
+  description: 'Platos de temporada y propuestas del chef.',
+  restaurantId: 'preview-pro-mobile',
+  restaurantName: 'Lumina',
+  restaurantSlug: 'preview-pro-mobile',
+  template: 'proMobile',
+  sections: [
+    {
+      id: 'g-entradas',
+      name: 'Entradas',
+      items: [
+        { id: 'g-e1', name: 'Carpaccio de res', description: 'Finas láminas con rúcula, parmesano y alcaparras.', prices: [{ currency: 'ARS', amount: 19500 }], icons: [], photos: [GOURMET_IMAGE('carpaccio-de-res')] },
+        { id: 'g-e2', name: 'Tartar de atún', description: 'Atún rojo, aguacate y chips de wonton.', prices: [{ currency: 'ARS', amount: 22000 }], icons: [], photos: [GOURMET_IMAGE('tartar-de-atun')] },
+        { id: 'g-e3', name: 'Burrata con tomate', description: 'Burrata cremosa, tomate confitado y albahaca.', prices: [{ currency: 'ARS', amount: 17500 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('burrata-con-tomate')] },
+      ],
+    },
+    {
+      id: 'g-principales',
+      name: 'Platos principales',
+      items: [
+        { id: 'g-p1', name: 'Solomillo con reducción', description: 'Solomillo de ternera, reducción de vino tinto y puré de papa.', prices: [{ currency: 'ARS', amount: 48000 }], icons: [], photos: [GOURMET_IMAGE('solomillo-con-reduccion')] },
+        { id: 'g-p2', name: 'Risotto de hongos', description: 'Arroz cremoso con hongos de estación y trufa.', prices: [{ currency: 'ARS', amount: 38000 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('risotto-de-setas')] },
+        { id: 'g-p3', name: 'Pescado del día', description: 'Pescado fresco según mercado, guarnición de estación.', prices: [{ currency: 'ARS', amount: 42000 }], icons: [], photos: [GOURMET_IMAGE('pescado-del-dia')] },
+        { id: 'g-p4', name: 'Cordero confitado', description: 'Pierna de cordero confitada con verduras glaseadas.', prices: [{ currency: 'ARS', amount: 45000 }], icons: [], photos: [GOURMET_IMAGE('cordero-confitado')] },
+        { id: 'g-p5', name: 'Pechuga de pato a la naranja', description: 'Pechuga sellada con reducción de naranja. Puré de batata.', prices: [{ currency: 'ARS', amount: 46000 }], icons: [], photos: [GOURMET_IMAGE('pechuga-de-pato-a-la-naranja')] },
+        { id: 'g-p6', name: 'Ravioli de langostinos', description: 'Ravioli relleno de langostinos con salsa de azafrán y espárragos.', prices: [{ currency: 'ARS', amount: 40000 }], icons: [], photos: [GOURMET_IMAGE('ravioli-de-langostinos')] },
+      ],
+    },
+    {
+      id: 'g-postres',
+      name: 'Postres',
+      items: [
+        { id: 'g-d1', name: 'Soufflé de chocolate', description: 'Soufflé caliente con helado de vainilla.', prices: [{ currency: 'ARS', amount: 12500 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('souffle-de-chocolate')] },
+        { id: 'g-d2', name: 'Tarta de queso', description: 'Tarta de queso cremosa con coulis de frutos rojos.', prices: [{ currency: 'ARS', amount: 11000 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('tarta-de-queso')] },
+        { id: 'g-d3', name: 'Sorbete de limón', description: 'Sorbete refrescante con menta.', prices: [{ currency: 'ARS', amount: 9500 }], icons: ['vegano', 'vegetariano'], photos: [GOURMET_IMAGE('sorbete-de-limon')] },
+      ],
+    },
+    {
+      id: 'g-bebidas',
+      name: 'Bebidas',
+      items: [
+        { id: 'g-b1', name: 'Agua mineral', description: 'Con o sin gas. 500 ml.', prices: [{ currency: 'ARS', label: '500 ml', amount: 4800 }], icons: [] },
+        { id: 'g-b2', name: 'Vino de la casa', description: 'Tinto o blanco. Copa o botella.', prices: [{ currency: 'ARS', label: 'Copa', amount: 9200 }, { currency: 'ARS', label: 'Botella', amount: 34000 }], icons: [] },
+        { id: 'g-b3', name: 'Café', description: 'Expresso, cortado, con leche o descafeinado.', prices: [{ currency: 'ARS', amount: 4500 }], icons: [] },
+      ],
+    },
+  ],
+};
+
+const proMobileMenuDesayunosEn: PreviewMenu = {
+  id: 'preview-modern-food-desayunos-en',
+  slug: 'en-desayunos',
+  name: 'Breakfast',
+  description: 'Options to start your day, from 8:00 AM to 12:00 PM.',
+  restaurantId: 'preview-pro-mobile',
+  restaurantName: 'Lumina',
+  restaurantSlug: 'preview-pro-mobile',
+  template: 'proMobile',
+  sections: [
+    {
+      id: 'mf-d-clasicos',
+      name: 'Classics',
+      items: [
+        { id: 'mf-d1', name: 'Latte', description: 'Served with croissants or toast.', prices: [{ currency: 'ARS', amount: 5500 }], icons: ['vegetariano'] },
+        { id: 'mf-d2', name: 'Cortado', description: 'Espresso with a touch of milk.', prices: [{ currency: 'ARS', amount: 4800 }], icons: ['vegetariano'] },
+        { id: 'mf-d3', name: 'Toast with butter and jam', description: 'Sourdough bread. Two slices.', prices: [{ currency: 'ARS', amount: 6500 }], icons: ['vegetariano'] },
+        { id: 'mf-d4', name: 'Croissants', description: 'Two pieces. Butter or cream.', prices: [{ currency: 'ARS', amount: 4200 }], icons: ['vegetariano'] },
+        { id: 'mf-d5', name: 'Scrambled eggs', description: 'With country toast and fresh herbs.', prices: [{ currency: 'ARS', amount: 11000 }], icons: ['vegetariano'] },
+        { id: 'mf-d6', name: 'Ham and cheese omelette', description: 'Three eggs, cooked ham and creamy cheese.', prices: [{ currency: 'ARS', amount: 13500 }], icons: [] },
+      ],
+    },
+    {
+      id: 'mf-d-saludable',
+      name: 'Healthy',
+      items: [
+        { id: 'mf-d7', name: 'Avocado toast', description: 'Toasted bread, avocado, poached egg and seeds.', prices: [{ currency: 'ARS', amount: 12500 }], icons: ['vegetariano'] },
+        { id: 'mf-d8', name: 'Yogurt with granola and fruit', description: 'Natural yogurt, house granola and seasonal fruit.', prices: [{ currency: 'ARS', amount: 9800 }], icons: ['vegetariano'] },
+        { id: 'mf-d9', name: 'Açaí bowl', description: 'Açaí, banana, granola and honey.', prices: [{ currency: 'ARS', amount: 11200 }], icons: ['vegano', 'vegetariano'] },
+      ],
+    },
+    {
+      id: 'mf-d-bebidas',
+      name: 'Drinks',
+      items: [
+        { id: 'mf-d10', name: 'Fresh orange juice', description: '300 ml glass.', prices: [{ currency: 'ARS', label: '300 ml', amount: 6200 }], icons: ['vegano', 'vegetariano'] },
+        { id: 'mf-d11', name: 'Fruit smoothie', description: 'Banana, strawberry or mix. With milk or water.', prices: [{ currency: 'ARS', amount: 7500 }], icons: ['vegetariano'] },
+        { id: 'mf-d12', name: 'Tea or herbal infusion', description: 'Assorted varieties.', prices: [{ currency: 'ARS', amount: 3800 }], icons: ['vegano', 'vegetariano'] },
+      ],
+    },
+  ],
+};
+
+const proMobileMenuPrincipalEn: PreviewMenu = {
+  id: 'preview-modern-food-menu-principal-en',
+  slug: 'en-menu-principal',
+  name: 'Main menu',
+  description: 'Seasonal dishes and chef\'s specials.',
+  restaurantId: 'preview-pro-mobile',
+  restaurantName: 'Lumina',
+  restaurantSlug: 'preview-pro-mobile',
+  template: 'proMobile',
+  sections: [
+    {
+      id: 'g-entradas',
+      name: 'Starters',
+      items: [
+        { id: 'g-e1', name: 'Beef carpaccio', description: 'Thin slices with arugula, parmesan and capers.', prices: [{ currency: 'ARS', amount: 19500 }], icons: [], photos: [GOURMET_IMAGE('carpaccio-de-res')] },
+        { id: 'g-e2', name: 'Tuna tartare', description: 'Bluefin tuna, avocado and wonton chips.', prices: [{ currency: 'ARS', amount: 22000 }], icons: [], photos: [GOURMET_IMAGE('tartar-de-atun')] },
+        { id: 'g-e3', name: 'Burrata with tomato', description: 'Creamy burrata, confit tomato and basil.', prices: [{ currency: 'ARS', amount: 17500 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('burrata-con-tomate')] },
+      ],
+    },
+    {
+      id: 'g-principales',
+      name: 'Main courses',
+      items: [
+        { id: 'g-p1', name: 'Beef tenderloin with reduction', description: 'Beef tenderloin, red wine reduction and mashed potato.', prices: [{ currency: 'ARS', amount: 48000 }], icons: [], photos: [GOURMET_IMAGE('solomillo-con-reduccion')] },
+        { id: 'g-p2', name: 'Mushroom risotto', description: 'Creamy rice with seasonal mushrooms and truffle.', prices: [{ currency: 'ARS', amount: 38000 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('risotto-de-setas')] },
+        { id: 'g-p3', name: 'Fish of the day', description: 'Fresh market fish with seasonal garnish.', prices: [{ currency: 'ARS', amount: 42000 }], icons: [], photos: [GOURMET_IMAGE('pescado-del-dia')] },
+        { id: 'g-p4', name: 'Confit lamb', description: 'Confit lamb leg with glazed vegetables.', prices: [{ currency: 'ARS', amount: 45000 }], icons: [], photos: [GOURMET_IMAGE('cordero-confitado')] },
+        { id: 'g-p5', name: 'Duck breast with orange', description: 'Seared breast with orange reduction and sweet potato purée.', prices: [{ currency: 'ARS', amount: 46000 }], icons: [], photos: [GOURMET_IMAGE('pechuga-de-pato-a-la-naranja')] },
+        { id: 'g-p6', name: 'Prawn ravioli', description: 'Prawn-filled ravioli with saffron sauce and green asparagus.', prices: [{ currency: 'ARS', amount: 40000 }], icons: [], photos: [GOURMET_IMAGE('ravioli-de-langostinos')] },
+      ],
+    },
+    {
+      id: 'g-postres',
+      name: 'Desserts',
+      items: [
+        { id: 'g-d1', name: 'Chocolate soufflé', description: 'Warm soufflé with vanilla ice cream.', prices: [{ currency: 'ARS', amount: 12500 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('souffle-de-chocolate')] },
+        { id: 'g-d2', name: 'Cheesecake', description: 'Creamy cheesecake with red berry coulis.', prices: [{ currency: 'ARS', amount: 11000 }], icons: ['vegetariano'], photos: [GOURMET_IMAGE('tarta-de-queso')] },
+        { id: 'g-d3', name: 'Lemon sorbet', description: 'Refreshing sorbet with mint.', prices: [{ currency: 'ARS', amount: 9500 }], icons: ['vegano', 'vegetariano'], photos: [GOURMET_IMAGE('sorbete-de-limon')] },
+      ],
+    },
+    {
+      id: 'g-bebidas',
+      name: 'Drinks',
+      items: [
+        { id: 'g-b1', name: 'Mineral water', description: 'Still or sparkling. 500 ml.', prices: [{ currency: 'ARS', label: '500 ml', amount: 4800 }], icons: [] },
+        { id: 'g-b2', name: 'House wine', description: 'Red or white. Glass or bottle.', prices: [{ currency: 'ARS', label: 'Glass', amount: 9200 }, { currency: 'ARS', label: 'Bottle', amount: 34000 }], icons: [] },
+        { id: 'g-b3', name: 'Coffee', description: 'Espresso, cortado, with milk or decaf.', prices: [{ currency: 'ARS', amount: 4500 }], icons: [] },
+      ],
+    },
+  ],
+};
+
+/** Night Club: tema oscuro, layout móvil, sin fotos. */
+const nightClubMenu: PreviewMenu = {
+  id: 'preview-night-club-menu',
+  slug: 'carta-nocturna',
+  name: 'Carta nocturna',
+  description: 'Cócteles de autor, tragos clásicos y propuestas para la pista.',
+  restaurantId: 'preview-night-club',
+  restaurantName: 'Neón Club',
+  restaurantSlug: 'preview-night-club',
+  template: 'nightClub',
+  sections: [
+    {
+      id: 'nc-cocktails',
+      name: 'Cócteles',
+      items: [
+        { id: 'nc-c1', name: 'Neón Spritz', description: 'Aperol, prosecco, soda y rodaja de naranja.', prices: [{ currency: 'ARS', amount: 8500 }], icons: [] },
+        { id: 'nc-c2', name: 'Purple Rain', description: 'Vodka, mora, limón y espuma de lavanda.', prices: [{ currency: 'ARS', amount: 9200 }], icons: [] },
+        { id: 'nc-c3', name: 'Smoky Old Fashioned', description: 'Whisky ahumado, bitter y azúcar.', prices: [{ currency: 'ARS', amount: 9800 }], icons: [] },
+        { id: 'nc-c4', name: 'Margarita clásica', description: 'Tequila, triple sec y lima. Sal en el borde.', prices: [{ currency: 'ARS', amount: 8800 }], icons: [] },
+      ],
+    },
+    {
+      id: 'nc-tragos',
+      name: 'Tragos',
+      items: [
+        { id: 'nc-t1', name: 'Gin Tonic', description: 'Gin premium, tónica y botánico a elección.', prices: [{ currency: 'ARS', amount: 7200 }], icons: [] },
+        { id: 'nc-t2', name: 'Fernet con cola', prices: [{ currency: 'ARS', amount: 5800 }], icons: [] },
+        { id: 'nc-t3', name: 'Vodka con jugo', description: 'Naranja, pomelo o cranberry.', prices: [{ currency: 'ARS', amount: 6200 }], icons: [] },
+        { id: 'nc-t4', name: 'Whisky en las rocas', description: 'Medida 50 ml.', prices: [{ currency: 'ARS', amount: 9500 }], icons: [] },
+      ],
+    },
+    {
+      id: 'nc-shots',
+      name: 'Shots',
+      items: [
+        { id: 'nc-s1', name: 'Tequila shot', prices: [{ currency: 'ARS', amount: 4200 }], icons: [] },
+        { id: 'nc-s2', name: 'Jägerbomb', description: 'Jägermeister y energy drink.', prices: [{ currency: 'ARS', amount: 6500 }], icons: [] },
+        { id: 'nc-s3', name: 'Kamikaze', description: 'Vodka, triple sec y lima.', prices: [{ currency: 'ARS', amount: 4800 }], icons: [] },
+      ],
+    },
+    {
+      id: 'nc-cervezas',
+      name: 'Cervezas',
+      items: [
+        { id: 'nc-b1', name: 'Lager artesanal', description: 'Pinta 500 ml.', prices: [{ currency: 'ARS', amount: 5500 }], icons: [] },
+        { id: 'nc-b2', name: 'IPA', description: 'Pinta 500 ml.', prices: [{ currency: 'ARS', amount: 6200 }], icons: [] },
+        { id: 'nc-b3', name: 'Corona', description: 'Botella 355 ml.', prices: [{ currency: 'ARS', amount: 4800 }], icons: [] },
+      ],
+    },
+    {
+      id: 'nc-vip',
+      name: 'VIP',
+      items: [
+        { id: 'nc-v1', name: 'Botella vodka premium', description: 'Incluye mixers y hielo. Hasta 4 personas.', prices: [{ currency: 'ARS', amount: 85000 }], icons: [] },
+        { id: 'nc-v2', name: 'Botella whisky 12 años', description: 'Servicio en mesa VIP.', prices: [{ currency: 'ARS', amount: 120000 }], icons: [] },
+        { id: 'nc-v3', name: 'Combo espumante', description: 'Dos botellas + picada fría.', prices: [{ currency: 'ARS', amount: 95000 }], icons: [] },
+      ],
+    },
+  ],
+};
+
+const nightClubData: { restaurant: PreviewRestaurant; menu: PreviewMenu } = {
+  restaurant: {
+    id: 'preview-night-club',
+    name: 'Neón Club',
+    slug: 'preview-night-club',
+    description:
+      '**Música, luces y buena energía** cada noche.\nCarta de cócteles de autor, tragos clásicos y mesas VIP en Palermo. Reservas por WhatsApp.',
+    address: 'Av. Córdoba 4200, Palermo, CABA',
+    phone: '+54 11 5555 4242',
+    email: 'reservas@neonclub.com.ar',
+    website: 'https://neonclub.com.ar',
+    template: 'nightClub',
+    primaryColor: '#b026ff',
+    secondaryColor: '#e879f9',
+    country: 'Argentina',
+    whatsapp: '54 11 5555 4242',
+    logoUrl: '/preview/logo-neon-club.png',
+    coverUrl: '/preview/portada-neon-club.png',
+  },
+  menu: nightClubMenu,
+};
+
+const proMobileData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: PreviewMenu[] } = {
+  restaurant: {
+    ...gourmetData.restaurant,
+    id: 'preview-pro-mobile',
+    slug: 'preview-pro-mobile',
+    template: 'proMobile',
+    description:
+      'En Lumina creemos que cada cena es un viaje. Cocina de autor con producto de estación, técnica contemporánea y un servicio atento en un ambiente íntimo y elegante en el corazón de Buenos Aires.',
+    address: 'Av. Santa Fe 2567, Palermo, CABA',
+    phone: '+54 11 5555 0102',
+    email: 'reservas@lumina.com.ar',
+    website: 'https://lumina.com.ar',
+    country: 'Argentina',
+  },
+  menu: proMobileMenuPrincipalEs,
+  menus: [
+    proMobileMenuDesayunosEs,
+    proMobileMenuPrincipalEs,
+    proMobileMenuDesayunosEn,
+    proMobileMenuPrincipalEn,
+  ],
+};
+
 export type PreviewDataResult = { restaurant: PreviewRestaurant; menu: PreviewMenu; menus?: PreviewMenu[] };
 
 const previewData: Record<PreviewTemplateId, PreviewDataResult> = {
@@ -820,6 +1116,8 @@ const previewData: Record<PreviewTemplateId, PreviewDataResult> = {
   burgers: burgersData,
   'italian-food': italianFoodData,
   gourmet: gourmetData,
+  'modern-food': proMobileData,
+  'night-club': nightClubData,
 };
 
 export function getPreviewData(templateId: string): PreviewDataResult | null {

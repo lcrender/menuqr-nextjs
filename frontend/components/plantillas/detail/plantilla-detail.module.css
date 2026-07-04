@@ -185,6 +185,11 @@
 
 .heroImage {
   object-fit: cover;
+  object-position: center center;
+}
+
+.heroImageBiasTop {
+  object-position: center calc(50% + 60px);
 }
 
 .badgeRow {

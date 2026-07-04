@@ -9,6 +9,8 @@ const CATALOG_SLUG_TO_PREVIEW_SLUG: Record<string, string> = {
   burgers: 'burgers',
   gourmet: 'gourmet',
   'italian-food': 'italian-food',
+  'modern-food': 'modern-food',
+  'night-club': 'night-club',
 };
 
 /**
@@ -18,6 +20,9 @@ const CATALOG_SLUG_TO_PREVIEW_SLUG: Record<string, string> = {
 const LEGACY_PREVIEW_ALIASES: Record<string, string> = {
   minimalist: 'minimalista',
   italianFood: 'italian-food',
+  proMobile: 'modern-food',
+  'pro-mobile': 'modern-food',
+  nightClub: 'night-club',
 };
 
 const PREVIEW_SLUG_TO_CATALOG_SLUG: Record<string, string> = {
@@ -27,6 +32,8 @@ const PREVIEW_SLUG_TO_CATALOG_SLUG: Record<string, string> = {
   burgers: 'burgers',
   gourmet: 'gourmet',
   'italian-food': 'italian-food',
+  'modern-food': 'modern-food',
+  'night-club': 'night-club',
 };
 
 export function catalogSlugToPreviewTemplateId(catalogSlug: string): string {

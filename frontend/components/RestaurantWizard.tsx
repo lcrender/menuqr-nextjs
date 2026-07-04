@@ -6,7 +6,7 @@ import ProvinceSelector from './ProvinceSelector';
 import CitySelector from './CitySelector';
 
 const WIZARD_TEMPLATES: Array<{
-  id: 'classic' | 'minimalist' | 'foodie' | 'burgers' | 'italianFood' | 'gourmet';
+  id: 'classic' | 'minimalist' | 'foodie' | 'burgers' | 'italianFood' | 'gourmet' | 'proMobile' | 'nightClub';
   name: string;
   desc: string;
   previewClass: string;
@@ -16,6 +16,8 @@ const WIZARD_TEMPLATES: Array<{
   { id: 'minimalist', name: 'Minimalista', desc: 'Diseño limpio y contemporáneo', previewClass: 'minimalist' },
   { id: 'foodie', name: 'Foodie', desc: 'Diseño gastronómico y apetitoso', previewClass: 'foodie' },
   { id: 'gourmet', name: 'Gourmet', desc: 'Estilo refinado y premium', previewClass: 'gourmet', requiresProOrPremium: true },
+  { id: 'proMobile', name: 'Modern Food', desc: 'Diseño moderno con tabs laterales y fotos de producto', previewClass: 'modern-food', requiresProOrPremium: true },
+  { id: 'nightClub', name: 'Neon Club', desc: 'Tema oscuro con tabs laterales, sin fotos', previewClass: 'night-club' },
   { id: 'burgers', name: 'Burgers', desc: 'Bold y dinámico estilo hamburguesería', previewClass: 'burgers' },
   { id: 'italianFood', name: 'Italian Food', desc: 'Elegante con colores de la bandera italiana', previewClass: 'italianfood' },
 ];

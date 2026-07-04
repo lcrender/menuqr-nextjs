@@ -87,12 +87,16 @@ const nextConfig = {
   // ========================================
   async redirects() {
     return [
-      // Redirección removida: la landing page se muestra en /
-      // {
-      //   source: '/',
-      //   destination: '/admin',
-      //   permanent: false,
-      // },
+      {
+        source: '/plantillas/pro-mobile',
+        destination: '/plantillas/modern-food',
+        permanent: true,
+      },
+      {
+        source: '/preview/pro-mobile',
+        destination: '/preview/modern-food',
+        permanent: true,
+      },
     ];
   },
 

@@ -28,6 +28,8 @@ export const TEMPLATE_NAMES: Record<string, string> = {
   burgers: 'Burgers',
   italianFood: 'Italian Food',
   gourmet: 'Gourmet',
+  proMobile: 'Modern Food',
+  nightClub: 'Neon Club',
 };
 
 /** Opciones de color comunes a todas las plantillas (los ejemplos ya usan estos colores). */
@@ -130,8 +132,20 @@ const GOURMET_OPTIONS: TemplateConfigOption[] = [
   { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista (sin placeholder si no hay foto).', type: 'boolean', default: true },
 ];
 
+/** Modern Food: colores, visibilidad del encabezado y fotos de productos. */
+const PRO_MOBILE_OPTIONS: TemplateConfigOption[] = [
+  ...COMMON_COLOR_OPTIONS,
+  ...VISIBILITY_OPTIONS,
+  { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista (sin placeholder si no hay foto).', type: 'boolean', default: true },
+];
+
+/** Night Club: layout móvil oscuro, sin fotos de productos. */
+const NIGHT_CLUB_OPTIONS: TemplateConfigOption[] = [
+  ...COMMON_COLOR_OPTIONS,
+  ...VISIBILITY_OPTIONS,
+];
+
 /**
- * Opciones de configuración disponibles por plantilla.
  * classic, minimalist y foodie incluyen además opciones de visibilidad (portada, logo, nombre, descripción).
  */
 export const TEMPLATE_CONFIG_SCHEMAS: Record<string, TemplateConfigOption[]> = {
@@ -141,4 +155,6 @@ export const TEMPLATE_CONFIG_SCHEMAS: Record<string, TemplateConfigOption[]> = {
   burgers: [...COMMON_COLOR_OPTIONS, BURGERS_SECTION_TITLE_SIZE, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   italianFood: [...COMMON_COLOR_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   gourmet: [...GOURMET_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  proMobile: [...PRO_MOBILE_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  nightClub: [...NIGHT_CLUB_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
 };

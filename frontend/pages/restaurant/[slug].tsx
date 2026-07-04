@@ -22,6 +22,8 @@ import FoodieTemplate from '../../templates/foodie/FoodieTemplate';
 import BurgersTemplate from '../../templates/burgers/BurgersTemplate';
 import ItalianFoodTemplate from '../../templates/italianfood/ItalianFoodTemplate';
 import GourmetTemplate from '../../templates/gourmet/GourmetTemplate';
+import ProMobileTemplate from '../../templates/promobile/ProMobileTemplate';
+import NightClubTemplate from '../../templates/nightclub/NightClubTemplate';
 
 // Códigos de país comunes para WhatsApp
 const countryCodes: { [key: string]: string } = {
@@ -446,6 +448,24 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
       <>
         <PublicHtmlSeoHead seo={displaySeo} />
         <GourmetTemplate {...templateProps} />
+      </>
+    );
+  }
+
+  if (template === 'proMobile') {
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <ProMobileTemplate {...templateProps} />
+      </>
+    );
+  }
+
+  if (template === 'nightClub') {
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <NightClubTemplate {...templateProps} />
       </>
     );
   }

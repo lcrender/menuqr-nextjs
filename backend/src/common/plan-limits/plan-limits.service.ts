@@ -3,6 +3,7 @@ import { PostgresService } from '../database/postgres.service';
 import {
   getTenantPlanLimitsCatalog,
   GOURMET_TEMPLATE_ID,
+  PRO_MOBILE_TEMPLATE_ID,
   STANDARD_TEMPLATE_IDS,
   TenantPlanKey,
   TenantPlanLimitsRow,
@@ -13,6 +14,7 @@ import {
 export const RESTAURANT_TEMPLATE_IDS = [
   ...STANDARD_TEMPLATE_IDS,
   GOURMET_TEMPLATE_ID,
+  PRO_MOBILE_TEMPLATE_ID,
 ] as const;
 
 export type PlanLimitPersistPayload = {
@@ -84,6 +86,11 @@ export class PlanLimitsService {
     return [];
   }
 
+  private mergeProOnlyTemplates(base: string[], fromDb: unknown): string[] {
+    const db = this.parseProOnlyTemplates(fromDb);
+    return [...new Set([...base, ...db])];
+  }
+
   private mergeRow(base: TenantPlanLimitsRow, o: OverrideRow): TenantPlanLimitsRow {
     const at =
       typeof o.auto_translate_monthly_per_user === 'number' && Number.isFinite(o.auto_translate_monthly_per_user)
@@ -98,7 +105,7 @@ export class PlanLimitsService {
       gourmetTemplate: o.gourmet_template,
       productPhotosAllowed: o.product_photos_allowed,
       productHighlightAllowed: o.product_highlight_allowed,
-      proOnlyTemplatesInAdmin: this.parseProOnlyTemplates(o.pro_only_templates),
+      proOnlyTemplatesInAdmin: this.mergeProOnlyTemplates(base.proOnlyTemplatesInAdmin, o.pro_only_templates),
     };
   }
 

@@ -74,6 +74,8 @@ function templateLabelFromSlug(card: DashboardRestaurantCard): string {
   if (t === 'foodie') return 'Foodie';
   if (t === 'burgers') return 'Burgers';
   if (t === 'gourmet') return 'Gourmet';
+  if (t === 'proMobile') return 'Modern Food';
+  if (t === 'nightClub') return 'Neon Club';
   return t || '';
 }
 

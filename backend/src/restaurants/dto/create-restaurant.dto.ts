@@ -70,12 +70,12 @@ export class CreateRestaurantDto {
 
   @ApiProperty({ 
     description: 'Template de diseño del restaurante', 
-    enum: ['classic', 'minimalist', 'foodie', 'burgers', 'italianFood', 'gourmet'],
+    enum: ['classic', 'minimalist', 'foodie', 'burgers', 'italianFood', 'gourmet', 'proMobile', 'nightClub'],
     default: 'classic',
     required: false 
   })
   @IsString()
-  @IsIn(['classic', 'minimalist', 'foodie', 'burgers', 'italianFood', 'gourmet'])
+  @IsIn(['classic', 'minimalist', 'foodie', 'burgers', 'italianFood', 'gourmet', 'proMobile', 'nightClub'])
   @IsOptional()
   template?: string;
 

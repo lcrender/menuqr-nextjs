@@ -7,6 +7,8 @@ export const PLANTILLA_STATIC_DETAIL_SLUGS = new Set<string>([
   'minimalista',
   'foodie',
   'gourmet',
+  'modern-food',
+  'night-club',
   'burgers',
   'italian-food',
 ]);

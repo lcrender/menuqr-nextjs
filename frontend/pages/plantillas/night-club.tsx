@@ -3,23 +3,21 @@ import LandingFooter from '../../components/LandingFooter';
 import LandingNav from '../../components/LandingNav';
 import PlantillaLandingArticle from '../../components/plantillas/detail/PlantillaLandingArticle';
 import styles from '../../components/plantillas/detail/plantilla-detail.module.css';
-import { PLANTILLA_ITALIAN_FOOD_LANDING } from '../../data/plantilla-landing-italian-food';
+import { PLANTILLA_NIGHT_CLUB_LANDING } from '../../data/plantilla-landing-night-club';
 import { buildPlantillaDetalleJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
 import { getTemplateBySlug } from '../../lib/menu-templates-catalog';
 
-const L = PLANTILLA_ITALIAN_FOOD_LANDING;
+const L = PLANTILLA_NIGHT_CLUB_LANDING;
 
-export default function PlantillaItalianFoodPage() {
-  const catalog = getTemplateBySlug('italian-food');
+export default function PlantillaNightClubPage() {
+  const catalog = getTemplateBySlug('night-club');
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   const canonicalUrl =
-    canonicalBase && /^https?:\/\//i.test(canonicalBase)
-      ? `${canonicalBase}/plantillas/italian-food`
-      : null;
+    canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}/plantillas/night-club` : null;
   const plantillaJsonLd = (() => {
     const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
     if (!base) return null;
-    return buildPlantillaDetalleJsonLd(base, { slug: 'italian-food', nombre: L.header.h1 });
+    return buildPlantillaDetalleJsonLd(base, { slug: 'night-club', nombre: L.header.h1 });
   })();
 
   return (
@@ -36,12 +34,7 @@ export default function PlantillaItalianFoodPage() {
         <LandingNav />
         <main className={styles.wrap}>
           <div className="container">
-            <PlantillaLandingArticle
-              content={L}
-              catalog={catalog}
-              idPrefix="italian-food"
-              variant="visual"
-            />
+            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="night-club" variant="visual" />
           </div>
         </main>
         <LandingFooter />

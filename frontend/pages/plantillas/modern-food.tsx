@@ -3,23 +3,21 @@ import LandingFooter from '../../components/LandingFooter';
 import LandingNav from '../../components/LandingNav';
 import PlantillaLandingArticle from '../../components/plantillas/detail/PlantillaLandingArticle';
 import styles from '../../components/plantillas/detail/plantilla-detail.module.css';
-import { PLANTILLA_ITALIAN_FOOD_LANDING } from '../../data/plantilla-landing-italian-food';
+import { PLANTILLA_MODERN_FOOD_LANDING } from '../../data/plantilla-landing-modern-food';
 import { buildPlantillaDetalleJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
 import { getTemplateBySlug } from '../../lib/menu-templates-catalog';
 
-const L = PLANTILLA_ITALIAN_FOOD_LANDING;
+const L = PLANTILLA_MODERN_FOOD_LANDING;
 
-export default function PlantillaItalianFoodPage() {
-  const catalog = getTemplateBySlug('italian-food');
+export default function PlantillaModernFoodPage() {
+  const catalog = getTemplateBySlug('modern-food');
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   const canonicalUrl =
-    canonicalBase && /^https?:\/\//i.test(canonicalBase)
-      ? `${canonicalBase}/plantillas/italian-food`
-      : null;
+    canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}/plantillas/modern-food` : null;
   const plantillaJsonLd = (() => {
     const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
     if (!base) return null;
-    return buildPlantillaDetalleJsonLd(base, { slug: 'italian-food', nombre: L.header.h1 });
+    return buildPlantillaDetalleJsonLd(base, { slug: 'modern-food', nombre: L.header.h1 });
   })();
 
   return (
@@ -36,12 +34,7 @@ export default function PlantillaItalianFoodPage() {
         <LandingNav />
         <main className={styles.wrap}>
           <div className="container">
-            <PlantillaLandingArticle
-              content={L}
-              catalog={catalog}
-              idPrefix="italian-food"
-              variant="visual"
-            />
+            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="modern-food" variant="premium" />
           </div>
         </main>
         <LandingFooter />

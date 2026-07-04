@@ -3,8 +3,8 @@
     "slug": "classic",
     "nombre": "Clásica",
     "categoria": "restaurante",
-    "estilos": ["clasico", "elegante"],
-    "tags": ["tradicional"],
+    "estilos": ["clasico", "minimalista"],
+    "tags": ["tradicional", "bodegon", "parrilla", "sandwiches"],
     "plan": "free",
     "imagen": "/preview/preview-classic.jpg"
   },
@@ -13,7 +13,7 @@
     "nombre": "Minimalista",
     "categoria": "restaurante",
     "estilos": ["minimalista", "elegante"],
-    "tags": ["limpio"],
+    "tags": ["bar", "cafe", "bistro", "cocina de autor", "picadas", "vinos"],
     "plan": "free",
     "imagen": "/preview/preview-minimalist.jpg"
   },
@@ -21,8 +21,8 @@
     "slug": "foodie",
     "nombre": "Foodie",
     "categoria": "restaurante",
-    "estilos": ["moderno", "visual"],
-    "tags": ["atractivo", "instagram"],
+    "estilos": ["moderno", "clasico", "minimalista"],
+    "tags": ["menu ejecutivo", "restaurante familiar", "comida rapida"],
     "plan": "free",
     "imagen": "/preview/preview-foodie.jpg"
   },
@@ -30,17 +30,26 @@
     "slug": "gourmet",
     "nombre": "Gourmet",
     "categoria": "gourmet",
-    "estilos": ["elegante", "visual"],
-    "tags": ["alta_cocina", "con_imagenes", "pro"],
+    "estilos": ["elegante", "visual", "clasico"],
+    "tags": ["alta cocina", "con imagenes", "parrilla", "cerveceria", "brunch"],
     "plan": "pro",
     "imagen": "/preview/preview-gourmet.jpg"
+  },
+  {
+    "slug": "modern-food",
+    "nombre": "Modern Food",
+    "categoria": "gourmet",
+    "estilos": ["moderno", "visual", "minimalista", "elegante"],
+    "tags": ["con imagenes", "minimalista", "brunch", "tapas", "desayunos", "tragos"],
+    "plan": "pro",
+    "imagen": "/preview/preview-modern-food.jpg"
   },
   {
     "slug": "burgers",
     "nombre": "Burgers",
     "categoria": "hamburguesas",
-    "estilos": ["moderno"],
-    "tags": ["casual", "street_food", "comida_rapida"],
+    "estilos": [],
+    "tags": ["street food", "comida rapida", "hamburguesas", "pizza", "pancheria", "milanesas"],
     "plan": "free",
     "imagen": "/preview/preview-burgers.jpg"
   },
@@ -49,8 +58,17 @@
     "nombre": "Italian Food",
     "categoria": "italiano",
     "estilos": ["clasico", "elegante"],
-    "tags": ["pasta", "tradicional"],
+    "tags": ["pasta", "tradicional", "pizza", "Focaccia", "Gelato", "Antipasti"],
     "plan": "free",
     "imagen": "/preview/preview-italianFood.jpg"
+  },
+  {
+    "slug": "night-club",
+    "nombre": "Neon Club",
+    "categoria": "nightclub",
+    "estilos": ["moderno", "elegante", "dark"],
+    "tags": ["discoteca", "bar", "cocktails", "tragos", "musica"],
+    "plan": "free",
+    "imagen": "/preview/preview-night-club.png"
   }
 ]

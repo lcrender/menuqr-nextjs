@@ -10,6 +10,9 @@ import FoodieTemplate from '../../templates/foodie/FoodieTemplate';
 import BurgersTemplate from '../../templates/burgers/BurgersTemplate';
 import ItalianFoodTemplate from '../../templates/italianfood/ItalianFoodTemplate';
 import GourmetTemplate from '../../templates/gourmet/GourmetTemplate';
+import ProMobileTemplate from '../../templates/promobile/ProMobileTemplate';
+import NightClubTemplate from '../../templates/nightclub/NightClubTemplate';
+import type { MenuTabVariant } from '../../components/MenuLanguageSwitcher';
 import type { ItemPrice } from '../../data/preview-data';
 import {
   normalizePreviewTemplateSlug,
@@ -48,6 +51,8 @@ const PREVIEW_SLUG_LABELS: Record<string, string> = {
   burgers: 'Burgers',
   'italian-food': 'Italian Food',
   gourmet: 'Gourmet',
+  'modern-food': 'Modern Food',
+  'night-club': 'Neon Club',
 };
 
 const iconLabels: { [key: string]: string } = {
@@ -58,6 +63,26 @@ const iconLabels: { [key: string]: string } = {
   'sin-gluten': 'Sin Gluten',
   'sin-lactosa': 'Sin Lactosa',
 };
+
+const iconLabelsEn: { [key: string]: string } = {
+  celiaco: 'Gluten Free',
+  picante: 'Spicy',
+  vegano: 'Vegan',
+  vegetariano: 'Vegetarian',
+  'sin-gluten': 'Gluten Free',
+  'sin-lactosa': 'Lactose Free',
+};
+
+/** Vista previa Modern Food: locale + tipo de menú */
+const MODERN_FOOD_PREVIEW_MENU_TABS = [
+  { key: 'desayunos', labelEs: 'Desayunos', labelEn: 'Breakfast' },
+  { key: 'menu-principal', labelEs: 'Menú principal', labelEn: 'Main menu' },
+] as const;
+
+function modernFoodPreviewMenuSlug(locale: string, menuKey: string): string {
+  const prefix = locale === 'en-US' ? 'en' : 'es';
+  return `${prefix}-${menuKey}`;
+}
 
 export default function PreviewPage() {
   const router = useRouter();
@@ -90,15 +115,31 @@ export default function PreviewPage() {
 
   const { restaurant, menu, menus } = data;
   const menuListSource = menus?.length ? menus : [menu];
-  const [selectedSlug, setSelectedSlug] = useState<string>(() => menuListSource[0]?.slug ?? '');
+  const isModernFoodPreview = slug === 'modern-food';
+  const [selectedMenuKey, setSelectedMenuKey] = useState<string>('menu-principal');
+  const [contentLocale, setContentLocale] = useState('es-ES');
   useEffect(() => {
-    const s = menuListSource[0]?.slug;
-    if (s) setSelectedSlug(s);
-  }, [slug]);
-  const selectedMenuFromList = useMemo(
-    () => menuListSource.find((m) => m.slug === selectedSlug) ?? menuListSource[0],
-    [menuListSource, selectedSlug]
-  );
+    if (!isModernFoodPreview) {
+      const s = menuListSource[0]?.slug;
+      if (s) setSelectedMenuKey(s);
+    } else {
+      setSelectedMenuKey('menu-principal');
+    }
+  }, [slug, isModernFoodPreview, menuListSource]);
+  useEffect(() => {
+    if (isModernFoodPreview) setContentLocale('es-ES');
+  }, [slug, isModernFoodPreview]);
+
+  const modernFoodLocaleMenu = useMemo(() => {
+    if (!isModernFoodPreview) return null;
+    const fullSlug = modernFoodPreviewMenuSlug(contentLocale, selectedMenuKey);
+    return menuListSource.find((m) => m.slug === fullSlug) ?? menuListSource[0] ?? null;
+  }, [isModernFoodPreview, menuListSource, contentLocale, selectedMenuKey]);
+
+  const selectedMenuFromList = useMemo(() => {
+    if (isModernFoodPreview && modernFoodLocaleMenu) return modernFoodLocaleMenu;
+    return menuListSource.find((m) => m.slug === selectedMenuKey) ?? menuListSource[0];
+  }, [isModernFoodPreview, modernFoodLocaleMenu, menuListSource, selectedMenuKey]);
 
   if (!menuListSource[0] || !selectedMenuFromList) {
     return (
@@ -119,17 +160,41 @@ export default function PreviewPage() {
   const selectedMenu = {
     id: selectedMenuFromList.id,
     name: selectedMenuFromList.name,
-    slug: selectedMenuFromList.slug,
+    slug: isModernFoodPreview ? selectedMenuKey : selectedMenuFromList.slug,
     ...(selectedMenuFromList.description && { description: selectedMenuFromList.description }),
     sections: selectedMenuFromList.sections,
   };
-  const menuList = menuListSource.map((m) => ({
-    id: m.id,
-    name: m.name,
-    slug: m.slug,
-    ...(m.description && { description: m.description }),
-  }));
-  const onMenuSelect = (menuSlug: string) => setSelectedSlug(menuSlug);
+  const menuList = isModernFoodPreview
+    ? MODERN_FOOD_PREVIEW_MENU_TABS.map((tab) => ({
+        id: `modern-food-tab-${tab.key}`,
+        name: contentLocale === 'en-US' ? tab.labelEn : tab.labelEs,
+        slug: tab.key,
+      }))
+    : menuListSource.map((m) => ({
+        id: m.id,
+        name: m.name,
+        slug: m.slug,
+        ...(m.description && { description: m.description }),
+      }));
+  const onMenuSelect = (menuSlug: string) => setSelectedMenuKey(menuSlug);
+
+  const activeIconLabels =
+    isModernFoodPreview && contentLocale === 'en-US' ? iconLabelsEn : iconLabels;
+
+  const modernFoodMenuLocales = isModernFoodPreview
+    ? {
+        locales: ['es-ES', 'en-US'],
+        manifest: [
+          { locale: 'es-ES', label: 'Español', flagCode: 'es' },
+          { locale: 'en-US', label: 'English', flagCode: 'gb' },
+        ],
+        value: contentLocale,
+        onChange: setContentLocale,
+        primaryColor: restaurant.primaryColor || '#1a1a2e',
+        secondaryColor: restaurant.secondaryColor || '#c9a227',
+        menuTabVariant: 'proMobile' as MenuTabVariant,
+      }
+    : undefined;
 
   const commonProps = {
     restaurant,
@@ -138,7 +203,8 @@ export default function PreviewPage() {
     onMenuSelect,
     formatPrice,
     formatWhatsAppForLink,
-    iconLabels,
+    iconLabels: activeIconLabels,
+    ...(modernFoodMenuLocales ? { menuLocales: modernFoodMenuLocales } : {}),
   };
 
   const template = (restaurant.template || menu.template || 'classic') as string;
@@ -149,6 +215,8 @@ export default function PreviewPage() {
     if (template === 'foodie') return <FoodieTemplate {...commonProps} />;
     if (template === 'burgers') return <BurgersTemplate {...commonProps} />;
     if (template === 'gourmet') return <GourmetTemplate {...commonProps} />;
+    if (template === 'proMobile') return <ProMobileTemplate {...commonProps} />;
+    if (template === 'nightClub') return <NightClubTemplate {...commonProps} />;
     if (template === 'italianFood') return <ItalianFoodTemplate {...commonProps} />;
     return <ClassicTemplate {...commonProps} />;
   })();

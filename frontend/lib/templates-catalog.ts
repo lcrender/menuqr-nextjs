@@ -46,6 +46,23 @@ export const TEMPLATES_CATALOG: TemplateCatalogItem[] = [
     requiresProOrPremium: true,
   },
   {
+    id: 'proMobile',
+    name: 'Modern Food',
+    description:
+      'Diseño moderno optimizado para móvil: secciones en tabs verticales, detalle del producto al centro e imagen a la derecha. Disponible para plan Pro, Pro Team o Premium.',
+    preview: '📱',
+    category: 'Gourmet',
+    requiresProOrPremium: true,
+  },
+  {
+    id: 'nightClub',
+    name: 'Neon Club',
+    description:
+      'Diseño oscuro optimizado para móvil: secciones en tabs verticales, ideal para bares, discotecas y locales nocturnos. Sin fotos de producto.',
+    preview: '🌙',
+    category: 'Nocturno',
+  },
+  {
     id: 'burgers',
     name: 'Burgers',
     description:
