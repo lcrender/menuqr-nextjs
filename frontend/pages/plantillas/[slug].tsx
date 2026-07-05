@@ -9,6 +9,7 @@ import { getAllTemplateSlugs, getTemplateBySlug } from '../../lib/menu-templates
 import { buildPlantillaDetalleJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
 import { PLANTILLA_STATIC_DETAIL_SLUGS } from '../../lib/plantilla-static-detail-slugs';
 import { catalogSlugToPreviewTemplateId } from '../../lib/menu-template-preview-route';
+import { PLANTILLAS_CATALOG_PATH } from '../../lib/plantillas-catalog-url';
 import type { MenuTemplateCatalogItem } from '../../types/menu-template-catalog';
 
 interface PlantillaDetalleProps {
@@ -53,7 +54,7 @@ export default function PlantillaDetallePage({ template }: PlantillaDetalleProps
           <section className={styles.section}>
             <div className="container">
               <nav aria-label="Migas de pan" style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>
-                <Link href="/plantillas" style={{ color: '#2563eb', textDecoration: 'none' }}>
+                <Link href={PLANTILLAS_CATALOG_PATH} style={{ color: '#2563eb', textDecoration: 'none' }}>
                   ← Plantillas
                 </Link>
               </nav>
@@ -108,7 +109,7 @@ export default function PlantillaDetallePage({ template }: PlantillaDetalleProps
                   <Link href={previewHref} className={styles.ctaButton} style={{ width: 'auto', paddingLeft: '1.25rem', paddingRight: '1.25rem' }}>
                     Ver demo interactiva
                   </Link>
-                  <Link href="/plantillas" className={styles.btnSecondary}>
+                  <Link href={PLANTILLAS_CATALOG_PATH} className={styles.btnSecondary}>
                     Volver al catálogo
                   </Link>
                 </div>

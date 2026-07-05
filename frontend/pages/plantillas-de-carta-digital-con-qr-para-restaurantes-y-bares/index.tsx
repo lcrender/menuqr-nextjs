@@ -6,6 +6,7 @@ import LandingFooter from '../../components/LandingFooter';
 import LandingNav from '../../components/LandingNav';
 import FiltersBar from '../../components/plantillas/FiltersBar';
 import TemplateCard from '../../components/plantillas/TemplateCard';
+import PremiumPlanCard from '../../components/plantillas/PremiumPlanCard';
 import styles from '../../components/plantillas/Plantillas.module.css';
 import {
   MENU_TEMPLATES_CATALOG,
@@ -13,6 +14,7 @@ import {
   filterTemplates,
 } from '../../lib/menu-templates-catalog';
 import { buildPlantillasCatalogJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
+import { PLANTILLAS_CATALOG_PATH } from '../../lib/plantillas-catalog-url';
 import type { TemplateListFilters } from '../../types/menu-template-catalog';
 
 const INITIAL_FILTERS: TemplateListFilters = {
@@ -38,17 +40,19 @@ export default function PlantillasCatalogoPage() {
 
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   const canonicalUrl =
-    canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}/plantillas` : null;
+    canonicalBase && /^https?:\/\//i.test(canonicalBase)
+      ? `${canonicalBase}${PLANTILLAS_CATALOG_PATH}`
+      : null;
 
   return (
     <>
       <Head>
-        <title>Plantillas de menú QR para restaurantes | AppMenuQR</title>
+        <title>Plantillas de Carta Digital con QR para Restaurantes y Bares | AppMenuQR</title>
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
         <meta name="robots" content="index, follow" />
         <meta
           name="description"
-          content="Catálogo de plantillas visuales para menús QR: elegí estilo, categoría y plan. Ideal para restaurantes, bares y negocios gastronómicos."
+          content="Elegí una plantilla para tu carta digital y personalizala con los colores y el logo de tu marca. Filtrá por rubro, estilo y plan."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {plantillasJsonLd ? (
@@ -60,10 +64,11 @@ export default function PlantillasCatalogoPage() {
         <main>
           <section className={styles.section}>
             <div className="container">
-              <h1 className={styles.title}>Plantillas de menú QR</h1>
+              <h1 className={styles.title}>Plantillas de Carta Digital con QR para Restaurantes y Bares</h1>
               <p className={styles.intro}>
-                Explorá diseños pensados para cartas digitales: combiná filtros por categoría, estilo y plan para
-                encontrar la plantilla que mejor representa a tu negocio.
+                Elegí una plantilla para tu carta digital y personalizala con los colores y el logo de tu marca. Todos
+                los diseños son editables y podés filtrar por rubro, estilo y plan para encontrar la opción ideal para
+                tu restaurante, bar o negocio gastronómico.
               </p>
 
               <FiltersBar
@@ -83,13 +88,14 @@ export default function PlantillasCatalogoPage() {
                 <p className={styles.emptyState}>
                   No hay plantillas con esta combinación de filtros. Probá con &quot;Todos&quot; en algún criterio.
                 </p>
-              ) : (
-                <div className={styles.grid}>
-                  {filtered.map((t) => (
-                    <TemplateCard key={t.slug} template={t} />
-                  ))}
-                </div>
-              )}
+              ) : null}
+
+              <div className={styles.grid}>
+                {filtered.map((t) => (
+                  <TemplateCard key={t.slug} template={t} />
+                ))}
+                <PremiumPlanCard />
+              </div>
             </div>
           </section>
         </main>

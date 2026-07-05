@@ -5,6 +5,7 @@ import type { PlantillaLandingContent, PlantillaLandingVariant } from '../../../
 import PlantillaLandingDualCtaClient from './PlantillaLandingDualCtaClient';
 import PlantillaPreviewQrClient from './PlantillaPreviewQrClient';
 import styles from './plantilla-detail.module.css';
+import { PLANTILLAS_CATALOG_PATH } from '../../../lib/plantillas-catalog-url';
 
 /** Línea tipo stack CSS (Inter, Poppins, etc.) */
 function isFontStackLine(text: string): boolean {
@@ -40,7 +41,7 @@ export default function PlantillaLandingArticle({
   return (
     <article className={articleClass}>
       <nav className={styles.breadcrumb} aria-label="Migas de pan">
-        <Link href="/plantillas">← Plantillas</Link>
+        <Link href={PLANTILLAS_CATALOG_PATH}>← Plantillas</Link>
       </nav>
 
       <header>

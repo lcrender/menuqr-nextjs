@@ -24,7 +24,7 @@ export default function FiltersBar({ options, value, onChange, onClear }: Filter
       <div className={styles.filters} role="group" aria-label="Filtrar plantillas">
       <div className={styles.filterGroup}>
         <label className={styles.filterLabel} htmlFor="filter-categoria">
-          Categoría
+          Rubro
         </label>
         <select
           id="filter-categoria"

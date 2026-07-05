@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { getPublicAppOrigin } from './config';
 
+/** Ruta canónica del listado público de plantillas. */
+export const PLANTILLAS_CATALOG_PATH = '/plantillas-de-carta-digital-con-qr-para-restaurantes-y-bares' as const;
+
 export function getPlantillasCatalogUrlFromEnv(): string | null {
   const base = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   if (!base || !/^https?:\/\//i.test(base)) return null;
-  return `${base}/plantillas`;
+  return `${base}${PLANTILLAS_CATALOG_PATH}`;
 }
 
 /** URL absoluta del catálogo de plantillas (env en build o origin en cliente). */
@@ -15,7 +18,7 @@ export function usePlantillasCatalogUrl(): string | null {
     if (url) return;
     const origin = getPublicAppOrigin() || (typeof window !== 'undefined' ? window.location.origin : '');
     if (!origin) return;
-    setUrl(`${origin.replace(/\/$/, '')}/plantillas`);
+    setUrl(`${origin.replace(/\/$/, '')}${PLANTILLAS_CATALOG_PATH}`);
   }, [url]);
 
   return url;

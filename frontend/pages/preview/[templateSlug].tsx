@@ -19,6 +19,7 @@ import {
   previewTemplateIdToCatalogSlug,
 } from '../../lib/menu-template-preview-route';
 import PreviewTemplateCtaBar from '../../components/preview/PreviewTemplateCtaBar';
+import { PLANTILLAS_CATALOG_PATH } from '../../lib/plantillas-catalog-url';
 
 const formatPrice = (price: ItemPrice) => {
   if (price.currency === 'ARS') {
@@ -102,7 +103,7 @@ export default function PreviewPage() {
             : 'Especifica una plantilla en la URL: /preview/classic, /preview/minimalista, etc.'}
         </div>
         <p className="mt-3 d-flex flex-wrap gap-2">
-          <Link href="/plantillas" className="btn btn-outline-primary">
+          <Link href={PLANTILLAS_CATALOG_PATH} className="btn btn-outline-primary">
             Catálogo de plantillas
           </Link>
           <Link href="/admin/templates" className="btn btn-primary">
@@ -146,7 +147,7 @@ export default function PreviewPage() {
       <div className="container mt-5 py-5">
         <div className="alert alert-warning" role="alert">Sin menú en la vista previa.</div>
         <div className="d-flex flex-wrap gap-2 mt-2">
-          <Link href="/plantillas" className="btn btn-outline-primary">
+          <Link href={PLANTILLAS_CATALOG_PATH} className="btn btn-outline-primary">
             Catálogo de plantillas
           </Link>
           <Link href="/admin/templates" className="btn btn-primary">
@@ -246,7 +247,7 @@ export default function PreviewPage() {
           <span className="preview-nav-land-sep" aria-hidden>
             |
           </span>
-          <Link href="/plantillas" className="preview-nav-land-link">
+          <Link href={PLANTILLAS_CATALOG_PATH} className="preview-nav-land-link">
             Catálogo de plantillas
           </Link>
         </div>

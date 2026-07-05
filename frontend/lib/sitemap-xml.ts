@@ -1,4 +1,5 @@
 import { getAllTemplateSlugs } from './menu-templates-catalog';
+import { PLANTILLAS_CATALOG_PATH } from './plantillas-catalog-url';
 import { DOCUMENTATION_SLUGS_STATIC } from './documentation-nav';
 import { SEO_LANDING_SLUGS, SEO_LANDINGS } from './seo-landings-config';
 
@@ -25,7 +26,7 @@ export function buildSitemapEntries(): SitemapEntry[] {
   const today = new Date().toISOString().slice(0, 10);
   const out: SitemapEntry[] = [
     { path: '/', changefreq: 'weekly', priority: '1.0', lastmod: today },
-    { path: '/plantillas', changefreq: 'weekly', priority: '0.9', lastmod: today },
+    { path: PLANTILLAS_CATALOG_PATH, changefreq: 'weekly', priority: '0.9', lastmod: today },
     { path: '/precios', changefreq: 'weekly', priority: '0.9', lastmod: today },
     { path: '/soporte', changefreq: 'weekly', priority: '0.7', lastmod: today },
     { path: '/documentacion', changefreq: 'weekly', priority: '0.8', lastmod: today },

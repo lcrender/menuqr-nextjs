@@ -1,8 +1,8 @@
 import QRCode from 'react-qr-code';
-import { getPlantillasCatalogUrlFromEnv } from '../lib/plantillas-catalog-url';
+import { PLANTILLAS_CATALOG_PATH, getPlantillasCatalogUrlFromEnv } from '../lib/plantillas-catalog-url';
 
 const QR_ICON_VALUE =
-  getPlantillasCatalogUrlFromEnv() || 'https://appmenuqr.com/plantillas';
+  getPlantillasCatalogUrlFromEnv() || `https://appmenuqr.com${PLANTILLAS_CATALOG_PATH}`;
 
 type Props = {
   icon: string;

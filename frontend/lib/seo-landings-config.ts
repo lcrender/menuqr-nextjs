@@ -2,6 +2,7 @@
  * Configuración de landings SEO temáticas (contenido único por URL).
  * Ver docs/SEO-LANDINGS.md para arquitectura, canónicas e interlinking.
  */
+import { PLANTILLAS_CATALOG_PATH } from './plantillas-catalog-url';
 
 export type SeoLandingFeature = {
   icon: string;
@@ -70,7 +71,7 @@ export type SeoLandingConfig = {
 /** Recursos enlazados desde el bloque «Recursos» de cada landing SEO. */
 export const SEO_LANDING_RESOURCES: SeoLandingRelated[] = [
   { href: '/precios', label: 'Planes y precios', description: '' },
-  { href: '/plantillas', label: 'Plantillas de diseño', description: '' },
+  { href: PLANTILLAS_CATALOG_PATH, label: 'Plantillas de diseño', description: '' },
   { href: '/documentacion', label: 'Documentación', description: '' },
 ];
 

@@ -1,4 +1,5 @@
 import type { MenuTemplateCatalogItem } from '../types/menu-template-catalog';
+import { PLANTILLAS_CATALOG_PATH } from './plantillas-catalog-url';
 
 export type FaqPair = { question: string; answer: string };
 
@@ -246,7 +247,7 @@ export function buildPlantillaDetalleJsonLd(
           '@type': 'ListItem',
           position: 2,
           name: 'Plantillas',
-          item: `${b}/plantillas`,
+          item: `${b}${PLANTILLAS_CATALOG_PATH}`,
         },
         {
           '@type': 'ListItem',

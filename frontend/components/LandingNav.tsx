@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
 
 export default function LandingNav() {
   const router = useRouter();
@@ -80,7 +81,7 @@ export default function LandingNav() {
               </span>
             </button>
             <div className="landing-nav-actions d-none d-md-flex">
-              <Link href="/plantillas" className="landing-nav-text-link">
+              <Link href={PLANTILLAS_CATALOG_PATH} className="landing-nav-text-link">
                 Plantillas
               </Link>
               <Link href="/#beneficios" className="landing-nav-text-link">
@@ -123,7 +124,7 @@ export default function LandingNav() {
           </button>
         </div>
         <div className="landing-nav-mobile-links">
-          <Link href="/plantillas" className="landing-nav-mobile-link" onClick={closeMobileNav}>
+          <Link href={PLANTILLAS_CATALOG_PATH} className="landing-nav-mobile-link" onClick={closeMobileNav}>
             Plantillas
           </Link>
           <Link href="/#beneficios" className="landing-nav-mobile-link" onClick={closeMobileNav}>

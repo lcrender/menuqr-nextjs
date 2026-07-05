@@ -9,6 +9,7 @@ import LandingHeroPlantillasQr from '../components/LandingHeroPlantillasQr';
 import LandingBenefitIcon from '../components/LandingBenefitIcon';
 import api from '../lib/axios';
 import { buildLandingJsonLd, siteJsonLdBaseUrl } from '../lib/json-ld-appmenuqr';
+import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
 
 const LANDING_PAGE_TITLE = 'Carta digital para restaurantes con QR | AppMenuQR';
 const LANDING_PAGE_DESCRIPTION =
@@ -409,7 +410,7 @@ export default function Home() {
                 digital profesional desde el primer día.
               </p>
               <div className="landing-cta-buttons">
-                <Link href="/plantillas" className="landing-btn-secondary landing-btn-large landing-btn-cta-outline">
+                <Link href={PLANTILLAS_CATALOG_PATH} className="landing-btn-secondary landing-btn-large landing-btn-cta-outline">
                   Ver plantillas
                 </Link>
                 <button onClick={handleTryFree} className="landing-btn-primary landing-btn-large landing-btn-cta">
