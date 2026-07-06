@@ -9,14 +9,18 @@ export const PLANTILLA_ITALIAN_FOOD_LANDING: PlantillaLandingContent = {
       'Plantilla de menú QR estilo italiano. Ideal para pizzerías, restaurantes italianos, pastas, trattorias y más. Diseño elegante con identidad italiana.',
   },
   previewPath: '/preview/italian-food',
+  heroPreviewImage:
+    '/plantillas/landings/menu-digital-qr-bares-restaurantes-comida-italiana-pizzeria-preview-5e253c36-af7a-4edc-9bd8-8d144ba5fcae.png',
   badgeStrip: ['pizza', 'mediterráneo', 'trattoria'],
   header: {
-    h1: 'Plantilla de menú QR estilo italiano',
+    h1: 'Plantilla Italian Food para carta digital QR',
     intro:
-      'La plantilla Italian Food está diseñada para restaurantes que quieren transmitir la esencia de la cocina italiana a través de una carta digital elegante y con identidad propia. Su diseño combina tradición, estilo y una experiencia visual atractiva.',
+      'La plantilla Italian Food está diseñada para restaurantes que quieren transmitir la esencia de la cocina italiana a través de una carta digital elegante y con identidad propia. Su diseño combina tradición, estilo y una experiencia visual atractiva.\n\nAdemás, permite personalizar los colores principales y secundarios para acompañar la identidad visual del restaurante. También podés configurar elementos opcionales como el logo, la foto de portada, el nombre y la descripción del comercio.',
   },
   paraQuien: {
-    heading: '¿Para qué tipo de restaurantes es ideal?',
+    heading: '¿Para qué tipo de negocios es ideal?',
+    intro:
+      'La plantilla Italian Food es ideal para negocios gastronómicos que buscan una carta digital elegante, temática y fácil de leer. Su diseño permite mostrar productos, categorías y precios de forma ordenada, con una experiencia cómoda desde el celular.',
     items: [
       'Pizzerías',
       'Restaurantes italianos',
@@ -85,15 +89,14 @@ export const PLANTILLA_ITALIAN_FOOD_LANDING: PlantillaLandingContent = {
   },
   qr: {
     heading: 'Ver demo en tu móvil',
-    body: 'Escanea el código QR para ver cómo se visualiza esta plantilla en un teléfono.',
+    body: 'Escanea el código QR para ver una preview real de esta plantilla en tu teléfono.',
     demoButtonLabel: 'Ver demo',
-    demoHint: 'Abrí la demo en el navegador del celular o escaneá el código desde otro dispositivo.',
-    qrSize: 320,
+    demoHint: 'Demo disponible en celular y navegador',
   },
   cta: {
     heading: 'Empieza ahora',
-    body: 'Activa esta plantilla y ofrece una carta digital con auténtico estilo italiano para pizzas, pastas y todo tipo de cocina italiana.',
-    primaryLabel: 'Usar esta plantilla',
+    body: 'Activa esta plantilla y crea tu menú digital en minutos.',
+    primaryLabel: 'Elegir esta plantilla',
     primaryHref: '/login?action=register',
   },
 };

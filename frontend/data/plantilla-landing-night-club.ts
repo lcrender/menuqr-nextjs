@@ -10,10 +10,11 @@ export const PLANTILLA_NIGHT_CLUB_LANDING: PlantillaLandingContent = {
       'Plantilla de menú QR Neon Club con diseño oscuro y navegación simple. Ideal para bares, pubs, cervecerías y coctelerías. Gratuita y sin imágenes de productos.',
   },
   previewPath: '/preview/night-club',
+  heroPreviewImage: '/plantillas/landings/menu-digital-bar-nocturno-da58f4e9-f023-4196-a08a-c500603a2773.png',
   header: {
-    h1: 'Plantilla de menú QR Neon Club',
+    h1: 'Plantilla Neon Club para carta digital QR',
     intro:
-      'La plantilla Neon Club está diseñada para bares, pubs, cervecerías, coctelerías y locales nocturnos que buscan una carta digital moderna, oscura y fácil de navegar.\n\nSu estilo dark combina una estética elegante con una lectura clara, ideal para ambientes con poca luz y negocios que quieren transmitir una imagen más urbana, nocturna y moderna.',
+      'La plantilla Neon Club está diseñada para bares, pubs, cervecerías, coctelerías y locales nocturnos que buscan una carta digital moderna, oscura y fácil de navegar.\n\nSu estilo dark combina una estética elegante con una lectura clara, ideal para ambientes con poca luz y negocios que quieren transmitir una imagen más urbana, nocturna y moderna. También podés personalizar colores, logo, portada, nombre y descripción del comercio.',
   },
   exclusividadPro: {
     heading: 'Plantilla gratuita',
@@ -24,6 +25,8 @@ export const PLANTILLA_NIGHT_CLUB_LANDING: PlantillaLandingContent = {
   },
   paraQuien: {
     heading: '¿Para qué tipo de negocios es ideal?',
+    intro:
+      'La plantilla Neon Club es ideal para bares y locales nocturnos que buscan una carta digital oscura, moderna y fácil de leer. Su diseño permite mostrar bebidas, categorías y precios de forma ordenada, con una experiencia cómoda desde el celular.',
     items: [
       'Bares',
       'Pubs',
@@ -111,15 +114,14 @@ export const PLANTILLA_NIGHT_CLUB_LANDING: PlantillaLandingContent = {
   },
   qr: {
     heading: 'Ver demo en tu móvil',
-    body: 'Escaneá el código QR y probá esta plantilla directamente desde tu teléfono.',
+    body: 'Escanea el código QR para ver una preview real de esta plantilla en tu teléfono.',
     demoButtonLabel: 'Ver demo',
-    demoHint: 'Abrí la demo en el navegador del celular o escaneá el código desde otro dispositivo.',
-    qrSize: 320,
+    demoHint: 'Demo disponible en celular y navegador',
   },
   cta: {
     heading: 'Una plantilla gratuita para bares modernos',
     body: 'Neon Club es una excelente opción para bares, pubs y negocios nocturnos que necesitan un menú QR gratuito, profesional y con estilo dark.\n\nSu diseño oscuro, su navegación simple y su buena legibilidad la convierten en una plantilla ideal para presentar cartas de bebidas, tragos y comidas de forma moderna, rápida y ordenada.',
-    primaryLabel: 'Usar esta plantilla',
+    primaryLabel: 'Elegir esta plantilla',
     primaryHref: '/login?action=register',
   },
 };

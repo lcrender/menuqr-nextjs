@@ -34,7 +34,7 @@ export default function PlantillaBurgersPage() {
         <LandingNav />
         <main className={styles.wrap}>
           <div className="container">
-            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="burgers" variant="casual" />
+            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="burgers" variant="default" />
           </div>
         </main>
         <LandingFooter />

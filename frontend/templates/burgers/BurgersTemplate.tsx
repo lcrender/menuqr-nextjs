@@ -2,10 +2,10 @@ import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 
 const BURGERS_SECTION_TITLE_PRESETS = {
-  small: { fontSize: '1.65rem', marginBottom: '28px', paddingBottom: '14px' },
-  medium: { fontSize: '2rem', marginBottom: '32px', paddingBottom: '16px' },
-  large: { fontSize: '2.5rem', marginBottom: '40px', paddingBottom: '20px' },
-  xlarge: { fontSize: '3rem', marginBottom: '44px', paddingBottom: '22px' },
+  small: { fontSize: '1.4rem', marginBottom: '24px', paddingBottom: '12px' },
+  medium: { fontSize: '1.7rem', marginBottom: '32px', paddingBottom: '16px' },
+  large: { fontSize: '2rem', marginBottom: '36px', paddingBottom: '18px' },
+  xlarge: { fontSize: '2.5rem', marginBottom: '40px', paddingBottom: '20px' },
 } as const;
 
 type BurgersSectionTitleKey = keyof typeof BURGERS_SECTION_TITLE_PRESETS;
@@ -17,7 +17,7 @@ function resolveBurgersSectionTitleStyle(
   if (typeof raw === 'string' && raw in BURGERS_SECTION_TITLE_PRESETS) {
     return BURGERS_SECTION_TITLE_PRESETS[raw as BurgersSectionTitleKey];
   }
-  return BURGERS_SECTION_TITLE_PRESETS.large;
+  return BURGERS_SECTION_TITLE_PRESETS.medium;
 }
 
 interface BurgersTemplateProps {

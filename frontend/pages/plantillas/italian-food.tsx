@@ -40,7 +40,7 @@ export default function PlantillaItalianFoodPage() {
               content={L}
               catalog={catalog}
               idPrefix="italian-food"
-              variant="visual"
+              variant="default"
             />
           </div>
         </main>

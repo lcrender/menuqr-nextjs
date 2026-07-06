@@ -10,10 +10,12 @@ export const PLANTILLA_MODERN_FOOD_LANDING: PlantillaLandingContent = {
       'Plantilla de menú QR Modern Food para restaurantes, bares y cafeterías. Navegación por tabs laterales, imágenes en productos y diseño optimizado para móvil. Disponible en plan PRO.',
   },
   previewPath: '/preview/modern-food',
+  heroPreviewImage:
+    '/plantillas/landings/menu-restaurante-con-codigo-qr-modern-food-preview-d93994eb-a196-4194-824e-c62158ca5029.png',
   header: {
-    h1: 'Plantilla de menú QR Modern Food para restaurantes y bares',
+    h1: 'Plantilla Modern Food para carta digital QR',
     intro:
-      'La plantilla de menú QR Modern Food está diseñada para restaurantes, bares, cafeterías y negocios gastronómicos que buscan una carta digital moderna, visual y fácil de navegar. Es una opción ideal para comercios que quieren ofrecer a sus clientes una experiencia rápida, clara y profesional desde el celular.',
+      'La plantilla Modern Food está diseñada para restaurantes, bares, cafeterías y negocios gastronómicos que buscan una carta digital moderna, visual y fácil de navegar. Es una opción ideal para comercios que quieren ofrecer a sus clientes una experiencia rápida, clara y profesional desde el celular.\n\nAdemás, permite personalizar colores, logo, portada, nombre y descripción del comercio. También podés mostrar imágenes en cada producto y organizar el menú con tabs laterales para una navegación más ágil.',
   },
   exclusividadPro: {
     heading: 'Menú digital moderno con navegación rápida',
@@ -36,7 +38,9 @@ export const PLANTILLA_MODERN_FOOD_LANDING: PlantillaLandingContent = {
     ],
   },
   paraQuien: {
-    heading: 'Ideal para restaurantes, bares y cafeterías',
+    heading: '¿Para qué tipo de negocios es ideal?',
+    intro:
+      'La plantilla Modern Food es ideal para restaurantes, bares y cafeterías que buscan una carta digital moderna, visual y fácil de leer. Su diseño permite mostrar productos con fotos, categorías y precios de forma ordenada, con una experiencia cómoda desde el celular.',
     items: [
       'Restaurantes modernos',
       'Bares y cervecerías',
@@ -107,9 +111,9 @@ export const PLANTILLA_MODERN_FOOD_LANDING: PlantillaLandingContent = {
   },
   qr: {
     heading: 'Ver demo en tu móvil',
-    body: 'Escanea el código QR para experimentar esta plantilla en un entorno real desde tu teléfono.',
+    body: 'Escanea el código QR para ver una preview real de esta plantilla en tu teléfono.',
     demoButtonLabel: 'Ver demo',
-    demoHint: 'Abrí la demo en el navegador del celular o escaneá el código desde otro dispositivo.',
+    demoHint: 'Demo disponible en celular y navegador',
   },
   cta: {
     heading: 'Una plantilla de menú QR visual, moderna y profesional',

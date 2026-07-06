@@ -1,9 +1,11 @@
-import Image from 'next/image';
 import Link from 'next/link';
+import Image from 'next/image';
+import type { ReactNode } from 'react';
 import type { MenuTemplateCatalogItem } from '../../../types/menu-template-catalog';
 import type { PlantillaLandingContent, PlantillaLandingVariant } from '../../../types/plantilla-landing';
 import PlantillaLandingDualCtaClient from './PlantillaLandingDualCtaClient';
-import PlantillaPreviewQrClient from './PlantillaPreviewQrClient';
+import PlantillaLandingHeroAside from './PlantillaLandingHeroAside';
+import PlantillaPreviewPhoneMockup from './PlantillaPreviewPhoneMockup';
 import styles from './plantilla-detail.module.css';
 import { PLANTILLAS_CATALOG_PATH } from '../../../lib/plantillas-catalog-url';
 
@@ -17,6 +19,34 @@ export interface PlantillaLandingArticleProps {
   catalog: MenuTemplateCatalogItem | undefined;
   idPrefix: string;
   variant?: PlantillaLandingVariant;
+}
+
+function SectionBlock({
+  id,
+  heading,
+  icon,
+  children,
+  className = '',
+}: {
+  id: string;
+  heading: ReactNode;
+  icon: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`${styles.sectionCard} ${className}`.trim()} aria-labelledby={id}>
+      <div className={styles.sectionCardHead}>
+        <span className={styles.sectionIcon} aria-hidden="true">
+          {icon}
+        </span>
+        <h2 className={styles.h2} id={id}>
+          {heading}
+        </h2>
+      </div>
+      <div className={styles.sectionCardBody}>{children}</div>
+    </section>
+  );
 }
 
 export default function PlantillaLandingArticle({
@@ -38,35 +68,66 @@ export default function PlantillaLandingArticle({
   const tipografiaFirst = L.tipografia?.paragraphs[0];
   const tipografiaRest = L.tipografia?.paragraphs.slice(1) ?? [];
 
+  const heroTitle = catalog?.nombre ?? L.header.h1;
+  const chooseHref = L.cta.secondaryHref ?? L.cta.primaryHref;
+  const chooseLabel = L.cta.secondaryLabel ?? L.cta.primaryLabel;
+
   return (
     <article className={articleClass}>
-      <nav className={styles.breadcrumb} aria-label="Migas de pan">
-        <Link href={PLANTILLAS_CATALOG_PATH}>← Plantillas</Link>
-      </nav>
+      <div className={styles.heroIntro}>
+        <nav className={styles.breadcrumb} aria-label="Migas de pan">
+          <Link href={PLANTILLAS_CATALOG_PATH}>← Plantillas</Link>
+        </nav>
+        <header>
+          <h1 className={styles.heroTitle}>{heroTitle}</h1>
+          {L.header.intro.split(/\n\n+/).map((paragraph) => (
+            <p key={paragraph} className={styles.lead}>
+              {paragraph}
+            </p>
+          ))}
+        </header>
+      </div>
 
-      <header>
-        <h1 className={styles.heroTitle}>{L.header.h1}</h1>
-        {L.header.intro.split(/\n\n+/).map((paragraph) => (
-          <p key={paragraph} className={styles.lead}>
-            {paragraph}
-          </p>
-        ))}
-      </header>
+      <div className={styles.heroBand}>
+        <div className={styles.heroVisualRow}>
+          {catalog ? (
+            L.heroPreviewImage ? (
+              <div className={styles.heroPreviewWrap}>
+                <Image
+                  src={L.heroPreviewImage}
+                  alt={`Vista previa de la plantilla menú QR ${catalog.nombre}`}
+                  width={500}
+                  height={625}
+                  className={styles.heroPreviewImage}
+                  sizes="(max-width: 720px) 70vw, 380px"
+                  priority
+                />
+              </div>
+            ) : (
+              <div className={styles.heroMockupClip}>
+                <PlantillaPreviewPhoneMockup
+                  src={catalog.imagen}
+                  alt={`Vista previa de la plantilla menú QR ${catalog.nombre}`}
+                  priority
+                />
+              </div>
+            )
+          ) : (
+            <div className={styles.heroMockupClipPlaceholder} aria-hidden="true" />
+          )}
 
-      {catalog ? (
-        <div className={styles.heroFigure}>
-          <Image
-            src={catalog.imagen}
-            alt={`Vista previa de la plantilla menú QR ${catalog.nombre}`}
-            fill
-            sizes="(max-width: 720px) 100vw, 42rem"
-            className={`${styles.heroImage} ${
-              catalog.slug === 'modern-food' ? styles.heroImageBiasTop : ''
-            }`}
-            priority
-          />
+          <div className={styles.heroColAside}>
+            <PlantillaLandingHeroAside
+              previewPath={L.previewPath}
+              demoButtonLabel={L.qr.demoButtonLabel}
+              demoHint={L.qr.demoHint}
+              chooseLabel={chooseLabel}
+              chooseHref={chooseHref}
+              {...(L.cta.secondaryShowOnlyForPro ? { chooseShowOnlyForPro: true } : {})}
+            />
+          </div>
         </div>
-      ) : null}
+      </div>
 
       {catalog || L.badgeStrip?.length ? (
         <div className={styles.badgeRow} aria-label="Clasificación de la plantilla">
@@ -96,178 +157,156 @@ export default function PlantillaLandingArticle({
         </div>
       ) : null}
 
-      {L.exclusividadPro ? (
-        <section className={styles.section} aria-labelledby={`${idPrefix}-exclusividad`}>
-          <h2 className={styles.h2} id={`${idPrefix}-exclusividad`}>
-            {L.exclusividadPro.heading}
-          </h2>
-          {L.exclusividadPro.paragraphs.map((p) => (
-            <p key={p} className={styles.paragraph}>
-              {p}
-            </p>
-          ))}
-        </section>
-      ) : null}
-
-      <section className={styles.section} aria-labelledby={`${idPrefix}-para-quien`}>
-        <h2 className={styles.h2} id={`${idPrefix}-para-quien`}>
-          {L.paraQuien.heading}
-        </h2>
-        <ul className={styles.list}>
-          {L.paraQuien.items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section className={styles.section} aria-labelledby={`${idPrefix}-ventajas`}>
-        <h2 className={styles.h2} id={`${idPrefix}-ventajas`}>
-          {L.ventajas.heading}
-        </h2>
-        <ul className={styles.list}>
-          {L.ventajas.items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
-
-      {L.imagenesProductos ? (
-        <section className={styles.section} aria-labelledby={`${idPrefix}-imagenes`}>
-          <h2 className={styles.h2} id={`${idPrefix}-imagenes`}>
-            {L.imagenesProductos.heading}
-          </h2>
-          {L.imagenesProductos.paragraphs.map((p) => (
-            <p key={p} className={styles.paragraph}>
-              {p}
-            </p>
-          ))}
-          {L.imagenesProductos.items.length > 0 ? (
-            <ul className={styles.list}>
-              {L.imagenesProductos.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
-      ) : null}
-
-      <section className={styles.section} aria-labelledby={`${idPrefix}-personalizacion`}>
-        <h2 className={styles.h2} id={`${idPrefix}-personalizacion`}>
-          {L.personalizacion.heading}
-        </h2>
-        {L.personalizacion.intro?.trim() ? (
-          <p className={styles.paragraph}>{L.personalizacion.intro}</p>
-        ) : null}
-
-        <h3 className={styles.h3}>{L.personalizacion.colors.heading}</h3>
-        {L.personalizacion.colors.intro ? (
-          <p className={styles.paragraph}>{L.personalizacion.colors.intro}</p>
-        ) : null}
-        <ul className={styles.list}>
-          {L.personalizacion.colors.items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-
-        {L.personalizacion.elementos ? (
-          <>
-            <h3 className={styles.h3}>{L.personalizacion.elementos.heading}</h3>
-            <ul className={styles.list}>
-              {L.personalizacion.elementos.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </>
-        ) : null}
-      </section>
-
-      {L.tipografia ? (
-        <section className={styles.section} aria-labelledby={`${idPrefix}-tipografia`}>
-          <h2 className={styles.h2} id={`${idPrefix}-tipografia`}>
-            {L.tipografia.heading}
-          </h2>
-          {tipografiaFirst ? <p className={styles.paragraph}>{tipografiaFirst}</p> : null}
-          {L.tipografiaFontList?.length ? (
-            <ul className={styles.list}>
-              {L.tipografiaFontList.map((f) => (
-                <li key={f}>{f}</li>
-              ))}
-            </ul>
-          ) : null}
-          {tipografiaRest.map((para) =>
-            isFontStackLine(para) ? (
-              <p key={para} className={styles.fontStack}>
-                {para}
+      <div className={styles.sectionsStack}>
+        {L.exclusividadPro ? (
+          <SectionBlock id={`${idPrefix}-exclusividad`} heading={L.exclusividadPro.heading} icon="★">
+            {L.exclusividadPro.paragraphs.map((p) => (
+              <p key={p} className={styles.paragraph}>
+                {p}
               </p>
-            ) : (
-              <p key={para} className={styles.paragraph}>
-                {para}
-              </p>
-            ),
-          )}
-        </section>
-      ) : null}
+            ))}
+          </SectionBlock>
+        ) : null}
 
-      {L.identidadVisual ? (
-        <section className={styles.section} aria-labelledby={`${idPrefix}-identidad-visual`}>
-          <h2 className={styles.h2} id={`${idPrefix}-identidad-visual`}>
-            {L.identidadVisual.heading}
-          </h2>
-          {L.identidadVisual.paragraphs.map((p) => (
+        <SectionBlock id={`${idPrefix}-para-quien`} heading={L.paraQuien.heading} icon="🏪">
+          {L.paraQuien.intro ? <p className={styles.paragraph}>{L.paraQuien.intro}</p> : null}
+          <ul className={styles.list}>
+            {L.paraQuien.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </SectionBlock>
+
+        <SectionBlock id={`${idPrefix}-ventajas`} heading={L.ventajas.heading} icon="✓">
+          <ul className={styles.list}>
+            {L.ventajas.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </SectionBlock>
+
+        {L.imagenesProductos ? (
+          <SectionBlock id={`${idPrefix}-imagenes`} heading={L.imagenesProductos.heading} icon="🖼">
+            {L.imagenesProductos.paragraphs.map((p) => (
+              <p key={p} className={styles.paragraph}>
+                {p}
+              </p>
+            ))}
+            {L.imagenesProductos.items.length > 0 ? (
+              <ul className={styles.list}>
+                {L.imagenesProductos.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+          </SectionBlock>
+        ) : null}
+
+        <SectionBlock id={`${idPrefix}-personalizacion`} heading={L.personalizacion.heading} icon="🎨">
+          {L.personalizacion.intro?.trim() ? (
+            <p className={styles.paragraph}>{L.personalizacion.intro}</p>
+          ) : null}
+          <h3 className={styles.h3}>{L.personalizacion.colors.heading}</h3>
+          {L.personalizacion.colors.intro ? (
+            <p className={styles.paragraph}>{L.personalizacion.colors.intro}</p>
+          ) : null}
+          <ul className={styles.list}>
+            {L.personalizacion.colors.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          {L.personalizacion.colors.outro ? (
+            <p className={styles.paragraph}>{L.personalizacion.colors.outro}</p>
+          ) : null}
+          {L.personalizacion.elementos ? (
+            <>
+              <h3 className={styles.h3}>{L.personalizacion.elementos.heading}</h3>
+              {L.personalizacion.elementos.intro ? (
+                <p className={styles.paragraph}>{L.personalizacion.elementos.intro}</p>
+              ) : null}
+              <ul className={styles.list}>
+                {L.personalizacion.elementos.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              {L.personalizacion.elementos.outro ? (
+                <p className={styles.paragraph}>{L.personalizacion.elementos.outro}</p>
+              ) : null}
+            </>
+          ) : null}
+        </SectionBlock>
+
+        {L.tipografia ? (
+          <SectionBlock id={`${idPrefix}-tipografia`} heading={L.tipografia.heading} icon="Aa">
+            {tipografiaFirst ? <p className={styles.paragraph}>{tipografiaFirst}</p> : null}
+            {L.tipografiaFontList?.length ? (
+              <ul className={styles.list}>
+                {L.tipografiaFontList.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+            ) : null}
+            {tipografiaRest.map((para) =>
+              isFontStackLine(para) ? (
+                <p key={para} className={styles.fontStack}>
+                  {para}
+                </p>
+              ) : (
+                <p key={para} className={styles.paragraph}>
+                  {para}
+                </p>
+              ),
+            )}
+          </SectionBlock>
+        ) : null}
+
+        {L.identidadVisual ? (
+          <SectionBlock id={`${idPrefix}-identidad-visual`} heading={L.identidadVisual.heading} icon="✦">
+            {L.identidadVisual.paragraphs.map((p) => (
+              <p key={p} className={styles.paragraph}>
+                {p}
+              </p>
+            ))}
+            {L.identidadVisual.items.length > 0 ? (
+              <ul className={styles.list}>
+                {L.identidadVisual.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+          </SectionBlock>
+        ) : null}
+
+        <SectionBlock
+          id={`${idPrefix}-traducciones`}
+          heading={
+            <>
+              <span>{L.traduccionesPro.heading}</span>
+              <span className={styles.proBadge}>PRO</span>
+            </>
+          }
+          icon="🌐"
+        >
+          {L.traduccionesPro.paragraphs.map((p) => (
             <p key={p} className={styles.paragraph}>
               {p}
             </p>
           ))}
-          {L.identidadVisual.items.length > 0 ? (
-            <ul className={styles.list}>
-              {L.identidadVisual.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
-      ) : null}
+          <ul className={styles.list}>
+            {L.traduccionesPro.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </SectionBlock>
 
-      <section className={styles.section} aria-labelledby={`${idPrefix}-traducciones`}>
-        <h2 className={styles.h2} id={`${idPrefix}-traducciones`}>
-          <span>{L.traduccionesPro.heading}</span>
-          <span className={styles.proBadge}>PRO</span>
-        </h2>
-        {L.traduccionesPro.paragraphs.map((p) => (
-          <p key={p} className={styles.paragraph}>
-            {p}
-          </p>
-        ))}
-        <ul className={styles.list}>
-          {L.traduccionesPro.items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section className={styles.section} aria-labelledby={`${idPrefix}-experiencia`}>
-        <h2 className={styles.h2} id={`${idPrefix}-experiencia`}>
-          {L.experiencia.heading}
-        </h2>
-        <ul className={styles.list}>
-          {L.experiencia.items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section className={styles.qrSection} aria-labelledby={`${idPrefix}-qr`}>
-        <h2 className={styles.h2} id={`${idPrefix}-qr`}>
-          {L.qr.heading}
-        </h2>
-        <p className={styles.qrSectionIntro}>{L.qr.body}</p>
-        <PlantillaPreviewQrClient
-          previewPath={L.previewPath}
-          demoButtonLabel={L.qr.demoButtonLabel}
-          demoHint={L.qr.demoHint}
-          {...(typeof L.qr.qrSize === 'number' ? { qrSize: L.qr.qrSize } : {})}
-        />
-      </section>
+        <SectionBlock id={`${idPrefix}-experiencia`} heading={L.experiencia.heading} icon="📱">
+          <ul className={styles.list}>
+            {L.experiencia.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </SectionBlock>
+      </div>
 
       {L.cta.secondaryLabel && L.cta.secondaryHref ? (
         <PlantillaLandingDualCtaClient cta={L.cta} idPrefix={idPrefix} premiumBand={variant === 'premium'} />

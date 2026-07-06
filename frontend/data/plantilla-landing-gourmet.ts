@@ -10,10 +10,12 @@ export const PLANTILLA_GOURMET_LANDING: PlantillaLandingContent = {
       'Plantilla de menú QR Gourmet para restaurantes premium. Incluye imágenes en productos, tipografías elegantes y diseño exclusivo. Disponible en plan PRO.',
   },
   previewPath: '/preview/gourmet',
+  heroPreviewImage:
+    '/plantillas/landings/carta-digital-restaurante-gourmet-preview-f7615185-dcb5-4f6a-bee5-5ad8954aab1d.png',
   header: {
-    h1: 'Plantilla de menú QR Gourmet',
+    h1: 'Plantilla Gourmet para carta digital QR',
     intro:
-      'La plantilla Gourmet está diseñada para restaurantes que buscan una carta digital premium, elegante y altamente visual. Es ideal para transmitir calidad, detalle y una experiencia gastronómica superior.',
+      'La plantilla Gourmet está diseñada para restaurantes que buscan una carta digital premium, elegante y altamente visual. Es ideal para transmitir calidad, detalle y una experiencia gastronómica superior.\n\nAdemás, permite personalizar colores, tipografías y elementos visuales como logo, portada, nombre y descripción del comercio. También podés mostrar imágenes en cada producto para destacar tus platos.',
   },
   exclusividadPro: {
     heading: 'Plantilla exclusiva PRO',
@@ -23,7 +25,9 @@ export const PLANTILLA_GOURMET_LANDING: PlantillaLandingContent = {
     ],
   },
   paraQuien: {
-    heading: '¿Para qué tipo de restaurantes es ideal?',
+    heading: '¿Para qué tipo de negocios es ideal?',
+    intro:
+      'La plantilla Gourmet es ideal para restaurantes premium que buscan una carta digital elegante, visual y fácil de leer. Su diseño permite mostrar productos con fotos, categorías y precios de forma ordenada, con una experiencia cómoda desde el celular.',
     items: [
       'Restaurantes de alta cocina',
       'Bistrós y restaurantes gourmet',
@@ -92,9 +96,9 @@ export const PLANTILLA_GOURMET_LANDING: PlantillaLandingContent = {
   },
   qr: {
     heading: 'Ver demo en tu móvil',
-    body: 'Escanea el código QR para experimentar esta plantilla en un entorno real desde tu teléfono.',
+    body: 'Escanea el código QR para ver una preview real de esta plantilla en tu teléfono.',
     demoButtonLabel: 'Ver demo',
-    demoHint: 'Abrí la demo en el navegador del celular o escaneá el código desde otro dispositivo.',
+    demoHint: 'Demo disponible en celular y navegador',
   },
   cta: {
     heading: 'Activa la experiencia Gourmet',

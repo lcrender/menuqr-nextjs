@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { buildPremiumInquiryUrl } from '../../lib/premium-inquiry-url';
 import styles from './Plantillas.module.css';
 
 export default function PremiumPlanCard() {
@@ -20,7 +21,7 @@ export default function PremiumPlanCard() {
         </p>
         <p className={styles.premiumCardSubtext}>Contactanos y armamos una propuesta a medida.</p>
         <div className={styles.cardCta}>
-          <Link href="/contacto?from=plantillas-premium" className={styles.premiumCtaButton}>
+          <Link href={buildPremiumInquiryUrl('plantillas')} className={styles.premiumCtaButton}>
             Consultar
           </Link>
         </div>

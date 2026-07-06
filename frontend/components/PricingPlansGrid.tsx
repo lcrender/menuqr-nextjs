@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { formatCurrency } from '../lib/format-currency';
 import {
@@ -9,6 +10,7 @@ import {
   formatRestaurantsLine,
 } from '../lib/public-plan-limits';
 import { appendPromoToCheckoutUrl } from '../lib/promo-query';
+import { buildPremiumInquiryUrl } from '../lib/premium-inquiry-url';
 
 type PlanSlug = 'free' | 'starter' | 'pro' | 'premium';
 
@@ -84,7 +86,6 @@ export default function PricingPlansGrid({
   const planFree = pricingData?.plans?.find((p) => p.slug === 'free');
   const planStarter = pricingData?.plans?.find((p) => p.slug === 'starter');
   const planPro = pricingData?.plans?.find((p) => p.slug === 'pro');
-  const planPremium = pricingData?.plans?.find((p) => p.slug === 'premium');
   const paymentProvider = pricingData?.paymentProvider ?? 'paypal';
   const isMercadoPago = paymentProvider === 'mercadopago';
 
@@ -103,7 +104,6 @@ export default function PricingPlansGrid({
   const F = lim.free;
   const S = lim.starter;
   const P = lim.pro;
-  const X = lim.premium;
 
   const starterMoreProducts = S.productLimit > F.productLimit;
   const proMoreRestaurants = P.restaurantLimit > S.restaurantLimit;
@@ -444,55 +444,57 @@ export default function PricingPlansGrid({
         </button>
       </div>
 
-      {/* Plan Premium */}
-      <div className="landing-pricing-card">
+      {/* Plan Premium — propuesta a medida (sin checkout) */}
+      <div className="landing-pricing-card landing-pricing-card-premium">
+        <div className="landing-pricing-badge landing-pricing-badge-premium">A Medida</div>
         <div className="landing-pricing-header">
-          <h3 className="landing-pricing-name">Premium</h3>
-          {landingPlanTaglines ? (
-            <p className="landing-pricing-plan-tagline small text-muted mb-2">
-              Máxima escala para cadenas y locales con carta digital exigente.
-            </p>
-          ) : null}
-          {renderPaidPriceBlock(planPremium, 'USD 15.99', 'USD', 15.99)}
+          <h3 className="landing-pricing-name">Plan Premium</h3>
+          <p className="landing-pricing-premium-lead">
+            Diseño y configuración personalizada para adaptar tu carta digital a las necesidades de tu negocio.
+          </p>
+          <p className="landing-pricing-premium-callout">Contanos qué necesitás</p>
         </div>
         <ul className="landing-pricing-features">
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>{formatRestaurantsLine(X.restaurantLimit)}</span>
+            <span>Diseño personalizado de la carta digital</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>{formatMenusLine(X.menuLimit)}</span>
+            <span>Configuración inicial del menú</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>{formatProductsLine(X.productLimit)}</span>
+            <span>Carga completa de productos de la carta</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Fotos de productos</span>
-          </li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Alérgenos</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Desactivar productos</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Reordenar productos</span></li>
-          {renderDestacarProductosFeatureRow(X.productHighlightAllowed)}
-          <li className="landing-pricing-feature landing-pricing-feature-highlight">
-            <span className="landing-pricing-check">✓</span>
-            <span>Plantillas Premium</span>
+            <span>Adaptaciones según necesidad</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Idiomas ilimitados</span>
+            <span>Asistencia en la puesta en marcha</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Soporte dedicado</span>
+            <span>Soporte personalizado</span>
           </li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR descargable</span></li>
+          <li className="landing-pricing-feature landing-pricing-feature-highlight">
+            <span className="landing-pricing-check">✓</span>
+            <span>Propuesta a medida</span>
+          </li>
         </ul>
-        <button type="button" onClick={() => handleCta('premium')} className="landing-btn-secondary landing-btn-full" disabled={loadingPlan !== null}>
-          {isSubscription && loadingPlan === 'premium' ? '…' : isSubscription && billingCycle === 'yearly' ? 'Elegir Premium (anual)' : 'Elegir Premium'}
-        </button>
+        <div className="landing-pricing-premium-footer">
+          <p className="landing-pricing-premium-footer-text">
+            Ideal para proyectos que necesitan una carta digital más personalizada.
+          </p>
+        </div>
+        <Link
+          href={buildPremiumInquiryUrl('precios')}
+          className="landing-btn-secondary landing-btn-full landing-pricing-premium-cta"
+        >
+          Consultar plan
+        </Link>
       </div>
 
       {isSubscription && pricingData && (isMercadoPago ? (

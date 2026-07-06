@@ -9,6 +9,8 @@ export interface PlantillaLandingSeo {
 
 export interface PlantillaLandingSectionList {
   heading: string;
+  /** Párrafo opcional entre el h2 y la lista. */
+  intro?: string;
   items: readonly string[];
 }
 
@@ -17,11 +19,17 @@ export interface PlantillaLandingColorsSection {
   /** Párrafo opcional entre el h3 y la lista (p. ej. explicar los dos colores). */
   intro?: string;
   items: readonly string[];
+  /** Párrafo opcional después de la lista de colores. */
+  outro?: string;
 }
 
 export interface PlantillaLandingVisualElementsSection {
   heading: string;
+  /** Párrafo opcional entre el h3 y la lista. */
+  intro?: string;
   items: readonly string[];
+  /** Párrafo opcional después de la lista. */
+  outro?: string;
 }
 
 export interface PlantillaLandingPersonalization {
@@ -77,6 +85,8 @@ export interface PlantillaLandingContent {
   seo: PlantillaLandingSeo;
   /** Ruta de preview interactiva (ej. /preview/classic) */
   previewPath: string;
+  /** Imagen compuesta del hero (mockup + captura); si existe, reemplaza el mockup CSS. */
+  heroPreviewImage?: string;
   header: { h1: string; intro: string };
   /** Badges extra tras categoría/estilos/tags (ej. “Exclusivo”). */
   badgeStrip?: readonly string[];

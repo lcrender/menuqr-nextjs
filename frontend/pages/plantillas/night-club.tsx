@@ -34,7 +34,7 @@ export default function PlantillaNightClubPage() {
         <LandingNav />
         <main className={styles.wrap}>
           <div className="container">
-            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="night-club" variant="visual" />
+            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="night-club" variant="default" />
           </div>
         </main>
         <LandingFooter />

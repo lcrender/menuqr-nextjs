@@ -17,7 +17,7 @@
 }
 
 .template-burgers .menu-section-title {
-  font-size: 1.8rem;
+  font-size: 1.7rem;
   font-weight: 800;
   color: var(--primary-color, #e74c3c);
   margin-bottom: 40px;
@@ -179,7 +179,7 @@
   }
 
   .template-burgers .menu-section-title {
-    font-size: 1.8rem;
+    font-size: 1.7rem;
   }
 
   .template-burgers .menu-item-name {

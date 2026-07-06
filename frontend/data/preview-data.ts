@@ -508,7 +508,7 @@ const burgersData: { restaurant: PreviewRestaurant; menu: PreviewMenu } = {
     logoUrl: '/preview/logo-burgers.jpg',
     coverUrl: '/preview/portada-burgers.jpg',
     templateConfig: {
-      sectionTitleFontSize: 'large',
+      sectionTitleFontSize: 'medium',
     },
   },
   menu: {

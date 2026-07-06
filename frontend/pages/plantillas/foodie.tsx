@@ -34,7 +34,7 @@ export default function PlantillaFoodiePage() {
         <LandingNav />
         <main className={styles.wrap}>
           <div className="container">
-            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="foodie" variant="visual" />
+            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="foodie" variant="default" />
           </div>
         </main>
         <LandingFooter />

@@ -12,18 +12,22 @@ export const PLANTILLA_CLASSIC_LANDING: PlantillaLandingContent = {
       'Descubre la plantilla de menú QR clásica para restaurantes. Diseño elegante, fácil de usar y adaptable a tu marca. Ideal para cartas digitales profesionales.',
   },
   previewPath: '/preview/classic',
+  heroPreviewImage: '/plantillas/landings/classic-hero-preview.png',
   header: {
-    h1: 'Plantilla de menú QR clásica para restaurantes',
+    h1: 'Plantilla Clásica para carta digital QR',
     intro:
-      'La plantilla Clásica es la opción ideal para restaurantes que buscan una carta digital elegante, clara y fácil de usar. Está diseñada para mantener una estética tradicional, priorizando la legibilidad y una navegación intuitiva.',
+      'La plantilla Clásica es ideal para restaurantes que buscan una carta digital elegante, clara y fácil de usar. Su diseño prioriza la legibilidad, con textos grandes, navegación simple y una estética tradicional que se adapta muy bien a distintos tipos de negocios gastronómicos.\n\nAdemás, permite personalizar los colores principales y secundarios para acompañar la identidad visual del restaurante. También podés configurar elementos opcionales como el logo, la foto de portada, el nombre y la descripción del comercio.',
   },
   paraQuien: {
-    heading: '¿Para qué tipo de restaurantes es ideal?',
+    heading: '¿Para qué tipo de negocios es ideal?',
+    intro:
+      'La plantilla Clásica es ideal para negocios gastronómicos que buscan una carta digital simple, clara y fácil de leer. Su diseño permite mostrar productos, categorías y precios de forma ordenada, con una experiencia cómoda desde el celular.',
     items: [
-      'Restaurantes tradicionales',
+      'Restaurantes con carta simple y tradicional',
       'Bares y cafeterías',
-      'Trattorias y locales familiares',
-      'Negocios que buscan una carta digital simple y elegante',
+      'Locales gastronómicos familiares',
+      'Casas de comida y comercios de atención diaria',
+      'Negocios que priorizan una carta clara, práctica y fácil de usar',
     ],
   },
   ventajas: {
@@ -80,12 +84,12 @@ export const PLANTILLA_CLASSIC_LANDING: PlantillaLandingContent = {
     heading: 'Ver demo en tu móvil',
     body: 'Escanea el código QR para ver una preview real de esta plantilla en tu teléfono.',
     demoButtonLabel: 'Ver demo',
-    demoHint: 'Abrí la demo en el navegador del celular o escaneá el código desde otro dispositivo.',
+    demoHint: 'Demo disponible en celular y navegador',
   },
   cta: {
     heading: 'Empieza ahora',
     body: 'Activa esta plantilla y crea tu menú digital en minutos.',
-    primaryLabel: 'Usar esta plantilla',
+    primaryLabel: 'Elegir esta plantilla',
     primaryHref: '/login?action=register',
   },
 };

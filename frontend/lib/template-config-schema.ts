@@ -88,7 +88,7 @@ const BURGERS_SECTION_TITLE_SIZE: TemplateConfigOption = {
   label: 'Tamaño de letra de los títulos de sección',
   description: 'Tamaño del texto de las categorías del menú (por ejemplo: Hamburguesas, Acompañamientos).',
   type: 'select',
-  default: 'large',
+  default: 'medium',
   options: [
     { value: 'small', label: 'Pequeño' },
     { value: 'medium', label: 'Mediano' },

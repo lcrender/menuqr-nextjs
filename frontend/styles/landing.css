@@ -1019,6 +1019,60 @@
   box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
 }
 
+.landing-pricing-card-premium {
+  border-color: #c4b5fd;
+  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 48%);
+}
+
+.landing-pricing-card-premium:hover {
+  border-color: #a78bfa;
+  box-shadow: 0 12px 28px rgba(91, 33, 182, 0.14);
+}
+
+.landing-pricing-badge-premium {
+  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+}
+
+.landing-pricing-premium-lead {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--landing-text-secondary);
+}
+
+.landing-pricing-premium-callout {
+  margin: 1rem 0 0;
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #7c3aed;
+}
+
+.landing-pricing-card-premium .landing-pricing-features {
+  margin-bottom: 0;
+}
+
+.landing-pricing-premium-footer {
+  padding-top: 24px;
+  margin-bottom: 24px;
+  border-top: 1px solid var(--landing-border);
+}
+
+.landing-pricing-premium-footer-text {
+  margin: 0;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--landing-text-secondary);
+}
+
+.landing-pricing-premium-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
 .landing-pricing-badge {
   position: absolute;
   top: -12px;
@@ -1633,6 +1687,112 @@
     max-width: 100%;
     padding: 16px 24px;
     font-size: 1.05rem;
+  }
+}
+
+/* Consulta Plan Premium */
+.premium-inquiry-section {
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+}
+
+.premium-inquiry-card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 42%);
+  border: 2px solid #c4b5fd;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(91, 33, 182, 0.1);
+}
+
+.premium-inquiry-header {
+  text-align: center;
+  padding: 2rem 2rem 1.5rem;
+  border-bottom: 1px solid #e9d5ff;
+}
+
+.premium-inquiry-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 20px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+  margin-bottom: 1rem;
+}
+
+.premium-inquiry-title {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.75rem, 4vw, 2.15rem);
+  font-weight: 800;
+  color: var(--landing-text);
+  letter-spacing: -0.02em;
+}
+
+.premium-inquiry-lead {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--landing-text-secondary);
+}
+
+.premium-inquiry-callout {
+  margin: 1rem 0 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #7c3aed;
+}
+
+.premium-inquiry-body {
+  padding: 1.75rem 2rem 2rem;
+}
+
+.premium-inquiry-form .form-label {
+  font-weight: 600;
+  color: var(--landing-text);
+}
+
+.premium-inquiry-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+  border: none;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+}
+
+.premium-inquiry-submit:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  color: #fff;
+}
+
+.premium-inquiry-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .premium-inquiry-header,
+  .premium-inquiry-body {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .premium-inquiry-callout {
+    font-size: 1.45rem;
   }
 }
 

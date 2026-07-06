@@ -9,13 +9,16 @@ export const PLANTILLA_BURGERS_LANDING: PlantillaLandingContent = {
       'Plantilla de menú QR para hamburgueserías y comida rápida. Diseño moderno, visual y fácil de usar. Ideal para destacar tu carta digital.',
   },
   previewPath: '/preview/burgers',
+  heroPreviewImage: '/plantillas/landings/carta-digital-qr-burgers-preview-2c492fb7-fd54-41ef-afab-150ceee7603e.png',
   header: {
-    h1: 'Plantilla de menú QR para hamburgueserías',
+    h1: 'Plantilla Burgers para carta digital QR',
     intro:
-      'La plantilla Burgers está diseñada para negocios de comida rápida que buscan una carta digital moderna, clara y atractiva. Ideal para mostrar productos de forma directa y facilitar la elección del cliente.',
+      'La plantilla Burgers está diseñada para negocios de comida rápida que buscan una carta digital moderna, clara y atractiva. Ideal para mostrar productos de forma directa y facilitar la elección del cliente.\n\nAdemás, permite personalizar los colores principales y secundarios para acompañar la identidad visual del restaurante. También podés configurar elementos opcionales como el logo, la foto de portada, el nombre y la descripción del comercio.',
   },
   paraQuien: {
     heading: '¿Para qué tipo de negocios es ideal?',
+    intro:
+      'La plantilla Burgers es ideal para negocios gastronómicos que buscan una carta digital rápida, clara y fácil de leer. Su diseño permite mostrar productos, categorías y precios de forma ordenada, con una experiencia cómoda desde el celular.',
     items: [
       'Hamburgueserías',
       'Food trucks',
@@ -69,15 +72,14 @@ export const PLANTILLA_BURGERS_LANDING: PlantillaLandingContent = {
   },
   qr: {
     heading: 'Ver demo en tu móvil',
-    body: 'Escanea el código QR y prueba esta plantilla directamente desde tu teléfono.',
+    body: 'Escanea el código QR para ver una preview real de esta plantilla en tu teléfono.',
     demoButtonLabel: 'Ver demo',
-    demoHint: 'Abrí la demo en el navegador del celular o escaneá el código desde otro dispositivo.',
-    qrSize: 320,
+    demoHint: 'Demo disponible en celular y navegador',
   },
   cta: {
     heading: 'Empieza ahora',
-    body: 'Activa esta plantilla y ofrece una carta digital rápida y efectiva para tu negocio.',
-    primaryLabel: 'Usar esta plantilla',
+    body: 'Activa esta plantilla y crea tu menú digital en minutos.',
+    primaryLabel: 'Elegir esta plantilla',
     primaryHref: '/login?action=register',
   },
 };

@@ -34,7 +34,7 @@ export default function PlantillaGourmetPage() {
         <LandingNav />
         <main className={styles.wrap}>
           <div className="container">
-            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="gourmet" variant="premium" />
+            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="gourmet" variant="default" />
           </div>
         </main>
         <LandingFooter />

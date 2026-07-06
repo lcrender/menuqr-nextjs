@@ -1,6 +1,6 @@
 import Head from 'next/head';
-import Image from 'next/image';
 import Link from 'next/link';
+import PlantillaPreviewPhoneMockup from '../../components/plantillas/detail/PlantillaPreviewPhoneMockup';
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import LandingFooter from '../../components/LandingFooter';
 import LandingNav from '../../components/LandingNav';
@@ -70,16 +70,11 @@ export default function PlantillaDetallePage({ template }: PlantillaDetalleProps
                 ) : null}
 
                 <div className={styles.detailHero}>
-                  <div className={styles.detailImageWrap}>
-                    <Image
-                      src={template.imagen}
-                      alt={`Vista previa plantilla menú QR ${template.nombre}`}
-                      fill
-                      sizes="(max-width: 960px) 100vw, 720px"
-                      className={styles.detailImage}
-                      priority
-                    />
-                  </div>
+                  <PlantillaPreviewPhoneMockup
+                    src={template.imagen}
+                    alt={`Vista previa plantilla menú QR ${template.nombre}`}
+                    priority
+                  />
                 </div>
 
                 <p className={styles.badgeRow} style={{ marginBottom: '0.75rem' }}>

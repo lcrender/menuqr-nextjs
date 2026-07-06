@@ -363,21 +363,6 @@
   margin-bottom: 2rem;
 }
 
-.detailImageWrap {
-  position: relative;
-  width: 100%;
-  max-height: min(70vh, 520px);
-  aspect-ratio: 16 / 10;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-  background: #f3f4f6;
-}
-
-.detailImage {
-  object-fit: cover;
-}
-
 .detailContent {
   max-width: 720px;
   margin: 0 auto;

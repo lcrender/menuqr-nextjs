@@ -569,5 +569,57 @@ export class PublicService {
 
     return { ok: true };
   }
+
+  async submitPremiumInquiry(input: {
+    fullName: string;
+    businessName: string;
+    phone: string;
+    email: string;
+    message: string;
+    recaptchaToken: string;
+    sourcePage: string;
+    ip?: string;
+    userAgent?: string;
+  }) {
+    await this.recaptcha.verifyRequired(input.recaptchaToken, input.ip);
+
+    const receiver = (
+      this.config.get<string>('CONTACT_FORM_RECEIVER_EMAIL') ||
+      this.config.get<string>('SMTP_FROM') ||
+      'lcrender@gmail.com'
+    ).trim();
+
+    const escaped = (s: string) =>
+      s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
+        <h2 style="margin:0 0 16px">Nueva consulta Plan Premium (a medida)</h2>
+        <p><strong>Nombre:</strong> ${escaped(input.fullName)}</p>
+        <p><strong>Negocio:</strong> ${escaped(input.businessName)}</p>
+        <p><strong>Teléfono:</strong> ${escaped(input.phone)}</p>
+        <p><strong>Email:</strong> ${escaped(input.email)}</p>
+        <p><strong>Origen:</strong> ${escaped(input.sourcePage)}</p>
+        <p><strong>IP:</strong> ${escaped(input.ip || '-')}</p>
+        <p><strong>User-Agent:</strong> ${escaped(input.userAgent || '-')}</p>
+        <hr />
+        <p><strong>Qué necesita:</strong></p>
+        <div style="white-space:pre-wrap;border:1px solid #e5e7eb;padding:12px;border-radius:6px;background:#f9fafb">${escaped(input.message)}</div>
+      </div>
+    `;
+
+    await this.emailService.sendAdminNotificationEmail(
+      receiver,
+      `Consulta Plan Premium (${input.sourcePage}) - ${input.fullName}`,
+      html,
+    );
+
+    return { ok: true };
+  }
 }
 

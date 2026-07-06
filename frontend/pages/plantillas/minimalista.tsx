@@ -34,7 +34,7 @@ export default function PlantillaMinimalistaPage() {
         <LandingNav />
         <main className={styles.wrap}>
           <div className="container">
-            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="minimalista" variant="minimal" />
+            <PlantillaLandingArticle content={L} catalog={catalog} idPrefix="minimalista" variant="default" />
           </div>
         </main>
         <LandingFooter />

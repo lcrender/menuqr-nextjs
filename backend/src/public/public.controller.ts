@@ -4,6 +4,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/
 import { PublicService } from './public.service';
 import { Public } from '../common/decorators/public.decorator';
 import { PublicContactDto } from './dto/public-contact.dto';
+import { PublicPremiumInquiryDto } from './dto/public-premium-inquiry.dto';
 
 @ApiTags('public')
 @Controller('public')
@@ -87,6 +88,20 @@ export class PublicController {
   async submitContactForm(@Body() body: PublicContactDto, @Req() req: any) {
     return this.publicService.submitPublicContactForm({
       ...body,
+      ip: req?.ip || req?.headers?.['x-forwarded-for'] || undefined,
+      userAgent: req?.headers?.['user-agent'] || undefined,
+    });
+  }
+
+  @Post('premium-inquiry')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Enviar consulta del Plan Premium a medida' })
+  @ApiResponse({ status: 200, description: 'Consulta enviada' })
+  async submitPremiumInquiry(@Body() body: PublicPremiumInquiryDto, @Req() req: any) {
+    return this.publicService.submitPremiumInquiry({
+      ...body,
+      sourcePage: body.sourcePage || 'direct',
       ip: req?.ip || req?.headers?.['x-forwarded-for'] || undefined,
       userAgent: req?.headers?.['user-agent'] || undefined,
     });
