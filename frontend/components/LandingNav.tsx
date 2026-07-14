@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { usePublicAccountNav } from '../hooks/usePublicSession';
 import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
 
 export default function LandingNav() {
   const router = useRouter();
+  const accountNav = usePublicAccountNav();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const closeMobileNav = () => setMobileNavOpen(false);
@@ -52,9 +54,9 @@ export default function LandingNav() {
     router.push('/login?action=register');
   };
 
-  const handleLogin = () => {
+  const handleAccountNav = () => {
     closeMobileNav();
-    router.push('/login');
+    router.push(accountNav.href);
   };
 
   return (
@@ -96,9 +98,9 @@ export default function LandingNav() {
               <Link href="/#faq" className="landing-nav-text-link">
                 Preguntas frecuentes
               </Link>
-              <button type="button" onClick={handleLogin} className="landing-btn-secondary landing-nav-login-btn">
-                Iniciar Sesión
-              </button>
+              <Link href={accountNav.href} className="landing-btn-secondary landing-nav-login-btn">
+                {accountNav.label}
+              </Link>
             </div>
           </div>
         </div>
@@ -142,8 +144,8 @@ export default function LandingNav() {
           <button type="button" className="landing-btn-primary landing-nav-mobile-cta" onClick={handleTryFree}>
             Crear mi carta digital
           </button>
-          <button type="button" className="landing-btn-secondary landing-nav-mobile-cta" onClick={handleLogin}>
-            Iniciar sesión
+          <button type="button" className="landing-btn-secondary landing-nav-mobile-cta" onClick={handleAccountNav}>
+            {accountNav.label}
           </button>
         </div>
       </div>

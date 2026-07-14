@@ -2,8 +2,10 @@ import Head from 'next/head';
 import Link from 'next/link';
 import LandingNav from '../components/LandingNav';
 import LandingFooter from '../components/LandingFooter';
+import { usePublicAccountNav } from '../hooks/usePublicSession';
 
 export default function PublicSupportPage() {
+  const accountNav = usePublicAccountNav();
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   const canonicalUrl =
     canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}/soporte` : null;
@@ -26,8 +28,8 @@ export default function PublicSupportPage() {
               administrador vas a encontrar la sección de soporte con los datos de contacto y el formulario de
               incidencias.
             </p>
-            <Link href="/login" className="landing-btn-primary landing-btn-large d-inline-block text-center text-decoration-none">
-              Iniciar sesión
+            <Link href={accountNav.href} className="landing-btn-primary landing-btn-large d-inline-block text-center text-decoration-none">
+              {accountNav.label}
             </Link>
           </div>
         </main>

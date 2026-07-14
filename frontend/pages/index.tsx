@@ -7,6 +7,7 @@ import LandingNav from '../components/LandingNav';
 import LandingFooter from '../components/LandingFooter';
 import LandingHeroPlantillasQr from '../components/LandingHeroPlantillasQr';
 import LandingBenefitIcon from '../components/LandingBenefitIcon';
+import { usePublicAccountNav } from '../hooks/usePublicSession';
 import api from '../lib/axios';
 import { buildLandingJsonLd, siteJsonLdBaseUrl } from '../lib/json-ld-appmenuqr';
 import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
@@ -60,6 +61,7 @@ const LANDING_FAQ_ITEMS: readonly { question: string; answer: string }[] = [
 
 export default function Home() {
   const router = useRouter();
+  const accountNav = usePublicAccountNav();
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
@@ -83,7 +85,7 @@ export default function Home() {
   };
 
   const handleLogin = () => {
-    router.push('/login');
+    router.push(accountNav.href);
   };
 
   const canonicalUrl = (() => {
@@ -139,7 +141,7 @@ export default function Home() {
                   Crear mi carta digital
                 </button>
                 <button onClick={handleLogin} className="landing-btn-secondary landing-btn-large">
-                  Iniciar sesión
+                  {accountNav.label}
                 </button>
               </div>
               <p className="landing-hero-note">

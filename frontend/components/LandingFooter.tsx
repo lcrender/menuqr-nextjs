@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { usePublicAccountNav } from '../hooks/usePublicSession';
 
 /** Segunda fila del footer: landings SEO (solo texto ancla = keyword). */
 const FOOTER_SEO_LANDINGS = [
@@ -9,9 +10,11 @@ const FOOTER_SEO_LANDINGS = [
 
 /**
  * Footer público unificado (landing, legales, login, etc.):
- * Iniciar sesión, Documentación, Soporte, Precios, legales.
+ * Mi cuenta / Iniciar sesión, Documentación, Soporte, Precios, legales.
  */
 export default function LandingFooter() {
+  const accountNav = usePublicAccountNav();
+
   return (
     <footer className="landing-footer">
       <div className="container">
@@ -21,8 +24,8 @@ export default function LandingFooter() {
             <span className="landing-logo-text">AppMenuQR</span>
           </div>
           <div className="landing-footer-links">
-            <Link href="/login" className="landing-footer-link">
-              Iniciar sesión
+            <Link href={accountNav.href} className="landing-footer-link">
+              {accountNav.label}
             </Link>
             <Link href="/documentacion" className="landing-footer-link">
               Documentación
