@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -41,6 +42,7 @@ interface ProMobileTemplateProps {
         prices: Array<{ currency: string; label?: string; amount: number }>;
         icons: string[];
         photos?: string[];
+        highlighted?: boolean;
       }>;
     }>;
   } | null;
@@ -115,12 +117,79 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
     [sections, activeSectionId],
   );
 
+  const sectionItems = activeSection?.items ?? [];
+  const { featuredItems, regularItems } = splitHighlightedItems(sectionItems);
+  const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
+
+  const renderProMobileItem = (item: (typeof sectionItems)[number], featured: boolean) => {
+    const hasPhoto = showProductImages && !!item.photos?.length;
+    const photoSize = 76;
+    return (
+      <article key={item.id} className={`pro-mobile-item-row${hasPhoto ? '' : ' no-photo'}${featured ? ' pro-mobile-item-row--featured' : ''}`}>
+        <div className="pro-mobile-item-main">
+          {featured ? <p className="tpl-featured-label">{recommendedLabel}</p> : null}
+          <h3 className="pro-mobile-item-name">{item.name}</h3>
+          {item.description && <p className="pro-mobile-item-desc">{item.description}</p>}
+          {item.icons.length > 0 && (
+            <div className="pro-mobile-item-icons">
+              {item.icons.map((icon) => (
+                <span key={icon} className="pro-mobile-item-icon" title={iconLabels[icon] || icon}>
+                  {iconLabels[icon] || icon}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="pro-mobile-item-prices">
+            {item.prices.map((price, idx) => (
+              <span key={idx} className="pro-mobile-item-price">
+                {price.label && (
+                  <span className="pro-mobile-item-price-label">{price.label}:</span>
+                )}
+                {formatPrice(price)}
+              </span>
+            ))}
+          </div>
+        </div>
+        {hasPhoto && (
+          <div
+            className="pro-mobile-item-photo"
+            style={{
+              width: photoSize,
+              height: photoSize,
+              maxWidth: photoSize,
+              maxHeight: photoSize,
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
+          >
+            <img
+              src={item.photos![0]}
+              alt={item.name}
+              width={photoSize}
+              height={photoSize}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </div>
+        )}
+      </article>
+    );
+  };
+
   return (
     <div className={`${rootClass} restaurant-container`} style={{ minHeight: '100vh', width: '100%', background: pageBg }}>
       <style jsx>{`
         .template-pro-mobile {
           --primary-color: ${primaryColor};
           --secondary-color: ${secondaryColor};
+          --pro-mobile-border: ${borderColor};
+          --pro-mobile-title: ${titleColor};
+          --pro-mobile-desc: ${descColor};
+          --pro-mobile-surface: ${surfaceBg};
+          --pro-mobile-icon-bg: ${iconBg};
+          --pro-mobile-icon-border: ${iconBorder};
+          --pro-mobile-icon-color: ${iconColor};
+          --pro-mobile-price-label: ${priceLabelColor};
         }
         .template-pro-mobile .pro-mobile-cover {
           width: 100%;
@@ -241,75 +310,6 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
           min-width: 0;
           background: ${surfaceBg};
         }
-        .template-pro-mobile .pro-mobile-item-row {
-          display: grid;
-          grid-template-columns: 1fr 76px;
-          gap: 8px;
-          padding: 12px 10px;
-          border-bottom: 1px solid ${borderColor};
-          align-items: start;
-        }
-        .template-pro-mobile .pro-mobile-item-row.no-photo {
-          grid-template-columns: 1fr;
-        }
-        .template-pro-mobile .pro-mobile-item-name {
-          font-size: 0.92rem;
-          font-weight: 700;
-          margin: 0 0 4px;
-          color: ${titleColor};
-          line-height: 1.25;
-        }
-        .template-pro-mobile .pro-mobile-item-desc {
-          font-size: 0.75rem;
-          line-height: 1.45;
-          color: ${descColor};
-          margin: 0 0 6px;
-        }
-        .template-pro-mobile .pro-mobile-item-icons {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 4px;
-          margin-bottom: 6px;
-        }
-        .template-pro-mobile .pro-mobile-item-icon {
-          font-size: 0.6rem;
-          padding: 2px 6px;
-          border-radius: 3px;
-          border: 1px solid ${iconBorder};
-          background: ${iconBg};
-          color: ${iconColor};
-        }
-        .template-pro-mobile .pro-mobile-item-prices {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .template-pro-mobile .pro-mobile-item-price {
-          font-size: 0.82rem;
-          font-weight: 700;
-          color: ${primaryColor};
-          white-space: nowrap;
-        }
-        .template-pro-mobile .pro-mobile-item-price-label {
-          font-size: 0.68rem;
-          color: ${priceLabelColor};
-          font-weight: 400;
-          margin-right: 3px;
-        }
-        .template-pro-mobile .pro-mobile-item-photo {
-          width: 76px;
-          height: 76px;
-          border-radius: 6px;
-          overflow: hidden;
-          background: #f0f0f0;
-          flex-shrink: 0;
-        }
-        .template-pro-mobile .pro-mobile-item-photo img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
         .template-pro-mobile .footer {
           background: ${primaryColor};
           border-top: 3px solid ${secondaryColor};
@@ -344,14 +344,6 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
           .template-pro-mobile .pro-mobile-section-tab {
             font-size: 0.72rem;
             min-height: 88px;
-          }
-          .template-pro-mobile .pro-mobile-item-row {
-            grid-template-columns: 1fr 120px;
-            padding: 16px 14px;
-          }
-          .template-pro-mobile .pro-mobile-item-photo {
-            width: 120px;
-            height: 120px;
           }
         }
       `}</style>
@@ -440,41 +432,20 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
             </nav>
 
             <div className="pro-mobile-items">
-              {activeSection.items.map((item) => {
-                const hasPhoto = showProductImages && !!item.photos?.length;
-                return (
-                <article key={item.id} className={`pro-mobile-item-row${hasPhoto ? '' : ' no-photo'}`}>
-                  <div className="pro-mobile-item-main">
-                    <h3 className="pro-mobile-item-name">{item.name}</h3>
-                    {item.description && <p className="pro-mobile-item-desc">{item.description}</p>}
-                    {item.icons.length > 0 && (
-                      <div className="pro-mobile-item-icons">
-                        {item.icons.map((icon) => (
-                          <span key={icon} className="pro-mobile-item-icon" title={iconLabels[icon] || icon}>
-                            {iconLabels[icon] || icon}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="pro-mobile-item-prices">
-                      {item.prices.map((price, idx) => (
-                        <span key={idx} className="pro-mobile-item-price">
-                          {price.label && (
-                            <span className="pro-mobile-item-price-label">{price.label}:</span>
-                          )}
-                          {formatPrice(price)}
-                        </span>
-                      ))}
+              {sectionItems.length === 0 ? (
+                <p className="text-center py-4" style={{ color: isNightClub ? '#71717a' : undefined }}>
+                  No hay productos en esta sección.
+                </p>
+              ) : (
+                <>
+                  {featuredItems.length > 0 ? (
+                    <div className="tpl-featured-block" style={featuredAccentStyle}>
+                      {featuredItems.map((item) => renderProMobileItem(item, true))}
                     </div>
-                  </div>
-                  {hasPhoto && (
-                    <div className="pro-mobile-item-photo">
-                      <img src={item.photos![0]} alt={item.name} />
-                    </div>
-                  )}
-                </article>
-              );
-              })}
+                  ) : null}
+                  {regularItems.map((item) => renderProMobileItem(item, false))}
+                </>
+              )}
             </div>
           </div>
         ) : (

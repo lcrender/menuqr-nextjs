@@ -1,5 +1,6 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -40,6 +41,7 @@ interface ItalianFoodTemplateProps {
         prices: Array<{ currency: string; label?: string; amount: number }>;
         icons: string[];
         photos?: string[];
+        highlighted?: boolean;
       }>;
     }>;
   } | null;
@@ -64,6 +66,8 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
   const primaryColor = '#009246';
   const secondaryColor = '#CE2B37';
   const whiteColor = '#FFFFFF';
+  const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   // Función para separar el símbolo de la moneda del precio
   const formatPriceWithSeparatedSymbol = (price: { currency: string; label?: string; amount: number }) => {
@@ -276,11 +280,149 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
           <div className="mt-4" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 2, padding: '10px' }}>
 
             {/* Menu Sections */}
-            {selectedMenu.sections.map((section) => (
+            {selectedMenu.sections.map((section) => {
+              const { featuredItems, regularItems } = splitHighlightedItems(section.items);
+              const renderItalianCard = (item: (typeof section.items)[number], featured: boolean) => (
+                <div className={`template-italianfood menu-item-card${featured ? ' tpl-featured-card' : ''}`} style={{
+                  background: 'white',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  height: 'auto',
+                  minHeight: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderLeft: `3px solid #009246`
+                }}>
+                  {featured ? <p className="tpl-featured-label" style={{ padding: '16px 16px 0', margin: 0 }}>{recommendedLabel}</p> : null}
+                  {item.photos && item.photos.length > 0 && (
+                    <div style={{ width: '100%', height: '220px', overflow: 'hidden' }}>
+                      <img
+                        src={item.photos[0]}
+                        alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                  )}
+                  <div style={{ padding: '16px', flexGrow: 0, display: 'flex', flexDirection: 'column', background: 'white', height: 'auto', minHeight: 'auto' }}>
+                    <h3 style={{
+                      fontSize: '1.25rem',
+                      fontWeight: '600',
+                      marginBottom: '8px',
+                      marginTop: 0,
+                      color: '#2c3e50',
+                      lineHeight: '1.3',
+                      fontStyle: 'italic',
+                      fontFamily: "'Playfair Display', serif"
+                    }}>
+                      {item.name}
+                    </h3>
+                    {item.description && (
+                      <p style={{
+                        color: '#6c757d',
+                        fontSize: '0.95rem',
+                        lineHeight: '1.4',
+                        marginBottom: item.icons.length > 0 ? '12px' : '16px',
+                        marginTop: 0,
+                        paddingTop: 0,
+                        paddingBottom: 0,
+                        flexGrow: 0,
+                        height: 'auto',
+                        minHeight: 'auto',
+                        fontStyle: 'italic',
+                        fontFamily: "'Cormorant Garamond', serif"
+                      }}>
+                        {item.description}
+                      </p>
+                    )}
+                    {item.icons.length > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                        marginBottom: '16px',
+                        marginTop: 0,
+                        width: 'auto',
+                        alignItems: 'flex-start'
+                      }}>
+                        {item.icons.map((icon) => (
+                          <span
+                            key={icon}
+                            className="template-italianfood menu-item-icon"
+                            title={iconLabels[icon] || icon}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              fontWeight: '500',
+                              border: `1px solid rgba(206, 43, 55, 0.3)`,
+                              background: `rgba(206, 43, 55, 0.15)`,
+                              color: '#CE2B37',
+                              display: 'inline-block',
+                              lineHeight: '1.2',
+                              boxShadow: 'none',
+                              fontStyle: 'normal',
+                              margin: 0,
+                              height: 'auto',
+                              minHeight: 'auto',
+                              verticalAlign: 'baseline',
+                              width: 'auto',
+                              flex: '0 0 auto'
+                            }}
+                          >
+                            {iconLabels[icon] || icon}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{
+                      marginTop: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      alignItems: 'flex-start',
+                      paddingTop: '16px',
+                      borderTop: `1px solid #f0f0f0`
+                    }}>
+                      {item.prices.map((price, idx) => {
+                        const { symbol, amount } = formatPriceWithSeparatedSymbol(price);
+                        return (
+                          <span
+                            key={idx}
+                            className="template-italianfood menu-item-price"
+                            style={{
+                              fontSize: '1.2rem',
+                              fontWeight: '700',
+                              color: '#000000',
+                              display: 'inline-block',
+                              lineHeight: '1.2',
+                              whiteSpace: 'nowrap',
+                              margin: 0,
+                              padding: 0,
+                              height: 'auto',
+                              minHeight: 'auto',
+                              fontStyle: 'italic',
+                              fontFamily: "'Playfair Display', serif",
+                              verticalAlign: 'baseline'
+                            }}
+                          >
+                            {price.label && <span style={{ fontSize: '1rem', color: '#6c757d', marginRight: '6px', fontWeight: '500', fontStyle: 'normal' }}>{price.label}:</span>}
+                            {symbol && <span style={{ fontSize: '0.85rem', marginRight: '4px', verticalAlign: 'baseline' }}>{symbol}</span>}
+                            <span style={{ fontSize: '1.4rem', verticalAlign: 'baseline' }}>{amount}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+
+              return (
               <div key={section.id} id={`section-${section.id}`} className="template-italianfood menu-section" style={{ scrollMarginTop: '60px', marginBottom: '48px', paddingTop: '30px', paddingBottom: '30px', paddingLeft: '20px', paddingRight: '20px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
-                <h2 className="template-italianfood menu-section-title" style={{ 
-                  fontSize: '2rem', 
-                  fontWeight: '700', 
+                <h2 className="template-italianfood menu-section-title" style={{
+                  fontSize: '2rem',
+                  fontWeight: '700',
                   marginBottom: '32px',
                   marginTop: 0,
                   paddingTop: 0,
@@ -295,146 +437,23 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                 }}>
                   {section.name}
                 </h2>
+                {featuredItems.length > 0 ? (
+                  <div className="tpl-featured-block" style={featuredAccentStyle}>
+                    {featuredItems.map((item) => (
+                      <div key={item.id}>{renderItalianCard(item, true)}</div>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="row" style={{ marginBottom: '0', marginTop: '0' }}>
-                  {section.items.map((item) => (
+                  {regularItems.map((item) => (
                     <div key={item.id} className="col-md-6 col-lg-4" style={{ marginBottom: '24px', marginTop: 0 }}>
-                      <div className="template-italianfood menu-item-card" style={{
-                        background: 'white',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                        transition: 'all 0.3s ease',
-                        height: 'auto',
-                        minHeight: 'auto',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        borderLeft: `3px solid #009246`
-                      }}>
-                        {item.photos && item.photos.length > 0 && (
-                          <div style={{ width: '100%', height: '220px', overflow: 'hidden' }}>
-                            <img 
-                              src={item.photos[0]} 
-                              alt={item.name}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          </div>
-                        )}
-                        <div style={{ padding: '16px', flexGrow: 0, display: 'flex', flexDirection: 'column', background: 'white', height: 'auto', minHeight: 'auto' }}>
-                          <h3 style={{ 
-                            fontSize: '1.25rem', 
-                            fontWeight: '600', 
-                            marginBottom: '8px',
-                            marginTop: 0,
-                            color: '#2c3e50',
-                            lineHeight: '1.3',
-                            fontStyle: 'italic',
-                            fontFamily: "'Playfair Display', serif"
-                          }}>
-                            {item.name}
-                          </h3>
-                          {item.description && (
-                            <p style={{ 
-                              color: '#6c757d', 
-                              fontSize: '0.95rem', 
-                              lineHeight: '1.4',
-                              marginBottom: item.icons.length > 0 ? '12px' : '16px',
-                              marginTop: 0,
-                              paddingTop: 0,
-                              paddingBottom: 0,
-                              flexGrow: 0,
-                              height: 'auto',
-                              minHeight: 'auto',
-                              fontStyle: 'italic',
-                              fontFamily: "'Cormorant Garamond', serif"
-                            }}>
-                              {item.description}
-                            </p>
-                          )}
-                          {item.icons.length > 0 && (
-                            <div style={{ 
-                              display: 'flex', 
-                              flexWrap: 'wrap', 
-                              gap: '8px', 
-                              marginBottom: '16px',
-                              marginTop: 0,
-                              width: 'auto',
-                              alignItems: 'flex-start'
-                            }}>
-                              {item.icons.map((icon) => (
-                                <span 
-                                  key={icon} 
-                                  className="template-italianfood menu-item-icon"
-                                  title={iconLabels[icon] || icon}
-                                  style={{
-                                    padding: '4px 10px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: '500',
-                                    border: `1px solid rgba(206, 43, 55, 0.3)`,
-                                    background: `rgba(206, 43, 55, 0.15)`,
-                                    color: '#CE2B37',
-                                    display: 'inline-block',
-                                    lineHeight: '1.2',
-                                    boxShadow: 'none',
-                                    fontStyle: 'normal',
-                                    margin: 0,
-                                    height: 'auto',
-                                    minHeight: 'auto',
-                                    verticalAlign: 'baseline',
-                                    width: 'auto',
-                                    flex: '0 0 auto'
-                                  }}
-                                >
-                                  {iconLabels[icon] || icon}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          <div style={{ 
-                            marginTop: '16px', 
-                            display: 'flex', 
-                            flexDirection: 'column',
-                            gap: '8px', 
-                            alignItems: 'flex-start',
-                            paddingTop: '16px',
-                            borderTop: `1px solid #f0f0f0`
-                          }}>
-                            {item.prices.map((price, idx) => {
-                              const { symbol, amount } = formatPriceWithSeparatedSymbol(price);
-                              return (
-                                <span 
-                                  key={idx} 
-                                  className="template-italianfood menu-item-price"
-                                  style={{ 
-                                    fontSize: '1.2rem', 
-                                    fontWeight: '700',
-                                    color: '#000000',
-                                    display: 'inline-block',
-                                    lineHeight: '1.2',
-                                    whiteSpace: 'nowrap',
-                                    margin: 0,
-                                    padding: 0,
-                                    height: 'auto',
-                                    minHeight: 'auto',
-                                    fontStyle: 'italic',
-                                    fontFamily: "'Playfair Display', serif",
-                                    verticalAlign: 'baseline'
-                                  }}
-                                >
-                                  {price.label && <span style={{ fontSize: '1rem', color: '#6c757d', marginRight: '6px', fontWeight: '500', fontStyle: 'normal' }}>{price.label}:</span>}
-                                  {symbol && <span style={{ fontSize: '0.85rem', marginRight: '4px', verticalAlign: 'baseline' }}>{symbol}</span>}
-                                  <span style={{ fontSize: '1.4rem', verticalAlign: 'baseline' }}>{amount}</span>
-                                </span>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
+                      {renderItalianCard(item, false)}
                     </div>
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

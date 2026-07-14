@@ -8,11 +8,11 @@ import {
   footerWebsiteRel,
 } from '../../lib/template-footer-link-rel';
 import {
-  recommendedProductLabelForLocale,
   resolveSolNocheCoverUrl,
   resolveSolNocheIsDark,
   resolveSolNocheLogoUrl,
 } from '../../lib/sol-noche-template';
+import { recommendedProductLabelForLocale } from '../../lib/highlighted-menu-items';
 import type { SolNocheEditHotspot } from '../../lib/sol-noche-preview-edit';
 
 interface SolNocheMenuItem {

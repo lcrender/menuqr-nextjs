@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import SmartFoodAllergenIcon from './SmartFoodAllergenIcon';
+import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -42,6 +43,7 @@ interface SmartFoodTemplateProps {
         prices: Array<{ currency: string; label?: string; amount: number }>;
         icons: string[];
         photos?: string[];
+        highlighted?: boolean;
       }>;
     }>;
   } | null;
@@ -81,6 +83,8 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
   const showLogo = tc.showLogo !== false;
   const showName = tc.showRestaurantName !== false;
   const showDescription = tc.showRestaurantDescription !== false;
+  const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [activeAllergenFilters, setActiveAllergenFilters] = useState<Set<string>>(new Set());
@@ -264,41 +268,52 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
             {filteredSections.length === 0 ? (
               <p className="smartfood-empty">No hay productos que coincidan con los filtros seleccionados.</p>
             ) : (
-              filteredSections.map((section) => (
+              filteredSections.map((section) => {
+                const { featuredItems, regularItems } = splitHighlightedItems(section.items);
+                const renderSmartFoodItem = (item: (typeof section.items)[number], featured: boolean) => (
+                  <article key={item.id} className={`smartfood-item-card${featured ? ' tpl-featured-card' : ''}`}>
+                    <div className="smartfood-item-main">
+                      {featured ? <p className="tpl-featured-label">{recommendedLabel}</p> : null}
+                      <div className="smartfood-item-name">{item.name}</div>
+                      {item.description ? <div className="smartfood-item-desc">{item.description}</div> : null}
+                      {item.icons.length > 0 ? (
+                        <div className="smartfood-item-icons">
+                          {item.icons.map((icon) => (
+                            <span key={icon} className="smartfood-item-icon" title={iconLabels[icon] || icon}>
+                              <SmartFoodAllergenIcon code={icon} size={14} />
+                              {iconLabels[icon] || icon}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="smartfood-item-prices">
+                      {item.prices.map((price, idx) => (
+                        <div key={idx} className="smartfood-price-block">
+                          {price.label ? <span className="smartfood-price-label">{price.label}</span> : null}
+                          <span className="smartfood-price-value">{formatPrice(price)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                );
+
+                return (
                 <div key={section.id}>
                   <h2 id={`smartfood-section-${section.id}`} className="smartfood-section-heading">
                     {section.name}
                   </h2>
                   <div className="smartfood-section-items">
-                    {section.items.map((item) => (
-                    <article key={item.id} className="smartfood-item-card">
-                      <div className="smartfood-item-main">
-                        <div className="smartfood-item-name">{item.name}</div>
-                        {item.description ? <div className="smartfood-item-desc">{item.description}</div> : null}
-                        {item.icons.length > 0 ? (
-                          <div className="smartfood-item-icons">
-                            {item.icons.map((icon) => (
-                              <span key={icon} className="smartfood-item-icon" title={iconLabels[icon] || icon}>
-                                <SmartFoodAllergenIcon code={icon} size={14} />
-                                {iconLabels[icon] || icon}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
+                    {featuredItems.length > 0 ? (
+                      <div className="tpl-featured-block" style={featuredAccentStyle}>
+                        {featuredItems.map((item) => renderSmartFoodItem(item, true))}
                       </div>
-                      <div className="smartfood-item-prices">
-                        {item.prices.map((price, idx) => (
-                          <div key={idx} className="smartfood-price-block">
-                            {price.label ? <span className="smartfood-price-label">{price.label}</span> : null}
-                            <span className="smartfood-price-value">{formatPrice(price)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </article>
-                    ))}
+                    ) : null}
+                    {regularItems.map((item) => renderSmartFoodItem(item, false))}
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         ) : null}

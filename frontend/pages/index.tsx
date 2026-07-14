@@ -5,10 +5,10 @@ import Head from 'next/head';
 import PricingPlansGrid, { type PricingData } from '../components/PricingPlansGrid';
 import LandingNav from '../components/LandingNav';
 import LandingFooter from '../components/LandingFooter';
-import LandingHeroPlantillasQr from '../components/LandingHeroPlantillasQr';
+import SeoLandingHeroSplit from '../components/SeoLandingHeroSplit';
 import LandingBenefitIcon from '../components/LandingBenefitIcon';
-import { usePublicAccountNav } from '../hooks/usePublicSession';
 import api from '../lib/axios';
+import { SEO_LANDING_HERO_MOCKUP_IMAGE } from '../lib/seo-landings-config';
 import { buildLandingJsonLd, siteJsonLdBaseUrl } from '../lib/json-ld-appmenuqr';
 import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
 
@@ -59,9 +59,17 @@ const LANDING_FAQ_ITEMS: readonly { question: string; answer: string }[] = [
   },
 ];
 
+const HOME_HERO_SPLIT = {
+  h1: 'Carta digital para restaurantes con',
+  h1Highlight: 'código QR',
+  heroLead:
+    'AppMenuQR es un software para restaurantes y bares que centraliza tu carta digital: gestiona productos y categorías, publica cambios en tiempo real y comparte un código QR para que tus clientes consulten el menú desde el móvil, sin aplicaciones ni impresiones constantes.',
+  ctaLabel: 'Crear mi carta digital',
+  heroMockupImage: SEO_LANDING_HERO_MOCKUP_IMAGE,
+} as const;
+
 export default function Home() {
   const router = useRouter();
-  const accountNav = usePublicAccountNav();
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
@@ -82,10 +90,6 @@ export default function Home() {
 
   const handleTryFree = () => {
     router.push('/login?action=register');
-  };
-
-  const handleLogin = () => {
-    router.push(accountNav.href);
   };
 
   const canonicalUrl = (() => {
@@ -122,34 +126,7 @@ export default function Home() {
       <div className="landing-page">
         <LandingNav />
 
-        {/* Hero Section */}
-        <section className="landing-hero">
-          <div className="container">
-            <div className="landing-hero-content">
-              <h1 className="landing-hero-title">
-                Carta digital para restaurantes con{' '}
-                <span className="landing-hero-highlight">código QR</span>
-              </h1>
-              <p className="landing-hero-subtitle">
-                AppMenuQR es un software para restaurantes y bares que centraliza tu carta digital: gestiona
-                productos y categorías, publica cambios en tiempo real y comparte un código QR para que tus
-                clientes consulten el menú desde el móvil, sin aplicaciones ni impresiones constantes.
-              </p>
-              <LandingHeroPlantillasQr />
-              <div className="landing-hero-cta">
-                <button onClick={handleTryFree} className="landing-btn-primary landing-btn-large">
-                  Crear mi carta digital
-                </button>
-                <button onClick={handleLogin} className="landing-btn-secondary landing-btn-large">
-                  {accountNav.label}
-                </button>
-              </div>
-              <p className="landing-hero-note">
-                ✓ Sin tarjeta de crédito • ✓ Configuración en minutos • ✓ Soporte incluido
-              </p>
-            </div>
-          </div>
-        </section>
+        <SeoLandingHeroSplit config={HOME_HERO_SPLIT} onCta={handleTryFree} />
 
         {/* Benefits Section */}
         <section id="beneficios" className="landing-benefits">

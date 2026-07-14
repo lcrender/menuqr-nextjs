@@ -420,6 +420,312 @@
   margin-top: 16px;
 }
 
+/* Hero split (landings SEO — carta-digital-restaurante-qr) */
+.landing-hero--split {
+  text-align: left;
+  padding: 72px 0 88px;
+  background: #ffffff;
+}
+
+.landing-hero-split-band {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0;
+  padding: 2.75rem 2.75rem 2.5rem;
+  isolation: isolate;
+}
+
+.landing-hero-split-bg {
+  position: absolute;
+  right: 4%;
+  bottom: -6%;
+  width: min(48%, 360px);
+  height: 96%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.landing-hero-split-bg-image {
+  object-fit: contain;
+  object-position: 58% bottom;
+  opacity: 1;
+}
+
+.landing-hero-split-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.72fr);
+  gap: clamp(2rem, 4vw, 3rem);
+  align-items: center;
+}
+
+.landing-hero-split-left {
+  min-width: 0;
+  padding-right: 0.5rem;
+}
+
+.landing-hero-split-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.landing-hero-split-cta-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.landing-hero-cta--split {
+  justify-content: flex-start;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.landing-hero-split-spacer {
+  min-height: 260px;
+}
+
+.landing-hero-split-copy {
+  max-width: none;
+  margin-bottom: 0;
+}
+
+.landing-hero-title--split {
+  font-size: clamp(2rem, 3.8vw, 2.85rem);
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.landing-hero-subtitle--split {
+  font-size: 1.0625rem;
+  line-height: 1.72;
+  max-width: 40rem;
+  margin-bottom: 0;
+  text-align: left;
+  color: #475569;
+}
+
+.landing-hero-note--split {
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.75rem;
+  text-align: left;
+  line-height: 1.55;
+}
+
+.landing-hero-split-aside {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: auto;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.landing-hero-split-aside .landing-hero-plantillas-qr {
+  margin: 0;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing-hero-split-aside .landing-hero-plantillas-qr-frame {
+  padding: 0.5rem;
+  border-radius: 14px;
+  border: 2px solid #dbeafe;
+}
+
+.landing-hero-split-aside .landing-hero-plantillas-caption {
+  font-size: 0.75rem;
+  max-width: 150px;
+  margin: 0 auto;
+  padding-bottom: 0.5rem;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.landing-hero-split-qr-only {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.landing-hero-split-mockup-slot {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .landing-hero-split-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(1.25rem, 2.5vw, 2rem);
+    flex-wrap: nowrap;
+  }
+
+  .landing-hero-split-cta-block {
+    justify-self: start;
+    align-self: start;
+  }
+
+  .landing-hero-split-aside {
+    justify-self: center;
+    align-self: start;
+    justify-content: flex-start;
+    width: 100%;
+  }
+}
+
+@media (max-width: 991px) {
+  .landing-hero.landing-hero--split {
+    padding: 30px 0 88px;
+  }
+
+  .landing-hero-split-band {
+    padding: 2rem 1.75rem 1.25rem;
+  }
+
+  .landing-hero-split-bg {
+    right: auto;
+    left: 50%;
+    bottom: 0;
+    width: min(100%, 500px);
+    height: 520px;
+    max-height: 520px;
+    transform: translateX(-50%);
+    opacity: 1;
+  }
+
+  .landing-hero-split-mockup-slot {
+    display: block;
+    position: relative;
+    z-index: 1;
+    min-height: 520px;
+    margin-top: 3rem;
+    pointer-events: none;
+  }
+
+  .landing-hero-split-layout {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .landing-hero-split-spacer {
+    display: none;
+  }
+
+  .landing-hero-split-left {
+    align-items: center;
+  }
+
+  .landing-hero-split-copy,
+  .landing-hero-title--split,
+  .landing-hero-subtitle--split,
+  .landing-hero-note--split {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .landing-hero-subtitle--split {
+    max-width: 36rem;
+  }
+
+  .landing-hero-split-actions {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.75rem;
+    width: 100%;
+    margin-top: 1.5rem;
+    padding-bottom: 0;
+  }
+
+  .landing-hero-split-cta-block {
+    order: 1;
+    width: 100%;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .landing-hero-cta--split {
+    justify-content: center;
+  }
+
+  .landing-hero-note--split {
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .landing-hero-split-aside {
+    order: 2;
+    width: 100%;
+    align-self: center;
+    justify-content: center;
+    margin: 0 0 0.5rem;
+  }
+
+  .landing-hero-split-aside .landing-hero-plantillas-qr {
+    gap: 14px;
+  }
+
+  .landing-hero-split-aside .landing-hero-plantillas-qr-frame {
+    padding: 0.75rem;
+  }
+
+  .landing-hero-split-aside .landing-hero-plantillas-qr-frame svg {
+    width: 240px !important;
+    height: 240px !important;
+  }
+
+  .landing-hero-split-aside .landing-hero-plantillas-caption {
+    padding-bottom: 0;
+    font-size: 0.85rem;
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-hero.landing-hero--split {
+    padding: 30px 0 88px;
+  }
+
+  .landing-hero-split-band {
+    padding: 1.5rem 1.25rem 1rem;
+    border-radius: 18px;
+  }
+
+  .landing-hero-split-mockup-slot {
+    min-height: 500px;
+    margin-top: 2.5rem;
+  }
+
+  .landing-hero-split-bg {
+    width: min(100%, 500px);
+    height: 500px;
+    max-height: 500px;
+  }
+
+  .landing-hero-split-actions {
+    gap: 1.5rem;
+  }
+
+  .landing-hero-title--split {
+    font-size: 1.85rem;
+  }
+}
+
 /* Benefits Section */
 .landing-benefits {
   padding: 100px 0;
@@ -1660,8 +1966,8 @@
 }
 
 @media (max-width: 480px) {
-  .landing-hero {
-    padding: 60px 0 80px;
+  .landing-hero:not(.landing-hero--split) {
+    padding: 20px 0 80px;
   }
 
   .landing-hero-title {

@@ -41,6 +41,11 @@ export type SeoLandingConfig = {
   h1Highlight?: string;
   heroLead: string;
   ctaLabel: string;
+  /** Hero en dos columnas (texto + mockup). Por defecto: centrado clásico. */
+  heroVariant?: 'centered' | 'split';
+  /** Imagen de mockup para `heroVariant: 'split'`. */
+  heroMockupImage?: string;
+  heroMockupAlt?: string;
   /** Sección principal de valor (H2 + tarjetas H3) */
   valueSection: {
     h2: string;
@@ -83,6 +88,18 @@ export const SEO_LANDING_SLUGS = [
 
 export type SeoLandingSlug = (typeof SEO_LANDING_SLUGS)[number];
 
+/** Bullets del hero split (checklist bajo el CTA). */
+export const SEO_LANDING_HERO_BULLETS = [
+  'Carta QR gratuita',
+  'Carta QR PRO (funcionalidades extras)',
+  'Sin tarjeta de crédito',
+  'Configuración en minutos',
+  'Soporte incluido',
+] as const;
+
+export const SEO_LANDING_HERO_MOCKUP_IMAGE =
+  '/plantillas/landings/carta-digital-codigo-qr-sol-noche-preview-e8f182ad-9f88-49ee-a0ee-ac6285bf9cfa.png';
+
 export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
   'carta-digital-restaurante-qr': {
     slug: 'carta-digital-restaurante-qr',
@@ -98,6 +115,9 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
     heroLead:
       'Centraliza tu carta digital para restaurantes en un panel profesional: organiza categorías y platos, coloca el código QR en mesas y mantén la carta al día al instante, sin depender de impresiones.',
     ctaLabel: 'Configurar mi carta digital',
+    heroVariant: 'split',
+    heroMockupImage: SEO_LANDING_HERO_MOCKUP_IMAGE,
+    heroMockupAlt: 'Vista previa de la plantilla Sol & Noche en celular para carta digital con QR',
     valueSection: {
       h2: 'Gestión profesional de tu carta digital con QR',
       intro:
@@ -193,6 +213,9 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
     heroLead:
       'Publica un menú digital que tus clientes abren escaneando un QR desde el celular. Sin instalaciones, sin complicaciones técnicas: cargas platos, generas el código y mejoras la experiencia en sala.',
     ctaLabel: 'Crear mi menú QR',
+    heroVariant: 'split',
+    heroMockupImage: SEO_LANDING_HERO_MOCKUP_IMAGE,
+    heroMockupAlt: 'Vista previa de menú QR en celular con plantilla Sol & Noche',
     valueSection: {
       h2: 'Crear menú QR sin fricción para tu restaurante',
       intro: 'Publica tu menú digital en poco tiempo y ofrece una carta clara que el comensal abre al instante desde el móvil.',
@@ -286,6 +309,9 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
     heroLead:
       'AppMenuQR es una plataforma SaaS gastronómica para administrar cartas digitales, menús con QR y catálogo de productos desde un panel centralizado, con planes que crecen junto a tu negocio.',
     ctaLabel: 'Probar la plataforma',
+    heroVariant: 'split',
+    heroMockupImage: SEO_LANDING_HERO_MOCKUP_IMAGE,
+    heroMockupAlt: 'Vista previa de carta digital en celular con plantilla Sol & Noche',
     valueSection: {
       h2: 'Plataforma para operar tu carta digital a escala',
       intro:

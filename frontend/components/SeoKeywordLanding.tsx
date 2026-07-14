@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { SEO_LANDING_RESOURCES, type SeoLandingConfig } from '../lib/seo-landings-config';
 import { buildSeoLandingJsonLd, siteJsonLdBaseUrl } from '../lib/json-ld-appmenuqr';
+import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
 import LandingNav from './LandingNav';
 import LandingFooter from './LandingFooter';
+import SeoLandingHeroSplit from './SeoLandingHeroSplit';
 import LandingHeroPlantillasQr from './LandingHeroPlantillasQr';
 import LandingBenefitIcon from './LandingBenefitIcon';
 
@@ -57,39 +59,40 @@ export default function SeoKeywordLanding({ config }: Props) {
       <div className="landing-page">
         <LandingNav />
 
-        <section className="landing-hero">
-          <div className="container">
-            <div className="landing-hero-content">
-              <p className="text-muted small mb-2">
-                <Link href="/" className="text-decoration-none">
-                  Inicio
-                </Link>
-                <span aria-hidden="true"> · </span>
-                <span>{config.primaryKeyword}</span>
-              </p>
-              <h1 className="landing-hero-title">
-                {config.h1}
-                {config.h1Highlight ? (
-                  <>
-                    {' '}
-                    <span className="landing-hero-highlight">{config.h1Highlight}</span>
-                  </>
-                ) : null}
-              </h1>
-              <p className="landing-hero-subtitle">{config.heroLead}</p>
-              <LandingHeroPlantillasQr />
-              <div className="landing-hero-cta">
-                <button type="button" onClick={handleCta} className="landing-btn-primary landing-btn-large">
-                  {config.ctaLabel}
-                </button>
-                <Link href="/precios" className="landing-btn-secondary landing-btn-large">
-                  Ver planes
-                </Link>
+        {config.heroVariant === 'split' && config.heroMockupImage ? (
+          <SeoLandingHeroSplit config={config} onCta={handleCta} />
+        ) : (
+          <section className="landing-hero">
+            <div className="container">
+              <div className="landing-hero-content">
+                <p className="text-muted small mb-2">
+                  <Link href="/" className="text-decoration-none">
+                    Inicio
+                  </Link>
+                  <span aria-hidden="true"> · </span>
+                  <span>{config.primaryKeyword}</span>
+                </p>
+                <h1 className="landing-hero-title">
+                  {config.h1}
+                  {config.h1Highlight ? (
+                    <>
+                      {' '}
+                      <span className="landing-hero-highlight">{config.h1Highlight}</span>
+                    </>
+                  ) : null}
+                </h1>
+                <p className="landing-hero-subtitle">{config.heroLead}</p>
+                <LandingHeroPlantillasQr />
+                <div className="landing-hero-cta">
+                  <button type="button" onClick={handleCta} className="landing-btn-primary landing-btn-large">
+                    {config.ctaLabel}
+                  </button>
+                </div>
+                <p className="landing-hero-note">✓ Sin tarjeta de crédito • ✓ Configuración en minutos</p>
               </div>
-              <p className="landing-hero-note">✓ Sin tarjeta de crédito • ✓ Configuración en minutos</p>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <section className="landing-benefits">
           <div className="container">
@@ -230,12 +233,12 @@ export default function SeoKeywordLanding({ config }: Props) {
                 Empieza con AppMenuQR y lleva tu {config.primaryKeyword} al siguiente nivel.
               </p>
               <div className="landing-cta-buttons">
+                <Link href={PLANTILLAS_CATALOG_PATH} className="landing-btn-secondary landing-btn-large landing-btn-cta-outline">
+                  Ver plantillas
+                </Link>
                 <button type="button" onClick={handleCta} className="landing-btn-primary landing-btn-large landing-btn-cta">
                   {config.ctaLabel}
                 </button>
-                <Link href="/" className="landing-btn-secondary landing-btn-large landing-btn-cta-outline">
-                  Volver al inicio
-                </Link>
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -60,6 +61,7 @@ interface BurgersTemplateProps {
         prices: Array<{ currency: string; label?: string; amount: number }>;
         icons: string[];
         photos?: string[];
+        highlighted?: boolean;
       }>;
     }>;
   } | null;
@@ -83,6 +85,8 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
   const primaryColor = restaurant.primaryColor || '#e74c3c';
   const secondaryColor = restaurant.secondaryColor || '#c0392b';
   const sectionTitleLayout = resolveBurgersSectionTitleStyle(restaurant.templateConfig);
+  const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   const hexToRgba = (hex: string, a: number) => {
     const h = hex.replace('#', '');
@@ -340,9 +344,140 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
             )}
 
             {/* Menu Sections */}
-            {selectedMenu.sections.map((section) => (
+            {selectedMenu.sections.map((section) => {
+              const { featuredItems, regularItems } = splitHighlightedItems(section.items);
+              const renderBurgerCard = (item: (typeof section.items)[number], featured: boolean) => (
+                <div className={`template-burgers menu-item-card${featured ? ' tpl-featured-card' : ''}`} style={{
+                  background: 'white',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderTop: `5px solid ${primaryColor}`
+                }}>
+                  {featured ? <p className="tpl-featured-label" style={{ padding: '16px 28px 0', margin: 0 }}>{recommendedLabel}</p> : null}
+                  {item.photos && item.photos.length > 0 && (
+                    <div style={{ width: '100%', height: '240px', overflow: 'hidden', position: 'relative' }}>
+                      <img
+                        src={item.photos[0]}
+                        alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      {!featured ? (
+                        <div style={{
+                          position: 'absolute',
+                          top: '12px',
+                          right: '12px',
+                          background: primaryColor,
+                          color: 'white',
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                        }}>
+                          Nuevo
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                  <div style={{ padding: '28px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{
+                      fontSize: '1.5rem',
+                      fontWeight: '800',
+                      marginBottom: '12px',
+                      color: '#2c3e50',
+                      lineHeight: '1.3',
+                      marginTop: 0,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      {item.name}
+                    </h3>
+                    {item.description && (
+                      <p style={{
+                        color: '#6c757d',
+                        fontSize: '1rem',
+                        lineHeight: '1.7',
+                        marginBottom: item.icons.length > 0 ? '16px' : '20px',
+                        marginTop: 0,
+                        flexGrow: 1
+                      }}>
+                        {item.description}
+                      </p>
+                    )}
+                    {item.icons.length > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                        marginBottom: '20px',
+                        marginTop: 0
+                      }}>
+                        {item.icons.map((icon) => (
+                          <span
+                            key={icon}
+                            className="template-burgers menu-item-icon"
+                            title={iconLabels[icon] || icon}
+                            style={{
+                              padding: '6px 12px',
+                              borderRadius: '20px',
+                              fontSize: '0.75rem',
+                              fontWeight: '600',
+                              border: `2px solid ${primaryColor}30`,
+                              background: `${primaryColor}15`,
+                              color: primaryColor,
+                              display: 'inline-block',
+                              lineHeight: '1.4',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                              boxShadow: 'none'
+                            }}
+                          >
+                            {iconLabels[icon] || icon}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{
+                      marginTop: 'auto',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                      alignItems: 'baseline',
+                      justifyContent: 'flex-start',
+                      paddingTop: '16px',
+                      borderTop: `2px solid #f0f0f0`
+                    }}>
+                      {item.prices.map((price, idx) => (
+                        <span
+                          key={idx}
+                          className="template-burgers menu-item-price"
+                          style={{
+                            fontSize: '1.5rem',
+                            fontWeight: '800',
+                            color: primaryColor,
+                            display: 'inline-block',
+                            lineHeight: '1.5',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {price.label && <span style={{ fontSize: '1rem', color: '#6c757d', marginRight: '6px', fontWeight: '600' }}>{price.label}:</span>}
+                          {formatPrice(price)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+
+              return (
               <div key={section.id} id={`section-${section.id}`} style={{ scrollMarginTop: '100px', marginBottom: '80px', position: 'relative' }}>
-                {/* Icono decorativo pequeño */}
                 <div style={{
                   position: 'absolute',
                   top: '-10px',
@@ -370,138 +505,23 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                 >
                   {section.name}
                 </h2>
+                {featuredItems.length > 0 ? (
+                  <div className="tpl-featured-block" style={featuredAccentStyle}>
+                    {featuredItems.map((item) => (
+                      <div key={item.id}>{renderBurgerCard(item, true)}</div>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="row g-4">
-                  {section.items.map((item) => (
+                  {regularItems.map((item) => (
                     <div key={item.id} className="col-md-6 col-lg-4">
-                      <div className="template-burgers menu-item-card" style={{
-                        background: 'white',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                        transition: 'all 0.3s ease',
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        borderTop: `5px solid ${primaryColor}`
-                      }}>
-                        {item.photos && item.photos.length > 0 && (
-                          <div style={{ width: '100%', height: '240px', overflow: 'hidden', position: 'relative' }}>
-                            <img 
-                              src={item.photos[0]} 
-                              alt={item.name}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                            <div style={{
-                              position: 'absolute',
-                              top: '12px',
-                              right: '12px',
-                              background: primaryColor,
-                              color: 'white',
-                              padding: '6px 14px',
-                              borderRadius: '20px',
-                              fontSize: '0.75rem',
-                              fontWeight: '700',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                            }}>
-                              Nuevo
-                            </div>
-                          </div>
-                        )}
-                        <div style={{ padding: '28px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                          <h3 style={{ 
-                            fontSize: '1.5rem', 
-                            fontWeight: '800', 
-                            marginBottom: '12px',
-                            color: '#2c3e50',
-                            lineHeight: '1.3',
-                            marginTop: 0,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
-                          }}>
-                            {item.name}
-                          </h3>
-                          {item.description && (
-                            <p style={{ 
-                              color: '#6c757d', 
-                              fontSize: '1rem', 
-                              lineHeight: '1.7',
-                              marginBottom: item.icons.length > 0 ? '16px' : '20px',
-                              marginTop: 0,
-                              flexGrow: 1
-                            }}>
-                              {item.description}
-                            </p>
-                          )}
-                          {item.icons.length > 0 && (
-                            <div style={{ 
-                              display: 'flex', 
-                              flexWrap: 'wrap', 
-                              gap: '8px', 
-                              marginBottom: '20px',
-                              marginTop: 0
-                            }}>
-                              {item.icons.map((icon) => (
-                                <span 
-                                  key={icon} 
-                                  className="template-burgers menu-item-icon"
-                                  title={iconLabels[icon] || icon}
-                                  style={{
-                                    padding: '6px 12px',
-                                    borderRadius: '20px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: '600',
-                                    border: `2px solid ${primaryColor}30`,
-                                    background: `${primaryColor}15`,
-                                    color: primaryColor,
-                                    display: 'inline-block',
-                                    lineHeight: '1.4',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.5px',
-                                    boxShadow: 'none'
-                                  }}
-                                >
-                                  {iconLabels[icon] || icon}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          <div style={{ 
-                            marginTop: 'auto', 
-                            display: 'flex', 
-                            flexWrap: 'wrap', 
-                            gap: '12px', 
-                            alignItems: 'baseline',
-                            justifyContent: 'flex-start',
-                            paddingTop: '16px',
-                            borderTop: `2px solid #f0f0f0`
-                          }}>
-                            {item.prices.map((price, idx) => (
-                              <span 
-                                key={idx} 
-                                className="template-burgers menu-item-price"
-                                style={{ 
-                                  fontSize: '1.5rem', 
-                                  fontWeight: '800',
-                                  color: primaryColor,
-                                  display: 'inline-block',
-                                  lineHeight: '1.5',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                {price.label && <span style={{ fontSize: '1rem', color: '#6c757d', marginRight: '6px', fontWeight: '600' }}>{price.label}:</span>}
-                                {formatPrice(price)}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                      {renderBurgerCard(item, false)}
                     </div>
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

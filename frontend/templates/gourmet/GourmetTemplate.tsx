@@ -1,5 +1,6 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -51,6 +52,7 @@ interface GourmetTemplateProps {
         prices: Array<{ currency: string; label?: string; amount: number }>;
         icons: string[];
         photos?: string[];
+        highlighted?: boolean;
       }>;
     }>;
   } | null;
@@ -80,6 +82,8 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
   const fontKey = (tc.fontFamily as string) || 'serif';
   const fontFamily =
     (fontKey in FONT_FAMILIES ? FONT_FAMILIES[fontKey] : undefined) ?? FONT_FAMILIES.serif;
+  const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   return (
     <div className="template-gourmet restaurant-container" style={{ minHeight: '100vh', width: '100%', background: '#f8f9fa', fontFamily }}>
@@ -124,6 +128,44 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
         .template-gourmet .section-nav-link:hover {
           background: ${primaryColor};
           color: white;
+        }
+        .template-gourmet .gourmet-featured-header {
+          background: ${primaryColor};
+          padding: 12px 16px;
+          text-align: center;
+        }
+        .template-gourmet .gourmet-featured-label {
+          margin: 0;
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #ffffff;
+        }
+        .template-gourmet .gourmet-menu-body {
+          width: 100%;
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 0 16px 60px;
+        }
+        .template-gourmet .gourmet-card-body {
+          padding: 18px 14px;
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+        }
+        .template-gourmet .gourmet-products-row {
+          --bs-gutter-x: 0.75rem;
+          --bs-gutter-y: 0.75rem;
+        }
+        @media (min-width: 768px) {
+          .template-gourmet .gourmet-menu-body {
+            padding-left: 20px;
+            padding-right: 20px;
+          }
+          .template-gourmet .gourmet-card-body {
+            padding: 20px 16px;
+          }
         }
         .template-gourmet .gourmet-cover {
           width: 100%;
@@ -200,7 +242,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
         </div>
       </div>
 
-      <div style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '0 40px 60px 40px' }}>
+      <div className="gourmet-menu-body">
         {menuLocales && <MenuLanguageSwitcher {...menuLocales} gourmetFontFamily={fontFamily} />}
 
         {menuList.length > 0 && (
@@ -262,84 +304,103 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
               </div>
             )}
 
-            {selectedMenu.sections.map((section) => (
+            {selectedMenu.sections.map((section) => {
+              const { featuredItems, regularItems } = splitHighlightedItems(section.items);
+              const renderGourmetCard = (item: (typeof section.items)[number], featured: boolean) => (
+                <div
+                  className={`template-gourmet menu-item-card${featured ? ' tpl-featured-card' : ''}`}
+                  style={{
+                    background: 'white',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    transition: 'all 0.3s ease',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderTop: featured ? 'none' : `3px solid ${primaryColor}`,
+                    fontFamily,
+                  }}
+                >
+                  {featured ? (
+                    <div className="gourmet-featured-header">
+                      <p className="gourmet-featured-label">{recommendedLabel}</p>
+                    </div>
+                  ) : null}
+                  {showProductImages && item.photos && item.photos.length > 0 && (
+                    <div style={{ width: '100%', height: '220px', overflow: 'hidden' }}>
+                      <img src={item.photos[0]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  )}
+                  <div className="gourmet-card-body">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '12px', color: '#2c3e50', lineHeight: '1.4', marginTop: 0, fontFamily }}>
+                      {item.name}
+                    </h3>
+                    {item.description && (
+                      <p style={{ color: '#6c757d', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: item.icons.length > 0 ? '12px' : '16px', marginTop: 0, flexGrow: 1, fontFamily }}>
+                        {item.description}
+                      </p>
+                    )}
+                    {item.icons.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px', marginTop: 0 }}>
+                        {item.icons.map((icon) => (
+                          <span
+                            key={icon}
+                            className="template-gourmet menu-item-icon"
+                            title={iconLabels[icon] || icon}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              fontWeight: '500',
+                              border: '1px solid #e0e0e0',
+                              background: '#f5f5f5',
+                              color: '#6c757d',
+                              display: 'inline-block',
+                              lineHeight: '1.4',
+                              boxShadow: 'none',
+                              fontFamily,
+                            }}
+                          >
+                            {iconLabels[icon] || icon}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ marginTop: 'auto', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'baseline', justifyContent: 'flex-start', paddingTop: '8px', borderTop: '1px solid #f0f0f0' }}>
+                      {item.prices.map((price, idx) => (
+                        <span key={idx} className="template-gourmet menu-item-price" style={{ fontSize: '1.25rem', fontWeight: '600', color: primaryColor, display: 'inline-block', lineHeight: '1.5', whiteSpace: 'nowrap', fontFamily }}>
+                          {price.label && <span style={{ fontSize: '0.9rem', color: '#6c757d', marginRight: '4px', fontWeight: '400' }}>{price.label}:</span>}
+                          {formatPrice(price)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+
+              return (
               <div key={section.id} id={`section-${section.id}`} style={{ scrollMarginTop: '100px', marginBottom: '80px' }}>
                 <h2 className="template-gourmet menu-section-title" style={{ fontSize: '2rem', fontWeight: '600', marginBottom: '40px', paddingBottom: '15px', borderBottom: `3px solid ${primaryColor}`, fontFamily }}>
                   {section.name}
                 </h2>
-                <div className="row g-4">
-                  {section.items.map((item) => (
+                {featuredItems.length > 0 ? (
+                  <div className="tpl-featured-block" style={featuredAccentStyle}>
+                    {featuredItems.map((item) => (
+                      <div key={item.id}>{renderGourmetCard(item, true)}</div>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="row gourmet-products-row g-3">
+                  {regularItems.map((item) => (
                     <div key={item.id} className="col-md-6 col-lg-4">
-                      <div
-                        className="template-gourmet menu-item-card"
-                        style={{
-                          background: 'white',
-                          borderRadius: '12px',
-                          overflow: 'hidden',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                          transition: 'all 0.3s ease',
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          borderTop: `3px solid ${primaryColor}`,
-                          fontFamily,
-                        }}
-                      >
-                        {showProductImages && item.photos && item.photos.length > 0 && (
-                          <div style={{ width: '100%', height: '220px', overflow: 'hidden' }}>
-                            <img src={item.photos[0]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </div>
-                        )}
-                        <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '12px', color: '#2c3e50', lineHeight: '1.4', marginTop: 0, fontFamily }}>
-                            {item.name}
-                          </h3>
-                          {item.description && (
-                            <p style={{ color: '#6c757d', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: item.icons.length > 0 ? '12px' : '16px', marginTop: 0, flexGrow: 1, fontFamily }}>
-                              {item.description}
-                            </p>
-                          )}
-                          {item.icons.length > 0 && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px', marginTop: 0 }}>
-                              {item.icons.map((icon) => (
-                                <span
-                                  key={icon}
-                                  className="template-gourmet menu-item-icon"
-                                  title={iconLabels[icon] || icon}
-                                  style={{
-                                    padding: '4px 10px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: '500',
-                                    border: '1px solid #e0e0e0',
-                                    background: '#f5f5f5',
-                                    color: '#6c757d',
-                                    display: 'inline-block',
-                                    lineHeight: '1.4',
-                                    boxShadow: 'none',
-                                    fontFamily,
-                                  }}
-                                >
-                                  {iconLabels[icon] || icon}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          <div style={{ marginTop: 'auto', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'baseline', justifyContent: 'flex-start', paddingTop: '8px', borderTop: '1px solid #f0f0f0' }}>
-                            {item.prices.map((price, idx) => (
-                              <span key={idx} className="template-gourmet menu-item-price" style={{ fontSize: '1.25rem', fontWeight: '600', color: primaryColor, display: 'inline-block', lineHeight: '1.5', whiteSpace: 'nowrap', fontFamily }}>
-                                {price.label && <span style={{ fontSize: '0.9rem', color: '#6c757d', marginRight: '4px', fontWeight: '400' }}>{price.label}:</span>}
-                                {formatPrice(price)}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                      {renderGourmetCard(item, false)}
                     </div>
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

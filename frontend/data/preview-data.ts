@@ -1477,6 +1477,26 @@ function withHighlightedItems(menu: PreviewMenu, highlightedIds: readonly string
   };
 }
 
+/** Primer producto de las primeras secciones como destacado (datos demo preview). */
+function withDemoHighlightedItems(menu: PreviewMenu, maxSections = 2): PreviewMenu {
+  return {
+    ...menu,
+    sections: menu.sections.map((section, sectionIndex) => ({
+      ...section,
+      items: section.items.map((item, itemIndex) => ({
+        ...item,
+        highlighted: sectionIndex < maxSections && itemIndex === 0,
+      })),
+    })),
+  };
+}
+
+function applyDemoHighlightsToPreview(data: PreviewDataResult): PreviewDataResult {
+  const menu = withDemoHighlightedItems(data.menu);
+  const menus = data.menus?.map((m) => withDemoHighlightedItems(m));
+  return menus ? { ...data, menu, menus } : { ...data, menu };
+}
+
 const SOL_NOCHE_DAY_COVER = '/templates/solnoche/images/cover-sol.png';
 const SOL_NOCHE_NIGHT_COVER = '/templates/solnoche/images/cover-noche.png';
 const SOL_NOCHE_DAY_LOGO = '/templates/solnoche/images/logo-light.png';
@@ -1552,16 +1572,16 @@ const proMobileData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: 
 export type PreviewDataResult = { restaurant: PreviewRestaurant; menu: PreviewMenu; menus?: PreviewMenu[] };
 
 const previewData: Record<PreviewTemplateId, PreviewDataResult> = {
-  classic: classicData,
-  minimalista: minimalistData,
-  foodie: foodieData,
-  burgers: burgersData,
-  'italian-food': italianFoodData,
-  gourmet: gourmetData,
-  'modern-food': proMobileData,
-  'night-club': nightClubData,
-  'smart-food': smartFoodData,
-  'beach-bar': beachBarData,
+  classic: applyDemoHighlightsToPreview(classicData),
+  minimalista: applyDemoHighlightsToPreview(minimalistData),
+  foodie: applyDemoHighlightsToPreview(foodieData),
+  burgers: applyDemoHighlightsToPreview(burgersData),
+  'italian-food': applyDemoHighlightsToPreview(italianFoodData),
+  gourmet: applyDemoHighlightsToPreview(gourmetData),
+  'modern-food': applyDemoHighlightsToPreview(proMobileData),
+  'night-club': applyDemoHighlightsToPreview(nightClubData),
+  'smart-food': applyDemoHighlightsToPreview(smartFoodData),
+  'beach-bar': applyDemoHighlightsToPreview(beachBarData),
   'sol-noche': solNocheData,
 };
 

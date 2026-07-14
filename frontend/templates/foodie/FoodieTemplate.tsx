@@ -1,5 +1,6 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -41,6 +42,7 @@ interface FoodieTemplateProps {
         prices: Array<{ currency: string; label?: string; amount: number }>;
         icons: string[];
         photos?: string[];
+        highlighted?: boolean;
       }>;
     }>;
   } | null;
@@ -77,6 +79,8 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
   const showLogo = tc.showLogo !== false;
   const showName = tc.showRestaurantName !== false;
   const showDescription = tc.showRestaurantDescription !== false;
+  const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   return (
     <div className="template-foodie restaurant-container" style={{ minHeight: '100vh', width: '100%', background: '#f8f9fa' }}>
@@ -318,7 +322,115 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
             )}
 
             {/* Menu Sections */}
-            {selectedMenu.sections.map((section) => (
+            {selectedMenu.sections.map((section) => {
+              const { featuredItems, regularItems } = splitHighlightedItems(section.items);
+              const renderFoodieCard = (item: (typeof section.items)[number], featured: boolean) => (
+                <div className={`template-foodie menu-item-card${featured ? ' tpl-featured-card' : ''}`} style={{
+                  background: 'white',
+                  borderRadius: 0,
+                  overflow: 'hidden',
+                  transition: 'all 0.3s ease',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}>
+                  {featured ? <p className="tpl-featured-label" style={{ padding: '16px 24px 0', margin: 0 }}>{recommendedLabel}</p> : null}
+                  {item.photos && item.photos.length > 0 && (
+                    <div style={{ width: '100%', height: '220px', overflow: 'hidden' }}>
+                      <img
+                        src={item.photos[0]}
+                        alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                  )}
+                  <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{
+                      fontSize: '1.25rem',
+                      fontWeight: '600',
+                      marginBottom: '12px',
+                      color: '#2c3e50',
+                      lineHeight: '1.4',
+                      marginTop: 0
+                    }}>
+                      {item.name}
+                    </h3>
+                    {item.description && (
+                      <p style={{
+                        color: '#6c757d',
+                        fontSize: '0.95rem',
+                        lineHeight: '1.6',
+                        marginBottom: item.icons.length > 0 ? '12px' : '16px',
+                        marginTop: 0,
+                        flexGrow: 1
+                      }}>
+                        {item.description}
+                      </p>
+                    )}
+                    {item.icons.length > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                        marginBottom: '16px',
+                        marginTop: 0
+                      }}>
+                        {item.icons.map((icon) => (
+                          <span
+                            key={icon}
+                            className="template-foodie menu-item-icon"
+                            title={iconLabels[icon] || icon}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              fontWeight: '500',
+                              border: '1px solid #e0e0e0',
+                              background: '#f5f5f5',
+                              color: '#6c757d',
+                              display: 'inline-block',
+                              lineHeight: '1.4',
+                              boxShadow: 'none'
+                            }}
+                          >
+                            {iconLabels[icon] || icon}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{
+                      marginTop: 'auto',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                      alignItems: 'baseline',
+                      justifyContent: 'flex-start',
+                      paddingTop: '8px',
+                      borderTop: '1px solid #f0f0f0'
+                    }}>
+                      {item.prices.map((price, idx) => (
+                        <span
+                          key={idx}
+                          className="template-foodie menu-item-price"
+                          style={{
+                            fontSize: '1.25rem',
+                            fontWeight: '600',
+                            color: primaryColor,
+                            display: 'inline-block',
+                            lineHeight: '1.5',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {price.label && <span style={{ fontSize: '0.9rem', color: '#6c757d', marginRight: '4px', fontWeight: '400' }}>{price.label}:</span>}
+                          {formatPrice(price)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+
+              return (
               <div key={section.id} id={`section-${section.id}`} style={{ scrollMarginTop: '100px', marginBottom: '80px' }}>
                 <h2 className="template-foodie menu-section-title" style={{
                   fontSize: '2rem',
@@ -328,116 +440,23 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
                 }}>
                   {section.name}
                 </h2>
+                {featuredItems.length > 0 ? (
+                  <div className="tpl-featured-block" style={featuredAccentStyle}>
+                    {featuredItems.map((item) => (
+                      <div key={item.id}>{renderFoodieCard(item, true)}</div>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="row g-4">
-                  {section.items.map((item) => (
+                  {regularItems.map((item) => (
                     <div key={item.id} className="col-md-6 col-lg-4">
-                      <div className="template-foodie menu-item-card" style={{
-                        background: 'white',
-                        borderRadius: 0,
-                        overflow: 'hidden',
-                        transition: 'all 0.3s ease',
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                      }}>
-                        {item.photos && item.photos.length > 0 && (
-                          <div style={{ width: '100%', height: '220px', overflow: 'hidden' }}>
-                            <img 
-                              src={item.photos[0]} 
-                              alt={item.name}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          </div>
-                        )}
-                        <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                          <h3 style={{ 
-                            fontSize: '1.25rem', 
-                            fontWeight: '600', 
-                            marginBottom: '12px',
-                            color: '#2c3e50',
-                            lineHeight: '1.4',
-                            marginTop: 0
-                          }}>
-                            {item.name}
-                          </h3>
-                          {item.description && (
-                            <p style={{ 
-                              color: '#6c757d', 
-                              fontSize: '0.95rem', 
-                              lineHeight: '1.6',
-                              marginBottom: item.icons.length > 0 ? '12px' : '16px',
-                              marginTop: 0,
-                              flexGrow: 1
-                            }}>
-                              {item.description}
-                            </p>
-                          )}
-                          {item.icons.length > 0 && (
-                            <div style={{ 
-                              display: 'flex', 
-                              flexWrap: 'wrap', 
-                              gap: '8px', 
-                              marginBottom: '16px',
-                              marginTop: 0
-                            }}>
-                              {item.icons.map((icon) => (
-                                <span 
-                                  key={icon} 
-                                  className="template-foodie menu-item-icon"
-                                  title={iconLabels[icon] || icon}
-                                  style={{
-                                    padding: '4px 10px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: '500',
-                                    border: '1px solid #e0e0e0',
-                                    background: '#f5f5f5',
-                                    color: '#6c757d',
-                                    display: 'inline-block',
-                                    lineHeight: '1.4',
-                                    boxShadow: 'none'
-                                  }}
-                                >
-                                  {iconLabels[icon] || icon}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          <div style={{ 
-                            marginTop: 'auto', 
-                            display: 'flex', 
-                            flexWrap: 'wrap', 
-                            gap: '12px', 
-                            alignItems: 'baseline',
-                            justifyContent: 'flex-start',
-                            paddingTop: '8px',
-                            borderTop: '1px solid #f0f0f0'
-                          }}>
-                            {item.prices.map((price, idx) => (
-                              <span 
-                                key={idx} 
-                                className="template-foodie menu-item-price"
-                                style={{ 
-                                  fontSize: '1.25rem', 
-                                  fontWeight: '600',
-                                  color: primaryColor,
-                                  display: 'inline-block',
-                                  lineHeight: '1.5',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                {price.label && <span style={{ fontSize: '0.9rem', color: '#6c757d', marginRight: '4px', fontWeight: '400' }}>{price.label}:</span>}
-                                {formatPrice(price)}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                      {renderFoodieCard(item, false)}
                     </div>
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

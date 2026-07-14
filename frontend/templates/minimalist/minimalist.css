@@ -46,7 +46,7 @@
 .template-minimalist .menu-section {
   background: transparent;
   border: none;
-  padding: 40px 20px;
+  padding: 28px 0;
   margin: 0;
   width: 100%;
   max-width: 100%;
@@ -83,13 +83,54 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 24px;
-  transition: all 0.3s ease;
   position: relative;
 }
 
 .template-minimalist .menu-item:hover {
-  padding-left: 10px;
-  /* background: linear-gradient(90deg, #fafafa 0%, #ffffff 100%); */
+  transform: none;
+  padding-left: 0;
+}
+
+.template-minimalist .menu-item.minimalist-menu-item--featured {
+  border: 1.5px solid var(--tpl-featured-accent, var(--primary-color, #667eea));
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--tpl-featured-accent, var(--primary-color, #667eea)) 14%, transparent);
+  margin-bottom: 1rem;
+  border-bottom: 1.5px solid var(--tpl-featured-accent, var(--primary-color, #667eea));
+  overflow: hidden;
+}
+
+.template-minimalist .menu-item.minimalist-menu-item--featured,
+.template-minimalist .menu-item.minimalist-menu-item--featured .minimalist-menu-item-inner,
+.template-minimalist .menu-item.minimalist-menu-item--featured .minimalist-menu-item-inner > div,
+.template-minimalist .menu-item.minimalist-menu-item--featured .menu-item-name,
+.template-minimalist .menu-item.minimalist-menu-item--featured .menu-item-description,
+.template-minimalist .menu-item.minimalist-menu-item--featured .menu-item-icons,
+.template-minimalist .menu-item.minimalist-menu-item--featured .minimalist-menu-item-prices,
+.template-minimalist .menu-item.minimalist-menu-item--featured .tpl-featured-label {
+  background-color: #ffffff;
+  background-image: none;
+}
+
+.template-minimalist .menu-item.minimalist-menu-item--featured .tpl-featured-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+}
+
+.template-minimalist .minimalist-menu-item-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 14px 0;
+  width: 100%;
+  background: transparent;
+}
+
+.template-minimalist .menu-item.minimalist-menu-item--featured .minimalist-menu-item-inner {
+  padding: 14px 12px;
 }
 
 .template-minimalist .menu-item:last-child {
@@ -176,6 +217,11 @@
   font-size: 0.95rem;
 }
 
+.template-minimalist .minimalist-footer {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
 .template-minimalist .footer a {
   color: #1a1a1a;
   text-decoration: underline;
@@ -198,7 +244,18 @@
   gap: 0;
 }
 
+.template-minimalist.minimalist-main-content {
+  width: 100%;
+  padding: 48px 20px 0;
+}
+
 @media (max-width: 768px) {
+  .template-minimalist.minimalist-main-content {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-top: 40px !important;
+  }
+
   .template-minimalist .minimalist-menu-item-prices {
     width: 100%;
     align-items: flex-end;

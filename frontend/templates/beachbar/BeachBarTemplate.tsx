@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { resolveBeachBarBackgroundImage } from '../../lib/beach-bar-template';
+import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -42,6 +43,7 @@ interface BeachBarTemplateProps {
         prices: Array<{ currency: string; label?: string; amount: number }>;
         icons: string[];
         photos?: string[];
+        highlighted?: boolean;
       }>;
     }>;
   } | null;
@@ -89,6 +91,48 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
     const section = selectedMenu.sections.find((s) => s.id === activeSectionId);
     return section?.items ?? [];
   }, [selectedMenu, activeSectionId]);
+
+  const { featuredItems, regularItems } = splitHighlightedItems(visibleItems);
+  const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const featuredAccentStyle = { '--tpl-featured-accent': restaurant.primaryColor || '#0ea5e9' } as React.CSSProperties;
+
+  const renderBeachBarProduct = (item: (typeof visibleItems)[number], featured: boolean) => {
+    const photo = showProductImages && item.photos?.[0] ? item.photos[0] : null;
+    return (
+      <article key={item.id} className={`beachbar-product-card${featured ? ' tpl-featured-card' : ''}`}>
+        <div className="beachbar-product-photo-wrap" aria-hidden={!photo}>
+          {photo ? (
+            <img
+              src={photo}
+              alt=""
+              className="beachbar-product-photo"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : null}
+        </div>
+        <div className="beachbar-product-content">
+          <div className="beachbar-product-body">
+            {featured ? <p className="tpl-featured-label">{recommendedLabel}</p> : null}
+            <h3 className="beachbar-product-name">{item.name}</h3>
+            {item.description ? (
+              <p className="beachbar-product-desc">{item.description}</p>
+            ) : null}
+          </div>
+          <div className="beachbar-product-prices">
+            {item.prices.map((price, idx) => (
+              <div key={idx} className="beachbar-price">
+                {price.label ? (
+                  <span className="beachbar-price-label">{price.label}</span>
+                ) : null}
+                {formatPrice(price)}
+              </div>
+            ))}
+          </div>
+        </div>
+      </article>
+    );
+  };
 
   const publicLocales = useMemo(() => {
     if (!menuLocales) return [];
@@ -210,42 +254,14 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
             {visibleItems.length === 0 ? (
               <p className="beachbar-empty beachbar-glass">No hay productos en esta sección.</p>
             ) : (
-              visibleItems.map((item) => {
-                const photo = showProductImages && item.photos?.[0] ? item.photos[0] : null;
-                return (
-                  <article key={item.id} className="beachbar-product-card">
-                    <div className="beachbar-product-photo-wrap" aria-hidden={!photo}>
-                      {photo ? (
-                        <img
-                          src={photo}
-                          alt=""
-                          className="beachbar-product-photo"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : null}
-                    </div>
-                    <div className="beachbar-product-content">
-                      <div className="beachbar-product-body">
-                        <h3 className="beachbar-product-name">{item.name}</h3>
-                        {item.description ? (
-                          <p className="beachbar-product-desc">{item.description}</p>
-                        ) : null}
-                      </div>
-                      <div className="beachbar-product-prices">
-                        {item.prices.map((price, idx) => (
-                          <div key={idx} className="beachbar-price">
-                            {price.label ? (
-                              <span className="beachbar-price-label">{price.label}</span>
-                            ) : null}
-                            {formatPrice(price)}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </article>
-                );
-              })
+              <>
+                {featuredItems.length > 0 ? (
+                  <div className="tpl-featured-block" style={featuredAccentStyle}>
+                    {featuredItems.map((item) => renderBeachBarProduct(item, true))}
+                  </div>
+                ) : null}
+                {regularItems.map((item) => renderBeachBarProduct(item, false))}
+              </>
             )}
           </div>
         ) : (

@@ -109,20 +109,8 @@ export function resolveSolNocheLogoUrl(args: {
   return dayLogo || nightLogo || restaurantLogo || null;
 }
 
-const RECOMMENDED_PRODUCT_LABELS: Record<string, string> = {
-  es: 'Producto recomendado',
-  en: 'Recommended product',
-  it: 'Prodotto consigliato',
-  pt: 'Produto recomendado',
-  fr: 'Produit recommandé',
-  de: 'Empfohlenes Produkt',
-};
-
-/** Etiqueta UI del bloque de productos destacados según locale BCP-47 del menú (p. ej. es-ES). */
-export function recommendedProductLabelForLocale(locale?: string): string {
-  const lang = (locale || 'es-ES').split('-')[0]?.toLowerCase() || 'es';
-  return RECOMMENDED_PRODUCT_LABELS[lang] ?? RECOMMENDED_PRODUCT_LABELS.es!;
-}
+/** @deprecated Importar desde `highlighted-menu-items`. */
+export { recommendedProductLabelForLocale } from './highlighted-menu-items';
 
 export const SOL_NOCHE_TIMEZONE_OPTIONS = [
   { value: 'America/Argentina/Buenos_Aires', label: 'Argentina (Buenos Aires)' },

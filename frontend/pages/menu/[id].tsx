@@ -17,6 +17,7 @@ interface MenuItem {
   prices: ItemPrice[];
   icons: string[];
   photos?: string[];
+  highlighted?: boolean;
 }
 
 interface ItemPrice {

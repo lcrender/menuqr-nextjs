@@ -1,5 +1,6 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -41,6 +42,7 @@ interface MinimalistTemplateProps {
         prices: Array<{ currency: string; label?: string; amount: number }>;
         icons: string[];
         photos?: string[];
+        highlighted?: boolean;
       }>;
     }>;
   } | null;
@@ -68,6 +70,45 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
   const showLogo = tc.showLogo !== false;
   const showName = tc.showRestaurantName !== false;
   const showDescription = tc.showRestaurantDescription !== false;
+  const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
+
+  type MenuItem = NonNullable<MinimalistTemplateProps['selectedMenu']>['sections'][number]['items'][number];
+
+  const renderMenuItem = (item: MenuItem, featured: boolean) => (
+    <div key={item.id} className={`template-minimalist menu-item${featured ? ' minimalist-menu-item--featured' : ''}`}>
+      <div className="minimalist-menu-item-inner">
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          {featured ? <p className="tpl-featured-label">{recommendedLabel}</p> : null}
+          <div className="template-minimalist menu-item-name">{item.name}</div>
+          {item.description && (
+            <div className="template-minimalist menu-item-description">{item.description}</div>
+          )}
+          {item.icons.length > 0 && (
+            <div className="template-minimalist menu-item-icons" style={{ marginTop: '12px' }}>
+              {item.icons.map((icon) => (
+                <span
+                  key={icon}
+                  className="template-minimalist menu-item-icon"
+                  title={iconLabels[icon] || icon}
+                >
+                  {iconLabels[icon] || icon}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="template-minimalist minimalist-menu-item-prices" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', minWidth: '120px' }}>
+          {item.prices.map((price, idx) => (
+            <span key={idx} className="template-minimalist menu-item-price">
+              {price.label && <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>{price.label}: </span>}
+              {formatPrice(price)}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="template-minimalist restaurant-container" style={{ minHeight: '100vh', width: '100%' }}>
@@ -103,7 +144,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
         }
       `}</style>
 
-      <div style={{ width: '100%', paddingLeft: '40px', paddingRight: '40px', paddingTop: '60px' }}>
+      <div className="template-minimalist minimalist-main-content">
         {/* Cover Image (si la plantilla la muestra) */}
         {showCover && restaurant.coverUrl && (
           <div style={{ width: '100%', marginBottom: '24px', borderRadius: '12px', overflow: 'hidden' }}>
@@ -214,55 +255,28 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
             )}
 
             {/* Menu Sections */}
-            {selectedMenu.sections.map((section) => (
+            {selectedMenu.sections.map((section) => {
+              const { featuredItems, regularItems } = splitHighlightedItems(section.items);
+              return (
               <div key={section.id} id={`section-${section.id}`} className="template-minimalist menu-section" style={{ scrollMarginTop: '80px' }}>
                 <h2 className="template-minimalist menu-section-title">{section.name}</h2>
                 <div className="menu-items-container">
-                  {section.items.map((item) => (
-                    <div key={item.id} className="template-minimalist menu-item">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap', padding: '16px 20px', width: '100%' }}>
-                        <div style={{ flex: 1, minWidth: '250px' }}>
-                          <div className="template-minimalist menu-item-name">{item.name}</div>
-                          {item.description && (
-                            <div className="template-minimalist menu-item-description">{item.description}</div>
-                          )}
-                          {item.icons.length > 0 && (
-                            <div className="template-minimalist menu-item-icons" style={{ marginTop: '12px' }}>
-                              {item.icons.map((icon) => (
-                                <span 
-                                  key={icon} 
-                                  className="template-minimalist menu-item-icon"
-                                  title={iconLabels[icon] || icon}
-                                >
-                                  {iconLabels[icon] || icon}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <div className="template-minimalist minimalist-menu-item-prices" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', minWidth: '120px' }}>
-                          {item.prices.map((price, idx) => (
-                            <span 
-                              key={idx} 
-                              className="template-minimalist menu-item-price"
-                            >
-                              {price.label && <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>{price.label}: </span>}
-                              {formatPrice(price)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                  {featuredItems.length > 0 ? (
+                    <div className="tpl-featured-block" style={featuredAccentStyle}>
+                      {featuredItems.map((item) => renderMenuItem(item, true))}
                     </div>
-                  ))}
+                  ) : null}
+                  {regularItems.map((item) => renderMenuItem(item, false))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <footer className="template-minimalist footer mt-5" style={{ padding: '40px 40px', width: '100%' }}>
+      <footer className="template-minimalist footer mt-5 minimalist-footer" style={{ width: '100%' }}>
         <div style={{ width: '100%', maxWidth: '100%' }}>
           <div className="row">
             <div className="col-md-6">

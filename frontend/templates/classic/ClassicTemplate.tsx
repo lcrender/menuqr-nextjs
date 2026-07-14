@@ -7,6 +7,7 @@ import {
 } from '../../lib/template-footer-link-rel';
 import Link from 'next/link';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 
 interface ClassicTemplateProps {
   restaurant: {
@@ -42,6 +43,7 @@ interface ClassicTemplateProps {
         prices: Array<{ currency: string; label?: string; amount: number }>;
         icons: string[];
         photos?: string[];
+        highlighted?: boolean;
       }>;
     }>;
   } | null;
@@ -71,6 +73,57 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
   const showName = tc.showRestaurantName !== false;
   const showDescription = tc.showRestaurantDescription !== false;
   const phoneDisplay = (restaurant.phone || '').replace(/\s*\|\s*WhatsApp:.*$/i, '').trim();
+  const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
+
+  type MenuItem = NonNullable<ClassicTemplateProps['selectedMenu']>['sections'][number]['items'][number];
+
+  const renderMenuItem = (item: MenuItem, featured: boolean) => (
+    <div key={item.id} className={`template-classic menu-item${featured ? ' classic-menu-item--featured' : ''}`}>
+      <div className="classic-menu-item-inner">
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          {featured ? <p className="tpl-featured-label">{recommendedLabel}</p> : null}
+          <div className="template-classic menu-item-name">{item.name}</div>
+          {item.description && (
+            <div className="template-classic menu-item-description">{item.description}</div>
+          )}
+          {item.icons.length > 0 && (
+            <div className="template-classic menu-item-icons" style={{ marginTop: '12px' }}>
+              {item.icons.map((icon) => (
+                <span
+                  key={icon}
+                  className="template-classic menu-item-icon"
+                  title={iconLabels[icon] || icon}
+                >
+                  {iconLabels[icon] || icon}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="template-classic classic-menu-item-prices" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', minWidth: '120px' }}>
+          {item.prices.map((price, idx) => (
+            <span
+              key={idx}
+              style={{
+                background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+                color: 'white',
+                fontSize: '1rem',
+                fontWeight: '700',
+                padding: '8px 16px',
+                borderRadius: '25px',
+                boxShadow: `0 2px 8px ${primaryColor}40`,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {price.label && <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>{price.label}: </span>}
+              {formatPrice(price)}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="template-classic restaurant-container" style={{ 
@@ -196,116 +249,38 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
           <div className="mt-4">
             {/* Navigation Index */}
             {selectedMenu.sections.length > 1 && (
-              <div className="mb-5" style={{ 
-                background: 'transparent',
-                borderRadius: '0',
-                border: 'none',
-                padding: '0',
-                borderBottom: `2px solid ${primaryColor}20`,
-                paddingTop: '30px',
-                paddingBottom: '30px',
-                marginTop: '30px',
-                marginBottom: '40px'
-              }}>
-                <div className="d-flex flex-wrap gap-3" style={{ justifyContent: 'center' }}>
+              <div className="mb-5 classic-section-nav-wrap">
+                <nav className="classic-section-nav" aria-label="Secciones del menú">
                   {selectedMenu.sections.map((section) => (
                     <a
                       key={section.id}
                       href={`#section-${section.id}`}
-                      style={{ 
-                        borderRadius: '30px',
-                        background: 'transparent',
-                        color: primaryColor,
-                        border: `2px solid ${primaryColor}`,
-                        padding: '10px 24px',
-                        fontSize: '0.9rem',
-                        fontWeight: '600',
-                        textDecoration: 'none',
-                        transition: 'all 0.3s ease',
-                        display: 'inline-block',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = primaryColor;
-                        e.currentTarget.style.color = 'white';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = `0 4px 12px ${primaryColor}40`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = primaryColor;
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
+                      className="classic-section-nav-link"
                     >
                       {section.name}
                     </a>
                   ))}
-                </div>
+                </nav>
               </div>
             )}
 
             {/* Menu Sections */}
-            {selectedMenu.sections.map((section) => (
+            {selectedMenu.sections.map((section) => {
+              const { featuredItems, regularItems } = splitHighlightedItems(section.items);
+              return (
               <div key={section.id} id={`section-${section.id}`} className="template-classic menu-section" style={{ scrollMarginTop: '80px' }}>
                 <h2 className="template-classic menu-section-title">{section.name}</h2>
                 <div className="menu-items-container">
-                  {section.items.map((item) => (
-                    <div key={item.id} className="template-classic menu-item">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap', padding: '16px 20px' }}>
-                        <div style={{ flex: 1, minWidth: '250px' }}>
-                          <div className="template-classic menu-item-name">{item.name}</div>
-                          {item.description && (
-                            <div className="template-classic menu-item-description">{item.description}</div>
-                          )}
-                          {item.icons.length > 0 && (
-                            <div className="template-classic menu-item-icons" style={{ marginTop: '12px' }}>
-                              {item.icons.map((icon) => (
-                                <span 
-                                  key={icon} 
-                                  className="template-classic menu-item-icon"
-                                  title={iconLabels[icon] || icon}
-                                >
-                                  {iconLabels[icon] || icon}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <div className="template-classic classic-menu-item-prices" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', minWidth: '120px' }}>
-                          {item.prices.map((price, idx) => (
-                            <span 
-                              key={idx} 
-                              style={{ 
-                                background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
-                                color: 'white',
-                                fontSize: '1rem',
-                                fontWeight: '700',
-                                padding: '8px 16px',
-                                borderRadius: '25px',
-                                boxShadow: `0 2px 8px ${primaryColor}40`,
-                                whiteSpace: 'nowrap',
-                                transition: 'all 0.2s ease',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'scale(1.05)';
-                                e.currentTarget.style.boxShadow = `0 4px 12px ${primaryColor}60`;
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'scale(1)';
-                                e.currentTarget.style.boxShadow = `0 2px 8px ${primaryColor}40`;
-                              }}
-                            >
-                              {price.label && <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>{price.label}: </span>}
-                              {formatPrice(price)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                  {featuredItems.length > 0 ? (
+                    <div className="tpl-featured-block" style={featuredAccentStyle}>
+                      {featuredItems.map((item) => renderMenuItem(item, true))}
                     </div>
-                  ))}
+                  ) : null}
+                  {regularItems.map((item) => renderMenuItem(item, false))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
