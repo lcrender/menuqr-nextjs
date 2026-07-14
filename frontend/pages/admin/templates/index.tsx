@@ -16,7 +16,7 @@ import {
 } from '../../../lib/menu-templates-catalog';
 import { apiTemplateIdToCatalogSlug } from '../../../lib/template-selection-intent';
 import { TEMPLATE_NAMES } from '../../../lib/template-config-schema';
-import { TEMPLATES_CATALOG as templates } from '../../../lib/templates-catalog';
+import { TEMPLATES_CATALOG as templates, type TemplateCatalogItem } from '../../../lib/templates-catalog';
 import { DEFAULT_BEACH_BAR_BACKGROUND_IMAGE } from '../../../lib/beach-bar-template';
 import type { TemplateListFilters } from '../../../types/menu-template-catalog';
 
@@ -25,6 +25,10 @@ const INITIAL_FILTERS: TemplateListFilters = {
   estilo: 'all',
   plan: 'all',
 };
+
+type AdminGridItem =
+  | { type: 'template'; template: TemplateCatalogItem }
+  | { type: 'premium' };
 
 export default function Templates() {
   const [restaurants, setRestaurants] = useState<any[]>([]);
@@ -51,7 +55,7 @@ export default function Templates() {
   }, [filters]);
 
   const adminGridItems = useMemo(() => {
-    const items = filteredTemplates.map((template) => ({ type: 'template' as const, template }));
+    const items: AdminGridItem[] = filteredTemplates.map((template) => ({ type: 'template' as const, template }));
     const at = Math.min(CATALOG_PREMIUM_CARD_INDEX, items.length);
     items.splice(at, 0, { type: 'premium' as const });
     return items;
