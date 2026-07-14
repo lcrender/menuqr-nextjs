@@ -1,5 +1,11 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import {
+  FOOTER_REL_APPMENUQR,
+  FOOTER_REL_CONTACT,
+  FOOTER_REL_EXTERNAL,
+  footerWebsiteRel,
+} from '../../lib/template-footer-link-rel';
 
 interface MinimalistTemplateProps {
   restaurant: {
@@ -272,7 +278,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
               {restaurant.phone && (
                 <p style={{ marginBottom: '8px', color: '#555' }}>
                   <strong>Teléfono:</strong>{' '}
-                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`}>
+                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} rel={FOOTER_REL_CONTACT}>
                     {restaurant.phone.split('|')[0]?.trim() ?? ''}
                   </a>
                 </p>
@@ -283,7 +289,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
                   <a 
                     href={`https://wa.me/${formatWhatsAppForLink(restaurant.whatsapp, restaurant.country)}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel={FOOTER_REL_EXTERNAL}
                   >
                     {restaurant.whatsapp}
                   </a>
@@ -292,7 +298,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
               {restaurant.email && (
                 <p style={{ marginBottom: '8px', color: '#555' }}>
                   <strong>Email:</strong>{' '}
-                  <a href={`mailto:${restaurant.email}`}>
+                  <a href={`mailto:${restaurant.email}`} rel={FOOTER_REL_CONTACT}>
                     {restaurant.email}
                   </a>
                 </p>
@@ -303,7 +309,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
                   <a 
                     href={restaurant.website.startsWith('http') ? restaurant.website : `https://${restaurant.website}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel={FOOTER_REL_EXTERNAL}
                   >
                     {restaurant.website}
                   </a>
@@ -313,7 +319,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
           </div>
           <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.1)', textAlign: 'center', fontSize: '0.8rem', color: '#666' }}>
             Menú creado con{' '}
-            <a href="https://appmenuqr.com" target="_blank" rel="noopener noreferrer" style={{ color: '#666', textDecoration: 'underline' }}>appmenuqr.com</a>
+            <a href="https://appmenuqr.com" target="_blank" rel={FOOTER_REL_APPMENUQR} style={{ color: '#666', textDecoration: 'underline' }}>appmenuqr.com</a>
           </div>
         </div>
       </footer>

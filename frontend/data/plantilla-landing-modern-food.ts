@@ -1,13 +1,13 @@
 import type { PlantillaLandingContent } from '../types/plantilla-landing';
 
-/** Contenido editorial de /plantillas/modern-food */
+/** Contenido editorial de /caracteristicas/modern-food */
 export const PLANTILLA_MODERN_FOOD_LANDING: PlantillaLandingContent = {
   slug: 'modern-food',
   badgeStrip: ['Exclusivo'],
   seo: {
-    title: 'Plantilla menú QR Modern Food | Carta digital moderna con tabs e imágenes',
+    title: 'Características Modern Food | Menú QR PRO',
     description:
-      'Plantilla de menú QR Modern Food para restaurantes, bares y cafeterías. Navegación por tabs laterales, imágenes en productos y diseño optimizado para móvil. Disponible en plan PRO.',
+      'Tabs verticales, fotos en productos y navegación móvil optimizada. Características de la plantilla PRO Modern Food para restaurantes y bares actuales.',
   },
   previewPath: '/preview/modern-food',
   heroPreviewImage:
@@ -112,7 +112,7 @@ export const PLANTILLA_MODERN_FOOD_LANDING: PlantillaLandingContent = {
   qr: {
     heading: 'Ver demo en tu móvil',
     body: 'Escanea el código QR para ver una preview real de esta plantilla en tu teléfono.',
-    demoButtonLabel: 'Ver demo',
+    demoButtonLabel: 'Vista previa',
     demoHint: 'Demo disponible en celular y navegador',
   },
   cta: {

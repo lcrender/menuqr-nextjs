@@ -1,13 +1,13 @@
 import type { PlantillaLandingContent } from '../types/plantilla-landing';
 
-/** Contenido editorial de /plantillas/gourmet */
+/** Contenido editorial de /caracteristicas/gourmet */
 export const PLANTILLA_GOURMET_LANDING: PlantillaLandingContent = {
   slug: 'gourmet',
   badgeStrip: ['Exclusivo'],
   seo: {
-    title: 'Plantilla menú QR Gourmet | Carta digital premium con imágenes',
+    title: 'Características Gourmet | Menú QR PRO',
     description:
-      'Plantilla de menú QR Gourmet para restaurantes premium. Incluye imágenes en productos, tipografías elegantes y diseño exclusivo. Disponible en plan PRO.',
+      'Fotos en cada plato, tipografías elegantes y diseño premium. Características PRO para alta cocina y bistrós. Personalizá colores, logo y portada.',
   },
   previewPath: '/preview/gourmet',
   heroPreviewImage:
@@ -97,7 +97,7 @@ export const PLANTILLA_GOURMET_LANDING: PlantillaLandingContent = {
   qr: {
     heading: 'Ver demo en tu móvil',
     body: 'Escanea el código QR para ver una preview real de esta plantilla en tu teléfono.',
-    demoButtonLabel: 'Ver demo',
+    demoButtonLabel: 'Vista previa',
     demoHint: 'Demo disponible en celular y navegador',
   },
   cta: {

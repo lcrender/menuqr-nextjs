@@ -1,5 +1,5 @@
 import { getAllTemplateSlugs } from './menu-templates-catalog';
-import { PLANTILLAS_CATALOG_PATH } from './plantillas-catalog-url';
+import { PLANTILLAS_CATALOG_PATH, plantillaCaracteristicasHref } from './plantillas-catalog-url';
 import { DOCUMENTATION_SLUGS_STATIC } from './documentation-nav';
 import { SEO_LANDING_SLUGS, SEO_LANDINGS } from './seo-landings-config';
 
@@ -43,7 +43,7 @@ export function buildSitemapEntries(): SitemapEntry[] {
 
   for (const slug of getAllTemplateSlugs()) {
     out.push({
-      path: `/plantillas/${encodeURIComponent(slug)}`,
+      path: plantillaCaracteristicasHref(slug),
       changefreq: 'weekly',
       priority: '0.85',
       lastmod: today,

@@ -156,6 +156,71 @@
   transform: translateY(-2px);
 }
 
+/* Panel superior: borde inferior verde-blanco-rojo antes de las cards */
+.template-italianfood .italian-food-intro-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.template-italianfood .italian-food-intro-panel::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    #009246 0px,
+    #009246 12px,
+    #ffffff 12px,
+    #ffffff 24px,
+    #ce2b37 24px,
+    #ce2b37 36px
+  );
+  pointer-events: none;
+}
+
+.template-italianfood .italian-food-section-nav {
+  margin-bottom: 0;
+}
+
+/* Selector de idioma: ancho de pantalla con márgenes; botones apilados al 100% */
+.template-italianfood .italian-food-locale-strip {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding: 0 16px;
+  margin-bottom: 24px;
+  box-sizing: border-box;
+}
+
+.template-italianfood .italian-food-locale-tabs {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.template-italianfood .italian-food-locale-tabs-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 12px;
+}
+
+.template-italianfood .italian-food-locale-tabs-list .italian-food-locale-tab-btn {
+  width: 100%;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 1.2rem;
+  letter-spacing: 0.08em;
+}
+
 .template-italianfood .section-nav-link {
   border-radius: 8px;
   transition: all 0.3s ease;

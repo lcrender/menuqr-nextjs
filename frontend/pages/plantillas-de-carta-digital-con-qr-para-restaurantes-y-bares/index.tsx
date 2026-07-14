@@ -10,6 +10,7 @@ import PremiumPlanCard from '../../components/plantillas/PremiumPlanCard';
 import styles from '../../components/plantillas/Plantillas.module.css';
 import {
   MENU_TEMPLATES_CATALOG,
+  buildCatalogGridItems,
   deriveFilterOptions,
   filterTemplates,
 } from '../../lib/menu-templates-catalog';
@@ -31,6 +32,8 @@ export default function PlantillasCatalogoPage() {
     () => filterTemplates(MENU_TEMPLATES_CATALOG, filters),
     [filters],
   );
+
+  const gridItems = useMemo(() => buildCatalogGridItems(filtered), [filtered]);
 
   const plantillasJsonLd = useMemo(() => {
     const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
@@ -91,10 +94,13 @@ export default function PlantillasCatalogoPage() {
               ) : null}
 
               <div className={styles.grid}>
-                {filtered.map((t) => (
-                  <TemplateCard key={t.slug} template={t} />
-                ))}
-                <PremiumPlanCard />
+                {gridItems.map((item) =>
+                  item.type === 'premium' ? (
+                    <PremiumPlanCard key="plan-premium" />
+                  ) : (
+                    <TemplateCard key={item.template.slug} template={item.template} />
+                  ),
+                )}
               </div>
             </div>
           </section>

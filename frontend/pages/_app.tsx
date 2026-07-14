@@ -9,6 +9,9 @@ import '../templates/minimalist/minimalist.css';
 import '../templates/foodie/foodie.css';
 import '../templates/burgers/burgers.css';
 import '../templates/italianfood/italianfood.css';
+import '../templates/smartfood/smartfood.css';
+import '../templates/beachbar/beachbar.css';
+import '../templates/solnoche/solnoche.css';
 import '../src/i18n/config';
 import CookieConsentRoot from '../components/CookieConsentRoot';
 

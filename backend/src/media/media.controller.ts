@@ -59,6 +59,110 @@ export class MediaController {
     return this.mediaService.uploadRestaurantCover(req.user, restaurantId, file);
   }
 
+  @Post('restaurants/:restaurantId/template-background')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 3 * 1024 * 1024 } }))
+  @ApiOperation({ summary: 'Subir imagen de fondo de plantilla (template_config)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Fondo de plantilla subido exitosamente' })
+  async uploadRestaurantTemplateBackground(
+    @Param('restaurantId') restaurantId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    return this.mediaService.uploadRestaurantTemplateBackground(req.user, restaurantId, file);
+  }
+
+  @Post('restaurants/:restaurantId/template-cover-day')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 3 * 1024 * 1024 } }))
+  @ApiOperation({ summary: 'Subir portada de día (Sol & Noche)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async uploadRestaurantTemplateCoverDay(
+    @Param('restaurantId') restaurantId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    return this.mediaService.uploadRestaurantTemplateCoverDay(req.user, restaurantId, file);
+  }
+
+  @Post('restaurants/:restaurantId/template-cover-night')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 3 * 1024 * 1024 } }))
+  @ApiOperation({ summary: 'Subir portada de noche (Sol & Noche)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async uploadRestaurantTemplateCoverNight(
+    @Param('restaurantId') restaurantId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    return this.mediaService.uploadRestaurantTemplateCoverNight(req.user, restaurantId, file);
+  }
+
+  @Post('restaurants/:restaurantId/template-logo-day')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
+  @ApiOperation({ summary: 'Subir logo de día (Sol & Noche)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async uploadRestaurantTemplateLogoDay(
+    @Param('restaurantId') restaurantId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    return this.mediaService.uploadRestaurantTemplateLogoDay(req.user, restaurantId, file);
+  }
+
+  @Post('restaurants/:restaurantId/template-logo-night')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
+  @ApiOperation({ summary: 'Subir logo de noche (Sol & Noche)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async uploadRestaurantTemplateLogoNight(
+    @Param('restaurantId') restaurantId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    return this.mediaService.uploadRestaurantTemplateLogoNight(req.user, restaurantId, file);
+  }
+
   @Post('items/:itemId/photo')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
   @ApiOperation({ summary: 'Subir foto de producto' })

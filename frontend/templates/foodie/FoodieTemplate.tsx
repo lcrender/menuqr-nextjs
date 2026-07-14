@@ -1,5 +1,11 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import {
+  FOOTER_REL_APPMENUQR,
+  FOOTER_REL_CONTACT,
+  FOOTER_REL_EXTERNAL,
+  footerWebsiteRel,
+} from '../../lib/template-footer-link-rel';
 
 interface FoodieTemplateProps {
   restaurant: {
@@ -45,6 +51,15 @@ interface FoodieTemplateProps {
   menuLocales?: TemplateMenuLocalesProps;
 }
 
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return `rgba(44, 62, 80, ${alpha})`;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
   restaurant,
   menuList,
@@ -69,42 +84,117 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
         .template-foodie {
           --primary-color: ${primaryColor};
           --secondary-color: ${secondaryColor};
+          --foodie-glow: ${hexToRgba(secondaryColor, 0.28)};
+          --foodie-glow-soft: ${hexToRgba(secondaryColor, 0.14)};
         }
         .template-foodie .menu-section-title {
           color: ${primaryColor};
-          border-bottom-color: ${primaryColor};
+          text-shadow: 0 0 28px ${hexToRgba(secondaryColor, 0.18)};
+        }
+        .template-foodie .menu-section-title::before {
+          background: linear-gradient(
+            90deg,
+            ${primaryColor} 0,
+            ${primaryColor} 20%,
+            ${secondaryColor} 20%,
+            ${secondaryColor} 100%
+          );
         }
         .template-foodie .menu-item-card {
-          border-top-color: ${primaryColor};
+          box-shadow:
+            0 2px 10px ${hexToRgba(secondaryColor, 0.12)},
+            0 0 0 1px rgba(255, 255, 255, 0.65) inset,
+            0 10px 28px ${hexToRgba(secondaryColor, 0.14)};
         }
         .template-foodie .menu-item-card:hover {
-          box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+          box-shadow:
+            0 10px 28px ${hexToRgba(secondaryColor, 0.22)},
+            0 0 0 1px rgba(255, 255, 255, 0.75) inset,
+            0 0 32px ${hexToRgba(secondaryColor, 0.28)};
+        }
+        .template-foodie .menu-item-card::after {
+          background: linear-gradient(
+            90deg,
+            ${primaryColor} 0,
+            ${primaryColor} 20%,
+            ${secondaryColor} 20%,
+            ${secondaryColor} 100%
+          );
         }
         .template-foodie .menu-item-price {
           color: ${primaryColor};
+          text-shadow: 0 0 16px ${hexToRgba(secondaryColor, 0.22)};
         }
         .template-foodie .menu-tab-btn {
-          background: ${primaryColor};
-          border-color: ${primaryColor};
+          background: linear-gradient(
+            180deg,
+            color-mix(in srgb, ${primaryColor} 82%, white) 0%,
+            ${primaryColor} 52%,
+            color-mix(in srgb, ${primaryColor} 88%, black) 100%
+          );
+          border: 1px solid color-mix(in srgb, ${primaryColor} 70%, white);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.38),
+            0 4px 14px ${hexToRgba(secondaryColor, 0.2)},
+            0 0 22px ${hexToRgba(secondaryColor, 0.32)};
         }
         .template-foodie .menu-tab-btn:hover {
-          background: ${secondaryColor};
-          border-color: ${secondaryColor};
+          background: linear-gradient(
+            180deg,
+            color-mix(in srgb, ${secondaryColor} 82%, white) 0%,
+            ${secondaryColor} 52%,
+            color-mix(in srgb, ${secondaryColor} 88%, black) 100%
+          );
+          border-color: color-mix(in srgb, ${secondaryColor} 70%, white);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.38),
+            0 6px 18px ${hexToRgba(secondaryColor, 0.24)},
+            0 0 28px ${hexToRgba(secondaryColor, 0.36)};
         }
         .template-foodie .menu-tab-btn-outline {
           border-color: ${primaryColor};
           color: ${primaryColor};
+          box-shadow:
+            inset 0 0 0 1px ${hexToRgba(secondaryColor, 0.14)},
+            0 0 14px ${hexToRgba(secondaryColor, 0.18)};
         }
         .template-foodie .menu-tab-btn-outline:hover {
-          background: ${primaryColor};
+          background: linear-gradient(
+            180deg,
+            color-mix(in srgb, ${primaryColor} 82%, white) 0%,
+            ${primaryColor} 100%
+          );
           color: white;
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.35),
+            0 4px 14px ${hexToRgba(secondaryColor, 0.2)},
+            0 0 22px ${hexToRgba(secondaryColor, 0.3)};
+        }
+        .template-foodie .section-nav-link {
+          box-shadow: 0 0 10px ${hexToRgba(secondaryColor, 0.12)};
+        }
+        .template-foodie .section-nav-link:hover {
+          background: linear-gradient(
+            180deg,
+            color-mix(in srgb, ${primaryColor} 85%, white) 0%,
+            ${primaryColor} 100%
+          );
+          color: white;
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.32),
+            0 4px 14px ${hexToRgba(secondaryColor, 0.2)},
+            0 0 20px ${hexToRgba(secondaryColor, 0.28)};
+        }
+        .template-foodie .foodie-logo-wrap {
+          box-shadow:
+            0 4px 18px ${hexToRgba(secondaryColor, 0.18)},
+            0 0 28px ${hexToRgba(secondaryColor, 0.24)};
         }
         .template-foodie .footer {
           background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%);
-        }
-        .template-foodie .section-nav-link:hover {
-          background: ${primaryColor};
-          color: white;
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.22),
+            0 -8px 32px ${hexToRgba(secondaryColor, 0.24)};
         }
       `}</style>
 
@@ -119,57 +209,63 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
         </div>
       )}
 
-      {/* Restaurant Info - Simple and Compact */}
-      <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '40px 40px 60px 40px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '30px', flexWrap: 'wrap' }}>
+      {/* Restaurant Info - Logo y nombre centrados */}
+      <div className="template-foodie foodie-content-wrap" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '40px 16px 60px' }}>
+        <div
+          className="template-foodie foodie-header"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            gap: '24px',
+          }}
+        >
           {showLogo && restaurant.logoUrl && (
-            <div style={{ flexShrink: 0 }}>
-              <img 
-                src={restaurant.logoUrl} 
+            <div className="foodie-logo-wrap" style={{ flexShrink: 0 }}>
+              <img
+                src={restaurant.logoUrl}
                 alt={restaurant.name}
-                style={{ 
-                  width: '200px', 
-                  height: '200px', 
-                  objectFit: 'cover',
-                  borderRadius: '8px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                }}
+                className="foodie-logo-img"
               />
             </div>
           )}
-          <div style={{ flex: 1, minWidth: '250px' }}>
-            {showName && (
-              <h1 style={{ 
-                fontSize: '2.5rem', 
-                fontWeight: '600', 
-                marginBottom: '12px', 
+          {showName && (
+            <h1
+              style={{
+                fontSize: '2.5rem',
+                fontWeight: '600',
+                marginBottom: 0,
                 letterSpacing: '-0.02em',
                 color: '#2c3e50',
-                lineHeight: '1.2'
-              }}>
-                {restaurant.name}
-              </h1>
-            )}
-            {showDescription && restaurant.description && (
-              <div 
-                dangerouslySetInnerHTML={{ 
-                  __html: restaurant.description
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br />')
-                }}
-                style={{ 
-                  fontSize: '1rem', 
-                  lineHeight: '1.6', 
-                  color: '#6c757d',
-                  textAlign: 'justify'
-                }}
-              />
-            )}
-          </div>
+                lineHeight: '1.2',
+                textAlign: 'center',
+              }}
+            >
+              {restaurant.name}
+            </h1>
+          )}
+          {showDescription && restaurant.description && (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: restaurant.description
+                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                  .replace(/\n/g, '<br />'),
+              }}
+              style={{
+                fontSize: '1rem',
+                lineHeight: '1.6',
+                color: '#6c757d',
+                textAlign: 'justify',
+                maxWidth: '720px',
+                width: '100%',
+              }}
+            />
+          )}
         </div>
       </div>
 
-      <div style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '0 40px 60px 40px' }}>
+      <div className="template-foodie foodie-content-wrap" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '0 16px 60px' }}>
         {menuLocales && <MenuLanguageSwitcher {...menuLocales} />}
 
         {/* Menu Tabs */}
@@ -182,15 +278,11 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
                   onClick={() => onMenuSelect(menu.slug)}
                   className={`btn ${selectedMenu?.slug === menu.slug ? 'menu-tab-btn' : 'menu-tab-btn-outline'}`}
                   style={{
-                    borderRadius: '8px',
+                    borderRadius: 0,
                     padding: '12px 28px',
                     fontSize: '1rem',
                     fontWeight: selectedMenu?.slug === menu.slug ? '600' : '400',
                     transition: 'all 0.3s ease',
-                    boxShadow: selectedMenu?.slug === menu.slug ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
-                    border: selectedMenu?.slug === menu.slug ? 'none' : `1px solid ${primaryColor}`,
-                    color: selectedMenu?.slug === menu.slug ? 'white' : primaryColor,
-                    background: selectedMenu?.slug === menu.slug ? primaryColor : 'transparent',
                   }}
                 >
                   {menu.name}
@@ -202,32 +294,21 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
 
         {/* Selected Menu Content */}
         {selectedMenu && (
-          <div className="mt-4">
+          <div className={menuLocales ? 'foodie-menu-body' : 'mt-4'}>
             {/* Navigation Index */}
             {selectedMenu.sections.length > 1 && (
-              <div className="mb-5" style={{ 
-                padding: '30px 0',
-                marginBottom: '50px',
-                borderBottom: `1px solid ${primaryColor}15`
-              }}>
-                <div className="d-flex flex-wrap gap-2" style={{ justifyContent: 'center', gap: '10px' }}>
+              <div
+                className="foodie-section-nav"
+                style={{
+                  borderBottom: `1px solid ${primaryColor}15`,
+                }}
+              >
+                <div className="d-flex flex-wrap foodie-section-nav-list">
                   {selectedMenu.sections.map((section) => (
                     <a
                       key={section.id}
                       href={`#section-${section.id}`}
                       className="section-nav-link"
-                      style={{ 
-                        borderRadius: '6px',
-                        background: 'transparent',
-                        color: primaryColor,
-                        border: `1px solid ${primaryColor}40`,
-                        padding: '10px 20px',
-                        fontSize: '0.9rem',
-                        fontWeight: '500',
-                        textDecoration: 'none',
-                        transition: 'all 0.3s ease',
-                        display: 'inline-block',
-                      }}
                     >
                       {section.name}
                     </a>
@@ -239,12 +320,11 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
             {/* Menu Sections */}
             {selectedMenu.sections.map((section) => (
               <div key={section.id} id={`section-${section.id}`} style={{ scrollMarginTop: '100px', marginBottom: '80px' }}>
-                <h2 className="template-foodie menu-section-title" style={{ 
-                  fontSize: '2rem', 
-                  fontWeight: '600', 
+                <h2 className="template-foodie menu-section-title" style={{
+                  fontSize: '2rem',
+                  fontWeight: '600',
                   marginBottom: '40px',
                   paddingBottom: '15px',
-                  borderBottom: `3px solid ${primaryColor}`
                 }}>
                   {section.name}
                 </h2>
@@ -253,14 +333,12 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
                     <div key={item.id} className="col-md-6 col-lg-4">
                       <div className="template-foodie menu-item-card" style={{
                         background: 'white',
-                        borderRadius: '12px',
+                        borderRadius: 0,
                         overflow: 'hidden',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                         transition: 'all 0.3s ease',
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
-                        borderTop: `3px solid ${primaryColor}`
                       }}>
                         {item.photos && item.photos.length > 0 && (
                           <div style={{ width: '100%', height: '220px', overflow: 'hidden' }}>
@@ -365,7 +443,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
       </div>
 
       {/* Footer */}
-      <footer className="template-foodie footer mt-5" style={{ padding: '50px 40px', color: 'white', marginTop: '80px', width: '100%' }}>
+      <footer className="template-foodie footer mt-5 foodie-content-wrap" style={{ padding: '50px 16px', color: 'white', marginTop: '80px', width: '100%' }}>
         <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
           <div className="row">
             <div className="col-md-6">
@@ -381,7 +459,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
               {restaurant.phone && (
                 <p style={{ marginBottom: '10px', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>📞 Teléfono:</strong>{' '}
-                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} style={{ color: 'white', textDecoration: 'underline' }}>
+                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} rel={FOOTER_REL_CONTACT} style={{ color: 'white', textDecoration: 'underline' }}>
                     {restaurant.phone.split('|')[0]?.trim() ?? ''}
                   </a>
                 </p>
@@ -392,7 +470,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
                   <a 
                     href={`https://wa.me/${formatWhatsAppForLink(restaurant.whatsapp, restaurant.country)}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel={FOOTER_REL_EXTERNAL}
                     style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.whatsapp}
@@ -402,7 +480,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
               {restaurant.email && (
                 <p style={{ marginBottom: '10px', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>✉️ Email:</strong>{' '}
-                  <a href={`mailto:${restaurant.email}`} style={{ color: 'white', textDecoration: 'underline' }}>
+                  <a href={`mailto:${restaurant.email}`} rel={FOOTER_REL_CONTACT} style={{ color: 'white', textDecoration: 'underline' }}>
                     {restaurant.email}
                   </a>
                 </p>
@@ -413,7 +491,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
                   <a 
                     href={restaurant.website.startsWith('http') ? restaurant.website : `https://${restaurant.website}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel={footerWebsiteRel(false)}
                     style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.website}
@@ -424,7 +502,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
           </div>
           <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.25)', textAlign: 'center', fontSize: '0.8rem', opacity: 0.9 }}>
             Menú creado con{' '}
-            <a href="https://appmenuqr.com" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>appmenuqr.com</a>
+            <a href="https://appmenuqr.com" target="_blank" rel={FOOTER_REL_APPMENUQR} style={{ color: 'white', textDecoration: 'underline' }}>appmenuqr.com</a>
           </div>
         </div>
       </footer>

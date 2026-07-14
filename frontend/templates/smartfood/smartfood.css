@@ -1,0 +1,298 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Inter:wght@400;600;700&display=swap');
+
+.template-smartfood {
+  font-family: 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f4f5f6;
+  color: #1f2933;
+  min-height: 100vh;
+}
+
+.template-smartfood .smartfood-shell {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 0;
+}
+
+.template-smartfood .smartfood-logo {
+  display: block;
+  width: 144px;
+  height: auto;
+  margin: 0 auto 16px;
+  object-fit: contain;
+}
+
+.template-smartfood .smartfood-restaurant-name {
+  margin: 0 0 10px;
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.template-smartfood .smartfood-restaurant-desc {
+  margin: 0 auto 20px;
+  max-width: 560px;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #5f6b76;
+  text-align: center;
+}
+
+.template-smartfood .smartfood-menu-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.template-smartfood .smartfood-menu-tab {
+  border: none;
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.template-smartfood .smartfood-section-nav {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 0;
+  margin-bottom: 16px;
+  background: #eceef0;
+  border-radius: 14px;
+  padding: 4px;
+  scrollbar-width: none;
+}
+
+.template-smartfood .smartfood-section-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.template-smartfood .smartfood-section-btn {
+  flex: 1 0 auto;
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease;
+  position: relative;
+}
+
+.template-smartfood .smartfood-section-btn + .smartfood-section-btn::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 22%;
+  bottom: 22%;
+  width: 1px;
+  background: #d5d9dd;
+}
+
+.template-smartfood .smartfood-section-btn.active + .smartfood-section-btn::before,
+.template-smartfood .smartfood-section-btn.active::before {
+  display: none;
+}
+
+.template-smartfood .smartfood-filter-card {
+  background: #e8eaed;
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  margin-bottom: 12px;
+}
+
+.template-smartfood .smartfood-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.template-smartfood .smartfood-filter-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #2f3a44;
+}
+
+.template-smartfood .smartfood-filter-clear {
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+}
+
+.template-smartfood .smartfood-filter-clear:disabled {
+  opacity: 0.45;
+  cursor: default;
+  text-decoration: none;
+}
+
+.template-smartfood .smartfood-allergen-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.template-smartfood .smartfood-allergen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1.5px solid var(--secondary-color);
+  background: #fff;
+  color: #374151;
+  border-radius: 999px;
+  padding: 5px 6px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  min-width: 0;
+  text-align: center;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.template-smartfood .smartfood-allergen-btn.active {
+  background: var(--secondary-color);
+  color: #fff;
+}
+
+.template-smartfood .smartfood-allergen-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.template-smartfood .smartfood-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.template-smartfood .smartfood-section-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.template-smartfood .smartfood-item-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.template-smartfood .smartfood-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.template-smartfood .smartfood-item-name {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #1f2933;
+}
+
+.template-smartfood .smartfood-item-desc {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: #5f6b76;
+  margin-bottom: 8px;
+}
+
+.template-smartfood .smartfood-item-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.template-smartfood .smartfood-item-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #4b5563;
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 3px 8px 3px 6px;
+}
+
+.template-smartfood .smartfood-item-prices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 92px;
+}
+
+.template-smartfood .smartfood-price-block {
+  text-align: right;
+}
+
+.template-smartfood .smartfood-price-label {
+  display: block;
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.template-smartfood .smartfood-price-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2933;
+  white-space: nowrap;
+}
+
+.template-smartfood .smartfood-section-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 18px 0 10px;
+  color: #2f3a44;
+  scroll-margin-top: 16px;
+}
+
+.template-smartfood .smartfood-empty {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+  padding: 24px 12px;
+}
+
+.template-smartfood .footer {
+  background: #eceef0;
+  color: #374151;
+  margin-top: 8px;
+}
+
+.template-smartfood .footer a {
+  color: #1f4d3d;
+}

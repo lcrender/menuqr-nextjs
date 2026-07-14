@@ -94,7 +94,12 @@ const nextConfig = {
       },
       {
         source: '/plantillas/pro-mobile',
-        destination: '/plantillas/modern-food',
+        destination: '/caracteristicas/modern-food',
+        permanent: true,
+      },
+      {
+        source: '/plantillas/:slug',
+        destination: '/caracteristicas/:slug',
         permanent: true,
       },
       {

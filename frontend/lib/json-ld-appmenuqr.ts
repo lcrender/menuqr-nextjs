@@ -1,5 +1,5 @@
 import type { MenuTemplateCatalogItem } from '../types/menu-template-catalog';
-import { PLANTILLAS_CATALOG_PATH } from './plantillas-catalog-url';
+import { PLANTILLAS_CATALOG_PATH, plantillaCaracteristicasHref } from './plantillas-catalog-url';
 
 export type FaqPair = { question: string; answer: string };
 
@@ -208,7 +208,7 @@ export function buildPlantillasCatalogJsonLd(base: string, templates: readonly M
         item: {
           '@type': 'WebPage',
           name: t.nombre,
-          url: `${b}/plantillas/${encodeURIComponent(t.slug)}`,
+          url: `${b}${plantillaCaracteristicasHref(t.slug)}`,
         },
       })),
     },
@@ -223,7 +223,7 @@ export function buildPlantillaDetalleJsonLd(
   template: Pick<MenuTemplateCatalogItem, 'slug' | 'nombre'>,
 ): string {
   const b = base.replace(/\/$/, '');
-  const detailUrl = `${b}/plantillas/${encodeURIComponent(template.slug)}`;
+  const detailUrl = `${b}${plantillaCaracteristicasHref(template.slug)}`;
   const graph: Record<string, unknown>[] = [
     {
       '@type': 'WebPage',

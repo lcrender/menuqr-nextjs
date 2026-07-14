@@ -10,12 +10,12 @@
 - https://appmenuqr.com/software-carta-digital-restaurante — Software carta digital restaurante (SaaS, panel, escalabilidad)
 - https://appmenuqr.com/precios — Planes y precios
 - https://appmenuqr.com/plantillas-de-carta-digital-con-qr-para-restaurantes-y-bares — Catálogo de plantillas de menú QR
-- https://appmenuqr.com/plantillas/classic — Plantilla Classic (ejemplo de ficha)
-- https://appmenuqr.com/plantillas/minimalista — Plantilla Minimalista
-- https://appmenuqr.com/plantillas/foodie — Plantilla Foodie
-- https://appmenuqr.com/plantillas/burgers — Plantilla Burgers
-- https://appmenuqr.com/plantillas/italian-food — Plantilla Italian Food
-- https://appmenuqr.com/plantillas/gourmet — Plantilla Gourmet
+- https://appmenuqr.com/caracteristicas/classic — Plantilla Classic (ejemplo de ficha)
+- https://appmenuqr.com/caracteristicas/minimalista — Plantilla Minimalista
+- https://appmenuqr.com/caracteristicas/foodie — Plantilla Foodie
+- https://appmenuqr.com/caracteristicas/burgers — Plantilla Burgers
+- https://appmenuqr.com/caracteristicas/italian-food — Plantilla Italian Food
+- https://appmenuqr.com/caracteristicas/gourmet — Plantilla Gourmet
 - https://appmenuqr.com/soporte — Soporte (acceso con cuenta para incidencias)
 - https://appmenuqr.com/contacto — Contacto legal / formulario según página
 

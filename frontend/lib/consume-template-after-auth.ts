@@ -10,7 +10,10 @@ export type ConsumeTemplateResult =
   | { action: 'skipped' }
   | { action: 'needs_upgrade'; upgradeHref: string }
   | { action: 'needs_restaurant'; wizardHref: string }
-  | { action: 'applied'; displayName: string };
+  | { action: 'needs_pick_restaurant'; pickerHref: string; displayName: string }
+  | { action: 'applied'; displayName: string; restaurantId: string };
+
+export const TEMPLATE_PICKER_PATH = '/admin/apply-template';
 
 function normalizePlanKey(plan: string | null | undefined): string {
   return String(plan || 'free')
@@ -36,8 +39,8 @@ function buildRestaurantPayload(templateId: string): Record<string, unknown> {
 }
 
 /**
- * Tras login/registro: aplica la plantilla pendiente al primer restaurante o indica wizard / upgrade.
- * No limpia el intent si hace falta upgrade (sigue pendiente) o si derivamos a wizard (sigue pendiente).
+ * Tras login/registro: deriva a wizard, selector de restaurante o upgrade según el intent pendiente.
+ * No limpia el intent si hace falta upgrade, wizard o elección de restaurante.
  */
 export async function consumeTemplateAfterAuth(
   api: AxiosInstance,
@@ -81,20 +84,43 @@ export async function consumeTemplateAfterAuth(
     };
   }
 
-  const first = restaurants[0];
-  if (!first?.id) {
-    clearTemplateIntent();
-    return { action: 'skipped' };
+  return {
+    action: 'needs_pick_restaurant',
+    pickerHref: TEMPLATE_PICKER_PATH,
+    displayName: intent.displayName,
+  };
+}
+
+export function getNavigationForConsumeResult(result: ConsumeTemplateResult): string {
+  switch (result.action) {
+    case 'needs_upgrade':
+      return result.upgradeHref;
+    case 'needs_restaurant':
+      return result.wizardHref;
+    case 'needs_pick_restaurant':
+      return result.pickerHref;
+    case 'applied':
+      return '/admin';
+    default:
+      return '/admin';
   }
-  const targetId = first.id;
+}
+
+export async function applyTemplateIntentToRestaurant(
+  api: AxiosInstance,
+  restaurantId: string,
+  intent?: TemplateSelectionIntent | null,
+): Promise<{ ok: true; displayName: string } | { ok: false }> {
+  const resolved = intent ?? readTemplateIntent();
+  if (!resolved?.apiTemplateId || !restaurantId) return { ok: false };
   try {
-    await api.put(`/restaurants/${targetId}`, buildRestaurantPayload(intent.apiTemplateId));
-    const name = intent.displayName;
+    await api.put(`/restaurants/${restaurantId}`, buildRestaurantPayload(resolved.apiTemplateId));
+    const name = resolved.displayName;
     clearTemplateIntent();
-    setTemplateAppliedBanner(name);
-    return { action: 'applied', displayName: name };
+    setTemplateAppliedBanner(name, restaurantId);
+    return { ok: true, displayName: name };
   } catch {
-    return { action: 'skipped' };
+    return { ok: false };
   }
 }
 

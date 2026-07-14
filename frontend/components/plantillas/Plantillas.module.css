@@ -157,9 +157,20 @@
   overflow: hidden;
 }
 
+.cardImageWrapMockup {
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+  padding: 0.75rem 1rem 0.35rem;
+  box-sizing: border-box;
+}
+
 .cardImage {
   object-fit: cover;
   object-position: center center;
+}
+
+.cardImageMockup {
+  object-fit: contain;
+  object-position: center bottom;
 }
 
 .cardImageBiasTop {
@@ -237,6 +248,16 @@
   letter-spacing: 0.08em;
 }
 
+.badgeFree {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #047857;
+  border: 1px solid #6ee7b7;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .tagsLabel {
   font-size: 0.7rem;
   font-weight: 600;
@@ -251,14 +272,21 @@
   padding-top: 0.5rem;
 }
 
+.cardCtaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .ctaButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  padding: 0.65rem 1rem;
+  flex: 1 1 calc(50% - 0.25rem);
+  min-width: 7.5rem;
+  padding: 0.65rem 0.85rem;
   border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #fff;
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
@@ -269,8 +297,37 @@
   transition: filter 0.15s ease, transform 0.15s ease;
 }
 
-.ctaButton:hover {
+.ctaButton:hover:not(:disabled) {
   filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.ctaButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.ctaButtonSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 calc(50% - 0.25rem);
+  min-width: 7.5rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e40af;
+  background: #fff;
+  border: 2px solid #93c5fd;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.ctaButtonSecondary:hover {
+  background: #eff6ff;
+  border-color: #60a5fa;
   transform: translateY(-1px);
 }
 

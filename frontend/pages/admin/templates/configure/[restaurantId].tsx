@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../../../../lib/axios';
@@ -176,7 +176,13 @@ export default function ConfigureTemplate() {
                   </div>
                 )}
                 {visibleSchema.map((opt) => (
-                  <Field key={opt.id} option={opt} value={formValues[opt.id]} onChange={(v) => handleChange(opt.id, v)} />
+                  <Field
+                    key={opt.id}
+                    option={opt}
+                    value={formValues[opt.id]}
+                    onChange={(v) => handleChange(opt.id, v)}
+                    restaurantId={restaurant.id}
+                  />
                 ))}
                 <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                   <button type="submit" className="admin-btn" disabled={saving}>
@@ -206,12 +212,90 @@ function Field({
   option,
   value,
   onChange,
+  restaurantId,
 }: {
   option: TemplateConfigOption;
   value: unknown;
   onChange: (value: unknown) => void;
+  restaurantId?: string;
 }) {
   const id = `opt-${option.id}`;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  if (option.type === 'image') {
+    const imageUrl = typeof value === 'string' && value.trim() ? value : String(option.default ?? '');
+    return (
+      <div style={{ marginBottom: '20px' }}>
+        <label className="form-label">{option.label}</label>
+        {option.description && (
+          <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '8px' }}>{option.description}</p>
+        )}
+        {imageUrl ? (
+          <div
+            style={{
+              marginBottom: '12px',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: '1px solid var(--admin-border)',
+              maxWidth: '280px',
+              aspectRatio: '3 / 4',
+              background: '#f3f4f6',
+            }}
+          >
+            <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          </div>
+        ) : null}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (!file || !restaurantId) return;
+              setUploadError(null);
+              try {
+                setUploading(true);
+                const fd = new FormData();
+                fd.append('file', file);
+                const uploadPath = option.imageUploadPath ?? 'template-background';
+                const res = await api.post(`/media/restaurants/${restaurantId}/${uploadPath}`, fd);
+                if (res.data?.url) onChange(res.data.url);
+              } catch (err: any) {
+                setUploadError(err.response?.data?.message || 'Error al subir la imagen');
+              } finally {
+                setUploading(false);
+              }
+            }}
+          />
+          <button
+            type="button"
+            className="admin-btn admin-btn-secondary"
+            disabled={uploading || !restaurantId}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading ? 'Subiendo…' : 'Subir imagen'}
+          </button>
+          {option.default ? (
+            <button
+              type="button"
+              className="admin-btn admin-btn-secondary"
+              disabled={uploading}
+              onClick={() => onChange(option.default)}
+            >
+              Restaurar predeterminada
+            </button>
+          ) : null}
+        </div>
+        {uploadError ? <p style={{ color: 'var(--admin-error)', fontSize: '0.875rem', marginTop: '8px' }}>{uploadError}</p> : null}
+      </div>
+    );
+  }
+
   if (option.type === 'boolean') {
     return (
       <div style={{ marginBottom: '20px' }}>

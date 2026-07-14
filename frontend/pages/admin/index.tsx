@@ -11,7 +11,7 @@ import {
   partitionTemplateSummaryLines,
   type TemplateConfigSummaryLine,
 } from '../../lib/dashboard-template-config-summary';
-import { consumeTemplateAfterAuth } from '../../lib/consume-template-after-auth';
+import { consumeTemplateAfterAuth, getNavigationForConsumeResult } from '../../lib/consume-template-after-auth';
 import { readTemplateIntent, takeTemplateAppliedBanner } from '../../lib/template-selection-intent';
 
 export type MenuSummary = {
@@ -76,6 +76,7 @@ function templateLabelFromSlug(card: DashboardRestaurantCard): string {
   if (t === 'gourmet') return 'Gourmet';
   if (t === 'proMobile') return 'Modern Food';
   if (t === 'nightClub') return 'Neon Club';
+  if (t === 'smartFood') return 'Smart Food';
   return t || '';
 }
 
@@ -209,7 +210,10 @@ export default function Admin() {
   const [stats, setStats] = useState<any>(null);
   const [dashboardCards, setDashboardCards] = useState<DashboardRestaurantCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [templateWelcomeName, setTemplateWelcomeName] = useState<string | null>(null);
+  const [templateWelcomeBanner, setTemplateWelcomeBanner] = useState<{
+    displayName: string;
+    restaurantId: string;
+  } | null>(null);
   const [promoAppliedMessage, setPromoAppliedMessage] = useState<string | null>(null);
   const [dashboardWelcomeHtml, setDashboardWelcomeHtml] = useState<string | null>(null);
   const [dashboardCtaCard, setDashboardCtaCard] = useState<{
@@ -253,8 +257,8 @@ export default function Admin() {
   useEffect(() => {
     if (loading || user?.role !== 'ADMIN' || templateBannerReadRef.current) return;
     templateBannerReadRef.current = true;
-    const msg = takeTemplateAppliedBanner();
-    if (msg) setTemplateWelcomeName(msg);
+    const banner = takeTemplateAppliedBanner();
+    if (banner) setTemplateWelcomeBanner(banner);
   }, [loading, user?.role]);
 
   useEffect(() => {
@@ -264,9 +268,9 @@ export default function Admin() {
     (async () => {
       const r = await consumeTemplateAfterAuth(api, { isSuperAdmin: false });
       if (cancelled) return;
-      if (r.action === 'needs_upgrade') router.push(r.upgradeHref);
-      else if (r.action === 'needs_restaurant') router.replace(r.wizardHref);
-      else if (r.action === 'applied') setTemplateWelcomeName(r.displayName);
+      if (r.action === 'applied') {
+        setTemplateWelcomeBanner({ displayName: r.displayName, restaurantId: r.restaurantId });
+      } else router.push(getNavigationForConsumeResult(r));
     })();
     return () => {
       cancelled = true;
@@ -575,19 +579,26 @@ export default function Admin() {
     <AdminLayout>
       <h1 className="admin-title">Dashboard</h1>
 
-      {templateWelcomeName ? (
+      {templateWelcomeBanner ? (
         <div className="alert alert-success d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-4">
           <span>
-            Tu plantilla <strong>{templateWelcomeName}</strong> ya está aplicada. Podés afinarla en{' '}
-            <a href="/admin/templates" className="alert-link">
-              Plantillas
+            Tu plantilla <strong>{templateWelcomeBanner.displayName}</strong> ya está aplicada. Podés personalizarla en{' '}
+            <a
+              href={
+                templateWelcomeBanner.restaurantId
+                  ? `/admin/templates/configure/${encodeURIComponent(templateWelcomeBanner.restaurantId)}`
+                  : '/admin/templates'
+              }
+              className="alert-link"
+            >
+              Configurar plantilla
             </a>
             .
           </span>
           <button
             type="button"
             className="btn btn-sm btn-outline-success"
-            onClick={() => setTemplateWelcomeName(null)}
+            onClick={() => setTemplateWelcomeBanner(null)}
           >
             Cerrar
           </button>

@@ -3,15 +3,18 @@ import Image from 'next/image';
 import type { ReactNode } from 'react';
 import type { MenuTemplateCatalogItem } from '../../../types/menu-template-catalog';
 import type { PlantillaLandingContent, PlantillaLandingVariant } from '../../../types/plantilla-landing';
-import PlantillaLandingDualCtaClient from './PlantillaLandingDualCtaClient';
+import PlantillaLandingCtaBandClient from './PlantillaLandingCtaBandClient';
 import PlantillaLandingHeroAside from './PlantillaLandingHeroAside';
 import PlantillaPreviewPhoneMockup from './PlantillaPreviewPhoneMockup';
 import styles from './plantilla-detail.module.css';
 import { PLANTILLAS_CATALOG_PATH } from '../../../lib/plantillas-catalog-url';
 
-/** Línea tipo stack CSS (Inter, Poppins, etc.) */
+/** Línea tipo stack CSS (Inter, Poppins, etc.) o familia genérica al final (cursive, serif, …) */
 function isFontStackLine(text: string): boolean {
-  return /,\s*-apple-system/i.test(text) && /sans-serif/i.test(text);
+  const t = text.trim();
+  if (!t.includes(',')) return false;
+  if (/,\s*-apple-system/i.test(t) && /sans-serif/i.test(t)) return true;
+  return /,\s*(cursive|serif|sans-serif|monospace|fantasy)\s*$/i.test(t);
 }
 
 export interface PlantillaLandingArticleProps {
@@ -123,6 +126,9 @@ export default function PlantillaLandingArticle({
               demoHint={L.qr.demoHint}
               chooseLabel={chooseLabel}
               chooseHref={chooseHref}
+              catalogSlug={catalog?.slug ?? L.slug}
+              primaryUseTemplate={catalog?.plan === 'free'}
+              isProTemplate={catalog?.plan === 'pro'}
               {...(L.cta.secondaryShowOnlyForPro ? { chooseShowOnlyForPro: true } : {})}
             />
           </div>
@@ -185,6 +191,23 @@ export default function PlantillaLandingArticle({
           </ul>
         </SectionBlock>
 
+        {L.identidadVisual ? (
+          <SectionBlock id={`${idPrefix}-identidad-visual`} heading={L.identidadVisual.heading} icon="✦">
+            {L.identidadVisual.paragraphs.map((p) => (
+              <p key={p} className={styles.paragraph}>
+                {p}
+              </p>
+            ))}
+            {L.identidadVisual.items.length > 0 ? (
+              <ul className={styles.list}>
+                {L.identidadVisual.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+          </SectionBlock>
+        ) : null}
+
         {L.imagenesProductos ? (
           <SectionBlock id={`${idPrefix}-imagenes`} heading={L.imagenesProductos.heading} icon="🖼">
             {L.imagenesProductos.paragraphs.map((p) => (
@@ -199,6 +222,76 @@ export default function PlantillaLandingArticle({
                 ))}
               </ul>
             ) : null}
+          </SectionBlock>
+        ) : null}
+
+        {L.navegacionLateral ? (
+          <SectionBlock id={`${idPrefix}-navegacion-lateral`} heading={L.navegacionLateral.heading} icon="☰">
+            {L.navegacionLateral.paragraphs.map((p) => (
+              <p key={p} className={styles.paragraph}>
+                {p}
+              </p>
+            ))}
+          </SectionBlock>
+        ) : null}
+
+        {L.productosDestacados ? (
+          <SectionBlock id={`${idPrefix}-productos-destacados`} heading={L.productosDestacados.heading} icon="⭐">
+            {L.productosDestacados.paragraphs.map((p) => (
+              <p key={p} className={styles.paragraph}>
+                {p}
+              </p>
+            ))}
+          </SectionBlock>
+        ) : null}
+
+        {L.productosMenu ? (
+          <SectionBlock id={`${idPrefix}-productos-menu`} heading={L.productosMenu.heading} icon="🍽">
+            {L.productosMenu.paragraphs.map((p) => (
+              <p key={p} className={styles.paragraph}>
+                {p}
+              </p>
+            ))}
+          </SectionBlock>
+        ) : null}
+
+        {L.tipografia ? (
+          <SectionBlock id={`${idPrefix}-tipografia`} heading={L.tipografia.heading} icon="Aa">
+            {tipografiaFirst ? <p className={styles.paragraph}>{tipografiaFirst}</p> : null}
+            {L.tipografiaFontList?.length ? (
+              L.tipografiaFontList.map((f) =>
+                isFontStackLine(f) ? (
+                  <p key={f} className={styles.fontStack}>
+                    {f}
+                  </p>
+                ) : (
+                  <ul key={f} className={styles.list}>
+                    <li>{f}</li>
+                  </ul>
+                ),
+              )
+            ) : null}
+            {tipografiaRest.map((para) =>
+              isFontStackLine(para) ? (
+                <p key={para} className={styles.fontStack}>
+                  {para}
+                </p>
+              ) : (
+                <p key={para} className={styles.paragraph}>
+                  {para}
+                </p>
+              ),
+            )}
+          </SectionBlock>
+        ) : null}
+
+        {L.cambioAutomatico ? (
+          <SectionBlock id={`${idPrefix}-cambio-automatico`} heading={L.cambioAutomatico.heading} icon="🌓">
+            {L.cambioAutomatico.paragraphs.map((p) => (
+              <p key={p} className={styles.paragraph}>
+                {p}
+              </p>
+            ))}
           </SectionBlock>
         ) : null}
 
@@ -234,48 +327,17 @@ export default function PlantillaLandingArticle({
               ) : null}
             </>
           ) : null}
+          {L.personalizacion.titulosSeccion ? (
+            <>
+              <h3 className={styles.h3}>{L.personalizacion.titulosSeccion.heading}</h3>
+              {L.personalizacion.titulosSeccion.paragraphs.map((p) => (
+                <p key={p} className={styles.paragraph}>
+                  {p}
+                </p>
+              ))}
+            </>
+          ) : null}
         </SectionBlock>
-
-        {L.tipografia ? (
-          <SectionBlock id={`${idPrefix}-tipografia`} heading={L.tipografia.heading} icon="Aa">
-            {tipografiaFirst ? <p className={styles.paragraph}>{tipografiaFirst}</p> : null}
-            {L.tipografiaFontList?.length ? (
-              <ul className={styles.list}>
-                {L.tipografiaFontList.map((f) => (
-                  <li key={f}>{f}</li>
-                ))}
-              </ul>
-            ) : null}
-            {tipografiaRest.map((para) =>
-              isFontStackLine(para) ? (
-                <p key={para} className={styles.fontStack}>
-                  {para}
-                </p>
-              ) : (
-                <p key={para} className={styles.paragraph}>
-                  {para}
-                </p>
-              ),
-            )}
-          </SectionBlock>
-        ) : null}
-
-        {L.identidadVisual ? (
-          <SectionBlock id={`${idPrefix}-identidad-visual`} heading={L.identidadVisual.heading} icon="✦">
-            {L.identidadVisual.paragraphs.map((p) => (
-              <p key={p} className={styles.paragraph}>
-                {p}
-              </p>
-            ))}
-            {L.identidadVisual.items.length > 0 ? (
-              <ul className={styles.list}>
-                {L.identidadVisual.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            ) : null}
-          </SectionBlock>
-        ) : null}
 
         <SectionBlock
           id={`${idPrefix}-traducciones`}
@@ -300,6 +362,7 @@ export default function PlantillaLandingArticle({
         </SectionBlock>
 
         <SectionBlock id={`${idPrefix}-experiencia`} heading={L.experiencia.heading} icon="📱">
+          {L.experiencia.intro ? <p className={styles.paragraph}>{L.experiencia.intro}</p> : null}
           <ul className={styles.list}>
             {L.experiencia.items.map((item) => (
               <li key={item}>{item}</li>
@@ -308,21 +371,14 @@ export default function PlantillaLandingArticle({
         </SectionBlock>
       </div>
 
-      {L.cta.secondaryLabel && L.cta.secondaryHref ? (
-        <PlantillaLandingDualCtaClient cta={L.cta} idPrefix={idPrefix} premiumBand={variant === 'premium'} />
-      ) : (
-        <section className={`${styles.ctaBand} ${styles.sectionLast}`} aria-labelledby={`${idPrefix}-cta`}>
-          <h2 className={styles.h2} id={`${idPrefix}-cta`}>
-            {L.cta.heading}
-          </h2>
-          {L.cta.body.split(/\n\n+/).map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
-          <Link href={L.cta.primaryHref} className={styles.btnPrimary}>
-            {L.cta.primaryLabel}
-          </Link>
-        </section>
-      )}
+      <PlantillaLandingCtaBandClient
+        cta={L.cta}
+        catalogSlug={catalog?.slug ?? L.slug}
+        idPrefix={idPrefix}
+        isFreeTemplate={catalog?.plan === 'free'}
+        isProTemplate={catalog?.plan === 'pro'}
+        premiumBand={variant === 'premium'}
+      />
     </article>
   );
 }

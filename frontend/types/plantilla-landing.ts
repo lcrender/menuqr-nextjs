@@ -39,6 +39,11 @@ export interface PlantillaLandingPersonalization {
   colors: PlantillaLandingColorsSection;
   /** Opcional: si falta, no se muestra la subsección de elementos visuales. */
   elementos?: PlantillaLandingVisualElementsSection;
+  /** Opcional: p. ej. tamaño de títulos de sección (Burgers). */
+  titulosSeccion?: {
+    heading: string;
+    paragraphs: readonly string[];
+  };
 }
 
 export interface PlantillaLandingExclusividadBlock {
@@ -99,6 +104,14 @@ export interface PlantillaLandingContent {
    * Evita colocar este contenido en {@link imagenesProductos}, que se renderiza antes de personalización.
    */
   identidadVisual?: PlantillaLandingImagenesProductosBlock;
+  /** Bloque opcional entre imágenes/producto y personalización (p. ej. navegación lateral en Neon Club). */
+  navegacionLateral?: PlantillaLandingExclusividadBlock;
+  /** Bloque opcional: productos destacados (Sol & Noche). */
+  productosDestacados?: PlantillaLandingExclusividadBlock;
+  /** Bloque opcional: productos normales del menú (Sol & Noche). */
+  productosMenu?: PlantillaLandingExclusividadBlock;
+  /** Bloque opcional: cambio automático día/noche (Sol & Noche). */
+  cambioAutomatico?: PlantillaLandingExclusividadBlock;
   personalizacion: PlantillaLandingPersonalization;
   /** Opcional: p. ej. stack tipográfico de la plantilla. */
   tipografia?: PlantillaLandingTypographySection;

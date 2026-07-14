@@ -35,6 +35,7 @@ export const STANDARD_TEMPLATE_IDS = [
   'burgers',
   'italianFood',
   'nightClub',
+  'smartFood',
 ] as const;
 
 /** Solo Pro, Pro Team o Premium (restaurants.service). */
@@ -42,6 +43,12 @@ export const GOURMET_TEMPLATE_ID = 'gourmet';
 
 /** Plantilla PRO con layout móvil (tabs laterales). Solo Pro, Pro Team o Premium. */
 export const PRO_MOBILE_TEMPLATE_ID = 'proMobile';
+
+/** Plantilla premium estilo beach bar con fondo configurable. Solo Pro, Pro Team o Premium. */
+export const BEACH_BAR_TEMPLATE_ID = 'beachBar';
+
+/** Sol & Noche: portada día/noche, destacados y modo claro/oscuro. Solo Pro o Pro Team. */
+export const SOL_NOCHE_TEMPLATE_ID = 'solNoche';
 
 export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
   return [
@@ -79,7 +86,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       gourmetTemplate: true,
       productPhotosAllowed: true,
       productHighlightAllowed: true,
-      proOnlyTemplatesInAdmin: ['gourmet', 'proMobile'],
+      proOnlyTemplatesInAdmin: ['gourmet', 'proMobile', 'beachBar', 'solNoche'],
     },
     {
       key: 'pro_team',
@@ -91,7 +98,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       gourmetTemplate: true,
       productPhotosAllowed: true,
       productHighlightAllowed: true,
-      proOnlyTemplatesInAdmin: ['gourmet', 'proMobile'],
+      proOnlyTemplatesInAdmin: ['gourmet', 'proMobile', 'beachBar', 'solNoche'],
       note: 'Asignación manual por super admin; no se sobrescribe por webhooks de suscripción.',
     },
     {
@@ -104,7 +111,7 @@ export function getTenantPlanLimitsCatalog(): TenantPlanLimitsRow[] {
       gourmetTemplate: true,
       productPhotosAllowed: true,
       productHighlightAllowed: true,
-      proOnlyTemplatesInAdmin: ['gourmet', 'proMobile'],
+      proOnlyTemplatesInAdmin: ['gourmet', 'proMobile', 'beachBar', 'solNoche'],
     },
   ];
 }

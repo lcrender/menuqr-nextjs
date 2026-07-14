@@ -325,7 +325,8 @@ export class PublicService {
                 mi.id,
                 mi.name,
                 mi.description,
-                mi.active as "isAvailable"
+                mi.active as "isAvailable",
+                COALESCE((mi.extra->>'highlighted')::boolean, false) as "highlighted"
               FROM menu_items mi
               WHERE mi.section_id = $1 
                 AND mi.active = true

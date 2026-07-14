@@ -17,6 +17,7 @@ export interface MenuItem {
   prices: ItemPrice[];
   icons: string[];
   photos?: string[];
+  highlighted?: boolean;
 }
 
 export interface MenuSection {
@@ -38,6 +39,7 @@ export interface PreviewRestaurant {
   coverUrl?: string;
   whatsapp?: string;
   country?: string;
+  timezone?: string;
   template?: string;
   primaryColor?: string;
   secondaryColor?: string;
@@ -57,7 +59,7 @@ export interface PreviewMenu {
   sections: MenuSection[];
 }
 
-const TEMPLATE_IDS = ['classic', 'minimalista', 'foodie', 'burgers', 'italian-food', 'gourmet', 'modern-food', 'night-club'] as const;
+const TEMPLATE_IDS = ['classic', 'minimalista', 'foodie', 'burgers', 'italian-food', 'gourmet', 'modern-food', 'night-club', 'smart-food', 'beach-bar', 'sol-noche'] as const;
 export type PreviewTemplateId = typeof TEMPLATE_IDS[number];
 
 /** Clásica: Bodegón Argentino, ARS */
@@ -338,15 +340,15 @@ const menuEspanolFoodie: PreviewMenu = {
       id: 'sec-1',
       name: 'Pastas',
       items: [
-        { id: 'i1', name: 'Ñoquis de papa', description: 'Porción 400g', prices: [{ currency: 'ARS', amount: 3200 }], icons: [] },
-        { id: 'i2', name: 'Ravioles de verdura', prices: [{ currency: 'ARS', amount: 3500 }], icons: [] },
-        { id: 'i3', name: 'Sorrentinos de jamón y queso', prices: [{ currency: 'ARS', amount: 3800 }], icons: [] },
-        { id: 'f1', name: 'Fettuccine', description: 'Cintas anchas al huevo. Porción 350g', prices: [{ currency: 'ARS', amount: 3000 }], icons: [] },
+        { id: 'i1', name: 'Ñoquis de papa', description: 'Pasta de papa casera', prices: [{ currency: 'ARS', label: '400g', amount: 3200 }, { currency: 'ARS', label: '600g', amount: 4100 }], icons: [] },
+        { id: 'i2', name: 'Ravioles de verdura', description: 'Relleno de espinaca y ricota', prices: [{ currency: 'ARS', label: '350g', amount: 3500 }, { currency: 'ARS', label: '500g', amount: 4500 }], icons: ['vegetariano'] },
+        { id: 'i3', name: 'Sorrentinos de jamón y queso', prices: [{ currency: 'ARS', label: '350g', amount: 3800 }, { currency: 'ARS', label: '500g', amount: 4800 }], icons: [] },
+        { id: 'f1', name: 'Fettuccine', description: 'Cintas anchas al huevo', prices: [{ currency: 'ARS', label: '350g', amount: 3000 }, { currency: 'ARS', label: '500g', amount: 3900 }], icons: [] },
         { id: 'f2', name: 'Tallarines', description: 'Pasta larga casera. Porción 350g', prices: [{ currency: 'ARS', amount: 2900 }], icons: [] },
         { id: 'f3', name: 'Canelones', description: 'Tres unidades rellenas de verdura o carne con salsa a elección', prices: [{ currency: 'ARS', amount: 3600 }], icons: [] },
-        { id: 'f4', name: 'Lasagna', description: 'Porción individual. Carne y bechamel', prices: [{ currency: 'ARS', amount: 3900 }], icons: [] },
+        { id: 'f4', name: 'Lasagna', description: 'Carne y bechamel', prices: [{ currency: 'ARS', label: 'Individual', amount: 3900 }, { currency: 'ARS', label: 'Para 2', amount: 7200 }], icons: [] },
         { id: 'f5', name: 'Cintas', description: 'Cintas al huevo. Porción 350g', prices: [{ currency: 'ARS', amount: 3100 }], icons: [] },
-        { id: 'f6', name: 'Capeletis', description: 'Rellenos de ricotta y espinaca. Porción 350g', prices: [{ currency: 'ARS', amount: 3700 }], icons: [] },
+        { id: 'f6', name: 'Capeletis', description: 'Rellenos de ricotta y espinaca', prices: [{ currency: 'ARS', label: '350g', amount: 3700 }, { currency: 'ARS', label: '500g', amount: 4700 }], icons: [] },
       ],
     },
     {
@@ -355,19 +357,19 @@ const menuEspanolFoodie: PreviewMenu = {
       items: [
         { id: 'i4', name: 'Tuco', prices: [{ currency: 'ARS', amount: 800 }], icons: [] },
         { id: 'i5', name: 'Salsa blanca', prices: [{ currency: 'ARS', amount: 900 }], icons: [] },
-        { id: 'i6', name: 'Salsa cuatro quesos', prices: [{ currency: 'ARS', amount: 1100 }], icons: [] },
+        { id: 'i6', name: 'Salsa cuatro quesos', prices: [{ currency: 'ARS', label: 'Individual', amount: 1100 }, { currency: 'ARS', label: 'Para 2', amount: 1800 }], icons: [] },
         { id: 's1', name: 'Salsa bolognesa', description: 'Carne molida y tomate', prices: [{ currency: 'ARS', amount: 950 }], icons: [] },
         { id: 's2', name: 'Salsa fileto', description: 'Tomate natural sin piel', prices: [{ currency: 'ARS', amount: 850 }], icons: [] },
-        { id: 's3', name: 'Salsa pesto', description: 'Albahaca, ajo, piñones y parmesano', prices: [{ currency: 'ARS', amount: 1200 }], icons: [] },
+        { id: 's3', name: 'Salsa pesto', description: 'Albahaca, ajo, piñones y parmesano', prices: [{ currency: 'ARS', label: 'Individual', amount: 1200 }, { currency: 'ARS', label: 'Para 2', amount: 1900 }], icons: [] },
       ],
     },
     {
       id: 'sec-3',
       name: 'Bebidas',
       items: [
-        { id: 'i7', name: 'Gaseosa', description: 'Coca-Cola, Coca-Cola Zero, Sprite, Fanta, Aquarius pomelo', prices: [{ currency: 'ARS', label: '500ml', amount: 700 }], icons: [] },
-        { id: 'i8', name: 'Agua con gas', prices: [{ currency: 'ARS', label: '500ml', amount: 500 }], icons: [] },
-        { id: 'b1', name: 'Agua sin gas', prices: [{ currency: 'ARS', label: '500ml', amount: 450 }], icons: [] },
+        { id: 'i7', name: 'Gaseosa', description: 'Coca-Cola, Coca-Cola Zero, Sprite, Fanta, Aquarius pomelo', prices: [{ currency: 'ARS', label: '500ml', amount: 700 }, { currency: 'ARS', label: '1,5L', amount: 1200 }], icons: [] },
+        { id: 'i8', name: 'Agua con gas', prices: [{ currency: 'ARS', label: '500ml', amount: 500 }, { currency: 'ARS', label: '1,5L', amount: 900 }], icons: [] },
+        { id: 'b1', name: 'Agua sin gas', prices: [{ currency: 'ARS', label: '500ml', amount: 450 }, { currency: 'ARS', label: '1,5L', amount: 800 }], icons: [] },
       ],
     },
   ],
@@ -386,15 +388,15 @@ const menuEnglishFoodie: PreviewMenu = {
       id: 'sec-1',
       name: 'Pasta',
       items: [
-        { id: 'i1', name: 'Potato gnocchi', description: '400g portion', prices: [{ currency: 'ARS', amount: 3200 }], icons: [] },
-        { id: 'i2', name: 'Vegetable ravioli', prices: [{ currency: 'ARS', amount: 3500 }], icons: [] },
-        { id: 'i3', name: 'Ham and cheese sorrentinos', prices: [{ currency: 'ARS', amount: 3800 }], icons: [] },
-        { id: 'f1', name: 'Fettuccine', description: 'Egg ribbon pasta. 350g portion', prices: [{ currency: 'ARS', amount: 3000 }], icons: [] },
+        { id: 'i1', name: 'Potato gnocchi', description: 'Homemade potato pasta', prices: [{ currency: 'ARS', label: '400g', amount: 3200 }, { currency: 'ARS', label: '600g', amount: 4100 }], icons: [] },
+        { id: 'i2', name: 'Vegetable ravioli', description: 'Spinach and ricotta filling', prices: [{ currency: 'ARS', label: '350g', amount: 3500 }, { currency: 'ARS', label: '500g', amount: 4500 }], icons: ['vegetariano'] },
+        { id: 'i3', name: 'Ham and cheese sorrentinos', prices: [{ currency: 'ARS', label: '350g', amount: 3800 }, { currency: 'ARS', label: '500g', amount: 4800 }], icons: [] },
+        { id: 'f1', name: 'Fettuccine', description: 'Egg ribbon pasta', prices: [{ currency: 'ARS', label: '350g', amount: 3000 }, { currency: 'ARS', label: '500g', amount: 3900 }], icons: [] },
         { id: 'f2', name: 'Tagliatelle', description: 'Fresh egg pasta. 350g portion', prices: [{ currency: 'ARS', amount: 2900 }], icons: [] },
         { id: 'f3', name: 'Cannelloni', description: 'Three pieces stuffed with vegetables or meat, sauce of your choice', prices: [{ currency: 'ARS', amount: 3600 }], icons: [] },
-        { id: 'f4', name: 'Lasagna', description: 'Single portion. Meat and béchamel', prices: [{ currency: 'ARS', amount: 3900 }], icons: [] },
+        { id: 'f4', name: 'Lasagna', description: 'Meat and béchamel', prices: [{ currency: 'ARS', label: 'Single', amount: 3900 }, { currency: 'ARS', label: 'For 2', amount: 7200 }], icons: [] },
         { id: 'f5', name: 'Ribbon pasta', description: 'Egg ribbons. 350g portion', prices: [{ currency: 'ARS', amount: 3100 }], icons: [] },
-        { id: 'f6', name: 'Capeletis', description: 'Stuffed with ricotta and spinach. 350g portion', prices: [{ currency: 'ARS', amount: 3700 }], icons: [] },
+        { id: 'f6', name: 'Capeletis', description: 'Stuffed with ricotta and spinach', prices: [{ currency: 'ARS', label: '350g', amount: 3700 }, { currency: 'ARS', label: '500g', amount: 4700 }], icons: [] },
       ],
     },
     {
@@ -403,19 +405,19 @@ const menuEnglishFoodie: PreviewMenu = {
       items: [
         { id: 'i4', name: 'Tomato sauce', prices: [{ currency: 'ARS', amount: 800 }], icons: [] },
         { id: 'i5', name: 'White sauce', prices: [{ currency: 'ARS', amount: 900 }], icons: [] },
-        { id: 'i6', name: 'Four cheese sauce', prices: [{ currency: 'ARS', amount: 1100 }], icons: [] },
+        { id: 'i6', name: 'Four cheese sauce', prices: [{ currency: 'ARS', label: 'Single', amount: 1100 }, { currency: 'ARS', label: 'For 2', amount: 1800 }], icons: [] },
         { id: 's1', name: 'Bolognese sauce', description: 'Ground meat and tomato', prices: [{ currency: 'ARS', amount: 950 }], icons: [] },
         { id: 's2', name: 'Fileto sauce', description: 'Natural skinless tomato', prices: [{ currency: 'ARS', amount: 850 }], icons: [] },
-        { id: 's3', name: 'Pesto sauce', description: 'Basil, garlic, pine nuts and parmesan', prices: [{ currency: 'ARS', amount: 1200 }], icons: [] },
+        { id: 's3', name: 'Pesto sauce', description: 'Basil, garlic, pine nuts and parmesan', prices: [{ currency: 'ARS', label: 'Single', amount: 1200 }, { currency: 'ARS', label: 'For 2', amount: 1900 }], icons: [] },
       ],
     },
     {
       id: 'sec-3',
       name: 'Drinks',
       items: [
-        { id: 'i7', name: 'Soft drink', description: 'Coca-Cola, Coca-Cola Zero, Sprite, Fanta, grapefruit Aquarius', prices: [{ currency: 'ARS', label: '500ml', amount: 700 }], icons: [] },
-        { id: 'i8', name: 'Sparkling water', prices: [{ currency: 'ARS', label: '500ml', amount: 500 }], icons: [] },
-        { id: 'b1', name: 'Still water', prices: [{ currency: 'ARS', label: '500ml', amount: 450 }], icons: [] },
+        { id: 'i7', name: 'Soft drink', description: 'Coca-Cola, Coca-Cola Zero, Sprite, Fanta, grapefruit Aquarius', prices: [{ currency: 'ARS', label: '500ml', amount: 700 }, { currency: 'ARS', label: '1.5L', amount: 1200 }], icons: [] },
+        { id: 'i8', name: 'Sparkling water', prices: [{ currency: 'ARS', label: '500ml', amount: 500 }, { currency: 'ARS', label: '1.5L', amount: 900 }], icons: [] },
+        { id: 'b1', name: 'Still water', prices: [{ currency: 'ARS', label: '500ml', amount: 450 }, { currency: 'ARS', label: '1.5L', amount: 800 }], icons: [] },
       ],
     },
   ],
@@ -434,15 +436,15 @@ const menuItalianoFoodie: PreviewMenu = {
       id: 'sec-1',
       name: 'Paste',
       items: [
-        { id: 'i1', name: 'Gnocchi di patate', description: 'Porzione 400g', prices: [{ currency: 'ARS', amount: 3200 }], icons: [] },
-        { id: 'i2', name: 'Ravioli di verdura', prices: [{ currency: 'ARS', amount: 3500 }], icons: [] },
-        { id: 'i3', name: 'Sorrentini prosciutto e formaggio', prices: [{ currency: 'ARS', amount: 3800 }], icons: [] },
-        { id: 'f1', name: 'Fettuccine', description: 'Pasta all\'uovo. Porzione 350g', prices: [{ currency: 'ARS', amount: 3000 }], icons: [] },
+        { id: 'i1', name: 'Gnocchi di patate', description: 'Pasta di patate fatta in casa', prices: [{ currency: 'ARS', label: '400g', amount: 3200 }, { currency: 'ARS', label: '600g', amount: 4100 }], icons: [] },
+        { id: 'i2', name: 'Ravioli di verdura', description: 'Ripieno di spinaci e ricotta', prices: [{ currency: 'ARS', label: '350g', amount: 3500 }, { currency: 'ARS', label: '500g', amount: 4500 }], icons: ['vegetariano'] },
+        { id: 'i3', name: 'Sorrentini prosciutto e formaggio', prices: [{ currency: 'ARS', label: '350g', amount: 3800 }, { currency: 'ARS', label: '500g', amount: 4800 }], icons: [] },
+        { id: 'f1', name: 'Fettuccine', description: 'Pasta all\'uovo', prices: [{ currency: 'ARS', label: '350g', amount: 3000 }, { currency: 'ARS', label: '500g', amount: 3900 }], icons: [] },
         { id: 'f2', name: 'Tagliatelle', description: 'Pasta lunga fresca. Porzione 350g', prices: [{ currency: 'ARS', amount: 2900 }], icons: [] },
         { id: 'f3', name: 'Cannelloni', description: 'Tre pezzi ripieni di verdura o carne, salsa a scelta', prices: [{ currency: 'ARS', amount: 3600 }], icons: [] },
-        { id: 'f4', name: 'Lasagna', description: 'Porzione singola. Carne e besciamella', prices: [{ currency: 'ARS', amount: 3900 }], icons: [] },
+        { id: 'f4', name: 'Lasagna', description: 'Carne e besciamella', prices: [{ currency: 'ARS', label: 'Singola', amount: 3900 }, { currency: 'ARS', label: 'Per 2', amount: 7200 }], icons: [] },
         { id: 'f5', name: 'Cintas', description: 'Pasta all\'uovo. Porzione 350g', prices: [{ currency: 'ARS', amount: 3100 }], icons: [] },
-        { id: 'f6', name: 'Capeleti', description: 'Ripieni di ricotta e spinaci. Porzione 350g', prices: [{ currency: 'ARS', amount: 3700 }], icons: [] },
+        { id: 'f6', name: 'Capeleti', description: 'Ripieni di ricotta e spinaci', prices: [{ currency: 'ARS', label: '350g', amount: 3700 }, { currency: 'ARS', label: '500g', amount: 4700 }], icons: [] },
       ],
     },
     {
@@ -451,19 +453,19 @@ const menuItalianoFoodie: PreviewMenu = {
       items: [
         { id: 'i4', name: 'Sugo al pomodoro', prices: [{ currency: 'ARS', amount: 800 }], icons: [] },
         { id: 'i5', name: 'Salsa bianca', prices: [{ currency: 'ARS', amount: 900 }], icons: [] },
-        { id: 'i6', name: 'Salsa quattro formaggi', prices: [{ currency: 'ARS', amount: 1100 }], icons: [] },
+        { id: 'i6', name: 'Salsa quattro formaggi', prices: [{ currency: 'ARS', label: 'Singola', amount: 1100 }, { currency: 'ARS', label: 'Per 2', amount: 1800 }], icons: [] },
         { id: 's1', name: 'Salsa bolognese', description: 'Carne e pomodoro', prices: [{ currency: 'ARS', amount: 950 }], icons: [] },
         { id: 's2', name: 'Salsa filetto', description: 'Pomodoro naturale senza pelle', prices: [{ currency: 'ARS', amount: 850 }], icons: [] },
-        { id: 's3', name: 'Salsa pesto', description: 'Basilico, aglio, pinoli e parmigiano', prices: [{ currency: 'ARS', amount: 1200 }], icons: [] },
+        { id: 's3', name: 'Salsa pesto', description: 'Basilico, aglio, pinoli e parmigiano', prices: [{ currency: 'ARS', label: 'Singola', amount: 1200 }, { currency: 'ARS', label: 'Per 2', amount: 1900 }], icons: [] },
       ],
     },
     {
       id: 'sec-3',
       name: 'Bevande',
       items: [
-        { id: 'i7', name: 'Bibita', description: 'Coca-Cola, Coca-Cola Zero, Sprite, Fanta, Aquarius pompelmo', prices: [{ currency: 'ARS', label: '500ml', amount: 700 }], icons: [] },
-        { id: 'i8', name: 'Acqua frizzante', prices: [{ currency: 'ARS', label: '500ml', amount: 500 }], icons: [] },
-        { id: 'b1', name: 'Acqua naturale', prices: [{ currency: 'ARS', label: '500ml', amount: 450 }], icons: [] },
+        { id: 'i7', name: 'Bibita', description: 'Coca-Cola, Coca-Cola Zero, Sprite, Fanta, Aquarius pompelmo', prices: [{ currency: 'ARS', label: '500ml', amount: 700 }, { currency: 'ARS', label: '1,5L', amount: 1200 }], icons: [] },
+        { id: 'i8', name: 'Acqua frizzante', prices: [{ currency: 'ARS', label: '500ml', amount: 500 }, { currency: 'ARS', label: '1,5L', amount: 900 }], icons: [] },
+        { id: 'b1', name: 'Acqua naturale', prices: [{ currency: 'ARS', label: '500ml', amount: 450 }, { currency: 'ARS', label: '1,5L', amount: 800 }], icons: [] },
       ],
     },
   ],
@@ -1084,6 +1086,446 @@ const nightClubData: { restaurant: PreviewRestaurant; menu: PreviewMenu } = {
   menu: nightClubMenu,
 };
 
+/** Smart Food: comida saludable con filtros de alérgenos, ARS */
+const smartFoodMenuAlmuerzo: PreviewMenu = {
+  id: 'preview-smartfood-menu-almuerzo',
+  slug: 'almuerzo',
+  name: 'Almuerzo',
+  restaurantId: 'preview-smartfood',
+  restaurantName: 'Smart Food',
+  restaurantSlug: 'preview-smartfood',
+  template: 'smartFood',
+  sections: [
+    {
+      id: 'sf-sec-1',
+      name: 'Bowls',
+      items: [
+        {
+          id: 'sf-b1',
+          name: 'Bowl mediterráneo',
+          description: 'Quinoa, hummus, tomates cherry, pepino, aceitunas y semillas',
+          prices: [{ currency: 'ARS', amount: 11800 }],
+          icons: ['vegano', 'sin-lactosa'],
+        },
+        {
+          id: 'sf-b2',
+          name: 'Bowl proteico',
+          description: 'Arroz integral, pollo grillado, brócoli, zanahoria y limón',
+          prices: [{ currency: 'ARS', label: 'Regular', amount: 13200 }],
+          icons: ['celiaco', 'sin-gluten'],
+        },
+        {
+          id: 'sf-b3',
+          name: 'Bowl verde',
+          description: 'Espinaca, kale, palta, garbanzos y aderezo de yogur',
+          prices: [
+            { currency: 'ARS', label: 'Chico', amount: 9800 },
+            { currency: 'ARS', label: 'Grande', amount: 12400 },
+          ],
+          icons: ['vegetariano', 'sin-lactosa'],
+        },
+        {
+          id: 'sf-b4',
+          name: 'Bowl asiático picante',
+          description: 'Arroz jasmine, tofu, edamame, zanahoria y salsa sriracha',
+          prices: [{ currency: 'ARS', amount: 12100 }],
+          icons: ['vegano', 'picante'],
+        },
+      ],
+    },
+    {
+      id: 'sf-sec-2',
+      name: 'Ensaladas',
+      items: [
+        {
+          id: 'sf-e1',
+          name: 'César liviana',
+          description: 'Lechuga romana, pollo, croutons integrales y parmesano',
+          prices: [{ currency: 'ARS', amount: 10900 }],
+          icons: ['celiaco'],
+        },
+        {
+          id: 'sf-e2',
+          name: 'Ensalada de rúcula',
+          description: 'Rúcula, tomate, nueces y reducción balsámica',
+          prices: [{ currency: 'ARS', label: 'Individual', amount: 9200 }],
+          icons: ['vegetariano', 'sin-gluten'],
+        },
+        {
+          id: 'sf-e3',
+          name: 'Power salad',
+          description: 'Mix verde, huevo, quinoa y semillas de chía',
+          prices: [{ currency: 'ARS', amount: 10500 }],
+          icons: ['vegetariano'],
+        },
+      ],
+    },
+    {
+      id: 'sf-sec-3',
+      name: 'Platos',
+      items: [
+        {
+          id: 'sf-p1',
+          name: 'Salmón con vegetales',
+          description: 'Filet grillado con zapallo asado y pesto de albahaca',
+          prices: [{ currency: 'ARS', label: 'Plato', amount: 15800 }],
+          icons: ['celiaco', 'sin-gluten'],
+        },
+        {
+          id: 'sf-p2',
+          name: 'Wok de verduras',
+          description: 'Verduras salteadas, jengibre y salsa de soja reducida en sodio',
+          prices: [{ currency: 'ARS', amount: 11200 }],
+          icons: ['vegano'],
+        },
+        {
+          id: 'sf-p3',
+          name: 'Curry suave de garbanzos',
+          description: 'Garbanzos, arroz basmati y cilantro fresco',
+          prices: [
+            { currency: 'ARS', label: 'Con arroz', amount: 10800 },
+            { currency: 'ARS', label: 'Solo curry', amount: 9400 },
+          ],
+          icons: ['vegano', 'picante'],
+        },
+      ],
+    },
+    {
+      id: 'sf-sec-4',
+      name: 'Bebidas',
+      items: [
+        {
+          id: 'sf-d1',
+          name: 'Agua saborizada',
+          description: 'Pepino y menta o frutos rojos',
+          prices: [{ currency: 'ARS', label: '500 ml', amount: 2800 }],
+          icons: ['vegano', 'sin-lactosa'],
+        },
+        {
+          id: 'sf-d2',
+          name: 'Limonada natural',
+          description: 'Exprimida al momento, sin azúcar agregada',
+          prices: [{ currency: 'ARS', amount: 3200 }],
+          icons: ['vegano', 'sin-gluten'],
+        },
+        {
+          id: 'sf-d3',
+          name: 'Smoothie verde',
+          description: 'Espinaca, banana, manzana verde y jengibre',
+          prices: [
+            { currency: 'ARS', label: '350 ml', amount: 4500 },
+            { currency: 'ARS', label: '500 ml', amount: 5200 },
+          ],
+          icons: ['vegano', 'vegetariano'],
+        },
+      ],
+    },
+  ],
+};
+
+const smartFoodMenuMerienda: PreviewMenu = {
+  id: 'preview-smartfood-menu-merienda',
+  slug: 'merienda',
+  name: 'Merienda',
+  restaurantId: 'preview-smartfood',
+  restaurantName: 'Smart Food',
+  restaurantSlug: 'preview-smartfood',
+  template: 'smartFood',
+  sections: [
+    {
+      id: 'sf-m-sec-1',
+      name: 'Tostadas',
+      items: [
+        {
+          id: 'sf-t1',
+          name: 'Tostada de palta',
+          description: 'Pan integral, palta, semillas y limón',
+          prices: [{ currency: 'ARS', amount: 6800 }],
+          icons: ['vegetariano', 'sin-lactosa'],
+        },
+        {
+          id: 'sf-t2',
+          name: 'Tostada de hummus',
+          description: 'Pan sin gluten, hummus casero y tomate',
+          prices: [{ currency: 'ARS', label: 'Clásica', amount: 7200 }],
+          icons: ['vegano', 'sin-gluten'],
+        },
+      ],
+    },
+    {
+      id: 'sf-m-sec-2',
+      name: 'Snacks',
+      items: [
+        {
+          id: 'sf-s1',
+          name: 'Mix de frutos secos',
+          description: 'Almendras, nueces y castañas de cajú',
+          prices: [{ currency: 'ARS', amount: 5400 }],
+          icons: ['vegano', 'sin-lactosa'],
+        },
+        {
+          id: 'sf-s2',
+          name: 'Barrita energética casera',
+          description: 'Avena, dátiles, cacao y mantequilla de maní',
+          prices: [{ currency: 'ARS', amount: 3800 }],
+          icons: ['vegetariano', 'picante'],
+        },
+      ],
+    },
+  ],
+};
+
+const smartFoodData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: PreviewMenu[] } = {
+  restaurant: {
+    id: 'preview-smartfood',
+    name: 'Smart Food',
+    slug: 'preview-smartfood',
+    description:
+      'Comida real, equilibrada y deliciosa para tu día a día. En Smart Food priorizamos ingredientes frescos, opciones vegetarianas y veganas, y platos pensados para comer bien sin complicaciones. Ideal para almuerzos livianos, meriendas conscientes y bowls nutritivos.',
+    address: 'Av. Santa Fe 3024, Palermo, Buenos Aires',
+    phone: '+54 11 5555-7890',
+    email: 'hola@smartfood.com.ar',
+    whatsapp: '54 11 5555-7890',
+    website: 'https://smartfood.com.ar',
+    template: 'smartFood',
+    primaryColor: '#1B4332',
+    secondaryColor: '#40916C',
+    country: 'Argentina',
+    logoUrl: '/preview/logo-smart-food.png',
+    templateConfig: {
+      showCoverImage: false,
+      showLogo: true,
+      showRestaurantName: true,
+      showRestaurantDescription: true,
+    },
+  },
+  menu: smartFoodMenuAlmuerzo,
+  menus: [smartFoodMenuAlmuerzo, smartFoodMenuMerienda],
+};
+
+const BEACH_DEMO_PHOTO = (file: string) => `/templates/beachbar/products/${file}`;
+const BEACH_PHOTOS = {
+  tostadaPalta: BEACH_DEMO_PHOTO('tostada-palta-71a2f30c-7d4a-4413-944b-69be159fabd9.png'),
+  bowlTropical: BEACH_DEMO_PHOTO('bowl-tropical-d21b06df-927a-428e-a328-436864d857ec.png'),
+  huevosBenedictinos: BEACH_DEMO_PHOTO('huveos-benedictos-fa4e3605-5f25-45da-9eed-8c8d2a47a5e1.png'),
+  smoothieVerde: BEACH_DEMO_PHOTO('smoothi-verde-53b3b4ab-5623-40ae-b050-07b1d277116a.png'),
+  mojitoMaracuya: BEACH_DEMO_PHOTO('moijto-maracuya-e862531e-4c53-4f98-9255-cdb98b763a2d.png'),
+  ginTonic: BEACH_DEMO_PHOTO('gin-tonic-83bd427d-5a4f-4eb3-9ce1-c7d3d7f3464a.png'),
+  caipirinha: BEACH_DEMO_PHOTO('caipirinia-a6b394bc-b63b-4262-bcc1-847f3de8196f.png'),
+  spritzPomelo: BEACH_DEMO_PHOTO('sprit-con-pomelo-868b6035-ebe3-45aa-a43c-3d0e925a02f3.png'),
+  nachosDelSol: BEACH_DEMO_PHOTO('nachos-del-sol-04ece229-3fcc-41ce-a055-5e0fcf971fb2.png'),
+  bastonesPescado: BEACH_DEMO_PHOTO('bastones-de-pescado-69a4ba5f-5304-4f11-80e9-15d6b8a34142.png'),
+  empanaditasCamaron: BEACH_DEMO_PHOTO('empanaditas-de-camaron-bb80067e-315d-404e-9513-2e470fc437be.png'),
+  papasCheddar: BEACH_DEMO_PHOTO('papas-con-cheddar-8927cb90-de8e-4753-a2c8-2aad0d2105e3.png'),
+  tablaQuesosFiambres: BEACH_DEMO_PHOTO('tabla-de-quesos-y-fiambres-cc28f3f3-522b-4bb4-bc92-089dc9a6a83c.png'),
+  croquetasJamon: BEACH_DEMO_PHOTO('croquetas-de-jamon-dc9cbd62-5c47-4aa8-8164-037add9c8392.png'),
+  tostonHummus: BEACH_DEMO_PHOTO('toston-de-hummus-49b721d3-2e83-4d44-8aa9-097ecb486276.png'),
+  cheesecakeFrutosRojos: BEACH_DEMO_PHOTO('cheesecake-frutos-rojos-a877c43c-1a5b-474b-a708-82ce17a65c23.png'),
+  brownieConHelado: BEACH_DEMO_PHOTO('brownie-con-helado-685015c0-7be0-4a36-9176-61a108712a19.png'),
+  paletasArtesanales: BEACH_DEMO_PHOTO('paletas-artesanales-a4db95ef-1efe-4f2d-810c-2cf5a868e0d5.png'),
+  ensaladaFrutas: BEACH_DEMO_PHOTO('ensalada-de-frutas-a3d6a70a-f805-48e9-8612-d6929b0461bb.png'),
+} as const;
+const BEACH_DEFAULT_BG = '/templates/beachbar/images/background-beach-life.jpg';
+
+const beachBarMenuEs: PreviewMenu = {
+  id: 'preview-beachbar-menu-es',
+  slug: 'carta',
+  name: 'Carta',
+  restaurantId: 'preview-beachbar',
+  restaurantName: 'Beach Life',
+  restaurantSlug: 'preview-beachbar',
+  template: 'beachBar',
+  sections: [
+    {
+      id: 'bb-desayunos',
+      name: 'Desayunos',
+      items: [
+        { id: 'bb-d1', name: 'Tostadas de palta', description: 'Pan de masa madre, palta, semillas y limón.', prices: [{ currency: 'ARS', amount: 8900 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.tostadaPalta] },
+        { id: 'bb-d2', name: 'Bowl tropical', description: 'Yogur, granola, mango, maracuyá y coco.', prices: [{ currency: 'ARS', amount: 9500 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.bowlTropical] },
+        { id: 'bb-d3', name: 'Huevos benedictinos', description: 'English muffin, huevos pochados y holandesa.', prices: [{ currency: 'ARS', amount: 11200 }], icons: [], photos: [BEACH_PHOTOS.huevosBenedictinos] },
+        { id: 'bb-d4', name: 'Smoothie verde', description: 'Espinaca, piña, banana y jengibre.', prices: [{ currency: 'ARS', amount: 7200 }], icons: ['vegano'], photos: [BEACH_PHOTOS.smoothieVerde] },
+      ],
+    },
+    {
+      id: 'bb-tragos',
+      name: 'Tragos',
+      items: [
+        { id: 'bb-t1', name: 'Mojito de maracuyá', description: 'Ron blanco, menta fresca y fruta de estación.', prices: [{ currency: 'ARS', amount: 7800 }], icons: [], photos: [BEACH_PHOTOS.mojitoMaracuya] },
+        { id: 'bb-t2', name: 'Gin tonic costero', description: 'Gin premium, tónica, pepino y romero.', prices: [{ currency: 'ARS', amount: 8200 }], icons: [], photos: [BEACH_PHOTOS.ginTonic] },
+        { id: 'bb-t3', name: 'Caipiriña clásica', description: 'Cachaça, lima y azúcar mascabo.', prices: [{ currency: 'ARS', amount: 7500 }], icons: [], photos: [BEACH_PHOTOS.caipirinha] },
+        { id: 'bb-t4', name: 'Spritz de pomelo', description: 'Aperol, espumante y pomelo rosado.', prices: [{ currency: 'ARS', amount: 7900 }], icons: [], photos: [BEACH_PHOTOS.spritzPomelo] },
+      ],
+    },
+    {
+      id: 'bb-snacks',
+      name: 'Snacks',
+      items: [
+        { id: 'bb-s1', name: 'Nachos del sol', description: 'Totopos, cheddar, guacamole y pico de gallo.', prices: [{ currency: 'ARS', amount: 9800 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.nachosDelSol] },
+        { id: 'bb-s2', name: 'Bastones de pescado', description: 'Merluza crocante con salsa tártara.', prices: [{ currency: 'ARS', amount: 10500 }], icons: [], photos: [BEACH_PHOTOS.bastonesPescado] },
+        { id: 'bb-s3', name: 'Empanaditas de camarón', description: 'Camarones salteados y cilantro (x4).', prices: [{ currency: 'ARS', amount: 9200 }], icons: [], photos: [BEACH_PHOTOS.empanaditasCamaron] },
+        { id: 'bb-s4', name: 'Papas con cheddar', description: 'Papas rústicas, cheddar fundido y verdeo.', prices: [{ currency: 'ARS', amount: 8600 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.papasCheddar] },
+        { id: 'bb-s5', name: 'Tabla de quesos y fiambres', description: 'Selección para compartir con aceitunas y panes.', prices: [{ currency: 'ARS', amount: 12800 }], icons: [], photos: [BEACH_PHOTOS.tablaQuesosFiambres] },
+        { id: 'bb-s6', name: 'Croquetas de jamón', description: 'Cremosas, doradas y con dip de mostaza (x6).', prices: [{ currency: 'ARS', amount: 8400 }], icons: [], photos: [BEACH_PHOTOS.croquetasJamon] },
+        { id: 'bb-s7', name: 'Tostón de hummus', description: 'Pan de campo, hummus, tomates cherry y aceite de oliva.', prices: [{ currency: 'ARS', amount: 7900 }], icons: ['vegano', 'vegetariano'], photos: [BEACH_PHOTOS.tostonHummus] },
+      ],
+    },
+    {
+      id: 'bb-postres',
+      name: 'Postres',
+      items: [
+        { id: 'bb-p1', name: 'Cheesecake de frutos rojos', description: 'Base crocante y coulis de frutos del bosque.', prices: [{ currency: 'ARS', amount: 7400 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.cheesecakeFrutosRojos] },
+        { id: 'bb-p2', name: 'Brownie con helado', description: 'Brownie tibio y helado de vainilla.', prices: [{ currency: 'ARS', amount: 7100 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.brownieConHelado] },
+        { id: 'bb-p3', name: 'Paletas artesanales', description: 'Maracuyá, coco o frutilla (consultar).', prices: [{ currency: 'ARS', amount: 4200 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.paletasArtesanales] },
+        { id: 'bb-p4', name: 'Ensalada de frutas', description: 'Frutas de estación y menta fresca.', prices: [{ currency: 'ARS', amount: 5800 }], icons: ['vegano', 'vegetariano'], photos: [BEACH_PHOTOS.ensaladaFrutas] },
+      ],
+    },
+  ],
+};
+
+const beachBarMenuEn: PreviewMenu = {
+  ...beachBarMenuEs,
+  id: 'preview-beachbar-menu-en',
+  slug: 'menu',
+  name: 'Menu',
+  sections: [
+    {
+      id: 'bb-desayunos',
+      name: 'Breakfast',
+      items: [
+        { id: 'bb-d1', name: 'Avocado toast', description: 'Sourdough, avocado, seeds and lemon.', prices: [{ currency: 'ARS', amount: 8900 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.tostadaPalta] },
+        { id: 'bb-d2', name: 'Tropical bowl', description: 'Yogurt, granola, mango, passion fruit and coconut.', prices: [{ currency: 'ARS', amount: 9500 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.bowlTropical] },
+        { id: 'bb-d3', name: 'Eggs benedict', description: 'English muffin, poached eggs and hollandaise.', prices: [{ currency: 'ARS', amount: 11200 }], icons: [], photos: [BEACH_PHOTOS.huevosBenedictinos] },
+        { id: 'bb-d4', name: 'Green smoothie', description: 'Spinach, pineapple, banana and ginger.', prices: [{ currency: 'ARS', amount: 7200 }], icons: ['vegano'], photos: [BEACH_PHOTOS.smoothieVerde] },
+      ],
+    },
+    {
+      id: 'bb-tragos',
+      name: 'Drinks',
+      items: [
+        { id: 'bb-t1', name: 'Passion fruit mojito', description: 'White rum, fresh mint and seasonal fruit.', prices: [{ currency: 'ARS', amount: 7800 }], icons: [], photos: [BEACH_PHOTOS.mojitoMaracuya] },
+        { id: 'bb-t2', name: 'Coastal gin tonic', description: 'Premium gin, tonic, cucumber and rosemary.', prices: [{ currency: 'ARS', amount: 8200 }], icons: [], photos: [BEACH_PHOTOS.ginTonic] },
+        { id: 'bb-t3', name: 'Classic caipirinha', description: 'Cachaça, lime and muscovado sugar.', prices: [{ currency: 'ARS', amount: 7500 }], icons: [], photos: [BEACH_PHOTOS.caipirinha] },
+        { id: 'bb-t4', name: 'Grapefruit spritz', description: 'Aperol, sparkling wine and pink grapefruit.', prices: [{ currency: 'ARS', amount: 7900 }], icons: [], photos: [BEACH_PHOTOS.spritzPomelo] },
+      ],
+    },
+    {
+      id: 'bb-snacks',
+      name: 'Snacks',
+      items: [
+        { id: 'bb-s1', name: 'Sun nachos', description: 'Tortilla chips, cheddar, guacamole and pico de gallo.', prices: [{ currency: 'ARS', amount: 9800 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.nachosDelSol] },
+        { id: 'bb-s2', name: 'Fish sticks', description: 'Crispy hake with tartar sauce.', prices: [{ currency: 'ARS', amount: 10500 }], icons: [], photos: [BEACH_PHOTOS.bastonesPescado] },
+        { id: 'bb-s3', name: 'Shrimp empanadas', description: 'Sautéed shrimp and cilantro (x4).', prices: [{ currency: 'ARS', amount: 9200 }], icons: [], photos: [BEACH_PHOTOS.empanaditasCamaron] },
+        { id: 'bb-s4', name: 'Cheddar fries', description: 'Rustic fries, melted cheddar and chives.', prices: [{ currency: 'ARS', amount: 8600 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.papasCheddar] },
+        { id: 'bb-s5', name: 'Cheese and charcuterie board', description: 'Sharing selection with olives and breads.', prices: [{ currency: 'ARS', amount: 12800 }], icons: [], photos: [BEACH_PHOTOS.tablaQuesosFiambres] },
+        { id: 'bb-s6', name: 'Ham croquettes', description: 'Creamy, golden croquettes with mustard dip (x6).', prices: [{ currency: 'ARS', amount: 8400 }], icons: [], photos: [BEACH_PHOTOS.croquetasJamon] },
+        { id: 'bb-s7', name: 'Hummus toast', description: 'Country bread, hummus, cherry tomatoes and olive oil.', prices: [{ currency: 'ARS', amount: 7900 }], icons: ['vegano', 'vegetariano'], photos: [BEACH_PHOTOS.tostonHummus] },
+      ],
+    },
+    {
+      id: 'bb-postres',
+      name: 'Desserts',
+      items: [
+        { id: 'bb-p1', name: 'Berry cheesecake', description: 'Crispy base and forest fruit coulis.', prices: [{ currency: 'ARS', amount: 7400 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.cheesecakeFrutosRojos] },
+        { id: 'bb-p2', name: 'Brownie with ice cream', description: 'Warm brownie and vanilla ice cream.', prices: [{ currency: 'ARS', amount: 7100 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.brownieConHelado] },
+        { id: 'bb-p3', name: 'Artisan popsicles', description: 'Passion fruit, coconut or strawberry (ask).', prices: [{ currency: 'ARS', amount: 4200 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.paletasArtesanales] },
+        { id: 'bb-p4', name: 'Fruit salad', description: 'Seasonal fruit and fresh mint.', prices: [{ currency: 'ARS', amount: 5800 }], icons: ['vegano', 'vegetariano'], photos: [BEACH_PHOTOS.ensaladaFrutas] },
+      ],
+    },
+  ],
+};
+
+const beachBarData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: PreviewMenu[] } = {
+  restaurant: {
+    id: 'preview-beachbar',
+    name: 'Beach Life',
+    slug: 'preview-beachbar',
+    description:
+      '**Sabores, sol y buena vida** frente al mar.\nDesayunos frescos, tragos de autor y snacks para compartir con los pies en la arena.',
+    address: 'Costanera Playa Grande, Pinamar',
+    phone: '+54 2254 55-1234',
+    email: 'hola@beachlife.com.ar',
+    website: 'https://beachlife.com.ar',
+    whatsapp: '54 2254 55-1234',
+    template: 'beachBar',
+    primaryColor: '#1e3a5f',
+    secondaryColor: '#e8786a',
+    country: 'Argentina',
+    logoUrl: '/templates/beachbar/images/logo-beach-life.png',
+    templateConfig: {
+      backgroundImageUrl: BEACH_DEFAULT_BG,
+      showLogo: true,
+      showRestaurantName: false,
+      showRestaurantDescription: true,
+      showProductImages: true,
+    },
+  },
+  menu: beachBarMenuEs,
+  menus: [beachBarMenuEs, beachBarMenuEn],
+};
+
+function withHighlightedItems(menu: PreviewMenu, highlightedIds: readonly string[]): PreviewMenu {
+  const idSet = new Set(highlightedIds);
+  return {
+    ...menu,
+    sections: menu.sections.map((section) => ({
+      ...section,
+      items: section.items.map((item) => ({
+        ...item,
+        highlighted: idSet.has(item.id),
+      })),
+    })),
+  };
+}
+
+const SOL_NOCHE_DAY_COVER = '/templates/solnoche/images/cover-sol.png';
+const SOL_NOCHE_NIGHT_COVER = '/templates/solnoche/images/cover-noche.png';
+const SOL_NOCHE_DAY_LOGO = '/templates/solnoche/images/logo-light.png';
+const SOL_NOCHE_NIGHT_LOGO = '/templates/solnoche/images/logo-dark.png';
+
+const SOL_NOCHE_HIGHLIGHTED_IDS = ['bb-d2', 'bb-t1', 'bb-t2', 'bb-s1', 'bb-p1'] as const;
+const solNocheMenuEs = withHighlightedItems(beachBarMenuEs, SOL_NOCHE_HIGHLIGHTED_IDS);
+const solNocheMenuEn = withHighlightedItems(beachBarMenuEn, SOL_NOCHE_HIGHLIGHTED_IDS);
+
+const solNocheData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: PreviewMenu[] } = {
+  restaurant: {
+    id: 'preview-solnoche',
+    name: 'Sol & Noche',
+    slug: 'preview-solnoche',
+    description:
+      '**Sabores, sol y buena vida** frente al mar.\nDesayunos frescos, tragos de autor y snacks para compartir con los pies en la arena.',
+    address: 'Costanera Playa Grande, Pinamar',
+    phone: '+54 2254 55-1234',
+    email: 'hola@beachlife.com.ar',
+    website: 'https://beachlife.com.ar',
+    whatsapp: '54 2254 55-1234',
+    template: 'solNoche',
+    primaryColor: '#c45c26',
+    secondaryColor: '#1e3a5f',
+    country: 'Argentina',
+    timezone: 'America/Argentina/Buenos_Aires',
+    logoUrl: SOL_NOCHE_DAY_LOGO,
+    coverUrl: SOL_NOCHE_DAY_COVER,
+    templateConfig: {
+      colorMode: 'light',
+      autoDayNightSwitch: false,
+      templateTimezone: 'America/Argentina/Buenos_Aires',
+      dayStartHour: 6,
+      dayEndHour: 20,
+      dayCoverImageUrl: SOL_NOCHE_DAY_COVER,
+      nightCoverImageUrl: SOL_NOCHE_NIGHT_COVER,
+      dayLogoUrl: SOL_NOCHE_DAY_LOGO,
+      nightLogoUrl: SOL_NOCHE_NIGHT_LOGO,
+      showLogo: true,
+      showRestaurantName: true,
+      showRestaurantDescription: true,
+      showCoverImage: true,
+      showProductImages: true,
+    },
+  },
+  menu: solNocheMenuEs,
+  menus: [solNocheMenuEs, solNocheMenuEn],
+};
+
 const proMobileData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: PreviewMenu[] } = {
   restaurant: {
     ...gourmetData.restaurant,
@@ -1118,6 +1560,9 @@ const previewData: Record<PreviewTemplateId, PreviewDataResult> = {
   gourmet: gourmetData,
   'modern-food': proMobileData,
   'night-club': nightClubData,
+  'smart-food': smartFoodData,
+  'beach-bar': beachBarData,
+  'sol-noche': solNocheData,
 };
 
 export function getPreviewData(templateId: string): PreviewDataResult | null {

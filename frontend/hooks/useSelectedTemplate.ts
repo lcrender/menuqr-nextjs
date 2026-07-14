@@ -7,5 +7,6 @@ export {
   saveTemplateIntent,
   clearTemplateIntent,
   buildIntentFromPreviewTemplateId,
+  buildIntentFromCatalogSlug,
   type TemplateSelectionIntent,
 } from '../lib/template-selection-intent';

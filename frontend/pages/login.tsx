@@ -7,7 +7,7 @@ import api from '../lib/axios';
 import Head from 'next/head';
 import AlertModal from '../components/AlertModal';
 import LandingFooter from '../components/LandingFooter';
-import { consumeTemplateAfterAuth } from '../lib/consume-template-after-auth';
+import { consumeTemplateAfterAuth, getNavigationForConsumeResult } from '../lib/consume-template-after-auth';
 import {
   buildIntentFromPreviewTemplateId,
   parseTemplateQueryParam,
@@ -95,15 +95,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
           isSuperAdmin: parsed.role === 'SUPER_ADMIN',
         });
         if (cancelled) return;
-        if (tpl.action === 'needs_upgrade') {
-          router.replace(tpl.upgradeHref);
-          return;
-        }
-        if (tpl.action === 'needs_restaurant') {
-          router.replace(tpl.wizardHref);
-          return;
-        }
-        router.replace('/admin');
+        router.replace(getNavigationForConsumeResult(tpl));
       } catch {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
@@ -150,15 +142,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
     const tpl = await consumeTemplateAfterAuth(api, {
       isSuperAdmin: authUser?.role === 'SUPER_ADMIN',
     });
-    if (tpl.action === 'needs_upgrade') {
-      router.push(tpl.upgradeHref);
-      return;
-    }
-    if (tpl.action === 'needs_restaurant') {
-      router.push(tpl.wizardHref);
-      return;
-    }
-    router.push('/admin');
+    router.push(getNavigationForConsumeResult(tpl));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

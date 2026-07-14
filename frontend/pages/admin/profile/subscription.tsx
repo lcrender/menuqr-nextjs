@@ -7,6 +7,7 @@ import AlertModal from '../../../components/AlertModal';
 import { formatCurrency } from '../../../lib/format-currency';
 import PricingPlansGrid, { type BillingCycle, type PricingData } from '../../../components/PricingPlansGrid';
 import { getPromoCodeFromQuery } from '../../../lib/promo-query';
+import { tryContinueTemplateIntentAfterProUpgrade } from '../../../lib/template-use-flow';
 
 type SubItem = {
   id: string;
@@ -120,9 +121,18 @@ export default function SubscriptionManagement() {
         localStorage.removeItem('pendingPlan');
         localStorage.removeItem('pendingBillingCycle');
       }
-      setAlert({ title: 'Proceso completado', message: 'Cuando el pago se confirme, tu plan se actualizará. Puede tardar unos segundos.', variant: 'success' });
       router.replace('/admin/profile/subscription', undefined, { shallow: true });
-      loadSubscriptions();
+      void (async () => {
+        loadSubscriptions();
+        await loadCurrentPlan();
+        const continued = await tryContinueTemplateIntentAfterProUpgrade(router);
+        if (continued) return;
+        setAlert({
+          title: 'Proceso completado',
+          message: 'Cuando el pago se confirme, tu plan se actualizará. Puede tardar unos segundos.',
+          variant: 'success',
+        });
+      })();
     } else if (cancel === '1') {
       setAlert({ title: 'Cancelado', message: 'El proceso de pago fue cancelado.', variant: 'error' });
       router.replace('/admin/profile/subscription', undefined, { shallow: true });

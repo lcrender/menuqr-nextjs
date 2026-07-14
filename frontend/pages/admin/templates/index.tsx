@@ -1,49 +1,64 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
+import AdminTemplateCard from '../../../components/admin/AdminTemplateCard';
 import AlertModal from '../../../components/AlertModal';
-import { TEMPLATE_NAMES } from '../../../lib/template-config-schema';
+import FiltersBar from '../../../components/plantillas/FiltersBar';
+import PremiumPlanCard from '../../../components/plantillas/PremiumPlanCard';
+import plantillasStyles from '../../../components/plantillas/Plantillas.module.css';
 import {
-  TEMPLATES_CATALOG as templates,
-  PREVIEW_IMAGE_BASE,
-  PREVIEW_DEFAULT_IMAGE,
-} from '../../../lib/templates-catalog';
+  MENU_TEMPLATES_CATALOG,
+  CATALOG_PREMIUM_CARD_INDEX,
+  deriveFilterOptions,
+  filterTemplates,
+  sortTemplatesByCatalogOrder,
+} from '../../../lib/menu-templates-catalog';
+import { apiTemplateIdToCatalogSlug } from '../../../lib/template-selection-intent';
+import { TEMPLATE_NAMES } from '../../../lib/template-config-schema';
+import { TEMPLATES_CATALOG as templates } from '../../../lib/templates-catalog';
+import { DEFAULT_BEACH_BAR_BACKGROUND_IMAGE } from '../../../lib/beach-bar-template';
+import type { TemplateListFilters } from '../../../types/menu-template-catalog';
+
+const INITIAL_FILTERS: TemplateListFilters = {
+  categoria: 'all',
+  estilo: 'all',
+  plan: 'all',
+};
 
 export default function Templates() {
-  const router = useRouter();
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRestaurant, setSelectedRestaurant] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [previewSelectedId, setPreviewSelectedId] = useState<string | null>(null);
-  const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
-  const [previewImageError, setPreviewImageError] = useState<Record<string, boolean>>({});
   const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState<string>('#007bff');
   const [secondaryColor, setSecondaryColor] = useState<string>('#0056b3');
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [alertModal, setAlertModal] = useState<{ title: string; message: string; variant: 'success' | 'error'; restaurantId?: string } | null>(null);
+  const [filters, setFilters] = useState<TemplateListFilters>(INITIAL_FILTERS);
+  const filterOptions = useMemo(() => deriveFilterOptions(MENU_TEMPLATES_CATALOG), []);
+  const filteredTemplates = useMemo(() => {
+    const filteredCatalog = sortTemplatesByCatalogOrder(filterTemplates(MENU_TEMPLATES_CATALOG, filters));
+    const orderIndex = new Map(filteredCatalog.map((t, index) => [t.slug, index]));
+    return templates
+      .filter((t) => orderIndex.has(apiTemplateIdToCatalogSlug(t.id)))
+      .sort((a, b) => {
+        const sa = apiTemplateIdToCatalogSlug(a.id);
+        const sb = apiTemplateIdToCatalogSlug(b.id);
+        return (orderIndex.get(sa) ?? 999) - (orderIndex.get(sb) ?? 999);
+      });
+  }, [filters]);
+
+  const adminGridItems = useMemo(() => {
+    const items = filteredTemplates.map((template) => ({ type: 'template' as const, template }));
+    const at = Math.min(CATALOG_PREMIUM_CARD_INDEX, items.length);
+    items.splice(at, 0, { type: 'premium' as const });
+    return items;
+  }, [filteredTemplates]);
   const normalizedPlan = (currentPlan || '').toLowerCase().replace(/[\s-]+/g, '_');
   const hasProTemplatesAccess =
     normalizedPlan === 'pro' || normalizedPlan === 'pro_team' || normalizedPlan === 'premium';
-  const previewSelectedTemplate = previewSelectedId
-    ? templates.find((t) => t.id === previewSelectedId)
-    : null;
-  const showUnlockProInPreview =
-    !!previewSelectedTemplate?.requiresProOrPremium && !hasProTemplatesAccess;
-  const proCheckoutHref = '/admin/profile/subscription/checkout?plan=pro';
-
-  const openPreviewDrawer = () => {
-    if (typeof window === 'undefined') return;
-    setPreviewDrawerOpen(true);
-  };
-
-  const selectTemplateForPreview = (templateId: string) => {
-    setPreviewSelectedId(templateId);
-    setPreviewDrawerOpen(true);
-  };
 
   useEffect(() => {
     loadRestaurants();
@@ -78,6 +93,12 @@ export default function Templates() {
   };
 
   const handleRestaurantSelect = async (templateId: string, restaurantId: string) => {
+    if (!restaurantId) {
+      setSelectedRestaurant(null);
+      setSelectedTemplate(null);
+      return;
+    }
+
     setSelectedTemplate(templateId);
     setSelectedRestaurant(restaurantId);
     
@@ -113,6 +134,62 @@ export default function Templates() {
       const payload: any = {
         template: templateId,
       };
+
+      if (templateId === 'beachBar') {
+        try {
+          const cfgRes = await api.get(`/restaurants/${restaurantId}`);
+          const prevConfig = (cfgRes.data?.templateConfig || {}) as Record<string, unknown>;
+          payload.templateConfig = {
+            showLogo: true,
+            showRestaurantName: true,
+            showRestaurantDescription: true,
+            showProductImages: true,
+            backgroundImageUrl: DEFAULT_BEACH_BAR_BACKGROUND_IMAGE,
+            ...prevConfig,
+          };
+        } catch {
+          payload.templateConfig = {
+            showLogo: true,
+            showRestaurantName: true,
+            showRestaurantDescription: true,
+            showProductImages: true,
+            backgroundImageUrl: DEFAULT_BEACH_BAR_BACKGROUND_IMAGE,
+          };
+        }
+      }
+
+      if (templateId === 'solNoche') {
+        try {
+          const cfgRes = await api.get(`/restaurants/${restaurantId}`);
+          const prevConfig = (cfgRes.data?.templateConfig || {}) as Record<string, unknown>;
+          payload.templateConfig = {
+            colorMode: 'light',
+            autoDayNightSwitch: false,
+            templateTimezone: 'America/Argentina/Buenos_Aires',
+            dayStartHour: 6,
+            dayEndHour: 20,
+            showLogo: true,
+            showRestaurantName: true,
+            showRestaurantDescription: true,
+            showCoverImage: true,
+            showProductImages: true,
+            ...prevConfig,
+          };
+        } catch {
+          payload.templateConfig = {
+            colorMode: 'light',
+            autoDayNightSwitch: false,
+            templateTimezone: 'America/Argentina/Buenos_Aires',
+            dayStartHour: 6,
+            dayEndHour: 20,
+            showLogo: true,
+            showRestaurantName: true,
+            showRestaurantDescription: true,
+            showCoverImage: true,
+            showProductImages: true,
+          };
+        }
+      }
       
       // Solo enviar colores si NO es italianFood
       if (!isItalianFood) {
@@ -256,171 +333,49 @@ export default function Templates() {
               )}
             </section>
 
-            <aside className="admin-templates-preview d-none" aria-label="Vista previa de plantilla">
-              {!previewSelectedId ? (
-                <p className="admin-templates-preview-placeholder">
-                  Seleccione alguna plantilla para previsualizarla
-                </p>
-              ) : (
-                <>
-                  <div className="admin-templates-preview-image-wrap">
-                    <img
-                      key={previewSelectedId}
-                      src={previewImageError[previewSelectedId] ? PREVIEW_DEFAULT_IMAGE : `${PREVIEW_IMAGE_BASE}/preview-${previewSelectedId}.jpg`}
-                      alt={`Vista previa ${templates.find(t => t.id === previewSelectedId)?.name ?? previewSelectedId}`}
-                      className="admin-templates-preview-img"
-                      onError={() => setPreviewImageError((prev) => ({ ...prev, [previewSelectedId]: true }))}
-                      onClick={openPreviewDrawer}
-                      style={{ cursor: 'pointer' }}
-                      loading="lazy"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="admin-btn admin-templates-preview-cta d-none d-md-block"
-                    onClick={openPreviewDrawer}
-                  >
-                    Ver vista previa
-                  </button>
-                  <a
-                    href={`/preview/${previewSelectedId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="admin-btn admin-templates-preview-cta d-md-none"
-                  >
-                    Ver vista previa
-                  </a>
-                </>
-              )}
-            </aside>
+            <section className="admin-templates-catalog-section">
+              <h2 className="admin-templates-section-title">Catálogo de plantillas</h2>
 
-            {/* Grid de plantillas */}
+              <FiltersBar
+                options={filterOptions}
+                value={filters}
+                onChange={setFilters}
+                onClear={() => setFilters(INITIAL_FILTERS)}
+              />
+
+              <p className={plantillasStyles.resultsHint} aria-live="polite">
+                {filteredTemplates.length === templates.length
+                  ? `Mostrando las ${templates.length} plantillas`
+                  : `Mostrando ${filteredTemplates.length} de ${templates.length} plantillas`}
+              </p>
+
+              {filteredTemplates.length === 0 ? (
+                <p className={plantillasStyles.emptyState}>
+                  No hay plantillas con esta combinación de filtros. Probá con &quot;Todos&quot; en algún criterio.
+                </p>
+              ) : null}
+
             <div className="admin-templates-grid">
-            {templates.map((template) => (
-              <div key={template.id} style={{ minWidth: 0 }}>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="admin-card"
-                  style={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    borderColor: previewSelectedId === template.id ? 'var(--admin-primary, #6366f1)' : template.requiresProOrPremium ? 'rgba(180, 140, 45, 0.6)' : undefined,
-                    borderWidth: template.requiresProOrPremium ? '2px' : undefined,
-                    boxShadow: previewSelectedId === template.id ? '0 0 0 2px var(--admin-primary, #6366f1)' : template.requiresProOrPremium ? '0 2px 12px rgba(180, 140, 45, 0.15)' : undefined,
-                    background: template.requiresProOrPremium ? 'linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(255, 248, 230, 0.4) 100%)' : undefined,
-                  }}
-                  onClick={() => selectTemplateForPreview(template.id)}
-                >
-                  <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                    {template.requiresProOrPremium && (
-                      <span style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        fontSize: '0.7rem',
-                        fontWeight: '700',
-                        letterSpacing: '0.05em',
-                        color: '#b48c2d',
-                        background: 'rgba(180, 140, 45, 0.15)',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        border: '1px solid rgba(180, 140, 45, 0.5)',
-                      }}>
-                        PRO
-                      </span>
-                    )}
-                    <h3 className="admin-card-title" style={{ marginBottom: '8px', paddingRight: template.requiresProOrPremium ? '48px' : undefined }}>
-                      {template.name}
-                    </h3>
-                    <p className="admin-card-body" style={{ flex: 1, marginBottom: '16px', fontSize: '0.9375rem' }}>
-                      {template.description}
-                    </p>
-                    <p style={{ marginBottom: '16px' }} onClick={(e) => e.stopPropagation()}>
-                      <a
-                        href={`/preview/${template.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="small"
-                        style={{ color: 'var(--admin-primary, #6366f1)' }}
-                      >
-                        Ver vista previa →
-                      </a>
-                    </p>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      {template.requiresProOrPremium && !hasProTemplatesAccess ? (
-                        <p className="small text-muted" style={{ margin: 0 }}>
-                          Esta plantilla está disponible solo para plan <strong>Pro</strong>, <strong>Pro Team</strong> o <strong>Premium</strong>. Puedes ver la vista previa con el enlace de la tarjeta o seleccionando la plantilla para ver la imagen de ejemplo.
-                        </p>
-                      ) : (
-                        <>
-                          <label className="form-label" style={{ 
-                            fontSize: '0.875rem', 
-                            fontWeight: 600, 
-                            marginBottom: '8px',
-                            color: 'var(--admin-text)'
-                          }}>
-                            Aplicar a restaurante:
-                          </label>
-                          <select
-                            className="wizard-input-large"
-                            value={selectedTemplate === template.id && selectedRestaurant ? selectedRestaurant : ''}
-                            onChange={async (e) => {
-                              if (e.target.value) {
-                                if (selectedTemplate === template.id && selectedRestaurant === e.target.value) {
-                                  setSelectedRestaurant(null);
-                                  setSelectedTemplate(null);
-                                  await new Promise(resolve => setTimeout(resolve, 100));
-                                }
-                                await handleRestaurantSelect(template.id, e.target.value);
-                              } else {
-                                setSelectedRestaurant(null);
-                                setSelectedTemplate(null);
-                              }
-                            }}
-                            disabled={applyingTemplate?.startsWith(template.id) || false}
-                            style={{
-                              width: '100%',
-                              background: 'white',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <option value="">Seleccionar restaurante...</option>
-                            {restaurants.map((restaurant) => (
-                              <option key={restaurant.id} value={restaurant.id}>
-                                {restaurant.name} {getRestaurantTemplate(restaurant.id) === template.id ? '(Actual)' : ''}
-                              </option>
-                            ))}
-                          </select>
-                          {selectedTemplate === template.id && selectedRestaurant && (
-                            <button
-                              type="button"
-                              className="admin-btn"
-                              onClick={() => handleApplyTemplate(template.id, selectedRestaurant)}
-                              disabled={applyingTemplate === `${template.id}-${selectedRestaurant}`}
-                              style={{ width: '100%', marginTop: '12px', padding: '10px 16px' }}
-                            >
-                              {applyingTemplate === `${template.id}-${selectedRestaurant}` ? (
-                                <>
-                                  <span className="spinner-border spinner-border-sm me-2" role="status" />
-                                  Aplicando...
-                                </>
-                              ) : (
-                                'Aplicar plantilla'
-                              )}
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+              {adminGridItems.map((item) =>
+                item.type === 'premium' ? (
+                  <PremiumPlanCard key="plan-premium" />
+                ) : (
+                  <AdminTemplateCard
+                    key={item.template.id}
+                    template={item.template}
+                    restaurants={restaurants}
+                    hasProTemplatesAccess={hasProTemplatesAccess}
+                    selectedTemplate={selectedTemplate}
+                    selectedRestaurant={selectedRestaurant}
+                    applyingTemplate={applyingTemplate}
+                    getRestaurantTemplate={getRestaurantTemplate}
+                    onRestaurantSelect={handleRestaurantSelect}
+                    onApply={handleApplyTemplate}
+                  />
+                ),
+              )}
             </div>
+            </section>
             </div>
           </div>
         )}
@@ -444,59 +399,6 @@ export default function Templates() {
         />
       )}
 
-      {previewDrawerOpen && previewSelectedId && (
-        <div
-          className="admin-templates-preview-drawer-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Vista previa ampliada"
-          onClick={() => setPreviewDrawerOpen(false)}
-        >
-          <div className="admin-templates-preview-drawer-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-templates-preview-drawer-header">
-              <div className="fw-semibold">
-                Vista previa: {templates.find((t) => t.id === previewSelectedId)?.name ?? previewSelectedId}
-              </div>
-              <button
-                type="button"
-                className="btn-close"
-                aria-label="Cerrar"
-                onClick={() => setPreviewDrawerOpen(false)}
-              />
-            </div>
-
-            <div className="admin-templates-preview-drawer-body">
-              <img
-                key={previewSelectedId}
-                src={previewImageError[previewSelectedId] ? PREVIEW_DEFAULT_IMAGE : `${PREVIEW_IMAGE_BASE}/preview-${previewSelectedId}.jpg`}
-                alt={`Vista previa ${templates.find(t => t.id === previewSelectedId)?.name ?? previewSelectedId}`}
-                className="admin-templates-preview-drawer-img"
-                onError={() => setPreviewImageError((prev) => ({ ...prev, [previewSelectedId]: true }))}
-                loading="lazy"
-              />
-            </div>
-
-            <div className="admin-templates-preview-drawer-footer">
-              <a
-                href={`/preview/${previewSelectedId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="admin-btn admin-templates-preview-drawer-cta"
-              >
-                Abrir en nueva pestaña →
-              </a>
-              {showUnlockProInPreview && (
-                <Link
-                  href={proCheckoutHref}
-                  className="admin-btn admin-templates-preview-drawer-unlock"
-                >
-                  Desbloquear plantillas Pro
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </AdminLayout>
   );
 }

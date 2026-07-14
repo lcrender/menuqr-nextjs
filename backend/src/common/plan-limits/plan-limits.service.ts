@@ -2,6 +2,8 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PostgresService } from '../database/postgres.service';
 import {
   getTenantPlanLimitsCatalog,
+  BEACH_BAR_TEMPLATE_ID,
+  SOL_NOCHE_TEMPLATE_ID,
   GOURMET_TEMPLATE_ID,
   PRO_MOBILE_TEMPLATE_ID,
   STANDARD_TEMPLATE_IDS,
@@ -15,6 +17,8 @@ export const RESTAURANT_TEMPLATE_IDS = [
   ...STANDARD_TEMPLATE_IDS,
   GOURMET_TEMPLATE_ID,
   PRO_MOBILE_TEMPLATE_ID,
+  BEACH_BAR_TEMPLATE_ID,
+  SOL_NOCHE_TEMPLATE_ID,
 ] as const;
 
 export type PlanLimitPersistPayload = {

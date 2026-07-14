@@ -264,6 +264,183 @@ export class MediaService {
     }
   }
 
+  /** Fondo de plantilla (p. ej. Beach Life): solo devuelve URL; se guarda en template_config del restaurante. */
+  async uploadRestaurantTemplateBackground(
+    user: JwtUserPayload,
+    restaurantId: string,
+    file: Express.Multer.File,
+  ): Promise<{ id: string; url: string }> {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException(
+        'No se recibió la imagen. Si usás el cliente HTTP, no fijes Content-Type en FormData: debe incluir el boundary.',
+      );
+    }
+    const tenantId = await this.getRestaurantTenantIdOrThrow(restaurantId);
+    this.assertTenantAccess(user, tenantId);
+    try {
+      const uploaded = await this.uploadRestaurantAssetWithFallback({
+        file,
+        folder: `restaurants/${restaurantId}/template-background`,
+        optimizedWidth: 1600,
+        optimizedHeight: 2400,
+        optimizedMaxBytes: 2 * 1024 * 1024,
+        optimizedFilename: 'background.webp',
+      });
+
+      const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.postgres.executeRaw(
+        `INSERT INTO media_assets (
+          id, tenant_id, url, kind, filename, mime_type, size,
+          created_at, updated_at
+        ) VALUES ($1, $2, $3, 'image', $4, $5, $6, NOW(), NOW())`,
+        [id, tenantId, uploaded.url, uploaded.filename, uploaded.mimeType, uploaded.size],
+      );
+
+      return { id, url: uploaded.url };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error('Error subiendo fondo de plantilla:', error);
+      throw error;
+    }
+  }
+
+  /** Portada de día para Sol & Noche (template_config.dayCoverImageUrl). */
+  async uploadRestaurantTemplateCoverDay(
+    user: JwtUserPayload,
+    restaurantId: string,
+    file: Express.Multer.File,
+  ): Promise<{ id: string; url: string }> {
+    return this.uploadRestaurantTemplateCoverAsset(user, restaurantId, file, {
+      folder: `restaurants/${restaurantId}/template-cover-day`,
+      optimizedFilename: 'cover-day.webp',
+    });
+  }
+
+  /** Portada de noche para Sol & Noche (template_config.nightCoverImageUrl). */
+  async uploadRestaurantTemplateCoverNight(
+    user: JwtUserPayload,
+    restaurantId: string,
+    file: Express.Multer.File,
+  ): Promise<{ id: string; url: string }> {
+    return this.uploadRestaurantTemplateCoverAsset(user, restaurantId, file, {
+      folder: `restaurants/${restaurantId}/template-cover-night`,
+      optimizedFilename: 'cover-night.webp',
+    });
+  }
+
+  /** Logo de día para Sol & Noche (template_config.dayLogoUrl). */
+  async uploadRestaurantTemplateLogoDay(
+    user: JwtUserPayload,
+    restaurantId: string,
+    file: Express.Multer.File,
+  ): Promise<{ id: string; url: string }> {
+    return this.uploadRestaurantTemplateLogoAsset(user, restaurantId, file, {
+      folder: `restaurants/${restaurantId}/template-logo-day`,
+      optimizedFilename: 'logo-day.webp',
+    });
+  }
+
+  /** Logo de noche para Sol & Noche (template_config.nightLogoUrl). */
+  async uploadRestaurantTemplateLogoNight(
+    user: JwtUserPayload,
+    restaurantId: string,
+    file: Express.Multer.File,
+  ): Promise<{ id: string; url: string }> {
+    return this.uploadRestaurantTemplateLogoAsset(user, restaurantId, file, {
+      folder: `restaurants/${restaurantId}/template-logo-night`,
+      optimizedFilename: 'logo-night.webp',
+    });
+  }
+
+  private async uploadRestaurantTemplateLogoAsset(
+    user: JwtUserPayload,
+    restaurantId: string,
+    file: Express.Multer.File,
+    args: { folder: string; optimizedFilename: string },
+  ): Promise<{ id: string; url: string }> {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException(
+        'No se recibió la imagen. Si usás el cliente HTTP, no fijes Content-Type en FormData: debe incluir el boundary.',
+      );
+    }
+    const tenantId = await this.getRestaurantTenantIdOrThrow(restaurantId);
+    this.assertTenantAccess(user, tenantId);
+    try {
+      const uploaded = await this.uploadRestaurantAssetWithFallback({
+        file,
+        folder: args.folder,
+        optimizedWidth: 400,
+        optimizedHeight: 400,
+        optimizedMaxBytes: 1024 * 1024,
+        optimizedFilename: args.optimizedFilename,
+      });
+
+      const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.postgres.executeRaw(
+        `INSERT INTO media_assets (
+          id, tenant_id, url, kind, filename, mime_type, size,
+          created_at, updated_at
+        ) VALUES ($1, $2, $3, 'image', $4, $5, $6, NOW(), NOW())`,
+        [id, tenantId, uploaded.url, uploaded.filename, uploaded.mimeType, uploaded.size],
+      );
+
+      return { id, url: uploaded.url };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error('Error subiendo logo de plantilla:', error);
+      throw error;
+    }
+  }
+
+  private async uploadRestaurantTemplateCoverAsset(
+    user: JwtUserPayload,
+    restaurantId: string,
+    file: Express.Multer.File,
+    args: { folder: string; optimizedFilename: string },
+  ): Promise<{ id: string; url: string }> {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException(
+        'No se recibió la imagen. Si usás el cliente HTTP, no fijes Content-Type en FormData: debe incluir el boundary.',
+      );
+    }
+    const tenantId = await this.getRestaurantTenantIdOrThrow(restaurantId);
+    this.assertTenantAccess(user, tenantId);
+    try {
+      const uploaded = await this.uploadRestaurantAssetWithFallback({
+        file,
+        folder: args.folder,
+        optimizedWidth: 1200,
+        optimizedHeight: 800,
+        optimizedMaxBytes: 2 * 1024 * 1024,
+        optimizedFilename: args.optimizedFilename,
+      });
+
+      const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.postgres.executeRaw(
+        `INSERT INTO media_assets (
+          id, tenant_id, url, kind, filename, mime_type, size,
+          created_at, updated_at
+        ) VALUES ($1, $2, $3, 'image', $4, $5, $6, NOW(), NOW())`,
+        [id, tenantId, uploaded.url, uploaded.filename, uploaded.mimeType, uploaded.size],
+      );
+
+      return { id, url: uploaded.url };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error('Error subiendo portada de plantilla:', error);
+      throw error;
+    }
+  }
+
   /** Según límites efectivos del plan (BD override o defaults). */
   private async assertProductPhotosAllowed(tenantId: string): Promise<void> {
     const tenant = await this.postgres.queryRaw<any>(

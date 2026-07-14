@@ -1,4 +1,10 @@
 import React from 'react';
+import {
+  FOOTER_REL_APPMENUQR,
+  FOOTER_REL_CONTACT,
+  FOOTER_REL_EXTERNAL,
+  footerWebsiteRel,
+} from '../../lib/template-footer-link-rel';
 import Link from 'next/link';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 
@@ -329,7 +335,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
                   <a 
                     href={`https://wa.me/${formatWhatsAppForLink(restaurant.whatsapp, restaurant.country)}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel={FOOTER_REL_EXTERNAL}
                     style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.whatsapp}
@@ -339,7 +345,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
               {restaurant.email && (
                 <p style={{ marginBottom: '8px', opacity: 0.9 }}>
                   <strong>✉️ Email:</strong>{' '}
-                  <a href={`mailto:${restaurant.email}`} style={{ color: 'white', textDecoration: 'underline' }}>
+                  <a href={`mailto:${restaurant.email}`} rel={FOOTER_REL_CONTACT} style={{ color: 'white', textDecoration: 'underline' }}>
                     {restaurant.email}
                   </a>
                 </p>
@@ -350,7 +356,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
                   <a 
                     href={restaurant.website.startsWith('http') ? restaurant.website : `https://${restaurant.website}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel={FOOTER_REL_EXTERNAL}
                     style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.website}
@@ -361,7 +367,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
           </div>
           <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.25)', textAlign: 'center', fontSize: '0.8rem', opacity: 0.9 }}>
             Menú creado con{' '}
-            <a href="https://appmenuqr.com" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>appmenuqr.com</a>
+            <a href="https://appmenuqr.com" target="_blank" rel={FOOTER_REL_APPMENUQR} style={{ color: 'white', textDecoration: 'underline' }}>appmenuqr.com</a>
           </div>
         </div>
       </footer>

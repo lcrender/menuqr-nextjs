@@ -7,6 +7,51 @@ import type {
 
 export const MENU_TEMPLATES_CATALOG = catalogJson as MenuTemplateCatalogItem[];
 
+/** Orden de visualización en catálogo público y admin. Plan Premium va en índice 3 (4.ª tarjeta). */
+export const CATALOG_TEMPLATE_SLUG_ORDER: readonly string[] = [
+  'smart-food',
+  'beach-bar',
+  'minimalista',
+  'gourmet',
+  'night-club',
+  'modern-food',
+  'italian-food',
+  'sol-noche',
+  'foodie',
+  'classic',
+  'burgers',
+];
+
+/** Posición 0-based de la tarjeta Plan Premium entre plantillas. */
+export const CATALOG_PREMIUM_CARD_INDEX = 3;
+
+export type CatalogGridItem =
+  | { type: 'template'; template: MenuTemplateCatalogItem }
+  | { type: 'premium' };
+
+export function sortTemplatesByCatalogOrder(items: MenuTemplateCatalogItem[]): MenuTemplateCatalogItem[] {
+  const orderIndex = new Map(CATALOG_TEMPLATE_SLUG_ORDER.map((slug, index) => [slug, index]));
+  return [...items].sort((a, b) => {
+    const ia = orderIndex.get(a.slug) ?? 999;
+    const ib = orderIndex.get(b.slug) ?? 999;
+    if (ia !== ib) return ia - ib;
+    return a.nombre.localeCompare(b.nombre, 'es');
+  });
+}
+
+export function buildCatalogGridItems(
+  templates: MenuTemplateCatalogItem[],
+  options?: { includePremium?: boolean },
+): CatalogGridItem[] {
+  const sorted = sortTemplatesByCatalogOrder(templates);
+  const items: CatalogGridItem[] = sorted.map((template) => ({ type: 'template', template }));
+  if (options?.includePremium !== false) {
+    const at = Math.min(CATALOG_PREMIUM_CARD_INDEX, items.length);
+    items.splice(at, 0, { type: 'premium' });
+  }
+  return items;
+}
+
 const SLUG_SET = new Set(MENU_TEMPLATES_CATALOG.map((t) => t.slug));
 
 export function getTemplateBySlug(slug: string): MenuTemplateCatalogItem | undefined {

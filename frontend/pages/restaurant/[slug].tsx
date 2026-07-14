@@ -24,6 +24,9 @@ import ItalianFoodTemplate from '../../templates/italianfood/ItalianFoodTemplate
 import GourmetTemplate from '../../templates/gourmet/GourmetTemplate';
 import ProMobileTemplate from '../../templates/promobile/ProMobileTemplate';
 import NightClubTemplate from '../../templates/nightclub/NightClubTemplate';
+import SmartFoodTemplate from '../../templates/smartfood/SmartFoodTemplate';
+import BeachBarTemplate from '../../templates/beachbar/BeachBarTemplate';
+import SolNocheTemplate from '../../templates/solnoche/SolNocheTemplate';
 
 // Códigos de país comunes para WhatsApp
 const countryCodes: { [key: string]: string } = {
@@ -466,6 +469,33 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
       <>
         <PublicHtmlSeoHead seo={displaySeo} />
         <NightClubTemplate {...templateProps} />
+      </>
+    );
+  }
+
+  if (template === 'smartFood') {
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <SmartFoodTemplate {...templateProps} />
+      </>
+    );
+  }
+
+  if (template === 'beachBar') {
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <BeachBarTemplate {...templateProps} />
+      </>
+    );
+  }
+
+  if (template === 'solNoche') {
+    return (
+      <>
+        <PublicHtmlSeoHead seo={displaySeo} />
+        <SolNocheTemplate {...templateProps} />
       </>
     );
   }

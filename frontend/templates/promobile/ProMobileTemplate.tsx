@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import {
+  FOOTER_REL_APPMENUQR,
+  FOOTER_REL_CONTACT,
+  FOOTER_REL_EXTERNAL,
+  footerWebsiteRel,
+} from '../../lib/template-footer-link-rel';
 
 interface ProMobileTemplateProps {
   restaurant: {
@@ -66,6 +72,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
   appearance = 'default',
 }) => {
   const isNightClub = appearance === 'nightClub';
+  const footerWebsiteRelValue = footerWebsiteRel(!isNightClub);
   const primaryColor = restaurant.primaryColor || (isNightClub ? '#9333ea' : '#1a1a2e');
   const secondaryColor = restaurant.secondaryColor || (isNightClub ? '#e879f9' : '#c9a227');
   const tc = restaurant.templateConfig || {};
@@ -495,6 +502,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
                   <strong>📞 Teléfono:</strong>{' '}
                   <a
                     href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`}
+                    rel={FOOTER_REL_CONTACT}
                     style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.phone.split('|')[0]?.trim() ?? ''}
@@ -507,7 +515,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
                   <a
                     href={`https://wa.me/${formatWhatsAppForLink(restaurant.whatsapp, restaurant.country)}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel={FOOTER_REL_EXTERNAL}
                     style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.whatsapp}
@@ -517,7 +525,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
               {restaurant.email && (
                 <p style={{ marginBottom: '8px', opacity: 0.9, fontSize: '0.9rem' }}>
                   <strong>✉️ Email:</strong>{' '}
-                  <a href={`mailto:${restaurant.email}`} style={{ color: 'white', textDecoration: 'underline' }}>
+                  <a href={`mailto:${restaurant.email}`} rel={FOOTER_REL_CONTACT} style={{ color: 'white', textDecoration: 'underline' }}>
                     {restaurant.email}
                   </a>
                 </p>
@@ -528,7 +536,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
                   <a
                     href={restaurant.website.startsWith('http') ? restaurant.website : `https://${restaurant.website}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel={footerWebsiteRelValue}
                     style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.website}
@@ -548,7 +556,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
             }}
           >
             Menú creado con{' '}
-            <a href="https://appmenuqr.com" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>
+            <a href="https://appmenuqr.com" target="_blank" rel={FOOTER_REL_APPMENUQR} style={{ color: 'white', textDecoration: 'underline' }}>
               appmenuqr.com
             </a>
           </div>

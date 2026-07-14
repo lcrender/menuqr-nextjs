@@ -12,13 +12,24 @@ import ItalianFoodTemplate from '../../templates/italianfood/ItalianFoodTemplate
 import GourmetTemplate from '../../templates/gourmet/GourmetTemplate';
 import ProMobileTemplate from '../../templates/promobile/ProMobileTemplate';
 import NightClubTemplate from '../../templates/nightclub/NightClubTemplate';
+import SmartFoodTemplate from '../../templates/smartfood/SmartFoodTemplate';
+import BeachBarTemplate from '../../templates/beachbar/BeachBarTemplate';
+import SolNocheTemplate from '../../templates/solnoche/SolNocheTemplate';
 import type { MenuTabVariant } from '../../components/MenuLanguageSwitcher';
 import type { ItemPrice } from '../../data/preview-data';
 import {
   normalizePreviewTemplateSlug,
-  previewTemplateIdToCatalogSlug,
 } from '../../lib/menu-template-preview-route';
 import PreviewTemplateCtaBar from '../../components/preview/PreviewTemplateCtaBar';
+import SolNochePreviewEditToolbar from '../../components/preview/SolNochePreviewEditToolbar';
+import TemplatePreviewEditPanel from '../../components/preview/TemplatePreviewEditPanel';
+import type { PreviewRestaurant } from '../../data/preview-data';
+import {
+  buildTemplateConfigDefaults,
+  TEMPLATE_CONFIG_SCHEMAS,
+  TEMPLATE_NAMES,
+} from '../../lib/template-config-schema';
+import type { SolNocheEditHotspot } from '../../lib/sol-noche-preview-edit';
 import { PLANTILLAS_CATALOG_PATH } from '../../lib/plantillas-catalog-url';
 
 const formatPrice = (price: ItemPrice) => {
@@ -54,6 +65,9 @@ const PREVIEW_SLUG_LABELS: Record<string, string> = {
   gourmet: 'Gourmet',
   'modern-food': 'Modern Food',
   'night-club': 'Neon Club',
+  'smart-food': 'Smart Food',
+  'beach-bar': 'Beach Life',
+  'sol-noche': 'Sol & Noche',
 };
 
 const iconLabels: { [key: string]: string } = {
@@ -72,6 +86,26 @@ const iconLabelsEn: { [key: string]: string } = {
   vegetariano: 'Vegetarian',
   'sin-gluten': 'Gluten Free',
   'sin-lactosa': 'Lactose Free',
+};
+
+/** Vista previa Italian Food: locale → menú demo */
+const ITALIAN_FOOD_PREVIEW_LOCALE_TO_MENU_SLUG: Record<string, string> = {
+  'it-IT': 'italiano',
+  'es-ES': 'espanol',
+  'en-US': 'english',
+};
+
+/** Vista previa Foodie: locale → menú demo */
+const FOODIE_PREVIEW_LOCALE_TO_MENU_SLUG: Record<string, string> = {
+  'es-ES': 'espanol',
+  'en-US': 'english',
+  'it-IT': 'italiano',
+};
+
+/** Vista previa Beach Life: locale → menú demo */
+const BEACH_BAR_PREVIEW_LOCALE_TO_MENU_SLUG: Record<string, string> = {
+  'es-ES': 'carta',
+  'en-US': 'menu',
 };
 
 /** Vista previa Modern Food: locale + tipo de menú */
@@ -117,19 +151,65 @@ export default function PreviewPage() {
   const { restaurant, menu, menus } = data;
   const menuListSource = menus?.length ? menus : [menu];
   const isModernFoodPreview = slug === 'modern-food';
+  const isFoodiePreview = slug === 'foodie';
+  const isItalianFoodPreview = slug === 'italian-food';
+  const isBeachBarPreview = slug === 'beach-bar';
+  const isSolNochePreview = slug === 'sol-noche';
+  const isLocaleMenuPreview = isBeachBarPreview || isSolNochePreview;
   const [selectedMenuKey, setSelectedMenuKey] = useState<string>('menu-principal');
   const [contentLocale, setContentLocale] = useState('es-ES');
+  const [solNocheColorMode, setSolNocheColorMode] = useState<'light' | 'dark'>('light');
+  const [editMode, setEditMode] = useState(false);
+  const [selectedHotspot, setSelectedHotspot] = useState<SolNocheEditHotspot | null>(null);
+  const [draftRestaurant, setDraftRestaurant] = useState<PreviewRestaurant>(restaurant);
+  const [draftTemplateConfig, setDraftTemplateConfig] = useState<Record<string, unknown>>(() =>
+    buildTemplateConfigDefaults('solNoche', restaurant.templateConfig, restaurant),
+  );
+  const embedColorMode =
+    typeof router.query.colorMode === 'string' && router.query.colorMode === 'dark' ? 'dark' : 'light';
   useEffect(() => {
-    if (!isModernFoodPreview) {
-      const s = menuListSource[0]?.slug;
-      if (s) setSelectedMenuKey(s);
-    } else {
+    if (isModernFoodPreview) {
       setSelectedMenuKey('menu-principal');
+      return;
     }
-  }, [slug, isModernFoodPreview, menuListSource]);
+    if (isFoodiePreview) {
+      const menuSlug = FOODIE_PREVIEW_LOCALE_TO_MENU_SLUG[contentLocale] ?? 'espanol';
+      setSelectedMenuKey(menuSlug);
+      return;
+    }
+    if (isItalianFoodPreview) {
+      const menuSlug = ITALIAN_FOOD_PREVIEW_LOCALE_TO_MENU_SLUG[contentLocale] ?? 'italiano';
+      setSelectedMenuKey(menuSlug);
+      return;
+    }
+    if (isBeachBarPreview || isSolNochePreview) {
+      const menuSlug = BEACH_BAR_PREVIEW_LOCALE_TO_MENU_SLUG[contentLocale] ?? 'carta';
+      setSelectedMenuKey(menuSlug);
+      return;
+    }
+    const s = menuListSource[0]?.slug;
+    if (s) setSelectedMenuKey(s);
+  }, [slug, isModernFoodPreview, isFoodiePreview, isItalianFoodPreview, isLocaleMenuPreview, menuListSource, contentLocale]);
   useEffect(() => {
-    if (isModernFoodPreview) setContentLocale('es-ES');
-  }, [slug, isModernFoodPreview]);
+    if (isModernFoodPreview || isFoodiePreview || isLocaleMenuPreview) setContentLocale('es-ES');
+    if (isItalianFoodPreview) setContentLocale('it-IT');
+  }, [slug, isModernFoodPreview, isFoodiePreview, isItalianFoodPreview, isLocaleMenuPreview]);
+
+  useEffect(() => {
+    if (!isSolNochePreview) return;
+    const defaults = buildTemplateConfigDefaults('solNoche', restaurant.templateConfig, restaurant);
+    const initialMode =
+      embed && embedColorMode === 'dark'
+        ? 'dark'
+        : defaults.colorMode === 'dark'
+          ? 'dark'
+          : 'light';
+    setDraftRestaurant(restaurant);
+    setDraftTemplateConfig({ ...defaults, colorMode: initialMode, autoDayNightSwitch: false });
+    setEditMode(false);
+    setSelectedHotspot(null);
+    setSolNocheColorMode(initialMode);
+  }, [isSolNochePreview, restaurant, embed, embedColorMode]);
 
   const modernFoodLocaleMenu = useMemo(() => {
     if (!isModernFoodPreview) return null;
@@ -139,8 +219,20 @@ export default function PreviewPage() {
 
   const selectedMenuFromList = useMemo(() => {
     if (isModernFoodPreview && modernFoodLocaleMenu) return modernFoodLocaleMenu;
+    if (isFoodiePreview) {
+      const menuSlug = FOODIE_PREVIEW_LOCALE_TO_MENU_SLUG[contentLocale] ?? 'espanol';
+      return menuListSource.find((m) => m.slug === menuSlug) ?? menuListSource[0];
+    }
+    if (isItalianFoodPreview) {
+      const menuSlug = ITALIAN_FOOD_PREVIEW_LOCALE_TO_MENU_SLUG[contentLocale] ?? 'italiano';
+      return menuListSource.find((m) => m.slug === menuSlug) ?? menuListSource[0];
+    }
+    if (isBeachBarPreview || isSolNochePreview) {
+      const menuSlug = BEACH_BAR_PREVIEW_LOCALE_TO_MENU_SLUG[contentLocale] ?? 'carta';
+      return menuListSource.find((m) => m.slug === menuSlug) ?? menuListSource[0];
+    }
     return menuListSource.find((m) => m.slug === selectedMenuKey) ?? menuListSource[0];
-  }, [isModernFoodPreview, modernFoodLocaleMenu, menuListSource, selectedMenuKey]);
+  }, [isModernFoodPreview, isFoodiePreview, isItalianFoodPreview, isBeachBarPreview, isSolNochePreview, modernFoodLocaleMenu, menuListSource, contentLocale, selectedMenuKey]);
 
   if (!menuListSource[0] || !selectedMenuFromList) {
     return (
@@ -165,7 +257,9 @@ export default function PreviewPage() {
     ...(selectedMenuFromList.description && { description: selectedMenuFromList.description }),
     sections: selectedMenuFromList.sections,
   };
-  const menuList = isModernFoodPreview
+  const menuList = isFoodiePreview || isItalianFoodPreview || isLocaleMenuPreview
+    ? []
+    : isModernFoodPreview
     ? MODERN_FOOD_PREVIEW_MENU_TABS.map((tab) => ({
         id: `modern-food-tab-${tab.key}`,
         name: contentLocale === 'en-US' ? tab.labelEn : tab.labelEs,
@@ -197,15 +291,113 @@ export default function PreviewPage() {
       }
     : undefined;
 
+  const foodieMenuLocales = isFoodiePreview
+    ? {
+        locales: ['es-ES', 'en-US', 'it-IT'],
+        manifest: [
+          { locale: 'es-ES', label: 'Español', flagCode: 'es' },
+          { locale: 'en-US', label: 'English', flagCode: 'gb' },
+          { locale: 'it-IT', label: 'Italiano', flagCode: 'it' },
+        ],
+        value: contentLocale,
+        onChange: setContentLocale,
+        primaryColor: restaurant.primaryColor || '#A52A2A',
+        secondaryColor: restaurant.secondaryColor || '#D2B48C',
+        menuTabVariant: 'foodie' as MenuTabVariant,
+      }
+    : undefined;
+
+  const italianFoodMenuLocales = isItalianFoodPreview
+    ? {
+        locales: ['it-IT', 'es-ES', 'en-US'],
+        manifest: [
+          { locale: 'it-IT', label: 'Italiano', flagCode: 'it' },
+          { locale: 'es-ES', label: 'Español', flagCode: 'es' },
+          { locale: 'en-US', label: 'English', flagCode: 'gb' },
+        ],
+        value: contentLocale,
+        onChange: setContentLocale,
+        primaryColor: '#009246',
+        secondaryColor: '#CE2B37',
+        menuTabVariant: 'italianFood' as MenuTabVariant,
+      }
+    : undefined;
+
+  const beachBarMenuLocales = isLocaleMenuPreview
+    ? {
+        locales: ['es-ES', 'en-US'],
+        manifest: [
+          { locale: 'es-ES', label: 'Español', flagCode: 'es' },
+          { locale: 'en-US', label: 'English', flagCode: 'gb' },
+        ],
+        value: contentLocale,
+        onChange: setContentLocale,
+        primaryColor: restaurant.primaryColor || '#1e3a5f',
+        secondaryColor: restaurant.secondaryColor || '#e8786a',
+        menuTabVariant: 'classic' as MenuTabVariant,
+      }
+    : undefined;
+
+  const previewMenuLocales = beachBarMenuLocales ?? italianFoodMenuLocales ?? foodieMenuLocales ?? modernFoodMenuLocales;
+
+  const handleSolNocheColorModeChange = (mode: 'light' | 'dark') => {
+    setSolNocheColorMode(mode);
+    setDraftTemplateConfig((prev) => ({ ...prev, colorMode: mode }));
+  };
+
+  const handleTemplateConfigChange = (optionId: string, value: unknown) => {
+    setDraftTemplateConfig((prev) => ({ ...prev, [optionId]: value }));
+    if (optionId === 'colorMode' && (value === 'light' || value === 'dark')) {
+      setSolNocheColorMode(value);
+    }
+  };
+
+  const handleRestaurantFieldChange = (field: 'name' | 'description', value: string) => {
+    setDraftRestaurant((prev) => ({
+      ...prev,
+      ...(field === 'name' ? { name: value } : { description: value }),
+    }));
+  };
+
+  const restaurantForTemplate = useMemo(() => {
+    if (!isSolNochePreview) return restaurant;
+    const tc = draftTemplateConfig;
+    const colorMode = tc.colorMode === 'dark' ? 'dark' : 'light';
+    const primaryColor =
+      typeof tc.primaryColor === 'string' ? tc.primaryColor : draftRestaurant.primaryColor || '#c45c26';
+    const secondaryColor =
+      typeof tc.secondaryColor === 'string' ? tc.secondaryColor : draftRestaurant.secondaryColor || '#1e3a5f';
+    return {
+      ...draftRestaurant,
+      primaryColor,
+      secondaryColor,
+      templateConfig: { ...tc, colorMode, autoDayNightSwitch: false },
+    };
+  }, [isSolNochePreview, restaurant, draftRestaurant, draftTemplateConfig]);
+
+  const solNocheEditSchema = TEMPLATE_CONFIG_SCHEMAS.solNoche ?? [];
+
+  const menuLocalesForTemplate = useMemo(() => {
+    if (!previewMenuLocales) return undefined;
+    if (!isSolNochePreview) return previewMenuLocales;
+    const showTranslationFlags = restaurantForTemplate.templateConfig?.showTranslationFlags !== false;
+    return {
+      ...previewMenuLocales,
+      primaryColor: restaurantForTemplate.primaryColor || previewMenuLocales.primaryColor,
+      secondaryColor: restaurantForTemplate.secondaryColor || previewMenuLocales.secondaryColor,
+      showTranslationFlags,
+    };
+  }, [previewMenuLocales, isSolNochePreview, restaurantForTemplate]);
+
   const commonProps = {
-    restaurant,
+    restaurant: restaurantForTemplate,
     menuList,
     selectedMenu,
     onMenuSelect,
     formatPrice,
     formatWhatsAppForLink,
     iconLabels: activeIconLabels,
-    ...(modernFoodMenuLocales ? { menuLocales: modernFoodMenuLocales } : {}),
+    ...(menuLocalesForTemplate ? { menuLocales: menuLocalesForTemplate } : {}),
   };
 
   const template = (restaurant.template || menu.template || 'classic') as string;
@@ -218,6 +410,18 @@ export default function PreviewPage() {
     if (template === 'gourmet') return <GourmetTemplate {...commonProps} />;
     if (template === 'proMobile') return <ProMobileTemplate {...commonProps} />;
     if (template === 'nightClub') return <NightClubTemplate {...commonProps} />;
+    if (template === 'smartFood') return <SmartFoodTemplate {...commonProps} />;
+    if (template === 'beachBar') return <BeachBarTemplate {...commonProps} />;
+    if (template === 'solNoche') {
+      return (
+        <SolNocheTemplate
+          {...commonProps}
+          {...(editMode
+            ? { editMode: true, selectedHotspot, onHotspotSelect: setSelectedHotspot }
+            : {})}
+        />
+      );
+    }
     if (template === 'italianFood') return <ItalianFoodTemplate {...commonProps} />;
     return <ClassicTemplate {...commonProps} />;
   })();
@@ -228,9 +432,42 @@ export default function PreviewPage() {
     return templateElement;
   }
 
-  const iframeSrc = `/preview/${encodeURIComponent(slug)}?embed=1`;
-  const catalogSlug = previewTemplateIdToCatalogSlug(slug);
-  const plantillaDetalleHref = `/plantillas/${encodeURIComponent(catalogSlug)}`;
+  const iframeQuery = new URLSearchParams({ embed: '1' });
+  if (isSolNochePreview) iframeQuery.set('colorMode', solNocheColorMode);
+  const iframeSrc = `/preview/${encodeURIComponent(slug)}?${iframeQuery.toString()}`;
+
+  const solNocheEditToolbar = isSolNochePreview ? (
+    <SolNochePreviewEditToolbar
+      colorMode={solNocheColorMode}
+      onColorModeChange={handleSolNocheColorModeChange}
+      editMode={editMode}
+      onEditModeToggle={() => {
+        setEditMode((open) => {
+          const next = !open;
+          if (!next) setSelectedHotspot(null);
+          return next;
+        });
+      }}
+    />
+  ) : null;
+
+  const solNocheEditPanel =
+    isSolNochePreview && editMode ? (
+      <TemplatePreviewEditPanel
+        templateLabel={TEMPLATE_NAMES.solNoche ?? 'Sol & Noche'}
+        schema={solNocheEditSchema}
+        templateConfig={draftTemplateConfig}
+        onTemplateConfigChange={handleTemplateConfigChange}
+        restaurantName={draftRestaurant.name}
+        restaurantDescription={draftRestaurant.description ?? ''}
+        onRestaurantFieldChange={handleRestaurantFieldChange}
+        selectedHotspot={selectedHotspot}
+        onClose={() => {
+          setEditMode(false);
+          setSelectedHotspot(null);
+        }}
+      />
+    ) : null;
   const adjacent = getAdjacentPreviewTemplateIds(slug);
   const labelFor = (id: string) => PREVIEW_SLUG_LABELS[id] ?? id;
 
@@ -241,12 +478,6 @@ export default function PreviewPage() {
       </Head>
       <nav className="preview-nav-land" aria-label="Salir de la vista previa">
         <div className="preview-nav-land-inner">
-          <Link href={plantillaDetalleHref} className="preview-nav-land-link">
-            ← Volver a la plantilla
-          </Link>
-          <span className="preview-nav-land-sep" aria-hidden>
-            |
-          </span>
           <Link href={PLANTILLAS_CATALOG_PATH} className="preview-nav-land-link">
             Catálogo de plantillas
           </Link>
@@ -254,7 +485,7 @@ export default function PreviewPage() {
       </nav>
 
       {/* Desktop: flechas + mockup de teléfono */}
-      <div className="preview-stage-desktop d-none d-md-flex">
+      <div className={`preview-stage-desktop d-none d-md-flex${editMode && isSolNochePreview ? ' preview-stage-desktop--editing' : ''}`}>
         {adjacent ? (
           <Link
             href={`/preview/${encodeURIComponent(adjacent.prevId)}`}
@@ -269,16 +500,27 @@ export default function PreviewPage() {
         ) : (
           <span className="preview-nav-step-spacer" aria-hidden />
         )}
-        <div className="preview-phone-wrap">
-          <div className="preview-phone" aria-label="Mockup de teléfono">
-            <div className="preview-phone-screen">
-              <iframe
-                title="Vista previa mobile"
-                src={iframeSrc}
-                className="preview-phone-iframe"
-              />
+        <div className="preview-stage-main">
+          <div className="preview-phone-column">
+            {solNocheEditToolbar}
+            <div className="preview-phone-wrap">
+              <div className="preview-phone" aria-label="Mockup de teléfono">
+                <div className="preview-phone-screen">
+                  {isSolNochePreview ? (
+                    <div className="preview-phone-live">{templateElement}</div>
+                  ) : (
+                    <iframe
+                      key={slug}
+                      title="Vista previa mobile"
+                      src={iframeSrc}
+                      className="preview-phone-iframe"
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
+          {solNocheEditPanel}
         </div>
         {adjacent ? (
           <Link
@@ -323,6 +565,8 @@ export default function PreviewPage() {
             </Link>
           </div>
         ) : null}
+        {solNocheEditToolbar}
+        {solNocheEditPanel}
         <div className="preview-mobile-wrap">{templateElement}</div>
       </div>
 
@@ -364,13 +608,59 @@ export default function PreviewPage() {
         }
 
         .preview-stage-desktop {
-          min-height: calc(100vh - 52px);
+          min-height: calc(100vh - 52px - 100px);
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 28px;
-          padding: 24px 20px;
+          padding: 24px 20px 0;
           background: #fafafa;
+        }
+
+        .preview-stage-desktop--editing {
+          display: grid;
+          grid-template-columns: minmax(5.5rem, 1fr) auto minmax(5.5rem, 1fr);
+          align-items: center;
+          justify-items: center;
+          column-gap: 28px;
+          row-gap: 24px;
+        }
+
+        .preview-stage-desktop--editing .preview-nav-step-prev,
+        .preview-stage-desktop--editing .preview-nav-step-spacer:first-child {
+          grid-column: 1;
+          justify-self: end;
+        }
+
+        .preview-stage-desktop--editing .preview-stage-main {
+          grid-column: 2;
+          justify-self: center;
+        }
+
+        .preview-stage-desktop--editing .preview-nav-step-next,
+        .preview-stage-desktop--editing .preview-nav-step-spacer:last-child {
+          grid-column: 3;
+          justify-self: start;
+        }
+
+        .preview-stage-main {
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          gap: 20px;
+        }
+
+        .preview-phone-live {
+          width: 100%;
+          height: 100%;
+          overflow-x: hidden;
+          overflow-y: auto;
+          background: #ffffff;
+        }
+
+        .preview-phone-live :global(.template-sol-noche) {
+          min-height: 100%;
+          overflow-x: hidden;
         }
 
         .preview-nav-step {
@@ -408,7 +698,7 @@ export default function PreviewPage() {
         .preview-stage-mobile {
           display: flex;
           flex-direction: column;
-          min-height: calc(100vh - 52px);
+          min-height: calc(100vh - 52px - 132px);
           background: #ffffff;
         }
 
@@ -442,6 +732,13 @@ export default function PreviewPage() {
           text-overflow: ellipsis;
         }
 
+        .preview-phone-column {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 14px;
+        }
+
         .preview-phone-wrap {
           display: flex;
           align-items: flex-start;
@@ -460,8 +757,8 @@ export default function PreviewPage() {
 
         .preview-phone-screen {
           width: 100%;
-          height: min(720px, calc(100vh - 120px));
-          max-height: calc(100vh - 120px);
+          height: min(720px, calc(100vh - 52px - 120px));
+          max-height: calc(100vh - 52px - 120px);
           background: #ffffff;
           border-radius: 32px;
           overflow: hidden;

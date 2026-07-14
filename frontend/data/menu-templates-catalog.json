@@ -1,12 +1,21 @@
 [
   {
-    "slug": "classic",
-    "nombre": "Clásica",
-    "categoria": "restaurante",
-    "estilos": ["clasico", "minimalista"],
-    "tags": ["tradicional", "bodegon", "parrilla", "sandwiches"],
+    "slug": "smart-food",
+    "nombre": "Smart Food",
+    "categoria": "saludable",
+    "estilos": ["minimalista", "moderno"],
+    "tags": ["alergenos", "vegano", "vegetariano", "sin gluten", "bowls", "ensaladas"],
     "plan": "free",
-    "imagen": "/preview/preview-classic.jpg"
+    "imagen": "/preview/preview-smart-food.png"
+  },
+  {
+    "slug": "beach-bar",
+    "nombre": "Beach Life",
+    "categoria": "playa",
+    "estilos": ["moderno", "visual", "elegante"],
+    "tags": ["bar de playa", "tragos", "desayunos", "snacks", "postres", "con imagenes"],
+    "plan": "pro",
+    "imagen": "/preview/preview-beach-bar.jpg"
   },
   {
     "slug": "minimalista",
@@ -18,15 +27,6 @@
     "imagen": "/preview/preview-minimalist.jpg"
   },
   {
-    "slug": "foodie",
-    "nombre": "Foodie",
-    "categoria": "restaurante",
-    "estilos": ["moderno", "clasico", "minimalista"],
-    "tags": ["menu ejecutivo", "restaurante familiar", "comida rapida"],
-    "plan": "free",
-    "imagen": "/preview/preview-foodie.jpg"
-  },
-  {
     "slug": "gourmet",
     "nombre": "Gourmet",
     "categoria": "gourmet",
@@ -34,6 +34,15 @@
     "tags": ["alta cocina", "con imagenes", "parrilla", "cerveceria", "brunch"],
     "plan": "pro",
     "imagen": "/preview/preview-gourmet.jpg"
+  },
+  {
+    "slug": "night-club",
+    "nombre": "Neon Club",
+    "categoria": "nightclub",
+    "estilos": ["moderno", "elegante", "dark"],
+    "tags": ["discoteca", "bar", "cocktails", "tragos", "musica"],
+    "plan": "free",
+    "imagen": "/preview/preview-night-club.png"
   },
   {
     "slug": "modern-food",
@@ -45,15 +54,6 @@
     "imagen": "/preview/preview-modern-food.jpg"
   },
   {
-    "slug": "burgers",
-    "nombre": "Burgers",
-    "categoria": "hamburguesas",
-    "estilos": [],
-    "tags": ["street food", "comida rapida", "hamburguesas", "pizza", "pancheria", "milanesas"],
-    "plan": "free",
-    "imagen": "/preview/preview-burgers.jpg"
-  },
-  {
     "slug": "italian-food",
     "nombre": "Italian Food",
     "categoria": "italiano",
@@ -63,12 +63,39 @@
     "imagen": "/preview/preview-italianFood.jpg"
   },
   {
-    "slug": "night-club",
-    "nombre": "Neon Club",
-    "categoria": "nightclub",
+    "slug": "sol-noche",
+    "nombre": "Sol & Noche",
+    "categoria": "visual",
     "estilos": ["moderno", "elegante", "dark"],
-    "tags": ["discoteca", "bar", "cocktails", "tragos", "musica"],
+    "tags": ["modo oscuro", "destacados", "portada", "con imagenes", "pro"],
+    "plan": "pro",
+    "imagen": "/plantillas/landings/carta-digital-codigo-qr-sol-noche-preview-e8f182ad-9f88-49ee-a0ee-ac6285bf9cfa.png"
+  },
+  {
+    "slug": "foodie",
+    "nombre": "Foodie",
+    "categoria": "restaurante",
+    "estilos": ["moderno", "clasico", "minimalista"],
+    "tags": ["menu ejecutivo", "restaurante familiar", "comida rapida"],
     "plan": "free",
-    "imagen": "/preview/preview-night-club.png"
+    "imagen": "/preview/preview-foodie.jpg"
+  },
+  {
+    "slug": "classic",
+    "nombre": "Clásica",
+    "categoria": "restaurante",
+    "estilos": ["clasico", "minimalista"],
+    "tags": ["tradicional", "bodegon", "parrilla", "sandwiches"],
+    "plan": "free",
+    "imagen": "/preview/preview-classic.jpg"
+  },
+  {
+    "slug": "burgers",
+    "nombre": "Burgers",
+    "categoria": "hamburguesas",
+    "estilos": [],
+    "tags": ["street food", "comida rapida", "hamburguesas", "pizza", "pancheria", "milanesas"],
+    "plan": "free",
+    "imagen": "/preview/preview-burgers.jpg"
   }
 ]

@@ -1,15 +1,15 @@
 import type { PlantillaLandingContent } from '../types/plantilla-landing';
 
 /**
- * Contenido editorial de la landing /plantillas/classic.
+ * Contenido editorial de la landing /caracteristicas/classic.
  * En el futuro puede cargarse desde CMS manteniendo la misma forma (PlantillaLandingContent).
  */
 export const PLANTILLA_CLASSIC_LANDING: PlantillaLandingContent = {
   slug: 'classic',
   seo: {
-    title: 'Plantilla de menú QR clásica para restaurantes | Carta digital elegante',
+    title: 'Características plantilla Clásica | Menú QR',
     description:
-      'Descubre la plantilla de menú QR clásica para restaurantes. Diseño elegante, fácil de usar y adaptable a tu marca. Ideal para cartas digitales profesionales.',
+      'Carta digital clásica para restaurantes y bares. Diseño elegante, colores personalizables y lectura clara en celular. Plantilla gratuita con menú QR.',
   },
   previewPath: '/preview/classic',
   heroPreviewImage: '/plantillas/landings/classic-hero-preview.png',
@@ -83,7 +83,7 @@ export const PLANTILLA_CLASSIC_LANDING: PlantillaLandingContent = {
   qr: {
     heading: 'Ver demo en tu móvil',
     body: 'Escanea el código QR para ver una preview real de esta plantilla en tu teléfono.',
-    demoButtonLabel: 'Ver demo',
+    demoButtonLabel: 'Vista previa',
     demoHint: 'Demo disponible en celular y navegador',
   },
   cta: {

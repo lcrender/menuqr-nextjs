@@ -483,7 +483,7 @@ export class RestaurantsService {
     const template = data.template || 'classic';
     if (!RESTAURANT_TEMPLATE_IDS.includes(template as (typeof RESTAURANT_TEMPLATE_IDS)[number])) {
       throw new BadRequestException(
-        'Template inválido. Debe ser: classic, minimalist, foodie, burgers, italianFood, gourmet, proMobile o nightClub',
+        'Template inválido. Debe ser: classic, minimalist, foodie, burgers, italianFood, gourmet, proMobile, nightClub o smartFood',
       );
     }
     const planForTpl = await this.getTenantPlan(tenantId);
@@ -630,7 +630,7 @@ export class RestaurantsService {
     if (data.template !== undefined && data.template !== null) {
       if (!RESTAURANT_TEMPLATE_IDS.includes(data.template as (typeof RESTAURANT_TEMPLATE_IDS)[number])) {
         throw new BadRequestException(
-          'Template inválido. Debe ser: classic, minimalist, foodie, burgers, italianFood, gourmet, proMobile o nightClub',
+          'Template inválido. Debe ser: classic, minimalist, foodie, burgers, italianFood, gourmet, proMobile, nightClub o smartFood',
         );
       }
       const plan = await this.getTenantPlan(tenantId);

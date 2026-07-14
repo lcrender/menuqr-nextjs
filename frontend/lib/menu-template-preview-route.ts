@@ -11,6 +11,9 @@ const CATALOG_SLUG_TO_PREVIEW_SLUG: Record<string, string> = {
   'italian-food': 'italian-food',
   'modern-food': 'modern-food',
   'night-club': 'night-club',
+  'smart-food': 'smart-food',
+  'beach-bar': 'beach-bar',
+  'sol-noche': 'sol-noche',
 };
 
 /**
@@ -23,6 +26,9 @@ const LEGACY_PREVIEW_ALIASES: Record<string, string> = {
   proMobile: 'modern-food',
   'pro-mobile': 'modern-food',
   nightClub: 'night-club',
+  smartFood: 'smart-food',
+  beachBar: 'beach-bar',
+  solNoche: 'sol-noche',
 };
 
 const PREVIEW_SLUG_TO_CATALOG_SLUG: Record<string, string> = {
@@ -34,13 +40,16 @@ const PREVIEW_SLUG_TO_CATALOG_SLUG: Record<string, string> = {
   'italian-food': 'italian-food',
   'modern-food': 'modern-food',
   'night-club': 'night-club',
+  'smart-food': 'smart-food',
+  'beach-bar': 'beach-bar',
+  'sol-noche': 'sol-noche',
 };
 
 export function catalogSlugToPreviewTemplateId(catalogSlug: string): string {
   return CATALOG_SLUG_TO_PREVIEW_SLUG[catalogSlug] ?? catalogSlug;
 }
 
-/** Slug de `/preview/[templateSlug]` -> slug de catálogo `/plantillas/[slug]`. */
+/** Slug de `/preview/[templateSlug]` -> slug de catálogo `/caracteristicas/[slug]`. */
 export function previewTemplateIdToCatalogSlug(previewTemplateId: string): string {
   const canonical = normalizePreviewTemplateSlug(previewTemplateId);
   return canonical ? PREVIEW_SLUG_TO_CATALOG_SLUG[canonical] ?? canonical : previewTemplateId;

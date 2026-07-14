@@ -1,5 +1,11 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import {
+  FOOTER_REL_APPMENUQR,
+  FOOTER_REL_CONTACT,
+  FOOTER_REL_EXTERNAL,
+  footerWebsiteRel,
+} from '../../lib/template-footer-link-rel';
 
 const FONT_FAMILIES: Record<string, string> = {
   serif: 'Georgia, "Times New Roman", Times, serif',
@@ -352,32 +358,32 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
               {restaurant.phone && (
                 <p style={{ marginBottom: '10px', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>📞 Teléfono:</strong>{' '}
-                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} style={{ color: 'white', textDecoration: 'underline' }}>{restaurant.phone.split('|')[0]?.trim() ?? ''}</a>
+                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} rel={FOOTER_REL_CONTACT} style={{ color: 'white', textDecoration: 'underline' }}>{restaurant.phone.split('|')[0]?.trim() ?? ''}</a>
                 </p>
               )}
               {restaurant.whatsapp && (
                 <p style={{ marginBottom: '10px', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>💬 WhatsApp:</strong>{' '}
-                  <a href={`https://wa.me/${formatWhatsAppForLink(restaurant.whatsapp, restaurant.country)}`} target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>{restaurant.whatsapp}</a>
+                  <a href={`https://wa.me/${formatWhatsAppForLink(restaurant.whatsapp, restaurant.country)}`} target="_blank" rel={FOOTER_REL_EXTERNAL} style={{ color: 'white', textDecoration: 'underline' }}>{restaurant.whatsapp}</a>
                 </p>
               )}
               {restaurant.email && (
                 <p style={{ marginBottom: '10px', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>✉️ Email:</strong>{' '}
-                  <a href={`mailto:${restaurant.email}`} style={{ color: 'white', textDecoration: 'underline' }}>{restaurant.email}</a>
+                  <a href={`mailto:${restaurant.email}`} rel={FOOTER_REL_CONTACT} style={{ color: 'white', textDecoration: 'underline' }}>{restaurant.email}</a>
                 </p>
               )}
               {restaurant.website && (
                 <p style={{ marginBottom: '0', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>🌐 Web:</strong>{' '}
-                  <a href={restaurant.website.startsWith('http') ? restaurant.website : `https://${restaurant.website}`} target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>{restaurant.website}</a>
+                  <a href={restaurant.website.startsWith('http') ? restaurant.website : `https://${restaurant.website}`} target="_blank" rel={footerWebsiteRel(true)} style={{ color: 'white', textDecoration: 'underline' }}>{restaurant.website}</a>
                 </p>
               )}
             </div>
           </div>
           <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.25)', textAlign: 'center', fontSize: '0.8rem', opacity: 0.9 }}>
             Menú creado con{' '}
-            <a href="https://appmenuqr.com" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>appmenuqr.com</a>
+            <a href="https://appmenuqr.com" target="_blank" rel={FOOTER_REL_APPMENUQR} style={{ color: 'white', textDecoration: 'underline' }}>appmenuqr.com</a>
           </div>
         </div>
       </footer>

@@ -1,5 +1,11 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import {
+  FOOTER_REL_APPMENUQR,
+  FOOTER_REL_CONTACT,
+  FOOTER_REL_EXTERNAL,
+  footerWebsiteRel,
+} from '../../lib/template-footer-link-rel';
 
 interface ItalianFoodTemplateProps {
   restaurant: {
@@ -124,7 +130,10 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
       </div>
 
       {/* Restaurant Info - Contenedor con fondo blanco */}
-      <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '40px 30px', position: 'relative', zIndex: 2, backgroundColor: 'white', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
+      <div
+        className="template-italianfood italian-food-intro-panel"
+        style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '40px 30px', position: 'relative', zIndex: 2, backgroundColor: 'white', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}
+      >
         <div style={{ 
           display: 'flex', 
           alignItems: 'flex-start', 
@@ -191,7 +200,11 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
           </div>
         </div>
 
-        {menuLocales && <MenuLanguageSwitcher {...menuLocales} />}
+        {menuLocales ? (
+          <div className="italian-food-locale-strip">
+            <MenuLanguageSwitcher {...menuLocales} />
+          </div>
+        ) : null}
 
         {/* Menu Tabs */}
         {menuList.length > 0 && (
@@ -225,10 +238,9 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
 
         {/* Navigation Index - Botones de secciones dentro del contenedor blanco */}
         {selectedMenu && selectedMenu.sections.length > 1 && (
-          <div className="mb-5" style={{ 
-            padding: '24px 0',
-            marginBottom: '40px',
-            borderBottom: `2px solid #00924620`
+          <div className="mb-5 italian-food-section-nav" style={{
+            padding: '24px 0 0',
+            marginBottom: 0,
           }}>
             <div className="d-flex flex-wrap gap-2" style={{ justifyContent: 'center', gap: '10px' }}>
               {selectedMenu.sections.map((section) => (
@@ -454,7 +466,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                 {restaurant.phone && (
                   <p style={{ marginBottom: '8px', marginTop: 0, fontSize: '0.9rem', lineHeight: '1.4', color: '#000000' }}>
                     <strong>📞 Teléfono:</strong>{' '}
-                    <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} style={{ color: '#000000', textDecoration: 'underline' }}>
+                    <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} rel={FOOTER_REL_CONTACT} style={{ color: '#000000', textDecoration: 'underline' }}>
                       {restaurant.phone.split('|')[0]?.trim() ?? ''}
                     </a>
                   </p>
@@ -465,7 +477,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                     <a 
                       href={`https://wa.me/${formatWhatsAppForLink(restaurant.whatsapp, restaurant.country)}`}
                       target="_blank"
-                      rel="noopener noreferrer"
+                      rel={FOOTER_REL_EXTERNAL}
                       style={{ color: '#000000', textDecoration: 'underline' }}
                     >
                       {restaurant.whatsapp}
@@ -475,7 +487,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                 {restaurant.email && (
                   <p style={{ marginBottom: '8px', marginTop: 0, fontSize: '0.9rem', lineHeight: '1.4', color: '#000000' }}>
                     <strong>✉️ Email:</strong>{' '}
-                    <a href={`mailto:${restaurant.email}`} style={{ color: '#000000', textDecoration: 'underline' }}>
+                    <a href={`mailto:${restaurant.email}`} rel={FOOTER_REL_CONTACT} style={{ color: '#000000', textDecoration: 'underline' }}>
                       {restaurant.email}
                     </a>
                   </p>
@@ -486,7 +498,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                     <a 
                       href={restaurant.website.startsWith('http') ? restaurant.website : `https://${restaurant.website}`}
                       target="_blank"
-                      rel="noopener noreferrer"
+                      rel={footerWebsiteRel(false)}
                       style={{ color: '#000000', textDecoration: 'underline' }}
                     >
                       {restaurant.website}
@@ -498,7 +510,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
           </div>
           <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.1)', textAlign: 'center', fontSize: '0.8rem', color: '#555' }}>
             Menú creado con{' '}
-            <a href="https://appmenuqr.com" target="_blank" rel="noopener noreferrer" style={{ color: '#555', textDecoration: 'underline' }}>appmenuqr.com</a>
+            <a href="https://appmenuqr.com" target="_blank" rel={FOOTER_REL_APPMENUQR} style={{ color: '#555', textDecoration: 'underline' }}>appmenuqr.com</a>
           </div>
         </footer>
       </div>

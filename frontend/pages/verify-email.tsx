@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../lib/axios';
-import { consumeTemplateAfterAuth } from '../lib/consume-template-after-auth';
+import { consumeTemplateAfterAuth, getNavigationForConsumeResult } from '../lib/consume-template-after-auth';
 import Head from 'next/head';
 import LandingFooter from '../components/LandingFooter';
 
@@ -48,8 +48,7 @@ export default function VerifyEmail() {
         const tpl = await consumeTemplateAfterAuth(api, {
           isSuperAdmin: verifiedUser?.role === 'SUPER_ADMIN',
         });
-        if (tpl.action === 'needs_upgrade') target = tpl.upgradeHref;
-        else if (tpl.action === 'needs_restaurant') target = tpl.wizardHref;
+        target = getNavigationForConsumeResult(tpl);
       }
 
       // Redirigir al destino correspondiente después de 2 segundos

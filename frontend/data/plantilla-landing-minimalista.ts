@@ -1,12 +1,12 @@
 import type { PlantillaLandingContent } from '../types/plantilla-landing';
 
-/** Contenido editorial de /plantillas/minimalista */
+/** Contenido editorial de /caracteristicas/minimalista */
 export const PLANTILLA_MINIMALISTA_LANDING: PlantillaLandingContent = {
   slug: 'minimalista',
   seo: {
-    title: 'Plantilla de menú QR minimalista | Carta digital moderna y elegante',
+    title: 'Características Minimalista | Menú QR gratis',
     description:
-      'Plantilla de menú QR minimalista para restaurantes. Diseño limpio, moderno y fácil de leer. Personaliza colores y crea tu carta digital en minutos.',
+      'Carta minimalista para cafeterías y restaurantes. Diseño liviano, sin distracciones y colores de marca. Conocé todas las características de esta plantilla free.',
   },
   previewPath: '/preview/minimalista',
   heroPreviewImage: '/plantillas/landings/carta-digital-qr-minimalista-preview-4340a661-1394-439f-b6ca-62a4f53ef49f.png',
@@ -92,7 +92,7 @@ export const PLANTILLA_MINIMALISTA_LANDING: PlantillaLandingContent = {
   qr: {
     heading: 'Ver demo en tu móvil',
     body: 'Escanea el código QR para ver una preview real de esta plantilla en tu teléfono.',
-    demoButtonLabel: 'Ver demo',
+    demoButtonLabel: 'Vista previa',
     demoHint: 'Demo disponible en celular y navegador',
   },
   cta: {

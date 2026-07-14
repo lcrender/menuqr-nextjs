@@ -24,6 +24,9 @@ import ItalianFoodTemplate from '../../../templates/italianfood/ItalianFoodTempl
 import GourmetTemplate from '../../../templates/gourmet/GourmetTemplate';
 import ProMobileTemplate from '../../../templates/promobile/ProMobileTemplate';
 import NightClubTemplate from '../../../templates/nightclub/NightClubTemplate';
+import SmartFoodTemplate from '../../../templates/smartfood/SmartFoodTemplate';
+import BeachBarTemplate from '../../../templates/beachbar/BeachBarTemplate';
+import SolNocheTemplate from '../../../templates/solnoche/SolNocheTemplate';
 
 interface MenuSection {
   id: string;
@@ -401,6 +404,12 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
     templateBody = <ProMobileTemplate {...templateProps} />;
   } else if (template === 'nightClub') {
     templateBody = <NightClubTemplate {...templateProps} />;
+  } else if (template === 'smartFood') {
+    templateBody = <SmartFoodTemplate {...templateProps} />;
+  } else if (template === 'beachBar') {
+    templateBody = <BeachBarTemplate {...templateProps} />;
+  } else if (template === 'solNoche') {
+    templateBody = <SolNocheTemplate {...templateProps} />;
   } else if (template === 'italianFood') {
     templateBody = <ItalianFoodTemplate {...templateProps} />;
   } else {

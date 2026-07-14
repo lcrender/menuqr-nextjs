@@ -1,5 +1,11 @@
 import React from 'react';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import {
+  FOOTER_REL_APPMENUQR,
+  FOOTER_REL_CONTACT,
+  FOOTER_REL_EXTERNAL,
+  footerWebsiteRel,
+} from '../../lib/template-footer-link-rel';
 
 const BURGERS_SECTION_TITLE_PRESETS = {
   small: { fontSize: '1.4rem', marginBottom: '24px', paddingBottom: '12px' },
@@ -527,7 +533,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
               {restaurant.phone && (
                 <p style={{ marginBottom: '10px', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>📞 Teléfono:</strong>{' '}
-                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} style={{ color: 'white', textDecoration: 'underline' }}>
+                  <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} rel={FOOTER_REL_CONTACT} style={{ color: 'white', textDecoration: 'underline' }}>
                     {restaurant.phone.split('|')[0]?.trim() ?? ''}
                   </a>
                 </p>
@@ -538,7 +544,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                   <a 
                     href={`https://wa.me/${formatWhatsAppForLink(restaurant.whatsapp, restaurant.country)}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel={FOOTER_REL_EXTERNAL}
                     style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.whatsapp}
@@ -548,7 +554,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
               {restaurant.email && (
                 <p style={{ marginBottom: '10px', opacity: 0.9, fontSize: '0.95rem' }}>
                   <strong>✉️ Email:</strong>{' '}
-                  <a href={`mailto:${restaurant.email}`} style={{ color: 'white', textDecoration: 'underline' }}>
+                  <a href={`mailto:${restaurant.email}`} rel={FOOTER_REL_CONTACT} style={{ color: 'white', textDecoration: 'underline' }}>
                     {restaurant.email}
                   </a>
                 </p>
@@ -559,7 +565,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                   <a 
                     href={restaurant.website.startsWith('http') ? restaurant.website : `https://${restaurant.website}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel={footerWebsiteRel(false)}
                     style={{ color: 'white', textDecoration: 'underline' }}
                   >
                     {restaurant.website}
@@ -570,7 +576,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
           </div>
           <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.25)', textAlign: 'center', fontSize: '0.8rem', opacity: 0.9 }}>
             Menú creado con{' '}
-            <a href="https://appmenuqr.com" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>appmenuqr.com</a>
+            <a href="https://appmenuqr.com" target="_blank" rel={FOOTER_REL_APPMENUQR} style={{ color: 'white', textDecoration: 'underline' }}>appmenuqr.com</a>
           </div>
         </div>
       </footer>

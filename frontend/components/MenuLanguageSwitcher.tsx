@@ -1,5 +1,8 @@
-import React, { useMemo } from 'react';
+'use client';
+
+import { useMemo } from 'react';
 import type { CSSProperties } from 'react';
+import FoodieLocaleSelect from './FoodieLocaleSelect';
 import { MenuLocaleFlagGlyph } from '../lib/menu-locale-flag';
 
 export type MenuLangManifestEntry = {
@@ -124,6 +127,11 @@ export function isBcp47MenuLocale(s: string): boolean {
   return BCP47.test((s || '').trim());
 }
 
+function localeSelectWrapperStyle(variant?: MenuTabVariant): CSSProperties {
+  if (variant === 'foodie') return { marginBottom: 0 };
+  return { marginBottom: '50px' };
+}
+
 function menuTabButtonStyle(
   variant: MenuTabVariant,
   active: boolean,
@@ -164,8 +172,9 @@ function menuTabButtonStyle(
         ...base,
         borderRadius: '8px',
         padding: '12px 28px',
-        fontSize: '1.05rem',
+        fontSize: '1.2rem',
         fontWeight: active ? 600 : 500,
+        letterSpacing: '0.08em',
         boxShadow: active ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
         border: active ? 'none' : `2px solid ${primary}`,
         color: active ? 'white' : primary,
@@ -174,6 +183,13 @@ function menuTabButtonStyle(
         fontFamily: "'Playfair Display', serif",
       };
     case 'foodie':
+      return {
+        ...base,
+        borderRadius: 0,
+        padding: '12px 28px',
+        fontSize: '1rem',
+        fontWeight: active ? 600 : 400,
+      };
     case 'gourmet':
       return {
         ...base,
@@ -185,7 +201,7 @@ function menuTabButtonStyle(
         border: active ? 'none' : `1px solid ${primary}`,
         color: active ? 'white' : primary,
         background: active ? primary : 'transparent',
-        ...(variant === 'gourmet' && gourmetFontFamily ? { fontFamily: gourmetFontFamily } : {}),
+        ...(gourmetFontFamily ? { fontFamily: gourmetFontFamily } : {}),
       };
     case 'proMobile':
     case 'nightClub':
@@ -253,7 +269,7 @@ type Props = Partial<TemplateMenuLocalesProps> & {
 
 /**
  * Selector de idioma del contenido del menú.
- * En plantillas públicas pasá `menuTabVariant` + colores para el mismo aspecto que las pestañas de menú.
+ * En plantillas públicas pasá `menuTabVariant` + colores para adaptar el estilo al template.
  */
 export default function MenuLanguageSwitcher({
   locales,
@@ -286,10 +302,38 @@ export default function MenuLanguageSwitcher({
   const secondary = secondaryColor || '#0056b3';
   const variant = menuTabVariant || 'classic';
 
-  if (menuTabVariant && primaryColor && secondaryColor) {
+  if (variant === 'foodie') {
     return (
-      <div className={`menu-locale-tabs mb-5 ${className || ''}`} style={localeTabsWrapperStyle(variant)}>
-        <div className="d-flex flex-wrap gap-2" style={{ gap: localeTabsGap(variant), justifyContent: 'center' }}>
+      <div
+        className={`d-flex justify-content-center foodie-locale-switcher-wrap ${className || ''}`.trim()}
+        style={localeSelectWrapperStyle('foodie')}
+      >
+        <FoodieLocaleSelect
+          locales={locales}
+          manifest={manifest || []}
+          value={value ?? locales[0]!}
+          onChange={changeLocale}
+          showTranslationFlags={showTranslationFlags}
+        />
+      </div>
+    );
+  }
+
+  if (menuTabVariant && primaryColor && secondaryColor) {
+    const italianFoodLocales = variant === 'italianFood';
+    return (
+      <div
+        className={`menu-locale-tabs ${italianFoodLocales ? 'italian-food-locale-tabs' : 'mb-5'} ${className || ''}`.trim()}
+        style={localeTabsWrapperStyle(variant)}
+      >
+        <div
+          className={`d-flex flex-wrap gap-2 ${italianFoodLocales ? 'italian-food-locale-tabs-list' : ''}`.trim()}
+          style={
+            italianFoodLocales
+              ? { gap: localeTabsGap(variant) }
+              : { gap: localeTabsGap(variant), justifyContent: 'center' }
+          }
+        >
           {locales.map((loc) => {
             const active = loc === value;
             const mo = meta[loc];
@@ -299,7 +343,7 @@ export default function MenuLanguageSwitcher({
                 type="button"
                 onClick={() => changeLocale(loc)}
                 aria-pressed={active}
-                className="btn"
+                className={`btn ${italianFoodLocales ? 'italian-food-locale-tab-btn' : ''}`.trim()}
                 style={menuTabButtonStyle(variant, active, primary, secondary, gourmetFontFamily)}
               >
                 {showTranslationFlags && (
