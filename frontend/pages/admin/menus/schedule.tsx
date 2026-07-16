@@ -282,8 +282,7 @@ export default function ProgramarMenusPage() {
           </p>
           <div className="admin-card p-4">
             <p className="mb-3">
-              Esta función está disponible en planes <strong>Pro</strong>, <strong>Pro Team</strong> y{' '}
-              <strong>Premium</strong>.
+              Esta función está disponible en planes <strong>Pro</strong> o <strong>Premium</strong>.
             </p>
             <Link href="/admin/profile/subscription" className="admin-btn">
               Ver planes / suscripción
