@@ -47,13 +47,13 @@ export function normalizeMenuSchedule(raw: unknown): MenuScheduleConfig {
   if (!raw || typeof raw !== 'object') return emptyMenuSchedule();
   const obj = raw as Record<string, unknown>;
   const daysRaw = Array.isArray(obj.days) ? obj.days : [];
-  const days = [
-    ...new Set(
+  const days = Array.from(
+    new Set(
       daysRaw
         .map((d) => Number(d))
         .filter((d) => Number.isInteger(d) && d >= 1 && d <= 7),
     ),
-  ].sort((a, b) => a - b);
+  ).sort((a, b) => a - b);
   const dateRangeEnabled = Boolean(obj.dateRangeEnabled);
   const startDate =
     typeof obj.startDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.startDate.trim())
