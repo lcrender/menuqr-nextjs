@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsDateString, IsIn, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsIn, IsBoolean, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateMenuDto {
@@ -22,10 +22,10 @@ export class UpdateMenuDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ 
-    description: 'Estado del menú', 
+  @ApiProperty({
+    description: 'Estado del menú',
     enum: ['DRAFT', 'PUBLISHED', 'ARCHIVED'],
-    required: false 
+    required: false,
   })
   @IsString()
   @IsIn(['DRAFT', 'PUBLISHED', 'ARCHIVED'])
@@ -46,5 +46,21 @@ export class UpdateMenuDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
-}
 
+  @ApiProperty({ description: 'Activar programación semanal de visibilidad', required: false })
+  @IsBoolean()
+  @IsOptional()
+  scheduleEnabled?: boolean;
+
+  @ApiProperty({
+    description: 'Configuración semanal { days: 1-7[], startTime?, endTime? }',
+    required: false,
+  })
+  @IsObject()
+  @IsOptional()
+  schedule?: {
+    days?: number[];
+    startTime?: string | null;
+    endTime?: string | null;
+  };
+}

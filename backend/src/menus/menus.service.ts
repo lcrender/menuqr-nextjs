@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, ForbiddenException } from '@nestjs/common';
 import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import { QRService } from '../qr/qr.service';
 import { I18nService } from '../common/i18n/i18n.service';
 import { assertMenuAccessible } from '../common/menu-tenant-sync';
+import {
+  normalizeMenuSchedule,
+  planAllowsMenuSchedule,
+} from '../common/menu-schedule.util';
 
 @Injectable()
 export class MenusService {
@@ -64,6 +68,8 @@ export class MenusService {
       tenantId: m.tenantId || null,
       sectionCount: parseInt(m.sectionCount) || 0,
       slug: m.slug,
+      scheduleEnabled: Boolean(m.schedule_enabled ?? m.scheduleEnabled),
+      schedule: normalizeMenuSchedule(m.schedule) ?? m.schedule ?? null,
     }));
   }
 
@@ -205,6 +211,8 @@ export class MenusService {
     menu.restaurantName = menu.restaurantName;
     menu.restaurantSlug = menu.restaurantSlug;
     menu.slug = menu.slug;
+    menu.scheduleEnabled = Boolean(menu.schedule_enabled ?? menu.scheduleEnabled);
+    menu.schedule = normalizeMenuSchedule(menu.schedule) ?? menu.schedule ?? null;
 
     // Obtener QR si existe
     const qr = await this.qrService.getQRForMenu(id);
@@ -321,10 +329,25 @@ export class MenusService {
     validFrom?: Date;
     validTo?: Date;
     isActive?: boolean;
+    scheduleEnabled?: boolean;
+    schedule?: {
+      days?: number[];
+      startTime?: string | null;
+      endTime?: string | null;
+    };
   }) {
     this.logger.log(`Actualizando menú ${id} con datos:`, JSON.stringify(data));
     
     const menu = await this.findById(id, tenantId);
+
+    if (data.scheduleEnabled !== undefined || data.schedule !== undefined) {
+      const plan = await this.getTenantPlan(tenantId);
+      if (!planAllowsMenuSchedule(plan)) {
+        throw new ForbiddenException(
+          'La programación de menús está disponible en planes Pro, Pro Team o Premium.',
+        );
+      }
+    }
 
     const updates: string[] = [];
     const params: any[] = [];
@@ -413,6 +436,22 @@ export class MenusService {
     if (data.isActive !== undefined) {
       updates.push(`is_active = $${paramIndex++}`);
       params.push(data.isActive);
+    }
+    if (data.scheduleEnabled !== undefined) {
+      updates.push(`schedule_enabled = $${paramIndex++}`);
+      params.push(Boolean(data.scheduleEnabled));
+    }
+    if (data.schedule !== undefined) {
+      const normalized = normalizeMenuSchedule(data.schedule);
+      if (data.scheduleEnabled === true || menu.scheduleEnabled) {
+        if (!normalized || normalized.days.length === 0) {
+          throw new BadRequestException(
+            'Seleccioná al menos un día de la semana para programar el menú.',
+          );
+        }
+      }
+      updates.push(`schedule = $${paramIndex++}::jsonb`);
+      params.push(JSON.stringify(normalized ?? { days: [], startTime: null, endTime: null }));
     }
 
     if (updates.length === 0) {

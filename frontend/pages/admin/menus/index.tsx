@@ -16,6 +16,7 @@ import MenuWizard from '../../../components/MenuWizard';
 import ConfirmModal from '../../../components/ConfirmModal';
 import AlertModal from '../../../components/AlertModal';
 import { getMenuStatusLabelEs } from '../../../lib/menu-status-label';
+import { planAllowsMenuSchedule } from '../../../lib/menu-schedule';
 
 export default function Menus() {
   const router = useRouter();
@@ -68,7 +69,12 @@ export default function Menus() {
   const [showConfirmDeleteSection, setShowConfirmDeleteSection] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const [showAlert, setShowAlert] = useState(false);
-  const [alertData, setAlertData] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+  const [alertData, setAlertData] = useState<{
+    title: string;
+    message: string;
+    variant: 'success' | 'error' | 'warning' | 'info';
+    actionButton?: { label: string; href: string };
+  } | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -805,7 +811,34 @@ export default function Menus() {
 
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <h1 className="admin-title mb-0">Menús</h1>
-        <div className="admin-quick-links">
+        <div className="admin-quick-links d-flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={() => {
+              const allowed =
+                user?.role === 'SUPER_ADMIN' ||
+                planAllowsMenuSchedule(tenantPlan || user?.tenant?.plan);
+              if (!allowed) {
+                setAlertData({
+                  title: 'Función disponible en Pro',
+                  message:
+                    'La programación de menús (días y horarios de visibilidad) está disponible en planes Pro, Pro Team o Premium. Actualizá tu suscripción para usarla.',
+                  variant: 'info',
+                  actionButton: {
+                    label: 'Ver suscripción',
+                    href: '/admin/profile/subscription',
+                  },
+                });
+                setShowAlert(true);
+                return;
+              }
+              router.push('/admin/menus/schedule');
+            }}
+            title="Programar visibilidad de menús por día y horario"
+          >
+            Programar menú
+          </button>
           <button
             type="button"
             className="admin-btn"
@@ -1776,6 +1809,7 @@ export default function Menus() {
             setShowAlert(false);
             setAlertData(null);
           }}
+          {...(alertData.actionButton ? { actionButton: alertData.actionButton } : {})}
         />
       )}
     </AdminLayout>

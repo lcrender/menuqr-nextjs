@@ -1,0 +1,86 @@
+/* Admin: Programar menú */
+.menu-schedule-page .menu-schedule-controls {
+  padding: 1.25rem;
+}
+
+.menu-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.menu-schedule-card {
+  padding: 1.25rem;
+}
+
+.menu-schedule-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.menu-schedule-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+}
+
+.menu-schedule-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.menu-schedule-card-body {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.menu-schedule-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin: 0 0 0.5rem;
+}
+
+.menu-schedule-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.menu-schedule-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #334155;
+}
+
+.menu-schedule-day input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.menu-schedule-day.is-active {
+  border-color: var(--admin-primary, #4f46e5);
+  background: color-mix(in srgb, var(--admin-primary, #4f46e5) 12%, #fff);
+  color: var(--admin-primary, #4f46e5);
+}

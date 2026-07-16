@@ -54,6 +54,26 @@ function renderDestacarProductosFeatureRow(allowed: boolean) {
   );
 }
 
+/** Fila “Programar menú”: Pro+ con tilde; Free/Starter en gris con cruz. */
+function renderProgramarMenuFeatureRow(allowed: boolean) {
+  if (allowed) {
+    return (
+      <li className="landing-pricing-feature landing-pricing-feature-highlight">
+        <span className="landing-pricing-check">✓</span>
+        <span>
+          <strong>Programar menú</strong>
+        </span>
+      </li>
+    );
+  }
+  return (
+    <li className="landing-pricing-feature landing-pricing-muted">
+      <span>✗</span>
+      <span>Programar menú</span>
+    </li>
+  );
+}
+
 interface PricingPlansGridProps {
   /** landing = registro, profile = ir a home, subscription = callback onSelectPlan */
   variant?: 'landing' | 'profile' | 'subscription';
@@ -312,6 +332,7 @@ export default function PricingPlansGrid({
               <span className="landing-pricing-check">✓</span>
               <span>Imprimir carta en papel</span>
             </li>
+            {renderProgramarMenuFeatureRow(false)}
             <li className="landing-pricing-feature">
               <span className="landing-pricing-check">✓</span>
               <span>1 idioma</span>
@@ -375,6 +396,7 @@ export default function PricingPlansGrid({
           {renderDestacarProductosFeatureRow(S.productHighlightAllowed)}
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas básicas</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Imprimir carta en papel</span></li>
+          {renderProgramarMenuFeatureRow(false)}
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>1 idioma</span></li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
@@ -435,6 +457,7 @@ export default function PricingPlansGrid({
             </span>
           </li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Imprimir carta en papel</span></li>
+          {renderProgramarMenuFeatureRow(true)}
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
             <span>3 idiomas</span>
@@ -578,6 +601,7 @@ export default function PricingPlansGrid({
               <span className="landing-pricing-check">✓</span>
               <span>Imprimir carta en papel</span>
             </li>
+            {renderProgramarMenuFeatureRow(false)}
             <li className="landing-pricing-feature">
               <span className="landing-pricing-check">✓</span>
               <span>1 idioma</span>

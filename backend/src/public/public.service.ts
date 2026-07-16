@@ -5,6 +5,7 @@ import { I18nService } from '../common/i18n/i18n.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import { EmailService } from '../common/email/email.service';
 import { RecaptchaService } from '../common/recaptcha/recaptcha.service';
+import { isMenuScheduledVisibleNow } from '../common/menu-schedule.util';
 
 @Injectable()
 export class PublicService {
@@ -151,7 +152,10 @@ export class PublicService {
           m.status,
           m.sort,
           m.valid_from as "validFrom",
-          m.valid_to as "validTo"
+          m.valid_to as "validTo",
+          m.schedule_enabled as "scheduleEnabled",
+          m.schedule,
+          r.timezone as "restaurantTimezone"
         FROM menus m
         WHERE m.restaurant_id = $1 
           AND m.status = 'PUBLISHED'
@@ -162,9 +166,17 @@ export class PublicService {
         ORDER BY m.sort ASC, m.created_at DESC
       `;
 
-      const menusResult = await this.postgresService.queryRaw<any>(
+      const menusResultRaw = await this.postgresService.queryRaw<any>(
         menusQuery,
         [restaurant.id],
+      );
+
+      const menusResult = menusResultRaw.filter((m: any) =>
+        isMenuScheduledVisibleNow({
+          scheduleEnabled: m.scheduleEnabled,
+          schedule: m.schedule,
+          timezone: restaurant.timezone || m.restaurantTimezone || 'UTC',
+        }),
       );
 
       // Devolver solo la lista de menús (sin detalles completos)
@@ -225,10 +237,13 @@ export class PublicService {
           m.status,
           m.valid_from as "validFrom",
           m.valid_to as "validTo",
+          m.schedule_enabled as "scheduleEnabled",
+          m.schedule,
           m.translation_manifest as "translationManifest",
           r.id as "restaurantId",
           r.name as "restaurantName",
           r.slug as "restaurantSlug",
+          r.timezone as "restaurantTimezone",
           r.template as "restaurantTemplate",
           r.primary_color as "restaurantPrimaryColor",
           r.secondary_color as "restaurantSecondaryColor"
@@ -241,6 +256,8 @@ export class PublicService {
           AND m.status = 'PUBLISHED'
           AND m.is_active = true
           AND m.deleted_at IS NULL
+          AND (m.valid_from IS NULL OR m.valid_from <= NOW())
+          AND (m.valid_to IS NULL OR m.valid_to >= NOW())
         LIMIT 1
       `;
 
@@ -254,6 +271,18 @@ export class PublicService {
       }
 
       const menuData = menuResult[0];
+
+      if (
+        !isMenuScheduledVisibleNow({
+          scheduleEnabled: menuData.scheduleEnabled,
+          schedule: menuData.schedule,
+          timezone: menuData.restaurantTimezone || 'UTC',
+        })
+      ) {
+        throw new NotFoundException(
+          `Menú con slug "${menuSlug}" no encontrado en el restaurante "${restaurantSlug}"`,
+        );
+      }
 
       const restaurantTenant = await this.postgresService.queryRaw<any>(
         `SELECT tenant_id FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,

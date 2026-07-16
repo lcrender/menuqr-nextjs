@@ -248,6 +248,10 @@ model Menu {
   status     MenuStatus  @default(DRAFT)
   validFrom  DateTime?   @map("valid_from")
   validTo    DateTime?   @map("valid_to")
+  /// Si true, la visibilidad pública respeta `schedule` (días/horarios en timezone del restaurante).
+  scheduleEnabled Boolean  @default(false) @map("schedule_enabled")
+  /// Ventana semanal: { days: number[], startTime?: string|null, endTime?: string|null } (días 1=lun … 7=dom, HH:mm local).
+  schedule   Json?       @map("schedule")
   version    Int         @default(1)
   sort       Int         @default(0) // Orden de visualización
   /// Metadatos de idiomas extra (label, bandera) para el panel Traducciones; ver API menu-translations
