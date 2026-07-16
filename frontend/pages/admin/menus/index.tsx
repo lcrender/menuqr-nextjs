@@ -823,7 +823,7 @@ export default function Menus() {
                 setAlertData({
                   title: 'Función disponible en Pro',
                   message:
-                    'La programación de menús (días y horarios de visibilidad) está disponible en planes Pro, Pro Team o Premium. Actualizá tu suscripción para usarla.',
+                    'La programación de menús (días y horarios de visibilidad) está disponible en planes Pro o Premium. Actualizá tu suscripción para usarla.',
                   variant: 'info',
                   actionButton: {
                     label: 'Ver suscripción',

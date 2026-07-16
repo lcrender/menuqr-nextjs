@@ -347,7 +347,7 @@ export class MenusService {
       const plan = await this.getTenantPlan(tenantId);
       if (!planAllowsMenuSchedule(plan)) {
         throw new ForbiddenException(
-          'La programación de menús está disponible en planes Pro, Pro Team o Premium.',
+          'La programación de menús está disponible en planes Pro o Premium.',
         );
       }
     }
