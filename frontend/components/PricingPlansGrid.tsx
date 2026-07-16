@@ -461,6 +461,10 @@ export default function PricingPlansGrid({
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
+            <span>Selección de tipografía web</span>
+          </li>
+          <li className="landing-pricing-feature landing-pricing-feature-highlight">
+            <span className="landing-pricing-check">✓</span>
             <span>Configuración inicial del menú</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
