@@ -1268,6 +1268,13 @@ export default function Restaurants() {
                         Ver QR
                       </button>
                     )}
+                    <Link
+                      href={`/admin/restaurants/${restaurant.id}/print-menu`}
+                      className="btn btn-sm btn-secondary"
+                      title="Imprimir carta"
+                    >
+                      Imprimir carta
+                    </Link>
                     <button type="button" className="btn btn-sm btn-primary" onClick={() => handleEdit(restaurant)}>
                       Editar
                     </button>
@@ -1361,6 +1368,12 @@ export default function Restaurants() {
                     Ver QR
                   </button>
                 )}
+                <Link
+                  href={`/admin/restaurants/${restaurant.id}/print-menu`}
+                  className="btn btn-sm btn-secondary"
+                >
+                  Imprimir carta
+                </Link>
                 <button
                   type="button"
                   className="btn btn-sm btn-warning"

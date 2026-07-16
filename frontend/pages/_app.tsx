@@ -5,6 +5,7 @@ import '../styles/landing.css';
 import '../styles/cookie-consent.css';
 import '../styles/templates.css';
 import '../styles/highlighted-product.css';
+import '../styles/print-menu.css';
 import '../templates/classic/classic.css';
 import '../templates/minimalist/minimalist.css';
 import '../templates/foodie/foodie.css';
