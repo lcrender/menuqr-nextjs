@@ -156,7 +156,7 @@ export default function PrintMenuPage() {
       }
 
       setLocales(localeList);
-      setSelectedLocale(localeList.includes('es-ES') ? 'es-ES' : localeList[0]);
+      setSelectedLocale(localeList.includes('es-ES') ? 'es-ES' : localeList[0] ?? 'es-ES');
     } catch (err: any) {
       setError(err?.userMessage || err?.response?.data?.message || 'No se pudo cargar el restaurante.');
       setRestaurant(null);
@@ -242,7 +242,7 @@ export default function PrintMenuPage() {
             trees.push({
               id: menu.id,
               name: menu.name,
-              description: menu.description,
+              description: menu.description ?? null,
               sections: sectionsSorted.map((section: any) => ({
                 id: section.id,
                 name: section.name,
@@ -252,7 +252,7 @@ export default function PrintMenuPage() {
                   .map((item: any) => ({
                     id: item.id,
                     name: item.name,
-                    description: item.description,
+                    description: item.description ?? null,
                     prices: Array.isArray(item.prices) ? item.prices : [],
                   })),
               })),
@@ -261,7 +261,7 @@ export default function PrintMenuPage() {
             trees.push({
               id: menu.id,
               name: menu.name,
-              description: menu.description,
+              description: menu.description ?? null,
               sections: [],
             });
           }

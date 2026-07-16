@@ -482,9 +482,11 @@ export default function ProgramarMenusPage() {
                                     ...draft.schedule,
                                     dateRangeEnabled: e.target.checked,
                                     startDate: e.target.checked
-                                      ? draft.schedule.startDate
+                                      ? draft.schedule.startDate ?? null
                                       : null,
-                                    endDate: e.target.checked ? draft.schedule.endDate : null,
+                                    endDate: e.target.checked
+                                      ? draft.schedule.endDate ?? null
+                                      : null,
                                   },
                                 })
                               }
