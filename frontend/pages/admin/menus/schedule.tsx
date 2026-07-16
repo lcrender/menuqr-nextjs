@@ -189,6 +189,30 @@ export default function ProgramarMenusPage() {
           setSaving(false);
           return;
         }
+        if (draft.scheduleEnabled && draft.schedule.dateRangeEnabled) {
+          if (!draft.schedule.startDate) {
+            setAlert({
+              title: 'Falta fecha de inicio',
+              message: `Indicá el día de inicio para el menú «${menu.name}».`,
+              variant: 'warning',
+            });
+            setSaving(false);
+            return;
+          }
+          if (
+            draft.schedule.endDate &&
+            draft.schedule.startDate &&
+            draft.schedule.endDate < draft.schedule.startDate
+          ) {
+            setAlert({
+              title: 'Rango inválido',
+              message: `En «${menu.name}», la fecha de finalización no puede ser anterior a la de inicio.`,
+              variant: 'warning',
+            });
+            setSaving(false);
+            return;
+          }
+        }
         await api.put(`/menus/${menu.id}`, {
           scheduleEnabled: draft.scheduleEnabled,
           schedule: draft.scheduleEnabled
@@ -196,8 +220,22 @@ export default function ProgramarMenusPage() {
                 days: draft.schedule.days,
                 startTime: draft.schedule.startTime || null,
                 endTime: draft.schedule.endTime || null,
+                dateRangeEnabled: Boolean(draft.schedule.dateRangeEnabled),
+                startDate: draft.schedule.dateRangeEnabled
+                  ? draft.schedule.startDate || null
+                  : null,
+                endDate: draft.schedule.dateRangeEnabled
+                  ? draft.schedule.endDate || null
+                  : null,
               }
-            : { days: [], startTime: null, endTime: null },
+            : {
+                days: [],
+                startTime: null,
+                endTime: null,
+                dateRangeEnabled: false,
+                startDate: null,
+                endDate: null,
+              },
         });
       }
 
@@ -433,6 +471,79 @@ export default function ProgramarMenusPage() {
                               />
                             </div>
                           </div>
+
+                          <label className="menu-schedule-switch mt-3">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(draft.schedule.dateRangeEnabled)}
+                              onChange={(e) =>
+                                updateDraft(menu.id, {
+                                  schedule: {
+                                    ...draft.schedule,
+                                    dateRangeEnabled: e.target.checked,
+                                    startDate: e.target.checked
+                                      ? draft.schedule.startDate
+                                      : null,
+                                    endDate: e.target.checked ? draft.schedule.endDate : null,
+                                  },
+                                })
+                              }
+                            />
+                            <span>Limitar por fechas</span>
+                          </label>
+                          <p className="text-muted small mb-2 mt-1">
+                            Si no está activo, la programación aplica solo por días y horarios, sin
+                            importar la fecha del calendario.
+                          </p>
+                          {draft.schedule.dateRangeEnabled ? (
+                            <div className="row g-2">
+                              <div className="col-6 col-md-4">
+                                <label
+                                  className="form-label small mb-1"
+                                  htmlFor={`date-start-${menu.id}`}
+                                >
+                                  Día de inicio
+                                </label>
+                                <input
+                                  id={`date-start-${menu.id}`}
+                                  type="date"
+                                  className="form-control"
+                                  value={draft.schedule.startDate || ''}
+                                  onChange={(e) =>
+                                    updateDraft(menu.id, {
+                                      schedule: {
+                                        ...draft.schedule,
+                                        startDate: e.target.value || null,
+                                      },
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="col-6 col-md-4">
+                                <label
+                                  className="form-label small mb-1"
+                                  htmlFor={`date-end-${menu.id}`}
+                                >
+                                  Día de finalización (opcional)
+                                </label>
+                                <input
+                                  id={`date-end-${menu.id}`}
+                                  type="date"
+                                  className="form-control"
+                                  value={draft.schedule.endDate || ''}
+                                  min={draft.schedule.startDate || undefined}
+                                  onChange={(e) =>
+                                    updateDraft(menu.id, {
+                                      schedule: {
+                                        ...draft.schedule,
+                                        endDate: e.target.value || null,
+                                      },
+                                    })
+                                  }
+                                />
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       ) : (
                         <p className="text-muted small mb-0 mt-2">

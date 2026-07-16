@@ -57,6 +57,16 @@ const LANDING_FAQ_ITEMS: readonly { question: string; answer: string }[] = [
     answer:
       'En mesas, reservas, cartas impresas, ventanas, redes sociales o mensajería. El mismo código QR sigue funcionando aunque actualices platos o precios.',
   },
+  {
+    question: '¿Puedo imprimir la carta del menú QR en papel?',
+    answer:
+      'Sí. Desde el panel de administración podés generar una versión imprimible de tu carta: elegís restaurante, idioma y menús, y la imprimís en papel cuando la necesites para sala, terraza o eventos.',
+  },
+  {
+    question: '¿Qué hago si tengo un menú de día y otro de noche, o un menú especial?',
+    answer:
+      'Podés crear varios menús (por ejemplo almuerzo, cena o un menú especial) y, en planes Pro o Premium, programar en qué días y horarios se muestra cada uno según el huso horario del restaurante. Así el cliente ve en el QR la carta que corresponde a ese momento, sin cambiar el código.',
+  },
 ];
 
 const HOME_HERO_SPLIT = {

@@ -197,6 +197,16 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
         answer:
           'Sí. Puedes imprimir el mismo QR en todas las mesas o generar materiales para barra, terraza y delivery.',
       },
+      {
+        question: '¿Puedo imprimir la carta del menú QR en papel?',
+        answer:
+          'Sí. Desde el panel podés generar una versión imprimible de tu carta digital: elegís idioma y menús, y la imprimís cuando la necesites para sala, terraza o eventos.',
+      },
+      {
+        question: '¿Qué hago si tengo un menú de día y otro de noche, o un menú especial?',
+        answer:
+          'Podés crear varios menús (almuerzo, cena o un menú especial) y, en planes Pro o Premium, programar en qué días y horarios se muestra cada uno. El QR sigue siendo el mismo: el cliente ve la carta que corresponde a ese momento.',
+      },
     ],
   },
 
@@ -293,6 +303,16 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
         answer:
           'Sí. Editas platos y precios cuando quieras; el menú qr restaurante se actualiza sin generar un QR nuevo.',
       },
+      {
+        question: '¿Puedo imprimir la carta del menú QR en papel?',
+        answer:
+          'Sí. Desde el panel de administración podés imprimir tu menú digital en papel cuando lo necesites, eligiendo idioma y menús a incluir.',
+      },
+      {
+        question: '¿Qué hago si tengo un menú de día y otro de noche, o un menú especial?',
+        answer:
+          'Creás un menú para cada momento (día, noche o especial) y, con la programación disponible en planes Pro o Premium, definís días y horarios de visibilidad. El código QR no cambia: se muestra el menú correcto según el horario del local.',
+      },
     ],
   },
 
@@ -381,6 +401,16 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
         question: '¿Necesito instalar algo en el local?',
         answer:
           'No en las tablets o móviles de clientes. Tu equipo usa el panel desde el navegador; los comensales solo escanean el QR.',
+      },
+      {
+        question: '¿Puedo imprimir la carta del menú QR en papel?',
+        answer:
+          'Sí. El software incluye la opción de imprimir la carta digital en papel desde el panel, útil para respaldo en sala o eventos.',
+      },
+      {
+        question: '¿Qué hago si tengo un menú de día y otro de noche, o un menú especial?',
+        answer:
+          'La plataforma permite varios menús por restaurante. En planes Pro o Premium podés programar días y horarios de visibilidad para cada menú, de modo que el QR muestre automáticamente la carta de día, de noche o la especial según corresponda.',
       },
     ],
   },

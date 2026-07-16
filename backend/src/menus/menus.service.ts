@@ -334,6 +334,9 @@ export class MenusService {
       days?: number[];
       startTime?: string | null;
       endTime?: string | null;
+      dateRangeEnabled?: boolean;
+      startDate?: string | null;
+      endDate?: string | null;
     };
   }) {
     this.logger.log(`Actualizando menú ${id} con datos:`, JSON.stringify(data));
@@ -449,9 +452,32 @@ export class MenusService {
             'Seleccioná al menos un día de la semana para programar el menú.',
           );
         }
+        if (normalized.dateRangeEnabled) {
+          if (!normalized.startDate) {
+            throw new BadRequestException(
+              'Indicá la fecha de inicio cuando activás el rango de fechas.',
+            );
+          }
+          if (normalized.endDate && normalized.endDate < normalized.startDate) {
+            throw new BadRequestException(
+              'La fecha de finalización no puede ser anterior a la de inicio.',
+            );
+          }
+        }
       }
       updates.push(`schedule = $${paramIndex++}::jsonb`);
-      params.push(JSON.stringify(normalized ?? { days: [], startTime: null, endTime: null }));
+      params.push(
+        JSON.stringify(
+          normalized ?? {
+            days: [],
+            startTime: null,
+            endTime: null,
+            dateRangeEnabled: false,
+            startDate: null,
+            endDate: null,
+          },
+        ),
+      );
     }
 
     if (updates.length === 0) {

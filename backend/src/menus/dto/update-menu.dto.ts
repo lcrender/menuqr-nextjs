@@ -53,7 +53,8 @@ export class UpdateMenuDto {
   scheduleEnabled?: boolean;
 
   @ApiProperty({
-    description: 'Configuración semanal { days: 1-7[], startTime?, endTime? }',
+    description:
+      'Configuración semanal { days, startTime?, endTime?, dateRangeEnabled?, startDate?, endDate? }',
     required: false,
   })
   @IsObject()
@@ -62,5 +63,8 @@ export class UpdateMenuDto {
     days?: number[];
     startTime?: string | null;
     endTime?: string | null;
+    dateRangeEnabled?: boolean;
+    startDate?: string | null;
+    endDate?: string | null;
   };
 }
