@@ -209,15 +209,15 @@ export default function Home() {
                     🖥️
                   </span>
                   <span className="landing-highlight-point-text">
-                    Panel web para administrar tu menú digital restaurante
+                    Panel web para administrar tu menú digital
                   </span>
                 </div>
                 <div className="landing-highlight-point" role="listitem">
                   <span className="landing-highlight-point-icon">
-                    <LandingBenefitIcon icon="qr" qrSize={44} />
+                    <LandingBenefitIcon icon="qr" qrSize={40} />
                   </span>
                   <span className="landing-highlight-point-text">
-                    Código QR menú restaurante listo para imprimir o compartir
+                    Código QR listo para imprimir o compartir
                   </span>
                 </div>
                 <div className="landing-highlight-point" role="listitem">
@@ -225,7 +225,15 @@ export default function Home() {
                     📱
                   </span>
                   <span className="landing-highlight-point-text">
-                    Sin instalación para tus clientes ni conocimientos técnicos
+                    Sin instalación ni conocimientos técnicos
+                  </span>
+                </div>
+                <div className="landing-highlight-point" role="listitem">
+                  <span className="landing-highlight-point-icon" aria-hidden="true">
+                    🖨️
+                  </span>
+                  <span className="landing-highlight-point-text">
+                    Imprimí la carta en papel cuando la necesites
                   </span>
                 </div>
               </div>

@@ -163,9 +163,10 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
         'Frente a archivos estáticos o fotos sueltas en redes, AppMenuQR te da un flujo de trabajo: editas, publicas y el cliente ve siempre la versión vigente.',
       ],
       highlightBullets: [
-        { icon: '📱', text: 'Carta qr restaurante accesible desde cualquier smartphone' },
+        { icon: '📱', text: 'Carta QR accesible desde cualquier smartphone' },
         { icon: '💸', text: 'Menos costes de reimpresión por cambios de temporada' },
         { icon: '✨', text: 'Imagen ordenada y coherente con tu marca' },
+        { icon: '🖨️', text: 'Imprimí la carta en papel cuando la necesites' },
       ],
     },
     stepsSection: {
@@ -262,6 +263,7 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
         { icon: '📱', text: 'Menú digital visible desde cualquier smartphone' },
         { icon: '🚀', text: 'Cambios publicados al momento, sin nuevo QR' },
         { icon: '👥', text: 'Experiencia más ágil para clientes en sala' },
+        { icon: '🖨️', text: 'Imprimí la carta en papel cuando la necesites' },
       ],
     },
     stepsSection: {
@@ -359,7 +361,8 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
       highlightBullets: [
         { icon: '🏢', text: 'Varios restaurantes y menús según tu plan' },
         { icon: '🌐', text: 'Traducciones e importación CSV en niveles avanzados' },
-        { icon: '📋', text: 'Soporte y documentación para adoptar el sistema en el equipo' },
+        { icon: '📋', text: 'Soporte y documentación para adoptar el sistema' },
+        { icon: '🖨️', text: 'Imprimí la carta en papel cuando la necesites' },
       ],
       bullets: ['Suscripciones y facturación integradas en la plataforma'],
     },

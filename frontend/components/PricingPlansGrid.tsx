@@ -310,6 +310,10 @@ export default function PricingPlansGrid({
             </li>
             <li className="landing-pricing-feature">
               <span className="landing-pricing-check">✓</span>
+              <span>Imprimir carta en papel</span>
+            </li>
+            <li className="landing-pricing-feature">
+              <span className="landing-pricing-check">✓</span>
               <span>1 idioma</span>
             </li>
             <li className="landing-pricing-feature">
@@ -370,6 +374,7 @@ export default function PricingPlansGrid({
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Reordenar productos</span></li>
           {renderDestacarProductosFeatureRow(S.productHighlightAllowed)}
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas básicas</span></li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Imprimir carta en papel</span></li>
           <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>1 idioma</span></li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
@@ -429,6 +434,7 @@ export default function PricingPlansGrid({
               Plantillas <strong>Pro</strong>
             </span>
           </li>
+          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Imprimir carta en papel</span></li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
             <span>3 idiomas</span>
@@ -567,6 +573,10 @@ export default function PricingPlansGrid({
             <li className="landing-pricing-feature">
               <span className="landing-pricing-check">✓</span>
               <span>Plantillas básicas</span>
+            </li>
+            <li className="landing-pricing-feature">
+              <span className="landing-pricing-check">✓</span>
+              <span>Imprimir carta en papel</span>
             </li>
             <li className="landing-pricing-feature">
               <span className="landing-pricing-check">✓</span>
