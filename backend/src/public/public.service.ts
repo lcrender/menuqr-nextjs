@@ -154,8 +154,7 @@ export class PublicService {
           m.valid_from as "validFrom",
           m.valid_to as "validTo",
           m.schedule_enabled as "scheduleEnabled",
-          m.schedule,
-          r.timezone as "restaurantTimezone"
+          m.schedule
         FROM menus m
         WHERE m.restaurant_id = $1 
           AND m.status = 'PUBLISHED'
@@ -171,11 +170,12 @@ export class PublicService {
         [restaurant.id],
       );
 
+      const restaurantTimezone = restaurant.timezone || 'UTC';
       const menusResult = menusResultRaw.filter((m: any) =>
         isMenuScheduledVisibleNow({
           scheduleEnabled: m.scheduleEnabled,
           schedule: m.schedule,
-          timezone: restaurant.timezone || m.restaurantTimezone || 'UTC',
+          timezone: restaurantTimezone,
         }),
       );
 
