@@ -6,7 +6,8 @@ import { useMemo, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import { getApiBaseUrl } from '../lib/config';
-import { PREMIUM_INQUIRY_PATH, type PremiumInquirySource } from '../lib/premium-inquiry-url';
+import { type PremiumInquirySource } from '../lib/premium-inquiry-url';
+import type { GetServerSideProps } from 'next';
 
 export default function ConsultaPlanPremiumPage() {
   const router = useRouter();
@@ -28,12 +29,6 @@ export default function ConsultaPlanPremiumPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [ok, setOk] = useState(false);
-
-  const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
-  const canonicalUrl =
-    canonicalBase && /^https?:\/\//i.test(canonicalBase)
-      ? `${canonicalBase}${PREMIUM_INQUIRY_PATH}`
-      : null;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,8 +71,7 @@ export default function ConsultaPlanPremiumPage() {
     <>
       <Head>
         <title>Consulta Plan Premium a medida | AppMenuQR</title>
-        {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
-        <meta name="robots" content="index, follow" />
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
         <meta
           name="description"
           content="Consultá por el Plan Premium de AppMenuQR: diseño y configuración personalizada de tu carta digital con QR para restaurantes y bares."
@@ -206,6 +200,11 @@ export default function ConsultaPlanPremiumPage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
+  return { props: {} };
+};
 
 declare global {
   interface Window {

@@ -26,7 +26,10 @@ const LOGIN_META_DESCRIPTION =
 const REGISTER_META_DESCRIPTION =
   'Alta gratuita en AppMenuQR: menú digital con código QR, plantillas y categorías para tu local. Registrate y publicá platos en minutos, sin papel.';
 
+const ROBOTS_NOINDEX = 'noindex, follow';
+
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  context.res.setHeader('X-Robots-Tag', ROBOTS_NOINDEX);
   const initialIsRegister = context.query.action === 'register';
   return { props: { initialIsRegister } };
 }
@@ -315,6 +318,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
       <Head>
         <title>{pageTitle}</title>
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        <meta name="robots" content={ROBOTS_NOINDEX} />
         <meta name="description" content={pageDescription} />
         <meta property="og:type" content="website" />
         {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}

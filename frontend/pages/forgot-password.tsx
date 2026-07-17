@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import type { GetServerSideProps } from 'next';
 import api from '../lib/axios';
 import LandingFooter from '../components/LandingFooter';
 
@@ -36,6 +37,7 @@ export default function ForgotPasswordPage() {
       <Head>
         <title>Recuperar contraseña - AppMenuQR</title>
         <meta name="description" content="Recupera tu contraseña de AppMenuQR" />
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
       </Head>
       <div className="landing-page">
         <section className="landing-auth">
@@ -106,3 +108,8 @@ export default function ForgotPasswordPage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
+  return { props: {} };
+};
