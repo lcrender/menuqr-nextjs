@@ -1,0 +1,393 @@
+/* Pantalla admin: Imprimir carta */
+.print-menu-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.print-menu-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.print-menu-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.print-menu-preview-wrap {
+  background: #e8eaed;
+  border-radius: 12px;
+  padding: 1.25rem;
+  min-height: 480px;
+  max-height: calc(100vh - 160px);
+  overflow: auto;
+}
+
+.print-menu-sheet {
+  background: #fff;
+  color: #1a1a1a;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 2.25rem;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+
+.print-menu-cover {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 1.25rem;
+  display: block;
+}
+
+.print-menu-header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #111;
+}
+
+.print-menu-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.print-menu-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  line-height: 1.2;
+}
+
+.print-menu-desc {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #444;
+  line-height: 1.5;
+}
+
+.print-menu-block {
+  margin-bottom: 2rem;
+}
+
+.print-menu-block--page-break {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed #bbb;
+}
+
+.print-menu-block--page-break::before {
+  content: 'Salto de página';
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.print-menu-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #ccc;
+}
+
+.print-menu-menu-desc {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.print-menu-section {
+  margin-bottom: 1.25rem;
+}
+
+.print-menu-section--page-break {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed #bbb;
+}
+
+.print-menu-section--page-break::before {
+  content: 'Salto de página';
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.print-menu-section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #222;
+}
+
+.print-menu-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px dotted #ddd;
+}
+
+.print-menu-item-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.print-menu-item-desc {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.print-menu-item-prices {
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.print-menu-item-price-label {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: #777;
+  margin-right: 0.25rem;
+}
+
+.print-menu-footer {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 2px solid #111;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.print-menu-footer h4 {
+  font-size: 0.95rem;
+  margin: 0 0 0.5rem;
+}
+
+.print-menu-footer p {
+  margin: 0.2rem 0;
+}
+
+.print-menu-options {
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  padding: 1.25rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.print-menu-options h2 {
+  font-size: 1.1rem;
+  margin: 0 0 1rem;
+}
+
+.print-menu-options-group {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.print-menu-options-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.print-menu-options-group h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+  margin: 0 0 0.65rem;
+}
+
+.print-menu-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.print-menu-check input {
+  margin-top: 0.2rem;
+}
+
+.print-menu-empty {
+  text-align: center;
+  color: #666;
+  padding: 3rem 1rem;
+}
+
+@media (max-width: 991px) {
+  .print-menu-page {
+    grid-template-columns: 1fr;
+  }
+
+  .print-menu-options {
+    position: static;
+    order: -1;
+  }
+
+  .print-menu-preview-wrap {
+    max-height: none;
+  }
+}
+
+@media print {
+  /*
+   * margin lateral/inferior 0 ayuda a que Chrome no imprima URL/fecha.
+   * margin-top en hojas 2+ da aire al contenido en modo "una debajo de la otra".
+   * Si el navegador muestra encabezado, desmarcar "Encabezados y pies de página".
+   */
+  @page {
+    size: auto;
+    margin: 18mm 0 10mm 0;
+  }
+
+  @page :first {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 10mm;
+    margin-left: 0;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .admin-mobile-topbar,
+  .admin-sidebar,
+  .admin-sidebar-backdrop,
+  .no-print {
+    display: none !important;
+  }
+
+  .admin-container,
+  .admin-layout,
+  .admin-content,
+  .admin-main {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  .print-menu-page {
+    display: block !important;
+    gap: 0 !important;
+  }
+
+  .print-menu-preview-wrap {
+    background: transparent !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+
+  .print-menu-sheet {
+    box-shadow: none !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm 12mm 8mm !important;
+    border-radius: 0 !important;
+  }
+
+  .print-menu-cover {
+    max-height: 100px !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .print-menu-header {
+    margin-bottom: 0.85rem !important;
+    padding-bottom: 0.65rem !important;
+  }
+
+  .print-menu-block,
+  .print-menu-section {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .print-menu-block--page-break,
+  .print-menu-section--page-break {
+    break-before: page;
+    page-break-before: always;
+    margin-top: 0 !important;
+    /* El margen superior de hojas 2+ lo aporta @page; no sumar padding extra */
+    padding-top: 0 !important;
+    border-top: none !important;
+  }
+
+  .print-menu-block--page-break::before,
+  .print-menu-section--page-break::before {
+    display: none !important;
+  }
+
+  .print-menu-name,
+  .print-menu-section-title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .print-menu-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-menu-footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}

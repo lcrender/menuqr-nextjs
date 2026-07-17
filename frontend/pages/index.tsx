@@ -8,6 +8,7 @@ import LandingFooter from '../components/LandingFooter';
 import SeoLandingHeroSplit from '../components/SeoLandingHeroSplit';
 import LandingBenefitIcon from '../components/LandingBenefitIcon';
 import api from '../lib/axios';
+import { preferredImageSrc } from '../lib/optimized-image';
 import { SEO_LANDING_HERO_MOCKUP_IMAGE } from '../lib/seo-landings-config';
 import { buildLandingJsonLd, siteJsonLdBaseUrl } from '../lib/json-ld-appmenuqr';
 import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
@@ -128,6 +129,12 @@ export default function Home() {
         <meta name="twitter:title" content={LANDING_PAGE_TITLE} />
         <meta name="twitter:description" content={LANDING_PAGE_DESCRIPTION} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+          rel="preload"
+          as="image"
+          href={preferredImageSrc(SEO_LANDING_HERO_MOCKUP_IMAGE)}
+          type="image/webp"
+        />
         {landingJsonLd ? (
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: landingJsonLd }} />
         ) : null}

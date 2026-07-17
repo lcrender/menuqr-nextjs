@@ -13,7 +13,9 @@
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
     "export": "next export",
-    "optimize-images": "node ../scripts/optimize-static-images.mjs"
+    "optimize-images": "node ../scripts/optimize-static-images.mjs",
+    "sync-public-css": "node ../scripts/sync-public-css.js",
+    "prebuild": "node ../scripts/sync-public-css.js"
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -64,5 +66,14 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "browserslist": [
+    "chrome >= 92",
+    "firefox >= 90",
+    "safari >= 15",
+    "ios >= 15",
+    "edge >= 92",
+    "not dead",
+    "not op_mini all"
+  ]
 }

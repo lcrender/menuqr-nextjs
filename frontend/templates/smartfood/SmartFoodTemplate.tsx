@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import OptimizedPicture from '../../components/OptimizedPicture';
+import TemplateFonts, { SMART_FOOD_FONTS_HREF } from '../../components/TemplateFonts';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import SmartFoodAllergenIcon from './SmartFoodAllergenIcon';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
@@ -156,6 +157,8 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
   };
 
   return (
+    <>
+      <TemplateFonts googleFontsHref={SMART_FOOD_FONTS_HREF} />
     <div className="template-smartfood restaurant-container">
       <style jsx>{`
         .template-smartfood {
@@ -391,6 +394,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
         </div>
       </footer>
     </div>
+    </>
   );
 };
 

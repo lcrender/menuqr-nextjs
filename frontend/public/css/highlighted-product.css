@@ -1,0 +1,50 @@
+/* Bloque de productos destacados — compartido entre plantillas (excepto Sol & Noche, estilos propios). */
+.tpl-featured-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.tpl-featured-card {
+  border: 2px solid var(--tpl-featured-accent, #c45c26);
+  border-radius: 12px;
+}
+
+/* Fondo tintado solo en cards tipo grid (Foodie, Burgers, etc.) */
+.tpl-featured-card:not(.menu-item):not(.pro-mobile-item-row) {
+  background: color-mix(in srgb, var(--tpl-featured-accent, #c45c26) 6%, #ffffff);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--tpl-featured-accent, #c45c26) 18%, transparent);
+}
+
+.tpl-featured-label {
+  display: inline-block;
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tpl-featured-accent, #c45c26);
+}
+
+/* Variante grid (Foodie, Burgers, Gourmet, Italian) */
+.tpl-featured-block--grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .tpl-featured-block--grid .tpl-featured-card--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.template-night-club .tpl-featured-card {
+  background: color-mix(in srgb, var(--tpl-featured-accent, #9333ea) 14%, #12121a);
+}
+
+.template-beachbar .tpl-featured-card {
+  background: color-mix(in srgb, var(--tpl-featured-accent, #0ea5e9) 10%, rgba(255, 255, 255, 0.12));
+}

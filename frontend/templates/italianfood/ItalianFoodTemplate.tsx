@@ -1,5 +1,6 @@
 import React from 'react';
 import OptimizedPicture from '../../components/OptimizedPicture';
+import TemplateFonts, { ITALIAN_FOOD_FONTS_HREF } from '../../components/TemplateFonts';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { preferredImageSrc } from '../../lib/optimized-image';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
@@ -100,6 +101,8 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
   };
 
   return (
+    <>
+      <TemplateFonts googleFontsHref={ITALIAN_FOOD_FONTS_HREF} />
     <div
       className="template-italianfood restaurant-container"
       style={containerStyle}
@@ -536,6 +539,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
         </footer>
       </div>
     </div>
+    </>
   );
 };
 
