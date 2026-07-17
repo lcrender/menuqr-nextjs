@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
@@ -163,7 +164,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
               flexShrink: 0,
             }}
           >
-            <img
+            <OptimizedPicture
               src={item.photos![0]}
               alt={item.name}
               width={photoSize}
@@ -350,14 +351,14 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
 
       {showCover && restaurant.coverUrl && (
         <div className="pro-mobile-cover">
-          <img src={restaurant.coverUrl} alt={restaurant.name} />
+          <OptimizedPicture src={restaurant.coverUrl} alt={restaurant.name} />
         </div>
       )}
 
       <header className={`pro-mobile-header${headerNoName ? ' pro-mobile-header--no-name' : ''}`}>
         {showLogo && restaurant.logoUrl && (
           <div className="pro-mobile-logo" style={{ flexShrink: 0 }}>
-            <img src={restaurant.logoUrl} alt={restaurant.name} />
+            <OptimizedPicture src={restaurant.logoUrl} alt={restaurant.name} />
           </div>
         )}
         {(showName || (showDescription && restaurant.description)) && (

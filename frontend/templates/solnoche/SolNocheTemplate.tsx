@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import OptimizedPicture from '../../components/OptimizedPicture';
 import FoodieLocaleSelect from '../../components/FoodieLocaleSelect';
 import type { TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import {
@@ -233,7 +234,7 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
           >
             <div className="sol-noche-topbar-logo">
               {showLogo && logoUrl ? (
-                <img src={logoUrl} alt={restaurant.name} className="sol-noche-logo" />
+                <OptimizedPicture src={logoUrl} alt={restaurant.name} className="sol-noche-logo" />
               ) : editMode ? (
                 <span className="sol-noche-edit-placeholder">Logo oculto o sin imagen</span>
               ) : (
@@ -269,7 +270,7 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
               className="sol-noche-edit-zone--cover"
             >
               {coverUrl ? (
-                <img src={coverUrl} alt="" className="sol-noche-cover" loading="eager" decoding="async" />
+                <OptimizedPicture src={coverUrl} alt="" className="sol-noche-cover" loading="eager" decoding="async" />
               ) : (
                 <div className="sol-noche-edit-placeholder sol-noche-edit-placeholder--cover">Portada oculta o sin imagen</div>
               )}
@@ -400,7 +401,7 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
                         <article key={item.id} className={`sol-noche-featured-card${photo ? '' : ' no-photo'}`}>
                           {photo ? (
                             <div className="sol-noche-featured-photo-wrap">
-                              <img
+                              <OptimizedPicture
                                 src={photo}
                                 alt=""
                                 className="sol-noche-featured-photo"
@@ -435,7 +436,7 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
                         >
                           {photo ? (
                             <div className="sol-noche-regular-photo-wrap">
-                              <img
+                              <OptimizedPicture
                                 src={photo}
                                 alt=""
                                 className="sol-noche-regular-photo"

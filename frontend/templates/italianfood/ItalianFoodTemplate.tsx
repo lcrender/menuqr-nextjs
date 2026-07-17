@@ -1,5 +1,7 @@
 import React from 'react';
+import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
+import { preferredImageSrc } from '../../lib/optimized-image';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
   FOOTER_REL_APPMENUQR,
@@ -89,7 +91,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
   const containerStyle = {
     minHeight: '100vh',
     width: '100%',
-    backgroundImage: `url('/templates/italianfood/images/pattern-italian-food.jpg')`,
+    backgroundImage: `url('${preferredImageSrc('/templates/italianfood/images/pattern-italian-food.jpg')}')`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
@@ -117,7 +119,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
       <div style={{ position: 'relative', zIndex: 2 }}>
       {/* Cover Image */}
       <div style={{ width: '100%', height: '400px', overflow: 'hidden', position: 'relative' }}>
-        <img 
+        <OptimizedPicture 
           src={restaurant.coverUrl || '/templates/italianfood/images/pattern-italian-food.jpg'} 
           alt={restaurant.name}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -154,7 +156,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
             }}
             className="template-italianfood logo-container-mobile"
             >
-              <img 
+              <OptimizedPicture 
                 src={restaurant.logoUrl} 
                 alt={restaurant.name}
                 style={{ 
@@ -298,7 +300,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                   {featured ? <p className="tpl-featured-label" style={{ padding: '16px 16px 0', margin: 0 }}>{recommendedLabel}</p> : null}
                   {item.photos && item.photos.length > 0 && (
                     <div style={{ width: '100%', height: '220px', overflow: 'hidden' }}>
-                      <img
+                      <OptimizedPicture
                         src={item.photos[0]}
                         alt={item.name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}

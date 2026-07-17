@@ -1,4 +1,5 @@
 import React from 'react';
+import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
@@ -209,7 +210,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
 
       {showCover && restaurant.coverUrl && (
         <div className="gourmet-cover" style={{ position: 'relative' }}>
-          <img src={restaurant.coverUrl} alt={restaurant.name} style={{ minHeight: '200px' }} />
+          <OptimizedPicture src={restaurant.coverUrl} alt={restaurant.name} style={{ minHeight: '200px' }} />
         </div>
       )}
 
@@ -217,7 +218,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
         <div className="gourmet-header">
           {showLogo && restaurant.logoUrl && (
             <div className="gourmet-logo" style={{ flexShrink: 0 }}>
-              <img
+              <OptimizedPicture
                 src={restaurant.logoUrl}
                 alt={restaurant.name}
                 style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
@@ -329,7 +330,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
                   ) : null}
                   {showProductImages && item.photos && item.photos.length > 0 && (
                     <div style={{ width: '100%', height: '220px', overflow: 'hidden' }}>
-                      <img src={item.photos[0]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <OptimizedPicture src={item.photos[0]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   )}
                   <div className="gourmet-card-body">

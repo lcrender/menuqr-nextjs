@@ -1,4 +1,5 @@
 import React from 'react';
+import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
@@ -148,14 +149,14 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
         {/* Cover Image (si la plantilla la muestra) */}
         {showCover && restaurant.coverUrl && (
           <div style={{ width: '100%', marginBottom: '24px', borderRadius: '12px', overflow: 'hidden' }}>
-            <img src={restaurant.coverUrl} alt={restaurant.name} style={{ width: '100%', height: '280px', objectFit: 'cover' }} />
+            <OptimizedPicture src={restaurant.coverUrl} alt={restaurant.name} style={{ width: '100%', height: '280px', objectFit: 'cover' }} />
           </div>
         )}
         {/* Restaurant Info */}
         <div className="mb-5">
           <div className="text-center mb-4">
             {showLogo && restaurant.logoUrl && (
-              <img 
+              <OptimizedPicture 
                 src={restaurant.logoUrl} 
                 alt={restaurant.name}
                 style={{ maxWidth: '300px', maxHeight: '300px', marginBottom: '20px' }}

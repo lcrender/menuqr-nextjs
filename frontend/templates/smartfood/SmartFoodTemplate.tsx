@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import SmartFoodAllergenIcon from './SmartFoodAllergenIcon';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
@@ -184,7 +185,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
 
       <div className="smartfood-shell">
         {showLogo && restaurant.logoUrl ? (
-          <img src={restaurant.logoUrl} alt={restaurant.name} className="smartfood-logo" />
+          <OptimizedPicture src={restaurant.logoUrl} alt={restaurant.name} className="smartfood-logo" />
         ) : null}
 
         {showName ? <h1 className="smartfood-restaurant-name">{restaurant.name}</h1> : null}

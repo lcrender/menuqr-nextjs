@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import OptimizedPicture from '../../components/OptimizedPicture';
 import type { TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { resolveBeachBarBackgroundImage } from '../../lib/beach-bar-template';
+import { preferredImageSrc } from '../../lib/optimized-image';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
   FOOTER_REL_APPMENUQR,
@@ -102,7 +104,7 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
       <article key={item.id} className={`beachbar-product-card${featured ? ' tpl-featured-card' : ''}`}>
         <div className="beachbar-product-photo-wrap" aria-hidden={!photo}>
           {photo ? (
-            <img
+            <OptimizedPicture
               src={photo}
               alt=""
               className="beachbar-product-photo"
@@ -168,7 +170,7 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
         } as React.CSSProperties
       }
     >
-      <div className="beachbar-bg" style={{ backgroundImage: `url(${backgroundUrl})` }} aria-hidden />
+      <div className="beachbar-bg" style={{ backgroundImage: `url('${preferredImageSrc(backgroundUrl)}')` }} aria-hidden />
       <div className="beachbar-bg-overlay" aria-hidden />
 
       {menuLocales && publicLocales.length > 1 ? (
@@ -199,7 +201,7 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
       <div className="beachbar-page">
         <header className="beachbar-header">
           {showLogo && restaurant.logoUrl ? (
-            <img src={restaurant.logoUrl} alt={restaurant.name} className="beachbar-logo" />
+            <OptimizedPicture src={restaurant.logoUrl} alt={restaurant.name} className="beachbar-logo" />
           ) : null}
           {showName || showDescription ? (
             <div className="beachbar-glass beachbar-intro">

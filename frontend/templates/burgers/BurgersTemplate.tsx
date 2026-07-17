@@ -1,4 +1,5 @@
 import React from 'react';
+import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
@@ -173,7 +174,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
       {/* Cover Image */}
       {restaurant.coverUrl && (
         <div className="template-burgers burgers-cover" style={{ width: '100%', height: '350px', overflow: 'hidden', position: 'relative', zIndex: 1, borderRadius: '16px', border: `4px solid ${secondaryColor}`, boxSizing: 'border-box', boxShadow: `${shadowDepth}, ${shadowGlowSecondary}` }}>
-          <img
+          <OptimizedPicture
             src={restaurant.coverUrl}
             alt={restaurant.name}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -219,7 +220,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '30px', flexWrap: 'wrap', marginBottom: '50px', position: 'relative', zIndex: 1 }} className="template-burgers burgers-header-row">
           {restaurant.logoUrl && (
             <div className="template-burgers burgers-logo-wrapper" style={{ flexShrink: 0 }}>
-              <img 
+              <OptimizedPicture 
                 src={restaurant.logoUrl} 
                 alt={restaurant.name}
                 style={{ 
@@ -361,7 +362,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                   {featured ? <p className="tpl-featured-label" style={{ padding: '16px 28px 0', margin: 0 }}>{recommendedLabel}</p> : null}
                   {item.photos && item.photos.length > 0 && (
                     <div style={{ width: '100%', height: '240px', overflow: 'hidden', position: 'relative' }}>
-                      <img
+                      <OptimizedPicture
                         src={item.photos[0]}
                         alt={item.name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}

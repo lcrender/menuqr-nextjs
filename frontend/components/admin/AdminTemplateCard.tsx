@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import OptimizedPicture from '../OptimizedPicture';
 import Link from 'next/link';
 import { useState } from 'react';
 import { getTemplateBySlug } from '../../lib/menu-templates-catalog';
@@ -58,11 +58,10 @@ export default function AdminTemplateCard({
       <div
         className={`${styles.cardImageWrap} ${usesMockup ? styles.cardImageWrapMockup : ''}`}
       >
-        <Image
+        <OptimizedPicture
           src={imageSrc}
           alt={`Vista previa plantilla ${template.name}`}
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className={`${styles.cardImage} ${usesMockup ? styles.cardImageMockup : ''}`}
           onError={() => setImageError(true)}
         />

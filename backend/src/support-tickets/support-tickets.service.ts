@@ -11,6 +11,7 @@ import { Prisma, SupportTicketStatus, UserRole } from '@prisma/client';
 import { PrismaService } from '../common/database/prisma.service';
 import { EmailService } from '../common/email/email.service';
 import { MinioService } from '../common/minio/minio.service';
+import { optimizeModernPair } from '../common/image/image-optimizer';
 import { CreateSupportTicketDto } from './dto/create-support-ticket.dto';
 import { ReplySupportTicketDto } from './dto/reply-support-ticket.dto';
 
@@ -204,15 +205,34 @@ export class SupportTicketsService {
     if (!IMAGE_MIME.has(mime)) {
       throw new BadRequestException('Solo se permiten imágenes JPEG o PNG.');
     }
-    const ext = mime === 'image/png' ? '.png' : '.jpg';
     const folder = `support-tickets/${userId}`;
-    const filename = `img-${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`;
+    const baseName = `img-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
     try {
-      return await this.minio.uploadBuffer(file.buffer, {
-        folder,
-        filename,
-        contentType: mime === 'image/png' ? 'image/png' : 'image/jpeg',
+      const pair = await optimizeModernPair({
+        inputBuffer: file.buffer,
+        width: 1200,
+        height: 1200,
+        maxBytes: 512 * 1024,
+        fit: 'inside',
       });
+
+      const uploaded = await this.minio.uploadBuffer(pair.webp, {
+        folder,
+        filename: `${baseName}.webp`,
+        contentType: 'image/webp',
+      });
+
+      if (pair.avif) {
+        const avifKey = uploaded.filename.replace(/\.webp$/i, '.avif');
+        try {
+          await this.minio.putObjectExactKey(avifKey, pair.avif, 'image/avif');
+        } catch (e) {
+          this.logger.warn(`No se pudo subir AVIF para ticket ${avifKey}: ${e}`);
+        }
+      }
+
+      return uploaded;
     } catch (e) {
       this.logger.error(`MinIO upload ticket attachment: ${e}`);
       throw new ServiceUnavailableException('No se pudo subir la imagen al almacenamiento. Revisá MinIO.');

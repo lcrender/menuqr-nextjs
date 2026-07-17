@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import OptimizedPicture from './OptimizedPicture';
 import { SEO_LANDING_HERO_BULLETS, type SeoLandingConfig } from '../lib/seo-landings-config';
 import plantillaStyles from './plantillas/detail/plantilla-detail.module.css';
 import LandingHeroPlantillasQr from './LandingHeroPlantillasQr';
@@ -17,14 +17,12 @@ export default function SeoLandingHeroSplit({ config, onCta }: Props) {
         <div className={`${plantillaStyles.heroBand} landing-hero-split-band`}>
           {mockupSrc ? (
             <div className="landing-hero-split-bg" aria-hidden="true">
-              <Image
+              <OptimizedPicture
                 src={mockupSrc}
                 alt=""
                 fill
                 className="landing-hero-split-bg-image"
-                sizes="(max-width: 991px) 500px, 360px"
-                quality={100}
-                priority
+                loading="eager"
               />
             </div>
           ) : null}

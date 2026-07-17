@@ -1,4 +1,5 @@
 import React from 'react';
+import OptimizedPicture from '../../components/OptimizedPicture';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -185,7 +186,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
         {/* Cover Image */}
         {showCover && restaurant.coverUrl && (
           <div className="template-classic classic-cover-wrapper mb-4" style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-            <img 
+            <OptimizedPicture 
               src={restaurant.coverUrl} 
               alt={restaurant.name}
               style={{ width: '100%', height: '300px', objectFit: 'cover' }}
@@ -197,7 +198,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
         <div className="mb-5">
           <div className="text-center mb-4" style={{ marginTop: '40px' }}>
             {showLogo && restaurant.logoUrl && (
-              <img 
+              <OptimizedPicture 
                 className="template-classic classic-logo"
                 src={restaurant.logoUrl} 
                 alt={restaurant.name}

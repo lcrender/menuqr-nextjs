@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import OptimizedPicture from '../../OptimizedPicture';
 import type { ReactNode } from 'react';
 import type { MenuTemplateCatalogItem } from '../../../types/menu-template-catalog';
 import type { PlantillaLandingContent, PlantillaLandingVariant } from '../../../types/plantilla-landing';
@@ -96,14 +96,13 @@ export default function PlantillaLandingArticle({
           {catalog ? (
             L.heroPreviewImage ? (
               <div className={styles.heroPreviewWrap}>
-                <Image
+                <OptimizedPicture
                   src={L.heroPreviewImage}
                   alt={`Vista previa de la plantilla menú QR ${catalog.nombre}`}
                   width={500}
                   height={625}
                   className={styles.heroPreviewImage}
-                  sizes="(max-width: 720px) 70vw, 380px"
-                  priority
+                  loading="eager"
                 />
               </div>
             ) : (

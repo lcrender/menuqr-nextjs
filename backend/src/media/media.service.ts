@@ -8,7 +8,10 @@ import {
 import { PostgresService } from '../common/database/postgres.service';
 import { MinioService } from '../common/minio/minio.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
-import sharp from 'sharp';
+import {
+  getImageDimensions,
+  optimizeModernPair,
+} from '../common/image/image-optimizer';
 import { extname } from 'path';
 
 /** Usuario JWT (req.user); tenantId puede ser null p. ej. SUPER_ADMIN */
@@ -18,6 +21,8 @@ type MediaUploadResult = {
   filename: string;
   mimeType: string;
   size: number;
+  width?: number;
+  height?: number;
 };
 
 @Injectable()
@@ -30,46 +35,45 @@ export class MediaService {
     private readonly planLimits: PlanLimitsService,
   ) {}
 
-  private async optimizeToWebp(args: {
+  /** WebP principal + variante AVIF en la misma key (solo cambia extensión). */
+  private async tryOptimizeToModernFormats(args: {
     inputBuffer: Buffer;
     width: number;
     height: number;
     maxBytes: number;
     fit?: 'cover' | 'contain' | 'inside' | 'outside' | 'fill';
-  }): Promise<Buffer> {
-    const { inputBuffer, width, height, maxBytes, fit = 'cover' } = args;
-
-    // Cada pipeline debe usar un sharp() nuevo: una instancia solo puede ejecutarse una vez (toBuffer).
-    // animated: false evita edge cases con GIF/WebP multipágina; JPEG/PNG no se ven afectados.
-    const pipeline = () =>
-      sharp(inputBuffer, { limitInputPixels: 50_000_000, animated: false }).rotate();
-
-    let quality = 86;
-    let last: Buffer | null = null;
-
-    while (quality >= 40) {
-      const out = await pipeline()
-        .resize(width, height, { fit })
-        .webp({ quality, effort: 4 })
-        .toBuffer();
-      last = out;
-      if (out.length <= maxBytes) return out;
-      quality -= 6;
-    }
-
-    return last ?? (await pipeline().resize(width, height, { fit }).webp({ quality: 40, effort: 4 }).toBuffer());
-  }
-
-  /** Intenta optimizar a WebP; si falla, devuelve null para hacer fallback al original. */
-  private async tryOptimizeToWebp(args: {
-    inputBuffer: Buffer;
-    width: number;
-    height: number;
-    maxBytes: number;
-    fit?: 'cover' | 'contain' | 'inside' | 'outside' | 'fill';
-  }): Promise<Buffer | null> {
+    folder: string;
+    webpFilename: string;
+  }): Promise<(MediaUploadResult & { width?: number; height?: number }) | null> {
     try {
-      return await this.optimizeToWebp(args);
+      const [pair, dimensions] = await Promise.all([
+        optimizeModernPair(args),
+        getImageDimensions(args.inputBuffer),
+      ]);
+
+      const uploaded = await this.minio.uploadBuffer(pair.webp, {
+        folder: args.folder,
+        filename: args.webpFilename,
+        contentType: 'image/webp',
+      });
+
+      if (pair.avif) {
+        const avifKey = uploaded.filename.replace(/\.webp$/i, '.avif');
+        try {
+          await this.minio.putObjectExactKey(avifKey, pair.avif, 'image/avif');
+        } catch (err) {
+          this.logger.warn(`No se pudo subir variante AVIF ${avifKey}`, err as Error);
+        }
+      }
+
+      return {
+        url: uploaded.url,
+        filename: uploaded.filename,
+        mimeType: 'image/webp',
+        size: pair.webp.length,
+        width: dimensions.width,
+        height: dimensions.height,
+      };
     } catch (err) {
       this.logger.warn('Sharp falló al optimizar; se subirá imagen original.', err as Error);
       return null;
@@ -94,26 +98,18 @@ export class MediaService {
     optimizedMaxBytes: number;
     optimizedFilename: string;
   }): Promise<MediaUploadResult> {
-    const optimized = await this.tryOptimizeToWebp({
+    const optimized = await this.tryOptimizeToModernFormats({
       inputBuffer: args.file.buffer,
       width: args.optimizedWidth,
       height: args.optimizedHeight,
       maxBytes: args.optimizedMaxBytes,
       fit: 'cover',
+      folder: args.folder,
+      webpFilename: args.optimizedFilename,
     });
 
     if (optimized) {
-      const uploaded = await this.minio.uploadBuffer(optimized, {
-        folder: args.folder,
-        filename: args.optimizedFilename,
-        contentType: 'image/webp',
-      });
-      return {
-        url: uploaded.url,
-        filename: uploaded.filename,
-        mimeType: 'image/webp',
-        size: optimized.length,
-      };
+      return optimized;
     }
 
     const ext = this.getSafeExtension(args.file);
@@ -491,28 +487,26 @@ export class MediaService {
       // Un producto tiene solo una imagen: borrar la anterior (archivo + BD) antes de subir la nueva
       await this.deleteItemPhotos(tenantId, itemId);
 
-      const optimized = await this.tryOptimizeToWebp({
+      const optimized = await this.tryOptimizeToModernFormats({
         inputBuffer: file.buffer,
         width: 800,
         height: 800,
         maxBytes: 1024 * 1024,
         fit: 'cover',
+        folder: `items/${itemId}`,
+        webpFilename: 'product.webp',
       });
       const ext = this.getSafeExtension(file);
       const uploadPayload =
         optimized != null
-          ? await this.minio.uploadBuffer(optimized, {
-              folder: `items/${itemId}`,
-              filename: 'product.webp',
-              contentType: 'image/webp',
-            })
+          ? { url: optimized.url, filename: optimized.filename }
           : await this.minio.uploadBuffer(file.buffer, {
               folder: `items/${itemId}`,
               filename: `original${ext}`,
               contentType: file.mimetype || 'application/octet-stream',
             });
       const mimeType = optimized != null ? 'image/webp' : file.mimetype || 'application/octet-stream';
-      const mediaSize = optimized != null ? optimized.length : file.size ?? file.buffer.length;
+      const mediaSize = optimized != null ? optimized.size : file.size ?? file.buffer.length;
 
       // Guardar en base de datos
       const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;

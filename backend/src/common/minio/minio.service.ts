@@ -126,15 +126,7 @@ export class MinioService implements OnModuleInit {
       const timestamp = Date.now();
       const filename = `${folder}/${timestamp}-${args.filename}`;
 
-      await this.minioClient.putObject(
-        this.bucketName,
-        filename,
-        buffer,
-        buffer.length,
-        {
-          'Content-Type': args.contentType,
-        },
-      );
+      await this.putObjectExactKey(filename, buffer, args.contentType);
 
       const url = `${this.publicUrl}/${this.bucketName}/${filename}`;
       return { url, filename };
@@ -142,6 +134,44 @@ export class MinioService implements OnModuleInit {
       this.logger.error('Error subiendo buffer a MinIO:', error);
       throw error;
     }
+  }
+
+  /** Sube a una key exacta (sin timestamp). Usado para variantes AVIF hermanas. */
+  async putObjectExactKey(key: string, buffer: Buffer, contentType: string): Promise<void> {
+    await this.minioClient.putObject(this.bucketName, key, buffer, buffer.length, {
+      'Content-Type': contentType,
+    });
+  }
+
+  async getObjectBuffer(key: string): Promise<Buffer> {
+    const stream = await this.minioClient.getObject(this.bucketName, key);
+    const chunks: Buffer[] = [];
+    return new Promise((resolve, reject) => {
+      stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', reject);
+    });
+  }
+
+  async objectExists(key: string): Promise<boolean> {
+    try {
+      await this.minioClient.statObject(this.bucketName, key);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Lista todos los objetos del bucket (recursivo). */
+  async *listAllObjects(prefix = ''): AsyncGenerator<string> {
+    const stream = this.minioClient.listObjectsV2(this.bucketName, prefix, true);
+    for await (const obj of stream) {
+      if (obj.name) yield obj.name;
+    }
+  }
+
+  getBucketName(): string {
+    return this.bucketName;
   }
 
   async deleteFile(filename: string): Promise<void> {
