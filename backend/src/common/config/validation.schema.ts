@@ -84,6 +84,11 @@ export const validationSchema = Joi.object({
   /** Opcional; por defecto https://api.cognitive.microsofttranslator.com */
   MICROSOFT_TRANSLATOR_ENDPOINT: Joi.string().optional().allow(''),
 
+  /** OpenAI (import menú desde foto, solo Super Admin). Opcional. */
+  OPENAI_API_KEY: Joi.string().optional().allow(''),
+  OPENAI_MODEL: Joi.string().optional().allow('').default('gpt-4o-mini'),
+  OPENAI_BASE_URL: Joi.string().optional().allow(''),
+
   // ========================================
   // SEGURIDAD
   // ========================================

@@ -13,7 +13,7 @@ import { MenuSectionsModule } from '../menu-sections/menu-sections.module';
   imports: [DatabaseModule, QRModule, PlanLimitsModule, I18nModule, MenuItemsModule, MenuSectionsModule],
   controllers: [MenusController],
   providers: [MenusService, MenusCsvImportService],
-  exports: [MenusService],
+  exports: [MenusService, MenusCsvImportService],
 })
 export class MenusModule {}
 

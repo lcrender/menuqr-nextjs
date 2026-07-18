@@ -24,6 +24,7 @@ import { MenuTranslationsModule } from './menu-translations/menu-translations.mo
 import { SupportTicketsModule } from './support-tickets/support-tickets.module';
 import { PromoCodesModule } from './promo-codes/promo-codes.module';
 import { DashboardWelcomeModule } from './dashboard-welcome/dashboard-welcome.module';
+import { MenuPhotoImportModule } from './menu-photo-import/menu-photo-import.module';
 
 // Módulos comunes
 import { DatabaseModule } from './common/database/database.module';
@@ -113,6 +114,7 @@ import { PlanLimitsModule } from './common/plan-limits/plan-limits.module';
     SupportTicketsModule,
     PromoCodesModule,
     DashboardWelcomeModule,
+    MenuPhotoImportModule,
   ],
   controllers: [AppController],
   providers: [],

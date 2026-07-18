@@ -17,9 +17,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const currentPath = router.pathname;
   const isHelpSection = currentPath.startsWith('/admin/help');
   const isConfigSection = currentPath.startsWith('/admin/config');
+  const isToolsSection = currentPath.startsWith('/admin/herramientas');
   const isDashboardConfigSection = currentPath.startsWith('/admin/config/dashboard');
   const [helpMenuOpen, setHelpMenuOpen] = useState(isHelpSection);
   const [configMenuOpen, setConfigMenuOpen] = useState(isConfigSection);
+  const [toolsMenuOpen, setToolsMenuOpen] = useState(isToolsSection);
   const [dashboardConfigMenuOpen, setDashboardConfigMenuOpen] = useState(isDashboardConfigSection);
 
   useEffect(() => {
@@ -69,6 +71,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       setConfigMenuOpen(true);
     }
   }, [isConfigSection]);
+
+  useEffect(() => {
+    if (isToolsSection) {
+      setToolsMenuOpen(true);
+    }
+  }, [isToolsSection]);
 
   useEffect(() => {
     if (isDashboardConfigSection) {
@@ -289,6 +297,50 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   )}
                 </div>
               </li>
+
+              {isSuperAdmin && (
+                <li className="admin-nav-item mt-2 pt-2 border-top border-secondary border-opacity-25">
+                  <div>
+                    <button
+                      type="button"
+                      className={`admin-nav-link w-100 text-start d-flex justify-content-between align-items-center ${isToolsSection ? 'active' : ''}`}
+                      onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
+                      style={{
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: 'transparent',
+                      }}
+                    >
+                      <span>Herramientas</span>
+                      <span
+                        style={{
+                          transform: toolsMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.3s',
+                        }}
+                      >
+                        ▼
+                      </span>
+                    </button>
+                    {toolsMenuOpen && (
+                      <ul
+                        className="admin-subnav"
+                        style={{ listStyle: 'none', paddingLeft: '20px', marginTop: '5px' }}
+                      >
+                        <li className="admin-nav-item">
+                          <Link
+                            href="/admin/herramientas/importar-menu-foto"
+                            className={`admin-nav-link ${currentPath === '/admin/herramientas/importar-menu-foto' ? 'active' : ''}`}
+                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            Importar menú desde foto
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              )}
 
               {isSuperAdmin && (
                 <li className="admin-nav-item mt-2 pt-2 border-top border-secondary border-opacity-25">

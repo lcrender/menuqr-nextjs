@@ -100,6 +100,36 @@ export default function Menus() {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !router.isReady) return;
+
+    const photoRaw = sessionStorage.getItem('menuPhotoImportFlash');
+    if (photoRaw) {
+      try {
+        const j = JSON.parse(photoRaw) as { ok?: boolean; warnings?: string[] };
+        sessionStorage.removeItem('menuPhotoImportFlash');
+        if (j.ok !== false) {
+          const warnings = Array.isArray(j.warnings) ? j.warnings : [];
+          const base =
+            'El menú se creó correctamente desde las fotos. Quedó en borrador: usá «Publicar» para que esté visible online. No se importaron fotos de productos.';
+          const warnText =
+            warnings.length > 0
+              ? `\n\nAvisos:\n${warnings.map((w) => `• ${w}`).join('\n')}`
+              : '';
+          setAlertData({
+            title: warnings.length
+              ? 'Menú importado desde foto (con avisos)'
+              : 'Menú importado desde foto',
+            message: base + warnText,
+            variant: warnings.length ? 'warning' : 'success',
+          });
+          setShowAlert(true);
+          if (user) void loadData();
+          return;
+        }
+      } catch {
+        sessionStorage.removeItem('menuPhotoImportFlash');
+      }
+    }
+
     const raw = sessionStorage.getItem('menuCsvImportFlash');
     if (!raw) return;
     let warnings: string[] = [];

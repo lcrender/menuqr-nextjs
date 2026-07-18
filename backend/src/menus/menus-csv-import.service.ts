@@ -78,6 +78,37 @@ function parseAmount(raw: string): number {
   return n;
 }
 
+/** Fila interna compartida por CSV e import desde foto. */
+export type StructuredMenuImportRow = {
+  nombre_seccion: string;
+  nombre_producto: string;
+  descripcion_producto?: string;
+  destacado?: string;
+  alergenos?: string;
+  moneda_1?: string;
+  etiqueta_1?: string;
+  precio_1?: string;
+  moneda_2?: string;
+  etiqueta_2?: string;
+  precio_2?: string;
+  moneda_3?: string;
+  etiqueta_3?: string;
+  precio_3?: string;
+  moneda_4?: string;
+  etiqueta_4?: string;
+  precio_4?: string;
+  moneda_5?: string;
+  etiqueta_5?: string;
+  precio_5?: string;
+};
+
+export type StructuredMenuImportResult = {
+  menuId: string;
+  sectionsCreated: number;
+  productsCreated: number;
+  warnings: string[];
+};
+
 @Injectable()
 export class MenusCsvImportService {
   private readonly logger = new Logger(MenusCsvImportService.name);
@@ -115,15 +146,15 @@ export class MenusCsvImportService {
         );
       }
     }
-    return [...new Set(codes)];
+    return Array.from(new Set(codes));
   }
 
-  private buildPrices(row: Record<string, string>): Array<{ currency: string; label?: string; amount: number }> {
+  private buildPrices(row: StructuredMenuImportRow): Array<{ currency: string; label?: string; amount: number }> {
     const prices: Array<{ currency: string; label?: string; amount: number }> = [];
     for (let i = 1; i <= 5; i++) {
-      const cur = row[`moneda_${i}`];
-      const label = row[`etiqueta_${i}`];
-      const priceStr = row[`precio_${i}`];
+      const cur = row[`moneda_${i}` as keyof StructuredMenuImportRow] as string | undefined;
+      const label = row[`etiqueta_${i}` as keyof StructuredMenuImportRow] as string | undefined;
+      const priceStr = row[`precio_${i}` as keyof StructuredMenuImportRow] as string | undefined;
       if (!priceStr) continue;
       if (!cur) {
         throw new BadRequestException(`Si completás precio_${i}, debés indicar moneda_${i}`);
@@ -154,13 +185,173 @@ export class MenusCsvImportService {
     );
   }
 
+  /**
+   * Crea menú + secciones + productos desde filas ya normalizadas.
+   * Usado por CSV e import desde foto.
+   */
+  async importStructuredMenu(
+    tenantId: string,
+    targetRestaurantId: string,
+    menuMeta: { menuName: string; menuDescription?: string },
+    rows: StructuredMenuImportRow[],
+    extraWarnings: string[] = [],
+  ): Promise<StructuredMenuImportResult> {
+    const warnings = [...extraWarnings];
+    if (!rows.length) {
+      throw new BadRequestException('No hay productos para importar');
+    }
+
+    const restaurant = await this.postgres.queryRaw<{ id: string; name: string }>(
+      `SELECT id, name FROM restaurants WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [targetRestaurantId, tenantId],
+    );
+    if (!restaurant[0]) {
+      throw new BadRequestException('Restaurante no encontrado o no pertenece a la cuenta indicada');
+    }
+
+    const menuName = menuMeta.menuName.trim();
+    if (!menuName) {
+      throw new BadRequestException('El nombre del menú es obligatorio');
+    }
+    const menuDescription = (menuMeta.menuDescription ?? '').trim();
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i]!;
+      if (!String(row.nombre_seccion || '').trim()) {
+        throw new BadRequestException(`Fila ${i + 1}: falta nombre de sección`);
+      }
+      if (!String(row.nombre_producto || '').trim()) {
+        throw new BadRequestException(`Fila ${i + 1}: falta nombre de producto`);
+      }
+    }
+
+    const planRow = await this.postgres.queryRaw<{ plan: string }>(
+      `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      [tenantId],
+    );
+    const plan = planRow[0]?.plan || 'free';
+    const menuLimit = await this.planLimits.getMenuLimit(plan);
+    const productLimit = await this.planLimits.getProductLimit(plan);
+    const allowHighlight = await this.planLimits.allowsProductHighlight(plan);
+
+    const menuCount = await this.postgres.queryRaw<{ c: string }>(
+      `SELECT COUNT(*)::text as c FROM menus WHERE tenant_id = $1 AND deleted_at IS NULL`,
+      [tenantId],
+    );
+    const currentMenus = parseInt(menuCount[0]?.c || '0', 10);
+    if (menuLimit !== -1 && currentMenus >= menuLimit) {
+      throw new BadRequestException(
+        `Límite de menús alcanzado (${menuLimit}). No se puede importar un menú nuevo.`,
+      );
+    }
+
+    const productCount = await this.postgres.queryRaw<{ c: string }>(
+      `SELECT COUNT(*)::text as c FROM menu_items WHERE tenant_id = $1 AND deleted_at IS NULL`,
+      [tenantId],
+    );
+    const currentProducts = parseInt(productCount[0]?.c || '0', 10);
+    if (productLimit !== -1 && currentProducts + rows.length > productLimit) {
+      throw new BadRequestException(
+        `Este import agregaría ${rows.length} productos y superaría el límite del plan (${productLimit}). Actualmente hay ${currentProducts}.`,
+      );
+    }
+
+    const iconByLower = await this.loadIconCodesLowerMap();
+
+    const normalizeSectionName = (raw: string) => String(raw ?? '').trim();
+    const sectionNamesInOrder: string[] = [];
+    const sectionSortByName = new Map<string, number>();
+    for (const row of rows) {
+      const name = normalizeSectionName(row.nombre_seccion);
+      if (!sectionSortByName.has(name)) {
+        sectionSortByName.set(name, sectionNamesInOrder.length + 1);
+        sectionNamesInOrder.push(name);
+      }
+    }
+
+    let menuId: string | null = null;
+    try {
+      const created = await this.menus.create(tenantId, {
+        restaurantId: targetRestaurantId,
+        name: menuName,
+        description: menuDescription || undefined,
+      });
+      menuId = created.id;
+
+      const sectionIdByName = new Map<string, string>();
+      for (const name of sectionNamesInOrder) {
+        const sort = sectionSortByName.get(name)!;
+        const sec = await this.menuSections.create(tenantId, {
+          menuId: menuId!,
+          name,
+          sort,
+          isActive: true,
+        });
+        sectionIdByName.set(name, sec.id);
+      }
+
+      let productsCreated = 0;
+      for (const row of rows) {
+        const secName = normalizeSectionName(row.nombre_seccion);
+        const sectionId = sectionIdByName.get(secName);
+        if (!sectionId) {
+          throw new BadRequestException(`Sección no resuelta: "${secName}"`);
+        }
+
+        const prices = this.buildPrices(row);
+        if (prices.length === 0) {
+          throw new BadRequestException(
+            `Producto "${row.nombre_producto}": agregá al menos moneda_1 y precio_1 (> 0).`,
+          );
+        }
+
+        const iconCodes = this.resolveAlergenos(row.alergenos || '', iconByLower, warnings);
+        let highlighted = parseDestacado(row.destacado || '');
+        if (highlighted && !allowHighlight) {
+          warnings.push(
+            `Producto "${row.nombre_producto}": destacado desactivado (el plan no permite destacados).`,
+          );
+          highlighted = false;
+        }
+
+        await this.menuItems.create(tenantId, {
+          menuId: menuId!,
+          sectionId,
+          name: row.nombre_producto.trim(),
+          description: (row.descripcion_producto || '').trim() || undefined,
+          active: true,
+          prices,
+          iconCodes: iconCodes.length ? iconCodes : undefined,
+          highlighted,
+        });
+        productsCreated += 1;
+      }
+
+      return {
+        menuId: menuId!,
+        sectionsCreated: sectionNamesInOrder.length,
+        productsCreated,
+        warnings,
+      };
+    } catch (e) {
+      this.logger.warn(`Import estructurado falló, rollback menú ${menuId}: ${e}`);
+      if (menuId) {
+        try {
+          await this.rollbackMenuImport(menuId, tenantId);
+        } catch (rollbackErr) {
+          this.logger.error(`Rollback import falló: ${rollbackErr}`);
+        }
+      }
+      throw e;
+    }
+  }
+
   async importFromCsvBuffer(
     tenantId: string,
     targetRestaurantId: string,
     buffer: Buffer,
     menuFromForm?: { menuName: string; menuDescription?: string },
-  ): Promise<{ menuId: string; sectionsCreated: number; productsCreated: number; warnings: string[] }> {
-    const warnings: string[] = [];
+  ): Promise<StructuredMenuImportResult> {
     let records: Record<string, unknown>[];
     try {
       records = parse(buffer, {
@@ -241,126 +432,11 @@ export class MenusCsvImportService {
       }
     }
 
-    const planRow = await this.postgres.queryRaw<{ plan: string }>(
-      `SELECT plan FROM tenants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
-      [tenantId],
+    return this.importStructuredMenu(
+      tenantId,
+      targetRestaurantId,
+      { menuName, menuDescription },
+      rows as StructuredMenuImportRow[],
     );
-    const plan = planRow[0]?.plan || 'free';
-    const menuLimit = await this.planLimits.getMenuLimit(plan);
-    const productLimit = await this.planLimits.getProductLimit(plan);
-    const allowHighlight = await this.planLimits.allowsProductHighlight(plan);
-
-    const menuCount = await this.postgres.queryRaw<{ c: string }>(
-      `SELECT COUNT(*)::text as c FROM menus WHERE tenant_id = $1 AND deleted_at IS NULL`,
-      [tenantId],
-    );
-    const currentMenus = parseInt(menuCount[0]?.c || '0', 10);
-    if (menuLimit !== -1 && currentMenus >= menuLimit) {
-      throw new BadRequestException(
-        `Límite de menús alcanzado (${menuLimit}). No se puede importar un menú nuevo.`,
-      );
-    }
-
-    const productCount = await this.postgres.queryRaw<{ c: string }>(
-      `SELECT COUNT(*)::text as c FROM menu_items WHERE tenant_id = $1 AND deleted_at IS NULL`,
-      [tenantId],
-    );
-    const currentProducts = parseInt(productCount[0]?.c || '0', 10);
-    if (productLimit !== -1 && currentProducts + rows.length > productLimit) {
-      throw new BadRequestException(
-        `Este import agregaría ${rows.length} productos y superaría el límite del plan (${productLimit}). Actualmente hay ${currentProducts}.`,
-      );
-    }
-
-    const iconByLower = await this.loadIconCodesLowerMap();
-
-    /** Orden de secciones = orden de primera aparición de cada nombre en el CSV (repetir nombre_seccion en cada fila del mismo bloque). */
-    const normalizeSectionName = (raw: string) => String(raw ?? '').trim();
-    const sectionNamesInOrder: string[] = [];
-    const sectionSortByName = new Map<string, number>();
-    for (const row of rows) {
-      const name = normalizeSectionName(row.nombre_seccion);
-      if (!name) {
-        throw new BadRequestException('nombre_seccion vacío en una o más filas');
-      }
-      if (!sectionSortByName.has(name)) {
-        sectionSortByName.set(name, sectionNamesInOrder.length + 1);
-        sectionNamesInOrder.push(name);
-      }
-    }
-
-    let menuId: string | null = null;
-    try {
-      const created = await this.menus.create(tenantId, {
-        restaurantId: targetRestaurantId,
-        name: menuName,
-        description: menuDescription || undefined,
-      });
-      menuId = created.id;
-
-      const sectionIdByName = new Map<string, string>();
-      for (const name of sectionNamesInOrder) {
-        const sort = sectionSortByName.get(name)!;
-        const sec = await this.menuSections.create(tenantId, {
-          menuId: menuId!,
-          name,
-          sort,
-          isActive: true,
-        });
-        sectionIdByName.set(name, sec.id);
-      }
-
-      let productsCreated = 0;
-      for (const row of rows) {
-        const secName = normalizeSectionName(row.nombre_seccion);
-        const sectionId = sectionIdByName.get(secName);
-        if (!sectionId) {
-          throw new BadRequestException(`Sección no resuelta: "${secName}"`);
-        }
-
-        const prices = this.buildPrices(row);
-        if (prices.length === 0) {
-          throw new BadRequestException(
-            `Producto "${row.nombre_producto}": agregá al menos moneda_1 y precio_1 (> 0).`,
-          );
-        }
-
-        const iconCodes = this.resolveAlergenos(row.alergenos || '', iconByLower, warnings);
-        let highlighted = parseDestacado(row.destacado);
-        if (highlighted && !allowHighlight) {
-          warnings.push(`Producto "${row.nombre_producto}": destacado desactivado (tu plan no permite destacados).`);
-          highlighted = false;
-        }
-
-        await this.menuItems.create(tenantId, {
-          menuId: menuId!,
-          sectionId,
-          name: row.nombre_producto,
-          description: row.descripcion_producto || undefined,
-          active: true,
-          prices,
-          iconCodes: iconCodes.length ? iconCodes : undefined,
-          highlighted,
-        });
-        productsCreated += 1;
-      }
-
-      return {
-        menuId: menuId!,
-        sectionsCreated: sectionNamesInOrder.length,
-        productsCreated,
-        warnings,
-      };
-    } catch (e) {
-      this.logger.warn(`Import CSV falló, rollback menú ${menuId}: ${e}`);
-      if (menuId) {
-        try {
-          await this.rollbackMenuImport(menuId, tenantId);
-        } catch (rollbackErr) {
-          this.logger.error(`Rollback import CSV falló: ${rollbackErr}`);
-        }
-      }
-      throw e;
-    }
   }
 }
