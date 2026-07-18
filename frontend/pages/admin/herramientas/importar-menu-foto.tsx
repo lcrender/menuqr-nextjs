@@ -186,18 +186,25 @@ export default function ImportarMenuFotoPage() {
       return { restaurantId: selectedRestaurantId, tenantId };
     }
 
-    if (!selectedTenantId) {
-      throw new Error('Seleccioná la cuenta (tenant) donde crear el restaurante');
-    }
     if (!newRestaurantName.trim()) {
       throw new Error('Ingresá el nombre del restaurante');
     }
 
     setCreatingRestaurant(true);
     try {
+      const name = newRestaurantName.trim();
+      const tenantRes = await api.post('/tenants', {
+        name,
+        plan: 'pro',
+      });
+      const tenantId = tenantRes.data?.id || tenantRes.data?.data?.id;
+      if (!tenantId) {
+        throw new Error('No se pudo crear la cuenta para el restaurante');
+      }
+
       const createRes = await api.post('/restaurants', {
-        name: newRestaurantName.trim(),
-        tenantId: selectedTenantId,
+        name,
+        tenantId,
         defaultCurrency: currency,
         timezone: 'UTC',
       });
@@ -213,9 +220,10 @@ export default function ImportarMenuFotoPage() {
         });
       }
       setResolvedRestaurantId(restaurantId);
-      setResolvedTenantId(selectedTenantId);
+      setResolvedTenantId(tenantId);
+      setSelectedTenantId(tenantId);
       await loadLists();
-      return { restaurantId, tenantId: selectedTenantId };
+      return { restaurantId, tenantId };
     } finally {
       setCreatingRestaurant(false);
     }
@@ -225,7 +233,7 @@ export default function ImportarMenuFotoPage() {
     if (s === 1) return Boolean(currency);
     if (s === 2) {
       if (restaurantMode === 'existing') return Boolean(selectedRestaurantId);
-      return Boolean(selectedTenantId && newRestaurantName.trim());
+      return Boolean(newRestaurantName.trim());
     }
     if (s === 3) return Boolean(menuName.trim());
     if (s === 4) return photos.length > 0;
@@ -539,20 +547,11 @@ export default function ImportarMenuFotoPage() {
                 </div>
               ) : (
                 <div className="row g-3">
-                  <div className="col-md-6">
-                    <label className="form-label">Cuenta (tenant) *</label>
-                    <select
-                      className="form-select"
-                      value={selectedTenantId}
-                      onChange={(e) => setSelectedTenantId(e.target.value)}
-                    >
-                      <option value="">Seleccionar…</option>
-                      {tenants.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name || t.id} {t.plan ? `(${t.plan})` : ''}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="col-12">
+                    <p className="text-muted small mb-0">
+                      Se crea una cuenta nueva automáticamente con el nombre del restaurante (plan Pro).
+                      Después podés asignar el restaurante a un usuario desde el panel.
+                    </p>
                   </div>
                   <div className="col-md-6">
                     <label className="form-label">Nombre del restaurante *</label>
