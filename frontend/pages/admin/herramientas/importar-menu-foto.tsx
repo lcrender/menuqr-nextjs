@@ -552,23 +552,25 @@ export default function ImportarMenuFotoPage() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label fw-semibold">Restaurante destino *</label>
+                <label className="form-label fw-semibold d-block mb-2">Restaurante destino *</label>
                 {listsLoading && <p className="text-muted small">Cargando…</p>}
-                <div className="btn-group mb-3" role="group">
-                  <button
-                    type="button"
-                    className={`btn ${restaurantMode === 'existing' ? 'btn-primary' : 'btn-outline-primary'}`}
-                    onClick={() => setRestaurantMode('existing')}
-                  >
-                    Existente
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn ${restaurantMode === 'new' ? 'btn-primary' : 'btn-outline-primary'}`}
-                    onClick={() => setRestaurantMode('new')}
-                  >
-                    Nuevo
-                  </button>
+                <div className="mb-3">
+                  <div className="btn-group" role="group" aria-label="Tipo de restaurante">
+                    <button
+                      type="button"
+                      className={`btn ${restaurantMode === 'existing' ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setRestaurantMode('existing')}
+                    >
+                      Existente
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn ${restaurantMode === 'new' ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setRestaurantMode('new')}
+                    >
+                      Nuevo
+                    </button>
+                  </div>
                 </div>
 
                 {restaurantMode === 'existing' ? (
