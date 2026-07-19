@@ -314,59 +314,102 @@ export default function ImportarMenuFotoPage() {
   };
 
   const updateSectionName = (si: number, name: string) => {
-    if (!preview) return;
-    const sections = preview.sections.map((s, i) => (i === si ? { ...s, name } : s));
-    setPreview({ ...preview, sections });
+    setPreview((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        sections: prev.sections.map((s, i) => (i === si ? { ...s, name } : s)),
+      };
+    });
   };
 
   const updateItem = (si: number, ii: number, patch: Partial<PreviewItem>) => {
-    if (!preview) return;
-    const sections = preview.sections.map((s, i) => {
-      if (i !== si) return s;
-      const items = s.items.map((it, j) => (j === ii ? { ...it, ...patch } : it));
-      return { ...s, items };
+    setPreview((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        sections: prev.sections.map((s, i) => {
+          if (i !== si) return s;
+          return {
+            ...s,
+            items: s.items.map((it, j) => (j === ii ? { ...it, ...patch } : it)),
+          };
+        }),
+      };
     });
-    setPreview({ ...preview, sections });
   };
 
   const updateItemPrice = (si: number, ii: number, amount: number) => {
-    if (!preview) return;
-    const sections = preview.sections.map((s, i) => {
-      if (i !== si) return s;
-      const items = s.items.map((it, j) => {
-        if (j !== ii) return it;
-        const prices = [...(it.prices || [])];
-        if (!prices.length) {
-          prices.push({ currency, amount });
-        } else {
-          prices[0] = { ...prices[0]!, currency: prices[0]!.currency || currency, amount };
-        }
-        return { ...it, prices };
-      });
-      return { ...s, items };
+    setPreview((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        sections: prev.sections.map((s, i) => {
+          if (i !== si) return s;
+          return {
+            ...s,
+            items: s.items.map((it, j) => {
+              if (j !== ii) return it;
+              const prices = [...(it.prices || [])];
+              if (!prices.length) {
+                prices.push({ currency, amount });
+              } else {
+                prices[0] = {
+                  ...prices[0]!,
+                  currency: prices[0]!.currency || currency,
+                  amount,
+                };
+              }
+              return { ...it, prices };
+            }),
+          };
+        }),
+      };
     });
-    setPreview({ ...preview, sections });
   };
 
   const removeItem = (si: number, ii: number) => {
-    if (!preview) return;
-    const sections = preview.sections
-      .map((s, i) => {
-        if (i !== si) return s;
-        return { ...s, items: s.items.filter((_, j) => j !== ii) };
-      })
-      .filter((s) => s.items.length > 0);
-    setPreview({ ...preview, sections });
+    setPreview((prev) => {
+      if (!prev) return prev;
+      const sections = prev.sections
+        .map((s, i) => {
+          if (i !== si) return s;
+          return { ...s, items: s.items.filter((_, j) => j !== ii) };
+        })
+        .filter((s) => s.items.length > 0);
+      return { ...prev, sections };
+    });
   };
 
   const addItem = (si: number) => {
-    if (!preview) return;
-    const sections = preview.sections.map((s, i) => {
-      if (i !== si) return s;
+    setPreview((prev) => {
+      if (!prev) return prev;
       return {
-        ...s,
+        ...prev,
+        sections: prev.sections.map((s, i) => {
+          if (i !== si) return s;
+          return {
+            ...s,
+            items: [
+              ...s.items,
+              {
+                name: 'Nuevo producto',
+                description: '',
+                prices: [{ currency, amount: 1 }],
+                confidence: 'manual',
+              },
+            ],
+          };
+        }),
+      };
+    });
+  };
+
+  const addSection = () => {
+    setPreview((prev) => {
+      const emptySection: PreviewSection = {
+        name: 'Nueva sección',
         items: [
-          ...s.items,
           {
             name: 'Nuevo producto',
             description: '',
@@ -375,32 +418,13 @@ export default function ImportarMenuFotoPage() {
           },
         ],
       };
-    });
-    setPreview({ ...preview, sections });
-  };
-
-  const addSection = () => {
-    if (!preview) {
-      setPreview({
-        sections: [
-          {
-            name: 'Nueva sección',
-            items: [{ name: 'Nuevo producto', description: '', prices: [{ currency, amount: 1 }] }],
-          },
-        ],
-        warnings: [],
-      });
-      return;
-    }
-    setPreview({
-      ...preview,
-      sections: [
-        ...preview.sections,
-        {
-          name: 'Nueva sección',
-          items: [{ name: 'Nuevo producto', description: '', prices: [{ currency, amount: 1 }] }],
-        },
-      ],
+      if (!prev) {
+        return { sections: [emptySection], warnings: [] };
+      }
+      return {
+        ...prev,
+        sections: [...prev.sections, emptySection],
+      };
     });
   };
 
@@ -723,23 +747,17 @@ export default function ImportarMenuFotoPage() {
               )}
 
               {preview.sections.map((section, si) => (
-                <div key={si} className="border rounded p-3 mb-3">
-                  <div className="d-flex gap-2 align-items-center mb-2">
+                <div key={`section-${si}-${section.name}`} className="border rounded p-3 mb-3">
+                  <div className="mb-2">
+                    <label className="form-label small mb-1">Sección</label>
                     <input
                       className="form-control fw-semibold"
                       value={section.name}
                       onChange={(e) => updateSectionName(si, e.target.value)}
                     />
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-secondary text-nowrap"
-                      onClick={() => addItem(si)}
-                    >
-                      + Producto
-                    </button>
                   </div>
                   <div className="table-responsive">
-                    <table className="table table-sm align-middle mb-0">
+                    <table className="table table-sm align-middle mb-2">
                       <thead>
                         <tr>
                           <th>Producto</th>
@@ -750,7 +768,7 @@ export default function ImportarMenuFotoPage() {
                       </thead>
                       <tbody>
                         {section.items.map((item, ii) => (
-                          <tr key={ii}>
+                          <tr key={`item-${si}-${ii}-${item.name}`}>
                             <td>
                               <input
                                 className="form-control form-control-sm"
@@ -793,6 +811,13 @@ export default function ImportarMenuFotoPage() {
                       </tbody>
                     </table>
                   </div>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-primary"
+                    onClick={() => addItem(si)}
+                  >
+                    + Producto
+                  </button>
                 </div>
               ))}
 
