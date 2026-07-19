@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import AdminLayout from '../../../components/AdminLayout';
+import ConfirmModal from '../../../components/ConfirmModal';
 import api from '../../../lib/axios';
 import { TEMPLATES_CATALOG } from '../../../lib/templates-catalog';
 
@@ -97,6 +98,7 @@ export default function ImportarMenuFotoPage() {
   const [importDone, setImportDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [listsLoading, setListsLoading] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'back-to-photos' | 'reanalyze' | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -914,7 +916,7 @@ export default function ImportarMenuFotoPage() {
                   type="button"
                   className="btn btn-outline-secondary"
                   disabled={analyzing || importing}
-                  onClick={() => setStep(2)}
+                  onClick={() => setConfirmAction('back-to-photos')}
                 >
                   Volver a fotos
                 </button>
@@ -922,7 +924,7 @@ export default function ImportarMenuFotoPage() {
                   type="button"
                   className="btn btn-outline-primary"
                   disabled={analyzing || importing || photos.length === 0}
-                  onClick={() => void runAnalyze()}
+                  onClick={() => setConfirmAction('reanalyze')}
                 >
                   {analyzing ? 'Analizando…' : 'Volver a analizar'}
                 </button>
@@ -974,6 +976,33 @@ export default function ImportarMenuFotoPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        show={confirmAction === 'back-to-photos'}
+        title="Volver a fotos"
+        message="Si volvés a las fotos, habrá que analizar el menú de nuevo y se perderán los cambios de la vista previa. ¿Querés continuar?"
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        variant="warning"
+        onConfirm={() => {
+          setConfirmAction(null);
+          setStep(2);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
+      <ConfirmModal
+        show={confirmAction === 'reanalyze'}
+        title="Volver a analizar"
+        message="Se volverá a analizar el menú con OpenAI y se reemplazará la vista previa actual. Se perderán los cambios que hayas hecho. ¿Querés continuar?"
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        variant="warning"
+        onConfirm={() => {
+          setConfirmAction(null);
+          void runAnalyze();
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
     </AdminLayout>
   );
 }
