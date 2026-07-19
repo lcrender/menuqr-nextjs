@@ -24,7 +24,12 @@ export function toOptimizedFormat(src: string, format: 'webp' | 'avif'): string 
   return src.replace(/\.(jpe?g|png|webp)(\?.*)?$/i, `.${format}$2`);
 }
 
-/** Fuentes para <picture>: AVIF → WebP → original. */
+/**
+ * Fuentes para <picture>: AVIF → WebP → original.
+ * En MinIO solo inventamos .avif si la URL ya es .webp (par subido por el backend).
+ * No inventar .webp/.avif desde .jpg/.png: si Sharp falló solo existe el original y el
+ * <source> 404 rompe el logo sin usar el fallback.
+ */
 export function getOptimizedSources(src: string): {
   avif?: string;
   webp?: string;
@@ -40,19 +45,22 @@ export function getOptimizedSources(src: string): {
 
   if (isMinioRasterUrl(src)) {
     const isWebp = /\.webp(\?|$)/i.test(src);
-    return {
-      avif: toOptimizedFormat(src, 'avif'),
-      webp: isWebp ? src : toOptimizedFormat(src, 'webp'),
-      fallback: src,
-    };
+    if (isWebp) {
+      return {
+        avif: toOptimizedFormat(src, 'avif'),
+        webp: src,
+        fallback: src,
+      };
+    }
+    return { fallback: src };
   }
 
   return { fallback: src };
 }
 
-/** Ruta preferida para mostrar (WebP si hay variante). */
+/** Ruta preferida para mostrar (WebP solo si hay variante real o estático local). */
 export function preferredImageSrc(src: string): string {
-  if (isOptimizableStaticPath(src) || (isMinioRasterUrl(src) && !/\.webp(\?|$)/i.test(src))) {
+  if (isOptimizableStaticPath(src)) {
     return toOptimizedFormat(src, 'webp');
   }
   return src;
