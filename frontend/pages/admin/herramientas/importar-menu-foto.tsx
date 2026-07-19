@@ -524,19 +524,16 @@ export default function ImportarMenuFotoPage() {
                     className={`btn ${gptModel === 'gpt-4o' ? 'btn-primary' : 'btn-outline-primary'}`}
                     onClick={() => setGptModel('gpt-4o')}
                   >
-                    GPT-4o (recomendado)
+                    GPT-4o
                   </button>
                   <button
                     type="button"
                     className={`btn ${gptModel === 'gpt-4o-mini' ? 'btn-primary' : 'btn-outline-primary'}`}
                     onClick={() => setGptModel('gpt-4o-mini')}
                   >
-                    GPT-4o mini (más barato)
+                    GPT-4o mini
                   </button>
                 </div>
-                <p className="text-muted small mt-1 mb-0">
-                  En cartas multi-columna GPT-4o suele acertar mejor precios y descripciones.
-                </p>
               </div>
 
               <div className="mb-4">
@@ -618,12 +615,6 @@ export default function ImportarMenuFotoPage() {
                   </div>
                 ) : (
                   <div className="row g-3">
-                    <div className="col-12">
-                      <p className="text-muted small mb-0">
-                        Se crea una cuenta nueva automáticamente (plan Pro). Después podés asignar el
-                        restaurante a un usuario.
-                      </p>
-                    </div>
                     <div className="col-md-6">
                       <label className="form-label">Nombre del restaurante *</label>
                       <input
