@@ -29,6 +29,10 @@ export type MenuPhotoPreview = {
   warnings: string[];
 };
 
+type ChatContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string; detail: 'high' | 'low' | 'auto' } };
+
 @Injectable()
 export class OpenAiMenuVisionService {
   private readonly logger = new Logger(OpenAiMenuVisionService.name);
@@ -45,7 +49,6 @@ export class OpenAiMenuVisionService {
 
   private getDefaultModel(): string {
     const m = String(this.config.get<string>('OPENAI_MODEL') || '').trim();
-    // gpt-4o reads multi-column menus much more reliably than mini
     return m || 'gpt-4o';
   }
 
@@ -79,7 +82,6 @@ export class OpenAiMenuVisionService {
     const currencyCode = currency.trim().toUpperCase() || 'USD';
     const resolvedModel = this.resolveModel(model);
 
-    // Una página por llamada reduce confusiones en cartas multi-columna; luego mergeamos.
     const pagePreviews: MenuPhotoPreview[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i]!;
@@ -99,63 +101,110 @@ export class OpenAiMenuVisionService {
     model: string,
   ): Promise<MenuPhotoPreview> {
     const mime = (file.mimetype || 'image/jpeg').split(';')[0] || 'image/jpeg';
-    const b64 = file.buffer.toString('base64');
+    const imageUrl = `data:${mime};base64,${file.buffer.toString('base64')}`;
+    const imagePart: ChatContentPart = {
+      type: 'image_url',
+      image_url: { url: imageUrl, detail: 'high' },
+    };
 
-    const systemPrompt = `You extract printed restaurant menus from photos into JSON. Accuracy of name↔price pairing is critical.
+    // Pasada 1: SOLO nombre ↔ precio (misma línea). Evita que la descripción desplace el precio.
+    const pass1System = `You read printed European restaurant menus from photos.
+Your ONLY job is to pair each DISH NAME with the PRICE printed on the SAME horizontal line (usually right-aligned).
 
-LAYOUT RULES (Spanish / European menus):
-1. Multi-column layouts are common (e.g. RACIONES | HUEVOS | ESPECIALIDADES | POSTRES). Read EACH column top-to-bottom independently. Never mix a price from one column with an item in another.
-2. For each dish, the PRICE sits on the SAME horizontal line as the DISH NAME (usually bold), right-aligned. The description is ONLY the smaller text directly under that name — NEVER under the next dish.
-3. NEVER assign a price from the dish above or below. If a description is multi-line, the price still belongs to the name on the first line of that block, not to the last description line.
-4. Copy names and descriptions VERBATIM from the photo. Do not paraphrase, shorten, translate, or invent ingredients.
-5. Ignore: food photos, logos, QR codes, decorative icons (red L, smiley faces), sauce upsell banners (e.g. "añade tu salsa…"), photo captions on images.
-6. Section headers are short titles in colored bars (RACIONES, ESPECIALIDADES, POSTRES, HUEVOS ROTOS XL, etc.).
-7. Prices like 7,45€ or 7.45€ → amount 7.45 with decimal POINT. Currency EUR if € is shown, else use the default currency provided.
-8. If unsure about a price↔name pair, set confidence to "low" and add a warning; do not guess.
+STRICT RULES:
+1. Work COLUMN BY COLUMN (left to right), top to bottom within each column. Never take a price from another column.
+2. The price belongs to the BOLD dish title on that same line — NOT to the smaller description lines below.
+3. Multi-line descriptions do NOT move the price. Ignore description text completely in this pass.
+4. Ignore photos, logos, icons (red L, smileys), sauce banners ("añade tu salsa…"), and image captions.
+5. Section headers are short titles in colored bars (RACIONES, ESPECIALIDADES, POSTRES, HUEVOS ROTOS XL…).
+6. European prices: 7,45€ → amount 7.45. Keep € as EUR; otherwise use defaultCurrency.
+7. For each item include namePriceLine: the dish name AND the price digits exactly as you see them on that title line (example: "Patatas bravas o mixtas 7,45€").
+8. amount MUST match the number in namePriceLine. If you cannot read the price on the name line, omit the item and warn.
 
 Return JSON only:
 {
   "sections": [
     {
-      "name": "string",
+      "name": "RACIONES",
       "items": [
         {
-          "name": "string",
-          "description": "verbatim text or empty string",
-          "prices": [{ "currency": "EUR", "label": "", "amount": 7.45 }],
-          "confidence": "high|medium|low"
+          "name": "Patatas bravas o mixtas",
+          "namePriceLine": "Patatas bravas o mixtas 7,45€",
+          "prices": [{ "currency": "EUR", "amount": 7.45 }],
+          "confidence": "high"
         }
       ]
     }
   ],
-  "warnings": ["string"]
+  "warnings": []
 }`;
 
-    const userText = `Default currency if no symbol on paper: ${currencyCode}.
-This is page ${pageIndex} of ${pageCount} of a printed menu photo.
-First identify columns and section headers, then extract dishes column by column.
-For every item, double-check that the price is the one printed on the same line as that item's name.
+    const pass1User = `defaultCurrency=${currencyCode}. Page ${pageIndex}/${pageCount}.
+Extract ONLY section → dish name → price pairs. No descriptions.
 Respond with JSON only.`;
 
+    const pass1Raw = await this.chatJson(model, pass1System, [
+      { type: 'text', text: pass1User },
+      imagePart,
+    ]);
+    let preview = this.normalizePreview(pass1Raw, currencyCode, { requirePrices: true });
+
+    // Pasada 2: descripciones sin tocar precios ya fijados.
+    if (preview.sections.length) {
+      const locked = preview.sections.map((s) => ({
+        name: s.name,
+        items: s.items.map((it) => ({
+          name: it.name,
+          amount: it.prices[0]?.amount,
+          currency: it.prices[0]?.currency,
+        })),
+      }));
+
+      const pass2System = `You add descriptions to an already extracted restaurant menu.
+The name↔price pairs are LOCKED and correct. Do NOT change names, amounts, currencies, section order, or item order.
+For each dish, copy VERBATIM the smaller text printed directly under its name (ingredients/accompaniment). If none, use "".
+Ignore photos, icons, and promo banners.
+Return JSON with the same sections/items, adding only "description".`;
+
+      const pass2User = `Locked menu JSON (do not alter prices/names):
+${JSON.stringify({ sections: locked })}
+
+Look at the photo and fill description for each item. Respond with JSON only:
+{ "sections": [ { "name": "...", "items": [ { "name": "...", "description": "...", "prices": [{ "currency": "...", "amount": 0 }], "confidence": "high" } ] } ], "warnings": [] }
+Keep the same prices/amounts from the locked JSON.`;
+
+      try {
+        const pass2Raw = await this.chatJson(model, pass2System, [
+          { type: 'text', text: pass2User },
+          imagePart,
+        ]);
+        preview = this.mergeDescriptions(preview, this.normalizePreview(pass2Raw, currencyCode));
+      } catch (e) {
+        this.logger.warn(`Pass 2 (descriptions) failed; keeping prices from pass 1: ${e}`);
+        preview.warnings.push(
+          'No se pudieron completar todas las descripciones; revisá precios (sí se extrajeron) y textos a mano.',
+        );
+      }
+    }
+
+    preview.warnings.unshift(
+      'Revisá precios en la vista previa: se extrajeron emparejando nombre y precio de la misma línea.',
+    );
+    return preview;
+  }
+
+  private async chatJson(
+    model: string,
+    systemPrompt: string,
+    userContent: ChatContentPart[],
+  ): Promise<unknown> {
     const body = {
       model,
       response_format: { type: 'json_object' },
       temperature: 0,
       messages: [
         { role: 'system', content: systemPrompt },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: userText },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:${mime};base64,${b64}`,
-                detail: 'high' as const,
-              },
-            },
-          ],
-        },
+        { role: 'user', content: userContent },
       ],
     };
 
@@ -216,14 +265,33 @@ Respond with JSON only.`;
       throw new BadGatewayException('OpenAI no devolvió contenido usable');
     }
 
-    let parsed: unknown;
     try {
-      parsed = JSON.parse(content);
+      return JSON.parse(content);
     } catch {
       throw new BadGatewayException('OpenAI devolvió JSON inválido');
     }
+  }
 
-    return this.normalizePreview(parsed, currencyCode);
+  /** Conserva precios de pass1; solo copia descripciones de pass2 por nombre. */
+  private mergeDescriptions(base: MenuPhotoPreview, withDesc: MenuPhotoPreview): MenuPhotoPreview {
+    const descByKey = new Map<string, string>();
+    for (const sec of withDesc.sections) {
+      for (const it of sec.items) {
+        const key = `${sec.name.toLowerCase()}::${it.name.toLowerCase()}`;
+        if (it.description) descByKey.set(key, it.description);
+      }
+    }
+    return {
+      warnings: [...base.warnings, ...withDesc.warnings.filter((w) => !base.warnings.includes(w))],
+      sections: base.sections.map((sec) => ({
+        ...sec,
+        items: sec.items.map((it) => {
+          const key = `${sec.name.toLowerCase()}::${it.name.toLowerCase()}`;
+          const description = descByKey.get(key) ?? it.description ?? null;
+          return { ...it, description };
+        }),
+      })),
+    };
   }
 
   private mergePagePreviews(pages: MenuPhotoPreview[], currencyCode: string): MenuPhotoPreview {
@@ -231,19 +299,16 @@ Respond with JSON only.`;
     for (const p of pages) {
       warnings.push(...(p.warnings || []));
     }
-    const merged = {
-      sections: pages.flatMap((p) => p.sections),
-      warnings,
-    };
-    // Re-normalize to merge same section names across pages
-    return this.normalizePreview(merged, currencyCode);
+    return this.normalizePreview(
+      { sections: pages.flatMap((p) => p.sections), warnings },
+      currencyCode,
+    );
   }
 
   private parseAmount(raw: unknown): number | null {
     if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return raw;
     if (typeof raw !== 'string') return null;
     let t = raw.trim().replace(/\s/g, '').replace(/[€$]/g, '');
-    // 7,45 or 1.234,56 (EU) vs 7.45 (US)
     if (/^\d{1,3}(\.\d{3})*,\d{1,2}$/.test(t)) {
       t = t.replace(/\./g, '').replace(',', '.');
     } else if (t.includes(',') && !t.includes('.')) {
@@ -254,7 +319,19 @@ Respond with JSON only.`;
     return n;
   }
 
-  normalizePreview(raw: unknown, defaultCurrency: string): MenuPhotoPreview {
+  /** Extrae número desde namePriceLine si el modelo se contradice. */
+  private amountFromNamePriceLine(line: string | null | undefined): number | null {
+    if (!line) return null;
+    const matches = line.match(/(\d{1,3}(?:[.,]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2}|\d+)(?=\s*€|\s*$)/g);
+    if (!matches?.length) return null;
+    return this.parseAmount(matches[matches.length - 1]);
+  }
+
+  normalizePreview(
+    raw: unknown,
+    defaultCurrency: string,
+    opts?: { requirePrices?: boolean },
+  ): MenuPhotoPreview {
     const currency = defaultCurrency.toUpperCase();
     const warnings: string[] = [];
     const obj = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
@@ -285,15 +362,30 @@ Respond with JSON only.`;
         const item = it as Record<string, unknown>;
         const itemName = String(item.name || '').trim();
         if (!itemName) continue;
+
+        const namePriceLine =
+          typeof item.namePriceLine === 'string' ? item.namePriceLine.trim() : '';
+        const lineAmount = this.amountFromNamePriceLine(namePriceLine);
+
         const prices: MenuPhotoPreviewPrice[] = [];
         const pricesRaw = Array.isArray(item.prices) ? item.prices : [];
         for (const p of pricesRaw) {
           if (!p || typeof p !== 'object') continue;
           const pr = p as Record<string, unknown>;
-          const amount = this.parseAmount(pr.amount);
+          let amount = this.parseAmount(pr.amount);
+          // Si namePriceLine tiene otro número, confiar en la línea (más fiable en multi-columna)
+          if (lineAmount !== null && amount !== null && Math.abs(lineAmount - amount) > 0.001) {
+            warnings.push(
+              `"${itemName}": precio del JSON (${amount}) no coincide con la línea ("${namePriceLine}"); se usó ${lineAmount}.`,
+            );
+            amount = lineAmount;
+          } else if (amount === null && lineAmount !== null) {
+            amount = lineAmount;
+          }
           if (amount === null) continue;
           let cur = String(pr.currency || currency).trim().toUpperCase() || currency;
-          if (cur === 'EURO' || cur === 'EUROS') cur = 'EUR';
+          if (cur === 'EURO' || cur === 'EUROS' || cur === '€') cur = 'EUR';
+          if (namePriceLine.includes('€')) cur = 'EUR';
           const label = String(pr.label || '').trim();
           prices.push({
             currency: cur,
@@ -301,17 +393,30 @@ Respond with JSON only.`;
             amount,
           });
         }
+
+        if (!prices.length && lineAmount !== null) {
+          prices.push({
+            currency: namePriceLine.includes('€') ? 'EUR' : currency,
+            label: null,
+            amount: lineAmount,
+          });
+        }
+
         if (!prices.length) {
-          warnings.push(`Producto "${itemName}" sin precio legible; omitido del preview.`);
+          if (opts?.requirePrices !== false) {
+            warnings.push(`Producto "${itemName}" sin precio legible; omitido del preview.`);
+          }
           continue;
         }
+
         const confidence =
           typeof item.confidence === 'string' ? item.confidence.trim().toLowerCase() : null;
         if (confidence === 'low') {
           warnings.push(
-            `Revisá precio/descripción de "${itemName}" (confianza baja del análisis).`,
+            `Revisá precio de "${itemName}" (confianza baja del análisis).`,
           );
         }
+
         target.items.push({
           name: itemName,
           description: String(item.description || '').trim() || null,
