@@ -107,30 +107,46 @@ export class OpenAiMenuVisionService {
       image_url: { url: imageUrl, detail: 'high' },
     };
 
-    // Pasada 1: SOLO nombre ↔ precio (misma línea). Evita que la descripción desplace el precio.
-    const pass1System = `You read printed European restaurant menus from photos.
-Your ONLY job is to pair each DISH NAME with the PRICE printed on the SAME horizontal line (usually right-aligned).
+    // Pasada 1: detectar layout libremente y emparejar nombre ↔ precio.
+    const pass1System = `You extract restaurant menus from photos of printed or digital menus.
+Menus use MANY different designs. Do NOT assume one fixed layout.
 
-STRICT RULES:
-1. Work COLUMN BY COLUMN (left to right), top to bottom within each column. Never take a price from another column.
-2. The price belongs to the BOLD dish title on that same line — NOT to the smaller description lines below.
-3. Multi-line descriptions do NOT move the price. Ignore description text completely in this pass.
-4. Ignore photos, logos, icons (red L, smileys), sauce banners ("añade tu salsa…"), and image captions.
-5. Section headers are short titles in colored bars (RACIONES, ESPECIALIDADES, POSTRES, HUEVOS ROTOS XL…).
-6. European prices: 7,45€ → amount 7.45. Keep € as EUR; otherwise use defaultCurrency.
-7. For each item include namePriceLine: the dish name AND the price digits exactly as you see them on that title line (example: "Patatas bravas o mixtas 7,45€").
-8. amount MUST match the number in namePriceLine. If you cannot read the price on the name line, omit the item and warn.
+STEP A — Understand the layout of THIS photo first:
+- 1 column or several columns
+- Name and price on the same line (price left or right)
+- Name, then description, then price stacked vertically (often centered)
+- Price above the name, or under a dotted leader line
+- Cards/boxes per dish, chalkboards, handwritten, bilingual lines, etc.
+Adapt your reading order to the actual layout (usually top→bottom; if multiple columns, finish one column before the next, or follow reading order of that design).
+
+STEP B — Extract every dish you can read with high fidelity.
+
+PAIRING RULES (layout-agnostic):
+1. Each dish is a visual block: typically NAME + optional DESCRIPTION + one or more PRICES.
+2. Assign each price to the dish whose block it belongs to — never steal a price from a neighboring dish or another column/box.
+3. Prefer the dish TITLE (usually larger/bolder) over smaller description/ingredient text.
+4. Descriptions are NOT dish names and do NOT own the price.
+5. Section headers group dishes (ENTRANTES, PRIMERS, POSTRES, RACIONES, Drinks…). If unclear, use a sensible section name or "General".
+6. Ignore logos, photos, QR codes, allergens icons alone, promo banners, page footers, addresses, and decorative captions that are not dishes.
+7. Prices: European "7,45€" → amount 7.45. "$12.50" → 12.50. Keep €→EUR, $→USD when visible; else use defaultCurrency.
+8. Multiple prices for one dish (tapa / ración, half / full, sizes): put them all in "prices" with a short "label" when the menu shows one.
+9. For each item set "namePriceEvidence": a short quote of how name and price appear together in the photo (same line OR stacked). Examples:
+   - "Patatas bravas ………… 7,45€"
+   - "Patatas bravas / Con alioli / 7,45€" (vertical stack)
+10. "amount" MUST match the number in namePriceEvidence. If a price is unreadable, omit that item and add a warning — do not invent prices.
+11. Set confidence "high" | "medium" | "low" based on how clear the pairing is.
 
 Return JSON only:
 {
+  "layoutSummary": "one short sentence describing the layout you detected",
   "sections": [
     {
       "name": "RACIONES",
       "items": [
         {
           "name": "Patatas bravas o mixtas",
-          "namePriceLine": "Patatas bravas o mixtas 7,45€",
-          "prices": [{ "currency": "EUR", "amount": 7.45 }],
+          "namePriceEvidence": "Patatas bravas o mixtas 7,45€",
+          "prices": [{ "currency": "EUR", "label": null, "amount": 7.45 }],
           "confidence": "high"
         }
       ]
@@ -140,8 +156,8 @@ Return JSON only:
 }`;
 
     const pass1User = `defaultCurrency=${currencyCode}. Page ${pageIndex}/${pageCount}.
-Extract ONLY section → dish name → price pairs. No descriptions.
-Respond with JSON only.`;
+First infer this menu's layout, then extract EVERY section → dish name → price(s). No descriptions in this pass.
+Maximize accuracy so a human needs few or no corrections. Respond with JSON only.`;
 
     const pass1Raw = await this.chatJson(model, pass1System, [
       { type: 'text', text: pass1User },
@@ -157,13 +173,15 @@ Respond with JSON only.`;
           name: it.name,
           amount: it.prices[0]?.amount,
           currency: it.prices[0]?.currency,
+          prices: it.prices,
         })),
       }));
 
-      const pass2System = `You add descriptions to an already extracted restaurant menu.
-The name↔price pairs are LOCKED and correct. Do NOT change names, amounts, currencies, section order, or item order.
-For each dish, copy VERBATIM the smaller text printed directly under its name (ingredients/accompaniment). If none, use "".
-Ignore photos, icons, and promo banners.
+      const pass2System = `You add descriptions to an already extracted restaurant menu from a photo.
+The name↔price pairs are LOCKED and correct. Do NOT change names, amounts, currencies, labels, section order, or item order.
+For each dish, copy VERBATIM the descriptive / ingredient text that belongs to that dish in the photo (often under the name, sometimes beside it, sometimes in a smaller font). If there is none, use "".
+Adapt to ANY layout (columns, stacked centered blocks, cards, etc.).
+Ignore logos, photos, icons, and promo banners.
 Return JSON with the same sections/items, adding only "description".`;
 
       const pass2User = `Locked menu JSON (do not alter prices/names):
@@ -187,8 +205,17 @@ Keep the same prices/amounts from the locked JSON.`;
       }
     }
 
+    const layoutSummary =
+      pass1Raw &&
+      typeof pass1Raw === 'object' &&
+      typeof (pass1Raw as Record<string, unknown>).layoutSummary === 'string'
+        ? String((pass1Raw as Record<string, unknown>).layoutSummary).trim()
+        : '';
+    if (layoutSummary) {
+      preview.warnings.unshift(`Layout detectado: ${layoutSummary}`);
+    }
     preview.warnings.unshift(
-      'Revisá precios en la vista previa: se extrajeron emparejando nombre y precio de la misma línea.',
+      'Revisá la vista previa: el análisis se adapta al diseño de la foto, pero conviene verificar precios y textos.',
     );
     return preview;
   }
@@ -319,11 +346,16 @@ Keep the same prices/amounts from the locked JSON.`;
     return n;
   }
 
-  /** Extrae número desde namePriceLine si el modelo se contradice. */
+  /** Extrae número desde evidencia nombre↔precio si el modelo se contradice. */
   private amountFromNamePriceLine(line: string | null | undefined): number | null {
     if (!line) return null;
-    const matches = line.match(/(\d{1,3}(?:[.,]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2}|\d+)(?=\s*€|\s*$)/g);
-    if (!matches?.length) return null;
+    const matches = line.match(/(\d{1,3}(?:[.,]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2}|\d+)(?=\s*€|\s*$|\/|\|)/g);
+    if (!matches?.length) {
+      // Fallback: último número con decimales en la cadena
+      const any = line.match(/(\d{1,3}(?:[.,]\d{3})*[.,]\d{1,2}|\d+[.,]\d{1,2}|\d+)/g);
+      if (!any?.length) return null;
+      return this.parseAmount(any[any.length - 1]);
+    }
     return this.parseAmount(matches[matches.length - 1]);
   }
 
@@ -364,28 +396,43 @@ Keep the same prices/amounts from the locked JSON.`;
         if (!itemName) continue;
 
         const namePriceLine =
-          typeof item.namePriceLine === 'string' ? item.namePriceLine.trim() : '';
+          typeof item.namePriceEvidence === 'string' && item.namePriceEvidence.trim()
+            ? item.namePriceEvidence.trim()
+            : typeof item.namePriceLine === 'string'
+              ? item.namePriceLine.trim()
+              : '';
         const lineAmount = this.amountFromNamePriceLine(namePriceLine);
+        const evidenceCurrency = namePriceLine.includes('€')
+          ? 'EUR'
+          : /\$|USD/i.test(namePriceLine)
+            ? 'USD'
+            : null;
 
         const prices: MenuPhotoPreviewPrice[] = [];
         const pricesRaw = Array.isArray(item.prices) ? item.prices : [];
+        const useEvidenceAsAuthority = pricesRaw.length <= 1;
         for (const p of pricesRaw) {
           if (!p || typeof p !== 'object') continue;
           const pr = p as Record<string, unknown>;
           let amount = this.parseAmount(pr.amount);
-          // Si namePriceLine tiene otro número, confiar en la línea (más fiable en multi-columna)
-          if (lineAmount !== null && amount !== null && Math.abs(lineAmount - amount) > 0.001) {
+          // Con un solo precio, la evidencia nombre↔precio manda si hay contradicción
+          if (
+            useEvidenceAsAuthority &&
+            lineAmount !== null &&
+            amount !== null &&
+            Math.abs(lineAmount - amount) > 0.001
+          ) {
             warnings.push(
-              `"${itemName}": precio del JSON (${amount}) no coincide con la línea ("${namePriceLine}"); se usó ${lineAmount}.`,
+              `"${itemName}": precio del JSON (${amount}) no coincide con la evidencia ("${namePriceLine}"); se usó ${lineAmount}.`,
             );
             amount = lineAmount;
-          } else if (amount === null && lineAmount !== null) {
+          } else if (useEvidenceAsAuthority && amount === null && lineAmount !== null) {
             amount = lineAmount;
           }
           if (amount === null) continue;
           let cur = String(pr.currency || currency).trim().toUpperCase() || currency;
           if (cur === 'EURO' || cur === 'EUROS' || cur === '€') cur = 'EUR';
-          if (namePriceLine.includes('€')) cur = 'EUR';
+          if (evidenceCurrency) cur = evidenceCurrency;
           const label = String(pr.label || '').trim();
           prices.push({
             currency: cur,
@@ -396,7 +443,7 @@ Keep the same prices/amounts from the locked JSON.`;
 
         if (!prices.length && lineAmount !== null) {
           prices.push({
-            currency: namePriceLine.includes('€') ? 'EUR' : currency,
+            currency: evidenceCurrency || currency,
             label: null,
             amount: lineAmount,
           });
