@@ -647,8 +647,8 @@ export default function ImportarMenuFotoPage() {
             <>
               <h2 className="h5 mb-3">5. Revisar e importar</h2>
               <p className="text-muted small">
-                Editá lo que haga falta. No se importan fotos de productos. Moneda de referencia:{' '}
-                <strong>{currency}</strong>.
+                Editá lo que haga falta (en cartas multi-columna conviene revisar precios línea a línea).
+                No se importan fotos de productos. Moneda de referencia: <strong>{currency}</strong>.
               </p>
               {preview.warnings?.length > 0 && (
                 <div className="alert alert-warning">

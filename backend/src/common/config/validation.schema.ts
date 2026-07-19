@@ -86,7 +86,7 @@ export const validationSchema = Joi.object({
 
   /** OpenAI (import menú desde foto, solo Super Admin). Opcional. */
   OPENAI_API_KEY: Joi.string().optional().allow(''),
-  OPENAI_MODEL: Joi.string().optional().allow('').default('gpt-4o-mini'),
+  OPENAI_MODEL: Joi.string().optional().allow('').default('gpt-4o'),
   OPENAI_BASE_URL: Joi.string().optional().allow(''),
 
   // ========================================

@@ -91,6 +91,10 @@ services:
       # Mercado Pago: interpolación desde el .env de la raíz (además de env_file), para que siempre entren al contenedor
       MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
       MERCADOPAGO_ACCESS_TOKEN_TEST: ${MERCADOPAGO_ACCESS_TOKEN_TEST:-}
+      # OpenAI (import menú desde foto)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
     volumes:
       - ./backend:/app
       - /app/node_modules

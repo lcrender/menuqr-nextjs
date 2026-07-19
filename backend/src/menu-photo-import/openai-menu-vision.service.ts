@@ -45,7 +45,8 @@ export class OpenAiMenuVisionService {
 
   private getModel(): string {
     const m = String(this.config.get<string>('OPENAI_MODEL') || '').trim();
-    return m || 'gpt-4o-mini';
+    // gpt-4o reads multi-column menus much more reliably than mini
+    return m || 'gpt-4o';
   }
 
   private getBaseUrl(): string {
@@ -67,25 +68,39 @@ export class OpenAiMenuVisionService {
     }
 
     const currencyCode = currency.trim().toUpperCase() || 'USD';
-    const imageParts = files.map((f) => {
-      const mime = (f.mimetype || 'image/jpeg').split(';')[0] || 'image/jpeg';
-      const b64 = f.buffer.toString('base64');
-      return {
-        type: 'image_url' as const,
-        image_url: {
-          url: `data:${mime};base64,${b64}`,
-          detail: 'high' as const,
-        },
-      };
-    });
 
-    const systemPrompt = `You are an expert at reading printed restaurant menus from photos.
-Extract the menu structure as JSON only. Do not invent products that are not visible.
-Ignore decorative logos, QR codes, and social media handles.
-Do not extract or invent product photos — text and prices only.
-If a price currency is unclear on paper, use the provided default currency.
-Amounts must be positive numbers (use decimal point).
-Return JSON with this exact shape:
+    // Una página por llamada reduce confusiones en cartas multi-columna; luego mergeamos.
+    const pagePreviews: MenuPhotoPreview[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]!;
+      pagePreviews.push(await this.analyzeSinglePage(file, currencyCode, i + 1, files.length));
+    }
+
+    return this.mergePagePreviews(pagePreviews, currencyCode);
+  }
+
+  private async analyzeSinglePage(
+    file: { buffer: Buffer; mimetype: string; originalname?: string },
+    currencyCode: string,
+    pageIndex: number,
+    pageCount: number,
+  ): Promise<MenuPhotoPreview> {
+    const mime = (file.mimetype || 'image/jpeg').split(';')[0] || 'image/jpeg';
+    const b64 = file.buffer.toString('base64');
+
+    const systemPrompt = `You extract printed restaurant menus from photos into JSON. Accuracy of name↔price pairing is critical.
+
+LAYOUT RULES (Spanish / European menus):
+1. Multi-column layouts are common (e.g. RACIONES | HUEVOS | ESPECIALIDADES | POSTRES). Read EACH column top-to-bottom independently. Never mix a price from one column with an item in another.
+2. For each dish, the PRICE sits on the SAME horizontal line as the DISH NAME (usually bold), right-aligned. The description is ONLY the smaller text directly under that name — NEVER under the next dish.
+3. NEVER assign a price from the dish above or below. If a description is multi-line, the price still belongs to the name on the first line of that block, not to the last description line.
+4. Copy names and descriptions VERBATIM from the photo. Do not paraphrase, shorten, translate, or invent ingredients.
+5. Ignore: food photos, logos, QR codes, decorative icons (red L, smiley faces), sauce upsell banners (e.g. "añade tu salsa…"), photo captions on images.
+6. Section headers are short titles in colored bars (RACIONES, ESPECIALIDADES, POSTRES, HUEVOS ROTOS XL, etc.).
+7. Prices like 7,45€ or 7.45€ → amount 7.45 with decimal POINT. Currency EUR if € is shown, else use the default currency provided.
+8. If unsure about a price↔name pair, set confidence to "low" and add a warning; do not guess.
+
+Return JSON only:
 {
   "sections": [
     {
@@ -93,32 +108,40 @@ Return JSON with this exact shape:
       "items": [
         {
           "name": "string",
-          "description": "string or empty",
-          "prices": [{ "currency": "ISO4217", "label": "optional size/label or empty", "amount": number }],
+          "description": "verbatim text or empty string",
+          "prices": [{ "currency": "EUR", "label": "", "amount": 7.45 }],
           "confidence": "high|medium|low"
         }
       ]
     }
   ],
   "warnings": ["string"]
-}
-Section titles are category headers (Entradas, Principales, etc.). Items are dishes.
-If multiple pages show the same section name, merge items under one section preserving order.
-If a price is illegible, omit that item from results and add a warning.`;
+}`;
 
-    const userText = `Default currency code for prices when not explicit on the menu: ${currencyCode}.
-Analyze all attached page photos as one multi-page printed menu.
+    const userText = `Default currency if no symbol on paper: ${currencyCode}.
+This is page ${pageIndex} of ${pageCount} of a printed menu photo.
+First identify columns and section headers, then extract dishes column by column.
+For every item, double-check that the price is the one printed on the same line as that item's name.
 Respond with JSON only.`;
 
     const body = {
       model: this.getModel(),
       response_format: { type: 'json_object' },
-      temperature: 0.1,
+      temperature: 0,
       messages: [
         { role: 'system', content: systemPrompt },
         {
           role: 'user',
-          content: [{ type: 'text', text: userText }, ...imageParts],
+          content: [
+            { type: 'text', text: userText },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${mime};base64,${b64}`,
+                detail: 'high' as const,
+              },
+            },
+          ],
         },
       ],
     };
@@ -141,6 +164,32 @@ Respond with JSON only.`;
     if (!response.ok) {
       const errText = await response.text().catch(() => '');
       this.logger.error(`OpenAI HTTP ${response.status}: ${errText.slice(0, 500)}`);
+      let openaiType = '';
+      let openaiMessage = '';
+      try {
+        const parsedErr = JSON.parse(errText) as {
+          error?: { type?: string; message?: string; code?: string };
+        };
+        openaiType = String(parsedErr?.error?.type || parsedErr?.error?.code || '');
+        openaiMessage = String(parsedErr?.error?.message || '');
+      } catch {
+        /* ignore */
+      }
+      if (response.status === 429 && /insufficient_quota/i.test(openaiType + openaiMessage)) {
+        throw new BadGatewayException(
+          'OpenAI sin crédito/cuota disponible. Revisá billing en https://platform.openai.com/account/billing (el plan gratuito o la clave nueva pueden no tener saldo).',
+        );
+      }
+      if (response.status === 429) {
+        throw new BadGatewayException(
+          'OpenAI limitó temporalmente las peticiones (rate limit). Esperá un momento y reintentá.',
+        );
+      }
+      if (response.status === 401) {
+        throw new BadGatewayException(
+          'OpenAI rechazó la API key (401). Verificá OPENAI_API_KEY en el entorno del backend.',
+        );
+      }
       throw new BadGatewayException(
         `OpenAI rechazó el análisis (HTTP ${response.status}). Revisá la clave, el modelo y el tamaño de las imágenes.`,
       );
@@ -162,6 +211,34 @@ Respond with JSON only.`;
     }
 
     return this.normalizePreview(parsed, currencyCode);
+  }
+
+  private mergePagePreviews(pages: MenuPhotoPreview[], currencyCode: string): MenuPhotoPreview {
+    const warnings: string[] = [];
+    for (const p of pages) {
+      warnings.push(...(p.warnings || []));
+    }
+    const merged = {
+      sections: pages.flatMap((p) => p.sections),
+      warnings,
+    };
+    // Re-normalize to merge same section names across pages
+    return this.normalizePreview(merged, currencyCode);
+  }
+
+  private parseAmount(raw: unknown): number | null {
+    if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return raw;
+    if (typeof raw !== 'string') return null;
+    let t = raw.trim().replace(/\s/g, '').replace(/[€$]/g, '');
+    // 7,45 or 1.234,56 (EU) vs 7.45 (US)
+    if (/^\d{1,3}(\.\d{3})*,\d{1,2}$/.test(t)) {
+      t = t.replace(/\./g, '').replace(',', '.');
+    } else if (t.includes(',') && !t.includes('.')) {
+      t = t.replace(',', '.');
+    }
+    const n = Number(t);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return n;
   }
 
   normalizePreview(raw: unknown, defaultCurrency: string): MenuPhotoPreview {
@@ -200,9 +277,10 @@ Respond with JSON only.`;
         for (const p of pricesRaw) {
           if (!p || typeof p !== 'object') continue;
           const pr = p as Record<string, unknown>;
-          const amount = Number(pr.amount);
-          if (!Number.isFinite(amount) || amount <= 0) continue;
-          const cur = String(pr.currency || currency).trim().toUpperCase() || currency;
+          const amount = this.parseAmount(pr.amount);
+          if (amount === null) continue;
+          let cur = String(pr.currency || currency).trim().toUpperCase() || currency;
+          if (cur === 'EURO' || cur === 'EUROS') cur = 'EUR';
           const label = String(pr.label || '').trim();
           prices.push({
             currency: cur,
@@ -214,12 +292,18 @@ Respond with JSON only.`;
           warnings.push(`Producto "${itemName}" sin precio legible; omitido del preview.`);
           continue;
         }
+        const confidence =
+          typeof item.confidence === 'string' ? item.confidence.trim().toLowerCase() : null;
+        if (confidence === 'low') {
+          warnings.push(
+            `Revisá precio/descripción de "${itemName}" (confianza baja del análisis).`,
+          );
+        }
         target.items.push({
           name: itemName,
           description: String(item.description || '').trim() || null,
           prices,
-          confidence:
-            typeof item.confidence === 'string' ? item.confidence.trim().toLowerCase() : null,
+          confidence,
         });
       }
     }
