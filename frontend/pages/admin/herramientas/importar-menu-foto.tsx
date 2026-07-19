@@ -368,8 +368,8 @@ export default function ImportarMenuFotoPage() {
     });
   };
 
-  /** Intercambia solo el precio con el producto de arriba/abajo (nombres y descripciones no se mueven). */
-  const movePrice = (si: number, ii: number, direction: 'up' | 'down') => {
+  /** Mueve el producto completo (nombre, descripción y precio) arriba/abajo dentro de la sección. */
+  const moveItem = (si: number, ii: number, direction: 'up' | 'down') => {
     setPreview((prev) => {
       if (!prev) return prev;
       const target = direction === 'up' ? ii - 1 : ii + 1;
@@ -378,17 +378,10 @@ export default function ImportarMenuFotoPage() {
         sections: prev.sections.map((s, i) => {
           if (i !== si) return s;
           if (target < 0 || target >= s.items.length) return s;
-          const items = s.items.map((it) => ({
-            ...it,
-            prices: (it.prices || []).map((p) => ({ ...p })),
-          }));
-          const a = items[ii]!;
-          const b = items[target]!;
-          const pricesA = a.prices;
-          a.prices = b.prices.length
-            ? b.prices
-            : [{ currency, amount: 1 }];
-          b.prices = pricesA.length ? pricesA : [{ currency, amount: 1 }];
+          const items = [...s.items];
+          const [moved] = items.splice(ii, 1);
+          if (!moved) return s;
+          items.splice(target, 0, moved);
           return { ...s, items };
         }),
       };
@@ -760,8 +753,8 @@ export default function ImportarMenuFotoPage() {
               <h2 className="h5 mb-3">3. Vista previa</h2>
               <p className="text-muted small">
                 Corregí lo que haga falta antes de importar. Moneda: <strong>{currency}</strong> ·
-                Modelo: <strong>{gptModel}</strong>. Usá ↑↓ junto al precio para moverlo al producto de
-                arriba o abajo sin cambiar el nombre.
+                Modelo: <strong>{gptModel}</strong>. Usá ↑↓ para cambiar el orden de un producto dentro
+                de la sección.
               </p>
               {preview.warnings?.length > 0 && (
                 <div className="alert alert-warning">
@@ -790,8 +783,8 @@ export default function ImportarMenuFotoPage() {
                         <tr>
                           <th>Producto</th>
                           <th>Descripción</th>
-                          <th style={{ width: 160 }}>Precio</th>
-                          <th style={{ width: 70 }} />
+                          <th style={{ width: 110 }}>Precio</th>
+                          <th style={{ width: 90 }} />
                         </tr>
                       </thead>
                       <tbody>
@@ -814,48 +807,47 @@ export default function ImportarMenuFotoPage() {
                               />
                             </td>
                             <td>
+                              <input
+                                type="number"
+                                min={0.01}
+                                step="0.01"
+                                className="form-control form-control-sm"
+                                value={item.prices?.[0]?.amount ?? ''}
+                                onChange={(e) =>
+                                  updateItemPrice(si, ii, Number(e.target.value) || 0)
+                                }
+                              />
+                            </td>
+                            <td>
                               <div className="d-flex align-items-center gap-1">
-                                <input
-                                  type="number"
-                                  min={0.01}
-                                  step="0.01"
-                                  className="form-control form-control-sm"
-                                  style={{ minWidth: 72 }}
-                                  value={item.prices?.[0]?.amount ?? ''}
-                                  onChange={(e) =>
-                                    updateItemPrice(si, ii, Number(e.target.value) || 0)
-                                  }
-                                />
                                 <div className="btn-group-vertical" role="group">
                                   <button
                                     type="button"
                                     className="btn btn-sm btn-outline-secondary py-0 px-1"
-                                    title="Mover precio arriba"
+                                    title="Subir producto"
                                     disabled={ii === 0}
-                                    onClick={() => movePrice(si, ii, 'up')}
+                                    onClick={() => moveItem(si, ii, 'up')}
                                   >
                                     ↑
                                   </button>
                                   <button
                                     type="button"
                                     className="btn btn-sm btn-outline-secondary py-0 px-1"
-                                    title="Mover precio abajo"
+                                    title="Bajar producto"
                                     disabled={ii === section.items.length - 1}
-                                    onClick={() => movePrice(si, ii, 'down')}
+                                    onClick={() => moveItem(si, ii, 'down')}
                                   >
                                     ↓
                                   </button>
                                 </div>
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-danger"
+                                  onClick={() => removeItem(si, ii)}
+                                >
+                                  ×
+                                </button>
                               </div>
-                            </td>
-                            <td>
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() => removeItem(si, ii)}
-                              >
-                                ×
-                              </button>
                             </td>
                           </tr>
                         ))}
