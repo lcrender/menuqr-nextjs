@@ -3,6 +3,7 @@ import {
   MenusCsvImportService,
   StructuredMenuImportRow,
 } from '../menus/menus-csv-import.service';
+import { MenusService } from '../menus/menus.service';
 import { ImportMenuFromPhotoDto } from './dto/import-menu-from-photo.dto';
 import { OpenAiMenuVisionService } from './openai-menu-vision.service';
 
@@ -11,6 +12,7 @@ export class MenuPhotoImportService {
   constructor(
     private readonly vision: OpenAiMenuVisionService,
     private readonly menusCsvImport: MenusCsvImportService,
+    private readonly menus: MenusService,
   ) {}
 
   async previewFromImages(files: Express.Multer.File[], currency: string) {
@@ -64,7 +66,7 @@ export class MenuPhotoImportService {
       throw new BadRequestException('No hay productos válidos en el preview');
     }
 
-    return this.menusCsvImport.importStructuredMenu(
+    const result = await this.menusCsvImport.importStructuredMenu(
       dto.tenantId,
       dto.restaurantId,
       {
@@ -74,5 +76,16 @@ export class MenuPhotoImportService {
       rows,
       Array.isArray(dto.preview.warnings) ? dto.preview.warnings : [],
     );
+
+    // Herramienta SA: publicar para que la carta pública muestre los productos al instante
+    try {
+      await this.menus.publish(result.menuId, dto.tenantId);
+    } catch {
+      result.warnings.push(
+        'El menú se creó pero no se pudo publicar automáticamente. Publicálo desde Menús.',
+      );
+    }
+
+    return result;
   }
 }

@@ -109,7 +109,7 @@ export default function Menus() {
         if (j.ok !== false) {
           const warnings = Array.isArray(j.warnings) ? j.warnings : [];
           const base =
-            'El menú se creó correctamente desde las fotos. Quedó en borrador: usá «Publicar» para que esté visible online. No se importaron fotos de productos.';
+            'El menú se creó y publicó desde las fotos. Ya debería verse en la carta pública. No se importaron fotos de productos.';
           const warnText =
             warnings.length > 0
               ? `\n\nAvisos:\n${warnings.map((w) => `• ${w}`).join('\n')}`

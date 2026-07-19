@@ -110,7 +110,7 @@ services:
     networks:
       - menuqr_dev
 
-  # Servicio sin montar código: para seed/migrate usa node_modules de la imagen (evita Prisma musl/OpenSSL en volumen viejo)
+  # Servicio para seed/migrate: monta código para ver migraciones nuevas; node_modules de la imagen
   backend-run:
     build:
       context: ./backend
@@ -125,6 +125,8 @@ services:
       REDIS_URL: redis://redis:6379
       MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
       MERCADOPAGO_ACCESS_TOKEN_TEST: ${MERCADOPAGO_ACCESS_TOKEN_TEST:-}
+    volumes:
+      - ./backend/prisma:/app/prisma
     depends_on:
       postgres:
         condition: service_healthy
