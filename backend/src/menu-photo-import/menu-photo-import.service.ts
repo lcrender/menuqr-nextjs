@@ -15,7 +15,11 @@ export class MenuPhotoImportService {
     private readonly menus: MenusService,
   ) {}
 
-  async previewFromImages(files: Express.Multer.File[], currency: string) {
+  async previewFromImages(
+    files: Express.Multer.File[],
+    currency: string,
+    model?: string | null,
+  ) {
     return this.vision.analyzeMenuImages(
       files.map((f) => ({
         buffer: f.buffer,
@@ -23,6 +27,7 @@ export class MenuPhotoImportService {
         originalname: f.originalname,
       })),
       currency,
+      model,
     );
   }
 

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import AdminLayout from '../../../components/AdminLayout';
 import api from '../../../lib/axios';
+import { TEMPLATES_CATALOG } from '../../../lib/templates-catalog';
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4;
 
 type TenantRow = { id: string; name?: string; plan?: string };
 type RestaurantRow = {
@@ -12,6 +14,7 @@ type RestaurantRow = {
   tenantId?: string;
   tenant_id?: string;
   tenantName?: string | null;
+  slug?: string;
 };
 
 type PreviewPrice = {
@@ -36,6 +39,8 @@ type PreviewData = {
   sections: PreviewSection[];
   warnings: string[];
 };
+
+type GptModelChoice = 'gpt-4o' | 'gpt-4o-mini';
 
 const CURRENCY_OPTIONS = [
   { value: 'USD', label: 'USD - Dólar estadounidense' },
@@ -64,19 +69,21 @@ export default function ImportarMenuFotoPage() {
   const [user, setUser] = useState<any>(null);
   const [step, setStep] = useState<Step>(1);
 
-  const [currency, setCurrency] = useState('ARS');
-  const [restaurantMode, setRestaurantMode] = useState<'existing' | 'new'>('existing');
+  const [gptModel, setGptModel] = useState<GptModelChoice>('gpt-4o');
+  const [currency, setCurrency] = useState('EUR');
+  const [restaurantMode, setRestaurantMode] = useState<'existing' | 'new'>('new');
   const [tenants, setTenants] = useState<TenantRow[]>([]);
   const [restaurants, setRestaurants] = useState<RestaurantRow[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState('');
   const [selectedRestaurantId, setSelectedRestaurantId] = useState('');
   const [newRestaurantName, setNewRestaurantName] = useState('');
+  const [newRestaurantDescription, setNewRestaurantDescription] = useState('');
   const [newRestaurantLogo, setNewRestaurantLogo] = useState<File | null>(null);
   const [resolvedRestaurantId, setResolvedRestaurantId] = useState('');
   const [resolvedTenantId, setResolvedTenantId] = useState('');
+  const [resolvedRestaurantSlug, setResolvedRestaurantSlug] = useState('');
 
   const [menuName, setMenuName] = useState('');
-  const [menuDescription, setMenuDescription] = useState('');
 
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -85,6 +92,9 @@ export default function ImportarMenuFotoPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [creatingRestaurant, setCreatingRestaurant] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('foodie');
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [importDone, setImportDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [listsLoading, setListsLoading] = useState(false);
 
@@ -171,7 +181,11 @@ export default function ImportarMenuFotoPage() {
     setPhotoPreviews(next.map((f) => URL.createObjectURL(f)));
   };
 
-  const ensureRestaurant = async (): Promise<{ restaurantId: string; tenantId: string }> => {
+  const ensureRestaurant = async (): Promise<{
+    restaurantId: string;
+    tenantId: string;
+    slug?: string;
+  }> => {
     if (restaurantMode === 'existing') {
       if (!selectedRestaurantId) {
         throw new Error('Seleccioná un restaurante existente');
@@ -183,7 +197,10 @@ export default function ImportarMenuFotoPage() {
       }
       setResolvedRestaurantId(selectedRestaurantId);
       setResolvedTenantId(tenantId);
-      return { restaurantId: selectedRestaurantId, tenantId };
+      setResolvedRestaurantSlug(r?.slug || '');
+      return r?.slug
+        ? { restaurantId: selectedRestaurantId, tenantId, slug: r.slug }
+        : { restaurantId: selectedRestaurantId, tenantId };
     }
 
     if (!newRestaurantName.trim()) {
@@ -204,11 +221,13 @@ export default function ImportarMenuFotoPage() {
 
       const createRes = await api.post('/restaurants', {
         name,
+        description: newRestaurantDescription.trim() || undefined,
         tenantId,
         defaultCurrency: currency,
         timezone: 'UTC',
       });
       const restaurantId = createRes.data?.id || createRes.data?.data?.id;
+      const slug = createRes.data?.slug || createRes.data?.data?.slug || '';
       if (!restaurantId) {
         throw new Error('No se obtuvo el ID del restaurante creado');
       }
@@ -221,22 +240,22 @@ export default function ImportarMenuFotoPage() {
       }
       setResolvedRestaurantId(restaurantId);
       setResolvedTenantId(tenantId);
+      setResolvedRestaurantSlug(slug);
       setSelectedTenantId(tenantId);
       await loadLists();
-      return { restaurantId, tenantId };
+      return { restaurantId, tenantId, slug };
     } finally {
       setCreatingRestaurant(false);
     }
   };
 
   const canGoNextFromStep = (s: Step): boolean => {
-    if (s === 1) return Boolean(currency);
-    if (s === 2) {
+    if (s === 1) {
+      if (!currency || !menuName.trim()) return false;
       if (restaurantMode === 'existing') return Boolean(selectedRestaurantId);
       return Boolean(newRestaurantName.trim());
     }
-    if (s === 3) return Boolean(menuName.trim());
-    if (s === 4) return photos.length > 0;
+    if (s === 2) return photos.length > 0;
     return true;
   };
 
@@ -246,15 +265,17 @@ export default function ImportarMenuFotoPage() {
       setError('Completá los campos obligatorios de este paso');
       return;
     }
-    if (step === 2) {
+    if (step === 1) {
       try {
         await ensureRestaurant();
       } catch (e: any) {
         setError(e?.userMessage || e?.response?.data?.message || e?.message || 'Error con el restaurante');
         return;
       }
+      setStep(2);
+      return;
     }
-    if (step === 4) {
+    if (step === 2) {
       await runAnalyze();
       return;
     }
@@ -267,6 +288,7 @@ export default function ImportarMenuFotoPage() {
     try {
       const fd = new FormData();
       fd.append('currency', currency);
+      fd.append('model', gptModel);
       for (const file of photos) {
         fd.append('files', file);
       }
@@ -279,7 +301,7 @@ export default function ImportarMenuFotoPage() {
         sections: Array.isArray(data.sections) ? data.sections : [],
         warnings: Array.isArray(data.warnings) ? data.warnings : [],
       });
-      setStep(5);
+      setStep(3);
     } catch (e: any) {
       setError(
         e?.userMessage ||
@@ -389,9 +411,10 @@ export default function ImportarMenuFotoPage() {
       return;
     }
     const restaurantId = resolvedRestaurantId || selectedRestaurantId;
-    const tenantId = resolvedTenantId || selectedTenantId || tenantIdOfRestaurant(
-      restaurants.find((r) => r.id === restaurantId) || { id: '', name: '' },
-    );
+    const tenantId =
+      resolvedTenantId ||
+      selectedTenantId ||
+      tenantIdOfRestaurant(restaurants.find((r) => r.id === restaurantId) || { id: '', name: '' });
     if (!restaurantId || !tenantId) {
       setError('Falta restaurante o cuenta destino');
       return;
@@ -403,28 +426,56 @@ export default function ImportarMenuFotoPage() {
 
     setImporting(true);
     try {
-      const res = await api.post('/admin/tools/menu-photo/import', {
+      await api.post('/admin/tools/menu-photo/import', {
         tenantId,
         restaurantId,
         menuName: menuName.trim(),
-        menuDescription: menuDescription.trim() || undefined,
         currency,
         preview,
       });
-      const warnings = Array.isArray(res.data?.warnings) ? res.data.warnings : [];
-      try {
-        sessionStorage.setItem(
-          'menuPhotoImportFlash',
-          JSON.stringify({ ok: true, warnings }),
-        );
-      } catch {
-        /* ignore */
+      if (!resolvedRestaurantSlug) {
+        const r = restaurants.find((x) => x.id === restaurantId);
+        if (r?.slug) setResolvedRestaurantSlug(r.slug);
       }
-      await router.push('/admin/menus');
+      setImportDone(true);
+      setStep(4);
     } catch (e: any) {
       setError(e?.userMessage || e?.response?.data?.message || 'No se pudo importar el menú');
     } finally {
       setImporting(false);
+    }
+  };
+
+  const handleApplyTemplate = async () => {
+    setError(null);
+    const restaurantId = resolvedRestaurantId || selectedRestaurantId;
+    const tenantId =
+      resolvedTenantId ||
+      selectedTenantId ||
+      tenantIdOfRestaurant(restaurants.find((r) => r.id === restaurantId) || { id: '', name: '' });
+    if (!restaurantId || !tenantId) {
+      setError('Falta restaurante destino');
+      return;
+    }
+    setSavingTemplate(true);
+    try {
+      await api.put(
+        `/restaurants/${restaurantId}`,
+        { template: selectedTemplate },
+        { params: { tenantId } },
+      );
+      const slug =
+        resolvedRestaurantSlug ||
+        restaurants.find((r) => r.id === restaurantId)?.slug ||
+        '';
+      if (slug) {
+        window.open(`/restaurant/${slug}`, '_blank');
+      }
+      await router.push('/admin/restaurants');
+    } catch (e: any) {
+      setError(e?.userMessage || e?.response?.data?.message || 'No se pudo aplicar la plantilla');
+    } finally {
+      setSavingTemplate(false);
     }
   };
 
@@ -451,7 +502,7 @@ export default function ImportarMenuFotoPage() {
               productos).
             </p>
           </div>
-          <span className="badge text-bg-secondary">Paso {step} / 5</span>
+          <span className="badge text-bg-secondary">Paso {step} / 4</span>
         </div>
 
         {error && (
@@ -463,124 +514,150 @@ export default function ImportarMenuFotoPage() {
         <div className="admin-card p-4">
           {step === 1 && (
             <>
-              <h2 className="h5 mb-3">1. Moneda de los precios</h2>
-              <p className="text-muted small">
-                Se usa cuando el papel no aclara la moneda. También queda como moneda por defecto si
-                creás un restaurante nuevo.
-              </p>
-              <select
-                className="form-select"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-              >
-                {CURRENCY_OPTIONS.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
+              <h2 className="h5 mb-3">1. Datos iniciales</h2>
 
-          {step === 2 && (
-            <>
-              <h2 className="h5 mb-3">2. Restaurante destino</h2>
-              {listsLoading && <p className="text-muted">Cargando cuentas…</p>}
-              <div className="btn-group mb-3" role="group">
-                <button
-                  type="button"
-                  className={`btn ${restaurantMode === 'existing' ? 'btn-primary' : 'btn-outline-primary'}`}
-                  onClick={() => setRestaurantMode('existing')}
-                >
-                  Existente
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${restaurantMode === 'new' ? 'btn-primary' : 'btn-outline-primary'}`}
-                  onClick={() => setRestaurantMode('new')}
-                >
-                  Nuevo
-                </button>
+              <div className="mb-4">
+                <label className="form-label fw-semibold">Modelo GPT *</label>
+                <div className="btn-group w-100" role="group">
+                  <button
+                    type="button"
+                    className={`btn ${gptModel === 'gpt-4o' ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setGptModel('gpt-4o')}
+                  >
+                    GPT-4o (recomendado)
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn ${gptModel === 'gpt-4o-mini' ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setGptModel('gpt-4o-mini')}
+                  >
+                    GPT-4o mini (más barato)
+                  </button>
+                </div>
+                <p className="text-muted small mt-1 mb-0">
+                  En cartas multi-columna GPT-4o suele acertar mejor precios y descripciones.
+                </p>
               </div>
 
-              {restaurantMode === 'existing' ? (
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <label className="form-label">Filtrar por cuenta (opcional)</label>
-                    <select
-                      className="form-select"
-                      value={selectedTenantId}
-                      onChange={(e) => {
-                        setSelectedTenantId(e.target.value);
-                        setSelectedRestaurantId('');
-                      }}
-                    >
-                      <option value="">Todas</option>
-                      {tenants.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name || t.id} {t.plan ? `(${t.plan})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Restaurante *</label>
-                    <select
-                      className="form-select"
-                      value={selectedRestaurantId}
-                      onChange={(e) => {
-                        const id = e.target.value;
-                        setSelectedRestaurantId(id);
-                        const r = restaurants.find((x) => x.id === id);
-                        if (r) setSelectedTenantId(tenantIdOfRestaurant(r) || selectedTenantId);
-                      }}
-                    >
-                      <option value="">Seleccionar…</option>
-                      {restaurantsForTenant.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                          {r.tenantName ? ` — ${r.tenantName}` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              ) : (
-                <div className="row g-3">
-                  <div className="col-12">
-                    <p className="text-muted small mb-0">
-                      Se crea una cuenta nueva automáticamente con el nombre del restaurante (plan Pro).
-                      Después podés asignar el restaurante a un usuario desde el panel.
-                    </p>
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Nombre del restaurante *</label>
-                    <input
-                      className="form-control"
-                      value={newRestaurantName}
-                      onChange={(e) => setNewRestaurantName(e.target.value)}
-                      placeholder="Ej. La Parrilla"
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Logo (opcional)</label>
-                    <input
-                      type="file"
-                      className="form-control"
-                      accept="image/*"
-                      onChange={(e) => setNewRestaurantLogo(e.target.files?.[0] || null)}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+              <div className="mb-4">
+                <label className="form-label fw-semibold">Moneda *</label>
+                <select
+                  className="form-select"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                >
+                  {CURRENCY_OPTIONS.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {step === 3 && (
-            <>
-              <h2 className="h5 mb-3">3. Nombre del menú</h2>
               <div className="mb-3">
-                <label className="form-label">Nombre *</label>
+                <label className="form-label fw-semibold">Restaurante destino *</label>
+                {listsLoading && <p className="text-muted small">Cargando…</p>}
+                <div className="btn-group mb-3" role="group">
+                  <button
+                    type="button"
+                    className={`btn ${restaurantMode === 'existing' ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setRestaurantMode('existing')}
+                  >
+                    Existente
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn ${restaurantMode === 'new' ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setRestaurantMode('new')}
+                  >
+                    Nuevo
+                  </button>
+                </div>
+
+                {restaurantMode === 'existing' ? (
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label">Filtrar por cuenta (opcional)</label>
+                      <select
+                        className="form-select"
+                        value={selectedTenantId}
+                        onChange={(e) => {
+                          setSelectedTenantId(e.target.value);
+                          setSelectedRestaurantId('');
+                        }}
+                      >
+                        <option value="">Todas</option>
+                        {tenants.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name || t.id} {t.plan ? `(${t.plan})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Restaurante *</label>
+                      <select
+                        className="form-select"
+                        value={selectedRestaurantId}
+                        onChange={(e) => {
+                          const id = e.target.value;
+                          setSelectedRestaurantId(id);
+                          const r = restaurants.find((x) => x.id === id);
+                          if (r) setSelectedTenantId(tenantIdOfRestaurant(r) || selectedTenantId);
+                        }}
+                      >
+                        <option value="">Seleccionar…</option>
+                        {restaurantsForTenant.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.name}
+                            {r.tenantName ? ` — ${r.tenantName}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="row g-3">
+                    <div className="col-12">
+                      <p className="text-muted small mb-0">
+                        Se crea una cuenta nueva automáticamente (plan Pro). Después podés asignar el
+                        restaurante a un usuario.
+                      </p>
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Nombre del restaurante *</label>
+                      <input
+                        className="form-control"
+                        value={newRestaurantName}
+                        onChange={(e) => setNewRestaurantName(e.target.value)}
+                        placeholder="Ej. Lizarran Les Corts"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Logo (opcional)</label>
+                      <input
+                        type="file"
+                        className="form-control"
+                        accept="image/*"
+                        onChange={(e) => setNewRestaurantLogo(e.target.files?.[0] || null)}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Descripción del restaurante (opcional)</label>
+                      <textarea
+                        className="form-control"
+                        rows={2}
+                        value={newRestaurantDescription}
+                        onChange={(e) => setNewRestaurantDescription(e.target.value)}
+                        placeholder="Breve texto del local"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-0">
+                <label className="form-label fw-semibold">Nombre del menú *</label>
                 <input
                   className="form-control"
                   value={menuName}
@@ -588,24 +665,15 @@ export default function ImportarMenuFotoPage() {
                   placeholder="Carta principal"
                 />
               </div>
-              <div className="mb-0">
-                <label className="form-label">Descripción (opcional)</label>
-                <textarea
-                  className="form-control"
-                  rows={3}
-                  value={menuDescription}
-                  onChange={(e) => setMenuDescription(e.target.value)}
-                />
-              </div>
             </>
           )}
 
-          {step === 4 && (
+          {step === 2 && (
             <>
-              <h2 className="h5 mb-3">4. Fotos del menú en papel</h2>
+              <h2 className="h5 mb-3">2. Fotos del menú</h2>
               <p className="text-muted small">
-                Hasta {MAX_PHOTOS} fotos (máx. 3 MB c/u). En el celular podés usar la cámara; una foto
-                por página si el menú tiene varias.
+                Sacá una foto o elegí archivo. Hasta {MAX_PHOTOS} fotos (máx. 3 MB c/u); una por página
+                si el menú tiene varias.
               </p>
               <input
                 type="file"
@@ -643,12 +711,12 @@ export default function ImportarMenuFotoPage() {
             </>
           )}
 
-          {step === 5 && preview && (
+          {step === 3 && preview && (
             <>
-              <h2 className="h5 mb-3">5. Revisar e importar</h2>
+              <h2 className="h5 mb-3">3. Vista previa</h2>
               <p className="text-muted small">
-                Editá lo que haga falta (en cartas multi-columna conviene revisar precios línea a línea).
-                No se importan fotos de productos. Moneda de referencia: <strong>{currency}</strong>.
+                Corregí lo que haga falta antes de importar. Moneda: <strong>{currency}</strong> ·
+                Modelo: <strong>{gptModel}</strong>.
               </p>
               {preview.warnings?.length > 0 && (
                 <div className="alert alert-warning">
@@ -741,24 +809,51 @@ export default function ImportarMenuFotoPage() {
             </>
           )}
 
+          {step === 4 && importDone && (
+            <>
+              <h2 className="h5 mb-3">4. Plantilla del restaurante</h2>
+              <p className="text-muted small">
+                El menú ya se creó y publicó. Elegí la plantilla visual del restaurante.
+              </p>
+              <div className="row g-3">
+                {TEMPLATES_CATALOG.map((t) => (
+                  <div key={t.id} className="col-md-6 col-lg-4">
+                    <button
+                      type="button"
+                      className={`btn w-100 text-start h-100 ${
+                        selectedTemplate === t.id ? 'btn-primary' : 'btn-outline-secondary'
+                      }`}
+                      onClick={() => setSelectedTemplate(t.id)}
+                    >
+                      <div className="fw-semibold">
+                        {t.preview} {t.name}
+                      </div>
+                      <div className="small opacity-75 mt-1">{t.description}</div>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           <div className="d-flex flex-wrap gap-2 mt-4">
-            {step > 1 && step < 5 && (
+            {step === 2 && (
               <button
                 type="button"
                 className="btn btn-outline-secondary"
                 disabled={analyzing || creatingRestaurant}
-                onClick={() => setStep((step - 1) as Step)}
+                onClick={() => setStep(1)}
               >
                 Atrás
               </button>
             )}
-            {step === 5 && (
+            {step === 3 && (
               <>
                 <button
                   type="button"
                   className="btn btn-outline-secondary"
                   disabled={analyzing || importing}
-                  onClick={() => setStep(4)}
+                  onClick={() => setStep(2)}
                 >
                   Volver a fotos
                 </button>
@@ -780,25 +875,40 @@ export default function ImportarMenuFotoPage() {
                 </button>
               </>
             )}
-            {step < 4 && (
+            {step === 1 && (
               <button
                 type="button"
                 className="btn btn-primary"
-                disabled={creatingRestaurant || !canGoNextFromStep(step)}
+                disabled={creatingRestaurant || !canGoNextFromStep(1)}
                 onClick={() => void handleNext()}
               >
                 {creatingRestaurant ? 'Creando restaurante…' : 'Siguiente'}
               </button>
             )}
-            {step === 4 && (
+            {step === 2 && (
               <button
                 type="button"
                 className="btn btn-primary"
-                disabled={analyzing || !canGoNextFromStep(4)}
+                disabled={analyzing || !canGoNextFromStep(2)}
                 onClick={() => void handleNext()}
               >
                 {analyzing ? 'Analizando fotos…' : 'Analizar con OpenAI'}
               </button>
+            )}
+            {step === 4 && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={savingTemplate || !selectedTemplate}
+                  onClick={() => void handleApplyTemplate()}
+                >
+                  {savingTemplate ? 'Guardando…' : 'Aplicar plantilla y ver carta'}
+                </button>
+                <Link href="/admin/restaurants" className="btn btn-outline-secondary">
+                  Ir a restaurantes
+                </Link>
+              </>
             )}
           </div>
         </div>

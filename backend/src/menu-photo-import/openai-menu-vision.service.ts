@@ -43,10 +43,18 @@ export class OpenAiMenuVisionService {
     return String(this.config.get<string>('OPENAI_API_KEY') || '').trim();
   }
 
-  private getModel(): string {
+  private getDefaultModel(): string {
     const m = String(this.config.get<string>('OPENAI_MODEL') || '').trim();
     // gpt-4o reads multi-column menus much more reliably than mini
     return m || 'gpt-4o';
+  }
+
+  /** Modelos permitidos desde la herramienta SA. */
+  resolveModel(requested?: string | null): string {
+    const raw = String(requested || '').trim().toLowerCase();
+    if (raw === 'gpt-4o-mini' || raw === 'mini') return 'gpt-4o-mini';
+    if (raw === 'gpt-4o' || raw === 'common' || raw === 'standard') return 'gpt-4o';
+    return this.getDefaultModel();
   }
 
   private getBaseUrl(): string {
@@ -57,6 +65,7 @@ export class OpenAiMenuVisionService {
   async analyzeMenuImages(
     files: Array<{ buffer: Buffer; mimetype: string; originalname?: string }>,
     currency: string,
+    model?: string | null,
   ): Promise<MenuPhotoPreview> {
     if (!this.isConfigured()) {
       throw new ServiceUnavailableException(
@@ -68,12 +77,15 @@ export class OpenAiMenuVisionService {
     }
 
     const currencyCode = currency.trim().toUpperCase() || 'USD';
+    const resolvedModel = this.resolveModel(model);
 
     // Una página por llamada reduce confusiones en cartas multi-columna; luego mergeamos.
     const pagePreviews: MenuPhotoPreview[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i]!;
-      pagePreviews.push(await this.analyzeSinglePage(file, currencyCode, i + 1, files.length));
+      pagePreviews.push(
+        await this.analyzeSinglePage(file, currencyCode, i + 1, files.length, resolvedModel),
+      );
     }
 
     return this.mergePagePreviews(pagePreviews, currencyCode);
@@ -84,6 +96,7 @@ export class OpenAiMenuVisionService {
     currencyCode: string,
     pageIndex: number,
     pageCount: number,
+    model: string,
   ): Promise<MenuPhotoPreview> {
     const mime = (file.mimetype || 'image/jpeg').split(';')[0] || 'image/jpeg';
     const b64 = file.buffer.toString('base64');
@@ -125,7 +138,7 @@ For every item, double-check that the price is the one printed on the same line 
 Respond with JSON only.`;
 
     const body = {
-      model: this.getModel(),
+      model,
       response_format: { type: 'json_object' },
       temperature: 0,
       messages: [

@@ -28,6 +28,7 @@ export class MenuPhotoImportController {
       required: ['files', 'currency'],
       properties: {
         currency: { type: 'string', example: 'ARS' },
+        model: { type: 'string', example: 'gpt-4o', description: 'gpt-4o o gpt-4o-mini' },
         files: {
           type: 'array',
           items: { type: 'string', format: 'binary' },
@@ -43,6 +44,7 @@ export class MenuPhotoImportController {
   async preview(
     @UploadedFiles() files: Express.Multer.File[],
     @Body('currency') currency: string,
+    @Body('model') model?: string,
   ) {
     if (!files?.length) {
       throw new BadRequestException('Subí al menos una foto del menú (campo multipart "files")');
@@ -59,7 +61,7 @@ export class MenuPhotoImportController {
         throw new BadRequestException(`Archivo no es imagen: ${f.originalname || mime}`);
       }
     }
-    return this.menuPhotoImport.previewFromImages(files, currency.trim());
+    return this.menuPhotoImport.previewFromImages(files, currency.trim(), model);
   }
 
   @Post('import')
