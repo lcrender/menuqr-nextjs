@@ -544,8 +544,8 @@ export default function ImportarMenuFotoPage() {
           <div>
             <h1 className="admin-title mb-1">Importar menú desde foto</h1>
             <p className="text-muted mb-0">
-              Herramienta Super Admin: analizá fotos del menú en papel con OpenAI Vision (sin fotos de
-              productos).
+              Herramienta Super Admin: analizá fotos del menú (cualquier diseño) con OpenAI Vision e
+              importá el resultado.
             </p>
           </div>
           <span className="badge text-bg-secondary">Paso {step} / 4</span>
