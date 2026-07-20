@@ -26,7 +26,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Documentación | AppMenuQR',
     metaTitleAdmin: 'Documentación | Ayuda',
     metaDescription:
-      'Guía AppMenuQR: registro, restaurante, menús, CSV, plantillas, publicación, QR, administración del negocio, traducciones, suscripciones y pagos.',
+      'Guía AppMenuQR: registro, restaurante, menús, CSV, plantillas, publicación, programación, QR, impresión en papel, administración del negocio, traducciones, suscripciones y pagos.',
     group: 'Introducción',
     keywords: 'inicio guía flujo resumen pasos registro sesión',
     searchText: 'resumen flujo completo crear restaurante menú csv secciones productos qr verificar email',
@@ -128,6 +128,18 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     searchText: 'columna estado qr visible oculto',
   },
   {
+    slug: 'programar-menu',
+    title: 'Programar un menú',
+    shortTitle: 'Programar menú',
+    metaTitlePublic: 'Programar visibilidad del menú | Documentación AppMenuQR',
+    metaTitleAdmin: 'Programar visibilidad del menú | Ayuda',
+    metaDescription:
+      'Programación semanal de menús en planes Pro y Premium: días, horarios, fechas y huso horario del restaurante.',
+    group: 'Publicación',
+    keywords: 'programar horario días semana visibilidad pro premium timezone',
+    searchText: 'lunes martes horario desde hasta fechas guardar programación menús',
+  },
+  {
     slug: 'descargar-qr',
     title: 'Descargar código QR',
     shortTitle: 'Código QR',
@@ -138,6 +150,18 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     group: 'Publicación',
     keywords: 'qr código descargar dashboard restaurante menús nombre enlace',
     searchText: 'imprimir escanear google maps cambiar nombre nuevo qr',
+  },
+  {
+    slug: 'imprimir-carta',
+    title: 'Imprimir la carta en papel',
+    shortTitle: 'Imprimir carta',
+    metaTitlePublic: 'Imprimir carta en papel | Documentación AppMenuQR',
+    metaTitleAdmin: 'Imprimir carta en papel | Ayuda',
+    metaDescription:
+      'Imprimí tu menú en papel desde el panel: plantillas, logo, secciones, idioma y menús a incluir.',
+    group: 'Publicación',
+    keywords: 'imprimir papel carta plantilla pdf logo secciones idioma menús',
+    searchText: 'imprimir carta restaurante clásica elegante moderna bistro vista previa',
   },
   {
     slug: 'desactivar-restaurante',

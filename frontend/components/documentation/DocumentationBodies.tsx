@@ -125,11 +125,25 @@ export function DocIntroBody({ basePath }: BodyProps): ReactNode {
               → Cambia el estado del menú a &quot;Publicado&quot; para que esté visible
             </li>
             <li className="mb-2">
+              <Link href={docHref(basePath, 'programar-menu')} className="fw-bold text-decoration-underline">
+                Programar menú
+              </Link>
+              {' '}
+              → Define días y horarios de visibilidad (planes Pro y Premium)
+            </li>
+            <li className="mb-2">
               <Link href={docHref(basePath, 'descargar-qr')} className="fw-bold text-decoration-underline">
                 Descargar QR
               </Link>
               {' '}
               → Genera y descarga el código QR para compartir con tus clientes
+            </li>
+            <li className="mb-2">
+              <Link href={docHref(basePath, 'imprimir-carta')} className="fw-bold text-decoration-underline">
+                Imprimir carta en papel
+              </Link>
+              {' '}
+              → Generá una versión para imprimir con plantillas y opciones de diseño
             </li>
           </ol>
         </div>
@@ -762,7 +776,7 @@ export function DocPublicarMenuBody({ basePath }: BodyProps): ReactNode {
         </div>
       </div>
 
-      <DocSeeAlso basePath={basePath} slugs={['descargar-qr', 'menu-visibilidad-y-eliminacion', 'crear-menu']} />
+      <DocSeeAlso basePath={basePath} slugs={['programar-menu', 'descargar-qr', 'menu-visibilidad-y-eliminacion', 'crear-menu']} />
 
       <DocFaqBlock
         items={[
@@ -778,7 +792,235 @@ export function DocPublicarMenuBody({ basePath }: BodyProps): ReactNode {
             q: '¿Puedo programar horarios de publicación automáticos?',
             a: (
               <>
-                Si la versión actual del panel no ofrece programación, el flujo es <strong>manual</strong>: publicá o despublicá cuando corresponda (por ejemplo antes del servicio de mediodía o de noche).
+                Sí, en planes <strong>Pro</strong> y <strong>Premium</strong> podés{' '}
+                <Link href={docHref(basePath, 'programar-menu')}>programar la visibilidad</Link> de cada menú por días, horarios y (opcionalmente) fechas. El menú debe seguir estando <strong>publicado</strong>; la programación controla cuándo se muestra dentro de ese estado. Si tu plan no incluye la función, el flujo es <strong>manual</strong>: publicá o despublicá cuando corresponda.
+              </>
+            ),
+          },
+        ]}
+      />
+    </>
+  );
+}
+
+export function DocProgramarMenuBody({ basePath }: BodyProps): ReactNode {
+  return (
+    <>
+      <DocAudienceBlock title="Disponibilidad según plan">
+        <p className="mb-0">
+          La programación de menús está disponible en planes <strong>Pro</strong> y{' '}
+          <strong>Premium</strong>. Si tu plan es Free u otro que no la incluya, verás un aviso al entrar a la pantalla
+          y podrás revisar opciones en{' '}
+          <Link href={docHref(basePath, 'suscripciones-y-pagos')}>Suscripciones y pagos</Link>. La programación{' '}
+          <strong>no reemplaza</strong> publicar el menú: un menú en borrador no aparece en la carta aunque tenga horarios
+          configurados.
+        </p>
+      </DocAudienceBlock>
+
+      <div className="card mb-4">
+        <div className="card-header bg-dark text-white">
+          <h2 className="h4 mb-0">Programar visibilidad del menú</h2>
+        </div>
+        <div className="card-body">
+          <p className="mb-3">
+            Con esta función podés definir <strong>qué días</strong> y, si querés, <strong>en qué horario</strong> se muestra
+            cada menú en la carta pública del restaurante. Es útil para cartas de mediodía vs. noche, menús de fin de semana
+            o promociones que solo aplican ciertos días.
+          </p>
+          <h3 className="h6 text-uppercase text-muted mb-2">Checklist antes de programar</h3>
+          <ul className="mb-4 ps-3">
+            <li className="mb-2">
+              Confirmá que el menú esté <Link href={docHref(basePath, 'publicar-menu')}><strong>publicado</strong></Link>.
+            </li>
+            <li className="mb-2">Verificá el <strong>huso horario</strong> del restaurante (la programación usa esa zona horaria).</li>
+            <li className="mb-2">Si tenés varios menús, programá cada uno por separado según corresponda.</li>
+          </ul>
+          <ol className="mb-4">
+            <li className="mb-2">
+              Entrá a la sección <strong>Menús</strong> del panel y pulsá{' '}
+              <Link href="/admin/menus/schedule" target="_blank" rel="noopener noreferrer"><strong>Programar menú</strong></Link>.
+            </li>
+            <li className="mb-2">
+              Elegí el <strong>restaurante</strong> al que quieras aplicar la programación.
+            </li>
+            <li className="mb-2">
+              Revisá o ajustá el <strong>huso horario del restaurante</strong>: los días y horarios se evalúan según esa zona.
+            </li>
+            <li className="mb-2">
+              Para cada menú de la lista, activá el interruptor <strong>Programar visibilidad</strong>.
+            </li>
+            <li className="mb-2">
+              Marcá los <strong>días visibles</strong> (lunes a domingo). Si no marcás ninguno, el menú no se mostrará mientras
+              la programación esté activa.
+            </li>
+            <li className="mb-2">
+              <strong>Horario (opcional):</strong> podés indicar <em>Desde</em> y <em>Hasta</em>. Si los dejás vacíos, el menú
+              se ve todo el día en los días elegidos.
+            </li>
+            <li className="mb-2">
+              <strong>Limitar por fechas (opcional):</strong> activá esta opción si la programación debe aplicar solo entre
+              un día de inicio y, si lo indicás, un día de finalización. Si no la activás, la regla se repite cada semana
+              según los días marcados.
+            </li>
+            <li className="mb-2">
+              Pulsá <strong>Guardar programación</strong> para aplicar los cambios a todos los menús del restaurante que
+              hayas configurado.
+            </li>
+          </ol>
+          <p className="mb-3">
+            Si un menú tiene la programación <strong>desactivada</strong>, se comporta como siempre: estando publicado, se
+            muestra en la carta sin restricción de día u hora (salvo vigencia u otras reglas del sistema).
+          </p>
+          <div className="alert alert-info mb-0">
+            <strong>Ejemplo:</strong> menú &quot;Almuerzo&quot; publicado, programación activa, días lun–vie, horario 12:00–16:00.
+            Fuera de ese rango —aunque siga publicado— no aparecerá en la carta online hasta que entre la ventana configurada.
+          </div>
+        </div>
+      </div>
+
+      <DocSeeAlso basePath={basePath} slugs={['publicar-menu', 'menu-visibilidad-y-eliminacion', 'suscripciones-y-pagos']} />
+
+      <DocFaqBlock
+        items={[
+          {
+            q: '¿La programación publica o despublica el menú automáticamente?',
+            a: (
+              <>
+                No. Solo controla <strong>cuándo se muestra</strong> un menú que ya está <strong>publicado</strong>. Para ocultarlo por completo, usá <strong>despublicar</strong> (ver{' '}
+                <Link href={docHref(basePath, 'publicar-menu')}>Publicar el menú</Link>).
+              </>
+            ),
+          },
+          {
+            q: 'Programé el menú pero no aparece en el horario esperado.',
+            a: (
+              <>
+                Revisá el <strong>huso horario</strong> del restaurante, que el menú esté <strong>publicado</strong> y que
+                hayas marcado el día correcto. Guardá de nuevo si hiciste cambios sin pulsar <strong>Guardar programación</strong>.
+              </>
+            ),
+          },
+          {
+            q: '¿Puedo usar la programación con plan Free?',
+            a: (
+              <>
+                No. Necesitás plan <strong>Pro</strong> o <strong>Premium</strong>. Consultá{' '}
+                <Link href={docHref(basePath, 'suscripciones-y-pagos')}>Suscripciones y pagos</Link> para actualizar tu plan.
+              </>
+            ),
+          },
+        ]}
+      />
+    </>
+  );
+}
+
+export function DocImprimirCartaBody({ basePath }: BodyProps): ReactNode {
+  return (
+    <>
+      <DocAudienceBlock title="¿Para qué sirve?">
+        <p className="mb-0">
+          La impresión en papel genera una <strong>vista previa lista para imprimir</strong> de tu carta, independiente de la
+          plantilla online del restaurante. Podés elegir diseño de impresión, qué menús incluir y cómo se reparten las secciones
+          en las páginas. No modifica la carta digital ni el QR.
+        </p>
+      </DocAudienceBlock>
+
+      <div className="card mb-4">
+        <div className="card-header bg-dark text-white">
+          <h2 className="h4 mb-0">Imprimir la carta en papel</h2>
+        </div>
+        <div className="card-body">
+          <p className="mb-3">
+            Desde el panel podés preparar una versión en papel de uno o varios menús de un restaurante, con opciones de diseño
+            y contenido antes de enviar a la impresora o guardar como PDF desde el navegador.
+          </p>
+          <h3 className="h6 text-uppercase text-muted mb-2">Checklist antes de imprimir</h3>
+          <ul className="mb-4 ps-3">
+            <li className="mb-2">Revisá precios y nombres en los menús que vas a incluir.</li>
+            <li className="mb-2">Comprobá que el restaurante tenga logo o portada si querés mostrarlos.</li>
+            <li className="mb-2">Si usás traducciones, elegí el idioma correcto en las opciones.</li>
+          </ul>
+          <ol className="mb-4">
+            <li className="mb-2">
+              Entrá a <strong>Restaurantes</strong> en el panel y, sobre el local deseado, pulsá <strong>Imprimir carta</strong>.
+            </li>
+            <li className="mb-2">
+              Se abrirá la pantalla de impresión con una <strong>vista previa</strong> a la izquierda y las{' '}
+              <strong>Opciones de impresión</strong> a la derecha.
+            </li>
+            <li className="mb-2">
+              Elegí la <strong>plantilla de impresión</strong>:
+              <ul className="mt-2 mb-0">
+                <li><strong>Clásica</strong> — diseño limpio, precios a la derecha.</li>
+                <li><strong>Elegante</strong> — tipografía serif y encabezado centrado.</li>
+                <li><strong>Moderna</strong> — estilo minimalista con franja de color.</li>
+                <li><strong>Bistro</strong> — fondo cálido, precio debajo del nombre.</li>
+              </ul>
+            </li>
+            <li className="mb-2">
+              En <strong>Datos del restaurante</strong>, marcá o desmarcá qué mostrar: logo, portada, nombre y descripción
+              (las opciones sin imagen o texto quedan deshabilitadas).
+            </li>
+            <li className="mb-2">
+              En <strong>Secciones</strong>, elegí el layout:
+              <ul className="mt-2 mb-0">
+                <li><strong>Una debajo de la otra</strong> — todas las secciones en flujo continuo.</li>
+                <li><strong>Una sección por página</strong> — cada sección comienza en una página nueva (útil para menús largos).</li>
+              </ul>
+            </li>
+            <li className="mb-2">
+              Si tu restaurante tiene <strong>varios idiomas</strong> activos, elegí el idioma de la carta en el selector correspondiente.
+            </li>
+            <li className="mb-2">
+              En <strong>Menús a imprimir</strong>, marcá los menús que quieras incluir. Podés usar <strong>Todos</strong> o{' '}
+              <strong>Ninguno</strong> como atajo. La vista previa se actualiza al cambiar la selección.
+            </li>
+            <li className="mb-2">
+              Cuando la vista previa te convenga, pulsá <strong>Imprimir</strong>. Se abrirá el diálogo de impresión del
+              navegador; ahí podés elegir impresora o <strong>Guardar como PDF</strong>.
+            </li>
+          </ol>
+          <p className="mb-3">
+            Al pie de la carta impresa se incluyen los datos de contacto del restaurante (dirección, teléfono, WhatsApp, email
+            y web) según lo que tengas cargado en la ficha del local.
+          </p>
+          <div className="alert alert-warning mb-0">
+            <strong>Consejo:</strong> en el diálogo de impresión del navegador, desactivá encabezados y pies de página propios
+            del navegador si no los querés, y revisá márgenes y orientación (vertical suele funcionar mejor). Probá una hoja
+            de prueba antes de una tirada grande.
+          </div>
+        </div>
+      </div>
+
+      <DocSeeAlso basePath={basePath} slugs={['publicar-menu', 'plantillas', 'traducciones', 'descargar-qr']} />
+
+      <DocFaqBlock
+        items={[
+          {
+            q: '¿Necesito publicar el menú para imprimirlo?',
+            a: (
+              <>
+                No es obligatorio. La pantalla intenta cargar el contenido publicado; si un menú aún está en borrador, puede
+                usar los datos del panel como respaldo. Igual conviene tener el contenido revisado antes de imprimir.
+              </>
+            ),
+          },
+          {
+            q: '¿La plantilla de impresión cambia la carta online?',
+            a: (
+              <>
+                No. La plantilla de impresión solo afecta el papel/PDF. La carta digital sigue usando la{' '}
+                <Link href={docHref(basePath, 'plantillas')}>plantilla del restaurante</Link> configurada en el panel.
+              </>
+            ),
+          },
+          {
+            q: 'Imprimí y se cortan secciones o queda mucho espacio en blanco.',
+            a: (
+              <>
+                Probá la opción <strong>Una sección por página</strong> o la contraria según el largo de tu menú, y ajustá
+                escala o márgenes en el diálogo de impresión del navegador (por ejemplo &quot;Ajustar al ancho&quot;).
               </>
             ),
           },
@@ -1320,7 +1562,9 @@ export const DOC_BODY_BY_SLUG: Record<
   'reordenar-productos': (p) => <DocReordenarProductosBody {...p} />,
   plantillas: (p) => <DocPlantillasBody {...p} />,
   'publicar-menu': (p) => <DocPublicarMenuBody {...p} />,
+  'programar-menu': (p) => <DocProgramarMenuBody {...p} />,
   'descargar-qr': () => <DocDescargarQrBody />,
+  'imprimir-carta': (p) => <DocImprimirCartaBody {...p} />,
   'desactivar-restaurante': (p) => <DocDesactivarRestauranteBody {...p} />,
   'eliminar-restaurante': (p) => <DocEliminarRestauranteBody {...p} />,
   'menu-visibilidad-y-eliminacion': (p) => <DocMenuVisibilidadEliminacionBody {...p} />,
