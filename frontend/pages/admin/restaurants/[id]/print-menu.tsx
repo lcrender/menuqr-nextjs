@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import AdminLayout from '../../../../components/AdminLayout';
 import api from '../../../../lib/axios';
+import {
+  PRINT_MENU_TEMPLATES,
+  type PrintMenuTemplateId,
+} from '../../../../lib/print-menu-templates';
+import { PRINT_MENU_TEMPLATE_STYLES } from '../../../../lib/print-menu-template-styles';
 
 type RestaurantData = {
   id: string;
@@ -103,6 +109,7 @@ export default function PrintMenuPage() {
   const [showDescription, setShowDescription] = useState(true);
   /** stacked = una debajo de otra; per-page = una sección por página */
   const [sectionLayout, setSectionLayout] = useState<'stacked' | 'per-page'>('stacked');
+  const [printTemplate, setPrintTemplate] = useState<PrintMenuTemplateId>('classic');
 
   const loadBase = useCallback(async () => {
     if (!restaurantId) return;
@@ -295,6 +302,9 @@ export default function PrintMenuPage() {
 
   return (
     <AdminLayout>
+      <Head>
+        <style>{PRINT_MENU_TEMPLATE_STYLES}</style>
+      </Head>
       <div className="admin-main">
         <div className="print-menu-toolbar no-print">
           <div>
@@ -336,7 +346,11 @@ export default function PrintMenuPage() {
                   Actualizando vista previa…
                 </div>
               ) : null}
-              <article className="print-menu-sheet" aria-label="Vista previa de la carta">
+              <article
+                className="print-menu-sheet"
+                data-print-template={printTemplate}
+                aria-label="Vista previa de la carta"
+              >
                 {showCover && headerRestaurant?.coverUrl ? (
                   <img
                     src={headerRestaurant.coverUrl}
@@ -444,6 +458,25 @@ export default function PrintMenuPage() {
 
             <aside className="print-menu-options no-print">
               <h2>Opciones de impresión</h2>
+
+              <div className="print-menu-options-group">
+                <h3>Plantilla de impresión</h3>
+                <select
+                  className="form-select form-select-sm"
+                  value={printTemplate}
+                  onChange={(e) => setPrintTemplate(e.target.value as PrintMenuTemplateId)}
+                  aria-label="Plantilla de impresión"
+                >
+                  {PRINT_MENU_TEMPLATES.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="print-menu-template-hint">
+                  {PRINT_MENU_TEMPLATES.find((t) => t.id === printTemplate)?.description}
+                </p>
+              </div>
 
               <div className="print-menu-options-group">
                 <h3>Datos del restaurante</h3>

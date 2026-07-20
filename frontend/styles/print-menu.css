@@ -244,6 +244,13 @@
   margin-top: 0.2rem;
 }
 
+.print-menu-template-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  color: #777;
+  line-height: 1.45;
+}
+
 .print-menu-empty {
   text-align: center;
   color: #666;
