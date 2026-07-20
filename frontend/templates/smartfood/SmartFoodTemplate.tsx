@@ -181,8 +181,28 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
           color: #fff;
         }
         .template-smartfood .smartfood-section-btn.inactive {
-          background: #dfe3e6;
+          background: transparent;
           color: #374151;
+        }
+        :global(.template-smartfood .smartfood-shell) {
+          width: 100%;
+          max-width: 720px;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+        :global(.template-smartfood .smartfood-section-nav) {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          overflow: visible;
+        }
+        :global(.template-smartfood .smartfood-section-btn) {
+          flex: 0 1 auto;
+          max-width: 100%;
         }
       `}</style>
 
@@ -215,7 +235,19 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
         ) : null}
 
         {selectedMenu && selectedMenu.sections.length > 0 ? (
-          <nav className="smartfood-section-nav" aria-label="Secciones del menú">
+          <nav
+            className="smartfood-section-nav"
+            aria-label="Secciones del menú"
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 10,
+              width: '100%',
+              maxWidth: '100%',
+              minWidth: 0,
+              boxSizing: 'border-box',
+            }}
+          >
             {selectedMenu.sections.map((section) => (
               <button
                 key={section.id}

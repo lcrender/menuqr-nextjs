@@ -218,7 +218,13 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
                 marginTop: '30px',
                 marginBottom: '40px'
               }}>
-                <div className="d-flex flex-wrap gap-3" style={{ justifyContent: 'center' }}>
+                <div
+                  className="d-flex gap-3"
+                  style={{
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                  }}
+                >
                   {selectedMenu.sections.map((section) => (
                     <a
                       key={section.id}

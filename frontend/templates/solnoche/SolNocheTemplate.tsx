@@ -372,7 +372,20 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
 
         {sections.length > 0 ? (
           <nav className="sol-noche-sections-sticky" aria-label="Secciones">
-            <div className="sol-noche-sections-scroll">
+            <div
+              className="sol-noche-sections-scroll"
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                width: '100%',
+                maxWidth: '100%',
+                minWidth: 0,
+                boxSizing: 'border-box',
+                overflow: 'visible',
+              }}
+            >
               {sections.map((section) => (
                 <button
                   key={section.id}

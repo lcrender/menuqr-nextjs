@@ -373,25 +373,31 @@
 
 .template-foodie .foodie-section-nav-list .section-nav-link {
   position: relative;
-  overflow: hidden;
+  overflow: visible !important;
   box-sizing: border-box;
-  width: 5rem;
-  height: 5rem;
-  padding: 6px;
+  min-width: 5rem;
+  min-height: 5rem;
+  width: auto !important;
+  height: auto !important;
+  max-width: none;
+  padding: 8px 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  line-height: 1.15;
+  line-height: 1.2;
   font-size: 0.82rem;
   font-weight: 500;
   text-decoration: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   background: transparent;
   color: var(--primary-color, #2c3e50);
   border: 1px solid color-mix(in srgb, var(--primary-color, #2c3e50) 40%, transparent);
   border-radius: 0 !important;
   transition: all 0.3s ease;
-  flex-shrink: 0;
+  flex: 0 1 auto;
 }
 
 .template-foodie .section-nav-link::after {

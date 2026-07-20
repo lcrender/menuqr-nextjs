@@ -177,6 +177,16 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
         }
         .template-foodie .section-nav-link {
           box-shadow: 0 0 10px ${hexToRgba(secondaryColor, 0.12)};
+          width: auto !important;
+          height: auto !important;
+          max-width: none !important;
+          min-width: 5rem;
+          min-height: 5rem;
+          overflow: visible !important;
+          white-space: normal !important;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+          padding: 8px 12px;
         }
         .template-foodie .section-nav-link:hover {
           background: linear-gradient(
@@ -314,6 +324,23 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
                       key={section.id}
                       href={`#section-${section.id}`}
                       className="section-nav-link"
+                      style={{
+                        width: 'auto',
+                        height: 'auto',
+                        maxWidth: 'none',
+                        minWidth: '5rem',
+                        minHeight: '5rem',
+                        overflow: 'visible',
+                        whiteSpace: 'normal',
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
+                        padding: '8px 12px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        boxSizing: 'border-box',
+                      }}
                     >
                       {section.name}
                     </a>

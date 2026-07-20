@@ -290,18 +290,20 @@
 
 .sol-noche-sections-scroll {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.4rem;
-  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 0.55rem 1rem;
-  scrollbar-width: none;
-}
-
-.sol-noche-sections-scroll::-webkit-scrollbar {
-  display: none;
+  overflow: visible;
 }
 
 .sol-noche-section-btn {
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  max-width: 100%;
   border: 1px solid var(--sol-noche-border);
   background: var(--sol-noche-surface);
   color: var(--sol-noche-muted);

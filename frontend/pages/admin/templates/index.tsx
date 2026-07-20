@@ -41,6 +41,7 @@ export default function Templates() {
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [alertModal, setAlertModal] = useState<{ title: string; message: string; variant: 'success' | 'error'; restaurantId?: string } | null>(null);
   const [filters, setFilters] = useState<TemplateListFilters>(INITIAL_FILTERS);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const filterOptions = useMemo(() => deriveFilterOptions(MENU_TEMPLATES_CATALOG), []);
   const filteredTemplates = useMemo(() => {
     const filteredCatalog = sortTemplatesByCatalogOrder(filterTemplates(MENU_TEMPLATES_CATALOG, filters));
@@ -62,7 +63,21 @@ export default function Templates() {
   }, [filteredTemplates]);
   const normalizedPlan = (currentPlan || '').toLowerCase().replace(/[\s-]+/g, '_');
   const hasProTemplatesAccess =
-    normalizedPlan === 'pro' || normalizedPlan === 'pro_team' || normalizedPlan === 'premium';
+    isSuperAdmin ||
+    normalizedPlan === 'pro' ||
+    normalizedPlan === 'pro_team' ||
+    normalizedPlan === 'premium';
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      setIsSuperAdmin(parsed?.role === 'SUPER_ADMIN');
+    } catch {
+      setIsSuperAdmin(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadRestaurants();

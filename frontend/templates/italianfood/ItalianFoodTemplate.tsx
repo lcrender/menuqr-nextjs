@@ -312,7 +312,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                   )}
                   <div style={{ padding: '16px', flexGrow: 0, display: 'flex', flexDirection: 'column', background: 'white', height: 'auto', minHeight: 'auto' }}>
                     <h3 style={{
-                      fontSize: '1.25rem',
+                      fontSize: '1.6rem',
                       fontWeight: '600',
                       marginBottom: '8px',
                       marginTop: 0,
@@ -326,8 +326,8 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                     {item.description && (
                       <p style={{
                         color: '#6c757d',
-                        fontSize: '0.95rem',
-                        lineHeight: '1.4',
+                        fontSize: '1.4rem',
+                        lineHeight: '1.45',
                         marginBottom: item.icons.length > 0 ? '12px' : '16px',
                         marginTop: 0,
                         paddingTop: 0,

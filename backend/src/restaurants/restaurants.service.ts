@@ -633,8 +633,10 @@ export class RestaurantsService {
           'Template inválido. Debe ser: classic, minimalist, foodie, burgers, italianFood, gourmet, proMobile, nightClub o smartFood',
         );
       }
-      const plan = await this.getTenantPlan(tenantId);
-      await this.planLimits.assertTemplateAllowedForTenantPlan(plan, data.template);
+      if (opts?.userRole !== 'SUPER_ADMIN') {
+        const plan = await this.getTenantPlan(tenantId);
+        await this.planLimits.assertTemplateAllowedForTenantPlan(plan, data.template);
+      }
       updates.push(`template = $${paramIndex++}`);
       params.push(data.template);
     }

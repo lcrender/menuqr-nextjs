@@ -102,8 +102,8 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
     const photo = showProductImages && item.photos?.[0] ? item.photos[0] : null;
     return (
       <article key={item.id} className={`beachbar-product-card${featured ? ' tpl-featured-card' : ''}`}>
-        <div className="beachbar-product-photo-wrap" aria-hidden={!photo}>
-          {photo ? (
+        {photo ? (
+          <div className="beachbar-product-photo-wrap">
             <OptimizedPicture
               src={photo}
               alt=""
@@ -111,8 +111,8 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
               loading="lazy"
               decoding="async"
             />
-          ) : null}
-        </div>
+          </div>
+        ) : null}
         <div className="beachbar-product-content">
           <div className="beachbar-product-body">
             {featured ? <p className="tpl-featured-label">{recommendedLabel}</p> : null}
