@@ -73,6 +73,20 @@
   min-width: 0;
 }
 
+/* Solo icono + nombre (sin slogan), p. ej. topbar móvil admin */
+.landing-brand-mark--compact {
+  gap: 6px;
+}
+
+.landing-brand-mark--compact .landing-logo-copy {
+  gap: 0;
+  justify-content: center;
+}
+
+.landing-brand-mark--compact .landing-logo-text {
+  line-height: 1;
+}
+
 .landing-logo-icon {
   display: inline-flex;
   align-items: center;

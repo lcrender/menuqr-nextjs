@@ -187,6 +187,10 @@ body {
     min-width: 0;
   }
 
+  .admin-mobile-topbar-brand .landing-brand-mark--compact {
+    gap: 6px;
+  }
+
   .admin-mobile-topbar-brand .landing-logo-text {
     font-size: 1.05rem;
   }
@@ -301,6 +305,19 @@ body {
   align-items: center;
   gap: 8px;
   min-width: 0;
+}
+
+.admin-layout .landing-brand-mark--compact {
+  gap: 6px;
+}
+
+.admin-layout .landing-brand-mark--compact .landing-logo-copy {
+  gap: 0;
+  justify-content: center;
+}
+
+.admin-layout .landing-brand-mark--compact .landing-logo-text {
+  line-height: 1;
 }
 
 .admin-layout .landing-logo-icon {
