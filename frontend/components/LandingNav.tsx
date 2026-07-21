@@ -4,9 +4,10 @@ import { useRouter } from 'next/router';
 import { usePublicAccountNav } from '../hooks/usePublicSession';
 import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
 import { landingSectionHref, useLandingHomeHref } from '../lib/landing-region';
+import LandingBrandMark from './LandingBrandMark';
 
 type LandingNavProps = {
-  /** Home regional (/AR o /ES). Si no se pasa, se infiere de la ruta/cookie. */
+  /** Home regional (/ar o /es). Si no se pasa, se infiere de la ruta/cookie. */
   homeHref?: string;
 };
 
@@ -77,8 +78,7 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
         <div className="container">
           <div className="landing-nav-content">
             <Link href={logoHref} className="landing-logo" onClick={closeMobileNav}>
-              <span className="landing-logo-icon">🍽️</span>
-              <span className="landing-logo-text">AppMenuQR</span>
+              <LandingBrandMark priority />
             </Link>
             <button
               type="button"

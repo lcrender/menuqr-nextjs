@@ -66,8 +66,35 @@
   text-decoration: none;
 }
 
+.landing-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .landing-logo-icon {
-  font-size: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.landing-logo-icon-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  display: block;
+}
+
+.landing-logo-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.15;
 }
 
 .landing-logo-text {
@@ -75,6 +102,20 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.landing-logo-slogan {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--landing-text-secondary);
+  -webkit-text-fill-color: var(--landing-text-secondary);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 .landing-nav-actions {
@@ -1578,58 +1619,78 @@
 .landing-footer {
   background: var(--landing-text);
   color: white;
-  padding: 40px 0 24px;
+  padding: 48px 0 28px;
 }
 
-.landing-footer-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 24px;
+.landing-footer-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.3fr) repeat(3, minmax(0, 1fr));
+  gap: 32px 40px;
+  align-items: start;
+  padding-bottom: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.landing-footer-brand-col {
+  min-width: 0;
 }
 
 .landing-footer-brand {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 1.25rem;
   font-weight: 700;
 }
 
-.landing-footer-links {
+.landing-footer .landing-logo-slogan {
+  color: rgba(255, 255, 255, 0.55);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.55);
+}
+
+.landing-footer-col {
+  min-width: 0;
+}
+
+.landing-footer-heading {
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.landing-footer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .landing-footer-link {
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
-  transition: color 0.3s ease;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  transition: color 0.2s ease;
 }
 
 .landing-footer-link:hover {
   color: white;
 }
 
-.landing-footer-seo-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px 24px;
-  margin-bottom: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
 .landing-footer-copyright {
   text-align: center;
   padding-top: 24px;
-  border-top: none;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+}
+
+.landing-footer-copyright p {
+  margin: 0;
 }
 
 /* Auth Section */
@@ -1895,13 +1956,13 @@
     max-width: 360px;
   }
 
-  .landing-footer-content {
-    flex-direction: column;
-    text-align: center;
+  .landing-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 24px;
   }
 
-  .landing-footer-links {
-    justify-content: center;
+  .landing-footer-brand-col {
+    grid-column: 1 / -1;
   }
 
   .landing-auth {
@@ -1937,12 +1998,24 @@
     min-width: 0;
     font-size: 1.5rem;
     line-height: 1.2;
-    gap: 10px;
+    gap: 8px;
+  }
+
+  .landing-logo-icon-img {
+    width: 52px;
+    height: 52px;
+  }
+
+  .landing-logo-text {
+    font-size: 1.35rem;
+  }
+
+  .landing-logo-slogan {
+    font-size: 0.58rem;
   }
 
   .landing-logo-icon {
-    font-size: 2.15rem;
-    line-height: 1;
+    line-height: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2000,6 +2073,11 @@
     max-width: 100%;
     padding: 16px 24px;
     font-size: 1.05rem;
+  }
+
+  .landing-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 }
 

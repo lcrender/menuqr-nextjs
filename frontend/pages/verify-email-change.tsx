@@ -5,6 +5,7 @@ import api from '../lib/axios';
 import Head from 'next/head';
 import LandingFooter from '../components/LandingFooter';
 import LandingHomeLink from '../components/LandingHomeLink';
+import LandingBrandMark from '../components/LandingBrandMark';
 
 export default function VerifyEmailChange() {
   const router = useRouter();
@@ -52,8 +53,7 @@ export default function VerifyEmailChange() {
           <div className="container">
             <div className="landing-nav-content">
               <LandingHomeLink className="landing-logo">
-                <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">AppMenuQR</span>
+                <LandingBrandMark />
               </LandingHomeLink>
               <div className="landing-nav-actions">
                 <Link href="/login" className="landing-btn-secondary">

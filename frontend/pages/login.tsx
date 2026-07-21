@@ -16,6 +16,7 @@ import {
 } from '../lib/template-selection-intent';
 import { syncLandingRegionCookieFromUser } from '../lib/landing-region';
 import LandingHomeLink from '../components/LandingHomeLink';
+import LandingBrandMark from '../components/LandingBrandMark';
 
 // Ocultar credenciales de prueba: en build de producción (NODE_ENV) o si se define NEXT_PUBLIC_APP_ENV=production
 const isProduction =
@@ -346,14 +347,8 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
           <div className="container">
             <div className="landing-nav-content">
               <LandingHomeLink className="landing-logo">
-                <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">AppMenuQR</span>
+                <LandingBrandMark />
               </LandingHomeLink>
-              <div className="landing-nav-actions">
-                <LandingHomeLink className="landing-btn-secondary">
-                  Volver al inicio
-                </LandingHomeLink>
-              </div>
             </div>
           </div>
         </nav>

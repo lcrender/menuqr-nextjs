@@ -15,7 +15,7 @@ import {
 
 /**
  * Página /precios: redirige a la sección de precios de la home regional
- * (/AR#precios o /ES#precios), preservando query (p. ej. reason=pro_template).
+ * (/ar#precios o /es#precios), preservando query (p. ej. reason=pro_template).
  * Si hay query de upgrade, se queda aquí con precios regionales.
  */
 export default function PreciosPage() {
@@ -31,7 +31,7 @@ export default function PreciosPage() {
       setStayOnPage(true);
       return;
     }
-    if (homeHref !== '/AR' && homeHref !== '/ES') return;
+    if (homeHref !== '/ar' && homeHref !== '/es') return;
     const target = landingSectionHref(homeHref, 'precios');
     void router.replace(target);
   }, [router.isReady, router.query.reason, homeHref, router]);

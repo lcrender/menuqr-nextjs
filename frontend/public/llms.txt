@@ -4,9 +4,9 @@
 
 ## Páginas principales (marketing y producto)
 
-- https://appmenuqr.com/ — Inicio: redirige a /AR o /ES según región
-- https://appmenuqr.com/AR — Home Argentina (menú QR, precios en ARS)
-- https://appmenuqr.com/ES — Home España / resto del mundo (carta digital, precios USD)
+- https://appmenuqr.com/ — Inicio: redirige a /ar o /es según región
+- https://appmenuqr.com/ar — Home Argentina (menú QR, precios en ARS)
+- https://appmenuqr.com/es — Home España / resto del mundo (carta digital, precios USD)
 - https://appmenuqr.com/carta-digital-restaurante-qr — Carta digital restaurante QR (gestión profesional, mesas, tiempo real)
 - https://appmenuqr.com/software-carta-digital-restaurante — Software carta digital restaurante (SaaS, panel, escalabilidad)
 - https://appmenuqr.com/precios — Planes y precios
@@ -58,5 +58,5 @@
 - Las rutas bajo `/admin/` son el panel privado; no deben citarse como documentación de usuario final salvo contexto de “backoffice”.
 - Las cartas públicas de cada restaurante viven en URLs dinámicas (slug del negocio); no hay listado público de todos los restaurantes.
 - Para datos técnicos actualizados (precios exactos, límites de plan), priorizar las páginas HTML enlazadas arriba frente a respuestas genéricas.
-- `/` redirige a `/AR` (Argentina) o `/ES` (España/resto) según geolocalización/cookie; `/menu-qr-restaurante` redirige a `/` (301).
+- `/` redirige a `/ar` (Argentina) o `/es` (España/resto) según geolocalización/cookie; `/menu-qr-restaurante` redirige a `/` (301). `/AR` y `/ES` redirigen a minúsculas vía middleware (no next.config: evita bucles case-insensitive).
 - Documentación interna: `docs/GEO-LANDING.md`, `docs/SEO-LANDINGS.md`, `backend/docs/GEOLOCATION.md`.

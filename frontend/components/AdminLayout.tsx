@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../lib/axios';
+import LandingBrandMark from './LandingBrandMark';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -123,7 +124,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <span />
             </span>
           </button>
-          <span className="admin-mobile-topbar-title">AppMenuQR</span>
+          <span className="admin-mobile-topbar-brand">
+            <LandingBrandMark compact iconSize={28} textSize="0.75rem" />
+          </span>
         </header>
 
         {mobileNavOpen && (
@@ -160,7 +163,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </button>
               </div>
               <div className="admin-sidebar-header">
-              <h4>AppMenuQR</h4>
+              <div className="admin-sidebar-brand">
+                <LandingBrandMark
+                  iconSize={28}
+                  textSize="0.65rem"
+                  sloganSize="0.36rem"
+                />
+              </div>
               <p className="small">{user?.email}</p>
               <span className="badge bg-primary mb-2">{user?.role}</span>
               {currentPlan != null && (

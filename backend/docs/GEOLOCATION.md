@@ -7,7 +7,7 @@ La aplicación usa **geolocalización solo a nivel de país** (código ISO o nom
 Hay **dos usos distintos** del “país/región”:
 
 1. **Cuenta, facturación y restaurante** (este documento, secciones 1–5).
-2. **Home de marketing `/AR` vs `/ES`** — ver [`docs/GEO-LANDING.md`](../../docs/GEO-LANDING.md).
+2. **Home de marketing `/ar` vs `/es`** — ver [`docs/GEO-LANDING.md`](../../docs/GEO-LANDING.md).
 
 ---
 
@@ -50,7 +50,7 @@ Hay **dos usos distintos** del “país/región”:
 
 - **Endpoint**: `GET /pricing` (`backend/src/payment/pricing.controller.ts`).
 - **Query opcional**: `?country=AR` o `?country=GLOBAL`.
-  - Si está presente y es válido, **fuerza** esa tabla de precios (landings `/AR` y `/ES`), aunque haya sesión.
+  - Si está presente y es válido, **fuerza** esa tabla de precios (landings `/ar` y `/es`), aunque haya sesión.
   - Si no hay query: usuario autenticado → `billingCountry` / `declaredCountry` / `registrationCountry`; anónimo → **GLOBAL** (USD).
 - Filas en BD: `plan_prices.country` = `AR` | `GLOBAL` (y futuros países).
 
@@ -77,7 +77,7 @@ Detalle de homes y cookie: [`docs/GEO-LANDING.md`](../../docs/GEO-LANDING.md).
 | Backend | `backend/src/payment/pricing.controller.ts` — precios por país / `?country=` |
 | Backend | `backend/src/payment/payment-provider.service.ts` — MP vs PayPal por país |
 | Frontend | `frontend/components/RestaurantWizard.tsx` — país del restaurante por IP |
-| Frontend | `frontend/middleware.ts` + `frontend/lib/landing-region.ts` — home `/AR`\|`/ES` |
+| Frontend | `frontend/middleware.ts` + `frontend/lib/landing-region.ts` — home `/ar`\|`/es` |
 | Frontend | `frontend/pages/admin/restaurants/index.tsx` — país, moneda, timezone, WhatsApp |
 | Docs | [`docs/GEO-LANDING.md`](../../docs/GEO-LANDING.md) — marketing geo |
 | Docs | [`docs/SEO-LANDINGS.md`](../../docs/SEO-LANDINGS.md) — SEO landings + homes |

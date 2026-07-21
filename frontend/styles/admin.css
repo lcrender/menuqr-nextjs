@@ -164,13 +164,36 @@ body {
     border-radius: 1px;
   }
 
-  .admin-mobile-topbar-title {
+  .admin-mobile-topbar-title,
+  .admin-mobile-topbar-brand {
     font-weight: 800;
     font-size: 1.15rem;
     background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-accent) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .admin-mobile-topbar-brand {
+    background: none;
+    -webkit-text-fill-color: unset;
+    display: flex;
+    align-items: center;
+  }
+
+  .admin-mobile-topbar-brand .landing-brand-mark {
+    min-width: 0;
+  }
+
+  .admin-mobile-topbar-brand .landing-logo-text {
+    font-size: 1.05rem;
+  }
+
+  .admin-mobile-topbar-brand .landing-logo-icon-img {
+    width: 36px;
+    height: 36px;
   }
 
   .admin-sidebar-backdrop {
@@ -267,20 +290,78 @@ body {
 }
 
 .admin-sidebar-header {
-  padding: 32px 24px;
+  padding: 20px 16px;
   border-bottom: 1px solid var(--admin-border);
   text-align: center;
 }
 
-.admin-sidebar-header h4 {
-  font-size: 1.75rem;
-  font-weight: 800;
-  margin: 0 0 8px 0;
+/* Marca App Menu QR (mismas clases que landing; admin no carga landing.css) */
+.admin-layout .landing-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-layout .landing-logo-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.admin-layout .landing-logo-icon-img {
+  object-fit: contain;
+  display: block;
+}
+
+.admin-layout .landing-logo-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.admin-layout .landing-logo-text {
   background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-weight: 700;
   letter-spacing: -0.02em;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.admin-layout .landing-logo-slogan {
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  -webkit-text-fill-color: var(--admin-text-muted);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.admin-sidebar-brand {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 10px 0;
+}
+
+.admin-sidebar-brand .landing-brand-mark {
+  text-align: left;
+  gap: 5px;
+}
+
+.admin-sidebar-header .admin-sidebar-brand .landing-logo-copy {
+  gap: 1px;
+}
+
+.admin-sidebar-header .admin-sidebar-brand .landing-logo-icon-img {
+  width: 28px !important;
+  height: 28px !important;
 }
 
 .admin-sidebar-header p {
@@ -3933,12 +4014,11 @@ body {
     box-sizing: border-box;
   }
 
-  .admin-mobile-topbar .admin-mobile-topbar-title {
+  .admin-mobile-topbar .admin-mobile-topbar-title,
+  .admin-mobile-topbar .admin-mobile-topbar-brand {
     flex: 1;
     min-width: 0;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   /* Wrappers con maxWidth inline (config) no deben forzar ancho fijo > viewport */

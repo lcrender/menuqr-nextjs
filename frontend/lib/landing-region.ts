@@ -1,4 +1,5 @@
 /** Región de marketing: Argentina (ARS) vs resto del mundo (USD / ES).
+ * URLs de home: `/ar` y `/es`. Códigos de cookie/región: `AR` | `ES`.
  * Doc: docs/GEO-LANDING.md
  */
 
@@ -15,7 +16,7 @@ export function isLandingRegion(value: unknown): value is LandingRegion {
 }
 
 export function landingHomePath(region: LandingRegion): string {
-  return region === 'AR' ? '/AR' : '/ES';
+  return region === 'AR' ? '/ar' : '/es';
 }
 
 /** País ISO → región de landing. Solo AR fuerza Argentina; el resto va a ES. */
@@ -59,16 +60,17 @@ export function readLandingRegionCookie(): LandingRegion | null {
   return isLandingRegion(value) ? value : null;
 }
 
-/** Infere región solo desde la ruta (/AR, /ES). */
+/** Infere región solo desde la ruta (/ar, /es; también /AR, /ES legacy). */
 export function landingHomeHrefFromPath(pathname: string | undefined): string | null {
   if (!pathname) return null;
-  if (pathname === '/AR' || pathname.startsWith('/AR/')) return '/AR';
-  if (pathname === '/ES' || pathname.startsWith('/ES/')) return '/ES';
+  const lower = pathname.toLowerCase();
+  if (lower === '/ar' || lower.startsWith('/ar/')) return '/ar';
+  if (lower === '/es' || lower.startsWith('/es/')) return '/es';
   return null;
 }
 
 /**
- * Home regional: ruta actual → cookie → /ES (fallback seguro en cliente).
+ * Home regional: ruta actual → cookie → /es (fallback seguro en cliente).
  * En SSR sin ruta regional ni cookie, devuelve `/` (el middleware redirige).
  */
 export function resolveLandingHomeHref(pathname?: string): string {
@@ -78,7 +80,7 @@ export function resolveLandingHomeHref(pathname?: string): string {
   const fromCookie = readLandingRegionCookie();
   if (fromCookie) return landingHomePath(fromCookie);
 
-  if (typeof document !== 'undefined') return '/ES';
+  if (typeof document !== 'undefined') return '/es';
   return '/';
 }
 
@@ -94,8 +96,8 @@ export function pricingCountryForRegion(region: LandingRegion): 'AR' | 'GLOBAL' 
 
 export function resolveLandingRegion(pathname?: string): LandingRegion {
   const home = resolveLandingHomeHref(pathname);
-  if (home === '/AR') return 'AR';
-  if (home === '/ES') return 'ES';
+  if (home === '/ar') return 'AR';
+  if (home === '/es') return 'ES';
   return readLandingRegionCookie() || 'ES';
 }
 
@@ -122,17 +124,17 @@ export function buildLandingHreflangLinks(absoluteBaseUrl: string): LandingHrefl
   const base = absoluteBaseUrl.replace(/\/$/, '');
   if (!base || !/^https?:\/\//i.test(base)) return [];
   return [
-    { hreflang: 'es-AR', href: `${base}/AR` },
-    { hreflang: 'es-ES', href: `${base}/ES` },
+    { hreflang: 'es-AR', href: `${base}/ar` },
+    { hreflang: 'es-ES', href: `${base}/es` },
     /** Español genérico → versión internacional (España / resto del mundo). */
-    { hreflang: 'es', href: `${base}/ES` },
-    { hreflang: 'x-default', href: `${base}/ES` },
+    { hreflang: 'es', href: `${base}/es` },
+    { hreflang: 'x-default', href: `${base}/es` },
   ];
 }
 
 /**
  * Hook para logo y anclas de la home regional.
- * Respeta `override` (p. ej. en /AR y /ES) y actualiza con cookie en otras páginas.
+ * Respeta `override` (p. ej. en /ar y /es) y actualiza con cookie en otras páginas.
  */
 export function useLandingHomeHref(override?: string): string {
   const router = useRouter();

@@ -1,8 +1,11 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
+/** Bump al cambiar estilos admin para evitar caché del navegador. */
+const ADMIN_CSS_V = '20260721b';
+
 const ADMIN_STYLES = [
-  '/css/admin.css',
+  `/css/admin.css?v=${ADMIN_CSS_V}`,
   '/css/print-menu.css',
   '/css/menu-schedule.css',
 ] as const;

@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Posicionar intenciones de búsqueda distintas sin canibalizar las homes regionales (`/AR`, `/ES`) ni duplicar contenido. Cada URL indexable es una **landing independiente** con H1, estructura H2/H3, metadata y copy propios.
+Posicionar intenciones de búsqueda distintas sin canibalizar las homes regionales (`/ar`, `/es`) ni duplicar contenido. Cada URL indexable es una **landing independiente** con H1, estructura H2/H3, metadata y copy propios.
 
 **Homes geo (middleware, cookie, precios, hreflang, enlaces):** ver [`docs/GEO-LANDING.md`](./GEO-LANDING.md).  
 **País en registro / facturación / restaurante:** ver [`backend/docs/GEOLOCATION.md`](../backend/docs/GEOLOCATION.md).
@@ -12,12 +12,12 @@ Posicionar intenciones de búsqueda distintas sin canibalizar las homes regional
 | URL | Mercado | Nota |
 |-----|---------|------|
 | `/` | — | Redirect al home regional según cookie/geo |
-| `/AR` | Argentina (`es-AR`) | Home + precios ARS; absorbe la keyword «menú qr restaurante» |
-| `/ES` | España / resto (`es-ES`) | Home + precios GLOBAL (USD) |
+| `/ar` | Argentina (`es-AR`) | Home + precios ARS; absorbe la keyword «menú qr restaurante» |
+| `/es` | España / resto (`es-ES`) | Home + precios GLOBAL (USD) |
 
-**Redirect histórico:** `/menu-qr-restaurante` → `/` (301 en `next.config.js`). El middleware elige `/AR` o `/ES`.
+**Redirect histórico:** `/menu-qr-restaurante` → `/` (301 en `next.config.js`). El middleware elige `/ar` o `/es`.
 
-**Regla:** landings de keyword en la **raíz** (sin prefijo `/AR`/`/ES`) salvo que el contenido sea realmente distinto por país. No duplicar por geo “por si acaso”.
+**Regla:** landings de keyword en la **raíz** (sin prefijo `/ar`/`/es`) salvo que el contenido sea realmente distinto por país. No duplicar por geo “por si acaso”.
 
 ## Estructura de URLs SEO (keyword)
 
@@ -45,7 +45,7 @@ Posicionar intenciones de búsqueda distintas sin canibalizar las homes regional
 ## Canonical strategy
 
 - Cada landing declara **canonical a sí misma** (`NEXT_PUBLIC_APP_URL` + path).  
-- `/AR` y `/ES` tienen canonical propio + `hreflang` (`es-AR` / `es-ES` / `es` / `x-default`).  
+- `/ar` y `/es` tienen canonical propio + `hreflang` (`es-AR` / `es-ES` / `es` / `x-default`).  
 - No usar `noindex` en landings indexables (salvo las marcadas `noIndex` en config).  
 - Contenido duplicado entre landings: **prohibido** — solo enlaces contextuales en «Recursos».
 
@@ -75,11 +75,11 @@ Posicionar intenciones de búsqueda distintas sin canibalizar las homes regional
 
 ```
               ┌──────── / ────────┐
-              │  (geo → /AR|/ES)  │
+              │  (geo → /ar|/es)  │
               └─────────┬─────────┘
          ┌──────────────┼──────────────┐
          ▼              ▼              ▼
-       /AR            /ES     landings keyword
+       /ar            /es     landings keyword
          │              │              │
          └──────────────┴──────────────┘
               footer + recursos
@@ -97,7 +97,7 @@ Posicionar intenciones de búsqueda distintas sin canibalizar las homes regional
 ## Anti-canibalización
 
 1. Una keyword principal por URL.  
-2. `/AR` / `/ES` = mensaje de marca + precios regionales; landings = long-tail específico.  
+2. `/ar` / `/es` = mensaje de marca + precios regionales; landings = long-tail específico.  
 3. No copiar párrafos entre landings; reescribir ángulo.  
 4. Máximo 1–2 menciones de la keyword principal por bloque H2.  
 5. FAQ distintas por página (schema FAQPage no duplicado).
@@ -108,4 +108,4 @@ Al editar copy de landings SEO, modificar solo `seo-landings-config.ts`. Para un
 
 Redirects permanentes: `frontend/next.config.js` → `redirects()`.
 
-Cambios de homes `/AR`/`/ES`, cookie o hreflang: actualizar también [`GEO-LANDING.md`](./GEO-LANDING.md).
+Cambios de homes `/ar`/`/es`, cookie o hreflang: actualizar también [`GEO-LANDING.md`](./GEO-LANDING.md).

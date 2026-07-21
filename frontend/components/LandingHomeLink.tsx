@@ -6,11 +6,11 @@ type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> &
   Omit<LinkProps, 'href'> & {
     children: ReactNode;
     className?: string;
-    /** Forzar home regional (p. ej. /AR). */
+    /** Forzar home regional (p. ej. /ar). */
     homeHref?: string;
   };
 
-/** Link al home regional (/AR o /ES) según ruta/cookie. */
+/** Link al home regional (/ar o /es) según ruta/cookie. */
 export default function LandingHomeLink({ children, homeHref, ...rest }: Props) {
   const href = useLandingHomeHref(homeHref);
   return (

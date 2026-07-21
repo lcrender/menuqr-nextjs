@@ -29,7 +29,7 @@ export function buildOrganizationNode(base: string): {
     url: b,
     logo: {
       '@type': 'ImageObject',
-      url: `${b}/favicon.svg`,
+      url: `${b}/images/app-menu-qr-logo.png`,
     },
     description:
       'Software SaaS de carta digital para restaurantes con código QR: gestión de productos, menú digital, plantillas y panel de administración para bares y locales gastronómicos.',

@@ -32,14 +32,14 @@ export function buildSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
 
   const out: SitemapEntry[] = [
     {
-      path: '/AR',
+      path: '/ar',
       changefreq: 'weekly',
       priority: '1.0',
       lastmod: today,
       ...(homeAlternates ? { alternates: homeAlternates } : {}),
     },
     {
-      path: '/ES',
+      path: '/es',
       changefreq: 'weekly',
       priority: '1.0',
       lastmod: today,

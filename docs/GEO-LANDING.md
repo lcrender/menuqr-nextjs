@@ -1,4 +1,4 @@
-# Homes regionales (geo landing) — `/AR` y `/ES`
+# Homes regionales (geo landing) — `/ar` y `/es`
 
 ## Objetivo
 
@@ -6,8 +6,8 @@ Servir una **home de marketing distinta** según el mercado:
 
 | URL | Mercado | Copy | Precios (`GET /pricing`) |
 |-----|---------|------|---------------------------|
-| `/AR` | Argentina | Español argentino (voseo) | `?country=AR` → ARS / Mercado Pago |
-| `/ES` | España y resto del mundo | Español peninsular / internacional | `?country=GLOBAL` → USD / PayPal |
+| `/ar` | Argentina | Español argentino (voseo) | `?country=AR` → ARS / Mercado Pago |
+| `/es` | España y resto del mundo | Español peninsular / internacional | `?country=GLOBAL` → USD / PayPal |
 | `/` | — | No indexa contenido propio | Redirect al home regional |
 
 La versión en **inglés** se planifica en otra rama/prefijo (p. ej. `/EN`); no forma parte de este documento aún.
@@ -22,15 +22,15 @@ Geolocalización de registro/pagos/wizard: [`backend/docs/GEOLOCATION.md`](../ba
 ```
 Visitante → /
      │
-     ├─ Cookie menuqr-landing-region = AR|ES  →  /AR o /ES
-     ├─ Header CF-IPCountry / x-vercel-ip-country = AR  →  /AR
-     ├─ Accept-Language contiene es-AR  →  /AR
-     └─ Resto  →  /ES
+     ├─ Cookie menuqr-landing-region = AR|ES  →  /ar o /es
+     ├─ Header CF-IPCountry / x-vercel-ip-country = AR  →  /ar
+     ├─ Accept-Language contiene es-AR  →  /ar
+     └─ Resto  →  /es
 ```
 
-1. **`frontend/middleware.ts`**: si el path es `/`, resuelve región, setea cookie y redirige a `/AR` o `/ES`.
+1. **`frontend/middleware.ts`**: si el path es `/`, resuelve región, setea cookie y redirige a `/ar` o `/es`.
 2. **Fallback cliente** (`frontend/pages/index.tsx`): si el middleware no aplica, lee usuario en `localStorage` (país AR), cookie o `navigator.languages`, y hace `router.replace` al home regional.
-3. Visitar `/AR` o `/ES` **persiste** la cookie de región.
+3. Visitar `/ar` o `/es` **persiste** la cookie de región.
 
 ### Prioridad de región
 
@@ -47,7 +47,7 @@ Visitante → /
 |--------|---------|---------|
 | `menuqr-landing-region` | `AR`, `ES` | 1 año |
 
-- **Set** en middleware al visitar `/`, `/AR`, `/ES`.
+- **Set** en middleware al visitar `/`, `/ar`, `/es`.
 - **Set** en cliente al montar `HomeLanding`, login/registro (`syncLandingRegionCookieFromUser`) y `_app.tsx` si hay `user` en `localStorage`.
 - Helpers: `frontend/lib/landing-region.ts`.
 
@@ -60,23 +60,23 @@ Visitante → /
   - Sin query: usuario autenticado → `billingCountry` / `declaredCountry` / `registrationCountry`; anónimo → GLOBAL.
   - Archivo: `backend/src/payment/pricing.controller.ts`.
 - **Frontend home**: `HomeLanding` llama `/pricing` con `country` según `HOME_LANDING_AR` / `HOME_LANDING_ES`.
-- **`/precios`**: sin `?reason=…` redirige a `{/AR|/ES}#precios`. Con `?reason=pro_template` (u otro reason) se queda en `/precios` y carga precios según cookie regional.
+- **`/precios`**: sin `?reason=…` redirige a `{/ar|/es}#precios`. Con `?reason=pro_template` (u otro reason) se queda en `/precios` y carga precios según cookie regional.
 
 ---
 
 ## SEO técnico (homes)
 
-En cada `/AR` y `/ES` (`HomeLanding`):
+En cada `/ar` y `/es` (`HomeLanding`):
 
 - **Canonical** propio (`NEXT_PUBLIC_APP_URL` + path).
 - **`hreflang`** (HTML + sitemap xhtml):
-  - `es-AR` → `/AR`
-  - `es-ES` → `/ES`
-  - `es` → `/ES`
-  - `x-default` → `/ES`
+  - `es-AR` → `/ar`
+  - `es-ES` → `/es`
+  - `es` → `/es`
+  - `x-default` → `/es`
 - **`content-language`** / `document.documentElement.lang`: `es-AR` o `es-ES`.
 - **`og:locale`**: `es_AR` / `es_ES` (+ alternate del otro).
-- Sitemap: `frontend/lib/sitemap-xml.ts` incluye `/AR` y `/ES` con `xhtml:link` alternates.
+- Sitemap: `frontend/lib/sitemap-xml.ts` incluye `/ar` y `/es` con `xhtml:link` alternates.
 
 No usar meta `geo.region` (Google las ignora).
 
@@ -98,7 +98,7 @@ Helpers: `landingSectionHref`, `useLandingHomeHref`, `resolveLandingHomeHref` en
 
 ---
 
-## Landings SEO en la raíz (sin `/AR` ni `/ES`)
+## Landings SEO en la raíz (sin `/ar` ni `/es`)
 
 Las landings de **keyword** (`/carta-digital-restaurante-qr`, etc.) **permanecen en la raíz**: no se duplican por país salvo que el copy/precios cambien de verdad por mercado.
 
@@ -107,8 +107,9 @@ Las landings de **keyword** (`/carta-digital-restaurante-qr`, etc.) **permanecen
 | Origen | Destino | Tipo |
 |--------|---------|------|
 | `/menu-qr-restaurante` | `/` | 301 en `frontend/next.config.js` |
+| `/AR`, `/ES` | `/ar`, `/es` | 308 en `frontend/middleware.ts` (no en next.config: redirects case-insensitive → bucle) |
 
-El middleware luego envía a `/AR` o `/ES`. La keyword «menú QR restaurante» la absorbe sobre todo `/AR`.
+El middleware luego envía a `/ar` o `/es`. La keyword «menú QR restaurante» la absorbe sobre todo `/ar`.
 
 Detalle SEO: [`docs/SEO-LANDINGS.md`](./SEO-LANDINGS.md).
 
@@ -120,8 +121,8 @@ Detalle SEO: [`docs/SEO-LANDINGS.md`](./SEO-LANDINGS.md).
 |---------|-----|
 | `frontend/lib/home-landing-copy.ts` | Textos `HOME_LANDING_AR` / `HOME_LANDING_ES` |
 | `frontend/components/HomeLanding.tsx` | Layout compartido de la home |
-| `frontend/pages/AR/index.tsx` | `region="AR"` |
-| `frontend/pages/ES/index.tsx` | `region="ES"` |
+| `frontend/pages/ar/index.tsx` | `region="AR"` |
+| `frontend/pages/es/index.tsx` | `region="ES"` |
 | `frontend/pages/index.tsx` | Redirect cliente de respaldo |
 | `frontend/middleware.ts` | Redirect geo + cookie |
 | `frontend/lib/landing-region.ts` | Cookie, paths, hreflang, hooks |
@@ -137,9 +138,9 @@ En login/registro el backend incluye `registrationCountry` y `declaredCountry` e
 
 ## Qué no hacer
 
-- No redirigir landings SEO globales **fijas** a `/AR` (rompe precios/copy para no-AR). Preferir `/` + middleware.
-- No indexar `/` como home canónica de contenido (redirige; las canónicas son `/AR` y `/ES`).
-- No duplicar landings keyword en `/AR/...` y `/ES/...` sin copy realmente distinto.
+- No redirigir landings SEO globales **fijas** a `/ar` (rompe precios/copy para no-AR). Preferir `/` + middleware.
+- No indexar `/` como home canónica de contenido (redirige; las canónicas son `/ar` y `/es`).
+- No duplicar landings keyword en `/ar/...` y `/es/...` sin copy realmente distinto.
 - No olvidar el cluster `hreflang` bidireccional al agregar inglés u otra región.
 
 ---

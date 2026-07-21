@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import LandingFooter from '../../components/LandingFooter';
 import LandingHomeLink from '../../components/LandingHomeLink';
+import LandingBrandMark from '../../components/LandingBrandMark';
 
 export default function PoliticaDeCookies() {
   return (
@@ -20,8 +21,7 @@ export default function PoliticaDeCookies() {
           <div className="container">
             <div className="landing-nav-content">
               <LandingHomeLink className="landing-logo">
-                <span className="landing-logo-icon">🍽️</span>
-                <span className="landing-logo-text">AppMenuQR</span>
+                <LandingBrandMark />
               </LandingHomeLink>
               <div className="landing-nav-actions">
                 <Link href="/login" className="landing-btn-secondary">

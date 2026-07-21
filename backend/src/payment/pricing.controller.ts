@@ -8,7 +8,7 @@ import { SubscriptionService } from '../subscription/subscription.service';
 
 /**
  * GET /pricing: precios según región.
- * - ?country=AR|GLOBAL fuerza precios de landing (/AR, /ES) aunque haya sesión.
+ * - ?country=AR|GLOBAL fuerza precios de landing (/ar, /es) aunque haya sesión.
  * - Sin query y autenticado: billing_country / declared_country / registration_country.
  * - Sin query y anónimo: GLOBAL (USD / PayPal).
  */

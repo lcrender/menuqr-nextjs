@@ -41,7 +41,7 @@ function detectRegionClient(): LandingRegion {
 }
 
 /**
- * La raíz redirige a /AR o /ES (middleware + fallback cliente).
+ * La raíz redirige a /ar o /es (middleware + fallback cliente).
  * Preferencia: ubicación del usuario → cookie → idioma del navegador → ES.
  */
 export default function HomeRedirect() {

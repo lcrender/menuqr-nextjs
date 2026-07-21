@@ -8,7 +8,7 @@ import {
   type LandingRegion,
 } from './lib/landing-region';
 
-/** Redirect `/` → `/AR`|`/ES` por cookie/geo. Doc: docs/GEO-LANDING.md */
+/** Redirect `/` → `/ar`|`/es` por cookie/geo. Doc: docs/GEO-LANDING.md */
 
 function countryFromRequest(request: NextRequest): string | null {
   const headers = request.headers;
@@ -41,21 +41,43 @@ function withRegionCookie(response: NextResponse, region: LandingRegion): NextRe
   return response;
 }
 
+/** Evita que el navegador reutilice Location antiguos (/AR, /ES). */
+function withNoStore(response: NextResponse): NextResponse {
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
+  return response;
+}
+
+function redirectTo(request: NextRequest, pathname: string, region: LandingRegion, status: 307 | 308) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  return withNoStore(withRegionCookie(NextResponse.redirect(url, status), region));
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname === '/' || pathname === '') {
     const region = resolveRegion(request);
-    const url = request.nextUrl.clone();
-    url.pathname = landingHomePath(region);
-    return withRegionCookie(NextResponse.redirect(url), region);
+    // Siempre minúsculas: /ar o /es (nunca /AR ni /ES).
+    return redirectTo(request, landingHomePath(region), region, 307);
   }
 
+  // Legacy mayúsculas → minúsculas (SEO / bookmarks).
+  // NO usar next.config redirects para esto: son case-insensitive y
+  // provocan ERR_TOO_MANY_REDIRECTS (/es coincide con /ES → /es → …).
+  // Usamos 307 (no 308) para no fijar el hop en la caché del navegador.
   if (pathname === '/AR' || pathname === '/AR/') {
+    return redirectTo(request, '/ar', 'AR', 307);
+  }
+  if (pathname === '/ES' || pathname === '/ES/') {
+    return redirectTo(request, '/es', 'ES', 307);
+  }
+
+  if (pathname === '/ar' || pathname === '/ar/') {
     return withRegionCookie(NextResponse.next(), 'AR');
   }
 
-  if (pathname === '/ES' || pathname === '/ES/') {
+  if (pathname === '/es' || pathname === '/es/') {
     return withRegionCookie(NextResponse.next(), 'ES');
   }
 
@@ -63,5 +85,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/AR', '/AR/', '/ES', '/ES/'],
+  matcher: ['/', '/ar', '/ar/', '/es', '/es/', '/AR', '/AR/', '/ES', '/ES/'],
 };
