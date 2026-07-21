@@ -14,6 +14,8 @@ import {
   readTemplateIntent,
   saveTemplateIntent,
 } from '../lib/template-selection-intent';
+import { syncLandingRegionCookieFromUser } from '../lib/landing-region';
+import LandingHomeLink from '../components/LandingHomeLink';
 
 // Ocultar credenciales de prueba: en build de producción (NODE_ENV) o si se define NEXT_PUBLIC_APP_ENV=production
 const isProduction =
@@ -263,6 +265,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
           localStorage.setItem('accessToken', response.data.accessToken);
           localStorage.setItem('refreshToken', response.data.refreshToken);
           localStorage.setItem('user', JSON.stringify(response.data.user));
+          syncLandingRegionCookieFromUser(response.data.user);
           await navigateAfterAuth(response.data.user);
         }
       } else {
@@ -276,6 +279,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
         localStorage.setItem('accessToken', response.data.accessToken);
         localStorage.setItem('refreshToken', response.data.refreshToken);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        syncLandingRegionCookieFromUser(response.data.user);
 
         await navigateAfterAuth(response.data.user);
       }
@@ -341,14 +345,14 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
         <nav className="landing-nav">
           <div className="container">
             <div className="landing-nav-content">
-              <Link href="/" className="landing-logo">
+              <LandingHomeLink className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
                 <span className="landing-logo-text">AppMenuQR</span>
-              </Link>
+              </LandingHomeLink>
               <div className="landing-nav-actions">
-                <Link href="/" className="landing-btn-secondary">
+                <LandingHomeLink className="landing-btn-secondary">
                   Volver al inicio
-                </Link>
+                </LandingHomeLink>
               </div>
             </div>
           </div>

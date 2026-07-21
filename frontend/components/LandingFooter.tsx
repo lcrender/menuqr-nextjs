@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { usePublicAccountNav } from '../hooks/usePublicSession';
+import { landingSectionHref, useLandingHomeHref } from '../lib/landing-region';
 
 /** Segunda fila del footer: landings SEO (solo texto ancla = keyword). */
 const FOOTER_SEO_LANDINGS = [
   { href: '/carta-digital-restaurante-qr', label: 'Carta digital restaurante QR' },
-  { href: '/menu-qr-restaurante', label: 'Menú QR restaurante' },
   { href: '/software-carta-digital-restaurante', label: 'Software carta digital restaurante' },
 ] as const;
 
@@ -14,15 +14,17 @@ const FOOTER_SEO_LANDINGS = [
  */
 export default function LandingFooter() {
   const accountNav = usePublicAccountNav();
+  const homeHref = useLandingHomeHref();
+  const preciosHref = landingSectionHref(homeHref, 'precios');
 
   return (
     <footer className="landing-footer">
       <div className="container">
         <div className="landing-footer-content">
-          <div className="landing-footer-brand">
+          <Link href={homeHref} className="landing-footer-brand text-decoration-none">
             <span className="landing-logo-icon">🍽️</span>
             <span className="landing-logo-text">AppMenuQR</span>
-          </div>
+          </Link>
           <div className="landing-footer-links">
             <Link href={accountNav.href} className="landing-footer-link">
               {accountNav.label}
@@ -33,7 +35,7 @@ export default function LandingFooter() {
             <Link href="/soporte" className="landing-footer-link">
               Soporte
             </Link>
-            <Link href="/precios" className="landing-footer-link">
+            <Link href={preciosHref} className="landing-footer-link">
               Precios
             </Link>
             <Link href="/legal/terminos-y-condiciones" className="landing-footer-link">

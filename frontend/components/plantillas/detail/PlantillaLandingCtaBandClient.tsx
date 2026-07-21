@@ -5,6 +5,7 @@ import { useProTemplatesAccess } from '../../../hooks/useProTemplatesAccess';
 import type { PlantillaLandingCta } from '../../../types/plantilla-landing';
 import PlantillaUpgradeProButton from './PlantillaUpgradeProButton';
 import PlantillaUseTemplateButton from './PlantillaUseTemplateButton';
+import { landingSectionHref, useLandingHomeHref } from '../../../lib/landing-region';
 import styles from './plantilla-detail.module.css';
 
 export interface PlantillaLandingCtaBandClientProps {
@@ -18,6 +19,15 @@ export interface PlantillaLandingCtaBandClientProps {
   isProTemplate?: boolean;
 }
 
+function resolveCtaHref(href: string, homeHref: string): string {
+  if (href === '/precios' || href.startsWith('/precios?')) {
+    const q = href.includes('?') ? href.slice(href.indexOf('?')) : '';
+    if (q) return `/precios${q}`;
+    return landingSectionHref(homeHref, 'precios');
+  }
+  return href;
+}
+
 export default function PlantillaLandingCtaBandClient({
   cta,
   catalogSlug,
@@ -27,6 +37,8 @@ export default function PlantillaLandingCtaBandClient({
   isProTemplate = false,
 }: PlantillaLandingCtaBandClientProps) {
   const hasProAccess = useProTemplatesAccess();
+  const homeHref = useLandingHomeHref();
+  const primaryHref = resolveCtaHref(cta.primaryHref, homeHref);
   const isDual = Boolean(cta.secondaryLabel && cta.secondaryHref) && !isProTemplate;
   const bandClass = premiumBand ? `${styles.ctaBand} ${styles.ctaBandPremium}` : styles.ctaBand;
   const primaryBtnClass = premiumBand ? styles.btnPremiumPrimary : styles.btnPrimary;
@@ -54,7 +66,7 @@ export default function PlantillaLandingCtaBandClient({
         )
       ) : isDual ? (
         <div className={styles.ctaRow}>
-          <Link href={cta.primaryHref} className={primaryBtnClass}>
+          <Link href={primaryHref} className={primaryBtnClass}>
             {cta.primaryLabel}
           </Link>
           {cta.secondaryLabel ? (
@@ -72,7 +84,7 @@ export default function PlantillaLandingCtaBandClient({
           className={styles.btnPrimary ?? ''}
         />
       ) : (
-        <Link href={cta.primaryHref} className={styles.btnPrimary}>
+        <Link href={primaryHref} className={styles.btnPrimary}>
           {cta.primaryLabel}
         </Link>
       )}

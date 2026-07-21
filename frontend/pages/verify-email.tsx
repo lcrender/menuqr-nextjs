@@ -5,6 +5,7 @@ import api from '../lib/axios';
 import { consumeTemplateAfterAuth, getNavigationForConsumeResult } from '../lib/consume-template-after-auth';
 import Head from 'next/head';
 import LandingFooter from '../components/LandingFooter';
+import LandingHomeLink from '../components/LandingHomeLink';
 
 export default function VerifyEmail() {
   const router = useRouter();
@@ -76,10 +77,10 @@ export default function VerifyEmail() {
         <nav className="landing-nav">
           <div className="container">
             <div className="landing-nav-content">
-              <Link href="/" className="landing-logo">
+              <LandingHomeLink className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
                 <span className="landing-logo-text">AppMenuQR</span>
-              </Link>
+              </LandingHomeLink>
               <div className="landing-nav-actions">
                 <Link href="/login" className="landing-btn-secondary">
                   Iniciar Sesión
@@ -133,9 +134,9 @@ export default function VerifyEmail() {
                       <Link href="/login" className="landing-btn-primary landing-btn-full">
                         Ir a Iniciar Sesión
                       </Link>
-                      <Link href="/" className="landing-btn-secondary landing-btn-full">
+                      <LandingHomeLink className="landing-btn-secondary landing-btn-full">
                         Volver al Inicio
-                      </Link>
+                      </LandingHomeLink>
                     </div>
                     <p className="landing-auth-subtitle" style={{ marginTop: '24px', fontSize: '0.85rem', color: 'var(--landing-text-muted)' }}>
                       Si el problema persiste, contacta con soporte o intenta registrarte nuevamente.

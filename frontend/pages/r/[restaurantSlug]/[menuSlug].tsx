@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import type { GetServerSideProps } from 'next';
 import { useEffect, useState, type ReactNode } from 'react';
 import axios from 'axios';
-import Link from 'next/link';
+import LandingHomeLink from '../../../components/LandingHomeLink';
 import { getApiBaseUrl } from '../../../lib/config';
 import { PublicHtmlSeoHead } from '../../../components/PublicHtmlSeoHead';
 import {
@@ -328,9 +328,9 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
           <div className="alert alert-danger" role="alert">
             {error || 'Menú no encontrado'}
           </div>
-          <Link href="/" className="btn btn-primary mt-3">
+          <LandingHomeLink className="btn btn-primary mt-3">
             Volver al inicio
-          </Link>
+          </LandingHomeLink>
         </div>
       </>
     );

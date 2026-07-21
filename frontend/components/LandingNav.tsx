@@ -3,11 +3,18 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { usePublicAccountNav } from '../hooks/usePublicSession';
 import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
+import { landingSectionHref, useLandingHomeHref } from '../lib/landing-region';
 
-export default function LandingNav() {
+type LandingNavProps = {
+  /** Home regional (/AR o /ES). Si no se pasa, se infiere de la ruta/cookie. */
+  homeHref?: string;
+};
+
+export default function LandingNav({ homeHref }: LandingNavProps) {
   const router = useRouter();
   const accountNav = usePublicAccountNav();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const logoHref = useLandingHomeHref(homeHref);
 
   const closeMobileNav = () => setMobileNavOpen(false);
 
@@ -59,12 +66,17 @@ export default function LandingNav() {
     router.push(accountNav.href);
   };
 
+  const beneficiosHref = landingSectionHref(logoHref, 'beneficios');
+  const preciosHref = landingSectionHref(logoHref, 'precios');
+  const comoFuncionaHref = landingSectionHref(logoHref, 'como-funciona');
+  const faqHref = landingSectionHref(logoHref, 'faq');
+
   return (
     <>
       <nav className="landing-nav">
         <div className="container">
           <div className="landing-nav-content">
-            <Link href="/" className="landing-logo" onClick={closeMobileNav}>
+            <Link href={logoHref} className="landing-logo" onClick={closeMobileNav}>
               <span className="landing-logo-icon">🍽️</span>
               <span className="landing-logo-text">AppMenuQR</span>
             </Link>
@@ -86,16 +98,16 @@ export default function LandingNav() {
               <Link href={PLANTILLAS_CATALOG_PATH} className="landing-nav-text-link">
                 Plantillas
               </Link>
-              <Link href="/#beneficios" className="landing-nav-text-link">
+              <Link href={beneficiosHref} className="landing-nav-text-link">
                 Beneficios
               </Link>
-              <Link href="/precios" className="landing-nav-text-link">
+              <Link href={preciosHref} className="landing-nav-text-link">
                 Precios
               </Link>
-              <Link href="/#como-funciona" className="landing-nav-text-link">
+              <Link href={comoFuncionaHref} className="landing-nav-text-link">
                 Cómo funciona
               </Link>
-              <Link href="/#faq" className="landing-nav-text-link">
+              <Link href={faqHref} className="landing-nav-text-link">
                 Preguntas frecuentes
               </Link>
               <Link href={accountNav.href} className="landing-btn-secondary landing-nav-login-btn">
@@ -129,16 +141,16 @@ export default function LandingNav() {
           <Link href={PLANTILLAS_CATALOG_PATH} className="landing-nav-mobile-link" onClick={closeMobileNav}>
             Plantillas
           </Link>
-          <Link href="/#beneficios" className="landing-nav-mobile-link" onClick={closeMobileNav}>
+          <Link href={beneficiosHref} className="landing-nav-mobile-link" onClick={closeMobileNav}>
             Beneficios
           </Link>
-          <Link href="/precios" className="landing-nav-mobile-link" onClick={closeMobileNav}>
+          <Link href={preciosHref} className="landing-nav-mobile-link" onClick={closeMobileNav}>
             Precios
           </Link>
-          <Link href="/#como-funciona" className="landing-nav-mobile-link" onClick={closeMobileNav}>
+          <Link href={comoFuncionaHref} className="landing-nav-mobile-link" onClick={closeMobileNav}>
             Cómo funciona
           </Link>
-          <Link href="/#faq" className="landing-nav-mobile-link" onClick={closeMobileNav}>
+          <Link href={faqHref} className="landing-nav-mobile-link" onClick={closeMobileNav}>
             Preguntas frecuentes
           </Link>
           <button type="button" className="landing-btn-primary landing-nav-mobile-cta" onClick={handleTryFree}>

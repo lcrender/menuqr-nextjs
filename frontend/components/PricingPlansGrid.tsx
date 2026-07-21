@@ -11,6 +11,7 @@ import {
 } from '../lib/public-plan-limits';
 import { appendPromoToCheckoutUrl } from '../lib/promo-query';
 import { buildPremiumInquiryUrl } from '../lib/premium-inquiry-url';
+import { resolveLandingHomeHref } from '../lib/landing-region';
 
 type PlanSlug = 'free' | 'starter' | 'pro' | 'premium';
 
@@ -147,7 +148,7 @@ export default function PricingPlansGrid({
       return;
     }
     if (variant === 'profile') {
-      router.push('/');
+      router.push(resolveLandingHomeHref());
     } else {
       // Landing/precio sin sesión: preservar plan elegido para completar registro + verificación.
       if (isPaidPlan) {

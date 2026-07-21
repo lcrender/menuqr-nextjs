@@ -1,8 +1,13 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import LandingFooter from '../../components/LandingFooter';
+import LandingHomeLink from '../../components/LandingHomeLink';
+import { landingSectionHref, useLandingHomeHref } from '../../lib/landing-region';
 
 export default function PoliticaDePrivacidad() {
+  const homeHref = useLandingHomeHref();
+  const preciosHref = landingSectionHref(homeHref, 'precios');
+
   return (
     <>
       <Head>
@@ -18,10 +23,10 @@ export default function PoliticaDePrivacidad() {
         <nav className="landing-nav">
           <div className="container">
             <div className="landing-nav-content">
-              <Link href="/" className="landing-logo">
+              <LandingHomeLink className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
                 <span className="landing-logo-text">AppMenuQR</span>
-              </Link>
+              </LandingHomeLink>
               <div className="landing-nav-actions">
                 <Link href="/login" className="landing-btn-secondary">
                   Iniciar Sesión
@@ -98,7 +103,7 @@ export default function PoliticaDePrivacidad() {
                   <p style={{ marginTop: '16px' }}>
                     La cantidad de restaurantes, menús y productos que puede gestionar cada cuenta depende del plan
                     contratado. Los límites y precios vigentes se publican en la{' '}
-                    <Link href="/precios">página de precios</Link> de la Plataforma.
+                    <Link href={preciosHref}>página de precios</Link> de la Plataforma.
                   </p>
 
                   <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>4. Servicios de Terceros</h2>

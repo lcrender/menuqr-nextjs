@@ -1,8 +1,13 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import LandingFooter from '../../components/LandingFooter';
+import LandingHomeLink from '../../components/LandingHomeLink';
+import { landingSectionHref, useLandingHomeHref } from '../../lib/landing-region';
 
 export default function TerminosYCondiciones() {
+  const homeHref = useLandingHomeHref();
+  const preciosHref = landingSectionHref(homeHref, 'precios');
+
   return (
     <>
       <Head>
@@ -18,10 +23,10 @@ export default function TerminosYCondiciones() {
         <nav className="landing-nav">
           <div className="container">
             <div className="landing-nav-content">
-              <Link href="/" className="landing-logo">
+              <LandingHomeLink className="landing-logo">
                 <span className="landing-logo-icon">🍽️</span>
                 <span className="landing-logo-text">AppMenuQR</span>
-              </Link>
+              </LandingHomeLink>
               <div className="landing-nav-actions">
                 <Link href="/login" className="landing-btn-secondary">
                   Iniciar Sesión
@@ -114,7 +119,7 @@ export default function TerminosYCondiciones() {
                   <p className="mb-2">
                     Los cupos de restaurantes, menús y productos, así como el uso de fotos en productos y plantillas
                     avanzadas, dependen del plan contratado. Consultá los límites y precios vigentes en la{' '}
-                    <Link href="/precios">página de precios</Link> de la Plataforma.
+                    <Link href={preciosHref}>página de precios</Link> de la Plataforma.
                   </p>
                   <p>
                     Las funcionalidades comerciales o de marketing adicionales (por ejemplo idiomas, soporte, plantillas

@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { SEO_LANDING_RESOURCES, type SeoLandingConfig } from '../lib/seo-landings-config';
 import { buildSeoLandingJsonLd, siteJsonLdBaseUrl } from '../lib/json-ld-appmenuqr';
 import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
+import { landingSectionHref, useLandingHomeHref } from '../lib/landing-region';
 import LandingNav from './LandingNav';
 import LandingFooter from './LandingFooter';
 import SeoLandingHeroSplit from './SeoLandingHeroSplit';
@@ -17,6 +18,8 @@ type Props = {
 
 export default function SeoKeywordLanding({ config }: Props) {
   const router = useRouter();
+  const homeHref = useLandingHomeHref();
+  const preciosHref = landingSectionHref(homeHref, 'precios');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   const path = `/${config.slug}`;
@@ -66,7 +69,7 @@ export default function SeoKeywordLanding({ config }: Props) {
             <div className="container">
               <div className="landing-hero-content">
                 <p className="text-muted small mb-2">
-                  <Link href="/" className="text-decoration-none">
+                  <Link href={homeHref} className="text-decoration-none">
                     Inicio
                   </Link>
                   <span aria-hidden="true"> · </span>
@@ -215,11 +218,14 @@ export default function SeoKeywordLanding({ config }: Props) {
             <div className="landing-prose-inner landing-prose-inner--centered">
               <h2 className="landing-section-title">Recursos</h2>
               <ul className="landing-prose-list landing-prose-list--centered text-start mx-auto" style={{ maxWidth: '36rem' }}>
-                {SEO_LANDING_RESOURCES.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href}>{link.label}</Link>
-                  </li>
-                ))}
+                {SEO_LANDING_RESOURCES.map((link) => {
+                  const href = link.href === '/precios' ? preciosHref : link.href;
+                  return (
+                    <li key={link.href}>
+                      <Link href={href}>{link.label}</Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>

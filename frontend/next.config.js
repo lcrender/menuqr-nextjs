@@ -108,6 +108,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/menu-qr-restaurante',
+        destination: '/',
+        permanent: true,
+      },
+      {
         source: '/plantillas',
         destination: '/plantillas-de-carta-digital-con-qr-para-restaurantes-y-bares',
         permanent: true,

@@ -82,7 +82,6 @@ export const SEO_LANDING_RESOURCES: SeoLandingRelated[] = [
 
 export const SEO_LANDING_SLUGS = [
   'carta-digital-restaurante-qr',
-  'menu-qr-restaurante',
   'software-carta-digital-restaurante',
 ] as const;
 
@@ -206,112 +205,6 @@ export const SEO_LANDINGS: Record<SeoLandingSlug, SeoLandingConfig> = {
         question: '¿Qué hago si tengo un menú de día y otro de noche, o un menú especial?',
         answer:
           'Podés crear varios menús (almuerzo, cena o un menú especial) y, en planes Pro o Premium, programar en qué días y horarios se muestra cada uno. El QR sigue siendo el mismo: el cliente ve la carta que corresponde a ese momento.',
-      },
-    ],
-  },
-
-  'menu-qr-restaurante': {
-    slug: 'menu-qr-restaurante',
-    primaryKeyword: 'menú qr restaurante',
-    searchIntent: 'Transaccional: quiere crear un menú QR rápido, fácil y usable desde el celular del cliente.',
-    meta: {
-      title: 'Menú QR restaurante | Crear menú digital en minutos | AppMenuQR',
-      description:
-        'Crea tu menú QR restaurante en minutos. Menú digital accesible desde el celular, sin apps. QR menú restaurante listo para compartir o imprimir.',
-    },
-    h1: 'Menú QR restaurante',
-    h1Highlight: 'listo en minutos',
-    heroLead:
-      'Publica un menú digital que tus clientes abren escaneando un QR desde el celular. Sin instalaciones, sin complicaciones técnicas: cargas platos, generas el código y mejoras la experiencia en sala.',
-    ctaLabel: 'Crear mi menú QR',
-    heroVariant: 'split',
-    heroMockupImage: SEO_LANDING_HERO_MOCKUP_IMAGE,
-    heroMockupAlt: 'Vista previa de menú QR en celular con plantilla Sol & Noche',
-    valueSection: {
-      h2: 'Crear menú QR sin fricción para tu restaurante',
-      intro: 'Publica tu menú digital en poco tiempo y ofrece una carta clara que el comensal abre al instante desde el móvil.',
-      features: [
-        {
-          icon: '⏱️',
-          title: 'Creación rápida de menú QR',
-          body: 'Registro, carga de productos y QR listo en poco tiempo. Pensado para empezar hoy, no dentro de un mes.',
-        },
-        {
-          icon: '📲',
-          title: 'Acceso desde el celular del cliente',
-          body: 'El menú digital restaurante se abre en el navegador: texto legible, precios visibles y navegación sencilla.',
-        },
-        {
-          icon: '😊',
-          title: 'Mejor experiencia en mesa',
-          body: 'Menos esperas para ver la carta, menos contacto con papel y consulta autónoma de platos y alérgenos.',
-        },
-        {
-          icon: 'qr',
-          title: 'QR menú restaurante para compartir',
-          body: 'Imprime el código, añádelo a redes o envíalo por mensajería. Un enlace, muchos puntos de contacto.',
-        },
-        {
-          icon: '✓',
-          title: 'Sin instalación para tus clientes',
-          body: 'Solo escanean el QR: no hace falta descargar apps ni crear cuentas para ver el menú qr restaurante.',
-        },
-        {
-          icon: '⚡',
-          title: 'Actualización en tiempo real',
-          body: 'Editas platos y precios cuando quieras; el menú digital se actualiza sin generar un código nuevo.',
-        },
-      ],
-    },
-    detailSection: {
-      h2: 'Menú digital restaurante pensado para el día a día',
-      paragraphs: [
-        'Un menú qr restaurante bien hecho no es solo tecnología: es que el cliente entienda qué puede pedir y que tú puedas ajustar la oferta cuando cambia el menú del día.',
-        'AppMenuQR combina facilidad para crear menú qr con herramientas para editar precios, ocultar platos agotados y, en planes superiores, añadir fotos e idiomas.',
-      ],
-      highlightBullets: [
-        { icon: '📱', text: 'Menú digital visible desde cualquier smartphone' },
-        { icon: '🚀', text: 'Cambios publicados al momento, sin nuevo QR' },
-        { icon: '👥', text: 'Experiencia más ágil para clientes en sala' },
-        { icon: '🖨️', text: 'Imprimí la carta en papel cuando la necesites' },
-      ],
-    },
-    stepsSection: {
-      h2: 'Pasos para crear tu menú QR restaurante',
-      steps: [
-        'Regístrate en AppMenuQR',
-        'Añade el nombre de tu local y tus platos',
-        'Revisa la vista previa del menú digital',
-        'Genera y descarga tu QR menú restaurante',
-        'Colócalo donde lo vean tus clientes',
-      ],
-      outro: 'Tus comensales escanean y consultan el menú al instante desde el móvil.',
-    },
-    faq: [
-      {
-        question: '¿Cómo crear menú QR para mi restaurante?',
-        answer:
-          'Crea una cuenta, configura tu restaurante, agrega productos y genera el código QR desde el panel. No necesitas programar ni diseñar desde cero si usas una plantilla.',
-      },
-      {
-        question: '¿El menú QR funciona en iPhone y Android?',
-        answer:
-          'Sí. Cualquier celular con cámara y navegador puede escanear el QR y ver el menú digital restaurante.',
-      },
-      {
-        question: '¿Puedo actualizar el menú después?',
-        answer:
-          'Sí. Editas platos y precios cuando quieras; el menú qr restaurante se actualiza sin generar un QR nuevo.',
-      },
-      {
-        question: '¿Puedo imprimir la carta del menú QR en papel?',
-        answer:
-          'Sí. Desde el panel de administración podés imprimir tu menú digital en papel cuando lo necesites, eligiendo idioma y menús a incluir.',
-      },
-      {
-        question: '¿Qué hago si tengo un menú de día y otro de noche, o un menú especial?',
-        answer:
-          'Creás un menú para cada momento (día, noche o especial) y, con la programación disponible en planes Pro o Premium, definís días y horarios de visibilidad. El código QR no cambia: se muestra el menú correcto según el horario del local.',
       },
     ],
   },

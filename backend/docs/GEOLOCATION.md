@@ -2,7 +2,12 @@
 
 ## Resumen
 
-La aplicación usa **geolocalización solo a nivel de país** (código ISO o nombre). No se usa GPS, ni coordenadas (latitud/longitud), ni la API del navegador `navigator.geolocation`. La detección se hace por **IP** en backend y en frontend mediante APIs externas o el header de Cloudflare.
+La aplicación usa **geolocalización solo a nivel de país** (código ISO o nombre). No se usa GPS, ni coordenadas (latitud/longitud), ni la API del navegador `navigator.geolocation`. La detección se hace por **IP** / headers CDN y, en marketing, por cookie de región de landing.
+
+Hay **dos usos distintos** del “país/región”:
+
+1. **Cuenta, facturación y restaurante** (este documento, secciones 1–5).
+2. **Home de marketing `/AR` vs `/ES`** — ver [`docs/GEO-LANDING.md`](../../docs/GEO-LANDING.md).
 
 ---
 
@@ -11,11 +16,13 @@ La aplicación usa **geolocalización solo a nivel de país** (código ISO o nom
 - **Dónde**: `GeoService` (`backend/src/geo/geo.service.ts`) y endpoint `POST /auth/register` (`backend/src/auth/auth.controller.ts`).
 - **Cómo**:
   1. Se intenta leer el header **`CF-IPCountry`** (Cloudflare). Si existe y es válido (2 letras, distinto de `XX`), se usa como código de país.
-  2. Si no hay Cloudflare, se llama a la API externa **ip-api.com** con la IP del cliente (`req.ip` o `req.socket?.remoteAddress`). Solo se consulta para IPs públicas (no localhost ni redes privadas).
+  2. Si no hay Cloudflare, se llama a la API externa **ip-api.com** con la IP del cliente. Solo se consulta para IPs públicas (no localhost ni redes privadas).
+  3. Fallback opcional: `Accept-Language` (ej. `es-AR` → `AR`) dentro de `GeoService`.
 - **Uso del país detectado**:
-  - Se guarda en el usuario como **`registration_country`** (y opcionalmente el usuario puede tener **`declared_country`** en su perfil).
+  - Se guarda en el usuario como **`registration_country`** (y opcionalmente **`declared_country`** en perfil).
   - Se guarda en la suscripción inicial como **`billing_country`**.
-  - Pensado para futura lógica de proveedor de pago (ej. MercadoPago por Argentina) y métricas.
+  - Define proveedor de pago (Argentina → Mercado Pago; resto → PayPal, según `payment-provider`).
+- **Respuesta login/registro**: el objeto `user` incluye `registrationCountry` y `declaredCountry` para que el frontend sincronice la cookie de landing (`menuqr-landing-region`).
 
 ---
 
@@ -35,25 +42,42 @@ La aplicación usa **geolocalización solo a nivel de país** (código ISO o nom
 
 - **Moneda por defecto**: En `admin/restaurants/index.tsx` hay un mapa `countryCurrencies`; al elegir país se sugiere la moneda (ej. Argentina → ARS).
 - **Dirección**: País, provincia y ciudad se usan en el formulario de restaurante y se envían al backend (address, timezone, etc.).
-- **WhatsApp**: En la vista pública del menú y en las plantillas (Classic, Minimalist, Foodie, Italian Food) se usa el **país del restaurante** para formatear el link de WhatsApp con el prefijo correcto (`formatWhatsAppForLink(whatsapp, restaurant.country)`), de modo que el número tenga el código de país si no lo incluye el usuario.
+- **WhatsApp**: En la vista pública del menú y en las plantillas se usa el **país del restaurante** para formatear el link de WhatsApp con el prefijo correcto (`formatWhatsAppForLink(whatsapp, restaurant.country)`).
 
 ---
 
-## 4. Qué no se hace
+## 4. Precios por país (API)
+
+- **Endpoint**: `GET /pricing` (`backend/src/payment/pricing.controller.ts`).
+- **Query opcional**: `?country=AR` o `?country=GLOBAL`.
+  - Si está presente y es válido, **fuerza** esa tabla de precios (landings `/AR` y `/ES`), aunque haya sesión.
+  - Si no hay query: usuario autenticado → `billingCountry` / `declaredCountry` / `registrationCountry`; anónimo → **GLOBAL** (USD).
+- Filas en BD: `plan_prices.country` = `AR` | `GLOBAL` (y futuros países).
+
+Detalle de homes y cookie: [`docs/GEO-LANDING.md`](../../docs/GEO-LANDING.md).
+
+---
+
+## 5. Qué no se hace
 
 - No se usa **geolocalización precisa** (sin GPS ni coordenadas).
 - No se guardan **latitud/longitud** del usuario ni del restaurante.
 - No se usa **`navigator.geolocation`** en el navegador.
+- Las meta HTML `geo.region` / `geo.placename` **no** se usan para SEO (Google las ignora); el targeting de marketing usa `hreflang` en las homes regionales.
 
 ---
 
-## 5. Archivos relevantes
+## 6. Archivos relevantes
 
-| Ámbito   | Archivo |
-|----------|--------|
-| Backend  | `backend/src/geo/geo.service.ts` — detección de país por IP/headers |
-| Backend  | `backend/src/auth/auth.controller.ts` — registro y llamada a `GeoService` |
-| Backend  | `backend/src/auth/auth.service.ts` — guardado de `registrationCountry` y `billingCountry` |
-| Frontend | `frontend/components/RestaurantWizard.tsx` — detección de país por IP (ipapi.co / ip-api.com) |
+| Ámbito | Archivo |
+|--------|---------|
+| Backend | `backend/src/geo/geo.service.ts` — detección de país por IP/headers |
+| Backend | `backend/src/auth/auth.controller.ts` — registro y llamada a `GeoService` |
+| Backend | `backend/src/auth/auth.service.ts` — `registrationCountry` / `billingCountry` en respuestas |
+| Backend | `backend/src/payment/pricing.controller.ts` — precios por país / `?country=` |
+| Backend | `backend/src/payment/payment-provider.service.ts` — MP vs PayPal por país |
+| Frontend | `frontend/components/RestaurantWizard.tsx` — país del restaurante por IP |
+| Frontend | `frontend/middleware.ts` + `frontend/lib/landing-region.ts` — home `/AR`\|`/ES` |
 | Frontend | `frontend/pages/admin/restaurants/index.tsx` — país, moneda, timezone, WhatsApp |
-| Frontend | `frontend/pages/restaurant/[slug].tsx` y plantillas — uso de `country` para WhatsApp |
+| Docs | [`docs/GEO-LANDING.md`](../../docs/GEO-LANDING.md) — marketing geo |
+| Docs | [`docs/SEO-LANDINGS.md`](../../docs/SEO-LANDINGS.md) — SEO landings + homes |

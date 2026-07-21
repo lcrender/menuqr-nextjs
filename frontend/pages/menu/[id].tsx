@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import LandingHomeLink from '../../components/LandingHomeLink';
 import { getApiBaseUrl } from '../../lib/config';
 
 interface MenuSection {
@@ -95,9 +96,9 @@ export default function MenuPage() {
         <div className="alert alert-danger" role="alert">
           {error || 'Menú no encontrado'}
         </div>
-        <Link href="/" className="btn btn-primary mt-3">
+        <LandingHomeLink className="btn btn-primary mt-3">
           Volver al inicio
-        </Link>
+        </LandingHomeLink>
       </div>
     );
   }
