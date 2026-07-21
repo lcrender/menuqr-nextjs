@@ -104,7 +104,7 @@ export default function AdminTemplateCard({
 
           {proLocked ? (
             <p className={styles.proLockedMsg}>
-              Disponible en plan <strong>Pro</strong>, <strong>Pro Team</strong> o{' '}
+              Disponible en plan <strong>Pro</strong> o{' '}
               <strong>Premium</strong>.{' '}
               <Link href="/admin/profile/subscription/checkout?plan=pro">Mejorar plan</Link>
             </p>

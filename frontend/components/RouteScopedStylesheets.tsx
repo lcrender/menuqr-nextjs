@@ -2,7 +2,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 
 /** Bump al cambiar estilos admin para evitar caché del navegador. */
-const ADMIN_CSS_V = '20260721b';
+const ADMIN_CSS_V = '20260721c';
 
 const ADMIN_STYLES = [
   `/css/admin.css?v=${ADMIN_CSS_V}`,
@@ -30,6 +30,7 @@ function needsAdminStyles(pathname: string): boolean {
 
 /** Cartas públicas, preview y rutas cortas /r /m */
 function needsMenuStyles(pathname: string, asPath: string): boolean {
+  if (pathname.startsWith('/admin/menus/preview')) return true;
   if (
     pathname.startsWith('/restaurant') ||
     pathname.startsWith('/menu') ||

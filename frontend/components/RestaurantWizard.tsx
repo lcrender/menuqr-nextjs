@@ -4,6 +4,8 @@ import CoverCropModal from './CoverCropModal';
 import CountrySelector from './CountrySelector';
 import ProvinceSelector from './ProvinceSelector';
 import CitySelector from './CitySelector';
+import { getPlantillaHeroMockupByApiTemplateId } from '../lib/plantilla-landing-hero-images';
+import { PREVIEW_DEFAULT_IMAGE, PREVIEW_IMAGE_BASE } from '../lib/templates-catalog';
 
 const WIZARD_TEMPLATES: Array<{
   id: 'classic' | 'minimalist' | 'foodie' | 'burgers' | 'italianFood' | 'gourmet' | 'proMobile' | 'nightClub' | 'smartFood' | 'beachBar' | 'solNoche';
@@ -110,7 +112,10 @@ interface RestaurantWizardProps {
   setCoverFile: (file: File | null) => void;
   coverPreview: string | null;
   setCoverPreview: (preview: string | null) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  /** Crea el restaurante al terminar el paso 5. Devuelve el id o null si falló. */
+  onCreateRestaurant: () => Promise<string | null>;
+  /** Asigna plantilla/colores al restaurante ya creado y continúa al menú. */
+  onAssignTemplateAndContinue: (restaurantId: string) => Promise<void>;
   onCancel?: () => void;
   userPlan?: string | null;
   isSuperAdmin?: boolean;
@@ -127,13 +132,15 @@ export default function RestaurantWizard({
   setCoverFile,
   coverPreview,
   setCoverPreview,
-  onSubmit,
+  onCreateRestaurant,
+  onAssignTemplateAndContinue,
   onCancel,
   userPlan = null,
   isSuperAdmin = false,
 }: RestaurantWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 5;
+  const totalSteps = 6;
+  const restaurantCreateStep = 5;
   const [, setDetectingCountry] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -142,8 +149,9 @@ export default function RestaurantWizard({
   const [showCoverCrop, setShowCoverCrop] = useState(false);
   const [coverCropSrc, setCoverCropSrc] = useState<string | null>(null);
   const [showAdditionalCurrenciesModal, setShowAdditionalCurrenciesModal] = useState(false);
-  const [previewSelectedId, setPreviewSelectedId] = useState<string | null>(null);
-  const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
+  const [proLockTemplate, setProLockTemplate] = useState<(typeof WIZARD_TEMPLATES)[number] | null>(null);
+  const [createdRestaurantId, setCreatedRestaurantId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const normalizedPlan = String(userPlan || '')
     .toLowerCase()
     .replace(/[\s-]+/g, '_')
@@ -340,52 +348,71 @@ export default function RestaurantWizard({
       // Paso 4: Moneda por defecto es obligatoria
       return formData.defaultCurrency && formData.defaultCurrency.trim() !== '';
     }
-    // Pasos 3 y 5 no tienen validaciones obligatorias
+    // Pasos 3, 5 y 6 no tienen validaciones obligatorias
     return true;
   };
 
   const handleNext = () => {
-    if (currentStep < totalSteps && canGoToNextStep()) {
+    if (currentStep < restaurantCreateStep && canGoToNextStep()) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
+    // Tras crear el restaurante (paso 6) no se vuelve a los datos del restaurante.
+    if (currentStep > 1 && currentStep < totalSteps && !createdRestaurantId) {
       setCurrentStep(currentStep - 1);
     }
   };
 
-  const selectTemplateForPreview = (templateId: string) => {
-    setPreviewSelectedId(templateId);
-    setPreviewDrawerOpen(true);
+  const handleSelectTemplate = (template: (typeof WIZARD_TEMPLATES)[number]) => {
+    if (template.requiresProOrPremium && !hasProTemplatesAccess) {
+      setProLockTemplate(template);
+      return;
+    }
+    setFormData({ ...formData, template: template.id });
   };
 
-  const currentPreviewIndex = previewSelectedId
-    ? WIZARD_TEMPLATES.findIndex((t) => t.id === previewSelectedId)
-    : -1;
-  const currentPreviewTemplate = currentPreviewIndex >= 0 ? WIZARD_TEMPLATES[currentPreviewIndex] : null;
-  const canUseCurrentPreviewTemplate = Boolean(
-    currentPreviewTemplate && (!currentPreviewTemplate.requiresProOrPremium || hasProTemplatesAccess),
-  );
-
-  const goToTemplatePreview = (direction: 'prev' | 'next') => {
-    if (currentPreviewIndex < 0) return;
-    const nextIndex =
-      direction === 'prev'
-        ? (currentPreviewIndex - 1 + WIZARD_TEMPLATES.length) % WIZARD_TEMPLATES.length
-        : (currentPreviewIndex + 1) % WIZARD_TEMPLATES.length;
-    const nextTemplate = WIZARD_TEMPLATES[nextIndex];
-    if (!nextTemplate) return;
-    setPreviewSelectedId(nextTemplate.id);
+  const handleContinueWithFreeTemplate = () => {
+    setFormData({ ...formData, template: 'classic' });
+    setProLockTemplate(null);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentStep === totalSteps) {
-      onSubmit(e);
-    } else {
+    if (saving) return;
+
+    if (currentStep < restaurantCreateStep) {
       handleNext();
+      return;
+    }
+
+    if (currentStep === restaurantCreateStep) {
+      if (createdRestaurantId) {
+        setCurrentStep(6);
+        return;
+      }
+      if (!canGoToNextStep()) return;
+      setSaving(true);
+      try {
+        const id = await onCreateRestaurant();
+        if (id) {
+          setCreatedRestaurantId(id);
+          setCurrentStep(6);
+        }
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    if (currentStep === 6 && createdRestaurantId) {
+      setSaving(true);
+      try {
+        await onAssignTemplateAndContinue(createdRestaurantId);
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -430,9 +457,13 @@ export default function RestaurantWizard({
             <div className="wizard-step-number">4</div>
             <div className="wizard-step-label">Medios de pago</div>
           </div>
-          <div className={`wizard-step ${currentStep >= 5 ? 'active' : ''}`}>
+          <div className={`wizard-step ${currentStep >= 5 ? 'active' : ''} ${currentStep > 5 ? 'completed' : ''}`}>
             <div className="wizard-step-number">5</div>
-            <div className="wizard-step-label">Diseño</div>
+            <div className="wizard-step-label">Imágenes</div>
+          </div>
+          <div className={`wizard-step ${currentStep >= 6 ? 'active' : ''}`}>
+            <div className="wizard-step-number">6</div>
+            <div className="wizard-step-label">Plantilla</div>
           </div>
         </div>
       </div>
@@ -847,11 +878,10 @@ export default function RestaurantWizard({
 
         {currentStep === 5 && (
           <div className="wizard-step-content">
-            <h3 className="wizard-step-title">Diseño</h3>
-            <p className="wizard-step-description">Agrega el logo, foto de portada y elige el estilo de diseño</p>
+            <h3 className="wizard-step-title">Imágenes</h3>
+            <p className="wizard-step-description">Agrega el logo y la foto de portada de tu restaurante</p>
 
             <div className="wizard-media-grid-mobile">
-              {/* Logo */}
               <div className="wizard-field">
                 <label className="wizard-label">Logo del restaurante</label>
                 <p className="small text-muted mb-2">
@@ -910,7 +940,6 @@ export default function RestaurantWizard({
                 </div>
               </div>
 
-              {/* Foto de portada */}
               <div className="wizard-field">
                 <label className="wizard-label">Foto de portada</label>
                 <div
@@ -966,41 +995,67 @@ export default function RestaurantWizard({
                 </div>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Template de diseño */}
+        {currentStep === 6 && (
+          <div className="wizard-step-content">
+            <h3 className="wizard-step-title">Plantilla y colores</h3>
+            <p className="wizard-step-description">
+              Elige el diseño de tu menú y los colores de marca. Después continuarás con la creación del menú.
+            </p>
+
             <div className="wizard-field">
               <label className="wizard-label">Plantilla de diseño</label>
               <p className="wizard-help-text" style={{ marginBottom: '14px', fontSize: '0.9rem', color: '#6c757d' }}>
-                Seleccione una plantilla de diseño para tu menu, luego podras cambiarlo y configurar los colores de tu marca
+                Seleccioná una plantilla. Luego podrás cambiarla y ajustar los colores de tu marca.
               </p>
               <div className="wizard-template-selector wizard-template-selector--grid">
-                {WIZARD_TEMPLATES.map((t) => (
-                  <div
-                    key={t.id}
-                    className={`wizard-template-option ${formData.template === t.id ? 'active' : ''} ${t.requiresProOrPremium ? 'wizard-template-option-pro' : ''}`}
-                    onClick={() => selectTemplateForPreview(t.id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') selectTemplateForPreview(t.id);
-                    }}
-                  >
-                    {t.requiresProOrPremium && <span className="wizard-template-pro-badge">PRO</span>}
-                    <div className={`wizard-template-preview ${t.previewClass}`}></div>
-                    <div className="wizard-template-name">{t.name}</div>
-                    <div className="wizard-template-desc">{t.desc}</div>
-                    {t.requiresProOrPremium && (
-                      <small className="wizard-template-pro-note">Disponible para plan Pro/Pro Team/Premium</small>
-                    )}
-                  </div>
-                ))}
+                {WIZARD_TEMPLATES.map((t) => {
+                  const mockup = getPlantillaHeroMockupByApiTemplateId(t.id);
+                  const previewSrc = mockup ?? `${PREVIEW_IMAGE_BASE}/preview-${t.id}.jpg`;
+                  return (
+                    <div
+                      key={t.id}
+                      className={`wizard-template-option ${formData.template === t.id ? 'active' : ''} ${t.requiresProOrPremium ? 'wizard-template-option-pro' : ''}`}
+                      onClick={() => handleSelectTemplate(t)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') handleSelectTemplate(t);
+                      }}
+                    >
+                      {t.requiresProOrPremium && <span className="wizard-template-pro-badge">PRO</span>}
+                      <div
+                        className={`wizard-template-preview ${mockup ? 'wizard-template-preview--mockup' : t.previewClass}`}
+                      >
+                        <img
+                          src={previewSrc}
+                          alt={`Vista previa ${t.name}`}
+                          className="wizard-template-preview-img"
+                          loading="lazy"
+                          onError={(e) => {
+                            const img = e.currentTarget;
+                            if (img.dataset.fallback === '1') return;
+                            img.dataset.fallback = '1';
+                            img.src = PREVIEW_DEFAULT_IMAGE;
+                          }}
+                        />
+                      </div>
+                      <div className="wizard-template-name">{t.name}</div>
+                      <div className="wizard-template-desc">{t.desc}</div>
+                      {t.requiresProOrPremium && (
+                        <small className="wizard-template-pro-note">Disponible para plan Pro/Business</small>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <small className="wizard-hint">
                 Esta plantilla se aplicará a todos los menús de este restaurante
               </small>
             </div>
 
-            {/* Colores de marca */}
             <div className="wizard-field">
               <label className="wizard-label">Colores de marca</label>
               <p className="wizard-help-text" style={{ marginBottom: '20px', fontSize: '0.9rem', color: '#6c757d' }}>
@@ -1039,20 +1094,20 @@ export default function RestaurantWizard({
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <input
                       type="color"
-                      value={formData.secondaryColor || '#0056b3'}
+                      value={formData.secondaryColor || '#6c757d'}
                       onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
                       style={{ width: '60px', height: '40px', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer' }}
                     />
                     <input
                       type="text"
-                      value={formData.secondaryColor || '#0056b3'}
+                      value={formData.secondaryColor || '#6c757d'}
                       onChange={(e) => {
                         const value = e.target.value;
                         if (/^#[0-9A-Fa-f]{6}$/.test(value) || value === '') {
-                          setFormData({ ...formData, secondaryColor: value || '#0056b3' });
+                          setFormData({ ...formData, secondaryColor: value || '#6c757d' });
                         }
                       }}
-                      placeholder="#0056b3"
+                      placeholder="#6c757d"
                       style={{ flex: 1, padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
                     />
                   </div>
@@ -1064,39 +1119,50 @@ export default function RestaurantWizard({
 
         {/* Wizard footer */}
         <div className="wizard-footer">
-          {currentStep > 1 && (
+          {currentStep > 1 && !createdRestaurantId && (
             <button 
               type="button" 
               className="admin-btn admin-btn-secondary"
               onClick={handleBack}
+              disabled={saving}
             >
               ← Anterior
             </button>
           )}
           <div className="wizard-footer-right">
-            {onCancel && (
+            {onCancel && !createdRestaurantId && (
               <button 
                 type="button" 
                 className="admin-btn admin-btn-secondary"
                 onClick={onCancel}
+                disabled={saving}
               >
                 Cancelar
               </button>
             )}
-            {currentStep < totalSteps ? (
+            {currentStep < restaurantCreateStep ? (
               <button 
                 type="submit" 
                 className="admin-btn"
-                disabled={!canGoToNextStep()}
+                disabled={!canGoToNextStep() || saving}
               >
                 Siguiente →
+              </button>
+            ) : currentStep === restaurantCreateStep ? (
+              <button 
+                type="submit" 
+                className="admin-btn"
+                disabled={!canGoToNextStep() || saving}
+              >
+                {saving ? 'Creando…' : 'Crear Restaurante'}
               </button>
             ) : (
               <button 
                 type="submit" 
                 className="admin-btn"
+                disabled={saving}
               >
-                Crear Restaurante
+                {saving ? 'Guardando…' : 'Continuar al menú →'}
               </button>
             )}
           </div>
@@ -1141,83 +1207,49 @@ export default function RestaurantWizard({
         </div>
       )}
 
-      {previewDrawerOpen && previewSelectedId && (
+      {proLockTemplate && (
         <div
-          className="admin-templates-preview-drawer-overlay"
+          className="wizard-mobile-modal-overlay"
           role="dialog"
           aria-modal="true"
-          aria-label="Vista previa ampliada"
-          onClick={() => setPreviewDrawerOpen(false)}
+          aria-labelledby="wizard-pro-template-title"
+          onClick={() => setProLockTemplate(null)}
         >
-          <div className="admin-templates-preview-drawer-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-templates-preview-drawer-header">
-              <div className="fw-semibold">
-                Vista previa: {WIZARD_TEMPLATES.find((t) => t.id === previewSelectedId)?.name ?? previewSelectedId}
-                {currentPreviewTemplate?.requiresProOrPremium && (
-                  <span className="wizard-template-pro-badge wizard-template-pro-badge-inline">PRO</span>
-                )}
-              </div>
+          <div className="wizard-mobile-modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <div className="wizard-mobile-modal-header">
+              <h4 id="wizard-pro-template-title">Plantilla Pro</h4>
               <button
                 type="button"
-                className="btn-close"
-                aria-label="Cerrar"
-                onClick={() => setPreviewDrawerOpen(false)}
-              />
-            </div>
-
-            <div className="admin-templates-preview-drawer-body">
-              <div className="wizard-preview-mobile-nav">
-                <button
-                  type="button"
-                  className="admin-btn admin-btn-secondary wizard-preview-nav-btn"
-                  onClick={() => goToTemplatePreview('prev')}
-                  aria-label="Vista previa anterior"
-                >
-                  Anterior
-                </button>
-                <button
-                  type="button"
-                  className="admin-btn admin-btn-secondary wizard-preview-nav-btn"
-                  onClick={() => goToTemplatePreview('next')}
-                  aria-label="Vista previa siguiente"
-                >
-                  Próxima
-                </button>
-              </div>
-              <iframe
-                key={previewSelectedId}
-                src={`/preview/${previewSelectedId}`}
-                title={`Demo ${WIZARD_TEMPLATES.find((t) => t.id === previewSelectedId)?.name ?? previewSelectedId}`}
-                className="admin-templates-preview-drawer-iframe"
-                loading="lazy"
-              />
-            </div>
-
-            {currentPreviewTemplate?.requiresProOrPremium && !hasProTemplatesAccess && (
-              <div className="alert alert-warning mb-2" role="status">
-                Esta plantilla requiere plan Pro. Cambiá tu plan para poder usarla.
-              </div>
-            )}
-
-            <div className="admin-templates-preview-drawer-footer" style={{ display: 'flex', gap: 10, justifyContent: 'space-between' }}>
-              <button
-                type="button"
-                className="admin-btn wizard-template-action-use"
-                onClick={() => {
-                  setFormData({ ...formData, template: previewSelectedId });
-                  setPreviewDrawerOpen(false);
-                }}
-                disabled={!canUseCurrentPreviewTemplate}
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => setProLockTemplate(null)}
               >
-                Usar Plantilla
+                Cerrar
+              </button>
+            </div>
+            <div style={{ padding: '8px 4px 16px' }}>
+              <p style={{ marginBottom: 12, fontSize: '1rem', lineHeight: 1.45 }}>
+                La plantilla <strong>{proLockTemplate.name}</strong> está disponible solo para usuarios{' '}
+                <strong>Pro</strong> o <strong>Business</strong>.
+              </p>
+              <p style={{ marginBottom: 0, color: '#6c757d', fontSize: '0.92rem', lineHeight: 1.45 }}>
+                Podés seguir con una plantilla gratuita (más adelante la vas a poder cambiar) o ver los planes de
+                suscripción. Esta plantilla es solo para usuarios Pro.
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button
+                type="button"
+                className="admin-btn"
+                onClick={handleContinueWithFreeTemplate}
+              >
+                Continuar con plantilla gratuita
               </button>
               <a
-                href={`/preview/${previewSelectedId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="admin-btn admin-templates-preview-drawer-cta wizard-template-action-demo"
+                href="/admin/profile/subscription"
+                className="admin-btn admin-btn-secondary"
+                style={{ textAlign: 'center', textDecoration: 'none' }}
               >
-                Ver demo
+                Ver planes de suscripción
               </a>
             </div>
           </div>

@@ -24,9 +24,16 @@ export default function OptimizedPicture({
   style,
   ...imgProps
 }: OptimizedPictureProps) {
-  if (!src) return null;
+  const resolvedSrc =
+    typeof src === 'string'
+      ? src
+      : src && typeof src === 'object' && typeof (src as { url?: unknown }).url === 'string'
+        ? (src as { url: string }).url
+        : null;
 
-  const sources = getOptimizedSources(src);
+  if (!resolvedSrc) return null;
+
+  const sources = getOptimizedSources(resolvedSrc);
 
   const fillStyle: React.CSSProperties = fill
     ? { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }
@@ -37,7 +44,7 @@ export default function OptimizedPicture({
   if (!usePicture || (!sources.avif && !sources.webp)) {
     return (
       <img
-        src={preferredImageSrc(src)}
+        src={preferredImageSrc(resolvedSrc)}
         alt={alt}
         loading={loading}
         decoding={decoding}

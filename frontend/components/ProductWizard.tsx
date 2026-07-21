@@ -817,13 +817,29 @@ export default function ProductWizard({
     }
   };
 
-  const handleViewMenu = () => {
-    if (!menuData?.slug || !menuData?.restaurantSlug) {
-      alert('No se puede abrir el menú. Falta información del restaurante o del menú.');
+  const handlePreviewMenu = () => {
+    const id = menuData?.id || initialMenuId;
+    if (!id) {
+      alert('No se puede previsualizar el menú.');
       return;
     }
-    const menuUrl = `/r/${menuData.restaurantSlug}/${menuData.slug}`;
-    window.open(menuUrl, '_blank');
+    const restaurantId = menuData?.restaurantId || menuData?.restaurant_id || initialRestaurantId;
+    const fromList = Array.isArray(restaurantsProp)
+      ? restaurantsProp.find((r) => r?.id === restaurantId)
+      : null;
+    const restaurantName =
+      fromList?.name ||
+      menuData?.restaurantName ||
+      menuData?.restaurant_name ||
+      '';
+    const qs = new URLSearchParams();
+    if (restaurantName) qs.set('restaurantName', String(restaurantName));
+    const query = qs.toString();
+    window.open(
+      `/admin/menus/preview/${encodeURIComponent(id)}${query ? `?${query}` : ''}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
   };
 
   // Drag and drop handlers
@@ -1810,6 +1826,15 @@ export default function ProductWizard({
           </div>
 
           <div className="wizard-footer-actions">
+            {(menuData?.id || initialMenuId) && (
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary"
+                onClick={handlePreviewMenu}
+              >
+                Previsualizar
+              </button>
+            )}
             {menuData?.status === 'DRAFT' && (
               <button 
                 type="button" 
@@ -1841,14 +1866,6 @@ export default function ProductWizard({
                   disabled={unpublishingMenu}
                 >
                   {unpublishingMenu ? 'Despublicando...' : 'Despublicar menú'}
-                </button>
-                <button 
-                  type="button" 
-                  className="admin-btn"
-                  onClick={handleViewMenu}
-                  style={{ backgroundColor: '#17a2b8', borderColor: '#17a2b8' }}
-                >
-                  👁️ Ver menú
                 </button>
               </>
             )}

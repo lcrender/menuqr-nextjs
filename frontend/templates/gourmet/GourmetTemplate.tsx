@@ -98,6 +98,9 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
           border-bottom-color: ${primaryColor};
         }
         .template-gourmet .menu-item-card {
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
           border-top-color: ${primaryColor};
         }
         .template-gourmet .menu-item-card:hover {
@@ -156,8 +159,22 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
           flex-direction: column;
         }
         .template-gourmet .gourmet-products-row {
-          --bs-gutter-x: 0.75rem;
+          --bs-gutter-x: 0;
           --bs-gutter-y: 0.75rem;
+          display: flex;
+          flex-direction: column;
+          margin-left: 0;
+          margin-right: 0;
+        }
+        .template-gourmet .gourmet-products-row > [class*='col'] {
+          width: 100%;
+          max-width: 100%;
+          flex: 0 0 100%;
+          padding-left: 0;
+          padding-right: 0;
+        }
+        .template-gourmet .tpl-featured-block > * {
+          width: 100%;
         }
         @media (min-width: 768px) {
           .template-gourmet .gourmet-menu-body {
@@ -394,7 +411,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
                 ) : null}
                 <div className="row gourmet-products-row g-3">
                   {regularItems.map((item) => (
-                    <div key={item.id} className="col-md-6 col-lg-4">
+                    <div key={item.id} className="col-12">
                       {renderGourmetCard(item, false)}
                     </div>
                   ))}

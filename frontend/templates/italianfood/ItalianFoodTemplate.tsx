@@ -120,6 +120,31 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
       }} />
       {/* Contenido con z-index superior */}
       <div style={{ position: 'relative', zIndex: 2 }}>
+      <style jsx>{`
+        .template-italianfood .italian-products-row {
+          display: flex;
+          flex-direction: column;
+          margin-left: 0;
+          margin-right: 0;
+          --bs-gutter-x: 0;
+          --bs-gutter-y: 0;
+        }
+        .template-italianfood .italian-products-row > [class*='col'] {
+          width: 100%;
+          max-width: 100%;
+          flex: 0 0 100%;
+          padding-left: 0;
+          padding-right: 0;
+        }
+        .template-italianfood .menu-item-card {
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        .template-italianfood .tpl-featured-block > * {
+          width: 100%;
+        }
+      `}</style>
       {/* Cover Image */}
       <div style={{ width: '100%', height: '400px', overflow: 'hidden', position: 'relative' }}>
         <OptimizedPicture 
@@ -449,9 +474,9 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                     ))}
                   </div>
                 ) : null}
-                <div className="row" style={{ marginBottom: '0', marginTop: '0' }}>
+                <div className="row italian-products-row" style={{ marginBottom: '0', marginTop: '0' }}>
                   {regularItems.map((item) => (
-                    <div key={item.id} className="col-md-6 col-lg-4" style={{ marginBottom: '24px', marginTop: 0 }}>
+                    <div key={item.id} className="col-12" style={{ marginBottom: '24px', marginTop: 0 }}>
                       {renderItalianCard(item, false)}
                     </div>
                   ))}

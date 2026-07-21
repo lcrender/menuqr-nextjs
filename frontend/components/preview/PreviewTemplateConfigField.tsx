@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import api from '../../lib/axios';
 import type { TemplateConfigOption } from '../../lib/template-config-schema';
 import styles from './PreviewTemplateConfigField.module.css';
 
@@ -7,12 +8,21 @@ type Props = {
   value: unknown;
   onChange: (value: unknown) => void;
   highlighted?: boolean;
+  /** Si se indica, las imágenes se suben al API del restaurante (admin). */
+  restaurantId?: string;
 };
 
-export default function PreviewTemplateConfigField({ option, value, onChange, highlighted }: Props) {
+export default function PreviewTemplateConfigField({
+  option,
+  value,
+  onChange,
+  highlighted,
+  restaurantId,
+}: Props) {
   const id = `preview-opt-${option.id}`;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const fieldClass = `${styles.field}${highlighted ? ` ${styles.fieldHighlighted}` : ''}`;
 
@@ -37,23 +47,44 @@ export default function PreviewTemplateConfigField({ option, value, onChange, hi
               const file = e.target.files?.[0];
               e.target.value = '';
               if (!file) return;
+              setUploadError(null);
               setUploading(true);
               try {
-                onChange(URL.createObjectURL(file));
+                if (restaurantId) {
+                  const fd = new FormData();
+                  fd.append('file', file);
+                  const uploadPath = option.imageUploadPath ?? 'template-background';
+                  const res = await api.post(`/media/restaurants/${restaurantId}/${uploadPath}`, fd);
+                  if (res.data?.url) onChange(res.data.url);
+                } else {
+                  onChange(URL.createObjectURL(file));
+                }
+              } catch (err: any) {
+                setUploadError(err?.response?.data?.message || 'Error al subir la imagen');
               } finally {
                 setUploading(false);
               }
             }}
           />
-          <button type="button" className={styles.btn} disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+          <button
+            type="button"
+            className={styles.btn}
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
             {uploading ? 'Cargando…' : 'Subir imagen'}
           </button>
           {imageUrl ? (
-            <button type="button" className={styles.btnSecondary} onClick={() => onChange('')}>
-              Quitar
+            <button
+              type="button"
+              className={styles.btnSecondary}
+              onClick={() => onChange(option.default ?? '')}
+            >
+              {option.default ? 'Restaurar' : 'Quitar'}
             </button>
           ) : null}
         </div>
+        {uploadError ? <p className={styles.hint} style={{ color: '#b91c1c' }}>{uploadError}</p> : null}
       </div>
     );
   }

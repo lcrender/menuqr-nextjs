@@ -898,6 +898,23 @@ export default function Menus() {
         </div>
       </div>
 
+      {showMenuWizard && (
+        <div className="restaurant-wizard-container mb-4">
+          <MenuWizard
+            restaurantId=""
+            restaurants={restaurants}
+            showMenuEntryChoice
+            onComplete={() => {
+              setShowMenuWizard(false);
+              loadData();
+            }}
+            onCancel={() => {
+              setShowMenuWizard(false);
+            }}
+          />
+        </div>
+      )}
+
       {!loading && restaurants.length === 0 && (
         <div className="admin-card mb-4" style={{ textAlign: 'center', padding: '2rem' }}>
           <p className="mb-3" style={{ fontSize: '1.1rem', color: 'var(--admin-text-secondary)' }}>
@@ -1692,23 +1709,6 @@ export default function Menus() {
               )}
             </div>
           </div>
-        </div>
-      )}
-
-      {showMenuWizard && (
-        <div className="restaurant-wizard-container">
-          <MenuWizard
-            restaurantId=""
-            restaurants={restaurants}
-            showMenuEntryChoice
-            onComplete={() => {
-              setShowMenuWizard(false);
-              loadData();
-            }}
-            onCancel={() => {
-              setShowMenuWizard(false);
-            }}
-          />
         </div>
       )}
 

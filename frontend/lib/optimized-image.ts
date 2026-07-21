@@ -9,14 +9,14 @@ const MINIO_RASTER = /\.(jpe?g|png|webp)(\?|$)/i;
 
 /** Rutas locales estáticas optimizables (no URLs externas ni ya en webp/avif). */
 export function isOptimizableStaticPath(src: string): boolean {
-  if (!src || !src.startsWith('/')) return false;
+  if (typeof src !== 'string' || !src || !src.startsWith('/')) return false;
   if (/\.(webp|avif|svg|gif)$/i.test(src)) return false;
   return RASTER_EXT.test(src);
 }
 
 /** URL MinIO/S3 con imagen raster (WebP, JPEG o PNG). */
 export function isMinioRasterUrl(src: string): boolean {
-  return /^https?:\/\//i.test(src) && MINIO_RASTER.test(src);
+  return typeof src === 'string' && /^https?:\/\//i.test(src) && MINIO_RASTER.test(src);
 }
 
 /** Convierte extensión a .webp o .avif (conserva query string). */
@@ -35,6 +35,10 @@ export function getOptimizedSources(src: string): {
   webp?: string;
   fallback: string;
 } {
+  if (typeof src !== 'string' || !src) {
+    return { fallback: '' };
+  }
+
   if (isOptimizableStaticPath(src)) {
     return {
       avif: toOptimizedFormat(src, 'avif'),
@@ -60,6 +64,7 @@ export function getOptimizedSources(src: string): {
 
 /** Ruta preferida para mostrar (WebP solo si hay variante real o estático local). */
 export function preferredImageSrc(src: string): string {
+  if (typeof src !== 'string' || !src) return '';
   if (isOptimizableStaticPath(src)) {
     return toOptimizedFormat(src, 'webp');
   }

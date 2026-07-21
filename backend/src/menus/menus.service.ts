@@ -192,7 +192,19 @@ export class MenusService {
       `SELECT 
         m.*,
         r.name as "restaurantName",
-        r.slug as "restaurantSlug"
+        r.slug as "restaurantSlug",
+        r.template as "restaurantTemplate",
+        r.primary_color as "restaurantPrimaryColor",
+        r.secondary_color as "restaurantSecondaryColor",
+        r.logo_url as "restaurantLogoUrl",
+        r.cover_url as "restaurantCoverUrl",
+        r.description as "restaurantDescription",
+        r.address as "restaurantAddress",
+        r.phone as "restaurantPhone",
+        r.email as "restaurantEmail",
+        r.website as "restaurantWebsite",
+        r.template_config as "restaurantTemplateConfig",
+        r.tenant_id as "restaurantTenantId"
       FROM menus m
       LEFT JOIN restaurants r ON r.id = m.restaurant_id AND r.deleted_at IS NULL
       WHERE m.id = $1 AND m.deleted_at IS NULL
@@ -208,8 +220,8 @@ export class MenusService {
 
     // Mapear campos
     menu.restaurantId = menu.restaurant_id;
-    menu.restaurantName = menu.restaurantName;
-    menu.restaurantSlug = menu.restaurantSlug;
+    menu.restaurantName = menu.restaurantName || null;
+    menu.restaurantSlug = menu.restaurantSlug || null;
     menu.slug = menu.slug;
     menu.scheduleEnabled = Boolean(menu.schedule_enabled ?? menu.scheduleEnabled);
     menu.schedule = normalizeMenuSchedule(menu.schedule) ?? menu.schedule ?? null;

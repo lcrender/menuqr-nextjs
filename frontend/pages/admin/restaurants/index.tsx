@@ -366,7 +366,13 @@ export default function Restaurants() {
     return websiteValue;
   };
 
-  const executeRestaurantSave = async () => {
+  const executeRestaurantSave = async (options?: {
+    openMenuWizard?: boolean;
+    deferTemplateAssignment?: boolean;
+  }): Promise<string | null> => {
+    const openMenuWizard = options?.openMenuWizard !== false;
+    const deferTemplateAssignment = options?.deferTemplateAssignment === true;
+
     try {
       // Construir dirección con el nuevo formato
       const addressParts = [
@@ -394,7 +400,8 @@ export default function Restaurants() {
         email: formData.email || undefined,
         website: website || undefined,
         timezone: formData.timezone || 'UTC',
-        template: formData.template || 'classic',
+        // En el wizard: plantilla/colores se asignan en el paso siguiente
+        template: deferTemplateAssignment ? 'classic' : (formData.template || 'classic'),
         defaultCurrency: formData.defaultCurrency || 'USD',
         additionalCurrencies: formData.additionalCurrencies && formData.additionalCurrencies.length > 0 
           ? formData.additionalCurrencies 
@@ -426,7 +433,7 @@ export default function Restaurants() {
             variant: 'error',
           });
           setShowAlert(true);
-          return;
+          return null;
         }
         data.tenantId = selectedTenantIdForCreate.trim();
       }
@@ -460,12 +467,17 @@ export default function Restaurants() {
         await api.post(`/media/restaurants/${restaurantId}/cover`, formDataCover);
       }
 
-      // Si es una creación nueva (no edición), abrir wizard de menú
+      // Si es una creación nueva (no edición), preparar / abrir wizard de menú
       if (!editing) {
         // Recargar restaurantes primero para tener la lista actualizada
         await loadRestaurants();
         setNewRestaurantId(restaurantId);
-        setShowMenuWizard(true);
+        if (openMenuWizard) {
+          setShowMenuWizard(true);
+        } else {
+          // Mantener el wizard de restaurante abierto para el paso de plantilla
+          setShowWizard(true);
+        }
       } else {
         setShowModal(false);
         setShowWizard(false);
@@ -481,6 +493,7 @@ export default function Restaurants() {
       });
         loadRestaurants();
       }
+      return restaurantId;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error guardando restaurante';
       setAlertData({
@@ -493,6 +506,39 @@ export default function Restaurants() {
       if (errorMessage.includes('límite') || errorMessage.includes('limit')) {
         loadRestaurants();
       }
+      return null;
+    }
+  };
+
+  const handleWizardCreateRestaurant = async () => {
+    return executeRestaurantSave({
+      openMenuWizard: false,
+      deferTemplateAssignment: true,
+    });
+  };
+
+  const handleWizardAssignTemplateAndContinue = async (restaurantId: string) => {
+    try {
+      await api.put(`/restaurants/${restaurantId}`, {
+        template: formData.template || 'classic',
+        primaryColor: formData.primaryColor || '#007bff',
+        secondaryColor: formData.secondaryColor || '#0056b3',
+      });
+      setShowWizard(false);
+      setNewRestaurantId(restaurantId);
+      setShowMenuWizard(true);
+      setLogoFile(null);
+      setLogoPreview(null);
+      setCoverFile(null);
+      setCoverPreview(null);
+    } catch (error: any) {
+      setAlertData({
+        title: 'Error',
+        message: error.response?.data?.message || 'Error asignando la plantilla',
+        variant: 'error',
+      });
+      setShowAlert(true);
+      throw error;
     }
   };
 
@@ -1087,7 +1133,8 @@ export default function Restaurants() {
             setCoverFile={setCoverFile}
             coverPreview={coverPreview}
             setCoverPreview={setCoverPreview}
-            onSubmit={handleSubmit}
+            onCreateRestaurant={handleWizardCreateRestaurant}
+            onAssignTemplateAndContinue={handleWizardAssignTemplateAndContinue}
             userPlan={tenantPlan}
             isSuperAdmin={isSuperAdmin}
             {...(restaurants.length > 0 ? {
