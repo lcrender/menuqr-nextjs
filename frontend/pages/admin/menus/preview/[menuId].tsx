@@ -33,11 +33,11 @@ function planAllowsPaidTemplateOptions(plan: string | null | undefined): boolean
 type MenuItemRow = {
   id: string;
   name: string;
-  description?: string | null;
-  prices?: Array<{ currency: string; label?: string; amount: number }>;
-  icons?: string[];
-  photos?: string[];
-  highlighted?: boolean;
+  description?: string;
+  prices: Array<{ currency: string; label?: string; amount: number }>;
+  icons: string[];
+  photos: string[];
+  highlighted: boolean;
   sectionId?: string;
   section_id?: string;
   sort?: number;
@@ -235,13 +235,8 @@ export default function AdminMenuPreviewPage() {
           items: itemsRaw
             .filter((item) => item.sectionId === section.id || item.section_id === section.id)
             .sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999))
-            .map((item) => ({
-              id: item.id,
-              name: item.name,
-              description: item.description ?? undefined,
-              prices: Array.isArray(item.prices) ? item.prices : [],
-              icons: Array.isArray(item.icons) ? item.icons : [],
-              photos: Array.isArray(item.photos)
+            .map((item) => {
+              const photos = Array.isArray(item.photos)
                 ? item.photos
                     .map((photo: unknown) => {
                       if (typeof photo === 'string') return photo;
@@ -251,16 +246,27 @@ export default function AdminMenuPreviewPage() {
                       return null;
                     })
                     .filter((url: string | null): url is string => Boolean(url))
-                : [],
-              highlighted: Boolean(item.highlighted),
-            })),
+                : [];
+              const row: MenuItemRow = {
+                id: item.id,
+                name: item.name,
+                prices: Array.isArray(item.prices) ? item.prices : [],
+                icons: Array.isArray(item.icons) ? item.icons : [],
+                photos,
+                highlighted: Boolean(item.highlighted),
+              };
+              if (typeof item.description === 'string' && item.description.trim()) {
+                row.description = item.description;
+              }
+              return row;
+            }),
         }));
 
         let whatsapp = restaurantData?.whatsapp || '';
         if (!whatsapp && (restaurantData?.phone || menuData.restaurantPhone)?.includes?.('WhatsApp:')) {
           const phone = String(restaurantData?.phone || menuData.restaurantPhone || '');
           const match = phone.match(/WhatsApp:\s*(.+?)(?:\s*\|)?$/i);
-          whatsapp = match ? match[1].trim() : '';
+          whatsapp = match?.[1]?.trim() || '';
         }
 
         const restaurantName =

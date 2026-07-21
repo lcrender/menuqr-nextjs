@@ -17,19 +17,19 @@ type Props = {
   schema: TemplateConfigOption[];
   formValues: Record<string, unknown>;
   onChange: (optionId: string, value: unknown) => void;
-  restaurantId?: string;
-  saving?: boolean;
-  saveError?: string | null;
-  saveSuccess?: string | null;
+  restaurantId?: string | undefined;
+  saving?: boolean | undefined;
+  saveError?: string | null | undefined;
+  saveSuccess?: string | null | undefined;
   onSave: () => void;
   /** Bloqueo al guardar plantilla Pro sin plan Pro/Business */
-  proSaveLockOpen?: boolean;
-  proSaveLockTemplateName?: string;
-  onCloseProSaveLock?: () => void;
-  onContinueWithFreeTemplate?: () => void;
-  subscriptionHref?: string;
+  proSaveLockOpen?: boolean | undefined;
+  proSaveLockTemplateName?: string | undefined;
+  onCloseProSaveLock?: (() => void) | undefined;
+  onContinueWithFreeTemplate?: (() => void) | undefined;
+  subscriptionHref?: string | undefined;
   /** Aviso suave mientras previsualiza una Pro sin poder guardarla */
-  previewingLockedPro?: boolean;
+  previewingLockedPro?: boolean | undefined;
 };
 
 export default function AdminMenuPreviewConfigDrawer({
@@ -111,7 +111,7 @@ export default function AdminMenuPreviewConfigDrawer({
                 option={opt}
                 value={formValues[opt.id]}
                 onChange={(v) => onChange(opt.id, v)}
-                restaurantId={restaurantId}
+                {...(restaurantId ? { restaurantId } : {})}
               />
             ))
           )}
