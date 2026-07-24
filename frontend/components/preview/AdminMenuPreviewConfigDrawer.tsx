@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import PreviewTemplateConfigField from './PreviewTemplateConfigField';
 import type { TemplateConfigOption } from '../../lib/template-config-schema';
 import styles from './AdminMenuPreviewConfigDrawer.module.css';
@@ -53,13 +54,21 @@ export default function AdminMenuPreviewConfigDrawer({
   subscriptionHref = '/admin/profile/subscription',
   previewingLockedPro = false,
 }: Props) {
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const selected = templateOptions.find((t) => t.id === templateId);
 
   return (
-    <div className={styles.root} role="dialog" aria-modal="true" aria-labelledby="admin-preview-config-title">
-      <button type="button" className={styles.backdrop} aria-label="Cerrar configuración" onClick={onClose} />
+    <div className={styles.root} role="dialog" aria-modal="false" aria-labelledby="admin-preview-config-title">
       <aside className={styles.panel} id="admin-preview-config-drawer">
         <div className={styles.header}>
           <div>

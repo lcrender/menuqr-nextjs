@@ -4432,6 +4432,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* Evita que el switch de Bootstrap (margin-left negativo) se recorte al borde */
+  padding-left: 0.75rem;
+  overflow: visible;
 }
 
 .admin-product-status-switches .form-check.form-switch {
@@ -4441,15 +4444,18 @@ body {
   min-height: 1.75rem;
   padding-left: 0;
   margin-bottom: 0;
+  margin-left: 0;
+  overflow: visible;
 }
 
-.admin-product-status-switches .form-check-input {
+.admin-product-status-switches .form-check.form-switch .form-check-input {
   width: 2.5em;
   height: 1.35em;
   margin-left: 0;
   margin-top: 0;
   float: none;
   flex-shrink: 0;
+  position: relative;
   cursor: pointer;
 }
 

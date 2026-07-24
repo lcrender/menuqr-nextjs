@@ -128,7 +128,7 @@ export function isBcp47MenuLocale(s: string): boolean {
 }
 
 function localeSelectWrapperStyle(variant?: MenuTabVariant): CSSProperties {
-  if (variant === 'foodie') return { marginBottom: 0 };
+  if (variant === 'foodie') return {};
   return { marginBottom: '50px' };
 }
 
@@ -180,7 +180,7 @@ function menuTabButtonStyle(
         color: active ? 'white' : primary,
         background: active ? primary : 'transparent',
         fontStyle: 'italic',
-        fontFamily: "'Playfair Display', serif",
+        fontFamily: gourmetFontFamily || "'Playfair Display', serif",
       };
     case 'foodie':
       return {

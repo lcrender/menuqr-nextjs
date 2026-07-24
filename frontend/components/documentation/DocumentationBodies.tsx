@@ -53,6 +53,37 @@ function DocFaqBlock({ items }: { items: { q: string; a: ReactNode }[] }): React
   );
 }
 
+const PRIMEROS_PASOS_VIDEO_ID = 'M85F7_szTFs';
+const PRIMEROS_PASOS_VIDEO_URL = `https://www.youtube.com/embed/${PRIMEROS_PASOS_VIDEO_ID}`;
+const PRIMEROS_PASOS_VIDEO_WATCH = `https://youtu.be/${PRIMEROS_PASOS_VIDEO_ID}`;
+
+/** Video tutorial del flujo inicial (restaurante → menú → secciones → productos → plantilla). */
+function DocPrimerosPasosVideo(): ReactNode {
+  return (
+    <div className="card mb-4 border-0 bg-light">
+      <div className="card-body">
+        <h2 className="h5 mb-2">Video: primeros pasos</h2>
+        <p className="mb-3 text-muted small">
+          Recorrido paso a paso para crear tu menú QR, armar secciones y productos, y elegir una plantilla.{' '}
+          <a href={PRIMEROS_PASOS_VIDEO_WATCH} target="_blank" rel="noopener noreferrer">
+            Abrir en YouTube
+          </a>
+        </p>
+        <div className="ratio ratio-16x9 rounded overflow-hidden bg-dark">
+          <iframe
+            src={PRIMEROS_PASOS_VIDEO_URL}
+            title="Cómo crear un menú QR en App Menu QR: restaurante, secciones, productos y plantilla"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function DocIntroBody({ basePath }: BodyProps): ReactNode {
   return (
     <>
@@ -213,7 +244,9 @@ export function DocIntroBody({ basePath }: BodyProps): ReactNode {
 
 export function DocCrearRestauranteBody(): ReactNode {
   return (
-    <div className="card mb-4">
+    <>
+      <DocPrimerosPasosVideo />
+      <div className="card mb-4">
       <div className="card-header bg-primary text-white">
         <h2 className="h4 mb-0">1️⃣ Crear un Restaurante</h2>
       </div>
@@ -286,12 +319,15 @@ export function DocCrearRestauranteBody(): ReactNode {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
 export function DocCrearMenuBody({ basePath }: BodyProps): ReactNode {
   return (
-    <div className="card mb-4">
+    <>
+      <DocPrimerosPasosVideo />
+      <div className="card mb-4">
       <div className="card-header bg-success text-white">
         <h2 className="h4 mb-0">2️⃣ Crear un Menú</h2>
       </div>
@@ -336,6 +372,7 @@ export function DocCrearMenuBody({ basePath }: BodyProps): ReactNode {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

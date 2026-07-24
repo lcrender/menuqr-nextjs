@@ -182,10 +182,10 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
         }
       `}</style>
 
-      <div className="template-classic classic-main-content" style={{ width: '100%', paddingLeft: '40px', paddingRight: '40px', flex: '1' }}>
+      <div className="template-classic classic-main-content">
         {/* Cover Image */}
         {showCover && restaurant.coverUrl && (
-          <div className="template-classic classic-cover-wrapper mb-4" style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          <div className="template-classic classic-cover-wrapper mb-4">
             <OptimizedPicture 
               src={restaurant.coverUrl} 
               alt={restaurant.name}

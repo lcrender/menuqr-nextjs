@@ -2,6 +2,14 @@
 .template-pro-mobile {
   overflow-x: hidden;
   max-width: 100%;
+  box-sizing: border-box;
+}
+
+.template-pro-mobile.restaurant-container {
+  container-type: inline-size;
+  container-name: pro-mobile-menu;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .template-pro-mobile .pro-mobile-layout {
@@ -12,6 +20,262 @@
 .template-pro-mobile .pro-mobile-items {
   overflow-x: hidden;
   max-width: 100%;
+}
+
+/* Portada / logo / textos: contener siempre al ancho del menú (no 100vw) */
+.template-pro-mobile .pro-mobile-cover {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.template-pro-mobile .pro-mobile-cover img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 140px;
+  max-height: 220px !important;
+  object-fit: cover !important;
+  display: block;
+}
+
+.template-pro-mobile .pro-mobile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 14px 16px;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.template-pro-mobile .pro-mobile-logo {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  max-width: 72px;
+  overflow: visible;
+}
+
+.template-pro-mobile .pro-mobile-logo img,
+.template-pro-mobile .pro-mobile-logo picture,
+.template-pro-mobile .pro-mobile-logo picture img {
+  width: 72px !important;
+  height: 72px !important;
+  max-width: 72px !important;
+  max-height: 72px !important;
+  object-fit: contain !important;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: block;
+}
+
+.template-pro-mobile .pro-mobile-header-body {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.template-pro-mobile .pro-mobile-title {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.template-pro-mobile .pro-mobile-desc {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Sin nombre: logo + descripción centrados */
+.template-pro-mobile .pro-mobile-header--no-name {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.template-pro-mobile .pro-mobile-header--no-name .pro-mobile-header-body {
+  flex: none;
+  width: 100%;
+  text-align: center;
+}
+
+.template-pro-mobile .pro-mobile-header--no-name .pro-mobile-logo {
+  margin: 0 auto;
+}
+
+.template-pro-mobile .pro-mobile-header--no-name .pro-mobile-desc {
+  width: 100%;
+  text-align: center !important;
+}
+
+/* Desktop: centrar logo, nombre y descripción en pantalla */
+@media (min-width: 769px) {
+  .template-pro-mobile .pro-mobile-cover img {
+    max-height: 320px !important;
+  }
+
+  .template-pro-mobile .pro-mobile-header {
+    width: min(900px, 100%);
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 28px 24px 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .template-pro-mobile .pro-mobile-logo {
+    width: 160px !important;
+    height: 160px !important;
+    max-width: 160px !important;
+    margin: 0 auto;
+    overflow: visible !important;
+  }
+
+  .template-pro-mobile .pro-mobile-logo img,
+  .template-pro-mobile .pro-mobile-logo picture,
+  .template-pro-mobile .pro-mobile-logo picture img {
+    width: 160px !important;
+    height: 160px !important;
+    max-width: 160px !important;
+    max-height: 160px !important;
+    object-fit: contain !important;
+  }
+
+  .template-pro-mobile .pro-mobile-header-body {
+    flex: none;
+    width: 100%;
+    max-width: 640px;
+    text-align: center;
+  }
+
+  .template-pro-mobile .pro-mobile-title {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  .template-pro-mobile .pro-mobile-desc {
+    text-align: center;
+  }
+}
+
+@container pro-mobile-menu (min-width: 769px) {
+  .template-pro-mobile .pro-mobile-cover img {
+    max-height: 320px !important;
+  }
+
+  .template-pro-mobile .pro-mobile-header {
+    width: min(900px, 100%);
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 28px 24px 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .template-pro-mobile .pro-mobile-logo {
+    width: 160px !important;
+    height: 160px !important;
+    max-width: 160px !important;
+    margin: 0 auto;
+    overflow: visible !important;
+  }
+
+  .template-pro-mobile .pro-mobile-logo img,
+  .template-pro-mobile .pro-mobile-logo picture,
+  .template-pro-mobile .pro-mobile-logo picture img {
+    width: 160px !important;
+    height: 160px !important;
+    max-width: 160px !important;
+    max-height: 160px !important;
+    object-fit: contain !important;
+  }
+
+  .template-pro-mobile .pro-mobile-header-body {
+    flex: none;
+    width: 100%;
+    max-width: 640px;
+    text-align: center;
+  }
+
+  .template-pro-mobile .pro-mobile-title {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  .template-pro-mobile .pro-mobile-desc {
+    text-align: center;
+  }
+}
+
+.preview-phone-live .template-pro-mobile .pro-mobile-cover img {
+  max-height: 220px !important;
+}
+
+.preview-phone-live .template-pro-mobile .pro-mobile-logo {
+  width: 72px !important;
+  height: 72px !important;
+  max-width: 72px !important;
+  overflow: visible !important;
+}
+
+.preview-phone-live .template-pro-mobile .pro-mobile-logo img,
+.preview-phone-live .template-pro-mobile .pro-mobile-logo picture img {
+  width: 72px !important;
+  height: 72px !important;
+  max-width: 72px !important;
+  max-height: 72px !important;
+  object-fit: contain !important;
+}
+
+.preview-phone-live .template-pro-mobile .pro-mobile-header {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 20px 14px 16px !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+  gap: 16px !important;
+}
+
+.preview-phone-live .template-pro-mobile .pro-mobile-header-body {
+  flex: 1 !important;
+  max-width: 100% !important;
+  text-align: left !important;
+}
+
+.preview-phone-live .template-pro-mobile .pro-mobile-title,
+.preview-phone-live .template-pro-mobile .pro-mobile-desc {
+  text-align: left !important;
+}
+
+.preview-phone-live .template-pro-mobile .pro-mobile-header--no-name {
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+.preview-phone-live .template-pro-mobile .pro-mobile-header--no-name .pro-mobile-header-body,
+.preview-phone-live .template-pro-mobile .pro-mobile-header--no-name .pro-mobile-title,
+.preview-phone-live .template-pro-mobile .pro-mobile-header--no-name .pro-mobile-desc {
+  text-align: center !important;
+}
+
+.preview-phone-live .template-pro-mobile .pro-mobile-title {
+  font-size: 1.45rem !important;
 }
 
 .template-pro-mobile .pro-mobile-item-row {
@@ -87,7 +351,9 @@
 }
 
 .template-pro-mobile .pro-mobile-items .tpl-featured-block {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   margin: 0;
   padding: 0;
   max-width: 100%;
@@ -96,15 +362,27 @@
 
 .template-pro-mobile .pro-mobile-item-row--featured {
   border: none;
-  border-bottom: 1px solid var(--pro-mobile-border, #eee);
+  border-bottom: 1px solid color-mix(in srgb, var(--tpl-featured-accent, var(--primary-color, #1a1a2e)) 32%, #c4c4c8);
   margin: 0;
   border-radius: 0;
   background: color-mix(in srgb, var(--tpl-featured-accent, var(--primary-color, #1a1a2e)) 8%, var(--pro-mobile-surface, #fff));
   box-shadow: none;
 }
 
+/* Separación clara entre varios destacados consecutivos */
+.template-pro-mobile .pro-mobile-item-row--featured + .pro-mobile-item-row--featured {
+  border-top: 1px solid color-mix(in srgb, var(--tpl-featured-accent, var(--primary-color, #1a1a2e)) 22%, transparent);
+  box-shadow: inset 0 8px 10px -10px color-mix(in srgb, var(--tpl-featured-accent, var(--primary-color, #1a1a2e)) 35%, transparent);
+}
+
 .template-night-club.template-pro-mobile .pro-mobile-item-row--featured {
   background: color-mix(in srgb, var(--tpl-featured-accent, #9333ea) 14%, var(--pro-mobile-surface, #12121a));
+  border-bottom-color: color-mix(in srgb, var(--tpl-featured-accent, #9333ea) 40%, rgba(255, 255, 255, 0.12));
+}
+
+.template-night-club.template-pro-mobile .pro-mobile-item-row--featured + .pro-mobile-item-row--featured {
+  border-top-color: color-mix(in srgb, var(--tpl-featured-accent, #9333ea) 28%, rgba(255, 255, 255, 0.08));
+  box-shadow: inset 0 8px 10px -10px color-mix(in srgb, var(--tpl-featured-accent, #9333ea) 45%, transparent);
 }
 
 .template-pro-mobile .pro-mobile-item-row--featured .tpl-featured-label {

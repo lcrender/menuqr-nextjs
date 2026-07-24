@@ -40,8 +40,8 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaDescription:
       'Alta del primer restaurante en AppMenuQR: datos, dirección en mapa, teléfono, WhatsApp, logo, plantilla por defecto y moneda principal.',
     group: 'Primeros pasos',
-    keywords: 'restaurante crear logo portada moneda plantilla dirección whatsapp maps',
-    searchText: 'restaurantes menú lateral crear guardar primera vez asistente',
+    keywords: 'restaurante crear logo portada moneda plantilla dirección whatsapp maps video tutorial youtube',
+    searchText: 'restaurantes menú lateral crear guardar primera vez asistente video tutorial primeros pasos',
   },
   {
     slug: 'crear-menu',
@@ -52,8 +52,8 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaDescription:
       'Cómo crear menús por restaurante: nombre visible para clientes, descripción opcional y secciones dentro del menú.',
     group: 'Primeros pasos',
-    keywords: 'menú crear borrador restaurante nombre botón secciones',
-    searchText: 'menús nuevo guardar almuerzo cena entradas principales',
+    keywords: 'menú crear borrador restaurante nombre botón secciones video tutorial youtube',
+    searchText: 'menús nuevo guardar almuerzo cena entradas principales video tutorial primeros pasos',
   },
   {
     slug: 'crear-secciones',

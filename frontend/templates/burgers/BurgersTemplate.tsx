@@ -85,21 +85,30 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
 }) => {
   const primaryColor = restaurant.primaryColor || '#e74c3c';
   const secondaryColor = restaurant.secondaryColor || '#c0392b';
+  const tc = restaurant.templateConfig || {};
+  const showCover = tc.showCoverImage !== false;
+  const showLogo = tc.showLogo !== false;
+  const showName = tc.showRestaurantName !== false;
+  const showDescription = tc.showRestaurantDescription !== false;
+  const restaurantNameColor =
+    typeof tc.restaurantNameColor === 'string' && tc.restaurantNameColor.trim()
+      ? tc.restaurantNameColor.trim()
+      : '#2c3e50';
   const sectionTitleLayout = resolveBurgersSectionTitleStyle(restaurant.templateConfig);
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   const hexToRgba = (hex: string, a: number) => {
     const h = hex.replace('#', '');
-    const r = parseInt(h.slice(0, 2), 16);
-    const g = parseInt(h.slice(2, 4), 16);
-    const b = parseInt(h.slice(4, 6), 16);
+    const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+    const r = parseInt(full.slice(0, 2), 16);
+    const g = parseInt(full.slice(2, 4), 16);
+    const b = parseInt(full.slice(4, 6), 16);
     return `rgba(${r},${g},${b},${a})`;
   };
 
   const shadowDepth = '0 2px 4px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.12), 0 16px 32px rgba(0,0,0,0.08)';
   const shadowGlowPrimary = `0 0 28px ${hexToRgba(primaryColor, 0.22)}`;
-  const shadowGlowSecondary = `0 0 28px ${hexToRgba(secondaryColor, 0.22)}`;
 
   return (
       <div className="template-burgers restaurant-container" style={{ minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden', boxSizing: 'border-box' }}>
@@ -166,14 +175,27 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
           box-shadow: 0 4px 12px rgba(0,0,0,0.12), 0 0 24px ${hexToRgba(primaryColor, 0.35)};
         }
         .template-burgers .restaurant-description-burgers strong {
-          color: white;
+          color: ${primaryColor};
           font-weight: 700;
         }
       `}</style>
 
       {/* Cover Image */}
-      {restaurant.coverUrl && (
-        <div className="template-burgers burgers-cover" style={{ width: '100%', height: '350px', overflow: 'hidden', position: 'relative', zIndex: 1, borderRadius: '16px', border: `4px solid ${secondaryColor}`, boxSizing: 'border-box', boxShadow: `${shadowDepth}, ${shadowGlowSecondary}` }}>
+      {showCover && restaurant.coverUrl && (
+        <div
+          className="template-burgers burgers-cover"
+          style={{
+            width: '100%',
+            height: '350px',
+            overflow: 'hidden',
+            position: 'relative',
+            zIndex: 1,
+            borderRadius: '16px',
+            border: 'none',
+            boxSizing: 'border-box',
+            boxShadow: shadowDepth,
+          }}
+        >
           <OptimizedPicture
             src={restaurant.coverUrl}
             alt={restaurant.name}
@@ -218,7 +240,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
         </div>
         
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '30px', flexWrap: 'wrap', marginBottom: '50px', position: 'relative', zIndex: 1 }} className="template-burgers burgers-header-row">
-          {restaurant.logoUrl && (
+          {showLogo && restaurant.logoUrl && (
             <div className="template-burgers burgers-logo-wrapper" style={{ flexShrink: 0 }}>
               <OptimizedPicture 
                 src={restaurant.logoUrl} 
@@ -234,29 +256,38 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
               />
             </div>
           )}
-          <div style={{ 
+          {(showName || (showDescription && restaurant.description)) && (
+          <div
+            className="template-burgers burgers-info-card"
+            style={{ 
             flex: 1, 
             minWidth: '250px',
-            background: primaryColor,
+            background: '#ffffff',
             borderRadius: '20px',
             padding: '32px 28px',
-            boxShadow: `${shadowDepth}, ${shadowGlowPrimary}`,
-            color: 'white',
-            border: '4px solid #000',
+            boxShadow: shadowDepth,
+            color: '#2c3e50',
+            border: `4px solid ${primaryColor}`,
             boxSizing: 'border-box'
           }}>
-            <h1 style={{ 
+            {showName ? (
+            <h1
+              className="template-burgers burgers-restaurant-name"
+              style={{ 
               fontSize: '1.8rem', 
               fontWeight: '800', 
-              marginBottom: '16px', 
-              color: 'white',
+              marginBottom: showDescription && restaurant.description ? '16px' : 0, 
+              color: restaurantNameColor,
               lineHeight: '1.2',
               textTransform: 'uppercase',
-              letterSpacing: '2px'
+              letterSpacing: '2px',
+              textAlign: 'center',
+              background: 'transparent',
             }}>
               {restaurant.name}
             </h1>
-            {restaurant.description && (
+            ) : null}
+            {showDescription && restaurant.description && (
               <div 
                 dangerouslySetInnerHTML={{ 
                   __html: restaurant.description
@@ -266,13 +297,15 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                 style={{ 
                   fontSize: '1rem', 
                   lineHeight: '1.7', 
-                  color: 'rgba(255,255,255,0.95)',
-                  textAlign: 'justify'
+                  color: '#4b5563',
+                  textAlign: 'center',
+                  background: 'transparent',
                 }}
                 className="restaurant-description-burgers"
               />
             )}
           </div>
+          )}
         </div>
 
         {menuLocales && <MenuLanguageSwitcher {...menuLocales} />}
@@ -506,18 +539,15 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                 >
                   {section.name}
                 </h2>
-                {featuredItems.length > 0 ? (
-                  <div className="tpl-featured-block" style={featuredAccentStyle}>
-                    {featuredItems.map((item) => (
-                      <div key={item.id}>{renderBurgerCard(item, true)}</div>
-                    ))}
-                  </div>
-                ) : null}
-                <div className="row g-4">
+                <div
+                  className="template-burgers burgers-products-grid"
+                  style={featuredItems.length > 0 ? featuredAccentStyle : undefined}
+                >
+                  {featuredItems.map((item) => (
+                    <div key={item.id}>{renderBurgerCard(item, true)}</div>
+                  ))}
                   {regularItems.map((item) => (
-                    <div key={item.id} className="col-md-6 col-lg-4">
-                      {renderBurgerCard(item, false)}
-                    </div>
+                    <div key={item.id}>{renderBurgerCard(item, false)}</div>
                   ))}
                 </div>
               </div>

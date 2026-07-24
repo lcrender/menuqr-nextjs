@@ -262,18 +262,11 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
           )}
           {showDescription && restaurant.description && (
             <div
+              className="template-foodie foodie-restaurant-description"
               dangerouslySetInnerHTML={{
                 __html: restaurant.description
                   .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                   .replace(/\n/g, '<br />'),
-              }}
-              style={{
-                fontSize: '1rem',
-                lineHeight: '1.6',
-                color: '#6c757d',
-                textAlign: 'justify',
-                maxWidth: '720px',
-                width: '100%',
               }}
             />
           )}
@@ -469,19 +462,22 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
                   {section.name}
                 </h2>
                 {featuredItems.length > 0 ? (
-                  <div className="tpl-featured-block" style={featuredAccentStyle}>
+                  <div
+                    className="template-foodie foodie-products-grid foodie-products-grid--featured"
+                    style={featuredAccentStyle}
+                  >
                     {featuredItems.map((item) => (
                       <div key={item.id}>{renderFoodieCard(item, true)}</div>
                     ))}
                   </div>
                 ) : null}
-                <div className="row g-4">
-                  {regularItems.map((item) => (
-                    <div key={item.id} className="col-md-6 col-lg-4">
-                      {renderFoodieCard(item, false)}
-                    </div>
-                  ))}
-                </div>
+                {regularItems.length > 0 ? (
+                  <div className="template-foodie foodie-products-grid">
+                    {regularItems.map((item) => (
+                      <div key={item.id}>{renderFoodieCard(item, false)}</div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               );
             })}

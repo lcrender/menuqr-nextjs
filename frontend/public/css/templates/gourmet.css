@@ -1,0 +1,139 @@
+/* PLANTILLA GOURMET */
+.template-gourmet {
+  color: #2c3e50;
+}
+
+/* Container queries: el mockup admin no cambia el viewport; sí el ancho del contenedor */
+.template-gourmet.restaurant-container {
+  container-type: inline-size;
+  container-name: gourmet-menu;
+}
+
+/* Grid de productos:
+   - móvil: 1 col
+   - tablet (≥768): 2 cols
+   - desktop (≥992): 3 cols
+   Destacados van en su propio grid (arriba); comunes empiezan en la fila siguiente. */
+.template-gourmet .gourmet-products-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  column-gap: 1.5rem;
+  row-gap: 1.5rem;
+}
+
+.template-gourmet .gourmet-products-grid--featured {
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .template-gourmet .gourmet-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 992px) {
+  .template-gourmet .gourmet-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Mockup admin: viewport desktop; forzar layout por ancho del teléfono */
+.preview-phone-live .template-gourmet .gourmet-products-grid {
+  grid-template-columns: 1fr !important;
+}
+
+@container gourmet-menu (max-width: 767px) {
+  .template-gourmet .gourmet-products-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@container gourmet-menu (min-width: 768px) and (max-width: 991px) {
+  .template-gourmet .gourmet-products-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@container gourmet-menu (min-width: 992px) {
+  .template-gourmet .gourmet-products-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* Header: desktop logo + texto; móvil / mockup centrados */
+.template-gourmet .gourmet-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.template-gourmet .gourmet-header-text {
+  flex: 1;
+  min-width: 250px;
+}
+
+.template-gourmet .gourmet-restaurant-description {
+  text-align: justify;
+}
+
+@media (max-width: 768px) {
+  .template-gourmet .gourmet-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .template-gourmet .gourmet-logo {
+    margin: 0 auto;
+  }
+
+  .template-gourmet .gourmet-header-text {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .template-gourmet .gourmet-restaurant-description {
+    text-align: center;
+  }
+}
+
+@container gourmet-menu (max-width: 768px) {
+  .template-gourmet .gourmet-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .template-gourmet .gourmet-logo {
+    margin: 0 auto;
+  }
+
+  .template-gourmet .gourmet-header-text {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .template-gourmet .gourmet-restaurant-description {
+    text-align: center;
+  }
+}
+
+.preview-phone-live .template-gourmet .gourmet-header {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.preview-phone-live .template-gourmet .gourmet-logo {
+  margin: 0 auto;
+}
+
+.preview-phone-live .template-gourmet .gourmet-header-text {
+  width: 100%;
+  min-width: 0;
+}
+
+.preview-phone-live .template-gourmet .gourmet-restaurant-description {
+  text-align: center !important;
+}

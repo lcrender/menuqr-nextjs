@@ -365,3 +365,41 @@
     align-items: flex-end;
   }
 }
+
+/*
+ * Mockup de teléfono (preview admin / live embed):
+ * el fondo usa position:fixed en la carta real; aquí hay que contenerlo
+ * para que no cubra toda la pantalla por encima del marco.
+ */
+.preview-phone-live:has(.template-beachbar) {
+  overflow: hidden;
+  position: relative;
+  /* Crea containing block por si queda algún fixed */
+  transform: translateZ(0);
+}
+
+.preview-phone-live .template-beachbar {
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.preview-phone-live .beachbar-bg,
+.preview-phone-live .beachbar-bg-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.preview-phone-live .beachbar-locale-float {
+  position: absolute;
+}
+
+.preview-phone-live .beachbar-page {
+  height: 100%;
+  max-width: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}

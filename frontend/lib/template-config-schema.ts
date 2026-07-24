@@ -104,6 +104,47 @@ const BURGERS_SECTION_TITLE_SIZE: TemplateConfigOption = {
   ],
 };
 
+/** Burgers: visibilidad + color del nombre (debajo de mostrar/ocultar nombre). */
+const BURGERS_OPTIONS: TemplateConfigOption[] = [
+  ...COMMON_COLOR_OPTIONS,
+  {
+    id: 'showCoverImage',
+    label: 'Mostrar imagen de portada',
+    description: 'Si está desactivado, no se muestra la imagen de portada en la plantilla.',
+    type: 'boolean',
+    default: true,
+  },
+  {
+    id: 'showLogo',
+    label: 'Mostrar logo',
+    description: 'Si está desactivado, no se muestra el logo del restaurante.',
+    type: 'boolean',
+    default: true,
+  },
+  {
+    id: 'showRestaurantName',
+    label: 'Mostrar nombre del restaurante',
+    description: 'Si está desactivado, no se muestra el nombre del restaurante.',
+    type: 'boolean',
+    default: true,
+  },
+  {
+    id: 'restaurantNameColor',
+    label: 'Color del nombre del restaurante',
+    description: 'Color del texto del nombre del restaurante en la cabecera.',
+    type: 'color',
+    default: '#2c3e50',
+  },
+  {
+    id: 'showRestaurantDescription',
+    label: 'Mostrar descripción del restaurante',
+    description: 'Si está desactivado, no se muestra la descripción del restaurante.',
+    type: 'boolean',
+    default: true,
+  },
+  BURGERS_SECTION_TITLE_SIZE,
+];
+
 /** Visible solo en planes de pago indicados (y super admin); en planes inferiores el menú público sigue mostrando banderas. */
 const TRANSLATION_FLAGS_TEMPLATE_OPTIONS: TemplateConfigOption[] = [
   {
@@ -146,9 +187,15 @@ const PRO_MOBILE_OPTIONS: TemplateConfigOption[] = [
   { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista (sin placeholder si no hay foto).', type: 'boolean', default: true },
 ];
 
-/** Night Club: layout móvil oscuro, sin fotos de productos. */
+/** Night Club: solo color principal (el secundario no se usa); sin fotos de productos. */
 const NIGHT_CLUB_OPTIONS: TemplateConfigOption[] = [
-  ...COMMON_COLOR_OPTIONS,
+  {
+    id: 'primaryColor',
+    label: 'Color principal',
+    description: 'Color principal de la plantilla (botones, títulos, elementos destacados).',
+    type: 'color',
+    default: '#9333ea',
+  },
   ...VISIBILITY_OPTIONS,
 ];
 
@@ -255,6 +302,25 @@ const SOL_NOCHE_OPTIONS: TemplateConfigOption[] = [
   { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista.', type: 'boolean', default: true },
 ];
 
+/** Italian Food: tipografía (colores fijos de bandera, no configurables). */
+const ITALIAN_FOOD_OPTIONS: TemplateConfigOption[] = [
+  {
+    id: 'fontFamily',
+    label: 'Tipografía',
+    description: 'Fuente para títulos y textos de la plantilla.',
+    type: 'select',
+    default: 'playfair',
+    options: [
+      { value: 'playfair', label: 'Playfair Display (por defecto)' },
+      { value: 'cormorant', label: 'Cormorant Garamond' },
+      { value: 'bodoni', label: 'Bodoni Moda' },
+      { value: 'eb-garamond', label: 'EB Garamond' },
+      { value: 'lora', label: 'Lora' },
+      { value: 'cinzel', label: 'Cinzel' },
+    ],
+  },
+];
+
 /**
  * classic, minimalist y foodie incluyen además opciones de visibilidad (portada, logo, nombre, descripción).
  */
@@ -262,13 +328,13 @@ export const TEMPLATE_CONFIG_SCHEMAS: Record<string, TemplateConfigOption[]> = {
   classic: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   minimalist: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   foodie: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  burgers: [...COMMON_COLOR_OPTIONS, BURGERS_SECTION_TITLE_SIZE, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  italianFood: [...COMMON_COLOR_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  burgers: [...BURGERS_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  italianFood: [...ITALIAN_FOOD_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   gourmet: [...GOURMET_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   proMobile: [...PRO_MOBILE_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   nightClub: [...NIGHT_CLUB_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
   smartFood: [...SMART_FOOD_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  beachBar: [...BEACH_BAR_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  beachBar: [...BEACH_BAR_OPTIONS],
   solNoche: [...SOL_NOCHE_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
 };
 

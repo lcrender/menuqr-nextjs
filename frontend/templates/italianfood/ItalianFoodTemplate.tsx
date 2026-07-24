@@ -11,6 +11,34 @@ import {
   footerWebsiteRel,
 } from '../../lib/template-footer-link-rel';
 
+/** Pares tipográficos: display (títulos) + body (descripciones). */
+const ITALIAN_FONT_FAMILIES: Record<string, { display: string; body: string }> = {
+  playfair: {
+    display: "'Playfair Display', serif",
+    body: "'Cormorant Garamond', serif",
+  },
+  cormorant: {
+    display: "'Cormorant Garamond', serif",
+    body: "'Cormorant Garamond', serif",
+  },
+  bodoni: {
+    display: "'Bodoni Moda', serif",
+    body: "'Bodoni Moda', serif",
+  },
+  'eb-garamond': {
+    display: "'EB Garamond', serif",
+    body: "'EB Garamond', serif",
+  },
+  lora: {
+    display: "'Lora', serif",
+    body: "'Lora', serif",
+  },
+  cinzel: {
+    display: "'Cinzel', serif",
+    body: "'Cormorant Garamond', serif",
+  },
+};
+
 interface ItalianFoodTemplateProps {
   restaurant: {
     id: string;
@@ -69,6 +97,11 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
   const primaryColor = '#009246';
   const secondaryColor = '#CE2B37';
   const whiteColor = '#FFFFFF';
+  const tc = restaurant.templateConfig || {};
+  const fontKey = typeof tc.fontFamily === 'string' ? tc.fontFamily : 'playfair';
+  const fonts = ITALIAN_FONT_FAMILIES[fontKey] ?? ITALIAN_FONT_FAMILIES.playfair!;
+  const displayFont = fonts.display;
+  const bodyFont = fonts.body;
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
@@ -121,28 +154,10 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
       {/* Contenido con z-index superior */}
       <div style={{ position: 'relative', zIndex: 2 }}>
       <style jsx>{`
-        .template-italianfood .italian-products-row {
-          display: flex;
-          flex-direction: column;
-          margin-left: 0;
-          margin-right: 0;
-          --bs-gutter-x: 0;
-          --bs-gutter-y: 0;
-        }
-        .template-italianfood .italian-products-row > [class*='col'] {
-          width: 100%;
-          max-width: 100%;
-          flex: 0 0 100%;
-          padding-left: 0;
-          padding-right: 0;
-        }
         .template-italianfood .menu-item-card {
           width: 100%;
           max-width: 100%;
           box-sizing: border-box;
-        }
-        .template-italianfood .tpl-featured-block > * {
-          width: 100%;
         }
       `}</style>
       {/* Cover Image */}
@@ -198,7 +213,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
               />
             </div>
           )}
-          <div style={{ flex: 1, minWidth: '250px', textAlign: 'left' }} className="template-italianfood restaurant-info-text">
+          <div className="template-italianfood restaurant-info-text">
             <h1 style={{ 
               fontSize: '2.5rem', 
               fontWeight: '700', 
@@ -207,8 +222,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
               color: '#009246',
               lineHeight: '1.2',
               fontStyle: 'italic',
-              fontFamily: "'Playfair Display', serif",
-              textAlign: 'inherit'
+              fontFamily: displayFont,
             }}
             className="template-italianfood restaurant-name-mobile"
             >
@@ -216,6 +230,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
             </h1>
             {restaurant.description && (
               <div 
+                className="template-italianfood italian-restaurant-description"
                 dangerouslySetInnerHTML={{ 
                   __html: restaurant.description
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -223,11 +238,10 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                 }}
                 style={{ 
                   fontSize: '1.15rem', 
-                  lineHeight: '1.8', 
+                  lineHeight: '1.45', 
                   color: '#5a5a5a',
-                  textAlign: 'justify',
                   fontStyle: 'italic',
-                  fontFamily: "'Cormorant Garamond', serif"
+                  fontFamily: bodyFont
                 }}
               />
             )}
@@ -236,7 +250,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
 
         {menuLocales ? (
           <div className="italian-food-locale-strip">
-            <MenuLanguageSwitcher {...menuLocales} />
+            <MenuLanguageSwitcher {...menuLocales} gourmetFontFamily={displayFont} />
           </div>
         ) : null}
 
@@ -260,7 +274,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                     color: selectedMenu?.slug === menu.slug ? 'white' : '#009246',
                     background: selectedMenu?.slug === menu.slug ? '#009246' : 'transparent',
                     fontStyle: 'italic',
-                    fontFamily: "'Playfair Display', serif"
+                    fontFamily: displayFont
                   }}
                 >
                   {menu.name}
@@ -294,7 +308,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                     transition: 'all 0.3s ease',
                     display: 'inline-block',
                     fontStyle: 'italic',
-                    fontFamily: "'Playfair Display', serif"
+                    fontFamily: displayFont
                   }}
                 >
                   {section.name}
@@ -344,7 +358,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                       color: '#2c3e50',
                       lineHeight: '1.3',
                       fontStyle: 'italic',
-                      fontFamily: "'Playfair Display', serif"
+                      fontFamily: displayFont
                     }}>
                       {item.name}
                     </h3>
@@ -361,7 +375,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                         height: 'auto',
                         minHeight: 'auto',
                         fontStyle: 'italic',
-                        fontFamily: "'Cormorant Garamond', serif"
+                        fontFamily: bodyFont
                       }}>
                         {item.description}
                       </p>
@@ -433,7 +447,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                               height: 'auto',
                               minHeight: 'auto',
                               fontStyle: 'italic',
-                              fontFamily: "'Playfair Display', serif",
+                              fontFamily: displayFont,
                               verticalAlign: 'baseline'
                             }}
                           >
@@ -460,7 +474,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                   borderBottom: '3px solid transparent',
                   borderImage: 'repeating-linear-gradient(90deg, #009246 0px, #009246 12px, #FFFFFF 12px, #FFFFFF 24px, #CE2B37 24px, #CE2B37 36px) 1',
                   fontStyle: 'italic',
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: displayFont,
                   lineHeight: '1.2',
                   height: 'auto',
                   minHeight: 'auto'
@@ -468,19 +482,22 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                   {section.name}
                 </h2>
                 {featuredItems.length > 0 ? (
-                  <div className="tpl-featured-block" style={featuredAccentStyle}>
+                  <div
+                    className="template-italianfood italian-products-grid italian-products-grid--featured"
+                    style={featuredAccentStyle}
+                  >
                     {featuredItems.map((item) => (
                       <div key={item.id}>{renderItalianCard(item, true)}</div>
                     ))}
                   </div>
                 ) : null}
-                <div className="row italian-products-row" style={{ marginBottom: '0', marginTop: '0' }}>
-                  {regularItems.map((item) => (
-                    <div key={item.id} className="col-12" style={{ marginBottom: '24px', marginTop: 0 }}>
-                      {renderItalianCard(item, false)}
-                    </div>
-                  ))}
-                </div>
+                {regularItems.length > 0 ? (
+                  <div className="template-italianfood italian-products-grid">
+                    {regularItems.map((item) => (
+                      <div key={item.id}>{renderItalianCard(item, false)}</div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               );
             })}
@@ -503,7 +520,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
           <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: 0 }}>
             <div className="row" style={{ margin: 0 }}>
               <div className="col-md-6" style={{ padding: '0 12px' }}>
-                <h4 style={{ marginBottom: '12px', marginTop: 0, fontWeight: '600', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", fontSize: '1.15rem', lineHeight: '1.3', color: '#000000' }}>{restaurant.name}</h4>
+                <h4 style={{ marginBottom: '12px', marginTop: 0, fontWeight: '600', fontStyle: 'italic', fontFamily: displayFont, fontSize: '1.15rem', lineHeight: '1.3', color: '#000000' }}>{restaurant.name}</h4>
                 {restaurant.address && (
                   <p style={{ marginBottom: '8px', marginTop: 0, fontSize: '0.9rem', lineHeight: '1.4', color: '#000000' }}>
                     <strong>📍 Dirección:</strong> {restaurant.address}
@@ -511,7 +528,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                 )}
               </div>
               <div className="col-md-6" style={{ padding: '0 12px' }}>
-                <h5 style={{ marginBottom: '12px', marginTop: 0, fontWeight: '600', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", fontSize: '1rem', lineHeight: '1.3', color: '#000000' }}>Contacto</h5>
+                <h5 style={{ marginBottom: '12px', marginTop: 0, fontWeight: '600', fontStyle: 'italic', fontFamily: displayFont, fontSize: '1rem', lineHeight: '1.3', color: '#000000' }}>Contacto</h5>
                 {restaurant.phone && (
                   <p style={{ marginBottom: '8px', marginTop: 0, fontSize: '0.9rem', lineHeight: '1.4', color: '#000000' }}>
                     <strong>📞 Teléfono:</strong>{' '}

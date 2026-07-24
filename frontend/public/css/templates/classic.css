@@ -5,6 +5,25 @@
   color: var(--secondary-color, #0056b3);
 }
 
+/* Container queries: el mockup admin no cambia el viewport; sí el ancho del contenedor */
+.template-classic.restaurant-container {
+  container-type: inline-size;
+  container-name: classic-menu;
+}
+
+.template-classic.classic-main-content {
+  width: 100%;
+  padding-left: 40px;
+  padding-right: 40px;
+  flex: 1;
+}
+
+.template-classic .classic-cover-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 .template-classic .restaurant-header {
   background: linear-gradient(135deg, var(--primary-color, #007bff) 0%, var(--secondary-color, #0056b3) 100%);
   color: white;
@@ -268,23 +287,24 @@
   }
 }
 
+/* Móvil real (viewport) + mockup admin (ancho del contenedor ~390px) */
 @media (max-width: 768px) {
   .template-classic.classic-main-content {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .template-classic .classic-cover-wrapper {
     margin-left: -16px;
     margin-right: -16px;
     width: calc(100% + 32px);
-    border-radius: 0 !important;
+    border-radius: 0;
   }
 
   .template-classic .classic-logo {
-    max-width: 100% !important;
-    width: 100% !important;
-    height: auto !important;
+    max-width: 100%;
+    width: 100%;
+    height: auto;
     aspect-ratio: 1;
     object-fit: cover;
   }
@@ -296,8 +316,41 @@
   }
 
   .template-classic .footer {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+@container classic-menu (max-width: 768px) {
+  .template-classic.classic-main-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .template-classic .classic-cover-wrapper {
+    margin-left: -16px;
+    margin-right: -16px;
+    width: calc(100% + 32px);
+    border-radius: 0;
+  }
+
+  .template-classic .classic-logo {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  .template-classic .classic-menu-item-prices {
+    width: 100%;
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .template-classic .footer {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 

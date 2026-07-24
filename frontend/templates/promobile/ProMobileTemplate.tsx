@@ -194,10 +194,10 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
         }
         .template-pro-mobile .pro-mobile-cover {
           width: 100%;
-          max-width: 100vw;
+          max-width: 100%;
           overflow: hidden;
         }
-        .template-pro-mobile .pro-mobile-cover img {
+        .template-pro-mobile .pro-mobile-cover :global(img) {
           width: 100%;
           height: auto;
           display: block;
@@ -210,6 +210,9 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
           align-items: flex-start;
           gap: 16px;
           padding: 20px 14px 16px;
+          max-width: 100%;
+          box-sizing: border-box;
+          min-width: 0;
         }
         .template-pro-mobile .pro-mobile-header--no-name {
           flex-direction: column;
@@ -219,6 +222,9 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
         .template-pro-mobile .pro-mobile-header-body {
           flex: 1;
           min-width: 0;
+          max-width: 100%;
+          overflow-wrap: anywhere;
+          word-break: break-word;
         }
         .template-pro-mobile .pro-mobile-header--no-name .pro-mobile-header-body {
           flex: none;
@@ -231,14 +237,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
         }
         .template-pro-mobile .pro-mobile-header--no-name .pro-mobile-desc {
           width: 100%;
-          text-align: justify;
-        }
-        .template-pro-mobile .pro-mobile-logo img {
-          width: 72px;
-          height: 72px;
-          object-fit: cover;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          text-align: center;
         }
         .template-pro-mobile .pro-mobile-title {
           font-size: 1.45rem;
@@ -246,12 +245,16 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
           margin: 0 0 8px;
           color: ${titleColor};
           line-height: 1.2;
+          max-width: 100%;
+          overflow-wrap: anywhere;
         }
         .template-pro-mobile .pro-mobile-desc {
           font-size: 0.85rem;
           line-height: 1.55;
           color: ${descColor};
           margin: 0;
+          max-width: 100%;
+          overflow-wrap: anywhere;
         }
         .template-pro-mobile .menu-tab-btn {
           background: ${primaryColor};
@@ -313,27 +316,9 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
         }
         .template-pro-mobile .footer {
           background: ${primaryColor};
-          border-top: 3px solid ${secondaryColor};
+          ${isNightClub ? 'border-top: none;' : `border-top: 3px solid ${secondaryColor};`}
         }
         @media (min-width: 769px) {
-          .template-pro-mobile .pro-mobile-cover img {
-            max-height: 320px;
-          }
-          .template-pro-mobile .pro-mobile-header {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 28px 24px 20px;
-          }
-          .template-pro-mobile .pro-mobile-header--no-name .pro-mobile-header-body {
-            padding: 0 24px;
-          }
-          .template-pro-mobile .pro-mobile-logo img {
-            width: 100px;
-            height: 100px;
-          }
-          .template-pro-mobile .pro-mobile-title {
-            font-size: 2rem;
-          }
           .template-pro-mobile .pro-mobile-menu-area {
             max-width: 900px;
             margin: 0 auto;

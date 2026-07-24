@@ -20,7 +20,7 @@ export default function TemplateFonts({ googleFontsHref }: TemplateFontsProps) {
 }
 
 export const ITALIAN_FOOD_FONTS_HREF =
-  'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap';
+  'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;0,6..96,700;1,6..96,400;1,6..96,600;1,6..96,700&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Cinzel:wght@400;600;700&display=swap';
 
 export const SMART_FOOD_FONTS_HREF =
   'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Inter:wght@400;600;700&display=swap';

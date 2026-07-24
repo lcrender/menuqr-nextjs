@@ -158,24 +158,6 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
           display: flex;
           flex-direction: column;
         }
-        .template-gourmet .gourmet-products-row {
-          --bs-gutter-x: 0;
-          --bs-gutter-y: 0.75rem;
-          display: flex;
-          flex-direction: column;
-          margin-left: 0;
-          margin-right: 0;
-        }
-        .template-gourmet .gourmet-products-row > [class*='col'] {
-          width: 100%;
-          max-width: 100%;
-          flex: 0 0 100%;
-          padding-left: 0;
-          padding-right: 0;
-        }
-        .template-gourmet .tpl-featured-block > * {
-          width: 100%;
-        }
         @media (min-width: 768px) {
           .template-gourmet .gourmet-menu-body {
             padding-left: 20px;
@@ -213,16 +195,6 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
           gap: 30px;
           flex-wrap: wrap;
         }
-        @media (max-width: 768px) {
-          .template-gourmet .gourmet-header {
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-          }
-          .template-gourmet .gourmet-logo {
-            margin: 0 auto;
-          }
-        }
       `}</style>
 
       {showCover && restaurant.coverUrl && (
@@ -242,18 +214,19 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
               />
             </div>
           )}
-          <div style={{ flex: 1, minWidth: '250px' }}>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: '600', marginBottom: '12px', letterSpacing: '-0.02em', color: '#2c3e50', lineHeight: '1.2', fontFamily }}>
+          <div className="gourmet-header-text">
+            <h1 className="gourmet-restaurant-name" style={{ fontSize: '2.5rem', fontWeight: '600', marginBottom: '12px', letterSpacing: '-0.02em', color: '#2c3e50', lineHeight: '1.2', fontFamily }}>
               {restaurant.name}
             </h1>
             {restaurant.description && (
               <div
+                className="gourmet-restaurant-description"
                 dangerouslySetInnerHTML={{
                   __html: restaurant.description
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\n/g, '<br />'),
                 }}
-                style={{ fontSize: '1rem', lineHeight: '1.6', color: '#6c757d', textAlign: 'justify', fontFamily }}
+                style={{ fontSize: '1rem', lineHeight: '1.6', color: '#6c757d', fontFamily }}
               />
             )}
           </div>
@@ -403,19 +376,22 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
                   {section.name}
                 </h2>
                 {featuredItems.length > 0 ? (
-                  <div className="tpl-featured-block" style={featuredAccentStyle}>
+                  <div
+                    className="template-gourmet gourmet-products-grid gourmet-products-grid--featured"
+                    style={featuredAccentStyle}
+                  >
                     {featuredItems.map((item) => (
                       <div key={item.id}>{renderGourmetCard(item, true)}</div>
                     ))}
                   </div>
                 ) : null}
-                <div className="row gourmet-products-row g-3">
-                  {regularItems.map((item) => (
-                    <div key={item.id} className="col-12">
-                      {renderGourmetCard(item, false)}
-                    </div>
-                  ))}
-                </div>
+                {regularItems.length > 0 ? (
+                  <div className="template-gourmet gourmet-products-grid">
+                    {regularItems.map((item) => (
+                      <div key={item.id}>{renderGourmetCard(item, false)}</div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               );
             })}

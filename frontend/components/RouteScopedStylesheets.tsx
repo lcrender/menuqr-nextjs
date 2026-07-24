@@ -3,6 +3,8 @@ import { useRouter } from 'next/router';
 
 /** Bump al cambiar estilos admin para evitar caché del navegador. */
 const ADMIN_CSS_V = '20260721c';
+/** Bump al cambiar CSS de plantillas (preview mockup, etc.). */
+const MENU_CSS_V = '20260724z';
 
 const ADMIN_STYLES = [
   `/css/admin.css?v=${ADMIN_CSS_V}`,
@@ -11,17 +13,18 @@ const ADMIN_STYLES = [
 ] as const;
 
 const MENU_STYLES = [
-  '/css/templates.css',
-  '/css/highlighted-product.css',
-  '/css/templates/classic.css',
-  '/css/templates/minimalist.css',
-  '/css/templates/foodie.css',
-  '/css/templates/burgers.css',
-  '/css/templates/italianfood.css',
-  '/css/templates/smartfood.css',
-  '/css/templates/beachbar.css',
-  '/css/templates/promobile.css',
-  '/css/templates/solnoche.css',
+  `/css/templates.css?v=${MENU_CSS_V}`,
+  `/css/highlighted-product.css?v=${MENU_CSS_V}`,
+  `/css/templates/classic.css?v=${MENU_CSS_V}`,
+  `/css/templates/minimalist.css?v=${MENU_CSS_V}`,
+  `/css/templates/foodie.css?v=${MENU_CSS_V}`,
+  `/css/templates/burgers.css?v=${MENU_CSS_V}`,
+  `/css/templates/italianfood.css?v=${MENU_CSS_V}`,
+  `/css/templates/gourmet.css?v=${MENU_CSS_V}`,
+  `/css/templates/smartfood.css?v=${MENU_CSS_V}`,
+  `/css/templates/beachbar.css?v=${MENU_CSS_V}`,
+  `/css/templates/promobile.css?v=${MENU_CSS_V}`,
+  `/css/templates/solnoche.css?v=${MENU_CSS_V}`,
 ] as const;
 
 function needsAdminStyles(pathname: string): boolean {

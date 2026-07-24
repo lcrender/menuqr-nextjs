@@ -5,6 +5,72 @@
   color: #2c3e50;
 }
 
+/* Container queries: el mockup admin no cambia el viewport; sí el ancho del contenedor */
+.template-foodie.restaurant-container {
+  container-type: inline-size;
+  container-name: foodie-menu;
+}
+
+.template-foodie .foodie-restaurant-description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #6c757d;
+  max-width: 720px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Grid de productos:
+   - móvil: 1 col
+   - tablet (≥768): 2 cols
+   - desktop (≥992): 3 cols
+   Destacados van en su propio grid (arriba); comunes empiezan en la fila siguiente. */
+.template-foodie .foodie-products-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  column-gap: 1.5rem;
+  row-gap: 1.5rem;
+}
+
+.template-foodie .foodie-products-grid--featured {
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .template-foodie .foodie-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 992px) {
+  .template-foodie .foodie-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Mockup admin: viewport desktop; forzar layout por ancho del teléfono */
+.preview-phone-live .template-foodie .foodie-products-grid {
+  grid-template-columns: 1fr !important;
+}
+
+@container foodie-menu (max-width: 767px) {
+  .template-foodie .foodie-products-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@container foodie-menu (min-width: 768px) and (max-width: 991px) {
+  .template-foodie .foodie-products-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@container foodie-menu (min-width: 992px) {
+  .template-foodie .foodie-products-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
 .template-foodie .foodie-logo-wrap {
   position: relative;
   padding: 3px;
@@ -159,16 +225,17 @@
 .template-foodie .foodie-locale-select {
   position: relative;
   display: inline-block;
-  min-width: 200px;
+  width: fit-content;
+  max-width: 100%;
   z-index: 20;
 }
 
 .template-foodie .foodie-locale-select-trigger {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  width: 100%;
+  gap: 10px;
+  width: auto;
   padding: 12px 28px;
   font-size: 1rem;
   font-weight: 600;
@@ -257,8 +324,11 @@
 .template-foodie .foodie-locale-select-menu {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
-  right: 0;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: max-content;
+  min-width: 100%;
   margin: 0;
   padding: 6px 0;
   list-style: none;
@@ -353,7 +423,7 @@
 }
 
 .template-foodie .foodie-locale-switcher-wrap {
-  margin-bottom: 28px;
+  margin-bottom: 40px;
 }
 
 .template-foodie .foodie-menu-body {

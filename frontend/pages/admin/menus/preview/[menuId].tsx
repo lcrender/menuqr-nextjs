@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import api from '../../../../lib/axios';
 import AdminMenuPreviewConfigDrawer from '../../../../components/preview/AdminMenuPreviewConfigDrawer';
+import {
+  buildTemplateMenuLocales,
+  type MenuLangManifestEntry,
+} from '../../../../components/MenuLanguageSwitcher';
 import {
   TEMPLATE_CONFIG_SCHEMAS,
   buildTemplateConfigDefaults,
@@ -95,6 +99,84 @@ function asArray<T>(data: unknown): T[] {
   return [];
 }
 
+function parseTranslationManifest(raw: unknown): MenuLangManifestEntry[] {
+  let data: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(data)) return [];
+  return data
+    .filter((x) => x && typeof x === 'object' && typeof (x as { locale?: unknown }).locale === 'string')
+    .map((x) => {
+      const o = x as Record<string, unknown>;
+      const ep = o.enabledPublic;
+      const entry: MenuLangManifestEntry = { locale: String(o.locale) };
+      if (typeof o.label === 'string') entry.label = o.label;
+      if (typeof o.flagCode === 'string') entry.flagCode = o.flagCode;
+      if (ep === false || ep === 'false') entry.enabledPublic = false;
+      else if (ep === true || ep === 'true') entry.enabledPublic = true;
+      return entry;
+    });
+}
+
+/** Misma regla que el menú público: ocultar locales con enabledPublic === false. */
+function filterPublicLocales(allLocales: string[], manifest: MenuLangManifestEntry[]): string[] {
+  const map = new Map(manifest.map((e) => [e.locale, e]));
+  const out = allLocales.filter((loc) => {
+    const e = map.get(loc);
+    if (e && e.enabledPublic === false) return false;
+    return true;
+  });
+  if (out.length === 0) return ['es-ES'];
+  return out;
+}
+
+/** Destacado vive en `extra.highlighted` en API admin; en público ya viene plano. */
+function itemIsHighlighted(item: { highlighted?: unknown; extra?: { highlighted?: unknown } | null }): boolean {
+  if (item?.highlighted === true) return true;
+  if (item?.extra && typeof item.extra === 'object' && item.extra.highlighted === true) return true;
+  return false;
+}
+
+function mapItemPhotos(photosRaw: unknown): string[] {
+  if (!Array.isArray(photosRaw)) return [];
+  return photosRaw
+    .map((photo: unknown) => {
+      if (typeof photo === 'string') return photo;
+      if (photo && typeof photo === 'object' && typeof (photo as { url?: unknown }).url === 'string') {
+        return (photo as { url: string }).url;
+      }
+      return null;
+    })
+    .filter((url: string | null): url is string => Boolean(url));
+}
+
+function mapPublicSectionsToPreview(sectionsRaw: unknown[]): MenuSectionRow[] {
+  return sectionsRaw.map((section: any) => ({
+    id: section.id,
+    name: section.name,
+    sort: section.sort,
+    items: (Array.isArray(section.items) ? section.items : []).map((item: any) => {
+      const row: MenuItemRow = {
+        id: item.id,
+        name: item.name,
+        prices: Array.isArray(item.prices) ? item.prices : [],
+        icons: Array.isArray(item.icons) ? item.icons : [],
+        photos: mapItemPhotos(item.photos),
+        highlighted: itemIsHighlighted(item),
+      };
+      if (typeof item.description === 'string' && item.description.trim()) {
+        row.description = item.description;
+      }
+      return row;
+    }),
+  }));
+}
+
 /**
  * Vista previa admin del menú (incluye borradores) con marco móvil.
  * URL: /admin/menus/preview/[menuId]
@@ -118,6 +200,13 @@ export default function AdminMenuPreviewPage() {
   const [configSaveSuccess, setConfigSaveSuccess] = useState<string | null>(null);
   const [proSaveLockOpen, setProSaveLockOpen] = useState(false);
   const [viewerRole, setViewerRole] = useState<string | null>(null);
+  const [contentLocale, setContentLocale] = useState('es-ES');
+  const [availableLocales, setAvailableLocales] = useState<string[]>(['es-ES']);
+  const [translationManifest, setTranslationManifest] = useState<MenuLangManifestEntry[]>([]);
+  const [tenantQuery, setTenantQuery] = useState<Record<string, string>>({});
+  const baseSectionsRef = useRef<MenuSectionRow[]>([]);
+  const baseMenuRef = useRef<{ name: string; description?: string }>({ name: '' });
+  const localeReadyRef = useRef(false);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -236,24 +325,13 @@ export default function AdminMenuPreviewPage() {
             .filter((item) => item.sectionId === section.id || item.section_id === section.id)
             .sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999))
             .map((item) => {
-              const photos = Array.isArray(item.photos)
-                ? item.photos
-                    .map((photo: unknown) => {
-                      if (typeof photo === 'string') return photo;
-                      if (photo && typeof photo === 'object' && typeof (photo as { url?: unknown }).url === 'string') {
-                        return (photo as { url: string }).url;
-                      }
-                      return null;
-                    })
-                    .filter((url: string | null): url is string => Boolean(url))
-                : [];
               const row: MenuItemRow = {
                 id: item.id,
                 name: item.name,
                 prices: Array.isArray(item.prices) ? item.prices : [],
                 icons: Array.isArray(item.icons) ? item.icons : [],
-                photos,
-                highlighted: Boolean(item.highlighted),
+                photos: mapItemPhotos(item.photos),
+                highlighted: itemIsHighlighted(item),
               };
               if (typeof item.description === 'string' && item.description.trim()) {
                 row.description = item.description;
@@ -311,7 +389,58 @@ export default function AdminMenuPreviewPage() {
             secondaryColor: nextRestaurant.secondaryColor,
           }),
         );
+        baseSectionsRef.current = builtSections;
+        baseMenuRef.current = {
+          name: menuData.name || '',
+          ...(typeof menuData.description === 'string' ? { description: menuData.description } : {}),
+        };
         setSections(builtSections);
+        setTenantQuery(tenantParams);
+        localeReadyRef.current = false;
+        setContentLocale('es-ES');
+
+        let locales = ['es-ES'];
+        let manifest: MenuLangManifestEntry[] = [];
+        try {
+          const translationsRes = await api.get('/menu-translations/menus', {
+            params: {
+              ...(restaurantId ? { restaurantId: String(restaurantId) } : {}),
+              ...tenantParams,
+            },
+          });
+          const rows = asArray<any>(translationsRes.data);
+          const row = rows.find((r) => r?.id === menuId);
+          if (row) {
+            const locs = (Array.isArray(row.locales) ? row.locales : []).filter(
+              (l: unknown): l is string => typeof l === 'string' && l.trim().length > 0,
+            );
+            locales = locs.length ? locs : ['es-ES'];
+            if (!locales.includes('es-ES')) locales = ['es-ES', ...locales];
+            manifest = parseTranslationManifest(row.translationManifest);
+          }
+        } catch {
+          if (nextRestaurant.slug && menuData.slug && menuData.status === 'PUBLISHED') {
+            try {
+              const pub = await api.get(
+                `/public/restaurants/${nextRestaurant.slug}/menus/${menuData.slug}`,
+                { params: { locale: 'es-ES' } },
+              );
+              const available = Array.isArray(pub.data?.availableLocales)
+                ? pub.data.availableLocales.filter((l: unknown) => typeof l === 'string')
+                : [];
+              if (available.length) locales = available;
+              manifest = parseTranslationManifest(pub.data?.translationLanguageManifest);
+            } catch {
+              /* keep es-ES */
+            }
+          }
+        }
+
+        if (cancelled) return;
+        const publicLocales = filterPublicLocales(locales, manifest);
+        setAvailableLocales(publicLocales);
+        setTranslationManifest(manifest);
+        localeReadyRef.current = true;
       } catch (err: any) {
         if (!cancelled) {
           setError(err?.response?.data?.message || err?.message || 'No se pudo cargar la vista previa');
@@ -325,6 +454,133 @@ export default function AdminMenuPreviewPage() {
       cancelled = true;
     };
   }, [menuId, restaurantNameFromQuery, router.isReady]);
+
+  // Ajustar locale si deja de estar disponible
+  useEffect(() => {
+    if (!availableLocales.length) return;
+    if (availableLocales.includes(contentLocale)) return;
+    setContentLocale(availableLocales.includes('es-ES') ? 'es-ES' : availableLocales[0]!);
+  }, [availableLocales, contentLocale]);
+
+  // Aplicar traducciones al cambiar idioma (misma experiencia que el menú público)
+  useEffect(() => {
+    if (!menu?.id || !restaurant || !localeReadyRef.current) return;
+
+    let cancelled = false;
+    (async () => {
+      const applyBase = () => {
+        setSections(baseSectionsRef.current);
+        setMenu((prev: any) =>
+          prev
+            ? {
+                ...prev,
+                name: baseMenuRef.current.name || prev.name,
+                description: baseMenuRef.current.description,
+              }
+            : prev,
+        );
+      };
+
+      if (
+        menu.status === 'PUBLISHED' &&
+        restaurant.slug &&
+        menu.slug &&
+        restaurant.slug !== 'preview'
+      ) {
+        try {
+          const pub = await api.get(`/public/restaurants/${restaurant.slug}/menus/${menu.slug}`, {
+            params: { locale: contentLocale },
+          });
+          if (cancelled) return;
+          const pubSections = Array.isArray(pub.data?.sections) ? pub.data.sections : [];
+          setSections(mapPublicSectionsToPreview(pubSections));
+          setMenu((prev: any) =>
+            prev
+              ? {
+                  ...prev,
+                  name: pub.data?.name || prev.name,
+                  description: pub.data?.description ?? prev.description,
+                }
+              : prev,
+          );
+          if (Array.isArray(pub.data?.availableLocales) && pub.data.availableLocales.length) {
+            const locs = pub.data.availableLocales.filter(
+              (l: unknown): l is string => typeof l === 'string',
+            );
+            setAvailableLocales((prev) =>
+              prev.length === locs.length && prev.every((l, i) => l === locs[i]) ? prev : locs,
+            );
+          }
+          if (pub.data?.translationLanguageManifest) {
+            setTranslationManifest(parseTranslationManifest(pub.data.translationLanguageManifest));
+          }
+          return;
+        } catch {
+          /* fallback abajo */
+        }
+      }
+
+      if (contentLocale === 'es-ES') {
+        if (!cancelled) applyBase();
+        return;
+      }
+
+      try {
+        const res = await api.get(`/menu-translations/menus/${menu.id}/workbench`, {
+          params: { locale: contentLocale, ...tenantQuery },
+        });
+        if (cancelled) return;
+        const d = res.data;
+        const sectionNameById = new Map<string, string>(
+          (Array.isArray(d.sections) ? d.sections : []).map((s: any) => [s.id, s.name]),
+        );
+        const itemById = new Map<string, { name: string; description?: string }>(
+          (Array.isArray(d.items) ? d.items : []).map((it: any) => [
+            it.id,
+            {
+              name: it.name,
+              ...(typeof it.description === 'string' ? { description: it.description } : {}),
+            },
+          ]),
+        );
+        setSections(
+          baseSectionsRef.current.map((section) => ({
+            ...section,
+            name: sectionNameById.get(section.id) || section.name,
+            items: section.items.map((item) => {
+              const tr = itemById.get(item.id);
+              if (!tr) return item;
+              const next: MenuItemRow = { ...item, name: tr.name || item.name };
+              if (typeof tr.description === 'string') next.description = tr.description;
+              else if (item.description !== undefined) next.description = item.description;
+              return next;
+            }),
+          })),
+        );
+        setMenu((prev: any) =>
+          prev
+            ? {
+                ...prev,
+                name: d.menu?.name || prev.name,
+                description: d.menu?.description ?? prev.description,
+              }
+            : prev,
+        );
+      } catch {
+        if (!cancelled) applyBase();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // restaurant.slug / templateConfig: no usar objeto restaurant completo (evita bucles al editar config)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentLocale, menu?.id, menu?.status, menu?.slug, restaurant?.slug, tenantQuery]);
+
+  const handleMenuContentLocaleChange = useCallback((loc: string) => {
+    setContentLocale(loc);
+  }, []);
 
   const templateId = restaurant?.template || menu?.template || 'classic';
   const hasProTemplatesAccess =
@@ -434,7 +690,8 @@ export default function AdminMenuPreviewPage() {
       payload.secondaryColor = hex(configValues.secondaryColor) ?? restaurant.secondaryColor ?? '#0056b3';
       await api.put(`/restaurants/${restaurant.id}`, payload);
       applyConfigToRestaurant(configValues, restaurant.template);
-      setConfigSaveSuccess('Configuración guardada.');
+      setConfigSaveSuccess(null);
+      setConfigDrawerOpen(false);
     } catch (err: any) {
       setConfigSaveError(err?.response?.data?.message || 'Error al guardar la configuración');
     } finally {
@@ -452,6 +709,8 @@ export default function AdminMenuPreviewPage() {
       slug: menu.slug,
       ...(menu.description ? { description: menu.description } : {}),
       sections,
+      availableLocales,
+      translationLanguageManifest: translationManifest,
     };
     const menuList = [
       {
@@ -462,6 +721,14 @@ export default function AdminMenuPreviewPage() {
       },
     ];
 
+    const menuLocales = buildTemplateMenuLocales(
+      selectedMenu,
+      restaurant,
+      template,
+      contentLocale,
+      handleMenuContentLocaleChange,
+    );
+
     const templateProps = {
       restaurant,
       menuList,
@@ -470,6 +737,7 @@ export default function AdminMenuPreviewPage() {
       formatPrice,
       formatWhatsAppForLink,
       iconLabels,
+      ...(menuLocales ? { menuLocales } : {}),
     };
 
     let body: ReactNode;
@@ -487,7 +755,15 @@ export default function AdminMenuPreviewPage() {
     else body = <ClassicTemplate {...templateProps} />;
 
     return body;
-  }, [menu, restaurant, sections]);
+  }, [
+    menu,
+    restaurant,
+    sections,
+    availableLocales,
+    translationManifest,
+    contentLocale,
+    handleMenuContentLocaleChange,
+  ]);
 
   const statusLabel =
     menu?.status === 'PUBLISHED' ? 'Publicado' : menu?.status === 'DRAFT' ? 'Borrador' : menu?.status || '';
@@ -603,10 +879,14 @@ export default function AdminMenuPreviewPage() {
                   </div>
                 </div>
               </div>
-              <p className="admin-menu-preview-hint">
-                Vista móvil
-                {menu?.status === 'DRAFT' ? ' · borrador' : ''}.
-              </p>
+              <div className="admin-menu-preview-hint">
+                <p className="admin-menu-preview-hint-title">
+                  Vista móvil{menu?.status === 'DRAFT' ? ' · borrador' : ''}.
+                </p>
+                <p className="admin-menu-preview-hint-note">
+                  Puede haber variaciones mínimas según la resolución de cada teléfono.
+                </p>
+              </div>
             </div>
           ) : (
             <div className="admin-menu-preview-desktop-stage">{templateBody}</div>
@@ -780,11 +1060,44 @@ export default function AdminMenuPreviewPage() {
           background: #fff;
         }
 
+        /* Classic: forzar layout móvil en el mockup (viewport desktop no activa @media) */
+        .preview-phone-live :global(.template-classic.classic-main-content) {
+          padding-left: 16px !important;
+          padding-right: 16px !important;
+        }
+
+        .preview-phone-live :global(.template-classic .classic-cover-wrapper) {
+          margin-left: -16px !important;
+          margin-right: -16px !important;
+          width: calc(100% + 32px) !important;
+          border-radius: 0 !important;
+        }
+
+        .preview-phone-live :global(.template-classic .classic-logo) {
+          max-width: 100% !important;
+          width: 100% !important;
+          height: auto !important;
+          aspect-ratio: 1;
+          object-fit: cover;
+        }
+
         .admin-menu-preview-hint {
+          margin: 0;
+          max-width: 340px;
+          text-align: center;
+        }
+
+        .admin-menu-preview-hint-title {
           margin: 0;
           color: #64748b;
           font-size: 0.9rem;
-          text-align: center;
+        }
+
+        .admin-menu-preview-hint-note {
+          margin: 6px 0 0;
+          color: #94a3b8;
+          font-size: 0.8rem;
+          line-height: 1.4;
         }
 
         .admin-menu-preview-desktop-stage {

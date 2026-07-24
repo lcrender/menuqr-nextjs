@@ -7,6 +7,62 @@
   --white-color: #FFFFFF;
 }
 
+/* Container queries: el mockup admin no cambia el viewport; sí el ancho del contenedor */
+.template-italianfood.restaurant-container {
+  container-type: inline-size;
+  container-name: italian-menu;
+}
+
+/* Grid de productos:
+   - móvil: 1 col
+   - tablet (≥768): 2 cols
+   - desktop (≥992): 3 cols
+   Destacados van en su propio grid (arriba); comunes empiezan en la fila siguiente. */
+.template-italianfood .italian-products-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  column-gap: 1.5rem;
+  row-gap: 1.5rem;
+}
+
+.template-italianfood .italian-products-grid--featured {
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .template-italianfood .italian-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 992px) {
+  .template-italianfood .italian-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.preview-phone-live .template-italianfood .italian-products-grid {
+  grid-template-columns: 1fr !important;
+}
+
+@container italian-menu (max-width: 767px) {
+  .template-italianfood .italian-products-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@container italian-menu (min-width: 768px) and (max-width: 991px) {
+  .template-italianfood .italian-products-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@container italian-menu (min-width: 992px) {
+  .template-italianfood .italian-products-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
 .template-italianfood * {
   box-sizing: border-box;
 }
@@ -269,6 +325,17 @@
   background: repeating-linear-gradient(180deg, #009246 0px, #009246 12px, #FFFFFF 12px, #FFFFFF 24px, #CE2B37 24px, #CE2B37 36px);
 }
 
+/* Header: desktop izquierda; móvil / mockup centrados */
+.template-italianfood .restaurant-info-text {
+  flex: 1;
+  min-width: 250px;
+  text-align: left;
+}
+
+.template-italianfood .italian-restaurant-description {
+  text-align: justify;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .template-italianfood .menu-section-title {
@@ -279,7 +346,6 @@
     font-size: 1.2rem;
   }
 
-  /* Centrar logo en móviles */
   .template-italianfood .restaurant-info-container {
     flex-direction: column;
     align-items: center;
@@ -296,13 +362,70 @@
   .template-italianfood .restaurant-info-text {
     text-align: center;
     width: 100%;
+    min-width: 0;
   }
 
   .template-italianfood .restaurant-name-mobile {
     text-align: center !important;
   }
 
-  .template-italianfood .restaurant-info-text > div {
+  .template-italianfood .italian-restaurant-description {
+    text-align: center;
+  }
+}
+
+@container italian-menu (max-width: 768px) {
+  .template-italianfood .restaurant-info-container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .template-italianfood .logo-container-mobile {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .template-italianfood .restaurant-info-text {
+    text-align: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .template-italianfood .restaurant-name-mobile {
     text-align: center !important;
   }
+
+  .template-italianfood .italian-restaurant-description {
+    text-align: center;
+  }
+}
+
+.preview-phone-live .template-italianfood .restaurant-info-container {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.preview-phone-live .template-italianfood .logo-container-mobile {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.preview-phone-live .template-italianfood .restaurant-info-text {
+  text-align: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.preview-phone-live .template-italianfood .restaurant-name-mobile {
+  text-align: center !important;
+}
+
+.preview-phone-live .template-italianfood .italian-restaurant-description {
+  text-align: center !important;
 }
