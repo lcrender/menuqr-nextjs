@@ -55,6 +55,7 @@ interface ItalianFoodTemplateProps {
     country?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    templateConfig?: Record<string, unknown>;
   };
   menuList: Array<{ id: string; name: string; slug: string; description?: string }>;
   selectedMenu: {
