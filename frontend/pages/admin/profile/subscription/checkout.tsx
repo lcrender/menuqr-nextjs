@@ -397,7 +397,16 @@ export default function SubscriptionCheckoutPage() {
           <Link href="/admin/profile/subscription" className="btn btn-sm btn-outline-secondary">
             ← Volver a planes
           </Link>
-          <Link href="/admin" className="btn btn-sm btn-link">
+          <Link
+            href="/admin"
+            className="btn btn-sm btn-link"
+            onClick={() => {
+              if (typeof window === 'undefined') return;
+              localStorage.removeItem('pendingPlan');
+              localStorage.removeItem('pendingBillingCycle');
+              localStorage.removeItem('pendingPricingCountry');
+            }}
+          >
             Ir a mi cuenta (plan Free)
           </Link>
         </div>

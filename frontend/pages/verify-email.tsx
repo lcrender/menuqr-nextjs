@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import api from '../lib/axios';
@@ -8,17 +8,38 @@ import LandingFooter from '../components/LandingFooter';
 import LandingHomeLink from '../components/LandingHomeLink';
 import LandingBrandMark from '../components/LandingBrandMark';
 
+function clearPendingPaidPlanLocal(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('pendingPlan');
+  localStorage.removeItem('pendingBillingCycle');
+  localStorage.removeItem('pendingPricingCountry');
+}
+
 export default function VerifyEmail() {
   const router = useRouter();
   const { token } = router.query;
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const [checkoutHref, setCheckoutHref] = useState<string | null>(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (token && typeof token === 'string') {
       verifyEmail(token);
     }
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
   }, [token]);
+
+  const goToFreeAccount = () => {
+    if (redirectTimerRef.current) {
+      clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+    clearPendingPaidPlanLocal();
+    router.push('/admin');
+  };
 
   const verifyEmail = async (verificationToken: string) => {
     try {
@@ -46,34 +67,38 @@ export default function VerifyEmail() {
           : 'yearly';
       const verifiedUser = response.data?.user as { role?: string } | undefined;
 
+      // Siempre entrar a la app con Free; el pago Pro es opcional.
       let target = '/admin';
 
       if (pendingPlan === 'starter' || pendingPlan === 'pro' || pendingPlan === 'premium') {
         const { buildSubscriptionCheckoutHref } = await import('../lib/subscription-checkout-url');
         const country =
           (typeof window !== 'undefined' && localStorage.getItem('pendingPricingCountry')) || null;
-        if (typeof window !== 'undefined') localStorage.removeItem('pendingPricingCountry');
-        target = buildSubscriptionCheckoutHref({
-          plan: pendingPlan,
-          billing: pendingBillingCycle,
-          country,
-        });
+        setCheckoutHref(
+          buildSubscriptionCheckoutHref({
+            plan: pendingPlan,
+            billing: pendingBillingCycle,
+            country,
+          }),
+        );
       } else {
         const tpl = await consumeTemplateAfterAuth(api, {
           isSuperAdmin: verifiedUser?.role === 'SUPER_ADMIN',
         });
-        target = getNavigationForConsumeResult(tpl);
+        // needs_upgrade: no forzar checkout; el dashboard ofrece upgrade opcional.
+        if (tpl.action !== 'needs_upgrade' && tpl.action !== 'skipped') {
+          target = getNavigationForConsumeResult(tpl);
+        }
       }
 
-      // Redirigir al destino correspondiente después de 2 segundos
-      setTimeout(() => {
+      redirectTimerRef.current = setTimeout(() => {
         router.push(target);
       }, 2000);
     } catch (err: any) {
       setStatus('error');
       setMessage(
-        err.response?.data?.message || 
-        'Error al verificar el email. El token puede ser inválido o haber expirado.'
+        err.response?.data?.message ||
+          'Error al verificar el email. El token puede ser inválido o haber expirado.',
       );
     }
   };
@@ -123,16 +148,19 @@ export default function VerifyEmail() {
                   <div className="landing-auth-header">
                     <div style={{ fontSize: '4rem', marginBottom: '24px' }}>✅</div>
                     <h1 className="landing-auth-title">¡Email Verificado!</h1>
-                    <p className="landing-auth-subtitle">
-                      {message}
-                    </p>
+                    <p className="landing-auth-subtitle">{message}</p>
                     <p className="landing-auth-subtitle" style={{ marginTop: '16px', fontSize: '0.9rem' }}>
-                      Serás redirigido automáticamente en unos segundos...
+                      Serás redirigido a tu cuenta en unos segundos...
                     </p>
                     <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <Link href="/admin" className="landing-btn-primary landing-btn-full">
+                      <button type="button" className="landing-btn-primary landing-btn-full" onClick={goToFreeAccount}>
                         Ir a mi cuenta (plan Free)
-                      </Link>
+                      </button>
+                      {checkoutHref ? (
+                        <Link href={checkoutHref} className="landing-btn-secondary landing-btn-full">
+                          Continuar con suscripción Pro
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
                 )}
@@ -152,7 +180,10 @@ export default function VerifyEmail() {
                         Volver al Inicio
                       </LandingHomeLink>
                     </div>
-                    <p className="landing-auth-subtitle" style={{ marginTop: '24px', fontSize: '0.85rem', color: 'var(--landing-text-muted)' }}>
+                    <p
+                      className="landing-auth-subtitle"
+                      style={{ marginTop: '24px', fontSize: '0.85rem', color: 'var(--landing-text-muted)' }}
+                    >
                       Si el problema persiste, contacta con soporte o intenta registrarte nuevamente.
                     </p>
                   </div>
@@ -167,4 +198,3 @@ export default function VerifyEmail() {
     </>
   );
 }
-

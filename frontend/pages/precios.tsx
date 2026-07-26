@@ -112,7 +112,16 @@ export default function PreciosPage() {
                     Esta plantilla requiere plan Pro. Podés suscribirte ahora o continuar con el plan Free y elegir otra
                     plantilla después.
                   </p>
-                  <Link href="/admin" className="btn btn-outline-secondary btn-sm">
+                  <Link
+                    href="/admin"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => {
+                      if (typeof window === 'undefined') return;
+                      localStorage.removeItem('pendingPlan');
+                      localStorage.removeItem('pendingBillingCycle');
+                      localStorage.removeItem('pendingPricingCountry');
+                    }}
+                  >
                     Ir a mi cuenta (plan Free)
                   </Link>
                 </div>

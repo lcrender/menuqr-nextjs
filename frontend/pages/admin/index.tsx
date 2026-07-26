@@ -12,7 +12,11 @@ import {
   type TemplateConfigSummaryLine,
 } from '../../lib/dashboard-template-config-summary';
 import { consumeTemplateAfterAuth, getNavigationForConsumeResult } from '../../lib/consume-template-after-auth';
-import { readTemplateIntent, takeTemplateAppliedBanner } from '../../lib/template-selection-intent';
+import {
+  clearTemplateIntent,
+  readTemplateIntent,
+  takeTemplateAppliedBanner,
+} from '../../lib/template-selection-intent';
 
 export type MenuSummary = {
   id: string;
@@ -214,6 +218,10 @@ export default function Admin() {
     displayName: string;
     restaurantId: string;
   } | null>(null);
+  const [proTemplateUpgradeOffer, setProTemplateUpgradeOffer] = useState<{
+    displayName: string;
+    upgradeHref: string;
+  } | null>(null);
   const [promoAppliedMessage, setPromoAppliedMessage] = useState<string | null>(null);
   const [dashboardWelcomeHtml, setDashboardWelcomeHtml] = useState<string | null>(null);
   const [dashboardCtaCard, setDashboardCtaCard] = useState<{
@@ -270,7 +278,19 @@ export default function Admin() {
       if (cancelled) return;
       if (r.action === 'applied') {
         setTemplateWelcomeBanner({ displayName: r.displayName, restaurantId: r.restaurantId });
-      } else router.push(getNavigationForConsumeResult(r));
+        return;
+      }
+      // Plan Free + plantilla Pro: no forzar checkout; el usuario puede usar la app y mejorar después.
+      if (r.action === 'needs_upgrade') {
+        const intent = readTemplateIntent();
+        setProTemplateUpgradeOffer({
+          displayName: intent?.displayName || 'Pro',
+          upgradeHref: r.upgradeHref,
+        });
+        return;
+      }
+      if (r.action === 'skipped') return;
+      router.push(getNavigationForConsumeResult(r));
     })();
     return () => {
       cancelled = true;
@@ -602,6 +622,30 @@ export default function Admin() {
           >
             Cerrar
           </button>
+        </div>
+      ) : null}
+
+      {proTemplateUpgradeOffer ? (
+        <div className="alert alert-info d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-4">
+          <span>
+            La plantilla <strong>{proTemplateUpgradeOffer.displayName}</strong> requiere plan Pro. Podés seguir con el
+            plan Free y activarla cuando te suscribas.
+          </span>
+          <div className="d-flex flex-wrap gap-2">
+            <a href={proTemplateUpgradeOffer.upgradeHref} className="btn btn-sm btn-primary">
+              Mejorar a Pro
+            </a>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => {
+                clearTemplateIntent();
+                setProTemplateUpgradeOffer(null);
+              }}
+            >
+              Ahora no
+            </button>
+          </div>
         </div>
       ) : null}
 

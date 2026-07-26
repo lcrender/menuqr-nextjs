@@ -101,6 +101,11 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
           isSuperAdmin: parsed.role === 'SUPER_ADMIN',
         });
         if (cancelled) return;
+        // Sin forzar pago: cuenta Free puede entrar al dashboard.
+        if (tpl.action === 'needs_upgrade') {
+          router.replace('/admin');
+          return;
+        }
         router.replace(getNavigationForConsumeResult(tpl));
       } catch {
         localStorage.removeItem('accessToken');
@@ -159,27 +164,21 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
   }, [router.isReady, router.query]);
 
   const navigateAfterAuth = async (authUser: any) => {
-    const planCheckout = pendingPlan;
-    if (planCheckout) {
-      const country =
-        (typeof window !== 'undefined' && localStorage.getItem('pendingPricingCountry')) ||
-        (typeof router.query.country === 'string' ? router.query.country : null);
+    // Tras login no forzamos checkout: la cuenta Free debe poder usar el dashboard.
+    // El upgrade queda disponible desde precios / banner del dashboard.
+    if (pendingPlan) {
       localStorage.removeItem('pendingPlan');
       localStorage.removeItem('pendingBillingCycle');
       localStorage.removeItem('pendingPricingCountry');
-      const { buildSubscriptionCheckoutHref } = await import('../lib/subscription-checkout-url');
-      router.push(
-        buildSubscriptionCheckoutHref({
-          plan: planCheckout,
-          billing: pendingBillingCycle,
-          country,
-        }),
-      );
-      return;
+      setPendingPlan(null);
     }
     const tpl = await consumeTemplateAfterAuth(api, {
       isSuperAdmin: authUser?.role === 'SUPER_ADMIN',
     });
+    if (tpl.action === 'needs_upgrade') {
+      router.push('/admin');
+      return;
+    }
     router.push(getNavigationForConsumeResult(tpl));
   };
 
