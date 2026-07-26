@@ -116,7 +116,7 @@ export class PromoReminderService {
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
-            <h1 style="margin:0; font-size: 20px;">🍽️ AppMenuQR</h1>
+            ${this.emailService.brandHeaderHtml()}
           </div>
           <div style="background: #f8fafc; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
             ${bodyHtml}

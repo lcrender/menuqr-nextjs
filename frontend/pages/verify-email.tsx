@@ -48,7 +48,6 @@ export default function VerifyEmail() {
         token: verificationToken,
       });
 
-      // Guardar tokens en localStorage
       if (response.data.accessToken) {
         localStorage.setItem('accessToken', response.data.accessToken);
         localStorage.setItem('refreshToken', response.data.refreshToken);
@@ -60,36 +59,45 @@ export default function VerifyEmail() {
 
       const pendingPlan = response.data?.pendingPlan as string | null | undefined;
       const pendingBillingCycleRaw = response.data?.pendingBillingCycle as string | null | undefined;
-      // Sin ciclo guardado en registro → anual por defecto
       const pendingBillingCycle =
         pendingBillingCycleRaw === 'monthly' || pendingBillingCycleRaw === 'yearly'
           ? pendingBillingCycleRaw
           : 'yearly';
       const verifiedUser = response.data?.user as { role?: string } | undefined;
 
-      // Siempre entrar a la app con Free; el pago Pro es opcional.
       let target = '/admin';
+      let nextCheckoutHref: string | null = null;
 
+      const { buildSubscriptionCheckoutHref, buildProTemplateUpgradeHref } = await import(
+        '../lib/subscription-checkout-url'
+      );
+      const country =
+        (typeof window !== 'undefined' && localStorage.getItem('pendingPricingCountry')) || null;
+
+      // Plan pago elegido en el registro → checkout (anual por defecto).
       if (pendingPlan === 'starter' || pendingPlan === 'pro' || pendingPlan === 'premium') {
-        const { buildSubscriptionCheckoutHref } = await import('../lib/subscription-checkout-url');
-        const country =
-          (typeof window !== 'undefined' && localStorage.getItem('pendingPricingCountry')) || null;
-        setCheckoutHref(
-          buildSubscriptionCheckoutHref({
-            plan: pendingPlan,
-            billing: pendingBillingCycle,
-            country,
-          }),
-        );
+        nextCheckoutHref = buildSubscriptionCheckoutHref({
+          plan: pendingPlan,
+          billing: pendingBillingCycle,
+          country,
+        });
+        target = nextCheckoutHref;
       } else {
         const tpl = await consumeTemplateAfterAuth(api, {
           isSuperAdmin: verifiedUser?.role === 'SUPER_ADMIN',
         });
-        // needs_upgrade: no forzar checkout; el dashboard ofrece upgrade opcional.
-        if (tpl.action !== 'needs_upgrade' && tpl.action !== 'skipped') {
+        // Plantilla Pro pendiente → checkout Pro anual (no dashboard).
+        if (tpl.action === 'needs_upgrade') {
+          nextCheckoutHref = tpl.upgradeHref || buildProTemplateUpgradeHref(country);
+          target = nextCheckoutHref;
+        } else if (tpl.action !== 'skipped') {
           target = getNavigationForConsumeResult(tpl);
         }
       }
+
+      setCheckoutHref(nextCheckoutHref);
+      // Evitar que un login posterior vuelva a forzar checkout por leftovers en localStorage.
+      if (nextCheckoutHref) clearPendingPaidPlanLocal();
 
       redirectTimerRef.current = setTimeout(() => {
         router.push(target);
@@ -111,7 +119,6 @@ export default function VerifyEmail() {
       </Head>
 
       <div className="landing-page">
-        {/* Navigation */}
         <nav className="landing-nav">
           <div className="container">
             <div className="landing-nav-content">
@@ -127,7 +134,6 @@ export default function VerifyEmail() {
           </div>
         </nav>
 
-        {/* Verification Section */}
         <section className="landing-auth">
           <div className="container">
             <div className="landing-auth-container">
@@ -150,17 +156,27 @@ export default function VerifyEmail() {
                     <h1 className="landing-auth-title">¡Email Verificado!</h1>
                     <p className="landing-auth-subtitle">{message}</p>
                     <p className="landing-auth-subtitle" style={{ marginTop: '16px', fontSize: '0.9rem' }}>
-                      Serás redirigido a tu cuenta en unos segundos...
+                      {checkoutHref
+                        ? 'Te llevamos al checkout de Pro (anual) en unos segundos...'
+                        : 'Serás redirigido a tu cuenta en unos segundos...'}
                     </p>
                     <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <button type="button" className="landing-btn-primary landing-btn-full" onClick={goToFreeAccount}>
-                        Ir a mi cuenta (plan Free)
-                      </button>
                       {checkoutHref ? (
-                        <Link href={checkoutHref} className="landing-btn-secondary landing-btn-full">
-                          Continuar con suscripción Pro
+                        <Link href={checkoutHref} className="landing-btn-primary landing-btn-full">
+                          Continuar al checkout Pro
                         </Link>
                       ) : null}
+                      <button
+                        type="button"
+                        className={
+                          checkoutHref
+                            ? 'landing-btn-secondary landing-btn-full'
+                            : 'landing-btn-primary landing-btn-full'
+                        }
+                        onClick={goToFreeAccount}
+                      >
+                        Ir a mi cuenta (plan Free)
+                      </button>
                     </div>
                   </div>
                 )}

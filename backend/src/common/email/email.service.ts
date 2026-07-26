@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { emailBrandHeaderHtml } from './email-branding';
 
 @Injectable()
 export class EmailService implements OnModuleInit {
@@ -11,6 +12,11 @@ export class EmailService implements OnModuleInit {
 
   constructor(private readonly configService: ConfigService) {
     this.frontendUrl = this.configService.get('FRONTEND_URL', 'http://localhost:3000');
+  }
+
+  /** Cabecera con logo del sitio (para plantillas en otros servicios). */
+  brandHeaderHtml(opts?: { titleSuffix?: string }): string {
+    return emailBrandHeaderHtml(this.frontendUrl, opts);
   }
 
   onModuleInit() {
@@ -199,7 +205,7 @@ export class EmailService implements OnModuleInit {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🍽️ AppMenuQR</h1>
+${this.brandHeaderHtml()}
           </div>
           <div class="content">
             <h2>Hola ${firstName},</h2>
@@ -241,7 +247,7 @@ export class EmailService implements OnModuleInit {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🍽️ AppMenuQR</h1>
+${this.brandHeaderHtml()}
           </div>
           <div class="content">
             <h2>Hola ${firstName},</h2>
@@ -283,7 +289,7 @@ export class EmailService implements OnModuleInit {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🍽️ AppMenuQR</h1>
+${this.brandHeaderHtml()}
           </div>
           <div class="content">
             <h2>Cambio de email realizado</h2>
@@ -320,7 +326,7 @@ export class EmailService implements OnModuleInit {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🍽️ AppMenuQR</h1>
+${this.brandHeaderHtml()}
           </div>
           <div class="content">
             <h2>Hola ${firstName},</h2>

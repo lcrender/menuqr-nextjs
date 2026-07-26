@@ -164,17 +164,31 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
   }, [router.isReady, router.query]);
 
   const navigateAfterAuth = async (authUser: any) => {
-    // Tras login no forzamos checkout: la cuenta Free debe poder usar el dashboard.
-    // El upgrade queda disponible desde precios / banner del dashboard.
-    if (pendingPlan) {
+    // Si eligió plan pago en este flujo → checkout una vez; luego puede salir y usar Free.
+    const planCheckout = pendingPlan;
+    if (planCheckout) {
+      const country =
+        (typeof window !== 'undefined' && localStorage.getItem('pendingPricingCountry')) ||
+        (typeof router.query.country === 'string' ? router.query.country : null);
       localStorage.removeItem('pendingPlan');
       localStorage.removeItem('pendingBillingCycle');
       localStorage.removeItem('pendingPricingCountry');
       setPendingPlan(null);
+      const { buildSubscriptionCheckoutHref } = await import('../lib/subscription-checkout-url');
+      router.push(
+        buildSubscriptionCheckoutHref({
+          plan: planCheckout,
+          billing: pendingBillingCycle,
+          country,
+        }),
+      );
+      return;
     }
     const tpl = await consumeTemplateAfterAuth(api, {
       isSuperAdmin: authUser?.role === 'SUPER_ADMIN',
     });
+    // Plantilla Pro pendiente: no forzar checkout en cada login (eso va tras verify-email).
+    // El dashboard permite Free y ofrece upgrade opcional.
     if (tpl.action === 'needs_upgrade') {
       router.push('/admin');
       return;

@@ -100,7 +100,7 @@ export class AdminMessagesService {
       <body>
         <div class="container">
           <div class="header">
-            <h1 style="margin:0;">🍽️ AppMenuQR</h1>
+            ${this.emailService.brandHeaderHtml()}
           </div>
           <div class="content">
             <h2 style="margin-top:0;">Prueba de notificaciones</h2>
@@ -223,7 +223,7 @@ export class AdminMessagesService {
       <body>
         <div class="container">
           <div class="header">
-            <h1 style="margin:0; font-size: 20px;">🍽️ AppMenuQR - Notificaciones</h1>
+            ${this.emailService.brandHeaderHtml({ titleSuffix: 'Notificaciones' })}
             <div style="margin-top: 10px;">
               <span class="pill">${this.escapeHtml(eventLabel)}</span>
             </div>
