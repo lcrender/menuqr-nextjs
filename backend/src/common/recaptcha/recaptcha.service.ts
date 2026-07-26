@@ -1,8 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RecaptchaService {
+  private readonly logger = new Logger(RecaptchaService.name);
+
   constructor(private readonly config: ConfigService) {}
 
   private getSecret(): string {
@@ -55,22 +57,33 @@ export class RecaptchaService {
       }),
     });
     if (!verifyRes.ok) {
+      this.logger.warn(`reCAPTCHA siteverify HTTP ${verifyRes.status}`);
       throw new BadRequestException('No se pudo validar reCAPTCHA. Intentá nuevamente.');
     }
     const verifyJson = (await verifyRes.json()) as {
       success?: boolean;
       score?: number;
       action?: string;
+      hostname?: string;
       'error-codes'?: string[];
     };
     if (!verifyJson.success) {
+      this.logger.warn(
+        `reCAPTCHA rejected: error-codes=${JSON.stringify(verifyJson['error-codes'] || [])} hostname=${verifyJson.hostname || '-'}`,
+      );
       throw new BadRequestException('No se pudo validar reCAPTCHA. Intentá nuevamente.');
     }
     const score = typeof verifyJson.score === 'number' ? verifyJson.score : 0;
     if (score < minScore) {
+      this.logger.warn(
+        `reCAPTCHA low score: score=${score} min=${minScore} action=${verifyJson.action || '-'} hostname=${verifyJson.hostname || '-'}`,
+      );
       throw new BadRequestException('No se pudo validar reCAPTCHA. Intentá nuevamente.');
     }
     if (options.expectedAction != null && verifyJson.action !== options.expectedAction) {
+      this.logger.warn(
+        `reCAPTCHA action mismatch: got=${verifyJson.action || '-'} expected=${options.expectedAction}`,
+      );
       throw new BadRequestException('No se pudo validar reCAPTCHA. Intentá nuevamente.');
     }
   }
