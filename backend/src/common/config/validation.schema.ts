@@ -132,6 +132,8 @@ export const validationSchema = Joi.object({
   // FORMULARIO DE CONTACTO PÚBLICO
   // ========================================
   GOOGLE_RECAPTCHA_SECRET_KEY: Joi.string().optional().allow(''),
+  /** Umbral v3 registro (0–1). Default 0.2 si no se define. */
+  GOOGLE_RECAPTCHA_MIN_SCORE: Joi.number().min(0).max(1).optional(),
   CONTACT_FORM_RECEIVER_EMAIL: Joi.string().email().optional().allow(''),
 
   /** Opcional: email para notificaciones de nuevos tickets de soporte (si falta, se usa CONTACT_FORM_RECEIVER_EMAIL o el primer SUPER_ADMIN). */

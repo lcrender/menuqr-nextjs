@@ -11,6 +11,18 @@ export class RecaptchaService {
     return (this.config.get<string>('GOOGLE_RECAPTCHA_SECRET_KEY') || '').trim();
   }
 
+  /**
+   * Umbral v3 (0–1). Registro por defecto 0.2 (usuarios reales a menudo caen bajo 0.5).
+   * Override: GOOGLE_RECAPTCHA_MIN_SCORE
+   */
+  private getRegisterMinScore(): number {
+    const raw = this.config.get<string | number>('GOOGLE_RECAPTCHA_MIN_SCORE');
+    if (raw === undefined || raw === null || raw === '') return 0.2;
+    const n = typeof raw === 'number' ? raw : Number(String(raw).trim());
+    if (!Number.isFinite(n)) return 0.2;
+    return Math.min(1, Math.max(0, n));
+  }
+
   /** Formulario público: el secret debe estar configurado. */
   async verifyRequired(token: string, remoteip?: string): Promise<void> {
     const secret = this.getSecret();
@@ -19,7 +31,8 @@ export class RecaptchaService {
         'No se puede enviar el formulario en este momento. Falta configurar reCAPTCHA en el servidor.',
       );
     }
-    await this.verifyWithSecret(secret, token, remoteip, {});
+    // Contacto / premium: un poco más estricto que el registro.
+    await this.verifyWithSecret(secret, token, remoteip, { minScore: Math.max(this.getRegisterMinScore(), 0.3) });
   }
 
   /**
@@ -37,7 +50,10 @@ export class RecaptchaService {
     if (!t) {
       throw new BadRequestException('Falta validar reCAPTCHA en el registro.');
     }
-    await this.verifyWithSecret(secret, t, remoteip, { expectedAction: opts.expectedAction });
+    await this.verifyWithSecret(secret, t, remoteip, {
+      expectedAction: opts.expectedAction,
+      minScore: this.getRegisterMinScore(),
+    });
   }
 
   private async verifyWithSecret(
