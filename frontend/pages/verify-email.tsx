@@ -38,15 +38,27 @@ export default function VerifyEmail() {
       setMessage(response.data.message || 'Email verificado exitosamente. Tu cuenta ha sido activada.');
 
       const pendingPlan = response.data?.pendingPlan as string | null | undefined;
-      const pendingBillingCycle = (response.data?.pendingBillingCycle as string | null | undefined) ?? 'monthly';
+      const pendingBillingCycleRaw = response.data?.pendingBillingCycle as string | null | undefined;
+      // Sin ciclo guardado en registro → anual por defecto
+      const pendingBillingCycle =
+        pendingBillingCycleRaw === 'monthly' || pendingBillingCycleRaw === 'yearly'
+          ? pendingBillingCycleRaw
+          : 'yearly';
       const verifiedUser = response.data?.user as { role?: string } | undefined;
 
-      let target =
-        pendingPlan && (pendingBillingCycle === 'monthly' || pendingBillingCycle === 'yearly')
-          ? `/admin/profile/subscription/checkout?plan=${pendingPlan}&billing=${pendingBillingCycle}`
-          : '/admin';
+      let target = '/admin';
 
-      if (!pendingPlan) {
+      if (pendingPlan === 'starter' || pendingPlan === 'pro' || pendingPlan === 'premium') {
+        const { buildSubscriptionCheckoutHref } = await import('../lib/subscription-checkout-url');
+        const country =
+          (typeof window !== 'undefined' && localStorage.getItem('pendingPricingCountry')) || null;
+        if (typeof window !== 'undefined') localStorage.removeItem('pendingPricingCountry');
+        target = buildSubscriptionCheckoutHref({
+          plan: pendingPlan,
+          billing: pendingBillingCycle,
+          country,
+        });
+      } else {
         const tpl = await consumeTemplateAfterAuth(api, {
           isSuperAdmin: verifiedUser?.role === 'SUPER_ADMIN',
         });
@@ -117,9 +129,11 @@ export default function VerifyEmail() {
                     <p className="landing-auth-subtitle" style={{ marginTop: '16px', fontSize: '0.9rem' }}>
                       Serás redirigido automáticamente en unos segundos...
                     </p>
-                    <Link href="/admin" className="landing-btn-primary landing-btn-full" style={{ marginTop: '24px' }}>
-                      Continuar
-                    </Link>
+                    <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <Link href="/admin" className="landing-btn-primary landing-btn-full">
+                        Ir a mi cuenta (plan Free)
+                      </Link>
+                    </div>
                   </div>
                 )}
 

@@ -10,6 +10,7 @@ import {
 } from '../../lib/consume-template-after-auth';
 import { clearTemplateIntent, readTemplateIntent, type TemplateSelectionIntent } from '../../lib/template-selection-intent';
 import { TEMPLATE_NAMES } from '../../lib/template-config-schema';
+import { buildProTemplateUpgradeHref } from '../../lib/subscription-checkout-url';
 import styles from '../../components/plantillas/ApplyTemplatePicker.module.css';
 
 interface RestaurantOption {
@@ -59,7 +60,7 @@ export default function ApplyTemplatePage() {
         const currentPlan = typeof statsRes.data?.plan === 'string' ? statsRes.data.plan : null;
 
         if (storedIntent.requiredPlan === 'pro' && !tenantPlanAllowsProTemplates(currentPlan)) {
-          router.replace('/precios?reason=pro_template');
+          router.replace(buildProTemplateUpgradeHref());
           return;
         }
 

@@ -63,7 +63,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showRegisterSuccessModal, setShowRegisterSuccessModal] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<'starter' | 'pro' | 'premium' | null>(null);
-  const [pendingBillingCycle, setPendingBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [pendingBillingCycle, setPendingBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [templateIntentHint, setTemplateIntentHint] = useState<string | null>(null);
 
   /** Persistir plantilla desde URL (/login?template=gourmet&plan=pro). */
@@ -115,11 +115,19 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
   }, [router.isReady]);
 
   useEffect(() => {
-    const qpPlan = typeof router.query.pendingPlan === 'string' ? router.query.pendingPlan.toLowerCase() : '';
+    if (!router.isReady) return;
+    // Marketing usa ?plan=pro; precios usa ?pendingPlan=pro
+    const qpPlanRaw =
+      (typeof router.query.pendingPlan === 'string' && router.query.pendingPlan) ||
+      (typeof router.query.plan === 'string' && router.query.plan) ||
+      '';
+    const qpPlan = qpPlanRaw.toLowerCase();
     const qpBilling =
       typeof router.query.pendingBillingCycle === 'string'
         ? router.query.pendingBillingCycle.toLowerCase()
-        : '';
+        : typeof router.query.billing === 'string'
+          ? router.query.billing.toLowerCase()
+          : '';
     const lsPlan = typeof window !== 'undefined' ? (localStorage.getItem('pendingPlan') || '').toLowerCase() : '';
     const lsBilling =
       typeof window !== 'undefined' ? (localStorage.getItem('pendingBillingCycle') || '').toLowerCase() : '';
@@ -128,21 +136,45 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
       : ['starter', 'pro', 'premium'].includes(lsPlan)
         ? lsPlan
         : '';
-    const resolvedBilling = qpBilling === 'yearly' || qpBilling === 'monthly'
-      ? qpBilling
-      : lsBilling === 'yearly' || lsBilling === 'monthly'
-        ? lsBilling
-        : 'monthly';
-    if (resolvedPlan) setPendingPlan(resolvedPlan as 'starter' | 'pro' | 'premium');
+    // Sin ciclo explícito → anual (flujo plantilla Pro / registro con plan)
+    const resolvedBilling =
+      qpBilling === 'yearly' || qpBilling === 'monthly'
+        ? qpBilling
+        : lsBilling === 'yearly' || lsBilling === 'monthly'
+          ? lsBilling
+          : 'yearly';
+    if (resolvedPlan) {
+      setPendingPlan(resolvedPlan as 'starter' | 'pro' | 'premium');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pendingPlan', resolvedPlan);
+        localStorage.setItem('pendingBillingCycle', resolvedBilling);
+        const qpCountry =
+          typeof router.query.country === 'string' ? router.query.country : '';
+        if (qpCountry === 'AR' || qpCountry === 'GLOBAL') {
+          localStorage.setItem('pendingPricingCountry', qpCountry);
+        }
+      }
+    }
     setPendingBillingCycle(resolvedBilling as 'monthly' | 'yearly');
-  }, [router.query]);
+  }, [router.isReady, router.query]);
 
   const navigateAfterAuth = async (authUser: any) => {
     const planCheckout = pendingPlan;
     if (planCheckout) {
+      const country =
+        (typeof window !== 'undefined' && localStorage.getItem('pendingPricingCountry')) ||
+        (typeof router.query.country === 'string' ? router.query.country : null);
       localStorage.removeItem('pendingPlan');
       localStorage.removeItem('pendingBillingCycle');
-      router.push(`/admin/profile/subscription/checkout?plan=${planCheckout}&billing=${pendingBillingCycle}`);
+      localStorage.removeItem('pendingPricingCountry');
+      const { buildSubscriptionCheckoutHref } = await import('../lib/subscription-checkout-url');
+      router.push(
+        buildSubscriptionCheckoutHref({
+          plan: planCheckout,
+          billing: pendingBillingCycle,
+          country,
+        }),
+      );
       return;
     }
     const tpl = await consumeTemplateAfterAuth(api, {

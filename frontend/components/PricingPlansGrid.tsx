@@ -12,6 +12,7 @@ import {
 import { appendPromoToCheckoutUrl } from '../lib/promo-query';
 import { buildPremiumInquiryUrl } from '../lib/premium-inquiry-url';
 import { resolveLandingHomeHref } from '../lib/landing-region';
+import { buildSubscriptionCheckoutHref, normalizePricingCountryParam } from '../lib/subscription-checkout-url';
 
 type PlanSlug = 'free' | 'starter' | 'pro' | 'premium';
 
@@ -133,10 +134,17 @@ export default function PricingPlansGrid({
 
   const handleCta = (planSlug?: PlanSlug) => {
     const isPaidPlan = planSlug === 'starter' || planSlug === 'pro' || planSlug === 'premium';
+    const pricingCountry =
+      normalizePricingCountryParam(pricingData?.country) ||
+      (pricingData?.currency === 'ARS' ? 'AR' : pricingData?.currency ? 'GLOBAL' : null);
     if (isSubscription && planSlug && planSlug !== 'free') {
       router.push(
         appendPromoToCheckoutUrl(
-          `/admin/profile/subscription/checkout?plan=${planSlug}&billing=${billingCycle}`,
+          buildSubscriptionCheckoutHref({
+            plan: planSlug,
+            billing: billingCycle,
+            country: pricingCountry,
+          }),
           promoCode,
         ),
       );
@@ -158,7 +166,11 @@ export default function PricingPlansGrid({
           if (token && user) {
             router.push(
               appendPromoToCheckoutUrl(
-                `/admin/profile/subscription/checkout?plan=${planSlug}&billing=${billingCycle}`,
+                buildSubscriptionCheckoutHref({
+                  plan: planSlug,
+                  billing: billingCycle,
+                  country: pricingCountry,
+                }),
                 promoCode,
               ),
             );
@@ -166,8 +178,13 @@ export default function PricingPlansGrid({
           }
           localStorage.setItem('pendingPlan', String(planSlug));
           localStorage.setItem('pendingBillingCycle', billingCycle);
+          if (pricingCountry) localStorage.setItem('pendingPricingCountry', pricingCountry);
         }
-        router.push(`/login?action=register&pendingPlan=${planSlug}&pendingBillingCycle=${billingCycle}`);
+        router.push(
+          `/login?action=register&pendingPlan=${planSlug}&pendingBillingCycle=${billingCycle}${
+            pricingCountry ? `&country=${pricingCountry}` : ''
+          }`,
+        );
         return;
       }
       router.push('/login?action=register');

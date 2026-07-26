@@ -6,8 +6,15 @@ import {
   tenantPlanAllowsProTemplates,
 } from './consume-template-after-auth';
 import { buildIntentFromCatalogSlug, readTemplateIntent, saveTemplateIntent } from './template-selection-intent';
+import { buildProTemplateUpgradeHref } from './subscription-checkout-url';
 
-export const PRO_TEMPLATE_UPGRADE_HREF = '/precios?reason=pro_template';
+/** Destino de upgrade Pro (anual + moneda de la región de landing). */
+export function getProTemplateUpgradeHref(): string {
+  return buildProTemplateUpgradeHref();
+}
+
+/** @deprecated Usar getProTemplateUpgradeHref(). */
+export const PRO_TEMPLATE_UPGRADE_HREF = '/admin/profile/subscription/checkout?plan=pro&billing=yearly';
 
 export function isAuthenticatedUser(): boolean {
   if (typeof window === 'undefined') return false;
@@ -55,7 +62,7 @@ export async function navigateUpgradeToProForTemplate(
 ): Promise<void> {
   const intent = buildIntentFromCatalogSlug(catalogSlug);
   if (intent) saveTemplateIntent(intent);
-  await router.push(PRO_TEMPLATE_UPGRADE_HREF);
+  await router.push(getProTemplateUpgradeHref());
 }
 
 function syncStoredUserPlan(plan: string): void {

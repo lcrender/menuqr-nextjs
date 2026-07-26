@@ -5,6 +5,7 @@ import {
   clearTemplateIntent,
   setTemplateAppliedBanner,
 } from './template-selection-intent';
+import { buildProTemplateUpgradeHref } from './subscription-checkout-url';
 
 export type ConsumeTemplateResult =
   | { action: 'skipped' }
@@ -60,7 +61,7 @@ export async function consumeTemplateAfterAuth(
   if (!options.isSuperAdmin && intent.requiredPlan === 'pro' && !tenantPlanAllowsProTemplates(plan)) {
     return {
       action: 'needs_upgrade',
-      upgradeHref: '/precios?reason=pro_template',
+      upgradeHref: buildProTemplateUpgradeHref(),
     };
   }
 

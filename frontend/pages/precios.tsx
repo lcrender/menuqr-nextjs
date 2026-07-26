@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import LandingNav from '../components/LandingNav';
 import LandingFooter from '../components/LandingFooter';
@@ -105,6 +106,17 @@ export default function PreciosPage() {
               <p className="text-center text-muted mb-4 mx-auto" style={{ maxWidth: '36rem' }}>
                 Precios vigentes según tu región. Podés registrarte gratis y cambiar de plan cuando lo necesites.
               </p>
+              {router.query.reason === 'pro_template' ? (
+                <div className="text-center mb-4">
+                  <p className="text-muted small mb-2">
+                    Esta plantilla requiere plan Pro. Podés suscribirte ahora o continuar con el plan Free y elegir otra
+                    plantilla después.
+                  </p>
+                  <Link href="/admin" className="btn btn-outline-secondary btn-sm">
+                    Ir a mi cuenta (plan Free)
+                  </Link>
+                </div>
+              ) : null}
               <PricingPlansGrid variant="landing" pricingData={pricingData} landingPlanTaglines />
             </div>
           </section>

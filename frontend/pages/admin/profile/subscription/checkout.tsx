@@ -16,6 +16,12 @@ import {
 } from '../../../../lib/public-plan-limits';
 import { getPromoCodeFromQuery } from '../../../../lib/promo-query';
 import type { PricingData } from '../../../../components/PricingPlansGrid';
+import {
+  normalizeCheckoutBilling,
+  normalizePricingCountryParam,
+  pricingCountryFromLandingRegion,
+  DEFAULT_UPGRADE_BILLING,
+} from '../../../../lib/subscription-checkout-url';
 
 type PlanSlug = 'starter' | 'pro' | 'premium';
 type BillingCycle = 'monthly' | 'yearly';
@@ -38,13 +44,13 @@ const PLAN_LABEL: Record<PlanSlug, string> = {
 
 export default function SubscriptionCheckoutPage() {
   const router = useRouter();
-  const { plan: planQuery, billing: billingQuery } = router.query;
+  const { plan: planQuery, billing: billingQuery, country: countryQuery } = router.query;
 
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [pricingLoading, setPricingLoading] = useState(true);
   const [limits, setLimits] = useState(DEFAULT_PUBLIC_PLAN_LIMITS);
   const [subscriptions, setSubscriptions] = useState<SubItem[]>([]);
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>(DEFAULT_UPGRADE_BILLING);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [billingData, setBillingData] = useState({
     mercadoPagoEmail: '',
@@ -90,7 +96,9 @@ export default function SubscriptionCheckoutPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.get('/pricing');
+        const forcedCountry =
+          normalizePricingCountryParam(countryQuery) || pricingCountryFromLandingRegion();
+        const res = await api.get('/pricing', { params: { country: forcedCountry } });
         setPricingData(res.data || null);
         const subsRes = await api.get('/subscriptions/me');
         setSubscriptions(Array.isArray(subsRes.data) ? subsRes.data : []);
@@ -130,14 +138,11 @@ export default function SubscriptionCheckoutPage() {
         // ignore
       }
     })();
-  }, []);
+  }, [countryQuery]);
 
   useEffect(() => {
     if (!router.isReady) return;
-    const b = typeof billingQuery === 'string' ? billingQuery.toLowerCase() : '';
-    if (b === 'yearly' || b === 'monthly') {
-      setBillingCycle(b);
-    }
+    setBillingCycle(normalizeCheckoutBilling(billingQuery, DEFAULT_UPGRADE_BILLING));
   }, [router.isReady, billingQuery]);
 
   const planSlug = useMemo((): PlanSlug | null => {
@@ -388,9 +393,12 @@ export default function SubscriptionCheckoutPage() {
   return (
     <AdminLayout>
       <div className="container py-4" style={{ maxWidth: 640 }}>
-        <div className="d-flex align-items-center gap-2 mb-4">
+        <div className="d-flex align-items-center gap-2 mb-4 flex-wrap">
           <Link href="/admin/profile/subscription" className="btn btn-sm btn-outline-secondary">
             ← Volver a planes
+          </Link>
+          <Link href="/admin" className="btn btn-sm btn-link">
+            Ir a mi cuenta (plan Free)
           </Link>
         </div>
 
