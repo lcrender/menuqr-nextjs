@@ -64,6 +64,9 @@ export default function SubscriptionCheckoutPage() {
     postalCode: '',
     country: '',
   });
+  /** Email de registro en la app; se usa por defecto como payer_email de Mercado Pago. */
+  const [appEmail, setAppEmail] = useState('');
+  const [useOtherMercadoPagoEmail, setUseOtherMercadoPagoEmail] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState<{ title: string; message: string; variant: 'success' | 'error' } | null>(null);
@@ -123,19 +126,23 @@ export default function SubscriptionCheckoutPage() {
         // No bloquear checkout si no existe/está caído; solo se pierde el autocompletado.
       }
 
-      // Prefill desde sesión local para evitar que el usuario lo escriba manualmente.
+      // Email de la app: se muestra como correo asociado a MP; solo se edita si el usuario lo pide.
       try {
         const raw = localStorage.getItem('user');
         const user = raw ? JSON.parse(raw) : null;
         const email = typeof user?.email === 'string' ? user.email.trim() : '';
         if (email) {
+          setAppEmail(email);
           setBillingData((prev) => ({
             ...prev,
             mercadoPagoEmail: prev.mercadoPagoEmail || email,
           }));
+        } else {
+          // Sin email en sesión: hay que pedirlo de forma editable.
+          setUseOtherMercadoPagoEmail(true);
         }
       } catch {
-        // ignore
+        setUseOtherMercadoPagoEmail(true);
       }
     })();
   }, [countryQuery]);
@@ -295,9 +302,11 @@ export default function SubscriptionCheckoutPage() {
     if (!billingData.state.trim()) nextErrors.state = 'La provincia o estado es obligatoria.';
     if (!billingData.postalCode.trim()) nextErrors.postalCode = 'El código postal es obligatorio.';
     if (!billingData.country.trim()) nextErrors.country = 'El país es obligatorio.';
-    if (isMercadoPago) {
+    if (isMercadoPago && useOtherMercadoPagoEmail) {
       const mpEmail = billingData.mercadoPagoEmail.trim();
-      if (mpEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mpEmail)) {
+      if (!mpEmail) {
+        nextErrors.mercadoPagoEmail = 'Ingresá el email de tu cuenta de Mercado Pago.';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mpEmail)) {
         nextErrors.mercadoPagoEmail = 'Ingresá un email válido.';
       }
     }
@@ -326,7 +335,11 @@ export default function SubscriptionCheckoutPage() {
         returnUrl,
         cancelUrl,
         acceptedTerms: true,
-        mercadoPagoEmail: billingData.mercadoPagoEmail.trim() || undefined,
+        mercadoPagoEmail: isMercadoPago
+          ? (useOtherMercadoPagoEmail
+              ? billingData.mercadoPagoEmail.trim()
+              : appEmail || billingData.mercadoPagoEmail.trim() || undefined)
+          : undefined,
         firstName: billingData.firstName.trim(),
         lastName: billingData.lastName.trim(),
         documentType: billingData.documentType,
@@ -506,17 +519,62 @@ export default function SubscriptionCheckoutPage() {
               <div className="row g-2 mb-3">
                 {isMercadoPago && (
                   <div className="col-12">
-                    <input
-                      className="form-control"
-                      type="email"
-                      placeholder="Email de tu cuenta de Mercado Pago"
-                      value={billingData.mercadoPagoEmail}
-                      onChange={(e) => setBillingData((p) => ({ ...p, mercadoPagoEmail: e.target.value }))}
-                    />
-                    {fieldErrors.mercadoPagoEmail && <small className="text-danger">{fieldErrors.mercadoPagoEmail}</small>}
-                    <small className="text-muted d-block mt-1">
-                      Opcional. Si lo dejás vacío, se usa el email de tu cuenta en la app.
-                    </small>
+                    <span className="small text-muted d-block mb-1">Correo asociado a Mercado Pago</span>
+                    {!useOtherMercadoPagoEmail ? (
+                      <>
+                        <div className="form-control-plaintext py-1 fw-medium">
+                          {appEmail || billingData.mercadoPagoEmail || '—'}
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-link btn-sm p-0 text-decoration-none"
+                          onClick={() => {
+                            setUseOtherMercadoPagoEmail(true);
+                            setFieldErrors((prev) => {
+                              const { mercadoPagoEmail: _, ...rest } = prev;
+                              return rest;
+                            });
+                          }}
+                        >
+                          ¿Usas otro correo en Mercado Pago?
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <input
+                          className="form-control"
+                          type="email"
+                          autoComplete="email"
+                          placeholder="Email de tu cuenta de Mercado Pago"
+                          value={billingData.mercadoPagoEmail}
+                          onChange={(e) =>
+                            setBillingData((p) => ({ ...p, mercadoPagoEmail: e.target.value }))
+                          }
+                        />
+                        {fieldErrors.mercadoPagoEmail && (
+                          <small className="text-danger d-block">{fieldErrors.mercadoPagoEmail}</small>
+                        )}
+                        {appEmail && (
+                          <button
+                            type="button"
+                            className="btn btn-link btn-sm p-0 mt-1 text-decoration-none"
+                            onClick={() => {
+                              setUseOtherMercadoPagoEmail(false);
+                              setBillingData((p) => ({
+                                ...p,
+                                mercadoPagoEmail: appEmail,
+                              }));
+                              setFieldErrors((prev) => {
+                                const { mercadoPagoEmail: _, ...rest } = prev;
+                                return rest;
+                              });
+                            }}
+                          >
+                            Usar el correo de mi cuenta en la app
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
                 <div className="col-12 col-md-6">
