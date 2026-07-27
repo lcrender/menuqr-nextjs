@@ -104,6 +104,24 @@ export class PaymentHistoryService {
     }
   }
 
+  /** Cantidad de cobros completados de una suscripción (para distinguir alta vs renovación). */
+  async countCompletedForSubscription(subscriptionId: string): Promise<number> {
+    if (!subscriptionId) return 0;
+    try {
+      const rows = await this.postgres.queryRaw<{ count: string | number }>(
+        `SELECT COUNT(*)::int AS count
+         FROM payment_attempts
+         WHERE subscription_id = $1 AND status = 'completed'::"PaymentAttemptStatus"`,
+        [subscriptionId],
+      );
+      const n = rows[0]?.count;
+      return typeof n === 'number' ? n : parseInt(String(n ?? '0'), 10) || 0;
+    } catch (err) {
+      this.logger.warn(`No se pudo contar payment_attempts: ${(err as Error)?.message ?? err}`);
+      return 0;
+    }
+  }
+
   private async list({
     where,
     params,

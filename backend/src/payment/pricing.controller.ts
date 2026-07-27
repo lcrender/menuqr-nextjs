@@ -11,6 +11,7 @@ import { SubscriptionService } from '../subscription/subscription.service';
  * - ?country=AR|GLOBAL fuerza precios de landing (/ar, /es) aunque haya sesión.
  * - Sin query y autenticado: billing_country / declared_country / registration_country.
  * - Sin query y anónimo: GLOBAL (USD / PayPal).
+ * El free trial de Mercado Pago no es global: se aplica solo con cupones en checkout.
  */
 @ApiTags('pricing')
 @Controller('pricing')

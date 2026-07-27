@@ -1,10 +1,11 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PaymentProviderService } from './payment-provider.service';
 import { PayPalService } from './providers/paypal.service';
 import { MercadoPagoService } from './providers/mercadopago.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { UsersService } from '../users/users.service';
+import { SubscriptionNotificationService } from './subscription-notification.service';
 import {
   PaymentProviderType,
   PlanType,
@@ -15,9 +16,12 @@ import {
 import { PREMIUM_CHECKOUT_ENABLED } from './pricing.constants';
 import { PricingService } from './pricing.service';
 import type { PlanSlug } from './pricing.service';
+import { PromoCodesService } from '../promo-codes/promo-codes.service';
 
 @Injectable()
 export class PaymentService {
+  private readonly logger = new Logger(PaymentService.name);
+
   constructor(
     private readonly paymentProviderService: PaymentProviderService,
     private readonly paypalService: PayPalService,
@@ -26,6 +30,8 @@ export class PaymentService {
     private readonly usersService: UsersService,
     private readonly config: ConfigService,
     private readonly pricingService: PricingService,
+    private readonly subscriptionNotifications: SubscriptionNotificationService,
+    private readonly promoCodesService: PromoCodesService,
   ) {}
 
   /**
@@ -83,6 +89,7 @@ export class PaymentService {
     returnUrl: string;
     cancelUrl: string;
     payerEmail?: string;
+    trialDays?: number;
   }): Promise<CreateSubscriptionResult> {
     const user = await this.usersService.findById(params.userId);
     if (!user) throw new NotFoundException('User not found');
@@ -140,6 +147,7 @@ export class PaymentService {
       returnUrl,
       cancelUrl,
       payerEmail: params.payerEmail?.trim() || (user.email ?? undefined),
+      trialDays: params.trialDays ?? 0,
       metadata: { userId: params.userId },
     });
   }
@@ -164,6 +172,7 @@ export class PaymentService {
     state: string;
     postalCode: string;
     country: string;
+    promoCode?: string;
   }): Promise<CreateSubscriptionResult> {
     if (!params.acceptedTerms) {
       throw new BadRequestException('Debés aceptar los términos y condiciones y la política de privacidad.');
@@ -179,6 +188,28 @@ export class PaymentService {
     }
     const amount = params.planType === 'yearly' ? priceRow.priceYearly : priceRow.price;
     const provider = this.paymentProviderService.getPaymentProvider(user);
+
+    let trialDays = 0;
+    let trialPromo: { id: string; grantPlanSlug: string; freeTrialDays: number } | null = null;
+    const promoRaw = params.promoCode?.trim();
+    if (promoRaw) {
+      if (provider !== 'mercadopago') {
+        throw new BadRequestException(
+          'Los cupones de prueba gratis solo aplican con Mercado Pago (Argentina).',
+        );
+      }
+      const resolved = await this.promoCodesService.resolveMpTrialPromoForCheckout({
+        userId: params.userId,
+        code: promoRaw,
+        planSlug: params.planSlug,
+      });
+      trialDays = resolved.freeTrialDays;
+      trialPromo = {
+        id: resolved.promo.id,
+        grantPlanSlug: resolved.promo.grantPlanSlug,
+        freeTrialDays: resolved.freeTrialDays,
+      };
+    }
 
     const sessionId = await this.subscriptionService.createCheckoutSession({
       userId: params.userId,
@@ -206,6 +237,7 @@ export class PaymentService {
         returnUrl: params.returnUrl,
         cancelUrl: params.cancelUrl,
         payerEmail: params.mercadoPagoEmail?.trim() || undefined,
+        trialDays,
       });
       const sub = await this.subscriptionService.findByExternalId(provider, result.subscriptionId);
       if (sub) {
@@ -213,6 +245,15 @@ export class PaymentService {
           status: 'redirected',
           subscriptionId: sub.id,
         });
+        if (trialPromo) {
+          await this.promoCodesService.recordMpTrialRedemption({
+            userId: params.userId,
+            promoId: trialPromo.id,
+            grantPlanSlug: trialPromo.grantPlanSlug,
+            freeTrialDays: trialPromo.freeTrialDays,
+            subscriptionId: sub.id,
+          });
+        }
       } else {
         await this.subscriptionService.updateCheckoutSession(sessionId, { status: 'redirected' });
       }
@@ -224,31 +265,85 @@ export class PaymentService {
   }
 
   /**
-   * Cancela una suscripción en el proveedor.
-   * El estado local se actualiza solo cuando llegue el webhook de cancelación.
+   * Cancela la suscripción (proveedor si aplica), baja el tenant a Free de inmediato
+   * y notifica al usuario y al super admin con el motivo.
    */
   async cancelSubscription(params: {
     userId: string;
     externalSubscriptionId?: string;
     cancelAtPeriodEnd?: boolean;
-  }): Promise<CancelSubscriptionResult> {
+    reason: string;
+  }): Promise<CancelSubscriptionResult & { previousPlan: string; newPlan: string }> {
+    const reason = String(params.reason || '').trim();
+    if (reason.length < 5) {
+      throw new BadRequestException('El motivo de cancelación es obligatorio (mínimo 5 caracteres).');
+    }
+    if (reason.length > 1000) {
+      throw new BadRequestException('El motivo de cancelación es demasiado largo.');
+    }
+
     const user = await this.usersService.findById(params.userId);
     if (!user) throw new NotFoundException('User not found');
 
-    let externalSubscriptionId = params.externalSubscriptionId;
-    if (!externalSubscriptionId) {
-      const subs = await this.subscriptionService.findByUserId(params.userId);
-      const active = subs.find((s) => s.status === 'active');
-      if (!active) throw new NotFoundException('No active subscription found');
-      externalSubscriptionId = active.externalSubscriptionId;
+    const subs = await this.subscriptionService.findByUserId(params.userId);
+    const sub = params.externalSubscriptionId
+      ? subs.find((s) => s.externalSubscriptionId === params.externalSubscriptionId)
+      : subs.find((s) => s.status === 'active' && s.subscriptionPlan !== 'free');
+
+    if (!sub || !sub.externalSubscriptionId) {
+      throw new NotFoundException('No se encontró una suscripción activa para cancelar.');
+    }
+    if (sub.status !== 'active') {
+      throw new BadRequestException('La suscripción ya no está activa.');
     }
 
-    const provider = this.paymentProviderService.getPaymentProvider(user);
-    const service = this.getProviderService(provider);
-    return service.cancelSubscription({
-      externalSubscriptionId,
-      cancelAtPeriodEnd: params.cancelAtPeriodEnd,
+    const previousPlan = String(sub.subscriptionPlan || 'free');
+    if (previousPlan === 'free') {
+      throw new BadRequestException('El plan Free no requiere cancelación.');
+    }
+
+    if (sub.paymentProvider === 'mercadopago' || sub.paymentProvider === 'paypal') {
+      try {
+        const service = this.getProviderService(sub.paymentProvider);
+        await service.cancelSubscription({
+          externalSubscriptionId: sub.externalSubscriptionId,
+          cancelAtPeriodEnd: params.cancelAtPeriodEnd ?? false,
+        });
+      } catch (e) {
+        this.logger.warn(
+          `Cancelación en proveedor ${sub.paymentProvider} falló para ${sub.externalSubscriptionId}: ${e}`,
+        );
+      }
+    }
+
+    await this.subscriptionService.updateStatus(sub.paymentProvider, sub.externalSubscriptionId, {
+      status: 'canceled',
+      cancelAtPeriodEnd: false,
     });
+    await this.subscriptionService.syncTenantPlanFromSubscription(params.userId);
+
+    try {
+      await this.subscriptionNotifications.notifySubscriptionCanceled({
+        userId: params.userId,
+        userEmail: user.email,
+        firstName: user.firstName ?? null,
+        lastName: user.lastName ?? null,
+        role: user.role ?? null,
+        tenantId: user.tenantId ?? null,
+        previousPlan,
+        reason,
+        paymentProvider: sub.paymentProvider,
+        externalSubscriptionId: sub.externalSubscriptionId,
+      });
+    } catch (e) {
+      this.logger.warn(`No se pudieron enviar emails de cancelación para user ${params.userId}: ${e}`);
+    }
+
+    return {
+      success: true,
+      previousPlan,
+      newPlan: 'free',
+    };
   }
 
   /**

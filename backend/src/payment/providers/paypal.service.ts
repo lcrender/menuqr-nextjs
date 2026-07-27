@@ -14,6 +14,7 @@ import { UsersService } from '../../users/users.service';
 import { AdminMessagesService } from '../../admin-messages/admin-messages.service';
 import { AppSettingsService } from '../../app-settings/app-settings.service';
 import { readEnvTrimmed } from '../../common/config/read-env-trimmed';
+import { SubscriptionNotificationService } from '../subscription-notification.service';
 
 const PAYPAL_API_BASE = (mode: string) =>
   mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
@@ -65,6 +66,7 @@ export class PayPalService implements IPaymentProviderService {
     private readonly paymentHistory: PaymentHistoryService,
     private readonly usersService: UsersService,
     private readonly adminMessages: AdminMessagesService,
+    private readonly subscriptionNotifications: SubscriptionNotificationService,
   ) {}
 
   /** Modo efectivo: preferencia en BD (super admin); si no hay fila, `PAYPAL_MODE` del entorno. */
@@ -174,6 +176,7 @@ export class PayPalService implements IPaymentProviderService {
     planSlug: string;
     returnUrl: string;
     cancelUrl: string;
+    trialDays?: number;
     metadata?: Record<string, string>;
   }): Promise<CreateSubscriptionResult> {
     if (params.planSlug === 'free') {
@@ -368,7 +371,6 @@ export class PayPalService implements IPaymentProviderService {
 
   private async handleSubscriptionActivated(subscriptionId: string, resource: any): Promise<void> {
     const existing = await this.subscriptionService.findByExternalId('paypal', subscriptionId);
-    const wasNew = !existing;
     let sub = existing;
     const planId = resource?.plan_id;
     const startTime = resource?.start_time || resource?.billing_info?.last_payment?.time;
@@ -404,30 +406,29 @@ export class PayPalService implements IPaymentProviderService {
     }
     if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
 
-    // Notificar solo cuando se crea la suscripción (no en renovaciones).
-    if (wasNew && sub) {
+    // Alta de suscripción: email al usuario y al super admin (idempotente con el primer cobro).
+    if (sub) {
       try {
         const actor = await this.usersService.findById(sub.userId);
         if (actor) {
-          await this.adminMessages.notifyIfEnabled(
-            'subscription_created',
-            {
-              id: actor.id,
-              email: actor.email,
-              firstName: actor.firstName ?? null,
-              lastName: actor.lastName ?? null,
-              role: actor.role,
-              tenantId: actor.tenantId ?? null,
-            },
-            {
-              subscriptionExternalId: subscriptionId,
-              planSlug: sub.subscriptionPlan ?? null,
-              planType: sub.planType ?? null,
-            },
-          );
+          await this.subscriptionNotifications.notify({
+            kind: 'activated',
+            userId: actor.id,
+            userEmail: actor.email,
+            firstName: actor.firstName ?? null,
+            lastName: actor.lastName ?? null,
+            tenantId: actor.tenantId ?? null,
+            paymentProvider: 'paypal',
+            planSlug: sub.subscriptionPlan ?? null,
+            planType: sub.planType ?? null,
+            currency: sub.currency ?? null,
+            externalSubscriptionId: subscriptionId,
+            currentPeriodStart: startTime ? new Date(startTime) : null,
+            currentPeriodEnd: endTime ? new Date(endTime) : null,
+          });
         }
       } catch (e) {
-        this.logger.warn(`No se pudo enviar notificación subscription_created (PayPal) para userId=${sub.userId}: ${e}`);
+        this.logger.warn(`No se pudo enviar emails subscription activated (PayPal) para userId=${sub.userId}: ${e}`);
       }
     }
   }
@@ -518,6 +519,8 @@ export class PayPalService implements IPaymentProviderService {
     const sub = await this.subscriptionService.findByExternalId('paypal', subId);
     if (!sub) return;
 
+    const wasAlreadyActive = sub.status === 'active';
+
     // Persistimos el intento como completado (la suscripción se activa/renueva vía sincronización).
     const externalPaymentId = resource?.id || body?.id || eventId || subId;
     const occurredAtRaw = resource?.create_time || resource?.time || body?.create_time;
@@ -547,44 +550,46 @@ export class PayPalService implements IPaymentProviderService {
     }
     const startTime = resource?.billing_agreement_id && resource?.create_time;
     const endTime = resource?.billing_agreement_id && resource?.valid_until;
+    const periodStart = startTime ? new Date(startTime) : undefined;
+    const periodEnd = endTime ? new Date(endTime) : undefined;
     if (startTime || endTime) {
       await this.subscriptionService.updateStatus('paypal', subId, {
         status: 'active',
-        currentPeriodStart: startTime ? new Date(startTime) : undefined,
-        currentPeriodEnd: endTime ? new Date(endTime) : undefined,
+        currentPeriodStart: periodStart,
+        currentPeriodEnd: periodEnd,
       });
     }
     await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
 
-    // Notificar pago exitoso (best-effort).
+    const completedCount = await this.paymentHistory.countCompletedForSubscription(sub.id);
     try {
       if (sub.userId) {
         const actor = await this.usersService.findById(sub.userId);
         if (actor) {
-          await this.adminMessages.notifyIfEnabled(
-            'subscription_payment_succeeded',
-            {
-              id: actor.id,
-              email: actor.email,
+          await this.subscriptionNotifications.notifyFromPaymentSuccess({
+            wasAlreadyActive,
+            completedPaymentsCount: completedCount,
+            payload: {
+              userId: actor.id,
+              userEmail: actor.email,
               firstName: actor.firstName ?? null,
               lastName: actor.lastName ?? null,
-              role: actor.role,
               tenantId: actor.tenantId ?? null,
-            },
-            {
-              paymentId: String(externalPaymentId),
-              providerStatus: String(providerStatus ?? ''),
-              amount: amountValue,
-              currency,
+              paymentProvider: 'paypal',
               planSlug: sub.subscriptionPlan ?? null,
               planType: sub.planType ?? null,
-              subscriptionExternalId: subId,
+              amount: amountValue,
+              currency,
+              externalSubscriptionId: subId,
+              externalPaymentId: String(externalPaymentId),
+              currentPeriodStart: periodStart ?? sub.currentPeriodStart ?? null,
+              currentPeriodEnd: periodEnd ?? sub.currentPeriodEnd ?? null,
             },
-          );
+          });
         }
       }
     } catch (e) {
-      this.logger.warn(`No se pudo enviar notificación payment_succeeded (PayPal) para userId=${sub?.userId}: ${e}`);
+      this.logger.warn(`No se pudo enviar emails de suscripción (PayPal) para userId=${sub?.userId}: ${e}`);
     }
   }
 

@@ -63,11 +63,6 @@ export default function Profile() {
     setFeedback({ type: 'success', message: 'Se envió un email de confirmación al nuevo correo. Revisa tu bandeja de entrada.' });
   }, []);
 
-  const handleSubscriptionsChange = useCallback(() => {
-    api.get('/subscriptions/me').then((res) => setSubscriptions(Array.isArray(res.data) ? res.data : [])).catch(() => {});
-    api.get('/restaurants/dashboard-stats').then((res) => setCurrentPlan(res.data?.plan ?? null)).catch(() => {});
-  }, []);
-
   if (loading) {
     return (
       <AdminLayout>
@@ -105,12 +100,10 @@ export default function Profile() {
               onChangePasswordSuccess={() => setAlertModal({ title: 'Listo', message: 'Contraseña actualizada correctamente.', variant: 'success' })}
             />
 
-            {/* 3. Suscripción (solo lectura desde Subscription, acciones vía backend) */}
+            {/* 3. Suscripción (solo lectura; cancelar desde Gestionar suscripción) */}
             <ProfileSubscription
               subscriptions={subscriptions}
               currentPlan={currentPlan}
-              onSubscriptionsChange={handleSubscriptionsChange}
-              onFeedback={(type, message) => setFeedback({ type, message })}
               feedback={feedback}
               onClearFeedback={() => setFeedback(null)}
             />

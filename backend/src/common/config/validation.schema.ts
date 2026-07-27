@@ -127,6 +127,28 @@ export const validationSchema = Joi.object({
   MERCADOPAGO_ACCESS_TOKEN_TEST: Joi.string().optional().allow(''),
   /** Origen público (https) para back_url en local con túnel; MP rechaza localhost. */
   MERCADOPAGO_PUBLIC_FRONTEND_URL: Joi.string().uri().optional().allow('', null),
+  /** Días de free_trial en preapproval_plan (legacy). Default 0: el trial de producto va por cupones. */
+  MERCADOPAGO_FREE_TRIAL_DAYS: Joi.number().integer().min(0).max(3650).optional(),
+  /** IDs fijos de preapproval_plan en MP (opcionales; si faltan se crean y cachean en app_settings). */
+  MERCADOPAGO_PLAN_ID_STARTER_MONTHLY: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_STARTER_YEARLY: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PRO_MONTHLY: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PRO_YEARLY: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PREMIUM_MONTHLY: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PREMIUM_YEARLY: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_STARTER_MONTHLY_TEST: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_STARTER_YEARLY_TEST: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PRO_MONTHLY_TEST: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PRO_YEARLY_TEST: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PREMIUM_MONTHLY_TEST: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PREMIUM_YEARLY_TEST: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_STARTER_MONTHLY_SANDBOX: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_STARTER_YEARLY_SANDBOX: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PRO_MONTHLY_SANDBOX: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PRO_YEARLY_SANDBOX: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PREMIUM_MONTHLY_SANDBOX: Joi.string().optional().allow(''),
+  MERCADOPAGO_PLAN_ID_PREMIUM_YEARLY_SANDBOX: Joi.string().optional().allow(''),
+  MERCADOPAGO_WEBHOOK_SECRET: Joi.string().optional().allow(''),
 
   // ========================================
   // FORMULARIO DE CONTACTO PÚBLICO

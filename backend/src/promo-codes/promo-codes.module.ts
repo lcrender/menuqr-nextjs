@@ -3,13 +3,20 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../common/database/database.module';
 import { EmailModule } from '../common/email/email.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
+import { SubscriptionNotificationModule } from '../payment/subscription-notification.module';
 import { PromoCodesAdminController } from './promo-codes-admin.controller';
 import { PromoCodesService } from './promo-codes.service';
 import { PromoReminderService } from './promo-reminder.service';
 import { PromoSubscriptionJob } from './promo-subscription.job';
 
 @Module({
-  imports: [DatabaseModule, SubscriptionModule, EmailModule, ConfigModule],
+  imports: [
+    DatabaseModule,
+    SubscriptionModule,
+    EmailModule,
+    ConfigModule,
+    SubscriptionNotificationModule,
+  ],
   controllers: [PromoCodesAdminController],
   providers: [PromoCodesService, PromoReminderService, PromoSubscriptionJob],
   exports: [PromoCodesService, PromoReminderService],

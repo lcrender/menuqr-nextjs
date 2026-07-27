@@ -286,9 +286,37 @@ export class SubscriptionController {
   }
 
   @Post('redeem-promo-code')
-  @ApiOperation({ summary: 'Canjear código promocional 100% gratis' })
+  @ApiOperation({ summary: 'Canjear código promocional 100% gratis (requiere datos de facturación)' })
   async redeemPromoCode(@Request() req: any, @Body() body: RedeemPromoCodeDto) {
-    return this.promoCodesService.redeemCode(req.user.id, body.code, body.contextPlanSlug);
+    const hasBilling =
+      !!body.firstName?.trim() &&
+      !!body.lastName?.trim() &&
+      !!body.street?.trim() &&
+      !!body.city?.trim() &&
+      !!body.state?.trim() &&
+      !!body.postalCode?.trim() &&
+      !!body.country?.trim();
+
+    return this.promoCodesService.redeemCode(
+      req.user.id,
+      body.code,
+      body.contextPlanSlug,
+      hasBilling
+        ? {
+            acceptedTerms: body.acceptedTerms === true,
+            firstName: body.firstName!,
+            lastName: body.lastName!,
+            documentType: body.documentType,
+            documentNumber: body.documentNumber,
+            street: body.street!,
+            city: body.city!,
+            state: body.state!,
+            postalCode: body.postalCode!,
+            country: body.country!,
+            billingCycle: body.billingCycle,
+          }
+        : undefined,
+    );
   }
 
   @Post('create')
@@ -333,6 +361,7 @@ export class SubscriptionController {
       state: body.state,
       postalCode: body.postalCode,
       country: body.country,
+      promoCode: body.promoCode,
     });
   }
 
@@ -343,15 +372,19 @@ export class SubscriptionController {
   }
 
   @Post('cancel')
-  @ApiOperation({ summary: 'Solicitar cancelación en el proveedor' })
+  @ApiOperation({
+    summary:
+      'Cancelar suscripción (motivo obligatorio): baja a Free de inmediato y notifica al usuario y al super admin',
+  })
   async cancel(
     @Request() req: any,
-    @Body() body: { externalSubscriptionId?: string; cancelAtPeriodEnd?: boolean },
+    @Body() body: { externalSubscriptionId?: string; cancelAtPeriodEnd?: boolean; reason: string },
   ) {
     const result = await this.paymentService.cancelSubscription({
       userId: req.user.id,
       externalSubscriptionId: body.externalSubscriptionId,
       cancelAtPeriodEnd: body.cancelAtPeriodEnd,
+      reason: body.reason,
     });
     return result;
   }

@@ -56,6 +56,13 @@ export class UpdatePromoCodeDto {
   @IsDateString()
   validUntil?: string;
 
+  /** null = quitar trial (pasar a beneficio por meses / ilimitado). */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(3650)
+  freeTrialDays?: number | null;
+
   @IsOptional()
   @IsBoolean()
   unlimitedDuration?: boolean;

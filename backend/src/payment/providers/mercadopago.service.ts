@@ -16,12 +16,13 @@ import { AppSettingsService } from '../../app-settings/app-settings.service';
 import { PaymentHistoryService, type PaymentAttemptStatus } from '../payment-history.service';
 import { UsersService } from '../../users/users.service';
 import { AdminMessagesService } from '../../admin-messages/admin-messages.service';
+import { SubscriptionNotificationService } from '../subscription-notification.service';
 
 const MP_API_BASE = 'https://api.mercadopago.com';
 
 /**
- * MercadoPago Preapproval API para suscripciones recurrentes (Argentina, ARS).
- * Flujo: crear preapproval → devolver init_point → usuario paga → webhook confirma → activar plan.
+ * MercadoPago suscripciones con plan asociado (preapproval_plan) + free_trial.
+ * Flujo: asegurar plan MP (con trial) → crear preapproval → init_point → webhook → activar plan.
  */
 @Injectable()
 export class MercadoPagoService implements IPaymentProviderService {
@@ -36,6 +37,7 @@ export class MercadoPagoService implements IPaymentProviderService {
     private readonly paymentHistory: PaymentHistoryService,
     private readonly usersService: UsersService,
     private readonly adminMessages: AdminMessagesService,
+    private readonly subscriptionNotifications: SubscriptionNotificationService,
   ) {}
 
   /** Intenta extraer mensaje legible del JSON de error de la API de Mercado Pago. */
@@ -112,6 +114,151 @@ export class MercadoPagoService implements IPaymentProviderService {
     return token;
   }
 
+  /**
+   * Plan ID fijo en .env (opcional). Si existe, se usa y se asume que el trial ya está configurado en MP.
+   * Ej: MERCADOPAGO_PLAN_ID_PRO_MONTHLY / MERCADOPAGO_PLAN_ID_PRO_MONTHLY_TEST
+   */
+  private resolveEnvPreapprovalPlanId(
+    planSlug: string,
+    planType: PlanType,
+    mode: 'sandbox' | 'production',
+  ): string | null {
+    const slugKey = planSlug.toUpperCase();
+    const cycle = planType === 'yearly' ? 'YEARLY' : 'MONTHLY';
+    const base = `MERCADOPAGO_PLAN_ID_${slugKey}_${cycle}`;
+    if (mode === 'sandbox') {
+      const test =
+        readEnvTrimmed(`${base}_TEST`, this.config) ||
+        readEnvTrimmed(`${base}_SANDBOX`, this.config);
+      if (test) return test;
+    }
+    return readEnvTrimmed(base, this.config) || null;
+  }
+
+  private async resolvePlanBackUrl(): Promise<string> {
+    const frontend =
+      readEnvTrimmed('MERCADOPAGO_PUBLIC_FRONTEND_URL', this.config) ||
+      readEnvTrimmed('FRONTEND_URL', this.config) ||
+      'https://appmenuqr.com';
+    const base = frontend.replace(/\/$/, '');
+    return this.resolveMercadoPagoBackUrl(`${base}/admin/profile/subscription?success=1`);
+  }
+
+  /**
+   * Crea (o reutiliza) un preapproval_plan en MP con free_trial.
+   * Cache en app_settings por modo + slug + ciclo + monto + días de trial.
+   */
+  private async ensurePreapprovalPlan(params: {
+    planSlug: string;
+    planName: string;
+    planType: PlanType;
+    amount: number;
+    trialDays: number;
+    token: string;
+    mode: 'sandbox' | 'production';
+  }): Promise<string> {
+    const fromEnv = this.resolveEnvPreapprovalPlanId(params.planSlug, params.planType, params.mode);
+    if (fromEnv) {
+      this.logger.log(`Usando preapproval_plan de env para ${params.planSlug}/${params.planType}: ${fromEnv}`);
+      return fromEnv;
+    }
+
+    const cacheKey = `mp_preapproval_plan:${params.mode}:${params.planSlug}:${params.planType}:${params.amount}:${params.trialDays}`;
+    const cached = await this.appSettings.getString(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const isYearly = params.planType === 'yearly';
+    const reason = `AppMenuQR - Plan ${params.planName}${isYearly ? ' (anual)' : ''}${
+      params.trialDays > 0 ? ` · ${params.trialDays} días gratis` : ''
+    }`;
+    const backUrl = await this.resolvePlanBackUrl();
+
+    const autoRecurring: Record<string, unknown> = {
+      frequency: isYearly ? 12 : 1,
+      frequency_type: 'months',
+      transaction_amount: params.amount,
+      currency_id: 'ARS',
+    };
+    if (params.trialDays > 0) {
+      autoRecurring.free_trial = {
+        frequency: params.trialDays,
+        frequency_type: 'days',
+      };
+    }
+
+    const body = {
+      reason,
+      auto_recurring: autoRecurring,
+      back_url: backUrl,
+    };
+
+    const res = await fetch(`${MP_API_BASE}/preapproval_plan`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${params.token}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      this.logger.error(`MercadoPago preapproval_plan error (${res.status}): ${errText}`);
+      const mpMessage = this.parseMercadoPagoErrorMessage(errText);
+      throw new BadRequestException(
+        mpMessage ?? 'No se pudo crear el plan de suscripción en Mercado Pago.',
+      );
+    }
+    const data = (await res.json()) as { id?: string };
+    const planId = String(data.id || '').trim();
+    if (!planId) {
+      throw new BadRequestException('Mercado Pago no devolvió id de preapproval_plan.');
+    }
+    await this.appSettings.setString(cacheKey, planId);
+    this.logger.log(
+      `Creado preapproval_plan ${planId} (${params.planSlug}/${params.planType}, trial=${params.trialDays}d)`,
+    );
+    return planId;
+  }
+
+  private resolveTrialPeriodEnd(
+    preapproval: any,
+    trialDays: number,
+    fallbackStart: Date | null,
+  ): Date | null {
+    const nextPayment = preapproval?.next_payment_date
+      ? new Date(preapproval.next_payment_date)
+      : null;
+    if (nextPayment && !Number.isNaN(nextPayment.getTime())) return nextPayment;
+
+    const freeTrial = preapproval?.auto_recurring?.free_trial;
+    const ftFreq = Number(freeTrial?.frequency);
+    const ftType = String(freeTrial?.frequency_type || '');
+    const start =
+      fallbackStart && !Number.isNaN(fallbackStart.getTime()) ? fallbackStart : new Date();
+    if (ftType === 'days' && Number.isFinite(ftFreq) && ftFreq > 0) {
+      const end = new Date(start);
+      end.setDate(end.getDate() + ftFreq);
+      return end;
+    }
+    if (ftType === 'months' && Number.isFinite(ftFreq) && ftFreq > 0) {
+      const end = new Date(start);
+      end.setMonth(end.getMonth() + ftFreq);
+      return end;
+    }
+    if (trialDays > 0) {
+      const end = new Date(start);
+      end.setDate(end.getDate() + trialDays);
+      return end;
+    }
+    if (preapproval?.end_date) {
+      const end = new Date(preapproval.end_date);
+      if (!Number.isNaN(end.getTime())) return end;
+    }
+    return null;
+  }
+
   async createSubscription(params: {
     userId: string;
     payerEmail?: string;
@@ -119,6 +266,7 @@ export class MercadoPagoService implements IPaymentProviderService {
     planSlug: string;
     returnUrl: string;
     cancelUrl: string;
+    trialDays?: number;
     metadata?: Record<string, string>;
   }): Promise<CreateSubscriptionResult> {
     const payerEmail = params.payerEmail?.trim();
@@ -142,23 +290,30 @@ export class MercadoPagoService implements IPaymentProviderService {
       throw new BadRequestException('Monto de suscripción inválido para este plan.');
     }
     const token = await this.resolveAccessToken();
+    const mode = await this.appSettings.getMercadoPagoMode();
+    const trialDays =
+      typeof params.trialDays === 'number' && Number.isFinite(params.trialDays)
+        ? Math.max(0, Math.min(Math.trunc(params.trialDays), 3650))
+        : 0;
 
-    // MP exige end_date en auto_recurring para suscripciones sin plan asociado (status pending).
-    const endDate = new Date();
-    endDate.setFullYear(endDate.getFullYear() + 5);
+    const preapprovalPlanId = await this.ensurePreapprovalPlan({
+      planSlug: params.planSlug,
+      planName: priceRow.planName,
+      planType: params.planType,
+      amount,
+      trialDays,
+      token,
+      mode,
+    });
 
     const backUrl = this.resolveMercadoPagoBackUrl(params.returnUrl);
 
     const preapprovalPayload = {
-      reason: `AppMenuQR - Plan ${priceRow.planName}${isYearly ? ' (anual)' : ''}`,
+      preapproval_plan_id: preapprovalPlanId,
+      reason: `AppMenuQR - Plan ${priceRow.planName}${isYearly ? ' (anual)' : ''}${
+        trialDays > 0 ? ` · ${trialDays} días gratis` : ''
+      }`,
       payer_email: payerEmail,
-      auto_recurring: {
-        frequency: isYearly ? 12 : 1,
-        frequency_type: 'months' as const,
-        transaction_amount: amount,
-        currency_id: 'ARS',
-        end_date: endDate.toISOString(),
-      },
       back_url: backUrl,
       status: 'pending' as const,
       external_reference: params.userId,
@@ -188,6 +343,12 @@ export class MercadoPagoService implements IPaymentProviderService {
     }
     const preapprovalId = String(data.id ?? data.preapproval_id ?? '').trim();
     if (preapprovalId) {
+      const start = new Date();
+      let periodEnd: Date | null = null;
+      if (trialDays > 0) {
+        periodEnd = new Date(start);
+        periodEnd.setDate(periodEnd.getDate() + trialDays);
+      }
       await this.subscriptionService.create({
         userId: params.userId,
         paymentProvider: 'mercadopago',
@@ -198,7 +359,7 @@ export class MercadoPagoService implements IPaymentProviderService {
         planType: params.planType,
         subscriptionPlan: params.planSlug,
         currentPeriodStart: null,
-        currentPeriodEnd: null,
+        currentPeriodEnd: periodEnd,
         cancelAtPeriodEnd: false,
       });
     }
@@ -387,46 +548,49 @@ export class MercadoPagoService implements IPaymentProviderService {
 
     // Activación del plan solo para pagos aprobados.
     if (status === 'approved' && externalRef && sub) {
+      const wasAlreadyActive = sub.status === 'active';
       const start = payment.date_approved ? new Date(payment.date_approved) : new Date();
       const ms =
         sub.planType === 'yearly'
           ? 366 * 24 * 60 * 60 * 1000
           : 31 * 24 * 60 * 60 * 1000;
+      const periodEnd = payment.date_approved
+        ? new Date(new Date(payment.date_approved).getTime() + ms)
+        : null;
       await this.subscriptionService.updateStatus('mercadopago', sub.externalSubscriptionId, {
         status: 'active',
         currentPeriodStart: start,
-        currentPeriodEnd: payment.date_approved
-          ? new Date(new Date(payment.date_approved).getTime() + ms)
-          : null,
+        currentPeriodEnd: periodEnd,
       });
       await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
 
-      // Notificar pago exitoso (best-effort).
+      const completedCount = await this.paymentHistory.countCompletedForSubscription(sub.id);
       try {
         const actor = await this.usersService.findById(sub.userId);
         if (actor) {
-          await this.adminMessages.notifyIfEnabled(
-            'subscription_payment_succeeded',
-            {
-              id: actor.id,
-              email: actor.email,
+          await this.subscriptionNotifications.notifyFromPaymentSuccess({
+            wasAlreadyActive,
+            completedPaymentsCount: completedCount,
+            payload: {
+              userId: actor.id,
+              userEmail: actor.email,
               firstName: actor.firstName ?? null,
               lastName: actor.lastName ?? null,
-              role: actor.role,
               tenantId: actor.tenantId ?? null,
-            },
-            {
-              paymentId: String(paymentId),
-              providerStatus: String(status ?? ''),
+              paymentProvider: 'mercadopago',
               planSlug: sub.subscriptionPlan ?? null,
               planType: sub.planType ?? null,
               amount: payment.transaction_amount ?? payment.transaction_details?.total_paid_amount ?? null,
               currency: payment.currency_id ?? null,
+              externalSubscriptionId: sub.externalSubscriptionId,
+              externalPaymentId: String(paymentId),
+              currentPeriodStart: start,
+              currentPeriodEnd: periodEnd,
             },
-          );
+          });
         }
       } catch (e) {
-        this.logger.warn(`No se pudo enviar notificación payment_succeeded (MP) para userId=${sub.userId}: ${e}`);
+        this.logger.warn(`No se pudo enviar emails de suscripción (MP) para userId=${sub.userId}: ${e}`);
       }
     }
   }
@@ -441,8 +605,12 @@ export class MercadoPagoService implements IPaymentProviderService {
     const status = preapproval.status;
     const externalRef = preapproval.external_reference;
     let sub = await this.subscriptionService.findByExternalId('mercadopago', preapprovalId);
-    const isNewSubscription = !sub && !!externalRef;
+    const trialDays = 0; // el trial viene del free_trial del preapproval en MP, no del env global
     if (status === 'authorized' || status === 'approved') {
+      const periodStart = preapproval.date_created ? new Date(preapproval.date_created) : new Date();
+      const periodEnd =
+        this.resolveTrialPeriodEnd(preapproval, trialDays, periodStart) ??
+        (sub?.currentPeriodEnd ?? null);
       if (!sub && externalRef) {
         // Rescate si el webhook llegó antes que persistiéramos la fila local (poco frecuente).
         sub = await this.subscriptionService.create({
@@ -459,44 +627,43 @@ export class MercadoPagoService implements IPaymentProviderService {
             if (r.includes('Pro')) return 'pro';
             return 'starter';
           })(),
-          currentPeriodStart: preapproval.date_created ? new Date(preapproval.date_created) : new Date(),
-          currentPeriodEnd: preapproval.end_date ? new Date(preapproval.end_date) : null,
+          currentPeriodStart: periodStart,
+          currentPeriodEnd: periodEnd,
           cancelAtPeriodEnd: false,
         });
       } else if (sub) {
         // Conservar plan_slug y plan_type ya guardados al crear el checkout (fuente de verdad).
         await this.subscriptionService.updateStatus('mercadopago', preapprovalId, {
           status: 'active',
-          currentPeriodStart: preapproval.date_created ? new Date(preapproval.date_created) : null,
-          currentPeriodEnd: preapproval.end_date ? new Date(preapproval.end_date) : null,
+          currentPeriodStart: periodStart,
+          currentPeriodEnd: periodEnd,
         });
       }
       if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
 
-      // Notificar una NUEVA suscripción (solo si se creó en este webhook).
-      if (isNewSubscription && sub) {
+      // Alta de suscripción: email al usuario y al super admin (idempotente con el cobro).
+      if (sub) {
         try {
           const actor = await this.usersService.findById(sub.userId);
           if (actor) {
-            await this.adminMessages.notifyIfEnabled(
-              'subscription_created',
-              {
-                id: actor.id,
-                email: actor.email,
-                firstName: actor.firstName ?? null,
-                lastName: actor.lastName ?? null,
-                role: actor.role,
-                tenantId: actor.tenantId ?? null,
-              },
-              {
-                subscriptionExternalId: preapprovalId,
-                planSlug: sub.subscriptionPlan ?? null,
-                planType: sub.planType ?? null,
-              },
-            );
+            await this.subscriptionNotifications.notify({
+              kind: 'activated',
+              userId: actor.id,
+              userEmail: actor.email,
+              firstName: actor.firstName ?? null,
+              lastName: actor.lastName ?? null,
+              tenantId: actor.tenantId ?? null,
+              paymentProvider: 'mercadopago',
+              planSlug: sub.subscriptionPlan ?? null,
+              planType: sub.planType ?? null,
+              currency: preapproval.currency_id || sub.currency || null,
+              externalSubscriptionId: preapprovalId,
+              currentPeriodStart: periodStart,
+              currentPeriodEnd: periodEnd,
+            });
           }
         } catch (e) {
-          this.logger.warn(`No se pudo enviar notificación subscription_created (MP) para userId=${sub.userId}: ${e}`);
+          this.logger.warn(`No se pudo enviar emails subscription activated (MP) para userId=${sub.userId}: ${e}`);
         }
       }
     } else if (status === 'cancelled') {

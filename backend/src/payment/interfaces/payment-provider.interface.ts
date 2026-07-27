@@ -33,6 +33,8 @@ export interface IPaymentProviderService {
     planSlug: string; // starter | pro | premium
     returnUrl: string;
     cancelUrl: string;
+    /** Solo Mercado Pago: días de free_trial (0 = cobro normal). Suele venir de un cupón. */
+    trialDays?: number;
     metadata?: Record<string, string>;
   }): Promise<CreateSubscriptionResult>;
 

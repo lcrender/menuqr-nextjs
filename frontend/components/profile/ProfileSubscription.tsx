@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import api from '../../lib/axios';
 import PlanBadge from './PlanBadge';
-import ConfirmModal from '../ConfirmModal';
 
 export interface SubscriptionItem {
   id: string;
@@ -29,8 +27,6 @@ interface ProfileSubscriptionProps {
   subscriptions: SubscriptionItem[];
   /** Plan actual del tenant (desde API dashboard-stats), para mostrar el estado real aunque no haya suscripción de pago */
   currentPlan?: string | null;
-  onSubscriptionsChange: () => void;
-  onFeedback?: (type: 'success' | 'error', message: string) => void;
   feedback: { type: 'success' | 'error'; message: string } | null;
   onClearFeedback: () => void;
 }
@@ -38,37 +34,12 @@ interface ProfileSubscriptionProps {
 export default function ProfileSubscription({
   subscriptions,
   currentPlan = null,
-  onSubscriptionsChange,
-  onFeedback,
   feedback,
   onClearFeedback,
 }: ProfileSubscriptionProps) {
-  const [cancelLoading, setCancelLoading] = useState<string | null>(null);
-  const [confirmCancel, setConfirmCancel] = useState<{ id: string; externalId: string } | null>(null);
-
   const activeSubscription = subscriptions.find((s) => s.status === 'active');
   const effectivePlan = (currentPlan || activeSubscription?.subscriptionPlan || 'free').toLowerCase();
   const isFree = effectivePlan === 'free' && !activeSubscription;
-
-  const handleCancelRequest = (s: SubscriptionItem) => {
-    if (s.paymentProvider === 'internal') return;
-    setConfirmCancel({ id: s.id, externalId: s.externalSubscriptionId || s.id });
-  };
-
-  const handleCancelConfirm = async () => {
-    if (!confirmCancel) return;
-    setCancelLoading(confirmCancel.externalId);
-    try {
-      await api.post('/subscriptions/cancel', { externalSubscriptionId: confirmCancel.externalId });
-      onSubscriptionsChange();
-      onFeedback?.('success', 'Solicitud de cancelación enviada.');
-    } catch (err: any) {
-      onFeedback?.('error', err.response?.data?.message || 'No se pudo cancelar.');
-    } finally {
-      setCancelLoading(null);
-      setConfirmCancel(null);
-    }
-  };
 
   return (
     <section className="card profile-section">
@@ -131,40 +102,13 @@ export default function ProfileSubscription({
                         </div>
                       )}
                     </div>
-                    {s.paymentProvider !== 'internal' && s.status === 'active' && (
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => handleCancelRequest(s)}
-                        disabled={cancelLoading === (s.externalSubscriptionId || s.id)}
-                      >
-                        {cancelLoading === (s.externalSubscriptionId || s.id) ? '…' : 'Cancelar suscripción'}
-                      </button>
-                    )}
                   </div>
                 </li>
               ))}
             </ul>
           </div>
         )}
-
-        {subscriptions.some((s) => s.paymentProvider !== 'internal' && s.status === 'active') && (
-          <p className="small mb-0">
-            <strong>Cancelar suscripción:</strong> usa el botón &quot;Cancelar suscripción&quot; en la suscripción activa de pago (arriba) o ve a <Link href="/admin/profile/subscription">Gestionar suscripción</Link>. Se te pedirá confirmación antes de cancelar.
-          </p>
-        )}
       </div>
-
-      <ConfirmModal
-        show={!!confirmCancel}
-        title="Cancelar suscripción"
-        message="¿Cancelar esta suscripción? Dejarás de tener acceso al plan al final del período actual. No se renovará."
-        confirmText="Sí, cancelar"
-        cancelText="No"
-        variant="danger"
-        onConfirm={handleCancelConfirm}
-        onCancel={() => setConfirmCancel(null)}
-      />
     </section>
   );
 }

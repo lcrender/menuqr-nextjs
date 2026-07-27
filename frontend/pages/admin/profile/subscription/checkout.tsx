@@ -80,7 +80,9 @@ export default function SubscriptionCheckoutPage() {
     grantPlanLabel: string;
     applicablePlans: string[];
     applicablePlanLabels: string[];
-    grantDurationMonths: number;
+    grantDurationMonths: number | null;
+    freeTrialDays?: number | null;
+    benefitKind?: 'free_grant' | 'mp_free_trial';
     benefitEndsAt: string | null;
     codeValidUntil: string;
     message?: string;
@@ -163,13 +165,6 @@ export default function SubscriptionCheckoutPage() {
     return pricingData.plans.find((x) => x.slug === planSlug) ?? null;
   }, [planSlug, pricingData]);
 
-  const displayPrice = useMemo(() => {
-    if (!planRow) return null;
-    const main = billingCycle === 'yearly' ? yearlyAmount(planRow) : planRow.price;
-    const period = billingCycle === 'yearly' ? '/año' : '/mes';
-    return { main, period, currency: planRow.currency };
-  }, [planRow, billingCycle]);
-
   const featureRows = useMemo(() => {
     if (!planSlug) return [];
     const L = limits[planSlug];
@@ -244,6 +239,51 @@ export default function SubscriptionCheckoutPage() {
 
   const promoReady =
     !!promoPreview?.valid && !promoPreview.planMismatch && !!planSlug;
+  const promoIsMpTrial =
+    promoReady &&
+    (promoPreview?.benefitKind === 'mp_free_trial' ||
+      (typeof promoPreview?.freeTrialDays === 'number' && promoPreview.freeTrialDays > 0));
+  const promoIsFreeGrant = promoReady && !promoIsMpTrial;
+  const mpTrialDays = promoIsMpTrial ? Number(promoPreview?.freeTrialDays || 0) : 0;
+  const showMpTrial = promoIsMpTrial && mpTrialDays > 0;
+
+  const displayPrice = useMemo(() => {
+    if (!planRow) return null;
+    if (promoIsFreeGrant) {
+      return { main: 0, period: '', currency: planRow.currency, freeWithPromo: true as const };
+    }
+    const main = billingCycle === 'yearly' ? yearlyAmount(planRow) : planRow.price;
+    const period = billingCycle === 'yearly' ? '/año' : '/mes';
+    return { main, period, currency: planRow.currency, freeWithPromo: false as const };
+  }, [planRow, billingCycle, promoIsFreeGrant]);
+
+  const collectBillingErrors = (): Record<string, string> => {
+    const nextErrors: Record<string, string> = {};
+    const isArgentina =
+      isArs || ['argentina', 'ar', 'arg'].includes((billingData.country || '').trim().toLowerCase());
+    if (!billingData.firstName.trim()) nextErrors.firstName = 'El nombre es obligatorio.';
+    if (!billingData.lastName.trim()) nextErrors.lastName = 'El apellido es obligatorio.';
+    if (!billingData.street.trim()) nextErrors.street = 'La dirección es obligatoria.';
+    if (!billingData.city.trim()) nextErrors.city = 'La ciudad es obligatoria.';
+    if (!billingData.state.trim()) nextErrors.state = 'La provincia o estado es obligatoria.';
+    if (!billingData.postalCode.trim()) nextErrors.postalCode = 'El código postal es obligatorio.';
+    if (!billingData.country.trim()) nextErrors.country = 'El país es obligatorio.';
+    if (isMercadoPago && useOtherMercadoPagoEmail) {
+      const mpEmail = billingData.mercadoPagoEmail.trim();
+      if (!mpEmail) {
+        nextErrors.mercadoPagoEmail = 'Ingresá el email de tu cuenta de Mercado Pago.';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mpEmail)) {
+        nextErrors.mercadoPagoEmail = 'Ingresá un email válido.';
+      }
+    }
+    if (isArgentina) {
+      if (!billingData.documentType) nextErrors.documentType = 'El tipo de documento es obligatorio para Argentina.';
+      if (!billingData.documentNumber.trim()) {
+        nextErrors.documentNumber = 'El número de documento es obligatorio para Argentina.';
+      }
+    }
+    return nextErrors;
+  };
 
   const handleValidatePromo = async () => {
     const trimmed = promoCode.trim();
@@ -268,14 +308,57 @@ export default function SubscriptionCheckoutPage() {
     }
   };
 
+  const switchCheckoutPlan = (nextPlan: string) => {
+    const trimmed = promoCode.trim();
+    const query: Record<string, string> = { plan: nextPlan };
+    if (billingCycle) query.billing = billingCycle;
+    if (typeof countryQuery === 'string' && countryQuery) query.country = countryQuery;
+    if (trimmed) query.promo = trimmed;
+    promoAutoValidated.current = false;
+    // shallow: no remonta la página → se conservan los datos de facturación en memoria
+    router.replace({ pathname: '/admin/profile/subscription/checkout', query }, undefined, {
+      shallow: true,
+    });
+  };
+
   const handleRedeemPromo = async () => {
     const trimmed = promoCode.trim();
-    if (!trimmed || !planSlug || !promoReady) return;
+    if (!trimmed || !planSlug || !promoIsFreeGrant) return;
+    if (!acceptedTerms) {
+      setAlert({
+        title: 'Términos',
+        message: 'Debés aceptar los términos y condiciones para continuar.',
+        variant: 'error',
+      });
+      return;
+    }
+    setFieldErrors({});
+    const nextErrors = collectBillingErrors();
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      setAlert({
+        title: 'Datos de facturación',
+        message: 'Completá los datos de facturación para guardarlos en tu cuenta.',
+        variant: 'error',
+      });
+      return;
+    }
     setPromoRedeeming(true);
     try {
       await api.post('/subscriptions/redeem-promo-code', {
         code: trimmed,
         contextPlanSlug: planSlug,
+        acceptedTerms: true,
+        firstName: billingData.firstName.trim(),
+        lastName: billingData.lastName.trim(),
+        documentType: billingData.documentType,
+        documentNumber: billingData.documentNumber.trim() || undefined,
+        street: billingData.street.trim(),
+        city: billingData.city.trim(),
+        state: billingData.state.trim(),
+        postalCode: billingData.postalCode.trim(),
+        country: billingData.country.trim(),
+        billingCycle,
       });
       const grantPlan = promoPreview?.grantPlan || planSlug;
       router.push(`/admin?promo=1&plan=${encodeURIComponent(grantPlan)}`);
@@ -293,27 +376,7 @@ export default function SubscriptionCheckoutPage() {
   const handleSubscribe = async () => {
     if (!planSlug || !acceptedTerms || !planRow || isSameActivePlan) return;
     setFieldErrors({});
-    const nextErrors: Record<string, string> = {};
-    const isArgentina = (isArs || ['argentina', 'ar', 'arg'].includes((billingData.country || '').trim().toLowerCase()));
-    if (!billingData.firstName.trim()) nextErrors.firstName = 'El nombre es obligatorio.';
-    if (!billingData.lastName.trim()) nextErrors.lastName = 'El apellido es obligatorio.';
-    if (!billingData.street.trim()) nextErrors.street = 'La dirección es obligatoria.';
-    if (!billingData.city.trim()) nextErrors.city = 'La ciudad es obligatoria.';
-    if (!billingData.state.trim()) nextErrors.state = 'La provincia o estado es obligatoria.';
-    if (!billingData.postalCode.trim()) nextErrors.postalCode = 'El código postal es obligatorio.';
-    if (!billingData.country.trim()) nextErrors.country = 'El país es obligatorio.';
-    if (isMercadoPago && useOtherMercadoPagoEmail) {
-      const mpEmail = billingData.mercadoPagoEmail.trim();
-      if (!mpEmail) {
-        nextErrors.mercadoPagoEmail = 'Ingresá el email de tu cuenta de Mercado Pago.';
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mpEmail)) {
-        nextErrors.mercadoPagoEmail = 'Ingresá un email válido.';
-      }
-    }
-    if (isArgentina) {
-      if (!billingData.documentType) nextErrors.documentType = 'El tipo de documento es obligatorio para Argentina.';
-      if (!billingData.documentNumber.trim()) nextErrors.documentNumber = 'El número de documento es obligatorio para Argentina.';
-    }
+    const nextErrors = collectBillingErrors();
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
       return;
@@ -335,10 +398,11 @@ export default function SubscriptionCheckoutPage() {
         returnUrl,
         cancelUrl,
         acceptedTerms: true,
+        promoCode: promoIsMpTrial ? promoCode.trim() : undefined,
         mercadoPagoEmail: isMercadoPago
-          ? (useOtherMercadoPagoEmail
-              ? billingData.mercadoPagoEmail.trim()
-              : appEmail || billingData.mercadoPagoEmail.trim() || undefined)
+          ? useOtherMercadoPagoEmail
+            ? billingData.mercadoPagoEmail.trim()
+            : appEmail || billingData.mercadoPagoEmail.trim() || undefined
           : undefined,
         firstName: billingData.firstName.trim(),
         lastName: billingData.lastName.trim(),
@@ -485,11 +549,16 @@ export default function SubscriptionCheckoutPage() {
                   {promoPreview.applicablePlans?.length === 1 && (
                     <>
                       {' '}
-                      <Link
-                        href={`/admin/profile/subscription/checkout?plan=${promoPreview.applicablePlans[0]}${promoCode.trim() ? `&promo=${encodeURIComponent(promoCode.trim())}` : ''}`}
+                      <button
+                        type="button"
+                        className="btn btn-link btn-sm p-0 align-baseline"
+                        onClick={() => {
+                          const next = promoPreview.applicablePlans[0];
+                          if (next) switchCheckoutPlan(next);
+                        }}
                       >
                         Ir al checkout {promoPreview.applicablePlanLabels[0]}
-                      </Link>
+                      </button>
                     </>
                   )}
                 </div>
@@ -497,11 +566,16 @@ export default function SubscriptionCheckoutPage() {
               {promoPreview?.valid && !promoPreview.planMismatch && (
                 <div className="alert alert-success small py-2 mb-2" role="status">
                   <span className="badge bg-success me-2">Plan: {promoPreview.grantPlanLabel}</span>
-                  {promoPreview.grantPlanLabel} gratis por {promoPreview.grantDurationMonths} mes(es)
-                  {promoPreview.benefitEndsAt && (
-                    <> (hasta {new Date(promoPreview.benefitEndsAt).toLocaleDateString('es-AR')})</>
-                  )}
-                  . Código canjeable hasta{' '}
+                  {promoIsMpTrial
+                    ? `${mpTrialDays} días de prueba gratis con Mercado Pago; después se cobra ${promoPreview.grantPlanLabel}.`
+                    : promoPreview.grantDurationMonths == null
+                      ? `${promoPreview.grantPlanLabel} gratis sin fecha de caducidad.`
+                      : `${promoPreview.grantPlanLabel} gratis por ${promoPreview.grantDurationMonths} mes(es)${
+                          promoPreview.benefitEndsAt
+                            ? ` (hasta ${new Date(promoPreview.benefitEndsAt).toLocaleDateString('es-AR')})`
+                            : ''
+                        }.`}{' '}
+                  Código válido hasta{' '}
                   {new Date(promoPreview.codeValidUntil).toLocaleDateString('es-AR')}.
                 </div>
               )}
@@ -512,10 +586,12 @@ export default function SubscriptionCheckoutPage() {
               )}
             </div>
 
-            {!promoReady && (
-            <>
             <div className="border-top pt-3 mb-3">
               <span className="small text-muted d-block mb-2">Datos de facturación</span>
+              <p className="small text-muted mb-2">
+                Completá estos datos para guardarlos en tu cuenta
+                {promoIsFreeGrant ? ' al activar el código' : ' antes de pagar'}.
+              </p>
               <div className="row g-2 mb-3">
                 {isMercadoPago && (
                   <div className="col-12">
@@ -648,15 +724,57 @@ export default function SubscriptionCheckoutPage() {
             {displayPrice && (
               <div className="rounded bg-light p-3 mb-3">
                 <div className="d-flex justify-content-between align-items-baseline flex-wrap gap-2">
-                  <span className="text-muted small">Total a pagar ({billingCycle === 'yearly' ? 'por año' : 'por mes'})</span>
+                  <span className="text-muted small">
+                    {displayPrice.freeWithPromo
+                      ? 'Total a pagar con código promocional'
+                      : showMpTrial
+                        ? `Hoy: ${mpTrialDays} días gratis`
+                        : `Total a pagar (${billingCycle === 'yearly' ? 'por año' : 'por mes'})`}
+                  </span>
                   <span className="h4 mb-0">
-                    {formatCurrency(displayPrice.main, displayPrice.currency)}
-                    <span className="fs-6 text-muted fw-normal">{displayPrice.period}</span>
+                    {displayPrice.freeWithPromo ? (
+                      <>
+                        <span className="text-success">Gratis</span>
+                        {displayPrice.main === 0 && planRow ? (
+                          <span className="fs-6 text-muted fw-normal ms-2 text-decoration-line-through">
+                            {formatCurrency(
+                              billingCycle === 'yearly' ? yearlyAmount(planRow) : planRow.price,
+                              planRow.currency,
+                            )}
+                          </span>
+                        ) : null}
+                      </>
+                    ) : showMpTrial ? (
+                      <span className="text-success">$0</span>
+                    ) : (
+                      <>
+                        {formatCurrency(displayPrice.main, displayPrice.currency)}
+                        <span className="fs-6 text-muted fw-normal">{displayPrice.period}</span>
+                      </>
+                    )}
                   </span>
                 </div>
-                {billingCycle === 'yearly' && monthly12 > 0 && (
+                {showMpTrial && planRow && (
                   <p className="small text-muted mb-0 mt-2">
-                    <span className="text-decoration-line-through me-2">{formatCurrency(monthly12, planRow.currency)}/año</span>
+                    Luego{' '}
+                    <strong>
+                      {formatCurrency(displayPrice.main, displayPrice.currency)}
+                      {displayPrice.period}
+                    </strong>
+                    . Mercado Pago cobrará automáticamente al terminar la prueba.
+                  </p>
+                )}
+                {promoIsFreeGrant && (
+                  <p className="small text-success mb-0 mt-2">
+                    Se activará <strong>{promoPreview?.grantPlanLabel}</strong> sin cobro. Los datos de facturación se
+                    guardan en tu cuenta.
+                  </p>
+                )}
+                {!promoIsFreeGrant && !showMpTrial && billingCycle === 'yearly' && monthly12 > 0 && (
+                  <p className="small text-muted mb-0 mt-2">
+                    <span className="text-decoration-line-through me-2">
+                      {formatCurrency(monthly12, planRow.currency)}/año
+                    </span>
                     oferta anual
                   </p>
                 )}
@@ -664,30 +782,41 @@ export default function SubscriptionCheckoutPage() {
             )}
 
             <div className="small text-muted mb-3">
-              {isSameActivePlan && (
+              {isSameActivePlan && !promoIsFreeGrant && (
                 <div className="alert alert-warning small py-2 mb-3" role="status">
                   Ya tenés activa esta suscripción. Elegí otro plan para cambiar o gestioná tu suscripción actual.
                 </div>
               )}
-              <p className="mb-2">
-                <strong>Renovación automática:</strong> la suscripción se renueva al final de cada período de facturación
-                hasta que la canceles.
-              </p>
-              <p className="mb-2">
-                <strong>Cancelación:</strong> podés cancelar cuando quieras desde «Gestionar suscripción»; el plan sigue activo
-                hasta el fin del período pagado.
-              </p>
-              {isArs && (
-                <p className="mb-0">
-                  <strong>Impuestos:</strong> los montos en pesos argentinos pueden estar sujetos a IVA u otros impuestos
-                  según la normativa vigente y lo informado por el proveedor de pago.
-                </p>
-              )}
-              {!isArs && (
-                <p className="mb-0">
-                  <strong>Impuestos:</strong> pueden aplicarse impuestos locales según tu país; el cargo final lo confirma{' '}
-                  {paymentLabel}.
-                </p>
+              {!promoIsFreeGrant && (
+                <>
+                  {showMpTrial && (
+                    <p className="mb-2">
+                      <strong>Prueba gratis:</strong> {mpTrialDays} días sin cobro. Al autorizar en Mercado Pago se
+                      activa el plan de inmediato; el primer cobro es al terminar la prueba.
+                    </p>
+                  )}
+                  <p className="mb-2">
+                    <strong>Renovación automática:</strong> la suscripción se renueva al final de cada período de
+                    facturación hasta que la canceles.
+                  </p>
+                  <p className="mb-2">
+                    <strong>Cancelación:</strong> podés cancelar cuando quieras desde «Gestionar suscripción»; el plan
+                    sigue activo hasta el fin del período pagado
+                    {showMpTrial ? ' (o de la prueba, si cancelás antes del primer cobro)' : ''}.
+                  </p>
+                  {isArs && (
+                    <p className="mb-0">
+                      <strong>Impuestos:</strong> los montos en pesos argentinos pueden estar sujetos a IVA u otros
+                      impuestos según la normativa vigente y lo informado por el proveedor de pago.
+                    </p>
+                  )}
+                  {!isArs && (
+                    <p className="mb-0">
+                      <strong>Impuestos:</strong> pueden aplicarse impuestos locales según tu país; el cargo final lo
+                      confirma {paymentLabel}.
+                    </p>
+                  )}
+                </>
               )}
             </div>
 
@@ -698,7 +827,7 @@ export default function SubscriptionCheckoutPage() {
                 type="checkbox"
                 checked={acceptedTerms}
                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                disabled={submitting}
+                disabled={submitting || promoRedeeming}
               />
               <label className="form-check-label small" htmlFor="terms">
                 Acepto los{' '}
@@ -713,55 +842,52 @@ export default function SubscriptionCheckoutPage() {
               </label>
             </div>
 
-            <button
-              type="button"
-              className="btn btn-primary btn-lg w-100"
-              disabled={!acceptedTerms || submitting || isSameActivePlan}
-              onClick={handleSubscribe}
-            >
-              {submitting ? 'Redirigiendo…' : 'Suscribirme'}
-            </button>
-            <div className="text-center mt-3 pt-3 border-top">
-              <p className="small text-muted mb-1">Pagos realizados mediante:</p>
-              <div
-                className="mx-auto d-flex align-items-center justify-content-center"
-                style={{
-                  width: 'min(100%, 720px)',
-                  height: 160,
-                }}
+            {promoIsFreeGrant ? (
+              <button
+                type="button"
+                className="btn btn-success btn-lg w-100"
+                disabled={!acceptedTerms || promoRedeeming}
+                onClick={handleRedeemPromo}
               >
-                <img
-                  src={isMercadoPago ? '/images/mercadopago.webp' : '/images/paypal.webp'}
-                  alt={paymentLabel}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                  }}
-                  decoding="async"
-                />
-              </div>
-            </div>
-            </>
-            )}
-
-            {promoReady && (
+                {promoRedeeming ? 'Activando…' : 'Activar código promocional'}
+              </button>
+            ) : (
               <>
-                <div className="rounded bg-light p-3 mb-3 text-center">
-                  <p className="mb-2">
-                    Este código activa <strong>{promoPreview?.grantPlanLabel}</strong> gratis sin pago.
-                  </p>
-                </div>
                 <button
                   type="button"
-                  className="btn btn-success btn-lg w-100"
-                  disabled={promoRedeeming}
-                  onClick={handleRedeemPromo}
+                  className="btn btn-primary btn-lg w-100"
+                  disabled={!acceptedTerms || submitting || isSameActivePlan}
+                  onClick={handleSubscribe}
                 >
-                  {promoRedeeming ? 'Activando…' : 'Activar código promocional'}
+                  {submitting
+                    ? 'Redirigiendo…'
+                    : showMpTrial
+                      ? `Continuar con ${mpTrialDays} días gratis`
+                      : 'Suscribirme'}
                 </button>
+                <div className="text-center mt-3 pt-3 border-top">
+                  <p className="small text-muted mb-1">Pagos realizados mediante:</p>
+                  <div
+                    className="mx-auto d-flex align-items-center justify-content-center"
+                    style={{
+                      width: 'min(100%, 720px)',
+                      height: 160,
+                    }}
+                  >
+                    <img
+                      src={isMercadoPago ? '/images/mercadopago.webp' : '/images/paypal.webp'}
+                      alt={paymentLabel}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
+                      }}
+                      decoding="async"
+                    />
+                  </div>
+                </div>
               </>
             )}
           </div>

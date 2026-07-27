@@ -22,6 +22,8 @@ export type PricingData = {
   country: string;
   currency: string;
   paymentProvider: string;
+  /** Solo AR / Mercado Pago: días de prueba gratis antes del primer cobro. */
+  mercadopagoFreeTrialDays?: number;
   plans: Array<{
     slug: PlanSlug;
     name: string;
@@ -216,6 +218,12 @@ export default function PricingPlansGrid({
       </p>
     );
 
+    const trialDays = pricingData?.mercadopagoFreeTrialDays;
+    const trialNote =
+      typeof trialDays === 'number' && trialDays > 0 ? (
+        <p className="text-muted small mb-0 mt-1">{trialDays} días gratis, después se cobra el plan</p>
+      ) : null;
+
     if (showBillingToggle) {
       const main = billingCycle === 'yearly' ? yearly : monthly;
       const period = billingCycle === 'yearly' ? '/año' : '/mes';
@@ -225,6 +233,7 @@ export default function PricingPlansGrid({
             <span className="landing-pricing-amount">{formatCurrency(main, currency)}</span>
             <span className="landing-pricing-period">{period}</span>
           </div>
+          {trialNote}
           {annualOffer}
         </>
       );
@@ -238,6 +247,7 @@ export default function PricingPlansGrid({
           </span>
           <span className="landing-pricing-period">/mes</span>
         </div>
+        {trialNote}
         {annualOffer}
       </>
     );

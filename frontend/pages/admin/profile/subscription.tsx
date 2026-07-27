@@ -8,6 +8,7 @@ import { formatCurrency } from '../../../lib/format-currency';
 import PricingPlansGrid, { type BillingCycle, type PricingData } from '../../../components/PricingPlansGrid';
 import { getPromoCodeFromQuery } from '../../../lib/promo-query';
 import { tryContinueTemplateIntentAfterProUpgrade } from '../../../lib/template-use-flow';
+import { formatSubscriptionStatusLabel } from '../../../lib/subscription-status-label';
 
 type SubItem = {
   id: string;
@@ -178,13 +179,20 @@ export default function SubscriptionManagement() {
   const yearlyPrice = effectivePricingPlan?.priceYearly ?? monthlyPrice * 10;
   const currency = effectivePricingPlan?.currency ?? pricingData?.currency ?? 'USD';
   const billing = effectiveSubscription?.planType === 'yearly' ? 'yearly' : 'monthly';
-  const autoRenewal = effectiveSubscription ? !effectiveSubscription.cancelAtPeriodEnd : false;
+  const isPaidProvider =
+    effectiveSubscription?.paymentProvider === 'mercadopago' ||
+    effectiveSubscription?.paymentProvider === 'paypal';
+  // Solo suscripciones de pago reales renuevan solas; promos/internal no.
+  const autoRenewal =
+    !!effectiveSubscription && isPaidProvider && !effectiveSubscription.cancelAtPeriodEnd;
   const isNoBillingPlan = effectivePlanSlug === 'free' || effectivePlanSlug === 'pro_team';
   const billingLabel = isNoBillingPlan ? 'Sin facturación' : billing === 'yearly' ? 'Anual' : 'Mensual';
   const autoRenewalLabel = isNoBillingPlan ? 'No necesita' : autoRenewal ? 'Activa' : 'Desactivada';
-  const periodEnd = effectiveSubscription?.currentPeriodEnd
-    ? new Date(effectiveSubscription.currentPeriodEnd).toLocaleDateString('es', { dateStyle: 'medium' })
-    : '—';
+  const periodEnd = isNoBillingPlan
+    ? 'Ilimitado'
+    : effectiveSubscription?.currentPeriodEnd
+      ? new Date(effectiveSubscription.currentPeriodEnd).toLocaleDateString('es', { dateStyle: 'medium' })
+      : '—';
 
   const canCancelSubscription =
     (normalizedCurrentPlan !== 'free' && normalizedCurrentPlan !== 'pro_team') &&
@@ -224,7 +232,9 @@ export default function SubscriptionManagement() {
               </div>
               <div className="col-12 col-md-6">
                 <div className="small text-muted">Estado</div>
-                <div className="h5 mb-0">{effectiveSubscription?.status ?? '—'}</div>
+                <div className="h5 mb-0">
+                  {formatSubscriptionStatusLabel(effectiveSubscription?.status)}
+                </div>
               </div>
 
               <div className="col-12 col-md-6">
@@ -269,9 +279,6 @@ export default function SubscriptionManagement() {
               <Link href="/admin/profile/subscription/payment-method" className="btn btn-sm btn-outline-secondary">
                 Método de pago
               </Link>
-              <Link href="/admin/profile/subscription/reactivation" className="btn btn-sm btn-outline-secondary">
-                Reanudar
-              </Link>
             </div>
           </div>
         </section>
@@ -282,9 +289,6 @@ export default function SubscriptionManagement() {
             <h2 className="h5 mb-0">Planes disponibles</h2>
           </div>
           <div className="card-body">
-            <p className="text-muted small mb-3">
-              Elige otro plan. Los precios y el proveedor de pago dependen de tu región (Argentina: MercadoPago / ARS; resto: PayPal / USD).
-            </p>
             {promoFromUrl && (
               <div className="alert alert-secondary small py-2 mb-3" role="status">
                 Código promocional detectado: <strong>{promoFromUrl}</strong>. Elegí un plan de pago para continuar al checkout con el código ya cargado.

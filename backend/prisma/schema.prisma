@@ -589,6 +589,8 @@ model PromoCode {
   validFrom             DateTime @map("valid_from")
   validUntil            DateTime @map("valid_until")
   grantDurationMonths   Int?     @map("grant_duration_months")
+  /// Días de free_trial en Mercado Pago; si > 0 el cupón no es canje interno sino trial en checkout.
+  freeTrialDays         Int?     @map("free_trial_days")
   maxRedemptions        Int?     @map("max_redemptions")
   maxRedemptionsPerUser Int      @default(1) @map("max_redemptions_per_user")
   redemptionCount       Int      @default(0) @map("redemption_count")

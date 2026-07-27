@@ -31,16 +31,18 @@ class GrantInApplicableConstraint implements ValidatorConstraintInterface {
   }
 }
 
-@ValidatorConstraint({ name: 'promoDurationOrUnlimited', async: false })
-class PromoDurationOrUnlimitedConstraint implements ValidatorConstraintInterface {
+@ValidatorConstraint({ name: 'promoBenefitConstraint', async: false })
+class PromoBenefitConstraint implements ValidatorConstraintInterface {
   validate(_: unknown, args: ValidationArguments) {
     const obj = args.object as CreatePromoCodeDto;
+    const trial = typeof obj.freeTrialDays === 'number' && obj.freeTrialDays >= 1;
+    if (trial) return true;
     if (obj.unlimitedDuration === true) return true;
     return typeof obj.grantDurationMonths === 'number' && obj.grantDurationMonths >= 1;
   }
 
   defaultMessage() {
-    return 'Indicá los meses de beneficio o activá duración ilimitada';
+    return 'Indicá días de prueba gratis (Mercado Pago), meses de beneficio, o duración ilimitada';
   }
 }
 
@@ -70,18 +72,31 @@ export class CreatePromoCodeDto {
   @IsDateString()
   validUntil!: string;
 
+  /**
+   * Prueba gratis vía Mercado Pago (free_trial). Si está definido, el cupón no se canjea
+   * como plan interno gratis: se aplica en el checkout de pago.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(3650)
+  freeTrialDays?: number;
+
   @IsOptional()
   @IsBoolean()
   unlimitedDuration?: boolean;
 
-  @ValidateIf((o: CreatePromoCodeDto) => !o.unlimitedDuration)
+  @ValidateIf(
+    (o: CreatePromoCodeDto) =>
+      !o.unlimitedDuration && !(typeof o.freeTrialDays === 'number' && o.freeTrialDays >= 1),
+  )
   @IsInt()
   @Min(1)
   @Max(120)
   grantDurationMonths?: number;
 
-  @Validate(PromoDurationOrUnlimitedConstraint)
-  private readonly _durationCheck?: boolean;
+  @Validate(PromoBenefitConstraint)
+  private readonly _benefitCheck?: boolean;
 
   @IsOptional()
   @IsInt()

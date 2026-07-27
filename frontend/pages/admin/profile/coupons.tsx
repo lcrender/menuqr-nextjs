@@ -15,6 +15,8 @@ type PromoPreview = {
   applicablePlans: string[];
   applicablePlanLabels: string[];
   grantDurationMonths: number | null;
+  freeTrialDays?: number | null;
+  benefitKind?: 'free_grant' | 'mp_free_trial';
   unlimitedDuration?: boolean;
   benefitEndsAt: string | null;
   codeValidUntil: string;
@@ -34,8 +36,11 @@ export default function ProfileCouponsPage() {
   const [preview, setPreview] = useState<PromoPreview | null>(null);
   const [alert, setAlert] = useState<{ title: string; message: string; variant: 'success' | 'error' } | null>(null);
 
+  const isMpTrial = (p: PromoPreview) =>
+    p.benefitKind === 'mp_free_trial' || (typeof p.freeTrialDays === 'number' && p.freeTrialDays > 0);
+
   const requiresDirectRedeem = (p: PromoPreview) =>
-    p.grantPlan === 'pro_team' || !isPromoCheckoutPlan(p.grantPlan);
+    !isMpTrial(p) && (p.grantPlan === 'pro_team' || !isPromoCheckoutPlan(p.grantPlan));
 
   const handleValidate = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -151,9 +156,11 @@ export default function ProfileCouponsPage() {
                   <li>
                     Beneficio:{' '}
                     <strong>
-                      {preview.unlimitedDuration
-                        ? 'Tiempo ilimitado'
-                        : `${preview.grantDurationMonths ?? '—'} mes(es) gratis`}
+                      {isMpTrial(preview)
+                        ? `${preview.freeTrialDays} días de prueba gratis (Mercado Pago)`
+                        : preview.unlimitedDuration
+                          ? 'Tiempo ilimitado'
+                          : `${preview.grantDurationMonths ?? '—'} mes(es) gratis`}
                     </strong>
                   </li>
                   {!preview.unlimitedDuration && preview.benefitEndsAt && (

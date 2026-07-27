@@ -428,7 +428,7 @@ export class SubscriptionService {
 
   async updateCheckoutSession(
     sessionId: string,
-    data: { subscriptionId?: string; status: 'redirected' | 'failed' },
+    data: { subscriptionId?: string; status: 'redirected' | 'failed' | 'completed' },
   ): Promise<void> {
     if (data.subscriptionId) {
       await this.postgres.executeRaw(

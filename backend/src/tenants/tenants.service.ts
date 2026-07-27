@@ -142,6 +142,26 @@ export class TenantsService {
       await this.planLimits.resetTemplatesIncompatibleWithPlan(id, data.plan);
     }
 
+    // Pro Team es plan manual sin cobro: marcar suscripciones pagas/activas como canceled en historial.
+    if (data.plan === 'pro_team') {
+      try {
+        await this.postgres.executeRaw(
+          `UPDATE subscriptions s
+           SET status = 'canceled',
+               cancel_at_period_end = false,
+               updated_at = NOW()
+           WHERE s.status = 'active'
+             AND s.user_id IN (
+               SELECT u.id FROM users u
+               WHERE u.tenant_id = $1 AND u.deleted_at IS NULL
+             )`,
+          [id],
+        );
+      } catch (e) {
+        this.logger.warn(`No se pudieron cancelar suscripciones al asignar pro_team al tenant ${id}: ${e}`);
+      }
+    }
+
     return this.findById(id);
   }
 

@@ -345,6 +345,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                             Importar menú desde foto
                           </Link>
                         </li>
+                        <li className="admin-nav-item">
+                          <Link
+                            href="/admin/herramientas/promo-codes"
+                            className={`admin-nav-link ${currentPath === '/admin/herramientas/promo-codes' ? 'active' : ''}`}
+                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            Códigos promo
+                          </Link>
+                        </li>
                       </ul>
                     )}
                   </div>
@@ -417,16 +427,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                             onClick={() => setMobileNavOpen(false)}
                           >
                             Límites de planes
-                          </Link>
-                        </li>
-                        <li className="admin-nav-item">
-                          <Link
-                            href="/admin/config/promo-codes"
-                            className={`admin-nav-link ${currentPath === '/admin/config/promo-codes' ? 'active' : ''}`}
-                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
-                            onClick={() => setMobileNavOpen(false)}
-                          >
-                            Códigos promo
                           </Link>
                         </li>
                         <li className="admin-nav-item">

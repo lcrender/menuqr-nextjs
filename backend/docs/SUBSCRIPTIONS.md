@@ -115,12 +115,41 @@ En `.env`:
 - `MERCADOPAGO_ACCESS_TOKEN`: access token de **producción** (cobros reales).
 - `MERCADOPAGO_ACCESS_TOKEN_TEST`: access token de **prueba** (cuentas de test / sandbox).
 - `MERCADOPAGO_WEBHOOK_SECRET` (recomendado en producción): clave de firma del webhook en el panel de Mercado Pago. Si está definida, el backend valida la cabecera `x-signature`. Si no está, acepta notificaciones sin verificar (útil solo en desarrollo).
+- `MERCADOPAGO_FREE_TRIAL_DAYS` (legacy, opcional): override global. Default **0**. El trial de producto **no** es global: se aplica solo con **cupones** (`promo_codes.free_trial_days`) en el checkout.
+- `MERCADOPAGO_PUBLIC_FRONTEND_URL` (opcional en local): URL https pública del front (túnel) porque MP rechaza `localhost` en `back_url`.
+
+### Trial gratis vía cupones
+
+En **Admin → Herramientas → Códigos promo** podés crear dos tipos de beneficio:
+
+1. **Plan gratis (canje interno):** meses o ilimitado; el usuario activa el código sin pasar por Mercado Pago.
+2. **Prueba gratis Mercado Pago:** N días (`free_trial_days`); el usuario valida el cupón en el checkout del plan, continúa a MP con `free_trial`, y el primer cobro es al terminar la prueba. Sin cupón → cobro normal.
+
+`POST /subscriptions/checkout` acepta `promoCode` opcional; si el código es de trial, el backend crea el `preapproval_plan` con esos días y registra el canje.
+
+### Planes de suscripción (`preapproval_plan`)
+
+El checkout AR asegura un **preapproval_plan** (con `free_trial` solo si el cupón lo indica) y luego crea el **preapproval** con `preapproval_plan_id`.
+
+Opciones:
+
+1. **Automático (recomendado para empezar):** el backend crea el plan en la API de MP y guarda el id en `app_settings` (clave por modo + slug + ciclo + monto + días de trial). Si cambiás precio o días de trial del cupón, se crea un plan nuevo la próxima vez.
+2. **IDs fijos en `.env`** (si ya los creaste en el panel/API de MP):
+
+| Variable | Uso |
+|----------|-----|
+| `MERCADOPAGO_PLAN_ID_STARTER_MONTHLY` / `_YEARLY` | Producción |
+| `MERCADOPAGO_PLAN_ID_PRO_MONTHLY` / `_YEARLY` | Producción |
+| `MERCADOPAGO_PLAN_ID_PREMIUM_MONTHLY` / `_YEARLY` | Producción |
+| Mismos nombres + `_TEST` o `_SANDBOX` | Modo prueba |
+
+**Nota:** si usás IDs fijos con trial embebido en MP, el cobro “sin cupón” también heredaría ese trial. Preferí planes auto-cacheados (sin `MERCADOPAGO_PLAN_ID_*`) para que sin cupón sea `trialDays = 0`.
 
 El modo activo (**prueba** vs **producción**) lo define el super admin en el panel (**Configuración → Mercado Pago**): se guarda en la tabla `app_settings` (`mercadopago_mode` = `sandbox` | `production`). Por defecto, sin fila en BD, se usa **producción**. La API elige el token según ese modo.
 
 URL del webhook: `https://tu-dominio.com/payment/webhooks/mercadopago`
 
-Eventos: autorización de preapproval, pagos creados, preapproval cancelado. Al confirmar pago/autorización se actualiza `subscriptions` y se sincroniza `tenants.plan`.
+Eventos: autorización de preapproval, pagos creados, preapproval cancelado. Al autorizar (p. ej. durante el trial) se activa el plan; `current_period_end` usa `next_payment_date` / duración del trial. Al confirmar el primer cobro real se actualiza el período de facturación.
 
 **Reglas de negocio (checkout):** no se permite crear una nueva suscripción de pago si ya existe una **activa** con el mismo proveedor; hay que cancelarla antes. Las suscripciones **incomplete** previas en Mercado Pago se cancelan en el proveedor y se marcan `canceled` en BD al iniciar un nuevo checkout, para evitar preapprovals colgados.
 

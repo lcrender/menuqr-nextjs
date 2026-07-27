@@ -13,7 +13,7 @@ export default function SubscriptionInvoicesPage() {
 
         <h1 className="h3 mb-3">Facturas</h1>
         <div className="alert alert-info mb-0">
-          Próximamente: listado de facturas e historial descargable.
+          No tenés facturas cargadas.
         </div>
       </div>
     </AdminLayout>

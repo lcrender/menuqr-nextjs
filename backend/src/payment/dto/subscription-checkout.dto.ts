@@ -62,4 +62,9 @@ export class SubscriptionCheckoutDto {
   @IsString()
   @IsNotEmpty({ message: 'El país es obligatorio.' })
   country: string;
+
+  /** Cupón de prueba gratis (Mercado Pago). Solo aplica si el código tiene free_trial_days. */
+  @IsOptional()
+  @IsString()
+  promoCode?: string;
 }

@@ -18,6 +18,28 @@ export type PayPalAppMode = 'sandbox' | 'live';
 export class AppSettingsService {
   constructor(private readonly postgres: PostgresService) {}
 
+  async getString(key: string): Promise<string | null> {
+    try {
+      const rows = await this.postgres.queryRaw<{ value: string }>(
+        `SELECT value FROM app_settings WHERE key = $1 LIMIT 1`,
+        [key],
+      );
+      const v = rows[0]?.value;
+      return typeof v === 'string' && v.trim() ? v.trim() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async setString(key: string, value: string): Promise<void> {
+    await this.postgres.executeRaw(
+      `INSERT INTO app_settings (key, value, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+      [key, value],
+    );
+  }
+
   async getMercadoPagoMode(): Promise<MercadoPagoAppMode> {
     try {
       const rows = await this.postgres.queryRaw<{ value: string }>(
