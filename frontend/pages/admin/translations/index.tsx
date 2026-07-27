@@ -410,8 +410,14 @@ export default function AdminTranslationsPage() {
 
   useEffect(() => {
     if (!user) return;
-    setLoadingPage(false);
-    void loadRestaurants();
+    let cancelled = false;
+    (async () => {
+      await loadRestaurants();
+      if (!cancelled) setLoadingPage(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user, loadRestaurants]);
 
   const loadMenus = useCallback(async () => {
@@ -914,14 +920,26 @@ export default function AdminTranslationsPage() {
     <AdminLayout>
       <div className="py-3">
         <h1 className="h3 mb-2">Traducciones</h1>
-        <p className="text-muted small mb-4">
-          Gestioná idiomas por menú: banderas, editor por idioma y corrección del código BCP-47 si hubo un error al
-          crear el idioma. Usá el interruptor <strong>Menú público</strong> en cada idioma para mostrarlo u ocultarlo en
-          la carta QR (sigue disponible en el editor aunque esté oculto). En planes <strong>Pro</strong>,{' '}
-          <strong>Pro Team</strong> y <strong>Premium</strong> aparece <strong>Traducción automática (beta)</strong>{' '}
-          por menú (límite mensual por usuario según límites de planes).
-        </p>
+        {(restaurants.length > 0 || isSuperAdmin) && (
+          <p className="text-muted small mb-4">
+            Usá el interruptor <strong>Menú público</strong> en cada idioma para mostrarlo u ocultarlo en la carta QR
+            (sigue disponible en el editor aunque esté oculto).
+          </p>
+        )}
 
+        {!isSuperAdmin && restaurants.length === 0 && (
+          <div className="admin-card mb-4" style={{ textAlign: 'center', padding: '2rem' }}>
+            <p className="mb-3" style={{ fontSize: '1.1rem', color: 'var(--admin-text-secondary)' }}>
+              Para crear una traducción de menú primero necesitas tener al menos un restaurante y un menú.
+            </p>
+            <a href="/admin/restaurants?wizard=true" className="admin-btn">
+              Crear mi primer restaurante
+            </a>
+          </div>
+        )}
+
+        {(restaurants.length > 0 || isSuperAdmin) && (
+          <>
         <div className="row g-3 mb-4">
           <div className="col-md-6">
             <label className="form-label">Restaurante</label>
@@ -1126,6 +1144,8 @@ export default function AdminTranslationsPage() {
               );
             })}
           </div>
+        )}
+          </>
         )}
       </div>
 
