@@ -132,6 +132,31 @@ const nextConfig = {
         destination: '/preview/modern-food',
         permanent: true,
       },
+      {
+        source: '/funciones/crear-menu-qr',
+        destination: '/funciones/menu-qr-dinamico',
+        permanent: true,
+      },
+      {
+        source: '/funciones/declarar-alergenos',
+        destination: '/funciones/menu-con-alergenos',
+        permanent: true,
+      },
+      {
+        source: '/funciones/traducir-menus',
+        destination: '/funciones/menu-multidioma',
+        permanent: true,
+      },
+      {
+        source: '/funciones/desactivar-productos',
+        destination: '/funciones/gestionar-productos-menu',
+        permanent: true,
+      },
+      {
+        source: '/funciones/destacar-productos',
+        destination: '/funciones/gestionar-productos-menu',
+        permanent: true,
+      },
     ];
   },
 

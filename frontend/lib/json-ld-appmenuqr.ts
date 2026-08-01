@@ -308,3 +308,80 @@ export function buildDocumentacionJsonLd(base: string, opts: { slug?: string; ti
   ];
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
 }
+
+/** Landing de función (/funciones/:slug): WebPage + BreadcrumbList + FAQPage + SoftwareApplication opcional. */
+export function buildFuncionesFeatureJsonLd(
+  base: string,
+  opts: {
+    path: string;
+    title: string;
+    description: string;
+    breadcrumbName: string;
+    faq?: readonly FaqPair[];
+    includeSoftwareApplication?: boolean;
+  },
+): string {
+  const b = base.replace(/\/$/, '');
+  const normalizedPath = opts.path.startsWith('/') ? opts.path : `/${opts.path}`;
+  const pageUrl = `${b}${normalizedPath}`;
+  const org = buildOrganizationNode(b);
+  const orgId = org['@id'];
+
+  const graph: Record<string, unknown>[] = [
+    org,
+    {
+      '@type': 'WebSite',
+      '@id': `${b}/#website`,
+      url: b,
+      name: ORG_NAME,
+    },
+    {
+      '@type': 'WebPage',
+      '@id': `${pageUrl}#webpage`,
+      url: pageUrl,
+      name: opts.title,
+      description: opts.description,
+      isPartOf: { '@id': `${b}/#website` },
+      publisher: { '@id': orgId },
+      inLanguage: 'es',
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: b },
+        { '@type': 'ListItem', position: 2, name: 'Funciones', item: `${b}/funciones` },
+        { '@type': 'ListItem', position: 3, name: opts.breadcrumbName, item: pageUrl },
+      ],
+    },
+  ];
+
+  if (opts.includeSoftwareApplication) {
+    graph.push({
+      '@type': 'SoftwareApplication',
+      name: ORG_NAME,
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web browser',
+      url: b,
+      description: opts.description,
+      offers: {
+        '@type': 'Offer',
+        url: `${b}/precios`,
+        description: 'Registro gratuito y planes de pago; precios actualizados en la página de precios.',
+      },
+    });
+  }
+
+  if (opts.faq && opts.faq.length > 0) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': `${pageUrl}#faq`,
+      mainEntity: opts.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: { '@type': 'Answer', text: item.answer },
+      })),
+    });
+  }
+
+  return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
+}

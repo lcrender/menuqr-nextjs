@@ -32,6 +32,11 @@ export default function LandingFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/funciones" className="landing-footer-link">
+                  Funciones
+                </Link>
+              </li>
+              <li>
                 <Link href={PLANTILLAS_CATALOG_PATH} className="landing-footer-link">
                   Plantillas
                 </Link>

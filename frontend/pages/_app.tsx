@@ -2,6 +2,7 @@ import type { AppProps } from 'next/app';
 import { useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/landing.css';
+import '../styles/funciones-feature.css';
 import '../styles/cookie-consent.css';
 import '../src/i18n/config';
 import CookieConsentRoot from '../components/CookieConsentRoot';

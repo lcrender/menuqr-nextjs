@@ -150,3 +150,29 @@ export function useLandingHomeHref(override?: string): string {
 
   return href;
 }
+
+/**
+ * Región de marketing segura ante hidratación.
+ * En SSR (y primer paint) solo usa ruta regional u override; la cookie se aplica tras montar
+ * para no desincronizar HTML servidor vs cliente.
+ */
+export function useLandingRegion(override?: LandingRegion): LandingRegion {
+  const router = useRouter();
+  const [region, setRegion] = useState<LandingRegion>(() => {
+    if (override) return override;
+    const fromPath = landingHomeHrefFromPath(router.pathname);
+    if (fromPath === '/ar') return 'AR';
+    if (fromPath === '/es') return 'ES';
+    return 'ES';
+  });
+
+  useEffect(() => {
+    if (override) {
+      setRegion(override);
+      return;
+    }
+    setRegion(resolveLandingRegion(router.pathname));
+  }, [override, router.pathname]);
+
+  return region;
+}

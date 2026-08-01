@@ -3,6 +3,7 @@ import { PLANTILLAS_CATALOG_PATH, plantillaCaracteristicasHref } from './plantil
 import { DOCUMENTATION_SLUGS_STATIC } from './documentation-nav';
 import { SEO_LANDING_SLUGS, SEO_LANDINGS } from './seo-landings-config';
 import { buildLandingHreflangLinks } from './landing-region';
+import { FUNCIONES_SLUGS } from './funciones-nav';
 
 export type SitemapEntry = {
   path: string;
@@ -50,6 +51,7 @@ export function buildSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
     { path: '/precios', changefreq: 'weekly', priority: '0.9', lastmod: today },
     { path: '/soporte', changefreq: 'weekly', priority: '0.7', lastmod: today },
     { path: '/documentacion', changefreq: 'weekly', priority: '0.8', lastmod: today },
+    { path: '/funciones', changefreq: 'weekly', priority: '0.85', lastmod: today },
     ...SEO_LANDING_SLUGS.filter((slug) => !SEO_LANDINGS[slug].noIndex).map((slug) => ({
       path: `/${slug}`,
       changefreq: 'monthly' as const,
@@ -75,6 +77,15 @@ export function buildSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
       path: `/documentacion/${encodeURIComponent(slug)}`,
       changefreq: 'monthly',
       priority: '0.75',
+      lastmod: today,
+    });
+  }
+
+  for (const slug of FUNCIONES_SLUGS) {
+    out.push({
+      path: `/funciones/${slug}`,
+      changefreq: 'monthly',
+      priority: '0.8',
       lastmod: today,
     });
   }

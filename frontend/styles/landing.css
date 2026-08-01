@@ -153,6 +153,96 @@
   color: var(--landing-primary);
 }
 
+.landing-nav-dropdown {
+  position: relative;
+}
+
+.landing-nav-dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: var(--landing-text-secondary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 6px 4px;
+}
+
+.landing-nav-dropdown-caret {
+  font-size: 0.7rem;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.landing-nav-dropdown-toggle.is-open .landing-nav-dropdown-caret {
+  transform: rotate(180deg);
+}
+
+.landing-nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  max-width: min(320px, 80vw);
+  padding: 0.4rem 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+  z-index: 120;
+}
+
+.landing-nav-dropdown-item {
+  display: block;
+  padding: 0.55rem 0.9rem;
+  color: var(--landing-text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.landing-nav-dropdown-item:hover {
+  background: #f8fafc;
+  color: var(--landing-primary);
+}
+
+.landing-nav-mobile-accordion {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.landing-nav-mobile-sublinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0 0 0.35rem 0.75rem;
+  margin: -0.25rem 0 0.35rem;
+}
+
+.landing-nav-mobile-sublink {
+  display: block;
+  padding: 0.45rem 0.5rem;
+  color: var(--landing-text-secondary);
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.landing-nav-mobile-sublink:hover {
+  color: var(--landing-primary);
+}
+
 #beneficios,
 #precios,
 #como-funciona,

@@ -1,9 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { usePublicAccountNav } from '../hooks/usePublicSession';
 import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
-import { landingSectionHref, useLandingHomeHref } from '../lib/landing-region';
+import {
+  FUNCIONES_PATH,
+  FUNCIONES_SECTIONS,
+  funcionesCopyForRegion,
+  funcionesHref,
+} from '../lib/funciones-nav';
+import {
+  landingSectionHref,
+  useLandingHomeHref,
+  type LandingRegion,
+} from '../lib/landing-region';
 import LandingBrandMark from './LandingBrandMark';
 
 type LandingNavProps = {
@@ -11,13 +21,25 @@ type LandingNavProps = {
   homeHref?: string;
 };
 
+function regionFromHomeHref(homeHref: string): LandingRegion {
+  return homeHref === '/ar' ? 'AR' : 'ES';
+}
+
 export default function LandingNav({ homeHref }: LandingNavProps) {
   const router = useRouter();
   const accountNav = usePublicAccountNav();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [funcionesOpen, setFuncionesOpen] = useState(false);
+  const [mobileFuncionesOpen, setMobileFuncionesOpen] = useState(false);
+  const funcionesRef = useRef<HTMLDivElement | null>(null);
   const logoHref = useLandingHomeHref(homeHref);
+  /** Derivado de logoHref (hidratación segura); no leer cookie en el render. */
+  const region = regionFromHomeHref(logoHref);
 
-  const closeMobileNav = () => setMobileNavOpen(false);
+  const closeMobileNav = () => {
+    setMobileNavOpen(false);
+    setMobileFuncionesOpen(false);
+  };
 
   useEffect(() => {
     if (mobileNavOpen) {
@@ -31,7 +53,11 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
   }, [mobileNavOpen]);
 
   useEffect(() => {
-    const onRoute = () => setMobileNavOpen(false);
+    const onRoute = () => {
+      setMobileNavOpen(false);
+      setFuncionesOpen(false);
+      setMobileFuncionesOpen(false);
+    };
     router.events.on('routeChangeStart', onRoute);
     return () => {
       router.events.off('routeChangeStart', onRoute);
@@ -51,11 +77,29 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
   useEffect(() => {
     if (!mobileNavOpen) return undefined;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMobileNavOpen(false);
+      if (e.key === 'Escape') closeMobileNav();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [mobileNavOpen]);
+
+  useEffect(() => {
+    if (!funcionesOpen) return undefined;
+    const onPointer = (e: MouseEvent) => {
+      if (!funcionesRef.current?.contains(e.target as Node)) {
+        setFuncionesOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFuncionesOpen(false);
+    };
+    document.addEventListener('mousedown', onPointer);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [funcionesOpen]);
 
   const handleTryFree = () => {
     closeMobileNav();
@@ -71,6 +115,7 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
   const preciosHref = landingSectionHref(logoHref, 'precios');
   const comoFuncionaHref = landingSectionHref(logoHref, 'como-funciona');
   const faqHref = landingSectionHref(logoHref, 'faq');
+  const tryFreeLabel = region === 'AR' ? 'Crear mi menú QR' : 'Crear mi carta digital';
 
   return (
     <>
@@ -95,6 +140,43 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
               </span>
             </button>
             <div className="landing-nav-actions d-none d-md-flex">
+              <div className="landing-nav-dropdown" ref={funcionesRef}>
+                <button
+                  type="button"
+                  className={`landing-nav-text-link landing-nav-dropdown-toggle${funcionesOpen ? ' is-open' : ''}`}
+                  aria-expanded={funcionesOpen}
+                  aria-haspopup="true"
+                  onClick={() => setFuncionesOpen((o) => !o)}
+                >
+                  Funciones
+                  <span className="landing-nav-dropdown-caret" aria-hidden>
+                    ▾
+                  </span>
+                </button>
+                {funcionesOpen ? (
+                  <div className="landing-nav-dropdown-menu" role="menu">
+                    <Link
+                      href={FUNCIONES_PATH}
+                      className="landing-nav-dropdown-item"
+                      role="menuitem"
+                      onClick={() => setFuncionesOpen(false)}
+                    >
+                      Ver todas
+                    </Link>
+                    {FUNCIONES_SECTIONS.map((s) => (
+                      <Link
+                        key={s.slug}
+                        href={funcionesHref(s.slug)}
+                        className="landing-nav-dropdown-item"
+                        role="menuitem"
+                        onClick={() => setFuncionesOpen(false)}
+                      >
+                        {funcionesCopyForRegion(s.navLabel, region)}
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
               <Link href={PLANTILLAS_CATALOG_PATH} className="landing-nav-text-link">
                 Plantillas
               </Link>
@@ -138,6 +220,32 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
           </button>
         </div>
         <div className="landing-nav-mobile-links">
+          <button
+            type="button"
+            className={`landing-nav-mobile-link landing-nav-mobile-accordion${mobileFuncionesOpen ? ' is-open' : ''}`}
+            aria-expanded={mobileFuncionesOpen}
+            onClick={() => setMobileFuncionesOpen((o) => !o)}
+          >
+            Funciones
+            <span aria-hidden>{mobileFuncionesOpen ? '▴' : '▾'}</span>
+          </button>
+          {mobileFuncionesOpen ? (
+            <div className="landing-nav-mobile-sublinks">
+              <Link href={FUNCIONES_PATH} className="landing-nav-mobile-sublink" onClick={closeMobileNav}>
+                Ver todas
+              </Link>
+              {FUNCIONES_SECTIONS.map((s) => (
+                <Link
+                  key={s.slug}
+                  href={funcionesHref(s.slug)}
+                  className="landing-nav-mobile-sublink"
+                  onClick={closeMobileNav}
+                >
+                  {funcionesCopyForRegion(s.navLabel, region)}
+                </Link>
+              ))}
+            </div>
+          ) : null}
           <Link href={PLANTILLAS_CATALOG_PATH} className="landing-nav-mobile-link" onClick={closeMobileNav}>
             Plantillas
           </Link>
@@ -154,7 +262,7 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
             Preguntas frecuentes
           </Link>
           <button type="button" className="landing-btn-primary landing-nav-mobile-cta" onClick={handleTryFree}>
-            Crear mi carta digital
+            {tryFreeLabel}
           </button>
           <button type="button" className="landing-btn-secondary landing-nav-mobile-cta" onClick={handleAccountNav}>
             {accountNav.label}
