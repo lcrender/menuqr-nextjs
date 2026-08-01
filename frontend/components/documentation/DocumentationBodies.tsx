@@ -2,6 +2,8 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { DocSection } from '../../lib/documentation-nav';
 import { docHref, getDocBySlug } from '../../lib/documentation-nav';
+import { MENU_TEMPLATES_CATALOG, sortTemplatesByCatalogOrder } from '../../lib/menu-templates-catalog';
+import { plantillaCaracteristicasHref } from '../../lib/plantillas-catalog-url';
 
 type BodyProps = { basePath: string };
 
@@ -742,7 +744,7 @@ export function DocPlantillasBody({ basePath }: BodyProps): ReactNode {
         </div>
       </div>
 
-      <DocSeeAlso basePath={basePath} slugs={['crear-restaurante', 'publicar-menu', 'descargar-qr', 'crear-menu']} />
+      <DocSeeAlso basePath={basePath} slugs={['catalogo-plantillas', 'crear-restaurante', 'publicar-menu', 'descargar-qr', 'crear-menu']} />
 
       <DocFaqBlock
         items={[
@@ -1586,6 +1588,56 @@ export function DocSuscripcionesPagosBody({ basePath }: BodyProps): ReactNode {
   );
 }
 
+export function DocCatalogoPlantillasBody({ basePath }: BodyProps): ReactNode {
+  const templates = sortTemplatesByCatalogOrder(MENU_TEMPLATES_CATALOG);
+
+  return (
+    <>
+      <DocAudienceBlock title="Qué vas a encontrar">
+        <p className="mb-0">
+          Resumen de las <strong>plantillas de carta digital</strong> disponibles. Cada una tiene una página con sus
+          características; usá el enlace para ver el detalle, ejemplos y para qué tipo de negocio encaja mejor.
+        </p>
+      </DocAudienceBlock>
+
+      <div className="card mb-4">
+        <div className="card-header bg-secondary text-white">
+          <h2 className="h4 mb-0">Plantillas disponibles</h2>
+        </div>
+        <div className="card-body p-0">
+          <ul className="list-group list-group-flush mb-0">
+            {templates.map((t) => {
+              const estilos = Array.isArray(t.estilos) ? t.estilos.filter(Boolean) : [];
+              const resumenParts = [t.categoria, ...estilos.slice(0, 2)].filter(Boolean);
+              const resumen = resumenParts
+                .map((s) => String(s).charAt(0).toUpperCase() + String(s).slice(1))
+                .join(' · ');
+              return (
+                <li key={t.slug} className="list-group-item px-3 py-3">
+                  <div className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
+                    <div>
+                      <h3 className="h6 mb-1">{t.nombre}</h3>
+                      {resumen ? <p className="small text-muted mb-0">{resumen}</p> : null}
+                    </div>
+                    <Link
+                      href={plantillaCaracteristicasHref(t.slug)}
+                      className="btn btn-sm btn-outline-primary flex-shrink-0"
+                    >
+                      Ver características
+                    </Link>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+
+      <DocSeeAlso basePath={basePath} slugs={['plantillas', 'crear-restaurante', 'publicar-menu']} />
+    </>
+  );
+}
+
 export const DOC_BODY_BY_SLUG: Record<
   DocSection['slug'],
   (props: BodyProps) => ReactNode
@@ -1609,4 +1661,5 @@ export const DOC_BODY_BY_SLUG: Record<
   'edicion-masiva-productos': (p) => <DocEdicionMasivaProductosBody {...p} />,
   'editar-productos-detalle': (p) => <DocEditarProductosDetalleBody {...p} />,
   'suscripciones-y-pagos': (p) => <DocSuscripcionesPagosBody {...p} />,
+  'catalogo-plantillas': (p) => <DocCatalogoPlantillasBody {...p} />,
 };

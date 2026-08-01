@@ -106,7 +106,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
   {
     slug: 'plantillas',
     title: 'Plantillas de diseño',
-    shortTitle: 'Plantillas',
+    shortTitle: 'Diseño',
     metaTitlePublic: 'Plantillas de diseño | Documentación AppMenuQR',
     metaTitleAdmin: 'Plantillas de diseño | Ayuda',
     metaDescription:
@@ -246,6 +246,20 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     group: 'Cuenta y facturación',
     keywords: 'suscripción pago mercadopago paypal argentina baja cancelar',
     searchText: 'facturación plan cobro mensual',
+  },
+  {
+    slug: 'catalogo-plantillas',
+    title: 'Plantillas',
+    shortTitle: 'Plantillas',
+    metaTitlePublic: 'Plantillas | Documentación AppMenuQR',
+    metaTitleAdmin: 'Plantillas | Ayuda',
+    metaDescription:
+      'Resumen de las plantillas de carta digital disponibles y enlace a las características de cada una.',
+    group: 'Plantillas',
+    keywords:
+      'plantillas catálogo características smart food beach gourmet minimalista classic foodie burgers',
+    searchText:
+      'ficha plantilla caracteristicas smart-food beach-bar gourmet minimalista night-club modern-food italian-food sol-noche foodie classic burgers',
   },
 ];
 
