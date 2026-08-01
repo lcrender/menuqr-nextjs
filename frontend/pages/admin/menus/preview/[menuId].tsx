@@ -12,6 +12,7 @@ import {
   buildTemplateConfigDefaults,
 } from '../../../../lib/template-config-schema';
 import { TEMPLATES_CATALOG } from '../../../../lib/templates-catalog';
+import { iconLabelsForLocale } from '../../../../lib/allergen-icon-labels';
 import ClassicTemplate from '../../../../templates/classic/ClassicTemplate';
 import MinimalistTemplate from '../../../../templates/minimalist/MinimalistTemplate';
 import FoodieTemplate from '../../../../templates/foodie/FoodieTemplate';
@@ -52,15 +53,6 @@ type MenuSectionRow = {
   name: string;
   sort?: number;
   items: MenuItemRow[];
-};
-
-const iconLabels: Record<string, string> = {
-  celiaco: 'Sin Gluten',
-  picante: 'Picante',
-  vegano: 'Vegano',
-  vegetariano: 'Vegetariano',
-  'sin-gluten': 'Sin Gluten',
-  'sin-lactosa': 'Sin Lactosa',
 };
 
 const countryCodes: Record<string, string> = {
@@ -201,6 +193,7 @@ export default function AdminMenuPreviewPage() {
   const [proSaveLockOpen, setProSaveLockOpen] = useState(false);
   const [viewerRole, setViewerRole] = useState<string | null>(null);
   const [contentLocale, setContentLocale] = useState('es-ES');
+  const iconLabels = useMemo(() => iconLabelsForLocale(contentLocale), [contentLocale]);
   const [availableLocales, setAvailableLocales] = useState<string[]>(['es-ES']);
   const [translationManifest, setTranslationManifest] = useState<MenuLangManifestEntry[]>([]);
   const [tenantQuery, setTenantQuery] = useState<Record<string, string>>({});

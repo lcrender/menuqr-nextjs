@@ -31,6 +31,7 @@ import {
 } from '../../lib/template-config-schema';
 import type { SolNocheEditHotspot } from '../../lib/sol-noche-preview-edit';
 import { PLANTILLAS_CATALOG_PATH } from '../../lib/plantillas-catalog-url';
+import { iconLabelsForLocale } from '../../lib/allergen-icon-labels';
 
 const formatPrice = (price: ItemPrice) => {
   if (price.currency === 'ARS') {
@@ -70,24 +71,6 @@ const PREVIEW_SLUG_LABELS: Record<string, string> = {
   'sol-noche': 'Sol & Noche',
 };
 
-const iconLabels: { [key: string]: string } = {
-  celiaco: 'Sin Gluten',
-  picante: 'Picante',
-  vegano: 'Vegano',
-  vegetariano: 'Vegetariano',
-  'sin-gluten': 'Sin Gluten',
-  'sin-lactosa': 'Sin Lactosa',
-};
-
-const iconLabelsEn: { [key: string]: string } = {
-  celiaco: 'Gluten Free',
-  picante: 'Spicy',
-  vegano: 'Vegan',
-  vegetariano: 'Vegetarian',
-  'sin-gluten': 'Gluten Free',
-  'sin-lactosa': 'Lactose Free',
-};
-
 /** Vista previa Italian Food: locale → menú demo */
 const ITALIAN_FOOD_PREVIEW_LOCALE_TO_MENU_SLUG: Record<string, string> = {
   'it-IT': 'italiano',
@@ -115,6 +98,17 @@ const MODERN_FOOD_PREVIEW_MENU_TABS = [
 ] as const;
 
 function modernFoodPreviewMenuSlug(locale: string, menuKey: string): string {
+  const prefix = locale === 'en-US' ? 'en' : 'es';
+  return `${prefix}-${menuKey}`;
+}
+
+/** Vista previa Smart Food: locale + tipo de menú */
+const SMART_FOOD_PREVIEW_MENU_TABS = [
+  { key: 'almuerzo', labelEs: 'Almuerzo', labelEn: 'Lunch' },
+  { key: 'merienda', labelEs: 'Merienda', labelEn: 'Snack' },
+] as const;
+
+function smartFoodPreviewMenuSlug(locale: string, menuKey: string): string {
   const prefix = locale === 'en-US' ? 'en' : 'es';
   return `${prefix}-${menuKey}`;
 }
@@ -151,6 +145,7 @@ export default function PreviewPage() {
   const { restaurant, menu, menus } = data;
   const menuListSource = menus?.length ? menus : [menu];
   const isModernFoodPreview = slug === 'modern-food';
+  const isSmartFoodPreview = slug === 'smart-food';
   const isFoodiePreview = slug === 'foodie';
   const isItalianFoodPreview = slug === 'italian-food';
   const isBeachBarPreview = slug === 'beach-bar';
@@ -172,6 +167,10 @@ export default function PreviewPage() {
       setSelectedMenuKey('menu-principal');
       return;
     }
+    if (isSmartFoodPreview) {
+      setSelectedMenuKey('almuerzo');
+      return;
+    }
     if (isFoodiePreview) {
       const menuSlug = FOODIE_PREVIEW_LOCALE_TO_MENU_SLUG[contentLocale] ?? 'espanol';
       setSelectedMenuKey(menuSlug);
@@ -189,11 +188,11 @@ export default function PreviewPage() {
     }
     const s = menuListSource[0]?.slug;
     if (s) setSelectedMenuKey(s);
-  }, [slug, isModernFoodPreview, isFoodiePreview, isItalianFoodPreview, isLocaleMenuPreview, menuListSource, contentLocale]);
+  }, [slug, isModernFoodPreview, isSmartFoodPreview, isFoodiePreview, isItalianFoodPreview, isLocaleMenuPreview, menuListSource, contentLocale]);
   useEffect(() => {
-    if (isModernFoodPreview || isFoodiePreview || isLocaleMenuPreview) setContentLocale('es-ES');
+    if (isModernFoodPreview || isSmartFoodPreview || isFoodiePreview || isLocaleMenuPreview) setContentLocale('es-ES');
     if (isItalianFoodPreview) setContentLocale('it-IT');
-  }, [slug, isModernFoodPreview, isFoodiePreview, isItalianFoodPreview, isLocaleMenuPreview]);
+  }, [slug, isModernFoodPreview, isSmartFoodPreview, isFoodiePreview, isItalianFoodPreview, isLocaleMenuPreview]);
 
   useEffect(() => {
     if (!isSolNochePreview) return;
@@ -217,8 +216,15 @@ export default function PreviewPage() {
     return menuListSource.find((m) => m.slug === fullSlug) ?? menuListSource[0] ?? null;
   }, [isModernFoodPreview, menuListSource, contentLocale, selectedMenuKey]);
 
+  const smartFoodLocaleMenu = useMemo(() => {
+    if (!isSmartFoodPreview) return null;
+    const fullSlug = smartFoodPreviewMenuSlug(contentLocale, selectedMenuKey);
+    return menuListSource.find((m) => m.slug === fullSlug) ?? menuListSource[0] ?? null;
+  }, [isSmartFoodPreview, menuListSource, contentLocale, selectedMenuKey]);
+
   const selectedMenuFromList = useMemo(() => {
     if (isModernFoodPreview && modernFoodLocaleMenu) return modernFoodLocaleMenu;
+    if (isSmartFoodPreview && smartFoodLocaleMenu) return smartFoodLocaleMenu;
     if (isFoodiePreview) {
       const menuSlug = FOODIE_PREVIEW_LOCALE_TO_MENU_SLUG[contentLocale] ?? 'espanol';
       return menuListSource.find((m) => m.slug === menuSlug) ?? menuListSource[0];
@@ -232,7 +238,7 @@ export default function PreviewPage() {
       return menuListSource.find((m) => m.slug === menuSlug) ?? menuListSource[0];
     }
     return menuListSource.find((m) => m.slug === selectedMenuKey) ?? menuListSource[0];
-  }, [isModernFoodPreview, isFoodiePreview, isItalianFoodPreview, isBeachBarPreview, isSolNochePreview, modernFoodLocaleMenu, menuListSource, contentLocale, selectedMenuKey]);
+  }, [isModernFoodPreview, isSmartFoodPreview, isFoodiePreview, isItalianFoodPreview, isBeachBarPreview, isSolNochePreview, modernFoodLocaleMenu, smartFoodLocaleMenu, menuListSource, contentLocale, selectedMenuKey]);
 
   if (!menuListSource[0] || !selectedMenuFromList) {
     return (
@@ -253,7 +259,7 @@ export default function PreviewPage() {
   const selectedMenu = {
     id: selectedMenuFromList.id,
     name: selectedMenuFromList.name,
-    slug: isModernFoodPreview ? selectedMenuKey : selectedMenuFromList.slug,
+    slug: isModernFoodPreview || isSmartFoodPreview ? selectedMenuKey : selectedMenuFromList.slug,
     ...(selectedMenuFromList.description && { description: selectedMenuFromList.description }),
     sections: selectedMenuFromList.sections,
   };
@@ -265,6 +271,12 @@ export default function PreviewPage() {
         name: contentLocale === 'en-US' ? tab.labelEn : tab.labelEs,
         slug: tab.key,
       }))
+    : isSmartFoodPreview
+    ? SMART_FOOD_PREVIEW_MENU_TABS.map((tab) => ({
+        id: `smart-food-tab-${tab.key}`,
+        name: contentLocale === 'en-US' ? tab.labelEn : tab.labelEs,
+        slug: tab.key,
+      }))
     : menuListSource.map((m) => ({
         id: m.id,
         name: m.name,
@@ -273,8 +285,10 @@ export default function PreviewPage() {
       }));
   const onMenuSelect = (menuSlug: string) => setSelectedMenuKey(menuSlug);
 
-  const activeIconLabels =
-    isModernFoodPreview && contentLocale === 'en-US' ? iconLabelsEn : iconLabels;
+  const activeIconLabels = useMemo(
+    () => iconLabelsForLocale(contentLocale),
+    [contentLocale],
+  );
 
   const modernFoodMenuLocales = isModernFoodPreview
     ? {
@@ -288,6 +302,22 @@ export default function PreviewPage() {
         primaryColor: restaurant.primaryColor || '#1a1a2e',
         secondaryColor: restaurant.secondaryColor || '#c9a227',
         menuTabVariant: 'proMobile' as MenuTabVariant,
+      }
+    : undefined;
+
+  const smartFoodMenuLocales = isSmartFoodPreview
+    ? {
+        locales: ['es-ES', 'en-US'],
+        manifest: [
+          { locale: 'es-ES', label: 'Español', flagCode: 'es' },
+          { locale: 'en-US', label: 'English', flagCode: 'gb' },
+        ],
+        value: contentLocale,
+        onChange: setContentLocale,
+        primaryColor: restaurant.primaryColor || '#1B4332',
+        secondaryColor: restaurant.secondaryColor || '#40916C',
+        menuTabVariant: 'classic' as MenuTabVariant,
+        showTranslationFlags: false,
       }
     : undefined;
 
@@ -338,7 +368,12 @@ export default function PreviewPage() {
       }
     : undefined;
 
-  const previewMenuLocales = beachBarMenuLocales ?? italianFoodMenuLocales ?? foodieMenuLocales ?? modernFoodMenuLocales;
+  const previewMenuLocales =
+    beachBarMenuLocales ??
+    italianFoodMenuLocales ??
+    foodieMenuLocales ??
+    smartFoodMenuLocales ??
+    modernFoodMenuLocales;
 
   const handleSolNocheColorModeChange = (mode: 'light' | 'dark') => {
     setSolNocheColorMode(mode);

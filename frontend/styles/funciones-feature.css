@@ -317,11 +317,28 @@
   .fx-split--media-left {
     grid-template-columns: 1.05fr 0.95fr;
   }
+
+  .fx-split--vcenter {
+    align-items: center;
+  }
+}
+
+.fx-edit-demo-media {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .fx-compare {
   display: grid;
   gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .fx-compare {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .fx-compare-card {
@@ -361,6 +378,19 @@
 @media (min-width: 992px) {
   .fx-cards-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .fx-cards-grid--org {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .fx-cards-grid--org .fx-card-media {
+    margin-top: 1rem;
+  }
+
+  .fx-cards-grid--org .fx-media--contain .fx-media-img {
+    padding: 0;
   }
 }
 
@@ -489,6 +519,15 @@
   .fx-steps {
     grid-template-columns: repeat(5, 1fr);
     gap: 1rem;
+  }
+
+  .fx-steps--roomy {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .fx-steps--roomy .fx-media--contain .fx-media-img {
+    padding: 0;
   }
 }
 
@@ -767,6 +806,14 @@
 .fx-media--photo {
   margin-top: 0.5rem;
   background: #fff;
+}
+
+.fx-media--bare {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
 }
 
 .fx-media--auto,

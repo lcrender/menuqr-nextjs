@@ -179,7 +179,7 @@ export default function MenuQrDinamicoLanding() {
               label="Soporte de mesa con código QR y teléfono mostrando la carta digital actualizada"
               aspect="auto"
               src={MENU_QR_DINAMICO_MEDIA.sameQrStory}
-              alt="Tu menú siempre actualizado desde un solo QR: soporte de mesa con código QR y teléfono mostrando la carta digital"
+              alt="Soporte de mesa con código QR y teléfono mostrando la carta digital de La Parrilla de Pocho"
             />
           </div>
         </section>
@@ -259,7 +259,7 @@ export default function MenuQrDinamicoLanding() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={panelSources.avif || panelSources.webp || panelSources.fallback}
-                      alt="Menú digital en el móvil con categorías, filtros alimentarios, productos y precios"
+                      alt="Menú digital en el móvil de La Parrilla de Pocho con categorías, productos y precios"
                       loading="lazy"
                       decoding="async"
                     />
@@ -395,7 +395,7 @@ export default function MenuQrDinamicoLanding() {
                   label="Mockup de teléfono con un menú digital real"
                   aspect="auto"
                   src={phonePreview}
-                  alt="Vista móvil de la plantilla Beach Life: menú digital para bar de playa"
+                    alt="Vista móvil del menú digital de La Parrilla de Pocho con iconos de alérgenos"
                 />
               </div>
             </div>

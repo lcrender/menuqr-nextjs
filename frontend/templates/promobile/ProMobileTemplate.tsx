@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
+import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -121,6 +122,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
   const sectionItems = activeSection?.items ?? [];
   const { featuredItems, regularItems } = splitHighlightedItems(sectionItems);
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   const renderProMobileItem = (item: (typeof sectionItems)[number], featured: boolean) => {
@@ -448,7 +450,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
               <h4 style={{ marginBottom: '20px', fontWeight: '600', fontSize: '1.1rem' }}>{restaurant.name}</h4>
               {restaurant.address && (
                 <p style={{ marginBottom: '10px', opacity: 0.9, fontSize: '0.9rem' }}>
-                  <strong>📍 Dirección:</strong> {restaurant.address}
+                  <strong>📍 {footerLabels.address}:</strong> {restaurant.address}
                 </p>
               )}
             </div>
@@ -456,7 +458,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
               <h5 style={{ marginBottom: '16px', fontWeight: '600', fontSize: '1rem' }}>Contacto</h5>
               {restaurant.phone && (
                 <p style={{ marginBottom: '8px', opacity: 0.9, fontSize: '0.9rem' }}>
-                  <strong>📞 Teléfono:</strong>{' '}
+                  <strong>📞 {footerLabels.phone}:</strong>{' '}
                   <a
                     href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`}
                     rel={FOOTER_REL_CONTACT}

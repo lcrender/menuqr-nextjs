@@ -1,5 +1,6 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import FuncionesFeaturePage from '../../components/funciones/FuncionesFeaturePage';
+import MenuConAlergenosLanding from '../../components/funciones/MenuConAlergenosLanding';
 import MenuQrDinamicoLanding from '../../components/funciones/MenuQrDinamicoLanding';
 import {
   FUNCIONES_SLUGS,
@@ -15,6 +16,9 @@ type Props = {
 export default function FuncionesSlugPage({ section }: Props) {
   if (section.slug === 'menu-qr-dinamico') {
     return <MenuQrDinamicoLanding />;
+  }
+  if (section.slug === 'menu-con-alergenos') {
+    return <MenuConAlergenosLanding />;
   }
   return <FuncionesFeaturePage section={section} />;
 }

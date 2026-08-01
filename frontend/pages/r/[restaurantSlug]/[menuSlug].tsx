@@ -1,9 +1,10 @@
 import { useRouter } from 'next/router';
 import type { GetServerSideProps } from 'next';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import axios from 'axios';
 import LandingHomeLink from '../../../components/LandingHomeLink';
 import { getApiBaseUrl } from '../../../lib/config';
+import { iconLabelsForLocale } from '../../../lib/allergen-icon-labels';
 import { PublicHtmlSeoHead } from '../../../components/PublicHtmlSeoHead';
 import {
   APP_MENU_QR_TITLE_SUFFIX,
@@ -126,15 +127,6 @@ interface Menu {
   translationLanguageManifest?: MenuLangManifestEntry[];
 }
 
-const iconLabels: { [key: string]: string } = {
-  celiaco: 'Sin Gluten',
-  picante: 'Picante',
-  vegano: 'Vegano',
-  vegetariano: 'Vegetariano',
-  'sin-gluten': 'Sin Gluten',
-  'sin-lactosa': 'Sin Lactosa',
-};
-
 function menuLocaleStorageKey(restaurantSlug: string, menuSlug: string) {
   return `menuqr-menu-content-locale:${restaurantSlug}:${menuSlug}`;
 }
@@ -148,6 +140,7 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
   const [error, setError] = useState('');
   /** Locale BCP-47 para textos del menú y restaurante (API pública), independiente del i18n de la app. */
   const [contentLocale, setContentLocale] = useState('es-ES');
+  const iconLabels = useMemo(() => iconLabelsForLocale(contentLocale), [contentLocale]);
 
   // Idioma del menú desde URL (`?locale=`), `?lang=` si es BCP-47, localStorage por menú, o idioma UI.
   useEffect(() => {

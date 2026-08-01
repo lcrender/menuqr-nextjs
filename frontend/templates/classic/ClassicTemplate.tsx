@@ -9,6 +9,7 @@ import {
 import Link from 'next/link';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
+import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
 
 interface ClassicTemplateProps {
   restaurant: {
@@ -75,6 +76,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
   const showDescription = tc.showRestaurantDescription !== false;
   const phoneDisplay = (restaurant.phone || '').replace(/\s*\|\s*WhatsApp:.*$/i, '').trim();
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   type MenuItem = NonNullable<ClassicTemplateProps['selectedMenu']>['sections'][number]['items'][number];
@@ -294,7 +296,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
               {showName && <h4 style={{ marginBottom: '20px' }}>{restaurant.name}</h4>}
               {restaurant.address && (
                 <p style={{ marginBottom: '10px', opacity: 0.9 }}>
-                  <strong>📍 Dirección:</strong> {restaurant.address}
+                  <strong>📍 {footerLabels.address}:</strong> {restaurant.address}
                 </p>
               )}
             </div>
@@ -302,7 +304,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
               <h5 style={{ marginBottom: '15px' }}>Contacto</h5>
               {phoneDisplay && (
                 <p style={{ marginBottom: '8px', opacity: 0.9 }}>
-                  <strong>📞 Teléfono:</strong> {phoneDisplay}
+                  <strong>📞 {footerLabels.phone}:</strong> {phoneDisplay}
                 </p>
               )}
               {restaurant.whatsapp && (

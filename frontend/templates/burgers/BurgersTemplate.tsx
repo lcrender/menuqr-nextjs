@@ -2,6 +2,7 @@ import React from 'react';
 import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
+import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -96,6 +97,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
       : '#2c3e50';
   const sectionTitleLayout = resolveBurgersSectionTitleStyle(restaurant.templateConfig);
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   const hexToRgba = (hex: string, a: number) => {
@@ -575,7 +577,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
               </h4>
               {restaurant.address && (
                 <p style={{ marginBottom: '12px', opacity: 0.9, fontSize: '0.95rem' }}>
-                  <strong>📍 Dirección:</strong> {restaurant.address}
+                  <strong>📍 {footerLabels.address}:</strong> {restaurant.address}
                 </p>
               )}
             </div>
@@ -583,7 +585,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
               <h5 style={{ marginBottom: '20px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>Contacto</h5>
               {restaurant.phone && (
                 <p style={{ marginBottom: '10px', opacity: 0.9, fontSize: '0.95rem' }}>
-                  <strong>📞 Teléfono:</strong>{' '}
+                  <strong>📞 {footerLabels.phone}:</strong>{' '}
                   <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} rel={FOOTER_REL_CONTACT} style={{ color: 'white', textDecoration: 'underline' }}>
                     {restaurant.phone.split('|')[0]?.trim() ?? ''}
                   </a>

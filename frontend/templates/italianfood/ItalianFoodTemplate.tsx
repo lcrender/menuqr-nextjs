@@ -4,6 +4,7 @@ import TemplateFonts, { ITALIAN_FOOD_FONTS_HREF } from '../../components/Templat
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { preferredImageSrc } from '../../lib/optimized-image';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
+import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -104,6 +105,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
   const displayFont = fonts.display;
   const bodyFont = fonts.body;
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   // Función para separar el símbolo de la moneda del precio
@@ -524,7 +526,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                 <h4 style={{ marginBottom: '12px', marginTop: 0, fontWeight: '600', fontStyle: 'italic', fontFamily: displayFont, fontSize: '1.15rem', lineHeight: '1.3', color: '#000000' }}>{restaurant.name}</h4>
                 {restaurant.address && (
                   <p style={{ marginBottom: '8px', marginTop: 0, fontSize: '0.9rem', lineHeight: '1.4', color: '#000000' }}>
-                    <strong>📍 Dirección:</strong> {restaurant.address}
+                    <strong>📍 {footerLabels.address}:</strong> {restaurant.address}
                   </p>
                 )}
               </div>
@@ -532,7 +534,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                 <h5 style={{ marginBottom: '12px', marginTop: 0, fontWeight: '600', fontStyle: 'italic', fontFamily: displayFont, fontSize: '1rem', lineHeight: '1.3', color: '#000000' }}>Contacto</h5>
                 {restaurant.phone && (
                   <p style={{ marginBottom: '8px', marginTop: 0, fontSize: '0.9rem', lineHeight: '1.4', color: '#000000' }}>
-                    <strong>📞 Teléfono:</strong>{' '}
+                    <strong>📞 {footerLabels.phone}:</strong>{' '}
                     <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} rel={FOOTER_REL_CONTACT} style={{ color: '#000000', textDecoration: 'underline' }}>
                       {restaurant.phone.split('|')[0]?.trim() ?? ''}
                     </a>

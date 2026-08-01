@@ -10,8 +10,7 @@ export const MENU_QR_DINAMICO_MEDIA = {
   heroPoster: 'https://i.ytimg.com/vi/mCuexoYIb8s/hqdefault.jpg',
   priceVideoSrc: null as string | null,
   pricePoster: '/preview/preview-smart-food.avif',
-  phonePreview:
-    '/plantillas/landings/menu-digital-para-bar-de-playa-beach-life-preview-6f0a73a0-53f1-4338-b0bc-92d504acf6ec.avif',
+  phonePreview: '/funciones/menu-qr-dinamico/beneficios-menu-movil.avif',
   panelPreview: '/funciones/menu-qr-dinamico/demo-menu-vista-movil.avif',
   sameQrStory: '/funciones/menu-qr-dinamico/mismo-qr-carta-actualizada.avif',
   comparePdfVsDynamic: '/funciones/menu-qr-dinamico/comparativa-pdf-vs-dinamico.avif',

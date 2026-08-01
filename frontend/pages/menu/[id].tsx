@@ -4,6 +4,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import LandingHomeLink from '../../components/LandingHomeLink';
 import { getApiBaseUrl } from '../../lib/config';
+import { iconLabelsForLocale } from '../../lib/allergen-icon-labels';
 
 interface MenuSection {
   id: string;
@@ -38,14 +39,7 @@ interface Menu {
   sections: MenuSection[];
 }
 
-const iconLabels: { [key: string]: string } = {
-  celiaco: 'Sin Gluten',
-  picante: 'Picante',
-  vegano: 'Vegano',
-  vegetariano: 'Vegetariano',
-  'sin-gluten': 'Sin Gluten',
-  'sin-lactosa': 'Sin Lactosa',
-};
+const iconLabels = iconLabelsForLocale('es-ES');
 
 export default function MenuPage() {
   const router = useRouter();

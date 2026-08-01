@@ -1,9 +1,11 @@
 import { useRouter } from 'next/router';
 import type { GetServerSideProps } from 'next';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { getApiBaseUrl } from '../../lib/config';
+import { iconLabelsForLocale } from '../../lib/allergen-icon-labels';
+import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
 import { PublicHtmlSeoHead } from '../../components/PublicHtmlSeoHead';
 import {
   APP_MENU_QR_TITLE_SUFFIX,
@@ -129,15 +131,6 @@ interface Menu {
   translationLanguageManifest?: MenuLangManifestEntry[];
 }
 
-const iconLabels: { [key: string]: string } = {
-  celiaco: 'Sin Gluten',
-  picante: 'Picante',
-  vegano: 'Vegano',
-  vegetariano: 'Vegetariano',
-  'sin-gluten': 'Sin Gluten',
-  'sin-lactosa': 'Sin Lactosa',
-};
-
 const formatPrice = (price: ItemPrice) => {
   if (price.currency === 'ARS') {
     return `$ ${Math.round(price.amount).toLocaleString('es-AR')}`;
@@ -163,6 +156,8 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [contentLocale, setContentLocale] = useState('es-ES');
+  const iconLabels = useMemo(() => iconLabelsForLocale(contentLocale), [contentLocale]);
+  const footerLabels = useMemo(() => templateFooterLabelsForLocale(contentLocale), [contentLocale]);
   const selectedMenuSlugRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -564,13 +559,13 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
               <div className="contact-info" style={{ borderLeft: '2px solid #e0e0e0', paddingLeft: '20px' }}>
                 {restaurant.address && (
                   <div className="mb-3">
-                    <strong>📍 Dirección:</strong>
+                    <strong>📍 {footerLabels.address}:</strong>
                     <p className="mb-0" style={{ fontSize: '0.9rem' }}>{restaurant.address}</p>
                   </div>
                 )}
                 {restaurant.phone && (
                   <div className="mb-2">
-                    <strong>📞 Teléfono:</strong>
+                    <strong>📞 {footerLabels.phone}:</strong>
                     <div>
                       <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} style={{ fontSize: '0.9rem' }}>
                         {restaurant.phone.split('|')[0]?.trim() ?? ''}

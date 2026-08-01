@@ -3,7 +3,9 @@ import OptimizedPicture from '../../components/OptimizedPicture';
 import TemplateFonts, { SMART_FOOD_FONTS_HREF } from '../../components/TemplateFonts';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import SmartFoodAllergenIcon from './SmartFoodAllergenIcon';
+import { smartFoodFilterUiForLocale } from '../../lib/allergen-icon-labels';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
+import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -86,6 +88,11 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
   const showName = tc.showRestaurantName !== false;
   const showDescription = tc.showRestaurantDescription !== false;
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
+  const filterUi = useMemo(
+    () => smartFoodFilterUiForLocale(menuLocales?.value),
+    [menuLocales?.value],
+  );
+  const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
 
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
@@ -268,7 +275,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2f3a44" strokeWidth="2" aria-hidden>
                   <path d="M4 6h16M7 12h10M10 18h4" strokeLinecap="round" />
                 </svg>
-                Filtros alimentarios
+                {filterUi.title}
               </div>
               <button
                 type="button"
@@ -276,7 +283,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
                 onClick={clearAllergenFilters}
                 disabled={activeAllergenFilters.size === 0}
               >
-                Limpiar filtros
+                {filterUi.clear}
               </button>
             </div>
             <div className="smartfood-allergen-filters">
@@ -302,7 +309,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
         {selectedMenu ? (
           <div className="smartfood-items">
             {filteredSections.length === 0 ? (
-              <p className="smartfood-empty">No hay productos que coincidan con los filtros seleccionados.</p>
+              <p className="smartfood-empty">{filterUi.empty}</p>
             ) : (
               filteredSections.map((section) => {
                 const { featuredItems, regularItems } = splitHighlightedItems(section.items);
@@ -362,7 +369,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
               {showName ? <h4 style={{ marginBottom: '20px' }}>{restaurant.name}</h4> : null}
               {restaurant.address ? (
                 <p style={{ marginBottom: '10px', color: '#555' }}>
-                  <strong>Dirección:</strong> {restaurant.address}
+                  <strong>{footerLabels.address}:</strong> {restaurant.address}
                 </p>
               ) : null}
             </div>
@@ -370,7 +377,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
               <h5 style={{ marginBottom: '15px' }}>Contacto</h5>
               {restaurant.phone ? (
                 <p style={{ marginBottom: '8px', color: '#555' }}>
-                  <strong>Teléfono:</strong>{' '}
+                  <strong>{footerLabels.phone}:</strong>{' '}
                   <a href={`tel:${restaurant.phone.split('|')[0]?.trim() ?? ''}`} rel={FOOTER_REL_CONTACT}>
                     {restaurant.phone.split('|')[0]?.trim() ?? ''}
                   </a>

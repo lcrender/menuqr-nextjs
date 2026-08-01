@@ -1086,10 +1086,10 @@ const nightClubData: { restaurant: PreviewRestaurant; menu: PreviewMenu } = {
   menu: nightClubMenu,
 };
 
-/** Smart Food: comida saludable con filtros de alérgenos, ARS */
-const smartFoodMenuAlmuerzo: PreviewMenu = {
-  id: 'preview-smartfood-menu-almuerzo',
-  slug: 'almuerzo',
+/** Smart Food: comida saludable con filtros de alérgenos, ARS (ES / EN) */
+const smartFoodMenuAlmuerzoEs: PreviewMenu = {
+  id: 'preview-smartfood-menu-almuerzo-es',
+  slug: 'es-almuerzo',
   name: 'Almuerzo',
   restaurantId: 'preview-smartfood',
   restaurantName: 'Smart Food',
@@ -1112,7 +1112,7 @@ const smartFoodMenuAlmuerzo: PreviewMenu = {
           name: 'Bowl proteico',
           description: 'Arroz integral, pollo grillado, brócoli, zanahoria y limón',
           prices: [{ currency: 'ARS', label: 'Regular', amount: 13200 }],
-          icons: ['celiaco', 'sin-gluten'],
+          icons: ['celiaco'],
         },
         {
           id: 'sf-b3',
@@ -1169,7 +1169,7 @@ const smartFoodMenuAlmuerzo: PreviewMenu = {
           name: 'Salmón con vegetales',
           description: 'Filet grillado con zapallo asado y pesto de albahaca',
           prices: [{ currency: 'ARS', label: 'Plato', amount: 15800 }],
-          icons: ['celiaco', 'sin-gluten'],
+          icons: ['celiaco'],
         },
         {
           id: 'sf-p2',
@@ -1223,9 +1223,9 @@ const smartFoodMenuAlmuerzo: PreviewMenu = {
   ],
 };
 
-const smartFoodMenuMerienda: PreviewMenu = {
-  id: 'preview-smartfood-menu-merienda',
-  slug: 'merienda',
+const smartFoodMenuMeriendaEs: PreviewMenu = {
+  id: 'preview-smartfood-menu-merienda-es',
+  slug: 'es-merienda',
   name: 'Merienda',
   restaurantId: 'preview-smartfood',
   restaurantName: 'Smart Food',
@@ -1275,6 +1275,194 @@ const smartFoodMenuMerienda: PreviewMenu = {
   ],
 };
 
+const smartFoodMenuAlmuerzoEn: PreviewMenu = {
+  id: 'preview-smartfood-menu-almuerzo-en',
+  slug: 'en-almuerzo',
+  name: 'Lunch',
+  restaurantId: 'preview-smartfood',
+  restaurantName: 'Smart Food',
+  restaurantSlug: 'preview-smartfood',
+  template: 'smartFood',
+  sections: [
+    {
+      id: 'sf-en-sec-1',
+      name: 'Bowls',
+      items: [
+        {
+          id: 'sf-en-b1',
+          name: 'Mediterranean bowl',
+          description: 'Quinoa, hummus, cherry tomatoes, cucumber, olives and seeds',
+          prices: [{ currency: 'ARS', amount: 11800 }],
+          icons: ['vegano', 'sin-lactosa'],
+        },
+        {
+          id: 'sf-en-b2',
+          name: 'Protein bowl',
+          description: 'Brown rice, grilled chicken, broccoli, carrot and lemon',
+          prices: [{ currency: 'ARS', label: 'Regular', amount: 13200 }],
+          icons: ['celiaco'],
+        },
+        {
+          id: 'sf-en-b3',
+          name: 'Green bowl',
+          description: 'Spinach, kale, avocado, chickpeas and yogurt dressing',
+          prices: [
+            { currency: 'ARS', label: 'Small', amount: 9800 },
+            { currency: 'ARS', label: 'Large', amount: 12400 },
+          ],
+          icons: ['vegetariano', 'sin-lactosa'],
+        },
+        {
+          id: 'sf-en-b4',
+          name: 'Spicy Asian bowl',
+          description: 'Jasmine rice, tofu, edamame, carrot and sriracha sauce',
+          prices: [{ currency: 'ARS', amount: 12100 }],
+          icons: ['vegano', 'picante'],
+        },
+      ],
+    },
+    {
+      id: 'sf-en-sec-2',
+      name: 'Salads',
+      items: [
+        {
+          id: 'sf-en-e1',
+          name: 'Light Caesar',
+          description: 'Romaine lettuce, chicken, whole-grain croutons and Parmesan',
+          prices: [{ currency: 'ARS', amount: 10900 }],
+          icons: ['celiaco'],
+        },
+        {
+          id: 'sf-en-e2',
+          name: 'Arugula salad',
+          description: 'Arugula, tomato, walnuts and balsamic reduction',
+          prices: [{ currency: 'ARS', label: 'Individual', amount: 9200 }],
+          icons: ['vegetariano', 'sin-gluten'],
+        },
+        {
+          id: 'sf-en-e3',
+          name: 'Power salad',
+          description: 'Mixed greens, egg, quinoa and chia seeds',
+          prices: [{ currency: 'ARS', amount: 10500 }],
+          icons: ['vegetariano'],
+        },
+      ],
+    },
+    {
+      id: 'sf-en-sec-3',
+      name: 'Mains',
+      items: [
+        {
+          id: 'sf-en-p1',
+          name: 'Salmon with vegetables',
+          description: 'Grilled fillet with roasted squash and basil pesto',
+          prices: [{ currency: 'ARS', label: 'Plate', amount: 15800 }],
+          icons: ['celiaco'],
+        },
+        {
+          id: 'sf-en-p2',
+          name: 'Vegetable wok',
+          description: 'Stir-fried vegetables, ginger and reduced-sodium soy sauce',
+          prices: [{ currency: 'ARS', amount: 11200 }],
+          icons: ['vegano'],
+        },
+        {
+          id: 'sf-en-p3',
+          name: 'Mild chickpea curry',
+          description: 'Chickpeas, basmati rice and fresh cilantro',
+          prices: [
+            { currency: 'ARS', label: 'With rice', amount: 10800 },
+            { currency: 'ARS', label: 'Curry only', amount: 9400 },
+          ],
+          icons: ['vegano', 'picante'],
+        },
+      ],
+    },
+    {
+      id: 'sf-en-sec-4',
+      name: 'Drinks',
+      items: [
+        {
+          id: 'sf-en-d1',
+          name: 'Flavored water',
+          description: 'Cucumber and mint or berries',
+          prices: [{ currency: 'ARS', label: '500 ml', amount: 2800 }],
+          icons: ['vegano', 'sin-lactosa'],
+        },
+        {
+          id: 'sf-en-d2',
+          name: 'Fresh lemonade',
+          description: 'Freshly squeezed, no added sugar',
+          prices: [{ currency: 'ARS', amount: 3200 }],
+          icons: ['vegano', 'sin-gluten'],
+        },
+        {
+          id: 'sf-en-d3',
+          name: 'Green smoothie',
+          description: 'Spinach, banana, green apple and ginger',
+          prices: [
+            { currency: 'ARS', label: '350 ml', amount: 4500 },
+            { currency: 'ARS', label: '500 ml', amount: 5200 },
+          ],
+          icons: ['vegano', 'vegetariano'],
+        },
+      ],
+    },
+  ],
+};
+
+const smartFoodMenuMeriendaEn: PreviewMenu = {
+  id: 'preview-smartfood-menu-merienda-en',
+  slug: 'en-merienda',
+  name: 'Snack',
+  restaurantId: 'preview-smartfood',
+  restaurantName: 'Smart Food',
+  restaurantSlug: 'preview-smartfood',
+  template: 'smartFood',
+  sections: [
+    {
+      id: 'sf-en-m-sec-1',
+      name: 'Toast',
+      items: [
+        {
+          id: 'sf-en-t1',
+          name: 'Avocado toast',
+          description: 'Whole-grain bread, avocado, seeds and lemon',
+          prices: [{ currency: 'ARS', amount: 6800 }],
+          icons: ['vegetariano', 'sin-lactosa'],
+        },
+        {
+          id: 'sf-en-t2',
+          name: 'Hummus toast',
+          description: 'Gluten-free bread, homemade hummus and tomato',
+          prices: [{ currency: 'ARS', label: 'Classic', amount: 7200 }],
+          icons: ['vegano', 'sin-gluten'],
+        },
+      ],
+    },
+    {
+      id: 'sf-en-m-sec-2',
+      name: 'Snacks',
+      items: [
+        {
+          id: 'sf-en-s1',
+          name: 'Mixed nuts',
+          description: 'Almonds, walnuts and cashews',
+          prices: [{ currency: 'ARS', amount: 5400 }],
+          icons: ['vegano', 'sin-lactosa'],
+        },
+        {
+          id: 'sf-en-s2',
+          name: 'Homemade energy bar',
+          description: 'Oats, dates, cocoa and peanut butter',
+          prices: [{ currency: 'ARS', amount: 3800 }],
+          icons: ['vegetariano', 'picante'],
+        },
+      ],
+    },
+  ],
+};
+
 const smartFoodData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: PreviewMenu[] } = {
   restaurant: {
     id: 'preview-smartfood',
@@ -1297,10 +1485,16 @@ const smartFoodData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: 
       showLogo: true,
       showRestaurantName: true,
       showRestaurantDescription: true,
+      showTranslationFlags: false,
     },
   },
-  menu: smartFoodMenuAlmuerzo,
-  menus: [smartFoodMenuAlmuerzo, smartFoodMenuMerienda],
+  menu: smartFoodMenuAlmuerzoEs,
+  menus: [
+    smartFoodMenuAlmuerzoEs,
+    smartFoodMenuMeriendaEs,
+    smartFoodMenuAlmuerzoEn,
+    smartFoodMenuMeriendaEn,
+  ],
 };
 
 const BEACH_DEMO_PHOTO = (file: string) => `/templates/beachbar/products/${file}`;
