@@ -267,12 +267,12 @@ export const FUNCIONES_SECTIONS: FuncionesSection[] = [
       ES: 'Gestionar productos de la carta',
     },
     metaTitle: {
-      AR: 'Desactivar y destacar productos | App Menu QR',
-      ES: 'Desactivar y destacar productos | App Menu QR',
+      AR: 'Gestionar productos del menú digital | Activa y destaca platos',
+      ES: 'Gestionar productos del menú digital | Activa y destaca platos',
     },
     metaDescription: {
-      AR: 'Ocultá platos sin stock y resaltá novedades o platos estrella en tu menú digital sin rearmar la carta.',
-      ES: 'Oculta platos sin stock y resalta novedades o platos estrella en tu carta digital sin rearmar la carta.',
+      AR: 'Activa, desactiva y destaca productos de tu menú digital. Controla la disponibilidad de platos y actualiza la carta sin cambiar el código QR.',
+      ES: 'Activa, desactiva y destaca productos de tu menú digital. Controla la disponibilidad de platos y actualiza la carta sin cambiar el código QR.',
     },
     lead: {
       AR: 'Cuando un plato se agota, desactivalo; cuando querés empujar un plato estrella, destacalo. La carta QR se actualiza al instante y no perdés precios ni descripciones.',

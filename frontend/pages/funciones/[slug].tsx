@@ -1,5 +1,6 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import FuncionesFeaturePage from '../../components/funciones/FuncionesFeaturePage';
+import GestionarProductosLanding from '../../components/funciones/GestionarProductosLanding';
 import ImprimirMenuLanding from '../../components/funciones/ImprimirMenuLanding';
 import MenuConAlergenosLanding from '../../components/funciones/MenuConAlergenosLanding';
 import MenuMultidiomaLanding from '../../components/funciones/MenuMultidiomaLanding';
@@ -31,6 +32,9 @@ export default function FuncionesSlugPage({ section }: Props) {
   }
   if (section.slug === 'imprimir-menu') {
     return <ImprimirMenuLanding />;
+  }
+  if (section.slug === 'gestionar-productos-menu') {
+    return <GestionarProductosLanding />;
   }
   return <FuncionesFeaturePage section={section} />;
 }
