@@ -1,6 +1,6 @@
 {
   "name": "menuqr-frontend",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Frontend para AppMenuQR - SaaS de menús de restaurantes",
   "private": true,
   "scripts": {

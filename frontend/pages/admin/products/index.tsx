@@ -21,6 +21,8 @@ import {
 const SECTION_DEST_NEW = '__new_section__';
 
 type ProductTableColumnKey =
+  | 'position'
+  | 'photo'
   | 'tenant'
   | 'restaurant'
   | 'template'
@@ -31,6 +33,8 @@ type ProductTableColumnKey =
   | 'status';
 
 const DEFAULT_VISIBLE_COLUMNS: Record<ProductTableColumnKey, boolean> = {
+  position: true,
+  photo: true,
   tenant: true,
   restaurant: true,
   template: true,
@@ -158,6 +162,8 @@ export default function Products() {
   const productColumnDefs = useMemo(
     () =>
       [
+        { key: 'position' as const, label: 'Posición' },
+        { key: 'photo' as const, label: 'Foto' },
         ...(isSuperAdmin ? [{ key: 'tenant' as const, label: 'Tenant' }] : []),
         { key: 'restaurant' as const, label: 'Restaurante' },
         ...(isSuperAdmin ? [{ key: 'template' as const, label: 'Plantilla' }] : []),
@@ -171,6 +177,15 @@ export default function Products() {
   );
 
   const showProductColumn = (key: ProductTableColumnKey) => visibleColumns[key] !== false;
+
+  const getProductPhotoUrl = (product: any): string | null => {
+    const photos = product?.photos;
+    if (!Array.isArray(photos) || photos.length === 0) return null;
+    const first = photos[0];
+    if (typeof first === 'string' && first.trim()) return first;
+    const url = first?.url;
+    return typeof url === 'string' && url.trim() ? url : null;
+  };
 
   const resetVisibleColumns = () => setVisibleColumns({ ...DEFAULT_VISIBLE_COLUMNS });
 
@@ -584,26 +599,23 @@ export default function Products() {
     e.preventDefault();
   };
 
-  const handleProductDrop = async (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    if (draggedProductIndex === null || draggedProductIndex === dropIndex) {
-      setDraggedProductIndex(null);
-      return;
-    }
-    const dragged = products[draggedProductIndex];
-    const dropTarget = products[dropIndex];
-    if (getSectionKey(dragged) !== getSectionKey(dropTarget)) {
-      setDraggedProductIndex(null);
-      return;
-    }
+  const handleProductDragEnd = () => {
+    setDraggedProductIndex(null);
+  };
+
+  const reorderProductWithinSection = async (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+    const dragged = products[fromIndex];
+    const dropTarget = products[toIndex];
+    if (!dragged || !dropTarget) return;
+    if (getSectionKey(dragged) !== getSectionKey(dropTarget)) return;
+
     const sectionKey = getSectionKey(dragged);
     const sectionProducts = products.filter((p) => getSectionKey(p) === sectionKey);
     const fromPos = sectionProducts.findIndex((p) => p.id === dragged.id);
     const toPos = sectionProducts.findIndex((p) => p.id === dropTarget.id);
-    if (fromPos < 0 || toPos < 0) {
-      setDraggedProductIndex(null);
-      return;
-    }
+    if (fromPos < 0 || toPos < 0 || fromPos === toPos) return;
+
     const reordered = [...sectionProducts];
     reordered.splice(fromPos, 1);
     reordered.splice(toPos, 0, dragged);
@@ -612,11 +624,23 @@ export default function Products() {
     if (isSuperAdmin && (dragged.tenantId || dragged.tenant_id)) {
       body.tenantId = dragged.tenantId || dragged.tenant_id;
     }
+
+    const sectionIds = new Set(reordered.map((p) => p.id));
+    let ri = 0;
+    const previousProducts = products;
+    setProducts(
+      products.map((p) => {
+        if (!sectionIds.has(p.id)) return p;
+        const next = reordered[ri++];
+        return next ? { ...next, sort: ri - 1 } : p;
+      }),
+    );
     setDraggedProductIndex(null);
+
     try {
       await api.post('/menu-items/reorder', body);
-      loadData();
     } catch (err: any) {
+      setProducts(previousProducts);
       setAlertData({
         title: 'Error',
         message: err.response?.data?.message || 'Error al cambiar el orden',
@@ -624,6 +648,46 @@ export default function Products() {
       });
       setShowAlert(true);
     }
+  };
+
+  const handleProductDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedProductIndex === null) return;
+    const fromIndex = draggedProductIndex;
+    setDraggedProductIndex(null);
+    await reorderProductWithinSection(fromIndex, dropIndex);
+  };
+
+  const moveProductByOffset = async (index: number, offset: -1 | 1) => {
+    const product = products[index];
+    if (!product) return;
+    const sectionKey = getSectionKey(product);
+    const sectionProducts = products.filter((p) => getSectionKey(p) === sectionKey);
+    const fromPos = sectionProducts.findIndex((p) => p.id === product.id);
+    const toPos = fromPos + offset;
+    if (fromPos < 0 || toPos < 0 || toPos >= sectionProducts.length) return;
+    const dropIndex = products.findIndex((p) => p.id === sectionProducts[toPos].id);
+    await reorderProductWithinSection(index, dropIndex);
+  };
+
+  const canMoveProduct = (index: number, offset: -1 | 1) => {
+    const product = products[index];
+    if (!product) return false;
+    const sectionKey = getSectionKey(product);
+    const sectionProducts = products.filter((p) => getSectionKey(p) === sectionKey);
+    const fromPos = sectionProducts.findIndex((p) => p.id === product.id);
+    const toPos = fromPos + offset;
+    return fromPos >= 0 && toPos >= 0 && toPos < sectionProducts.length;
+  };
+
+  const getProductPositionInSection = (product: any) => {
+    const sectionKey = getSectionKey(product);
+    const sectionProducts = products.filter((p) => getSectionKey(p) === sectionKey);
+    const position = sectionProducts.findIndex((p) => p.id === product.id) + 1;
+    return {
+      position: position > 0 ? position : typeof product.sort === 'number' ? product.sort + 1 : 0,
+      total: sectionProducts.length,
+    };
   };
 
   useEffect(() => {
@@ -1712,6 +1776,14 @@ export default function Products() {
               <tr>
                 <th style={{ width: '40px' }} className="text-center" aria-label="Seleccionar" />
                 <th style={{ width: '44px' }} aria-label="Arrastrar para ordenar" />
+                {showProductColumn('position') && (
+                  <th style={{ width: '72px' }} className="text-center">Pos.</th>
+                )}
+                {showProductColumn('photo') && (
+                  <th style={{ width: '64px' }} className="text-center admin-products-col-photo">
+                    Foto
+                  </th>
+                )}
                 <th>Nombre</th>
                 {isSuperAdmin && showProductColumn('tenant') && <th>Tenant</th>}
                 {showProductColumn('restaurant') && <th>Restaurante</th>}
@@ -1725,11 +1797,15 @@ export default function Products() {
               </tr>
             </thead>
             <tbody>
-              {products.map((product, index) => (
+              {products.map((product, index) => {
+                const { position, total } = getProductPositionInSection(product);
+                const photoUrl = getProductPhotoUrl(product);
+                return (
                 <tr
                   key={product.id}
                   onDragOver={(e) => handleProductDragOver(e, index)}
                   onDrop={(e) => handleProductDrop(e, index)}
+                  onDragEnd={handleProductDragEnd}
                   style={{
                     opacity: draggedProductIndex === index ? 0.5 : 1,
                     transition: 'opacity 0.2s ease',
@@ -1747,6 +1823,7 @@ export default function Products() {
                   <td
                     draggable
                     onDragStart={() => handleProductDragStart(index)}
+                    onDragEnd={handleProductDragEnd}
                     style={{
                       cursor: 'grab',
                       fontSize: '18px',
@@ -1758,6 +1835,33 @@ export default function Products() {
                   >
                     ☰
                   </td>
+                  {showProductColumn('position') && (
+                  <td className="text-center align-middle">
+                    <span
+                      className="admin-products-position-badge"
+                      title={`Posición ${position} de ${total} en la sección`}
+                    >
+                      {position}
+                      {total > 0 ? <span className="admin-products-position-total">/{total}</span> : null}
+                    </span>
+                  </td>
+                  )}
+                  {showProductColumn('photo') && (
+                  <td className="text-center align-middle admin-products-col-photo">
+                    {photoUrl ? (
+                      <img
+                        src={photoUrl}
+                        alt=""
+                        className="admin-products-photo-thumb"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="admin-products-photo-empty" title="Sin foto">
+                        —
+                      </span>
+                    )}
+                  </td>
+                  )}
                   <td className="admin-products-cell-name">{product.name}</td>
                   {isSuperAdmin && showProductColumn('tenant') && (
                     <td>
@@ -1864,7 +1968,8 @@ export default function Products() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1882,12 +1987,11 @@ export default function Products() {
             const sectionLabel =
               product.sectionName ||
               (product.sectionId || product.section_id ? getSectionName(product.sectionId || product.section_id) : null);
+            const { position, total } = getProductPositionInSection(product);
             return (
               <div
                 key={product.id}
                 className="admin-products-mobile-card admin-card"
-                onDragOver={(e) => handleProductDragOver(e, index)}
-                onDrop={(e) => handleProductDrop(e, index)}
                 style={{
                   opacity: draggedProductIndex === index ? 0.5 : 1,
                   transition: 'opacity 0.2s ease',
@@ -1902,14 +2006,33 @@ export default function Products() {
                     onChange={() => toggleProductSelected(product.id)}
                     aria-label={`Seleccionar ${product.name}`}
                   />
+                  <div className="admin-products-mobile-reorder" role="group" aria-label="Cambiar orden">
+                    <button
+                      type="button"
+                      className="admin-products-mobile-move"
+                      onClick={() => moveProductByOffset(index, -1)}
+                      disabled={!canMoveProduct(index, -1)}
+                      aria-label={`Subir ${product.name}`}
+                      title="Subir"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-products-mobile-move"
+                      onClick={() => moveProductByOffset(index, 1)}
+                      disabled={!canMoveProduct(index, 1)}
+                      aria-label={`Bajar ${product.name}`}
+                      title="Bajar"
+                    >
+                      ▼
+                    </button>
+                  </div>
                   <span
-                    className="admin-products-mobile-drag"
-                    draggable
-                    onDragStart={() => handleProductDragStart(index)}
-                    style={{ cursor: 'grab' }}
-                    aria-hidden
+                    className="admin-products-mobile-order"
+                    title={`Posición ${position} de ${total} en la sección`}
                   >
-                    ☰
+                    {position}
                   </span>
                   <div className="admin-products-mobile-head-text">
                     <span className="admin-products-mobile-name">{product.name}</span>
@@ -1943,6 +2066,14 @@ export default function Products() {
                 <p className="admin-products-mobile-meta">
                   <span className="admin-products-mobile-meta-label">Sección:</span>{' '}
                   {sectionLabel ? <strong>{sectionLabel}</strong> : <span className="text-muted">—</span>}
+                </p>
+                <p className="admin-products-mobile-meta">
+                  <span className="admin-products-mobile-meta-label">Posición:</span>{' '}
+                  <strong>
+                    {position}
+                    {total > 0 ? ` de ${total}` : ''}
+                  </strong>
+                  <span className="text-muted"> en la sección</span>
                 </p>
                 <div className="admin-products-mobile-prices">
                   <span className="admin-products-mobile-meta-label">Precios:</span>{' '}

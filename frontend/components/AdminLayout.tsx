@@ -8,12 +8,15 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
+const SIDEBAR_COLLAPSED_KEY = 'admin-sidebar-collapsed';
+
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const currentPath = router.pathname;
   const isHelpSection = currentPath.startsWith('/admin/help');
@@ -44,6 +47,26 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
     setLoading(false);
   }, [router]);
+
+  useEffect(() => {
+    try {
+      setSidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!user || user.role !== 'ADMIN') return;
@@ -145,10 +168,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           />
         )}
 
-        <div className="admin-layout">
+        <div className={`admin-layout${sidebarCollapsed ? ' admin-layout--sidebar-collapsed' : ''}`}>
+          <div className="admin-sidebar-slot">
           <nav
             id="admin-sidebar-nav"
             className={`admin-sidebar ${mobileNavOpen ? 'admin-sidebar--open' : ''}`}
+            aria-hidden={sidebarCollapsed && !mobileNavOpen ? true : undefined}
           >
             <div className="d-flex flex-column h-100">
               <div className="admin-sidebar-mobile-bar d-md-none">
@@ -535,6 +560,21 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </div>
             </div>
           </nav>
+          </div>
+
+          <button
+            type="button"
+            className="admin-sidebar-rail-toggle"
+            onClick={toggleSidebarCollapsed}
+            aria-expanded={!sidebarCollapsed}
+            aria-controls="admin-sidebar-nav"
+            aria-label={sidebarCollapsed ? 'Mostrar menú lateral' : 'Ocultar menú lateral'}
+            title={sidebarCollapsed ? 'Mostrar menú' : 'Ocultar menú'}
+          >
+            <svg className="admin-sidebar-rail-toggle-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+              <path d="M7.5 2.5L4 6l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
 
           <main className="admin-main">{children}</main>
         </div>

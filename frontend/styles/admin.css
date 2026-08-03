@@ -77,28 +77,110 @@ body {
 @media (min-width: 768px) {
   .admin-layout {
     min-height: 100vh;
+    --admin-sidebar-w: 240px;
+  }
+
+  .admin-sidebar-slot {
+    flex: 0 0 var(--admin-sidebar-w);
+    max-width: var(--admin-sidebar-w);
+    width: var(--admin-sidebar-w);
+    min-width: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow: hidden;
+    transition: flex-basis 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+      max-width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+      width 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .admin-sidebar {
-    position: sticky;
-    top: 0;
-    flex: 0 0 25%;
-    max-width: 25%;
-    width: auto;
+    position: relative;
+    top: auto;
+    flex: none;
+    max-width: none;
+    width: var(--admin-sidebar-w);
+    min-width: var(--admin-sidebar-w);
     height: 100vh;
     transform: none !important;
+    border-right: 1px solid var(--admin-border);
   }
 
   .admin-main {
     flex: 1;
     min-width: 0;
   }
+
+  .admin-sidebar-rail-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    top: 88px;
+    align-self: flex-start;
+    z-index: 6;
+    width: 20px;
+    height: 44px;
+    margin-left: -10px;
+    margin-right: -10px;
+    padding: 0;
+    border: 1px solid var(--admin-border);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--admin-text-muted);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .admin-sidebar-rail-toggle:hover {
+    background: #fff;
+    color: var(--admin-primary);
+    border-color: color-mix(in srgb, var(--admin-primary) 35%, var(--admin-border));
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.18);
+  }
+
+  .admin-sidebar-rail-toggle:focus-visible {
+    outline: 2px solid var(--admin-primary);
+    outline-offset: 2px;
+  }
+
+  .admin-sidebar-rail-toggle-icon {
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+  }
+
+  .admin-layout--sidebar-collapsed .admin-sidebar-slot {
+    flex-basis: 0;
+    max-width: 0;
+    width: 0;
+    pointer-events: none;
+  }
+
+  .admin-layout--sidebar-collapsed .admin-sidebar-rail-toggle {
+    margin-left: 10px;
+    margin-right: 0;
+  }
+
+  .admin-layout--sidebar-collapsed .admin-sidebar-rail-toggle-icon {
+    transform: scaleX(-1);
+  }
 }
 
 @media (min-width: 992px) {
-  .admin-sidebar {
-    flex: 0 0 16.666667%;
-    max-width: 16.666667%;
+  .admin-layout {
+    --admin-sidebar-w: 260px;
+  }
+}
+
+/* Móvil: el colapso de escritorio no aplica */
+@media (max-width: 767.98px) {
+  .admin-sidebar-slot {
+    display: contents;
+  }
+
+  .admin-sidebar-rail-toggle {
+    display: none !important;
   }
 }
 
@@ -3809,11 +3891,44 @@ body {
   max-width: 100%;
   border: 1px solid var(--admin-border, #e2e8f0);
   background: var(--admin-bg-card, #fff);
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .table-admin-products {
   margin-bottom: 0;
   font-size: 0.875rem;
+}
+
+.table-admin-products thead th {
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.table-admin-products tbody td {
+  border-bottom: 1px solid rgba(226, 232, 240, 0.65);
+}
+
+.table-admin-products tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table-admin-products th.admin-products-col-actions,
+.table-admin-products td.admin-products-col-actions {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: #fff;
+  box-shadow: -8px 0 12px -8px rgba(15, 23, 42, 0.18);
+  border-left: 1px solid var(--admin-border, #e2e8f0);
+}
+
+.table-admin-products thead th.admin-products-col-actions {
+  z-index: 3;
+  background: #fff;
+}
+
+.table-admin-products tbody tr:hover td.admin-products-col-actions {
+  background: #fafbff;
 }
 
 @media (min-width: 992px) {
@@ -3869,8 +3984,8 @@ body {
   }
 
   .admin-products-col-actions {
-    min-width: 6.5rem;
-    width: 6.5rem;
+    min-width: 7rem;
+    width: 7rem;
   }
 
   .admin-products-actions {
@@ -3903,8 +4018,8 @@ body {
   }
 
   .admin-products-col-actions {
-    min-width: 7.5rem;
-    width: 7.5rem;
+    min-width: 8rem;
+    width: 8rem;
   }
 
   .admin-products-actions .btn {
@@ -3938,6 +4053,100 @@ body {
   flex-shrink: 0;
   line-height: 1;
   padding-top: 2px;
+}
+
+.admin-products-mobile-reorder {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.admin-products-mobile-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.admin-products-position-badge {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1px;
+  min-width: 2.25rem;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--admin-primary-dark, #4f46e5);
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.admin-products-position-total {
+  font-weight: 500;
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.admin-products-col-photo {
+  width: 64px;
+}
+
+.admin-products-photo-thumb {
+  display: block;
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  background: #f1f5f9;
+  margin: 0 auto;
+}
+
+.admin-products-photo-empty {
+  display: inline-block;
+  color: var(--admin-text-muted, #64748b);
+  font-size: 0.875rem;
+}
+
+.admin-products-mobile-move {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--admin-text-secondary);
+  font-size: 0.65rem;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-products-mobile-move:hover:not(:disabled),
+.admin-products-mobile-move:active:not(:disabled) {
+  color: var(--admin-primary);
+  border-color: color-mix(in srgb, var(--admin-primary) 40%, var(--admin-border));
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.admin-products-mobile-move:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .admin-products-mobile-head-text {
