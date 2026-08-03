@@ -89,6 +89,16 @@ const FOODIE_PREVIEW_LOCALE_TO_MENU_SLUG: Record<string, string> = {
 const BEACH_BAR_PREVIEW_LOCALE_TO_MENU_SLUG: Record<string, string> = {
   'es-ES': 'carta',
   'en-US': 'menu',
+  'it-IT': 'menu-it',
+};
+
+const BEACH_BAR_PREVIEW_DESCRIPTIONS: Record<string, string> = {
+  'es-ES':
+    '**Sabores, sol y buena vida** frente al mar.\nDesayunos frescos, tragos de autor y snacks para compartir con los pies en la arena.',
+  'en-US':
+    '**Flavors, sun and good vibes** by the sea.\nFresh breakfasts, signature drinks and snacks to share with your feet in the sand.',
+  'it-IT':
+    '**Sapori, sole e bella vita** davanti al mare.\nColazioni fresche, cocktail d\'autore e stuzzichini da condividere con i piedi nella sabbia.',
 };
 
 /** Vista previa Modern Food: locale + tipo de menú */
@@ -355,10 +365,11 @@ export default function PreviewPage() {
 
   const beachBarMenuLocales = isLocaleMenuPreview
     ? {
-        locales: ['es-ES', 'en-US'],
+        locales: ['es-ES', 'en-US', 'it-IT'],
         manifest: [
           { locale: 'es-ES', label: 'Español', flagCode: 'es' },
           { locale: 'en-US', label: 'English', flagCode: 'gb' },
+          { locale: 'it-IT', label: 'Italiano', flagCode: 'it' },
         ],
         value: contentLocale,
         onChange: setContentLocale,
@@ -395,7 +406,15 @@ export default function PreviewPage() {
   };
 
   const restaurantForTemplate = useMemo(() => {
-    if (!isSolNochePreview) return restaurant;
+    const localizedDescription =
+      isLocaleMenuPreview && BEACH_BAR_PREVIEW_DESCRIPTIONS[contentLocale]
+        ? BEACH_BAR_PREVIEW_DESCRIPTIONS[contentLocale]
+        : undefined;
+
+    if (!isSolNochePreview) {
+      if (!localizedDescription) return restaurant;
+      return { ...restaurant, description: localizedDescription };
+    }
     const tc = draftTemplateConfig;
     const colorMode = tc.colorMode === 'dark' ? 'dark' : 'light';
     const primaryColor =
@@ -404,11 +423,19 @@ export default function PreviewPage() {
       typeof tc.secondaryColor === 'string' ? tc.secondaryColor : draftRestaurant.secondaryColor || '#1e3a5f';
     return {
       ...draftRestaurant,
+      ...(localizedDescription ? { description: localizedDescription } : {}),
       primaryColor,
       secondaryColor,
       templateConfig: { ...tc, colorMode, autoDayNightSwitch: false },
     };
-  }, [isSolNochePreview, restaurant, draftRestaurant, draftTemplateConfig]);
+  }, [
+    isSolNochePreview,
+    isLocaleMenuPreview,
+    contentLocale,
+    restaurant,
+    draftRestaurant,
+    draftTemplateConfig,
+  ]);
 
   const solNocheEditSchema = TEMPLATE_CONFIG_SCHEMAS.solNoche ?? [];
 

@@ -1628,6 +1628,58 @@ const beachBarMenuEn: PreviewMenu = {
   ],
 };
 
+const beachBarMenuIt: PreviewMenu = {
+  ...beachBarMenuEs,
+  id: 'preview-beachbar-menu-it',
+  slug: 'menu-it',
+  name: 'Menù',
+  sections: [
+    {
+      id: 'bb-desayunos',
+      name: 'Colazioni',
+      items: [
+        { id: 'bb-d1', name: 'Toast all\'avocado', description: 'Pane a lievitazione naturale, avocado, semi e limone.', prices: [{ currency: 'ARS', amount: 8900 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.tostadaPalta] },
+        { id: 'bb-d2', name: 'Bowl tropicale', description: 'Yogurt, granola, mango, frutto della passione e cocco.', prices: [{ currency: 'ARS', amount: 9500 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.bowlTropical] },
+        { id: 'bb-d3', name: 'Uova benedict', description: 'English muffin, uova in camicia e salsa olandese.', prices: [{ currency: 'ARS', amount: 11200 }], icons: [], photos: [BEACH_PHOTOS.huevosBenedictinos] },
+        { id: 'bb-d4', name: 'Smoothie verde', description: 'Spinaci, ananas, banana e zenzero.', prices: [{ currency: 'ARS', amount: 7200 }], icons: ['vegano'], photos: [BEACH_PHOTOS.smoothieVerde] },
+      ],
+    },
+    {
+      id: 'bb-tragos',
+      name: 'Cocktail',
+      items: [
+        { id: 'bb-t1', name: 'Mojito al frutto della passione', description: 'Rum bianco, menta fresca e frutta di stagione.', prices: [{ currency: 'ARS', amount: 7800 }], icons: [], photos: [BEACH_PHOTOS.mojitoMaracuya] },
+        { id: 'bb-t2', name: 'Gin tonic costiero', description: 'Gin premium, tonica, cetriolo e rosmarino.', prices: [{ currency: 'ARS', amount: 8200 }], icons: [], photos: [BEACH_PHOTOS.ginTonic] },
+        { id: 'bb-t3', name: 'Caipirinha classica', description: 'Cachaça, lime e zucchero muscovado.', prices: [{ currency: 'ARS', amount: 7500 }], icons: [], photos: [BEACH_PHOTOS.caipirinha] },
+        { id: 'bb-t4', name: 'Spritz al pompelmo', description: 'Aperol, spumante e pompelmo rosa.', prices: [{ currency: 'ARS', amount: 7900 }], icons: [], photos: [BEACH_PHOTOS.spritzPomelo] },
+      ],
+    },
+    {
+      id: 'bb-snacks',
+      name: 'Stuzzichini',
+      items: [
+        { id: 'bb-s1', name: 'Nachos del sole', description: 'Tortilla chips, cheddar, guacamole e pico de gallo.', prices: [{ currency: 'ARS', amount: 9800 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.nachosDelSol] },
+        { id: 'bb-s2', name: 'Bastoncini di pesce', description: 'Nasello croccante con salsa tartara.', prices: [{ currency: 'ARS', amount: 10500 }], icons: [], photos: [BEACH_PHOTOS.bastonesPescado] },
+        { id: 'bb-s3', name: 'Empanadas di gamberi', description: 'Gamberi saltati e coriandolo (x4).', prices: [{ currency: 'ARS', amount: 9200 }], icons: [], photos: [BEACH_PHOTOS.empanaditasCamaron] },
+        { id: 'bb-s4', name: 'Patate con cheddar', description: 'Patate rustiche, cheddar fuso e cipollotto.', prices: [{ currency: 'ARS', amount: 8600 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.papasCheddar] },
+        { id: 'bb-s5', name: 'Tagliere di formaggi e salumi', description: 'Selezione da condividere con olive e pane.', prices: [{ currency: 'ARS', amount: 12800 }], icons: [], photos: [BEACH_PHOTOS.tablaQuesosFiambres] },
+        { id: 'bb-s6', name: 'Crocchette di prosciutto', description: 'Cremose, dorate e con dip di senape (x6).', prices: [{ currency: 'ARS', amount: 8400 }], icons: [], photos: [BEACH_PHOTOS.croquetasJamon] },
+        { id: 'bb-s7', name: 'Toast di hummus', description: 'Pane di campagna, hummus, pomodorini e olio d\'oliva.', prices: [{ currency: 'ARS', amount: 7900 }], icons: ['vegano', 'vegetariano'], photos: [BEACH_PHOTOS.tostonHummus] },
+      ],
+    },
+    {
+      id: 'bb-postres',
+      name: 'Dolci',
+      items: [
+        { id: 'bb-p1', name: 'Cheesecake ai frutti di bosco', description: 'Base croccante e coulis di frutti di bosco.', prices: [{ currency: 'ARS', amount: 7400 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.cheesecakeFrutosRojos] },
+        { id: 'bb-p2', name: 'Brownie con gelato', description: 'Brownie tiepido e gelato alla vaniglia.', prices: [{ currency: 'ARS', amount: 7100 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.brownieConHelado] },
+        { id: 'bb-p3', name: 'Ghiaccioli artigianali', description: 'Frutto della passione, cocco o fragola (chiedere).', prices: [{ currency: 'ARS', amount: 4200 }], icons: ['vegetariano'], photos: [BEACH_PHOTOS.paletasArtesanales] },
+        { id: 'bb-p4', name: 'Macedonia di frutta', description: 'Frutta di stagione e menta fresca.', prices: [{ currency: 'ARS', amount: 5800 }], icons: ['vegano', 'vegetariano'], photos: [BEACH_PHOTOS.ensaladaFrutas] },
+      ],
+    },
+  ],
+};
+
 const beachBarData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: PreviewMenu[] } = {
   restaurant: {
     id: 'preview-beachbar',
@@ -1654,7 +1706,7 @@ const beachBarData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: P
     },
   },
   menu: beachBarMenuEs,
-  menus: [beachBarMenuEs, beachBarMenuEn],
+  menus: [beachBarMenuEs, beachBarMenuEn, beachBarMenuIt],
 };
 
 function withHighlightedItems(menu: PreviewMenu, highlightedIds: readonly string[]): PreviewMenu {
@@ -1699,6 +1751,7 @@ const SOL_NOCHE_NIGHT_LOGO = '/templates/solnoche/images/logo-dark.png';
 const SOL_NOCHE_HIGHLIGHTED_IDS = ['bb-d2', 'bb-t1', 'bb-t2', 'bb-s1', 'bb-p1'] as const;
 const solNocheMenuEs = withHighlightedItems(beachBarMenuEs, SOL_NOCHE_HIGHLIGHTED_IDS);
 const solNocheMenuEn = withHighlightedItems(beachBarMenuEn, SOL_NOCHE_HIGHLIGHTED_IDS);
+const solNocheMenuIt = withHighlightedItems(beachBarMenuIt, SOL_NOCHE_HIGHLIGHTED_IDS);
 
 const solNocheData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: PreviewMenu[] } = {
   restaurant: {
@@ -1737,7 +1790,7 @@ const solNocheData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: P
     },
   },
   menu: solNocheMenuEs,
-  menus: [solNocheMenuEs, solNocheMenuEn],
+  menus: [solNocheMenuEs, solNocheMenuEn, solNocheMenuIt],
 };
 
 const proMobileData: { restaurant: PreviewRestaurant; menu: PreviewMenu; menus: PreviewMenu[] } = {

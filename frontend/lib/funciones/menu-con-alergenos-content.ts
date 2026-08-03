@@ -12,7 +12,7 @@ export const MENU_CON_ALERGENOS_MEDIA = {
   compareVisual: null as string | null,
   addAllergensPanel: '/funciones/menu-con-alergenos/panel-iconos-alergenos.avif',
   phoneConsult: '/funciones/menu-con-alergenos/menu-movil-filtros.avif',
-  benefitsVisual: '/funciones/menu-con-alergenos/beneficios-menu-movil.avif',
+  benefitsVisual: '/funciones/menu-con-alergenos/menu-movil-filtros.avif',
   ctaFinal: '/funciones/menu-con-alergenos/cta-final.avif',
 } as const;
 
@@ -159,8 +159,8 @@ export const MENU_CON_ALERGENOS_STEPS = [
     title: 'Consulta el resultado en el menú',
     body: 'Escanea el mismo código QR y verifica cómo se muestran los alérgenos junto al producto.',
     mediaHint: 'Vista del menú en el teléfono',
-    image: '/funciones/menu-con-alergenos/menu-movil-filtros.avif',
-    imageAlt: 'Menú digital en el móvil con filtros alimentarios Sin Gluten, Vegano y etiquetas en productos',
+    image: '/funciones/menu-con-alergenos/beneficios-menu-movil.avif',
+    imageAlt: 'Menú digital en el móvil con filtros alimentarios y etiquetas Vegano y Sin Lactosa',
   },
 ] as const;
 

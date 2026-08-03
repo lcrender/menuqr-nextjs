@@ -388,7 +388,9 @@ export default function MenuConAlergenosLanding() {
                     <h3 className="fx-h3">{step.title}</h3>
                     <p>{step.body}</p>
                     <FxMediaSlot
-                      className="fx-media--contain fx-media--bare"
+                      className={`fx-media--contain fx-media--bare${
+                        step.title === 'Consulta el resultado en el menú' ? ' fx-media--compact' : ''
+                      }`}
                       label={step.mediaHint}
                       aspect="auto"
                       src={step.image}
@@ -445,11 +447,11 @@ export default function MenuConAlergenosLanding() {
               </div>
               <div className="fx-benefits-media">
                 <FxMediaSlot
-                  className="fx-media--photo fx-benefits-shot"
+                  className="fx-media--photo fx-media--bare fx-benefits-shot"
                   label="Vista del menú digital en el teléfono"
                   aspect="auto"
                   src={MENU_CON_ALERGENOS_MEDIA.benefitsVisual}
-                  alt="Menú digital en el móvil con filtros alimentarios y etiquetas Vegano y Sin Lactosa"
+                  alt="Menú digital en el móvil con filtros alimentarios Sin Gluten, Vegano y etiquetas en productos"
                 />
               </div>
             </div>

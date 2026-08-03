@@ -450,13 +450,30 @@
   cursor: zoom-in;
 }
 
-@media (min-width: 992px) {
+@media (min-width: 768px) {
   .fx-phone-shot {
     max-width: 480px;
   }
 }
 
 .fx-phone-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.fx-panel-shot {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.fx-panel-shot img {
   display: block;
   width: 100%;
   height: auto;
@@ -602,6 +619,18 @@
   box-shadow: var(--fx-shadow);
 }
 
+.fx-callout--highlight {
+  background: linear-gradient(135deg, rgba(85, 83, 226, 0.1), rgba(85, 83, 226, 0.04));
+  border: 1px solid rgba(85, 83, 226, 0.45);
+  border-left: 4px solid var(--fx-primary);
+  box-shadow: 0 8px 24px rgba(85, 83, 226, 0.12);
+  font-weight: 550;
+}
+
+.fx-callout--highlight p {
+  color: var(--fx-ink, #1e1b4b);
+}
+
 .fx-text-link {
   font-weight: 650;
   text-decoration: none;
@@ -640,7 +669,42 @@
   background: transparent;
   max-width: 420px;
   margin: 0 auto;
-  padding-top: 1.5rem;
+  padding: 0;
+  box-shadow: none;
+}
+
+.fx-benefits-shot.fx-media--photo {
+  background: transparent;
+}
+
+.fx-phone-media {
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+  background: transparent;
+}
+
+@media (min-width: 768px) {
+  .fx-phone-media {
+    max-width: 320px;
+  }
+}
+
+.fx-phone-media.fx-media--photo {
+  background: transparent;
+}
+
+.fx-media--compact {
+  max-width: 200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.fx-media--compact .fx-media-img {
+  max-height: 280px;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 .fx-chips {

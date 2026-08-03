@@ -1,6 +1,7 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import FuncionesFeaturePage from '../../components/funciones/FuncionesFeaturePage';
 import MenuConAlergenosLanding from '../../components/funciones/MenuConAlergenosLanding';
+import MenuMultidiomaLanding from '../../components/funciones/MenuMultidiomaLanding';
 import MenuQrDinamicoLanding from '../../components/funciones/MenuQrDinamicoLanding';
 import {
   FUNCIONES_SLUGS,
@@ -19,6 +20,9 @@ export default function FuncionesSlugPage({ section }: Props) {
   }
   if (section.slug === 'menu-con-alergenos') {
     return <MenuConAlergenosLanding />;
+  }
+  if (section.slug === 'menu-multidioma') {
+    return <MenuMultidiomaLanding />;
   }
   return <FuncionesFeaturePage section={section} />;
 }
