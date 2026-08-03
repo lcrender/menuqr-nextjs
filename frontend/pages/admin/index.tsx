@@ -652,7 +652,7 @@ export default function Admin() {
       {user?.role === 'ADMIN' && stats && (
         <>
           {(!showEmptyTenantWizard || promoAppliedMessage) && (
-            <div className="admin-card mb-4">
+            <div className="admin-card dashboard-welcome-card mb-4">
               {dashboardWelcomeHtml ? (
                 <div
                   className="admin-card-title dashboard-welcome-html mb-0"
@@ -896,6 +896,13 @@ export default function Admin() {
                               >
                                 Ver restaurante
                               </a>
+                              <Link
+                                href={`/admin/restaurants/${card.restaurantId}/print-menu`}
+                                className="admin-btn"
+                                style={{ textDecoration: 'none' }}
+                              >
+                                Imprimir carta
+                              </Link>
                             </>
                           )}
                           {!card.restaurantSlug && (

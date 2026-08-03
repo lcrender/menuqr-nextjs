@@ -517,28 +517,6 @@ export default function PrintMenuPage() {
                 </label>
               </div>
 
-              <div className="print-menu-options-group">
-                <h3>Secciones</h3>
-                <label className="print-menu-check">
-                  <input
-                    type="radio"
-                    name="sectionLayout"
-                    checked={sectionLayout === 'stacked'}
-                    onChange={() => setSectionLayout('stacked')}
-                  />
-                  <span>Una debajo de la otra</span>
-                </label>
-                <label className="print-menu-check">
-                  <input
-                    type="radio"
-                    name="sectionLayout"
-                    checked={sectionLayout === 'per-page'}
-                    onChange={() => setSectionLayout('per-page')}
-                  />
-                  <span>Una sección por página</span>
-                </label>
-              </div>
-
               {locales.length > 1 ? (
                 <div className="print-menu-options-group">
                   <h3>Idioma de la carta</h3>
@@ -585,6 +563,28 @@ export default function PrintMenuPage() {
                     </label>
                   ))
                 )}
+              </div>
+
+              <div className="print-menu-options-group">
+                <h3>Secciones</h3>
+                <label className="print-menu-check">
+                  <input
+                    type="radio"
+                    name="sectionLayout"
+                    checked={sectionLayout === 'stacked'}
+                    onChange={() => setSectionLayout('stacked')}
+                  />
+                  <span>Una debajo de la otra</span>
+                </label>
+                <label className="print-menu-check">
+                  <input
+                    type="radio"
+                    name="sectionLayout"
+                    checked={sectionLayout === 'per-page'}
+                    onChange={() => setSectionLayout('per-page')}
+                  />
+                  <span>Una sección por página</span>
+                </label>
               </div>
 
               <button
