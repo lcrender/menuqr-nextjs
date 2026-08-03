@@ -226,12 +226,12 @@ export const FUNCIONES_SECTIONS: FuncionesSection[] = [
       ES: 'Imprimir mi carta',
     },
     metaTitle: {
-      AR: 'Imprimir carta del restaurante | App Menu QR',
-      ES: 'Imprimir carta del restaurante | App Menu QR',
+      AR: 'Imprimir menú de restaurante | Crea tu carta en papel',
+      ES: 'Imprimir menú de restaurante | Crea tu carta en papel',
     },
     metaDescription: {
-      AR: 'Generá una versión imprimible de tu menú digital para mesa, carta física o respaldo cuando no hay Wi‑Fi.',
-      ES: 'Genera una versión imprimible de tu carta digital para mesa, carta física o respaldo cuando no hay Wi‑Fi.',
+      AR: 'Crea e imprime la carta de tu restaurante con los productos y precios de tu menú digital. Elige páginas separadas o categorías continuas.',
+      ES: 'Crea e imprime la carta de tu restaurante con los productos y precios de tu menú digital. Elige páginas separadas o categorías continuas.',
     },
     lead: {
       AR: 'Además del QR, podés sacar una versión en papel de tu menú digital: útil para salón, eventos o como respaldo. Elegí el diseño que mejor se adapte a tu local.',
