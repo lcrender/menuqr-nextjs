@@ -3,6 +3,7 @@ import FuncionesFeaturePage from '../../components/funciones/FuncionesFeaturePag
 import MenuConAlergenosLanding from '../../components/funciones/MenuConAlergenosLanding';
 import MenuMultidiomaLanding from '../../components/funciones/MenuMultidiomaLanding';
 import MenuQrDinamicoLanding from '../../components/funciones/MenuQrDinamicoLanding';
+import ProgramarMenusLanding from '../../components/funciones/ProgramarMenusLanding';
 import {
   FUNCIONES_SLUGS,
   getFuncionesSection,
@@ -23,6 +24,9 @@ export default function FuncionesSlugPage({ section }: Props) {
   }
   if (section.slug === 'menu-multidioma') {
     return <MenuMultidiomaLanding />;
+  }
+  if (section.slug === 'programar-menus') {
+    return <ProgramarMenusLanding />;
   }
   return <FuncionesFeaturePage section={section} />;
 }

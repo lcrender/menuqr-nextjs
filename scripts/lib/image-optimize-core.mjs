@@ -30,9 +30,18 @@ export function outputPathsFor(inputPath) {
  * @param {number} [args.maxWidth] - si se omite, no redimensiona
  * @param {number} [args.maxHeight]
  * @param {number} [args.maxBytes] - objetivo máximo por formato (bucle de quality)
+ * @param {number} [args.startQuality]
+ * @param {number} [args.minQuality]
  */
 export async function optimizeToWebp(args) {
-  const { inputBuffer, maxWidth, maxHeight, maxBytes = 512 * 1024 } = args;
+  const {
+    inputBuffer,
+    maxWidth,
+    maxHeight,
+    maxBytes = 512 * 1024,
+    startQuality = 86,
+    minQuality = 40,
+  } = args;
 
   const pipeline = () =>
     sharp(inputBuffer, { limitInputPixels: 50_000_000, animated: false }).rotate();
@@ -44,17 +53,17 @@ export async function optimizeToWebp(args) {
     return instance;
   };
 
-  let quality = 86;
+  let quality = startQuality;
   let last = null;
 
-  while (quality >= 40) {
+  while (quality >= minQuality) {
     const out = await resize(pipeline()).webp({ quality, effort: 5, smartSubsample: true }).toBuffer();
     last = out;
     if (out.length <= maxBytes) return out;
     quality -= 6;
   }
 
-  return last ?? (await resize(pipeline()).webp({ quality: 40, effort: 5 }).toBuffer());
+  return last ?? (await resize(pipeline()).webp({ quality: minQuality, effort: 5 }).toBuffer());
 }
 
 /**
@@ -63,9 +72,20 @@ export async function optimizeToWebp(args) {
  * @param {number} [args.maxWidth]
  * @param {number} [args.maxHeight]
  * @param {number} [args.maxBytes]
+ * @param {number} [args.startQuality]
+ * @param {number} [args.minQuality]
+ * @param {'4:2:0' | '4:4:4'} [args.chromaSubsampling]
  */
 export async function optimizeToAvif(args) {
-  const { inputBuffer, maxWidth, maxHeight, maxBytes = 400 * 1024 } = args;
+  const {
+    inputBuffer,
+    maxWidth,
+    maxHeight,
+    maxBytes = 400 * 1024,
+    startQuality = 55,
+    minQuality = 30,
+    chromaSubsampling = '4:2:0',
+  } = args;
 
   const pipeline = () =>
     sharp(inputBuffer, { limitInputPixels: 50_000_000, animated: false }).rotate();
@@ -77,19 +97,22 @@ export async function optimizeToAvif(args) {
     return instance;
   };
 
-  let quality = 55;
+  let quality = startQuality;
   let last = null;
 
-  while (quality >= 30) {
+  while (quality >= minQuality) {
     const out = await resize(pipeline())
-      .avif({ quality, effort: 4, chromaSubsampling: '4:2:0' })
+      .avif({ quality, effort: 4, chromaSubsampling })
       .toBuffer();
     last = out;
     if (out.length <= maxBytes) return out;
     quality -= 5;
   }
 
-  return last ?? (await resize(pipeline()).avif({ quality: 30, effort: 4 }).toBuffer());
+  return (
+    last ??
+    (await resize(pipeline()).avif({ quality: minQuality, effort: 4, chromaSubsampling }).toBuffer())
+  );
 }
 
 /**
@@ -99,9 +122,10 @@ export async function optimizeToAvif(args) {
  * @param {number} [options.maxWidth]
  * @param {number} [options.maxHeight]
  * @param {boolean} [options.force]
+ * @param {'default' | 'ui'} [options.preset] - `ui` = capturas de panel (más nítidas)
  */
 export async function generateOptimizedVariants(inputPath, options = {}) {
-  const { maxWidth, maxHeight, force = false } = options;
+  const { maxWidth, maxHeight, force = false, preset = 'default' } = options;
   const { webp: webpPath, avif: avifPath } = outputPathsFor(inputPath);
 
   const fs = await import('fs/promises');
@@ -110,10 +134,16 @@ export async function generateOptimizedVariants(inputPath, options = {}) {
 
   const meta = await sharp(inputBuffer).metadata();
   const hasAlpha = meta.hasAlpha === true;
+  const isUi = preset === 'ui';
 
-  // PNG con transparencia: priorizar calidad; fotos: comprimir más
-  const webpMaxBytes = hasAlpha ? 800 * 1024 : 350 * 1024;
-  const avifMaxBytes = hasAlpha ? 600 * 1024 : 280 * 1024;
+  // PNG con transparencia / capturas UI: priorizar nitidez (texto legible)
+  const webpMaxBytes = isUi ? 900 * 1024 : hasAlpha ? 800 * 1024 : 350 * 1024;
+  const avifMaxBytes = isUi ? 700 * 1024 : hasAlpha ? 600 * 1024 : 280 * 1024;
+  const webpStartQuality = isUi ? 92 : 86;
+  const webpMinQuality = isUi ? 72 : 40;
+  const avifStartQuality = isUi ? 72 : 55;
+  const avifMinQuality = isUi ? 55 : 30;
+  const chromaSubsampling = isUi ? '4:4:4' : '4:2:0';
 
   const needsWebp =
     force ||
@@ -138,6 +168,8 @@ export async function generateOptimizedVariants(inputPath, options = {}) {
       maxWidth,
       maxHeight,
       maxBytes: webpMaxBytes,
+      startQuality: webpStartQuality,
+      minQuality: webpMinQuality,
     });
     await fs.writeFile(webpPath, webpBuffer);
     result.webp = { path: webpPath, bytes: webpBuffer.length };
@@ -149,6 +181,9 @@ export async function generateOptimizedVariants(inputPath, options = {}) {
       maxWidth,
       maxHeight,
       maxBytes: avifMaxBytes,
+      startQuality: avifStartQuality,
+      minQuality: avifMinQuality,
+      chromaSubsampling,
     });
     await fs.writeFile(avifPath, avifBuffer);
     result.avif = { path: avifPath, bytes: avifBuffer.length };

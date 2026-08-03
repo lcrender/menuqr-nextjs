@@ -28,6 +28,8 @@ const FOLDER_LIMITS = {
   plantillas: { maxWidth: 1400 },
   templates: { maxWidth: 1600 },
   images: { maxWidth: 1200 },
+  /** Capturas de panel / landings de funciones: priorizar nitidez de texto */
+  funciones: { maxWidth: 2000, preset: 'ui' },
 };
 
 /** @param {string} dir */

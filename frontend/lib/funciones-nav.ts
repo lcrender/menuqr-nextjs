@@ -185,12 +185,12 @@ export const FUNCIONES_SECTIONS: FuncionesSection[] = [
       ES: 'Programar mis cartas',
     },
     metaTitle: {
-      AR: 'Programar menús por horarios | App Menu QR',
-      ES: 'Programar cartas por horarios | App Menu QR',
+      AR: 'Programar menús por días y horarios | Carta digital',
+      ES: 'Programar menús por días y horarios | Carta digital',
     },
     metaDescription: {
-      AR: 'Programá horarios de menú: almuerzo, cena o fin de semana sin publicar y despublicar a mano cada día.',
-      ES: 'Programa horarios de carta: comida, cena o fin de semana sin publicar y despublicar a mano cada día.',
+      AR: 'Programa los menús de tu restaurante por días y horarios. Muestra automáticamente desayunos, almuerzos, cenas o promociones con el mismo código QR.',
+      ES: 'Programa los menús de tu restaurante por días y horarios. Muestra automáticamente desayunos, almuerzos, cenas o promociones con el mismo código QR.',
     },
     lead: {
       AR: 'Definí franjas horarias para que el menú correcto aparezca solo cuando corresponde. Ideal si tenés carta de mediodía, noche o menús de fin de semana.',
