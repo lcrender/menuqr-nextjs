@@ -76,7 +76,7 @@ En cada `/ar` y `/es` (`HomeLanding`):
   - `x-default` → `/es`
 - **`content-language`** / `document.documentElement.lang`: `es-AR` o `es-ES`.
 - **`og:locale`**: `es_AR` / `es_ES` (+ alternate del otro).
-- Sitemap: `frontend/lib/sitemap-xml.ts` incluye `/ar` y `/es` con `xhtml:link` alternates.
+- Sitemap: `frontend/lib/sitemap-xml.ts` incluye `/ar` y `/es` con `xhtml:link` alternates. **No** incluye `/` (solo redirige).
 
 No usar meta `geo.region` (Google las ignora).
 

@@ -32,6 +32,7 @@ export function buildSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
   const homeAlternates = base ? buildLandingHreflangLinks(base) : undefined;
 
   const out: SitemapEntry[] = [
+    // Homes canónicas regionales (no incluir `/`: redirige por geo/cookie).
     {
       path: '/ar',
       changefreq: 'weekly',
@@ -46,7 +47,6 @@ export function buildSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
       lastmod: today,
       ...(homeAlternates ? { alternates: homeAlternates } : {}),
     },
-    { path: '/', changefreq: 'weekly', priority: '0.8', lastmod: today },
     { path: PLANTILLAS_CATALOG_PATH, changefreq: 'weekly', priority: '0.9', lastmod: today },
     { path: '/precios', changefreq: 'weekly', priority: '0.9', lastmod: today },
     { path: '/soporte', changefreq: 'weekly', priority: '0.7', lastmod: today },
