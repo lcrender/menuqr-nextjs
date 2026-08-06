@@ -19,7 +19,7 @@ export type AllergenIconCode = (typeof ALLERGEN_ICON_CODES)[number];
 
 const LABELS: Record<AllergenIconLang, Record<AllergenIconCode, string>> = {
   es: {
-    celiaco: 'Celíaco',
+    celiaco: 'Sin Gluten',
     picante: 'Picante',
     vegano: 'Vegano',
     vegetariano: 'Vegetariano',

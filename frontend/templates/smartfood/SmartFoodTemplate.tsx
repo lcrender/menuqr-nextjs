@@ -58,10 +58,11 @@ interface SmartFoodTemplateProps {
   menuLocales?: TemplateMenuLocalesProps;
 }
 
-const FILTER_ICON_ORDER = ['celiaco', 'sin-gluten', 'sin-lactosa', 'vegano', 'vegetariano', 'picante'] as const;
+const FILTER_ICON_ORDER = ['sin-gluten', 'sin-lactosa', 'vegano', 'vegetariano', 'picante'] as const;
 
+/** `celiaco` y `sin-gluten` son equivalentes en filtro; UI canónica = sin-gluten. */
 function normalizeAllergenCode(code: string): string {
-  if (code === 'sin-gluten') return 'celiaco';
+  if (code === 'celiaco') return 'sin-gluten';
   return code;
 }
 
@@ -109,7 +110,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
     for (const section of selectedMenu.sections) {
       for (const item of section.items) {
         for (const icon of item.icons) {
-          codes.add(icon);
+          codes.add(normalizeAllergenCode(icon));
         }
       }
     }
@@ -117,11 +118,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
     const extras = Array.from(codes).filter(
       (code) => !FILTER_ICON_ORDER.includes(code as (typeof FILTER_ICON_ORDER)[number]),
     );
-    const merged = [...ordered, ...extras];
-    if (merged.includes('celiaco') && merged.includes('sin-gluten')) {
-      return merged.filter((code) => code !== 'sin-gluten');
-    }
-    return merged;
+    return [...ordered, ...extras];
   }, [selectedMenu]);
 
   const filteredSections = useMemo(() => {
@@ -135,10 +132,11 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
   }, [selectedMenu, activeAllergenFilters]);
 
   const toggleAllergenFilter = (code: string) => {
+    const canonical = normalizeAllergenCode(code);
     setActiveAllergenFilters((prev) => {
-      const next = new Set(prev);
-      if (next.has(code)) next.delete(code);
-      else next.add(code);
+      const next = new Set(Array.from(prev).map(normalizeAllergenCode));
+      if (next.has(canonical)) next.delete(canonical);
+      else next.add(canonical);
       return next;
     });
   };
@@ -288,7 +286,9 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
             </div>
             <div className="smartfood-allergen-filters">
               {availableAllergenFilters.map((code) => {
-                const isActive = activeAllergenFilters.has(code);
+                const isActive = Array.from(activeAllergenFilters).some(
+                  (f) => normalizeAllergenCode(f) === code,
+                );
                 return (
                   <button
                     key={code}
@@ -298,7 +298,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
                     aria-pressed={isActive}
                   >
                     <SmartFoodAllergenIcon code={code} size={13} />
-                    {iconLabels[code] || code}
+                    {iconLabels[code] || iconLabels.celiaco || code}
                   </button>
                 );
               })}
