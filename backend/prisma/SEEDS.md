@@ -166,7 +166,56 @@ Archivos:
 
 ---
 
-## 5. Notas y buenas prácticas
+## 5. Seed Smart Food (plantilla smartFood)
+
+### 5.1. `seed-smart-food.ts`
+
+Script: `prisma/seed-smart-food.ts`
+
+Datos alineados con la vista previa de la plantilla Smart Food (`frontend/data/preview-data.ts` → `smartFoodData`): restaurante **Smart Food**, 4 menús publicados (Almuerzo / Merienda en ES y Lunch / Snack en EN), productos con descripciones, precios en ARS e iconos dietéticos.
+
+La demo de preview **no incluye fotos de producto**; solo logo (`/preview/logo-smart-food.png`).
+
+Ejemplo de uso:
+
+```bash
+cd backend
+npm run db:seed:smartfood -- usuario@ejemplo.com
+# o
+npx ts-node --project prisma/tsconfig.json prisma/seed-smart-food.ts usuario@ejemplo.com
+```
+
+En producción (Docker):
+
+```bash
+cd /opt/menuqr
+docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
+  'npm install ts-node@10.9.1 typescript@5.1.3 @types/node --no-save'
+docker compose -f docker-compose.prod.yml exec backend sh -c \
+  './node_modules/.bin/ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-smart-food.ts usuario@ejemplo.com'
+```
+
+Parámetro:
+
+- Email del usuario cuyo `tenantId` recibirá el restaurante.
+
+Lo que crea:
+
+1. Restaurante **Smart Food** (`slug: smart-food`, plantilla `smartFood`, colores `#1B4332` / `#40916C`, ARS, logo de preview).
+2. Menús publicados: `es-almuerzo`, `es-merienda`, `en-almuerzo`, `en-merienda`.
+3. Secciones y productos idénticos a la demo (bowls, ensaladas, platos, bebidas, tostadas, snacks).
+4. Iconos dietéticos en los ítems.
+
+Es idempotente: si el restaurante o los productos ya existen, los reutiliza sin duplicar.
+
+Archivos:
+
+- `prisma/seed-smart-food.ts`
+- `prisma/data/smart-food-data.ts`
+
+---
+
+## 6. Notas y buenas prácticas
 
 - Todos los seeds usan `PrismaClient`, por lo que `DATABASE_URL` en tu `.env` debe apuntar al entorno correcto (desarrollo, staging, etc.).
 - Evita ejecutar seeds de ejemplo en producción salvo que sepas exactamente qué datos crean.

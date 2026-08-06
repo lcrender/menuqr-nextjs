@@ -26,6 +26,7 @@
     "db:seed": "ts-node prisma/seed.ts",
     "db:seed:examples": "ts-node prisma/seed-examples.ts",
     "db:seed:lumina": "ts-node --project prisma/tsconfig.json prisma/seed-lumina-gourmet.ts",
+    "db:seed:smartfood": "ts-node --project prisma/tsconfig.json prisma/seed-smart-food.ts",
     "create-admin": "node scripts/create-admin.js",
     "list-super-admins": "node scripts/list-super-admins.js",
     "backfill-minio-avif": "node scripts/backfill-minio-avif.js",
