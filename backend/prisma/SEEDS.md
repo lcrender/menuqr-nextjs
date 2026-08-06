@@ -138,12 +138,19 @@ npx ts-node --project prisma/tsconfig.json prisma/seed-lumina-gourmet.ts usuario
 
 En producción (Docker):
 
+La imagen prod no incluye `ts-node` (`npm prune --production`) y el proceso corre como `nestjs`. Instalá y ejecutá **todo como root en un solo comando**:
+
 ```bash
 cd /opt/menuqr
 docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
-  'npm install ts-node@10.9.1 typescript@5.1.3 @types/node --no-save'
-docker compose -f docker-compose.prod.yml exec backend sh -c \
-  './node_modules/.bin/ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-lumina-gourmet.ts usuario@ejemplo.com'
+  'npm install ts-node@10.9.1 typescript@5.1.3 @types/node --no-save && ./node_modules/.bin/ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-lumina-gourmet.ts usuario@ejemplo.com'
+```
+
+Alternativa con `npx` (sin depender de `.bin` local):
+
+```bash
+docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
+  'npx --yes ts-node@10.9.1 --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-lumina-gourmet.ts usuario@ejemplo.com'
 ```
 
 Parámetro:
@@ -187,12 +194,19 @@ npx ts-node --project prisma/tsconfig.json prisma/seed-smart-food.ts usuario@eje
 
 En producción (Docker):
 
+La imagen prod no incluye `ts-node` y el contenedor corre como `nestjs`. Instalá y ejecutá **todo como root en un solo comando**:
+
 ```bash
 cd /opt/menuqr
 docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
-  'npm install ts-node@10.9.1 typescript@5.1.3 @types/node --no-save'
-docker compose -f docker-compose.prod.yml exec backend sh -c \
-  './node_modules/.bin/ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-smart-food.ts usuario@ejemplo.com'
+  'npm install ts-node@10.9.1 typescript@5.1.3 @types/node --no-save && ./node_modules/.bin/ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-smart-food.ts usuario@ejemplo.com'
+```
+
+Alternativa con `npx`:
+
+```bash
+docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
+  'npx --yes ts-node@10.9.1 --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-smart-food.ts usuario@ejemplo.com'
 ```
 
 Parámetro:
