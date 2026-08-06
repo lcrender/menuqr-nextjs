@@ -843,44 +843,54 @@ export default function Admin() {
                           )}
                           <div className="text-muted dashboard-restaurant-contact" style={{ textDecoration: 'none', fontSize: '1.05rem' }}>
                             {card.restaurantEmail && (
-                              <p className="mb-0 dashboard-restaurant-contact-field">
-                                <span className="text-dark dashboard-restaurant-contact-label">Email:</span>
-                                <a href={`mailto:${card.restaurantEmail}`} className="text-muted" style={{ textDecoration: 'none' }}>{card.restaurantEmail}</a>
-                              </p>
+                              <div className="dashboard-restaurant-contact-field">
+                                <div className="text-dark dashboard-restaurant-contact-label">Email:</div>
+                                <div className="dashboard-restaurant-contact-value">
+                                  <a href={`mailto:${card.restaurantEmail}`} className="text-muted" style={{ textDecoration: 'none' }}>{card.restaurantEmail}</a>
+                                </div>
+                              </div>
                             )}
                             {card.restaurantPhone && (() => {
                               const raw = card.restaurantPhone;
-                              const hasWhatsAppPart = raw.includes('| WhatsApp:');
-                              const displayPhone = (raw.split('|')[0] ?? raw).trim();
-                              const whatsappMatch = raw.match(/\|\s*WhatsApp:\s*(.+)/);
+                              const hasWhatsAppPart = /WhatsApp:/i.test(raw);
+                              const displayPhone = (raw.split('|')[0] ?? raw).replace(/\s*WhatsApp:.*$/i, '').trim();
+                              const whatsappMatch = raw.match(/WhatsApp:\s*(.+)/i);
                               const whatsappDisplay = whatsappMatch?.[1]?.trim() ?? displayPhone;
                               const whatsappDigits = (whatsappMatch?.[1] ?? raw).replace(/\D/g, '');
                               if (hasWhatsAppPart && whatsappDigits) {
                                 return (
                                   <>
-                                    <p className="mb-0 dashboard-restaurant-contact-field">
-                                      <span className="text-dark dashboard-restaurant-contact-label">Teléfono:</span>
-                                      <span>{displayPhone}</span>
-                                    </p>
-                                    <p className="mb-0 dashboard-restaurant-contact-field">
-                                      <span className="text-dark dashboard-restaurant-contact-label">WhatsApp:</span>
-                                      <a href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{whatsappDisplay}</a>
-                                    </p>
+                                    {displayPhone ? (
+                                      <div className="dashboard-restaurant-contact-field">
+                                        <div className="text-dark dashboard-restaurant-contact-label">Teléfono:</div>
+                                        <div className="dashboard-restaurant-contact-value">{displayPhone}</div>
+                                      </div>
+                                    ) : null}
+                                    <div className="dashboard-restaurant-contact-field">
+                                      <div className="text-dark dashboard-restaurant-contact-label">WhatsApp:</div>
+                                      <div className="dashboard-restaurant-contact-value">
+                                        <a href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{whatsappDisplay}</a>
+                                      </div>
+                                    </div>
                                   </>
                                 );
                               }
                               return (
-                                <p className="mb-0 dashboard-restaurant-contact-field">
-                                  <span className="text-dark dashboard-restaurant-contact-label">Teléfono / WhatsApp:</span>
-                                  <a href={`https://wa.me/${raw.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{displayPhone}</a>
-                                </p>
+                                <div className="dashboard-restaurant-contact-field">
+                                  <div className="text-dark dashboard-restaurant-contact-label">Teléfono / WhatsApp:</div>
+                                  <div className="dashboard-restaurant-contact-value">
+                                    <a href={`https://wa.me/${raw.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{displayPhone || raw}</a>
+                                  </div>
+                                </div>
                               );
                             })()}
                             {card.restaurantWebsite && (
-                              <p className="mb-0 dashboard-restaurant-contact-field">
-                                <span className="text-dark dashboard-restaurant-contact-label">Web:</span>
-                                <a href={card.restaurantWebsite.startsWith('http') ? card.restaurantWebsite : `https://${card.restaurantWebsite}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{card.restaurantWebsite}</a>
-                              </p>
+                              <div className="dashboard-restaurant-contact-field">
+                                <div className="text-dark dashboard-restaurant-contact-label">Web:</div>
+                                <div className="dashboard-restaurant-contact-value">
+                                  <a href={card.restaurantWebsite.startsWith('http') ? card.restaurantWebsite : `https://${card.restaurantWebsite}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{card.restaurantWebsite}</a>
+                                </div>
+                              </div>
                             )}
                           </div>
                         </div>

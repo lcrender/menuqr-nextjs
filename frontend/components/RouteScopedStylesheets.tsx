@@ -2,7 +2,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 
 /** Bump al cambiar estilos admin para evitar caché del navegador. */
-const ADMIN_CSS_V = '20260807a';
+const ADMIN_CSS_V = '20260807c';
 /** Bump al cambiar CSS de plantillas (preview mockup, etc.). */
 const MENU_CSS_V = '20260724z';
 

@@ -3348,29 +3348,30 @@ body {
   }
 }
 
-/* Móvil/tablet: etiqueta arriba, valor abajo (Email, Teléfono, WhatsApp, Web) */
-@media (max-width: 1199.98px) {
-  .dashboard-restaurant-contact {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-  }
+/* Contacto: etiqueta y valor siempre en líneas distintas (también en ~1325px) */
+.dashboard-restaurant-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
 
-  .dashboard-restaurant-contact-field {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.15rem;
-  }
+.dashboard-restaurant-contact-field {
+  display: block;
+}
 
-  .dashboard-restaurant-contact-label {
-    display: block;
-  }
+.dashboard-restaurant-contact-label,
+.dashboard-restaurant-contact-value {
+  display: block;
+  width: 100%;
+}
+
+.dashboard-restaurant-contact-label {
+  margin-bottom: 0.15rem;
 }
 
 @media (min-width: 1200px) {
-  .dashboard-restaurant-contact-label::after {
-    content: ' ';
+  .dashboard-restaurant-contact-field {
+    text-align: left;
   }
 }
 
