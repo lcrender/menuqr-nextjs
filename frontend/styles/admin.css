@@ -3348,6 +3348,32 @@ body {
   }
 }
 
+/* Móvil/tablet: etiqueta arriba, valor abajo (Email, Teléfono, WhatsApp, Web) */
+@media (max-width: 1199.98px) {
+  .dashboard-restaurant-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .dashboard-restaurant-contact-field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+  }
+
+  .dashboard-restaurant-contact-label {
+    display: block;
+  }
+}
+
+@media (min-width: 1200px) {
+  .dashboard-restaurant-contact-label::after {
+    content: ' ';
+  }
+}
+
 /* En desktop ancho: CTA a 100% debajo de las 3 stats */
 @media (min-width: 992px) {
   .dashboard-stats-row > .dashboard-cta-col {

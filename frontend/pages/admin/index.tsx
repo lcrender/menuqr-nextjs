@@ -841,9 +841,10 @@ export default function Admin() {
                           {card.restaurantAddress && (
                             <p className="text-muted mb-1" style={{ fontSize: '1.05rem' }}>{card.restaurantAddress}</p>
                           )}
-                          <div className="text-muted" style={{ textDecoration: 'none', fontSize: '1.05rem' }}>
+                          <div className="text-muted dashboard-restaurant-contact" style={{ textDecoration: 'none', fontSize: '1.05rem' }}>
                             {card.restaurantEmail && (
-                              <p className="mb-0"><span className="text-dark">Email:</span>{' '}
+                              <p className="mb-0 dashboard-restaurant-contact-field">
+                                <span className="text-dark dashboard-restaurant-contact-label">Email:</span>
                                 <a href={`mailto:${card.restaurantEmail}`} className="text-muted" style={{ textDecoration: 'none' }}>{card.restaurantEmail}</a>
                               </p>
                             )}
@@ -857,21 +858,27 @@ export default function Admin() {
                               if (hasWhatsAppPart && whatsappDigits) {
                                 return (
                                   <>
-                                    <p className="mb-0"><span className="text-dark">Teléfono:</span>{' '}{displayPhone}</p>
-                                    <p className="mb-0"><span className="text-dark">WhatsApp:</span>{' '}
+                                    <p className="mb-0 dashboard-restaurant-contact-field">
+                                      <span className="text-dark dashboard-restaurant-contact-label">Teléfono:</span>
+                                      <span>{displayPhone}</span>
+                                    </p>
+                                    <p className="mb-0 dashboard-restaurant-contact-field">
+                                      <span className="text-dark dashboard-restaurant-contact-label">WhatsApp:</span>
                                       <a href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{whatsappDisplay}</a>
                                     </p>
                                   </>
                                 );
                               }
                               return (
-                                <p className="mb-0"><span className="text-dark">Teléfono / WhatsApp:</span>{' '}
+                                <p className="mb-0 dashboard-restaurant-contact-field">
+                                  <span className="text-dark dashboard-restaurant-contact-label">Teléfono / WhatsApp:</span>
                                   <a href={`https://wa.me/${raw.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{displayPhone}</a>
                                 </p>
                               );
                             })()}
                             {card.restaurantWebsite && (
-                              <p className="mb-0"><span className="text-dark">Web:</span>{' '}
+                              <p className="mb-0 dashboard-restaurant-contact-field">
+                                <span className="text-dark dashboard-restaurant-contact-label">Web:</span>
                                 <a href={card.restaurantWebsite.startsWith('http') ? card.restaurantWebsite : `https://${card.restaurantWebsite}`} target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none' }}>{card.restaurantWebsite}</a>
                               </p>
                             )}
