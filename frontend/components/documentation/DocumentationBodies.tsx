@@ -908,7 +908,10 @@ export function DocProgramarMenuBody({ basePath }: BodyProps): ReactNode {
           </ol>
           <p className="mb-3">
             Si un menú tiene la programación <strong>desactivada</strong>, se comporta como siempre: estando publicado, se
-            muestra en la carta sin restricción de día u hora (salvo vigencia u otras reglas del sistema).
+            muestra en la carta sin restricción de día u hora (salvo vigencia u otras reglas del sistema). Si la
+            programación está <strong>activa</strong>, fuera de horario el menú no aparece en la página del restaurante,
+            pero <strong>sigue accesible por su URL directa</strong>. Para quitarla: desactivá «Programar visibilidad» (o
+            «Quitar programación») y pulsá <strong>Guardar programación</strong>.
           </p>
           <div className="alert alert-info mb-0">
             <strong>Ejemplo:</strong> menú &quot;Almuerzo&quot; publicado, programación activa, días lun–vie, horario 12:00–16:00.

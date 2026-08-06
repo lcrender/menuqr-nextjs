@@ -272,17 +272,9 @@ export class PublicService {
 
       const menuData = menuResult[0];
 
-      if (
-        !isMenuScheduledVisibleNow({
-          scheduleEnabled: menuData.scheduleEnabled,
-          schedule: menuData.schedule,
-          timezone: menuData.restaurantTimezone || 'UTC',
-        })
-      ) {
-        throw new NotFoundException(
-          `Menú con slug "${menuSlug}" no encontrado en el restaurante "${restaurantSlug}"`,
-        );
-      }
+      // La programación semanal solo oculta el menú en la página del restaurante
+      // (lista de menús). La URL directa /r/:restaurant/:menu sigue disponible
+      // si el menú está publicado y dentro de vigencia.
 
       const restaurantTenant = await this.postgresService.queryRaw<any>(
         `SELECT tenant_id FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,

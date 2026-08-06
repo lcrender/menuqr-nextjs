@@ -303,7 +303,9 @@ export default function ProgramarMenusPage() {
             </Link>
             <h1 className="admin-title mb-0">Programar menú</h1>
             <p className="text-muted mb-0 mt-1">
-              Elegí el restaurante, su huso horario y los días/horarios de cada menú.
+              Definí cuándo aparece cada menú en la página del restaurante. La URL directa del menú
+              sigue disponible si está publicado. Para dejarlo siempre visible: desactivá «Programar
+              visibilidad» y guardá.
             </p>
           </div>
           <button
@@ -407,6 +409,10 @@ export default function ProgramarMenusPage() {
 
                       {draft.scheduleEnabled ? (
                         <div className="menu-schedule-card-body">
+                          <p className="text-muted small mb-3">
+                            Fuera de este horario el menú <strong>no se lista</strong> en la página del
+                            restaurante, pero se puede abrir por su enlace directo.
+                          </p>
                           <p className="menu-schedule-label">Días visibles</p>
                           <div className="menu-schedule-days">
                             {MENU_SCHEDULE_DAYS.map((day) => (
@@ -545,10 +551,28 @@ export default function ProgramarMenusPage() {
                               </div>
                             </div>
                           ) : null}
+                          <div className="mt-3 pt-2 border-top">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-secondary"
+                              onClick={() =>
+                                updateDraft(menu.id, {
+                                  scheduleEnabled: false,
+                                  schedule: emptyMenuSchedule(),
+                                })
+                              }
+                            >
+                              Quitar programación
+                            </button>
+                            <span className="text-muted small ms-2">
+                              Luego pulsá «Guardar programación» para aplicar.
+                            </span>
+                          </div>
                         </div>
                       ) : (
                         <p className="text-muted small mb-0 mt-2">
-                          Sin programación: si está publicado, se muestra siempre (dentro de vigencia).
+                          Sin programación: si está publicado, se muestra siempre en la página del
+                          restaurante (dentro de vigencia). Recordá guardar los cambios.
                         </p>
                       )}
                     </article>
