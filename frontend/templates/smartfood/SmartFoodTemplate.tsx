@@ -100,7 +100,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
 
   useEffect(() => {
     setActiveSectionId(selectedMenu?.sections[0]?.id ?? null);
-    setActiveAllergenFilters(new Set());
+    // No limpiar filtros alimentarios: deben persistir al cambiar de menú/sección.
   }, [selectedMenu?.id]);
 
   const availableAllergenFilters = useMemo(() => {
@@ -241,7 +241,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
           </div>
         ) : null}
 
-        {selectedMenu && selectedMenu.sections.length > 0 ? (
+        {selectedMenu && filteredSections.length > 0 ? (
           <nav
             className="smartfood-section-nav"
             aria-label="Secciones del menú"
@@ -255,7 +255,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
               boxSizing: 'border-box',
             }}
           >
-            {selectedMenu.sections.map((section) => (
+            {filteredSections.map((section) => (
               <button
                 key={section.id}
                 type="button"
