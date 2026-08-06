@@ -228,7 +228,8 @@ export class AuthService {
           {
             pendingPlan: pendingPlan ?? null,
             pendingBillingCycle: pendingBillingCycle ?? null,
-            registrationCountry: registrationCountry ?? null,
+            registrationCountry: registrationCountry ?? user.registrationCountry ?? null,
+            declaredCountry: user.declaredCountry ?? null,
           },
         );
       } catch (e) {
@@ -345,6 +346,8 @@ export class AuthService {
           {
             pendingPlan: pending?.plan ?? null,
             pendingBillingCycle: pending?.billingCycle ?? null,
+            registrationCountry: user.registrationCountry ?? null,
+            declaredCountry: user.declaredCountry ?? null,
           },
         );
       } catch (e) {

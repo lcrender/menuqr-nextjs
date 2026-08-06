@@ -17,6 +17,7 @@ import {
 import { syncLandingRegionCookieFromUser } from '../lib/landing-region';
 import LandingHomeLink from '../components/LandingHomeLink';
 import LandingBrandMark from '../components/LandingBrandMark';
+import { trackSignUp } from '../lib/analytics';
 
 // Ocultar credenciales de prueba: en build de producción (NODE_ENV) o si se define NEXT_PUBLIC_APP_ENV=production
 const isProduction =
@@ -294,6 +295,13 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
           pendingPlan: pendingPlan ?? undefined,
           pendingBillingCycle: pendingPlan ? pendingBillingCycle : undefined,
           ...(recaptchaToken ? { recaptchaToken } : {}),
+        });
+
+        trackSignUp({
+          userId: response.data?.user?.id ?? null,
+          pendingPlan: pendingPlan ?? null,
+          pendingBillingCycle: pendingPlan ? pendingBillingCycle : null,
+          requiresEmailVerification: response.data?.requiresEmailVerification === true,
         });
 
         // Si el registro requiere verificación de email

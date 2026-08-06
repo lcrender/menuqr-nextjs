@@ -199,8 +199,15 @@ export class AdminMessagesService {
     }
 
     const eventLabel = this.eventLabel(eventKey);
-    const extraHtml = extra && Object.keys(extra).length
-      ? `<h3 style="margin-top: 20px; margin-bottom: 8px;">Detalles</h3><pre style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e5e7eb; white-space: pre-wrap;">${this.escapeHtml(JSON.stringify(extra, null, 2))}</pre>`
+    const registrationCountry = this.asOptionalString(extra?.registrationCountry);
+    const declaredCountry = this.asOptionalString(extra?.declaredCountry);
+    const countryLabel = this.formatCountryLabel(registrationCountry || declaredCountry);
+
+    const extraForDump = { ...(extra || {}) };
+    delete extraForDump.registrationCountry;
+    delete extraForDump.declaredCountry;
+    const extraHtml = Object.keys(extraForDump).length
+      ? `<h3 style="margin-top: 20px; margin-bottom: 8px;">Detalles</h3><pre style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e5e7eb; white-space: pre-wrap;">${this.escapeHtml(JSON.stringify(extraForDump, null, 2))}</pre>`
       : '';
 
     return `
@@ -238,6 +245,7 @@ export class AdminMessagesService {
                 <tr><td>Rol</td><td>${this.escapeHtml(actorUser.role || '—')}</td></tr>
                 <tr><td>Tenant ID</td><td>${this.escapeHtml(actorUser.tenantId || '—')}</td></tr>
                 <tr><td>Plan (tenant)</td><td>${this.escapeHtml(tenantPlan || '—')}</td></tr>
+                <tr><td>País (conexión)</td><td>${this.escapeHtml(countryLabel)}</td></tr>
               </tbody>
             </table>
             ${extraHtml}
@@ -249,6 +257,41 @@ export class AdminMessagesService {
       </body>
       </html>
     `;
+  }
+
+  private asOptionalString(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+
+  /** Código ISO → etiqueta legible (ej. AR → AR — Argentina). */
+  private formatCountryLabel(countryCode: string | null): string {
+    if (!countryCode) return 'No detectado';
+    const code = countryCode.trim().toUpperCase();
+    const names: Record<string, string> = {
+      AR: 'Argentina',
+      ES: 'España',
+      MX: 'México',
+      CO: 'Colombia',
+      CL: 'Chile',
+      PE: 'Perú',
+      UY: 'Uruguay',
+      PY: 'Paraguay',
+      BO: 'Bolivia',
+      EC: 'Ecuador',
+      VE: 'Venezuela',
+      BR: 'Brasil',
+      US: 'Estados Unidos',
+      CA: 'Canadá',
+      GB: 'Reino Unido',
+      DE: 'Alemania',
+      FR: 'Francia',
+      IT: 'Italia',
+      PT: 'Portugal',
+    };
+    const name = names[code];
+    return name ? `${code} — ${name}` : code;
   }
 
   private eventLabel(eventKey: AdminMessageEventKey): string {

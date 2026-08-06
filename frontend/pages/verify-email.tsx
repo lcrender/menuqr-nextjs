@@ -7,6 +7,7 @@ import Head from 'next/head';
 import LandingFooter from '../components/LandingFooter';
 import LandingHomeLink from '../components/LandingHomeLink';
 import LandingBrandMark from '../components/LandingBrandMark';
+import { trackEmailVerified } from '../lib/analytics';
 
 function clearPendingPaidPlanLocal(): void {
   if (typeof window === 'undefined') return;
@@ -22,9 +23,13 @@ export default function VerifyEmail() {
   const [message, setMessage] = useState('');
   const [checkoutHref, setCheckoutHref] = useState<string | null>(null);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const emailVerifiedTrackedRef = useRef(false);
+  const verifyingTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (token && typeof token === 'string') {
+      if (verifyingTokenRef.current === token) return;
+      verifyingTokenRef.current = token;
       verifyEmail(token);
     }
     return () => {
@@ -63,7 +68,16 @@ export default function VerifyEmail() {
         pendingBillingCycleRaw === 'monthly' || pendingBillingCycleRaw === 'yearly'
           ? pendingBillingCycleRaw
           : 'yearly';
-      const verifiedUser = response.data?.user as { role?: string } | undefined;
+      const verifiedUser = response.data?.user as { id?: string; role?: string } | undefined;
+
+      if (!emailVerifiedTrackedRef.current) {
+        emailVerifiedTrackedRef.current = true;
+        trackEmailVerified({
+          userId: verifiedUser?.id ?? null,
+          pendingPlan: pendingPlan ?? null,
+          pendingBillingCycle: pendingBillingCycleRaw ?? null,
+        });
+      }
 
       let target = '/admin';
       let nextCheckoutHref: string | null = null;
