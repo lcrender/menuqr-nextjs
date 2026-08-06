@@ -986,7 +986,7 @@ export default function Menus() {
                 {isSuperAdmin && <th>Plantilla</th>}
                 <th>Estado</th>
                 <th>Secciones</th>
-                <th>Acciones</th>
+                <th className="admin-menus-col-actions">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -1060,8 +1060,8 @@ export default function Menus() {
                     </span>
                   </td>
                   <td>{menu.sectionCount || 0}</td>
-                  <td>
-                    <div className="d-flex flex-wrap gap-2">
+                  <td className="admin-menus-col-actions">
+                    <div className="d-flex flex-wrap gap-2 admin-menus-actions">
                       <button 
                         className="btn btn-sm btn-primary" 
                         onClick={() => handleViewMenu(menu)}

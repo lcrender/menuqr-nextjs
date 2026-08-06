@@ -254,15 +254,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </li>
 
               <li className="admin-nav-item">
-                <Link
-                  href="/admin/translations"
-                  className={`admin-nav-link ${currentPath.startsWith('/admin/translations') ? 'active' : ''}`}
-                >
-                  Traducciones
-                </Link>
-              </li>
-
-              <li className="admin-nav-item">
                 <Link 
                   href="/admin/products" 
                   className={`admin-nav-link ${currentPath.startsWith('/admin/products') ? 'active' : ''}`}
@@ -277,6 +268,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   className={`admin-nav-link ${currentPath.startsWith('/admin/templates') ? 'active' : ''}`}
                 >
                   Plantillas
+                </Link>
+              </li>
+
+              <li className="admin-nav-item">
+                <Link
+                  href="/admin/translations"
+                  className={`admin-nav-link ${currentPath.startsWith('/admin/translations') ? 'active' : ''}`}
+                >
+                  Traducciones
                 </Link>
               </li>
 
