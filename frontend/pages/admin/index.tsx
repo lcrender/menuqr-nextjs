@@ -670,9 +670,9 @@ export default function Admin() {
           )}
 
           {!showEmptyTenantWizard && (
-            <div className="row g-4 mb-4">
+            <div className="row g-4 mb-4 dashboard-stats-row">
             {stats.totalRestaurants !== undefined && stats.restaurantLimit !== undefined && (
-              <div className="col-md-3 col-sm-6">
+              <div className="col-6 col-lg-4">
                 <div className="admin-stat-card h-100 d-flex flex-column">
                   <p className="admin-stat-title">Restaurantes</p>
                   <h2 className="admin-stat-value">
@@ -687,7 +687,7 @@ export default function Admin() {
             )}
 
             {stats.totalMenus !== undefined && stats.menuLimit !== undefined && (
-              <div className="col-md-3 col-sm-6">
+              <div className="col-6 col-lg-4">
                 <div className="admin-stat-card h-100 d-flex flex-column">
                   <p className="admin-stat-title">Menús</p>
                   <h2 className="admin-stat-value">
@@ -702,7 +702,7 @@ export default function Admin() {
             )}
 
             {stats.totalProducts !== undefined && stats.productLimit !== undefined && (
-              <div className="col-md-3 col-sm-6">
+              <div className="col-6 col-lg-4">
                 <div className="admin-stat-card h-100 d-flex flex-column">
                   <p className="admin-stat-title">Productos</p>
                   <h2 className="admin-stat-value">
@@ -716,7 +716,7 @@ export default function Admin() {
               </div>
             )}
 
-            <div className="col-md-3 col-sm-6">
+            <div className="col-6 col-lg-12 dashboard-cta-col">
               <div
                 className="admin-stat-card h-100 d-flex flex-column justify-content-center"
                 style={{
@@ -824,9 +824,9 @@ export default function Admin() {
                       <a href="/admin/restaurants" className="alert-link">Gestionar Restaurantes</a>.
                     </div>
                   )}
-                  <div className="row g-3 align-items-center">
-                    <div className="col-12 col-md-6 d-flex align-items-center">
-                      <div className="d-flex flex-column flex-md-row align-items-center align-items-md-start gap-3 w-100 dashboard-restaurant-card-info">
+                  <div className="row g-3 align-items-stretch dashboard-restaurant-card-row">
+                    <div className="col-12 col-xl-6 d-flex align-items-center">
+                      <div className="d-flex flex-column flex-xl-row align-items-center align-items-xl-start gap-3 w-100 dashboard-restaurant-card-info">
                         {card.restaurantLogoUrl && (
                           <img
                             src={card.restaurantLogoUrl}
@@ -834,7 +834,7 @@ export default function Admin() {
                             className="dashboard-restaurant-card-logo"
                           />
                         )}
-                        <div className="flex-grow-1 min-w-0 text-center text-md-start w-100">
+                        <div className="flex-grow-1 min-w-0 text-center text-xl-start w-100">
                           <h5 className="admin-card-title mb-1 dashboard-restaurant-card-title">
                             {card.restaurantName || 'Restaurante'}
                           </h5>
@@ -879,9 +879,9 @@ export default function Admin() {
                         </div>
                       </div>
                     </div>
-                    <div className="col-12 col-md-6 d-flex align-items-center">
-                      <div className="row g-3 align-items-center w-100">
-                        <div className="col-12 col-md-6 d-flex flex-column gap-3 align-items-center">
+                    <div className="col-12 col-xl-6 d-flex align-items-center">
+                      <div className="row g-3 align-items-center w-100 dashboard-restaurant-card-actions">
+                        <div className="col-12 col-sm-6 d-flex flex-column gap-3 align-items-center">
                           {card.restaurantSlug && (
                             <>
                               <button type="button" className="admin-btn" onClick={() => handleDownloadDashboardQR(card.restaurantSlug, qrId)}>
@@ -909,7 +909,7 @@ export default function Admin() {
                             <span className="small text-muted">Completa menú y productos para activar el QR</span>
                           )}
                         </div>
-                        <div className="col-12 col-md-6 d-flex justify-content-center justify-content-md-center">
+                        <div className="col-12 col-sm-6 d-flex justify-content-center">
                           <div style={{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', display: 'inline-block', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                             <QRCode
                               id={qrId}

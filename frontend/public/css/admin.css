@@ -3318,7 +3318,7 @@ body {
   border-radius: 12px 12px 0 0;
 }
 
-/* Dashboard: card restaurante — móvil = logo arriba, nombre, datos; desktop = fila logo+texto */
+/* Dashboard: card restaurante — móvil/tablet = info arriba, acciones+QR abajo; xl = dos columnas */
 .dashboard-restaurant-card-logo {
   width: 140px;
   height: 140px;
@@ -3328,7 +3328,7 @@ body {
   flex-shrink: 0;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1200px) {
   .dashboard-restaurant-card-logo {
     width: 211px;
     height: 211px;
@@ -3342,9 +3342,33 @@ body {
   padding-top: 0;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1200px) {
   .dashboard-restaurant-card-title {
     padding-top: 1.25rem;
+  }
+}
+
+/* En desktop ancho: CTA a 100% debajo de las 3 stats */
+@media (min-width: 992px) {
+  .dashboard-stats-row > .dashboard-cta-col {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* Cards stats en móvil/tablet: tipografía más compacta en grilla 2 cols */
+@media (max-width: 991.98px) {
+  .dashboard-stats-row .admin-stat-title {
+    font-size: 0.75rem;
+  }
+
+  .dashboard-stats-row .admin-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-stats-row .admin-btn {
+    font-size: 0.8rem;
+    padding: 8px 12px;
   }
 }
 
