@@ -138,19 +138,28 @@ npx ts-node --project prisma/tsconfig.json prisma/seed-lumina-gourmet.ts usuario
 
 En producción (Docker):
 
-La imagen prod no incluye `ts-node` (`npm prune --production`) y el proceso corre como `nestjs`. Instalá y ejecutá **todo como root en un solo comando**:
+La imagen prod hace `npm prune --production` (sin `ts-node`/`typescript`) y corre con `NODE_ENV=production`. Por eso hay que reinstalar las herramientas con `NODE_ENV=development`.
+
+**1.** Tras `git pull`, rebuild del backend (el código del seed vive en la imagen, no en un volumen):
 
 ```bash
 cd /opt/menuqr
-docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
-  'npm install ts-node@10.9.1 typescript@5.1.3 @types/node --no-save && ./node_modules/.bin/ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-lumina-gourmet.ts usuario@ejemplo.com'
+git pull
+docker compose -f docker-compose.prod.yml up -d --build --force-recreate backend
 ```
 
-Alternativa con `npx` (sin depender de `.bin` local):
+**2.** Ejecutar el seed (todo como root, con `NODE_ENV=development`):
 
 ```bash
 docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
-  'npx --yes ts-node@10.9.1 --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-lumina-gourmet.ts usuario@ejemplo.com'
+  'NODE_ENV=development npm install ts-node@10.9.1 typescript@5.1.3 @types/node --no-save && ./node_modules/.bin/ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-lumina-gourmet.ts usuario@ejemplo.com'
+```
+
+Alternativa con `npx` (incluye typescript como peer):
+
+```bash
+docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
+  'npx --yes -p typescript@5.1.3 -p ts-node@10.9.1 ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-lumina-gourmet.ts usuario@ejemplo.com'
 ```
 
 Parámetro:
@@ -194,19 +203,28 @@ npx ts-node --project prisma/tsconfig.json prisma/seed-smart-food.ts usuario@eje
 
 En producción (Docker):
 
-La imagen prod no incluye `ts-node` y el contenedor corre como `nestjs`. Instalá y ejecutá **todo como root en un solo comando**:
+La imagen prod no incluye `ts-node`/`typescript` y el código del seed está en la imagen (hace falta rebuild tras `git pull`).
+
+**1.** Rebuild:
 
 ```bash
 cd /opt/menuqr
+git pull
+docker compose -f docker-compose.prod.yml up -d --build --force-recreate backend
+```
+
+**2.** Seed (como root, con `NODE_ENV=development`):
+
+```bash
 docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
-  'npm install ts-node@10.9.1 typescript@5.1.3 @types/node --no-save && ./node_modules/.bin/ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-smart-food.ts usuario@ejemplo.com'
+  'NODE_ENV=development npm install ts-node@10.9.1 typescript@5.1.3 @types/node --no-save && ./node_modules/.bin/ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-smart-food.ts usuario@ejemplo.com'
 ```
 
 Alternativa con `npx`:
 
 ```bash
 docker compose -f docker-compose.prod.yml exec -u root backend sh -c \
-  'npx --yes ts-node@10.9.1 --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-smart-food.ts usuario@ejemplo.com'
+  'npx --yes -p typescript@5.1.3 -p ts-node@10.9.1 ts-node --project prisma/tsconfig.json --skip-project --transpile-only prisma/seed-smart-food.ts usuario@ejemplo.com'
 ```
 
 Parámetro:
