@@ -385,3 +385,80 @@ export function buildFuncionesFeatureJsonLd(
 
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
 }
+
+/** Índice del blog (/blog): CollectionPage + ItemList + BreadcrumbList. */
+export function buildBlogIndexJsonLd(
+  base: string,
+  articles: readonly { slug: string; title: string; publishedAt: string }[],
+): string {
+  const b = base.replace(/\/$/, '');
+  const url = `${b}/blog`;
+  const graph: Record<string, unknown>[] = [
+    {
+      '@type': 'CollectionPage',
+      '@id': `${url}#webpage`,
+      url,
+      name: 'Blog | App Menu QR',
+      isPartOf: { '@id': `${b}/#website` },
+      about: { '@id': `${b}/#organization` },
+      inLanguage: 'es',
+    },
+    {
+      '@type': 'ItemList',
+      '@id': `${url}#itemlist`,
+      itemListElement: articles.map((a, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        url: `${b}/blog/${encodeURIComponent(a.slug)}`,
+        name: a.title,
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: b },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: url },
+      ],
+    },
+  ];
+  return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
+}
+
+/** Artículo del blog (/blog/:slug): BlogPosting + BreadcrumbList. */
+export function buildBlogArticleJsonLd(
+  base: string,
+  meta: {
+    slug: string;
+    title: string;
+    metaDescription: string;
+    publishedAt: string;
+  },
+): string {
+  const b = base.replace(/\/$/, '');
+  const url = `${b}/blog/${encodeURIComponent(meta.slug)}`;
+  const graph: Record<string, unknown>[] = [
+    {
+      '@type': 'BlogPosting',
+      '@id': `${url}#article`,
+      url,
+      headline: meta.title,
+      description: meta.metaDescription,
+      datePublished: meta.publishedAt,
+      dateModified: meta.publishedAt,
+      inLanguage: 'es',
+      isPartOf: { '@id': `${b}/#website` },
+      author: { '@id': `${b}/#organization` },
+      publisher: { '@id': `${b}/#organization` },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': `${url}#webpage` },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: b },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: `${b}/blog` },
+        { '@type': 'ListItem', position: 3, name: meta.title, item: url },
+      ],
+    },
+  ];
+  return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
+}

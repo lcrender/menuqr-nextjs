@@ -59,6 +59,10 @@ const PRIMEROS_PASOS_VIDEO_ID = 'M85F7_szTFs';
 const PRIMEROS_PASOS_VIDEO_URL = `https://www.youtube.com/embed/${PRIMEROS_PASOS_VIDEO_ID}`;
 const PRIMEROS_PASOS_VIDEO_WATCH = `https://youtu.be/${PRIMEROS_PASOS_VIDEO_ID}`;
 
+const TRADUCCIONES_VIDEO_ID = 'j3hupAJNHmI';
+const TRADUCCIONES_VIDEO_URL = `https://www.youtube.com/embed/${TRADUCCIONES_VIDEO_ID}`;
+const TRADUCCIONES_VIDEO_WATCH = `https://youtu.be/${TRADUCCIONES_VIDEO_ID}`;
+
 /** Video tutorial del flujo inicial (restaurante → menú → secciones → productos → plantilla). */
 function DocPrimerosPasosVideo(): ReactNode {
   return (
@@ -75,6 +79,33 @@ function DocPrimerosPasosVideo(): ReactNode {
           <iframe
             src={PRIMEROS_PASOS_VIDEO_URL}
             title="Cómo crear un menú QR en App Menu QR: restaurante, secciones, productos y plantilla"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Video tutorial de traducciones / menú multidioma. */
+function DocTraduccionesVideo(): ReactNode {
+  return (
+    <div className="card mb-4 border-0 bg-light">
+      <div className="card-body">
+        <h2 className="h5 mb-2">Video: traducciones</h2>
+        <p className="mb-3 text-muted small">
+          Cómo agregar idiomas, editar textos y usar la traducción automática en el panel.{' '}
+          <a href={TRADUCCIONES_VIDEO_WATCH} target="_blank" rel="noopener noreferrer">
+            Abrir en YouTube
+          </a>
+        </p>
+        <div className="ratio ratio-16x9 rounded overflow-hidden bg-dark">
+          <iframe
+            src={TRADUCCIONES_VIDEO_URL}
+            title="Traducciones de menú en App Menu QR: idiomas y traducción automática"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             loading="lazy"
@@ -1318,6 +1349,8 @@ export function DocTraduccionesBody({ basePath }: BodyProps): ReactNode {
           Las traducciones y la cantidad de idiomas activos dependen de tu <Link href={docHref(basePath, 'suscripciones-y-pagos')}>plan de suscripción</Link>. Si no ves la sección de idiomas, es probable que tu plan actual no la incluya o que haya que activarla desde configuración.
         </p>
       </DocAudienceBlock>
+
+      <DocTraduccionesVideo />
 
       <div className="card mb-4">
         <div className="card-header bg-info text-white">

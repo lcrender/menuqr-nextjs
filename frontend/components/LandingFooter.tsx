@@ -58,6 +58,11 @@ export default function LandingFooter() {
             <h3 className="landing-footer-heading">Recursos</h3>
             <ul className="landing-footer-list">
               <li>
+                <Link href="/blog" className="landing-footer-link">
+                  Blog
+                </Link>
+              </li>
+              <li>
                 <Link href="/documentacion" className="landing-footer-link">
                   Documentación
                 </Link>

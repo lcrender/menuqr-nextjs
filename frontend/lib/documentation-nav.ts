@@ -208,7 +208,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaDescription:
       'Pasos para traducir contenido en AppMenuQR y límites según tu plan de suscripción.',
     group: 'Contenido e idiomas',
-    keywords: 'traducciones idiomas i18n plan límites suscripción',
+    keywords: 'traducciones idiomas i18n plan límites suscripción video tutorial youtube traducción automática',
     searchText: 'traducir menu texto segundo idioma',
   },
   {
