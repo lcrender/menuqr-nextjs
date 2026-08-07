@@ -5,6 +5,7 @@ import api from '../../../lib/axios';
 import { MenuLocaleFlagGlyph } from '../../../lib/menu-locale-flag';
 import AdminLayout from '../../../components/AdminLayout';
 import AlertModal from '../../../components/AlertModal';
+import ConfirmModal from '../../../components/ConfirmModal';
 
 type ManifestEntry = { locale: string; label?: string; flagCode?: string; enabledPublic?: boolean };
 
@@ -287,6 +288,13 @@ export default function AdminTranslationsPage() {
   const [addVisiblePublic, setAddVisiblePublic] = useState(true);
   const [addLocaleSearch, setAddLocaleSearch] = useState('');
   const [deleteLocaleBusy, setDeleteLocaleBusy] = useState<{ menuId: string; locale: string } | null>(null);
+  const [confirmDeleteLocale, setConfirmDeleteLocale] = useState<{ menu: MenuRow; locale: string } | null>(null);
+  const [confirmAutoTranslate, setConfirmAutoTranslate] = useState<{
+    menu: MenuRow;
+    locale: string;
+    force: boolean;
+    message: string;
+  } | null>(null);
 
   const [localeToggleKey, setLocaleToggleKey] = useState<string | null>(null);
 
@@ -461,35 +469,32 @@ export default function AdminTranslationsPage() {
     setAddOpen(true);
   };
 
-  const deleteMenuLocale = useCallback(
-    async (m: MenuRow, locale: string) => {
-      if (locale === 'es-ES') return;
-      if (
-        !window.confirm(
-          `¿Eliminar el idioma «${locale}» y todas sus traducciones de este menú? Esta acción no se puede deshacer.`,
-        )
-      ) {
-        return;
-      }
-      setDeleteLocaleBusy({ menuId: m.id, locale });
-      try {
-        const params: Record<string, string> = { locale };
-        if (isSuperAdmin && tenantIdForApi) params.tenantId = tenantIdForApi;
-        await api.delete(`/menu-translations/menus/${m.id}/locales`, { params });
-        showAlertMsg('Idioma eliminado', `Se quitó ${locale} del menú.`, 'success');
-        await loadMenus();
-      } catch (e: unknown) {
-        const msg =
-          (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          (e as Error)?.message ||
-          'Error';
-        showAlertMsg('Eliminar idioma', String(msg), 'error');
-      } finally {
-        setDeleteLocaleBusy(null);
-      }
-    },
-    [isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg],
-  );
+  const requestDeleteMenuLocale = useCallback((m: MenuRow, locale: string) => {
+    if (locale === 'es-ES') return;
+    setConfirmDeleteLocale({ menu: m, locale });
+  }, []);
+
+  const executeDeleteMenuLocale = useCallback(async () => {
+    if (!confirmDeleteLocale) return;
+    const { menu: m, locale } = confirmDeleteLocale;
+    setConfirmDeleteLocale(null);
+    setDeleteLocaleBusy({ menuId: m.id, locale });
+    try {
+      const params: Record<string, string> = { locale };
+      if (isSuperAdmin && tenantIdForApi) params.tenantId = tenantIdForApi;
+      await api.delete(`/menu-translations/menus/${m.id}/locales`, { params });
+      showAlertMsg('Idioma eliminado', `Se quitó ${locale} del menú.`, 'success');
+      await loadMenus();
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (e as Error)?.message ||
+        'Error';
+      showAlertMsg('Eliminar idioma', String(msg), 'error');
+    } finally {
+      setDeleteLocaleBusy(null);
+    }
+  }, [confirmDeleteLocale, isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg]);
 
   const submitAddLocale = async () => {
     if (!addMenuId) return;
@@ -677,7 +682,7 @@ export default function AdminTranslationsPage() {
     });
   }, [menus]);
 
-  const runMenuAutoTranslate = useCallback(
+  const requestMenuAutoTranslate = useCallback(
     async (m: MenuRow) => {
       const loc =
         autoLocalePick[m.id] || (m.locales || []).find((l) => l !== 'es-ES');
@@ -702,23 +707,12 @@ export default function AdminTranslationsPage() {
           return;
         }
         const extra = st.monthlyLimit != null ? ` Usos este mes: ${st.monthlyUsed}/${st.monthlyLimit}.` : '';
-        if (
-          !window.confirm(
-            `Se traducirá el menú desde español a ${loc}.${force ? ' Modo forzar: consume un uso aunque el menú ya tenga traducción automática previa.' : ''}${extra} ¿Continuar?`,
-          )
-        ) {
-          return;
-        }
-        const body: Record<string, unknown> = { targetLocale: loc, force };
-        if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
-        const res = await api.post(`/menu-translations/menus/${m.id}/auto-translate`, body);
-        const d = res.data as { segmentCount?: number; apiUnits?: number; cacheHits?: number };
-        showAlertMsg(
-          'Traducción automática',
-          `Listo: ${d.segmentCount ?? 0} segmentos. Llamadas nuevas a la API: ${d.apiUnits ?? 0}. Reutilizados desde caché: ${d.cacheHits ?? 0}.`,
-          'success',
-        );
-        await loadMenus();
+        setConfirmAutoTranslate({
+          menu: m,
+          locale: loc,
+          force,
+          message: `Se traducirá el menú desde español a ${loc}.${force ? ' Modo forzar: consume un uso aunque el menú ya tenga traducción automática previa.' : ''}${extra} ¿Continuar?`,
+        });
       } catch (e: unknown) {
         const msg =
           (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
@@ -729,8 +723,35 @@ export default function AdminTranslationsPage() {
         setAutoBusyMenuId(null);
       }
     },
-    [autoLocalePick, autoForce, isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg],
+    [autoLocalePick, autoForce, isSuperAdmin, tenantIdForApi, showAlertMsg],
   );
+
+  const executeMenuAutoTranslate = useCallback(async () => {
+    if (!confirmAutoTranslate) return;
+    const { menu: m, locale: loc, force } = confirmAutoTranslate;
+    setConfirmAutoTranslate(null);
+    setAutoBusyMenuId(m.id);
+    try {
+      const body: Record<string, unknown> = { targetLocale: loc, force };
+      if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
+      const res = await api.post(`/menu-translations/menus/${m.id}/auto-translate`, body);
+      const d = res.data as { segmentCount?: number; apiUnits?: number; cacheHits?: number };
+      showAlertMsg(
+        'Traducción automática',
+        `Listo: ${d.segmentCount ?? 0} segmentos. Llamadas nuevas a la API: ${d.apiUnits ?? 0}. Reutilizados desde caché: ${d.cacheHits ?? 0}.`,
+        'success',
+      );
+      await loadMenus();
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (e as Error)?.message ||
+        'Error';
+      showAlertMsg('Traducción automática', String(msg), 'error');
+    } finally {
+      setAutoBusyMenuId(null);
+    }
+  }, [confirmAutoTranslate, isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg]);
 
   const openWorkbench = async (menuId: string, locale: string) => {
     if (locale === 'es-ES') {
@@ -1064,7 +1085,7 @@ export default function AdminTranslationsPage() {
                                         deleteLocaleBusy.menuId === m.id &&
                                         deleteLocaleBusy.locale === loc
                                       }
-                                      onClick={() => void deleteMenuLocale(m, loc)}
+                                      onClick={() => requestDeleteMenuLocale(m, loc)}
                                     >
                                       {deleteLocaleBusy?.menuId === m.id && deleteLocaleBusy?.locale === loc
                                         ? 'Borrando…'
@@ -1130,7 +1151,7 @@ export default function AdminTranslationsPage() {
                                 type="button"
                                 className="btn btn-sm btn-outline-primary w-100"
                                 disabled={autoBusyMenuId === m.id}
-                                onClick={() => void runMenuAutoTranslate(m)}
+                                onClick={() => void requestMenuAutoTranslate(m)}
                               >
                                 {autoBusyMenuId === m.id ? 'Procesando…' : 'Traducir automáticamente'}
                               </button>
@@ -1556,6 +1577,32 @@ export default function AdminTranslationsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        show={!!confirmDeleteLocale}
+        title="Eliminar idioma"
+        message={
+          confirmDeleteLocale
+            ? `¿Eliminar el idioma «${confirmDeleteLocale.locale}» y todas sus traducciones de este menú? Esta acción no se puede deshacer.`
+            : ''
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        onConfirm={() => void executeDeleteMenuLocale()}
+        onCancel={() => setConfirmDeleteLocale(null)}
+      />
+
+      <ConfirmModal
+        show={!!confirmAutoTranslate}
+        title="Traducción automática"
+        message={confirmAutoTranslate?.message || ''}
+        confirmText="Traducir"
+        cancelText="Cancelar"
+        variant="primary"
+        onConfirm={() => void executeMenuAutoTranslate()}
+        onCancel={() => setConfirmAutoTranslate(null)}
+      />
 
       {alertData && (
         <AlertModal
