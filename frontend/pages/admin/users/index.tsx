@@ -489,6 +489,25 @@ export default function Users() {
                   </div>
                 ) : userDetails ? (
                   <>
+                    <div className="mb-4">
+                      <h6 className="mb-2">Identificadores</h6>
+                      <dl className="row mb-0 small">
+                        <dt className="col-sm-3 col-md-2 text-muted">User ID</dt>
+                        <dd className="col-sm-9 col-md-10">
+                          <code className="user-select-all">{userDetails.user?.id || selectedUser.id}</code>
+                        </dd>
+                        {userDetails.user?.tenantId || selectedUser.tenantId ? (
+                          <>
+                            <dt className="col-sm-3 col-md-2 text-muted">Tenant ID</dt>
+                            <dd className="col-sm-9 col-md-10 mb-0">
+                              <code className="user-select-all">
+                                {userDetails.user?.tenantId || selectedUser.tenantId}
+                              </code>
+                            </dd>
+                          </>
+                        ) : null}
+                      </dl>
+                    </div>
                     {currentUser?.role === 'SUPER_ADMIN' && (
                       <div className="mb-4">
                         <h6 className="mb-2">Región de facturación</h6>

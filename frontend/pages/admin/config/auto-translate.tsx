@@ -7,7 +7,8 @@ type Settings = {
   globalEnabled: boolean;
   googleConfigured: boolean;
   microsoftTranslatorConfigured: boolean;
-  activeProvider: 'microsoft' | 'google' | 'none';
+  openaiConfigured: boolean;
+  activeProvider: 'openai' | 'microsoft' | 'google' | 'none';
   googleTranslateProvider: {
     available: boolean;
     active: boolean;
@@ -15,6 +16,7 @@ type Settings = {
     disabledReason?: string;
   };
   microsoftTranslator: { active: boolean; configured: boolean };
+  openai: { active: boolean; configured: boolean; model: string };
 };
 
 export default function AdminConfigAutoTranslatePage() {
@@ -134,10 +136,11 @@ export default function AdminConfigAutoTranslatePage() {
         <h1 className="h3 mb-2">Traducción automática (beta)</h1>
         <p className="text-muted small mb-4">
           Activá o desactivá la función en todo el sistema. Los límites mensuales por usuario se configuran en{' '}
-          <strong>Límites de planes</strong> (campo por plan). El backend usa{' '}
-          <strong>Microsoft Translator</strong> (<code>MICROSOFT_TRANSLATOR_KEY</code>,{' '}
-          <code>MICROSOFT_TRANSLATOR_REGION</code>). La integración con Google Cloud Translation sigue existiendo en
-          código pero hoy está <strong>desactivada</strong> como proveedor.
+          <strong>Límites de planes</strong> (campo por plan). Prioridad de proveedores:{' '}
+          <strong>OpenAI</strong> (<code>OPENAI_API_KEY</code>, opcional{' '}
+          <code>OPENAI_TRANSLATE_MODEL</code>) → <strong>Microsoft Translator</strong> (
+          <code>MICROSOFT_TRANSLATOR_KEY</code>, <code>MICROSOFT_TRANSLATOR_REGION</code>). Google Cloud Translation
+          sigue en código pero hoy está <strong>desactivado</strong>.
         </p>
 
         {error && (
@@ -157,7 +160,29 @@ export default function AdminConfigAutoTranslatePage() {
             <div className="card-body">
               <h2 className="h6 mb-3">Proveedores de traducción automática</h2>
               <div className="row g-3 mb-4">
-                <div className="col-md-6">
+                <div className="col-md-4">
+                  <div
+                    className={`border rounded p-3 h-100 ${settings.openai?.configured ? 'border-success' : 'border-warning'}`}
+                  >
+                    <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+                      <strong className="small">OpenAI</strong>
+                      {settings.openai?.active ? (
+                        <span className="badge bg-success">En uso</span>
+                      ) : (
+                        <span className="badge bg-secondary">Inactivo</span>
+                      )}
+                    </div>
+                    <p className="small text-muted mb-1">
+                      {settings.openai?.configured
+                        ? `Clave detectada. Modelo: ${settings.openai.model || 'gpt-4o-mini'}.`
+                        : 'Falta OPENAI_API_KEY en el backend (misma key que import de menú por foto).'}
+                    </p>
+                    <p className="small mb-0 text-muted">
+                      Tiene prioridad sobre Microsoft si ambas están configuradas.
+                    </p>
+                  </div>
+                </div>
+                <div className="col-md-4">
                   <div
                     className={`border rounded p-3 h-100 ${settings.microsoftTranslator.configured ? 'border-success' : 'border-warning'}`}
                   >
@@ -176,7 +201,7 @@ export default function AdminConfigAutoTranslatePage() {
                     </p>
                   </div>
                 </div>
-                <div className="col-md-6">
+                <div className="col-md-4">
                   <div
                     className={`border rounded p-3 h-100 ${settings.googleTranslateProvider.active ? 'border-success' : 'opacity-75'}`}
                     style={

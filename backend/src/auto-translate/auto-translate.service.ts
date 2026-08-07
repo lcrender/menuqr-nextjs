@@ -22,6 +22,11 @@ const GLOBAL_SETTING_KEY = 'auto_translate_global_enabled';
 const GOOGLE_TRANSLATE_AS_ACTIVE_PROVIDER = false;
 
 const DEFAULT_MICROSOFT_TRANSLATOR_ENDPOINT = 'https://api.cognitive.microsofttranslator.com';
+const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
+/** Lote interno para Chat Completions (el runner ya parte en 50). */
+const OPENAI_TRANSLATE_CHUNK = 25;
+
+export type AutoTranslateProvider = 'openai' | 'microsoft' | 'google' | 'none';
 
 export type AutoTranslateStatusDto = {
   canRun: boolean;
@@ -34,10 +39,12 @@ export type AutoTranslateStatusDto = {
   userEnabled: boolean;
   /** Clave de Google presente en el servidor (informativo; puede estar inactiva). */
   googleConfigured: boolean;
-  /** Microsoft Translator (Azure) listo para usarse como backend activo. */
+  /** Microsoft Translator (Azure) listo. */
   microsoftTranslatorConfigured: boolean;
+  /** OpenAI listo (`OPENAI_API_KEY`). */
+  openaiConfigured: boolean;
   /** Proveedor que usará el backend para traducir (`none` si falta configuración). */
-  activeProvider: 'microsoft' | 'google' | 'none';
+  activeProvider: AutoTranslateProvider;
   planAllows: boolean;
 };
 
@@ -45,7 +52,8 @@ export type AutoTranslateAdminSettingsDto = {
   globalEnabled: boolean;
   googleConfigured: boolean;
   microsoftTranslatorConfigured: boolean;
-  activeProvider: 'microsoft' | 'google' | 'none';
+  openaiConfigured: boolean;
+  activeProvider: AutoTranslateProvider;
   googleTranslateProvider: {
     /** Existe integración en el código (siempre true). */
     available: boolean;
@@ -58,6 +66,11 @@ export type AutoTranslateAdminSettingsDto = {
   microsoftTranslator: {
     active: boolean;
     configured: boolean;
+  };
+  openai: {
+    active: boolean;
+    configured: boolean;
+    model: string;
   };
 };
 
@@ -90,6 +103,29 @@ export class AutoTranslateService {
     return !!this.googleApiKey();
   }
 
+  private openaiApiKey(): string | undefined {
+    const k = this.config.get<string>('OPENAI_API_KEY');
+    return k && String(k).trim().length > 0 ? String(k).trim() : undefined;
+  }
+
+  isOpenAiConfigured(): boolean {
+    return !!this.openaiApiKey();
+  }
+
+  private openaiBaseUrl(): string {
+    const base = String(this.config.get<string>('OPENAI_BASE_URL') || '').trim();
+    return (base || DEFAULT_OPENAI_BASE_URL).replace(/\/+$/, '');
+  }
+
+  /** Modelo para traducción: OPENAI_TRANSLATE_MODEL → OPENAI_MODEL → gpt-4o-mini. */
+  private openaiTranslateModel(): string {
+    const translate = String(this.config.get<string>('OPENAI_TRANSLATE_MODEL') || '').trim();
+    if (translate) return translate;
+    const general = String(this.config.get<string>('OPENAI_MODEL') || '').trim();
+    if (general) return general;
+    return 'gpt-4o-mini';
+  }
+
   private microsoftTranslatorKey(): string | undefined {
     const k = this.config.get<string>('MICROSOFT_TRANSLATOR_KEY');
     return k && String(k).trim().length > 0 ? String(k).trim() : undefined;
@@ -110,10 +146,13 @@ export class AutoTranslateService {
     return !!this.microsoftTranslatorKey() && !!this.microsoftTranslatorRegion();
   }
 
-  /** Proveedor efectivo para llamadas a API (Microsoft por defecto; Google solo si se habilita explícitamente). */
-  private effectiveTranslateProvider(): 'microsoft' | 'google' | 'none' {
-    if (GOOGLE_TRANSLATE_AS_ACTIVE_PROVIDER && this.googleApiKey()) return 'google';
+  /**
+   * Proveedor efectivo: OpenAI (si hay key) → Microsoft → Google (solo si se habilita la constante).
+   */
+  private effectiveTranslateProvider(): AutoTranslateProvider {
+    if (this.isOpenAiConfigured()) return 'openai';
     if (this.isMicrosoftTranslatorConfigured()) return 'microsoft';
+    if (GOOGLE_TRANSLATE_AS_ACTIVE_PROVIDER && this.googleApiKey()) return 'google';
     return 'none';
   }
 
@@ -124,11 +163,13 @@ export class AutoTranslateService {
   getAdminSettingsSnapshot(globalEnabled: boolean): AutoTranslateAdminSettingsDto {
     const googleConfigured = this.isGoogleConfigured();
     const microsoftConfigured = this.isMicrosoftTranslatorConfigured();
+    const openaiConfigured = this.isOpenAiConfigured();
     const active = this.effectiveTranslateProvider();
     return {
       globalEnabled,
       googleConfigured,
       microsoftTranslatorConfigured: microsoftConfigured,
+      openaiConfigured,
       activeProvider: active,
       googleTranslateProvider: {
         available: true,
@@ -137,13 +178,18 @@ export class AutoTranslateService {
         ...(!GOOGLE_TRANSLATE_AS_ACTIVE_PROVIDER
           ? {
               disabledReason:
-                'Google Translate está deshabilitado como proveedor. El sistema usa Microsoft Translator (Azure).',
+                'Google Translate está deshabilitado como proveedor. Prioridad: OpenAI → Microsoft Translator.',
             }
           : {}),
       },
       microsoftTranslator: {
         active: active === 'microsoft',
         configured: microsoftConfigured,
+      },
+      openai: {
+        active: active === 'openai',
+        configured: openaiConfigured,
+        model: this.openaiTranslateModel(),
       },
     };
   }
@@ -345,6 +391,7 @@ export class AutoTranslateService {
   ): Promise<AutoTranslateStatusDto> {
     const googleConfigured = this.isGoogleConfigured();
     const microsoftTranslatorConfigured = this.isMicrosoftTranslatorConfigured();
+    const openaiConfigured = this.isOpenAiConfigured();
     const activeProvider = this.effectiveTranslateProvider();
     const globalEnabled = await this.getAppSettingGlobalEnabled();
     const userFlag = await this.getUserAutoTranslateEnabled(userId);
@@ -367,7 +414,7 @@ export class AutoTranslateService {
     if (!this.isTranslateBackendConfigured()) {
       canRun = false;
       reason =
-        'Falta configurar Microsoft Translator en el servidor (MICROSOFT_TRANSLATOR_KEY y MICROSOFT_TRANSLATOR_REGION).';
+        'Falta configurar un proveedor de traducción (OPENAI_API_KEY, o MICROSOFT_TRANSLATOR_KEY + MICROSOFT_TRANSLATOR_REGION).';
       reasonCode = 'translator_not_configured';
     } else if (!globalEnabled) {
       canRun = false;
@@ -406,6 +453,7 @@ export class AutoTranslateService {
       userEnabled,
       googleConfigured,
       microsoftTranslatorConfigured,
+      openaiConfigured,
       activeProvider,
       planAllows,
     };
@@ -421,7 +469,7 @@ export class AutoTranslateService {
   ) {
     if (!this.isTranslateBackendConfigured()) {
       throw new ServiceUnavailableException(
-        'Traducción automática no configurada en el servidor (Microsoft Translator: MICROSOFT_TRANSLATOR_KEY y MICROSOFT_TRANSLATOR_REGION).',
+        'Traducción automática no configurada (OPENAI_API_KEY, o MICROSOFT_TRANSLATOR_KEY + MICROSOFT_TRANSLATOR_REGION).',
       );
     }
     if (!(await this.getAppSettingGlobalEnabled())) {
@@ -636,12 +684,124 @@ export class AutoTranslateService {
     });
   }
 
+  /** OpenAI Chat Completions — traduce un lote de textos de carta. */
+  private async openaiTranslateBatch(
+    texts: string[],
+    sourceBcp47: string,
+    targetBcp47: string,
+  ): Promise<string[]> {
+    const key = this.openaiApiKey();
+    if (!key) {
+      throw new ServiceUnavailableException('OPENAI_API_KEY no configurada.');
+    }
+    const model = this.openaiTranslateModel();
+    const base = this.openaiBaseUrl();
+    const from = this.toMicrosoftTranslatorLang(sourceBcp47);
+    const to = this.toMicrosoftTranslatorLang(targetBcp47);
+    const out: string[] = [];
+    for (let i = 0; i < texts.length; i += OPENAI_TRANSLATE_CHUNK) {
+      const chunk = texts.slice(i, i + OPENAI_TRANSLATE_CHUNK);
+      const part = await this.openaiTranslateChunk(chunk, from, to, key, model, base);
+      out.push(...part);
+    }
+    return out;
+  }
+
+  private async openaiTranslateChunk(
+    texts: string[],
+    fromLang: string,
+    toLang: string,
+    apiKey: string,
+    model: string,
+    baseUrl: string,
+  ): Promise<string[]> {
+    const system = [
+      'You are a professional translator for restaurant menus (dishes, sections, short descriptions).',
+      `Translate from ${fromLang} to ${toLang}.`,
+      'Keep proper nouns and brand names when they are usually left untranslated.',
+      'Do not invent prices, allergens, or extra sentences.',
+      'Return ONLY valid JSON of the form {"translations":["..."]} with the same number of strings, same order.',
+    ].join(' ');
+
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: system },
+          {
+            role: 'user',
+            content: JSON.stringify({ texts }),
+          },
+        ],
+      }),
+    });
+
+    const rawText = await res.text();
+    let parsed: any = null;
+    try {
+      parsed = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      parsed = null;
+    }
+
+    if (!res.ok) {
+      const errType = String(parsed?.error?.type || parsed?.error?.code || '');
+      const errMsg = String(parsed?.error?.message || rawText || `HTTP ${res.status}`);
+      this.logger.warn(`OpenAI Translate HTTP ${res.status}: ${errMsg}`);
+      if (res.status === 401) {
+        throw new BadGatewayException('OpenAI rechazó la API key (401). Verificá OPENAI_API_KEY.');
+      }
+      if (res.status === 429 && /insufficient_quota/i.test(errType + errMsg)) {
+        throw new BadGatewayException(
+          'OpenAI sin crédito/cuota. Revisá billing en https://platform.openai.com/account/billing',
+        );
+      }
+      throw new BadGatewayException(errMsg || `OpenAI Translate error HTTP ${res.status}`);
+    }
+
+    const content = parsed?.choices?.[0]?.message?.content;
+    if (typeof content !== 'string' || !content.trim()) {
+      throw new BadGatewayException('Respuesta vacía de OpenAI Translate.');
+    }
+
+    let payload: { translations?: unknown };
+    try {
+      payload = JSON.parse(content) as { translations?: unknown };
+    } catch {
+      this.logger.warn(`OpenAI Translate: JSON inválido en content: ${content.slice(0, 200)}`);
+      throw new BadGatewayException('OpenAI no devolvió JSON válido para la traducción.');
+    }
+
+    const translations = payload?.translations;
+    if (!Array.isArray(translations) || translations.length !== texts.length) {
+      throw new BadGatewayException(
+        `OpenAI Translate: se esperaban ${texts.length} traducciones, llegaron ${Array.isArray(translations) ? translations.length : 0}.`,
+      );
+    }
+
+    return translations.map((t, idx) => {
+      if (typeof t !== 'string') {
+        this.logger.warn(`OpenAI Translate: índice ${idx} no es string`);
+        throw new BadGatewayException('Respuesta incompleta de OpenAI Translate.');
+      }
+      return t;
+    });
+  }
+
   private async translateBatchActive(
     texts: string[],
     sourceBcp47: string,
     targetBcp47: string,
   ): Promise<string[]> {
     const p = this.effectiveTranslateProvider();
+    if (p === 'openai') return this.openaiTranslateBatch(texts, sourceBcp47, targetBcp47);
     if (p === 'google') return this.googleTranslateBatch(texts, sourceBcp47, targetBcp47);
     if (p === 'microsoft') return this.microsoftTranslateBatch(texts, sourceBcp47, targetBcp47);
     throw new ServiceUnavailableException('No hay proveedor de traducción automática configurado.');
