@@ -1,0 +1,83 @@
+{
+  "title": "Tickets de soporte",
+  "subtitle": "Gestioná reportes de usuarios: abrí un ticket para ver el hilo, datos de cuenta y suscripción, y respondé desde el detalle.",
+  "loading": "Cargando…",
+  "emDash": "—",
+  "ellipsis": "…",
+  "status": {
+    "open": "Abierto",
+    "in_progress": "En progreso",
+    "closed": "Cerrado"
+  },
+  "filters": {
+    "status": "Estado",
+    "all": "Todos",
+    "userEmail": "Email usuario",
+    "userEmailPlaceholder": "contiene…",
+    "from": "Desde",
+    "to": "Hasta",
+    "apply": "Aplicar filtros"
+  },
+  "errors": {
+    "loadList": "No se pudo cargar los tickets.",
+    "loadTicket": "No se pudo cargar el ticket.",
+    "sendReply": "No se pudo enviar la respuesta.",
+    "updateStatus": "No se pudo actualizar el estado.",
+    "invalidTicketNumber": "Ingresá un número de ticket válido.",
+    "linkTicket": "No se pudo unir el ticket."
+  },
+  "table": {
+    "number": "#",
+    "user": "Usuario",
+    "subject": "Asunto",
+    "status": "Estado",
+    "images": "Img",
+    "created": "Creado",
+    "updated": "Actualizado",
+    "empty": "No hay tickets con estos filtros.",
+    "total": "Total: {{total}} (mostrando {{showing}})",
+    "open": "Abrir",
+    "current": "Actual"
+  },
+  "detail": {
+    "breadcrumbTickets": "Tickets",
+    "createdAt": "Creado {{date}}",
+    "caseId": "Caso: {{id}}",
+    "linkCase": {
+      "title": "Unir ticket a otro caso",
+      "ticketNumber": "Número de ticket principal",
+      "placeholder": "Ej: 1042",
+      "linking": "Uniendo…",
+      "submit": "Unir tickets"
+    },
+    "related": {
+      "title": "Tickets del mismo caso"
+    },
+    "attachments": {
+      "title": "Imágenes adjuntas"
+    },
+    "history": {
+      "title": "Historial"
+    },
+    "closedNotice": "Ticket cerrado. Reabrilo (estado Abierto o En progreso) para responder.",
+    "reply": {
+      "title": "Respuesta (Super Admin)",
+      "placeholder": "Respuesta al usuario…",
+      "sending": "Enviando…",
+      "submit": "Enviar respuesta"
+    },
+    "userPanel": {
+      "title": "Usuario",
+      "email": "Email:",
+      "name": "Nombre:",
+      "role": "Rol:",
+      "tenant": "Tenant:",
+      "tenantValue": "{{name}} ({{plan}})",
+      "effectivePlan": "Plan efectivo (resumen):",
+      "subscriptionsTitle": "Suscripciones recientes",
+      "planLine": "Plan: {{plan}} · {{planType}}",
+      "periodEnd": "Fin período: {{date}}",
+      "noSubscriptions": "Sin filas de suscripción."
+    }
+  }
+}

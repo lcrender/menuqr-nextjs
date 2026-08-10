@@ -37,6 +37,18 @@ export class MenuSectionsService {
     return rows[0]?.tenant_id ?? null;
   }
 
+  private async resolveMenuSourceLocale(menuId: string, tenantId: string): Promise<string> {
+    try {
+      const rows = await this.postgres.queryRaw<{ source_locale: string | null }>(
+        `SELECT source_locale FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+        [menuId, tenantId],
+      );
+      return String(rows[0]?.source_locale || 'es-ES') || 'es-ES';
+    } catch {
+      return 'es-ES';
+    }
+  }
+
   async findById(id: string, tenantId: string) {
     const result = await this.postgres.queryRaw<any>(
       `SELECT * FROM menu_sections 
@@ -89,12 +101,14 @@ export class MenuSectionsService {
       ]
     );
 
+    const sourceLocale = await this.resolveMenuSourceLocale(data.menuId, tenantId);
     await this.i18nService.saveTranslations(
       tenantId,
       'menu_section',
       id,
       { name: data.name },
-      'es-ES',
+      sourceLocale,
+      { sourceLocale },
     );
 
     return this.findById(id, tenantId);
@@ -138,12 +152,14 @@ export class MenuSectionsService {
     );
 
     if (data.name !== undefined) {
+      const sourceLocale = await this.resolveMenuSourceLocale(String(section.menu_id), tenantId);
       await this.i18nService.saveTranslations(
         tenantId,
         'menu_section',
         id,
         { name: data.name },
-        'es-ES',
+        sourceLocale,
+        { sourceLocale },
       );
     }
 

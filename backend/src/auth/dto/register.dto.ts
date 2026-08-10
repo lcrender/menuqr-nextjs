@@ -1,5 +1,6 @@
-import { IsEmail, IsString, MinLength, MaxLength, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, IsNotEmpty, IsOptional, IsIn, IsBoolean, Equals } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class RegisterDto {
   @ApiProperty({
@@ -43,7 +44,7 @@ export class RegisterDto {
 
   @ApiProperty({
     description: 'Nombre del tenant/empresa (opcional)',
-    example: 'Mi Restaurante S.A.',
+    example: 'Mi Comercio S.A.',
     required: false,
   })
   @IsOptional()
@@ -69,6 +70,38 @@ export class RegisterDto {
   @IsOptional()
   @IsIn(['monthly', 'yearly'])
   pendingBillingCycle?: 'monthly' | 'yearly';
+
+  @ApiProperty({
+    description: 'Debe ser true: aceptación de Términos y Condiciones y Política de Privacidad',
+    example: true,
+  })
+  @Transform(({ value }) => value === true || value === 'true' || value === 1 || value === '1')
+  @IsBoolean({ message: 'Debés aceptar los Términos y Condiciones y la Política de Privacidad.' })
+  @Equals(true, { message: 'Debés aceptar los Términos y Condiciones y la Política de Privacidad.' })
+  acceptTerms!: boolean;
+
+  @ApiProperty({
+    description: 'Opt-in para recibir novedades y consejos de MenuQR (opcional)',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return false;
+    return value === true || value === 'true' || value === 1 || value === '1';
+  })
+  @IsBoolean()
+  marketingOptIn?: boolean;
+
+  @ApiProperty({
+    description: 'Zona horaria IANA del navegador (ej. America/Argentina/Buenos_Aires)',
+    example: 'America/Argentina/Buenos_Aires',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  timezone?: string;
 
   @ApiProperty({
     description: 'Token reCAPTCHA v3 (obligatorio si el servidor tiene GOOGLE_RECAPTCHA_SECRET_KEY)',

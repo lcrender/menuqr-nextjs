@@ -1,5 +1,5 @@
 /**
- * Intención de usar una plantilla desde preview → login → aplicar al primer restaurante (o wizard).
+ * Intención de usar una plantilla desde preview → login → aplicar al primer comercio (o wizard).
  */
 import { previewTemplateIdToCatalogSlug } from './menu-template-preview-route';
 import { getTemplateBySlug } from './menu-templates-catalog';

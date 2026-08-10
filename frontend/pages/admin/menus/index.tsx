@@ -2,7 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { Trans, useTranslation } from 'react-i18next';
 import api from '../../../lib/axios';
+import i18n from '../../../src/i18n/config';
+import adminMenusEs from '../../../src/locales/fragments/adminMenus.es.json';
+import adminMenusEn from '../../../src/locales/fragments/adminMenus.en.json';
 import {
   DEFAULT_PUBLIC_PLAN_LIMITS,
   fetchPublicPlanLimits,
@@ -15,10 +19,13 @@ import ProductWizard from '../../../components/ProductWizard';
 import MenuWizard from '../../../components/MenuWizard';
 import ConfirmModal from '../../../components/ConfirmModal';
 import AlertModal from '../../../components/AlertModal';
-import { getMenuStatusLabelEs } from '../../../lib/menu-status-label';
 import { planAllowsMenuSchedule } from '../../../lib/menu-schedule';
 
+i18n.addResourceBundle('es-ES', 'translation', { adminMenus: adminMenusEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { adminMenus: adminMenusEn }, true, true);
+
 export default function Menus() {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const [menus, setMenus] = useState<any[]>([]);
   const [restaurants, setRestaurants] = useState<any[]>([]);
@@ -76,6 +83,31 @@ export default function Menus() {
     actionButton?: { label: string; href: string };
   } | null>(null);
 
+
+  const getMenuStatusLabel = (status: string | undefined | null) => {
+    switch (status) {
+      case 'PUBLISHED':
+        return t('adminMenus.status.published');
+      case 'DRAFT':
+        return t('adminMenus.status.draft');
+      case 'ARCHIVED':
+        return t('adminMenus.status.archived');
+      default:
+        return status?.trim() ? String(status) : t('adminMenus.status.draft');
+    }
+  };
+
+  const getTemplateLabel = (template: string | null | undefined) => {
+    if (!template) return t('adminMenus.template.classic');
+    if (template === 'italianFood') return 'Italian Food';
+    return template.charAt(0).toUpperCase() + template.slice(1);
+  };
+
+  const formatWarnings = (warnings: string[]) =>
+    warnings.length > 0
+      ? `\n\n${t('adminMenus.alerts.warningsPrefix')}\n${warnings.map((w) => `• ${w}`).join('\n')}`
+      : '';
+
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
@@ -108,16 +140,12 @@ export default function Menus() {
         sessionStorage.removeItem('menuPhotoImportFlash');
         if (j.ok !== false) {
           const warnings = Array.isArray(j.warnings) ? j.warnings : [];
-          const base =
-            'El menú se creó y publicó desde las fotos. Ya debería verse en la carta pública. No se importaron fotos de productos.';
-          const warnText =
-            warnings.length > 0
-              ? `\n\nAvisos:\n${warnings.map((w) => `• ${w}`).join('\n')}`
-              : '';
+          const base = t('adminMenus.alerts.photoImportMessage');
+          const warnText = formatWarnings(warnings);
           setAlertData({
             title: warnings.length
-              ? 'Menú importado desde foto (con avisos)'
-              : 'Menú importado desde foto',
+              ? t('adminMenus.alerts.photoImportTitleWarnings')
+              : t('adminMenus.alerts.photoImportTitle'),
             message: base + warnText,
             variant: warnings.length ? 'warning' : 'success',
           });
@@ -146,14 +174,12 @@ export default function Menus() {
     }
     sessionStorage.removeItem('menuCsvImportFlash');
 
-    const base =
-      'El menú se creó correctamente desde el CSV. Quedó en borrador: usá el botón «Publicar» en la fila de ese menú para que esté visible online. Si tu plan permite fotos en productos, podés cargarlas después desde la edición del menú.';
-    const warnText =
-      warnings.length > 0
-        ? `\n\nAvisos:\n${warnings.map((w) => `• ${w}`).join('\n')}`
-        : '';
+    const base = t('adminMenus.alerts.csvImportMessage');
+    const warnText = formatWarnings(warnings);
     setAlertData({
-      title: warnings.length ? 'Menú importado (con avisos)' : 'Menú importado',
+      title: warnings.length
+        ? t('adminMenus.alerts.csvImportTitleWarnings')
+        : t('adminMenus.alerts.csvImportTitle'),
       message: base + warnText,
       variant: warnings.length ? 'warning' : 'success',
     });
@@ -215,7 +241,7 @@ export default function Menus() {
         setTotal(menusRes.data.length);
       }
       
-      // Manejar respuesta paginada o no paginada de restaurantes
+      // Manejar respuesta paginada o no paginada de comercios
       let restaurantsData = restaurantsRes.data;
       if (restaurantsRes.data.data && restaurantsRes.data.total !== undefined) {
         restaurantsData = restaurantsRes.data.data;
@@ -314,7 +340,7 @@ export default function Menus() {
         return; // Salir temprano para no cerrar el modal
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error guardando menú');
+      alert(error.response?.data?.message || t('adminMenus.alerts.saveMenuError'));
     }
   };
 
@@ -380,8 +406,8 @@ export default function Menus() {
       setMenuToDelete(null);
     } catch (error: any) {
       setAlertData({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error eliminando menú',
+        title: t('adminMenus.error'),
+        message: error.response?.data?.message || t('adminMenus.alerts.deleteMenuError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -395,15 +421,15 @@ export default function Menus() {
       await api.put(`/menus/${menu.id}/publish`);
       loadData();
       setAlertData({
-        title: 'Éxito',
-        message: 'Menú publicado correctamente',
+        title: t('adminMenus.success'),
+        message: t('adminMenus.alerts.publishSuccess'),
         variant: 'success',
       });
       setShowAlert(true);
     } catch (error: any) {
       setAlertData({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error publicando menú',
+        title: t('adminMenus.error'),
+        message: error.response?.data?.message || t('adminMenus.alerts.publishError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -415,15 +441,15 @@ export default function Menus() {
       await api.put(`/menus/${menu.id}/unpublish`);
       loadData();
       setAlertData({
-        title: 'Éxito',
-        message: 'Menú despublicado correctamente',
+        title: t('adminMenus.success'),
+        message: t('adminMenus.alerts.unpublishSuccess'),
         variant: 'success',
       });
       setShowAlert(true);
     } catch (error: any) {
       setAlertData({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error despublicando menú',
+        title: t('adminMenus.error'),
+        message: error.response?.data?.message || t('adminMenus.alerts.unpublishError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -447,8 +473,8 @@ export default function Menus() {
     e.preventDefault();
     if (!editing || !editing.id) {
       setAlertData({
-        title: 'Validación',
-        message: 'Primero debes guardar el menú antes de agregar secciones',
+        title: t('adminMenus.validation'),
+        message: t('adminMenus.alerts.saveMenuBeforeSections'),
         variant: 'warning',
       });
       setShowAlert(true);
@@ -476,15 +502,17 @@ export default function Menus() {
       setEditingSection(null);
       await loadSections(editing.id);
       setAlertData({
-        title: 'Éxito',
-        message: editingSection ? 'Sección actualizada correctamente' : 'Sección creada correctamente',
+        title: t('adminMenus.success'),
+        message: editingSection
+          ? t('adminMenus.alerts.sectionUpdated')
+          : t('adminMenus.alerts.sectionCreated'),
         variant: 'success',
       });
       setShowAlert(true);
     } catch (error: any) {
       setAlertData({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error guardando sección',
+        title: t('adminMenus.error'),
+        message: error.response?.data?.message || t('adminMenus.alerts.sectionSaveError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -516,15 +544,15 @@ export default function Menus() {
       setShowConfirmDeleteSection(false);
       setSectionToDelete(null);
       setAlertData({
-        title: 'Éxito',
-        message: 'Sección eliminada correctamente',
+        title: t('adminMenus.success'),
+        message: t('adminMenus.alerts.sectionDeleted'),
         variant: 'success',
       });
       setShowAlert(true);
     } catch (error: any) {
       setAlertData({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error eliminando sección',
+        title: t('adminMenus.error'),
+        message: error.response?.data?.message || t('adminMenus.alerts.sectionDeleteError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -599,8 +627,8 @@ export default function Menus() {
       // Recargar las secciones en caso de error para restaurar el estado
       await loadSections(editing.id);
       setAlertData({
-        title: 'Error',
-        message: 'Error al guardar el orden de las secciones. Por favor, intenta nuevamente.',
+        title: t('adminMenus.error'),
+        message: t('adminMenus.alerts.sectionReorderError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -663,10 +691,10 @@ export default function Menus() {
       await loadData();
       const errorMessage = Array.isArray(error.response?.data?.message) 
         ? error.response.data.message.join(', ')
-        : error.response?.data?.message || error.message || 'Error desconocido';
+        : error.response?.data?.message || error.message || t('adminMenus.alerts.unknownError');
       setAlertData({
-        title: 'Error',
-        message: `Error al guardar el orden de los menús: ${errorMessage}. Por favor, intenta nuevamente.`,
+        title: t('adminMenus.error'),
+        message: t('adminMenus.alerts.menuReorderError', { error: errorMessage }),
         variant: 'error',
       });
       setShowAlert(true);
@@ -675,10 +703,10 @@ export default function Menus() {
 
   const getRestaurantName = (restaurantId: string) => {
     const restaurant = restaurants.find(r => r.id === restaurantId);
-    return restaurant?.name || 'N/A';
+    return restaurant?.name || t('adminMenus.na');
   };
 
-  // Obtener la moneda por defecto del restaurante
+  // Obtener la moneda por defecto del comercio
   const getDefaultCurrency = (restaurantId: string) => {
     const restaurant = restaurants.find(r => r.id === restaurantId);
     return restaurant?.defaultCurrency || 'USD';
@@ -703,8 +731,8 @@ export default function Menus() {
       window.open(url, '_blank');
     } else {
       setAlertData({
-        title: 'Error',
-        message: 'No se puede generar la URL del menú. Asegúrate de que el menú tenga un slug y esté asociado a un restaurante.',
+        title: t('adminMenus.error'),
+        message: t('adminMenus.alerts.cannotGenerateUrl'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -768,7 +796,7 @@ export default function Menus() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Editar Menú: {selectedMenuForEdit.name}</h5>
+                <h5 className="modal-title">{t('adminMenus.editOptions.title', { name: selectedMenuForEdit.name })}</h5>
                 <button 
                   type="button" 
                   className="btn-close" 
@@ -779,7 +807,7 @@ export default function Menus() {
                 ></button>
               </div>
               <div className="modal-body">
-                <p className="mb-4">¿Qué deseas editar de este menú?</p>
+                <p className="mb-4">{t('adminMenus.editOptions.prompt')}</p>
                 <div className="d-grid gap-3">
                   <button
                     type="button"
@@ -789,8 +817,8 @@ export default function Menus() {
                     <div className="d-flex align-items-center justify-content-center">
                       <span className="me-2" style={{ fontSize: '24px' }}>📝</span>
                       <div className="text-start">
-                        <div className="fw-bold">Información del menú</div>
-                        <small className="text-muted">Cambiar nombre, descripción y fechas</small>
+                        <div className="fw-bold">{t('adminMenus.editOptions.infoTitle')}</div>
+                        <small className="text-muted">{t('adminMenus.editOptions.infoDesc')}</small>
                       </div>
                     </div>
                   </button>
@@ -802,8 +830,8 @@ export default function Menus() {
                     <div className="d-flex align-items-center justify-content-center">
                       <span className="me-2" style={{ fontSize: '24px' }}>📑</span>
                       <div className="text-start">
-                        <div className="fw-bold">Secciones del menú</div>
-                        <small className="text-muted">Crear, editar o eliminar secciones</small>
+                        <div className="fw-bold">{t('adminMenus.editOptions.sectionsTitle')}</div>
+                        <small className="text-muted">{t('adminMenus.editOptions.sectionsDesc')}</small>
                       </div>
                     </div>
                   </button>
@@ -815,8 +843,8 @@ export default function Menus() {
                     <div className="d-flex align-items-center justify-content-center">
                       <span className="me-2" style={{ fontSize: '24px' }}>🍽️</span>
                       <div className="text-start">
-                        <div className="fw-bold">Productos del menú</div>
-                        <small className="text-muted">Agregar, quitar o reordenar productos</small>
+                        <div className="fw-bold">{t('adminMenus.editOptions.productsTitle')}</div>
+                        <small className="text-muted">{t('adminMenus.editOptions.productsDesc')}</small>
                       </div>
                     </div>
                   </button>
@@ -831,7 +859,7 @@ export default function Menus() {
                     setSelectedMenuForEdit(null);
                   }}
                 >
-                  Cancelar
+                  {t('adminMenus.cancel')}
                 </button>
               </div>
             </div>
@@ -840,7 +868,7 @@ export default function Menus() {
       )}
 
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-        <h1 className="admin-title mb-0">Menús</h1>
+        <h1 className="admin-title mb-0">{t('adminMenus.title')}</h1>
         <div className="admin-quick-links d-flex flex-wrap gap-2">
           <button
             type="button"
@@ -851,12 +879,11 @@ export default function Menus() {
                 planAllowsMenuSchedule(tenantPlan || user?.tenant?.plan);
               if (!allowed) {
                 setAlertData({
-                  title: 'Función disponible en Pro',
-                  message:
-                    'La programación de menús (días y horarios de visibilidad) está disponible en planes Pro o Premium. Actualizá tu suscripción para usarla.',
+                  title: t('adminMenus.alerts.proFeatureTitle'),
+                  message: t('adminMenus.alerts.proFeatureMessage'),
                   variant: 'info',
                   actionButton: {
-                    label: 'Ver suscripción',
+                    label: t('adminMenus.alerts.viewSubscription'),
                     href: '/admin/profile/subscription',
                   },
                 });
@@ -865,9 +892,9 @@ export default function Menus() {
               }
               router.push('/admin/menus/schedule');
             }}
-            title="Programar visibilidad de menús por día y horario"
+            title={t('adminMenus.scheduleMenuTooltip')}
           >
-            Programar menú
+            {t('adminMenus.scheduleMenu')}
           </button>
           <button
             type="button"
@@ -881,9 +908,9 @@ export default function Menus() {
                 const plan = tenantPlan || 'free';
                 const planLabel =
                   plan === 'free'
-                    ? 'gratuito'
+                    ? t('adminMenus.plan.free')
                     : plan === 'pro_team'
-                      ? 'Pro Team'
+                      ? t('adminMenus.plan.proTeam')
                       : plan;
                 setLimitMessage({ limit, current: currentTotal, plan: planLabel });
                 setShowLimitModal(true);
@@ -893,7 +920,7 @@ export default function Menus() {
             }}
             disabled={restaurants.length === 0}
           >
-            + Nuevo Menú
+            {t('adminMenus.newMenu')}
           </button>
         </div>
       </div>
@@ -918,10 +945,10 @@ export default function Menus() {
       {!loading && restaurants.length === 0 && (
         <div className="admin-card mb-4" style={{ textAlign: 'center', padding: '2rem' }}>
           <p className="mb-3" style={{ fontSize: '1.1rem', color: 'var(--admin-text-secondary)' }}>
-            Para crear un menú primero necesitas tener al menos un restaurante.
+            {t('adminMenus.emptyBusiness.message')}
           </p>
-          <a href="/admin/restaurants?wizard=true" className="admin-btn">
-            Crear mi primer restaurante
+          <a href="/admin/comercios?wizard=true" className="admin-btn">
+            {t('adminMenus.emptyBusiness.cta')}
           </a>
         </div>
       )}
@@ -930,11 +957,14 @@ export default function Menus() {
         <div className="mb-3 p-3 bg-light rounded border">
           <div className="d-flex align-items-center gap-2 mb-2">
             <strong style={{ fontSize: '1.1rem' }}>
-              {total || menus.length}/{getMenuLimit() === -1 ? '∞' : getMenuLimit()} menús disponibles
+              {t('adminMenus.quota.available', {
+                current: total || menus.length,
+                limit: getMenuLimit() === -1 ? '∞' : getMenuLimit(),
+              })}
             </strong>
           </div>
           <p className="mb-0 text-muted" style={{ fontSize: '0.9rem' }}>
-            Puedes ampliar la cantidad de menús disponibles cambiando tu plan de suscripción.
+            {t('adminMenus.quota.hint')}
           </p>
         </div>
       )}
@@ -942,7 +972,7 @@ export default function Menus() {
       {restaurants.length > 0 && (
         <div className="admin-card mb-3">
           <label className="form-label fw-semibold mb-2" htmlFor="menus-filter-restaurant">
-            Restaurante
+            {t('adminMenus.filter.business')}
           </label>
           <select
             id="menus-filter-restaurant"
@@ -954,9 +984,9 @@ export default function Menus() {
               setPage(1);
             }}
           >
-            <option value="">Todos los restaurantes</option>
+            <option value="">{t('adminMenus.filter.allBusinesses')}</option>
             {[...restaurants]
-              .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }))
+              .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), i18n.language, { sensitivity: 'base' }))
               .map((r: any) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
@@ -969,7 +999,7 @@ export default function Menus() {
       {restaurants.length > 0 && (loading ? (
         <div className="text-center">
           <div className="spinner-border" role="status">
-            <span className="visually-hidden">Cargando...</span>
+            <span className="visually-hidden">{t('adminMenus.loading')}</span>
           </div>
         </div>
       ) : (
@@ -979,14 +1009,14 @@ export default function Menus() {
             <thead>
               <tr>
                 <th style={{ width: '40px' }}></th>
-                <th>Orden</th>
-                <th>Nombre</th>
-                {isSuperAdmin && <th>Tenant</th>}
-                <th>Restaurante</th>
-                {isSuperAdmin && <th>Plantilla</th>}
-                <th>Estado</th>
-                <th>Secciones</th>
-                <th className="admin-menus-col-actions">Acciones</th>
+                <th>{t('adminMenus.table.order')}</th>
+                <th>{t('adminMenus.table.name')}</th>
+                {isSuperAdmin && <th>{t('adminMenus.table.tenant')}</th>}
+                <th>{t('adminMenus.table.business')}</th>
+                {isSuperAdmin && <th>{t('adminMenus.table.template')}</th>}
+                <th>{t('adminMenus.table.status')}</th>
+                <th>{t('adminMenus.table.sections')}</th>
+                <th className="admin-menus-col-actions">{t('adminMenus.table.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1038,11 +1068,11 @@ export default function Menus() {
                       )}
                     </td>
                   )}
-                  <td>{getRestaurantName(menu.restaurantId || menu.restaurant_id) || 'Sin restaurante'}</td>
+                  <td>{getRestaurantName(menu.restaurantId || menu.restaurant_id) || t('adminMenus.table.noBusiness')}</td>
                   {isSuperAdmin && (
                     <td>
                       <span className="badge bg-secondary">
-                        {menu.restaurantTemplate ? (menu.restaurantTemplate === 'italianFood' ? 'Italian Food' : menu.restaurantTemplate.charAt(0).toUpperCase() + menu.restaurantTemplate.slice(1)) : 'Clásico'}
+                        {getTemplateLabel(menu.restaurantTemplate)}
                       </span>
                     </td>
                   )}
@@ -1056,7 +1086,7 @@ export default function Menus() {
                             : 'bg-secondary'
                       }`}
                     >
-                      {getMenuStatusLabelEs(menu.status)}
+                      {getMenuStatusLabel(menu.status)}
                     </span>
                   </td>
                   <td>{menu.sectionCount || 0}</td>
@@ -1065,27 +1095,27 @@ export default function Menus() {
                       <button 
                         className="btn btn-sm btn-primary" 
                         onClick={() => handleViewMenu(menu)}
-                        title="Ver menú en nueva pestaña"
+                        title={t('adminMenus.table.viewMenuTitle')}
                       >
-                        Ver menú
+                        {t('adminMenus.table.viewMenu')}
                       </button>
                       <button className="btn btn-sm btn-secondary" onClick={() => handleEdit(menu)}>
-                        Editar
+                        {t('adminMenus.edit')}
                       </button>
                       {menu.status === 'PUBLISHED' ? (
                         <button className="btn btn-sm btn-warning" onClick={() => handleUnpublish(menu)}>
-                          Despublicar
+                          {t('adminMenus.unpublish')}
                         </button>
                       ) : (
                         <button className="btn btn-sm btn-success" onClick={() => handlePublish(menu)}>
-                          Publicar
+                          {t('adminMenus.publish')}
                         </button>
                       )}
                       <button 
                         className="btn btn-sm btn-danger" 
                         onClick={() => handleDeleteClick(menu.id)}
                       >
-                        Eliminar
+                        {t('adminMenus.delete')}
                       </button>
                     </div>
                   </td>
@@ -1100,15 +1130,11 @@ export default function Menus() {
             const menuUrl = getMenuPublicUrl(menu);
             const statusBadge =
               menu.status === 'PUBLISHED'
-                ? { className: 'bg-success', label: getMenuStatusLabelEs(menu.status) }
+                ? { className: 'bg-success', label: getMenuStatusLabel(menu.status) }
                 : menu.status === 'DRAFT'
-                  ? { className: 'bg-warning text-dark', label: getMenuStatusLabelEs(menu.status) }
-                  : { className: 'bg-secondary', label: getMenuStatusLabelEs(menu.status) };
-            const templateShort = menu.restaurantTemplate
-              ? menu.restaurantTemplate === 'italianFood'
-                ? 'Italian Food'
-                : menu.restaurantTemplate.charAt(0).toUpperCase() + menu.restaurantTemplate.slice(1)
-              : 'Clásico';
+                  ? { className: 'bg-warning text-dark', label: getMenuStatusLabel(menu.status) }
+                  : { className: 'bg-secondary', label: getMenuStatusLabel(menu.status) };
+            const templateShort = getTemplateLabel(menu.restaurantTemplate);
             return (
               <div
                 key={menu.id}
@@ -1140,22 +1166,22 @@ export default function Menus() {
                 </div>
                 {isSuperAdmin && menu.tenantName && (
                   <p className="admin-menus-mobile-meta">
-                    <span className="admin-menus-mobile-meta-label">Tenant:</span>{' '}
+                    <span className="admin-menus-mobile-meta-label">{t('adminMenus.mobile.tenant')}</span>{' '}
                     <span className="badge bg-info">{menu.tenantName}</span>
                   </p>
                 )}
                 <p className="admin-menus-mobile-meta">
-                  <span className="admin-menus-mobile-meta-label">Restaurante:</span>{' '}
-                  <strong>{getRestaurantName(menu.restaurantId || menu.restaurant_id) || 'Sin restaurante'}</strong>
+                  <span className="admin-menus-mobile-meta-label">{t('adminMenus.mobile.business')}</span>{' '}
+                  <strong>{getRestaurantName(menu.restaurantId || menu.restaurant_id) || t('adminMenus.table.noBusiness')}</strong>
                 </p>
                 {isSuperAdmin && (
                   <p className="admin-menus-mobile-meta">
-                    <span className="admin-menus-mobile-meta-label">Plantilla:</span>{' '}
+                    <span className="admin-menus-mobile-meta-label">{t('adminMenus.mobile.template')}</span>{' '}
                     <span className="badge bg-secondary">{templateShort}</span>
                   </p>
                 )}
                 <p className="admin-menus-mobile-sections">
-                  Secciones: <strong>{menu.sectionCount ?? 0}</strong>
+                  {t('adminMenus.table.sectionsCount')}<strong>{menu.sectionCount ?? 0}</strong>
                 </p>
                 <div className="admin-menus-mobile-grid">
                   {menuUrl ? (
@@ -1164,27 +1190,27 @@ export default function Menus() {
                       className="btn btn-sm btn-primary"
                       onClick={() => handleViewMenu(menu)}
                     >
-                      Ver menú
+                      {t('adminMenus.table.viewMenu')}
                     </button>
                   ) : (
-                    <button type="button" className="btn btn-sm btn-primary" disabled title="Slug o restaurante incompleto">
-                      Ver menú
+                    <button type="button" className="btn btn-sm btn-primary" disabled title={t('adminMenus.table.viewMenuDisabledTitle')}>
+                      {t('adminMenus.table.viewMenu')}
                     </button>
                   )}
                   <button type="button" className="btn btn-sm btn-secondary" onClick={() => handleEdit(menu)}>
-                    Editar
+                    {t('adminMenus.edit')}
                   </button>
                   {menu.status === 'PUBLISHED' ? (
                     <button type="button" className="btn btn-sm btn-warning" onClick={() => handleUnpublish(menu)}>
-                      Despublicar
+                      {t('adminMenus.unpublish')}
                     </button>
                   ) : (
                     <button type="button" className="btn btn-sm btn-success" onClick={() => handlePublish(menu)}>
-                      Publicar
+                      {t('adminMenus.publish')}
                     </button>
                   )}
                   <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDeleteClick(menu.id)}>
-                    Eliminar
+                    {t('adminMenus.delete')}
                   </button>
                 </div>
               </div>
@@ -1199,14 +1225,18 @@ export default function Menus() {
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-center gap-3 mt-4 admin-menus-pagination">
           <div className="text-center text-md-start">
             <span className="text-muted">
-              Mostrando {((page - 1) * itemsPerPage) + 1} - {Math.min(page * itemsPerPage, total)} de {total}
+              {t('adminMenus.pagination.showing', {
+                from: ((page - 1) * itemsPerPage) + 1,
+                to: Math.min(page * itemsPerPage, total),
+                total,
+              })}
             </span>
           </div>
           <nav className="admin-menus-pagination-nav">
             <ul className="pagination mb-0">
               <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
                 <button className="page-link" onClick={() => setPage(page - 1)} disabled={page === 1}>
-                  Anterior
+                  {t('adminMenus.previous')}
                 </button>
               </li>
               {Array.from({ length: Math.ceil(total / itemsPerPage) }, (_, i) => i + 1)
@@ -1227,7 +1257,7 @@ export default function Menus() {
                 ))}
               <li className={`page-item ${page >= Math.ceil(total / itemsPerPage) ? 'disabled' : ''}`}>
                 <button className="page-link" onClick={() => setPage(page + 1)} disabled={page >= Math.ceil(total / itemsPerPage)}>
-                  Siguiente
+                  {t('adminMenus.next')}
                 </button>
               </li>
             </ul>
@@ -1255,7 +1285,7 @@ export default function Menus() {
                     color: 'var(--admin-text)',
                     letterSpacing: '-0.02em',
                     marginBottom: 0,
-                  }}>{editing ? 'Editar' : 'Nuevo'} Menú</h5>
+                  }}>{editing ? t('adminMenus.modal.editTitle') : t('adminMenus.modal.newTitle')}</h5>
                   {editing?.id && (formData.name || editing.name) ? (
                     <p className="text-muted small mb-0 mt-2" style={{ fontWeight: 600 }}>
                       {formData.name || editing.name}
@@ -1309,7 +1339,7 @@ export default function Menus() {
                     }}
                     type="button"
                   >
-                    Información
+                    {t('adminMenus.modal.tabInfo')}
                   </button>
                 </li>
                 <li className="nav-item">
@@ -1321,8 +1351,8 @@ export default function Menus() {
                         loadSections(editing.id);
                       } else {
                         setAlertData({
-                          title: 'Validación',
-                          message: 'Primero debes guardar el menú antes de agregar secciones',
+                          title: t('adminMenus.validation'),
+                          message: t('adminMenus.alerts.saveMenuBeforeSections'),
                           variant: 'warning',
                         });
                         setShowAlert(true);
@@ -1332,7 +1362,9 @@ export default function Menus() {
                     disabled={!editing?.id}
                     style={{ opacity: !editing?.id ? 0.5 : 1, cursor: !editing?.id ? 'not-allowed' : 'pointer' }}
                   >
-                    Secciones {editing?.id ? `(${sections.length})` : ''}
+                    {editing?.id
+                      ? t('adminMenus.modal.tabSectionsCount', { count: sections.length })
+                      : t('adminMenus.modal.tabSections')}
                   </button>
                 </li>
               </ul>
@@ -1348,7 +1380,7 @@ export default function Menus() {
                     <div className="wizard-step-centered">
                       <div className="wizard-fields-container">
                         <div className="wizard-field-large">
-                          <label className="wizard-label">Restaurante</label>
+                          <label className="wizard-label">{t('adminMenus.modal.business')}</label>
                           <select
                             className="wizard-input-large"
                             value={formData.restaurantId || ''}
@@ -1359,7 +1391,7 @@ export default function Menus() {
                               appearance: 'auto'
                             }}
                           >
-                            <option value="">Sin asignar</option>
+                            <option value="">{t('adminMenus.modal.unassigned')}</option>
                             {restaurants.map((restaurant) => (
                               <option key={restaurant.id} value={restaurant.id}>
                                 {restaurant.name}
@@ -1368,23 +1400,23 @@ export default function Menus() {
                           </select>
                         </div>
                         <div className="wizard-field-large">
-                          <label className="wizard-label">Nombre *</label>
+                          <label className="wizard-label">{t('adminMenus.modal.name')}</label>
                           <input
                             type="text"
                             className="wizard-input-large"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             required
-                            placeholder="Nombre del menú"
+                            placeholder={t('adminMenus.modal.namePlaceholder')}
                           />
                         </div>
                         <div className="wizard-field-large">
-                          <label className="wizard-label">Descripción (opcional)</label>
+                          <label className="wizard-label">{t('adminMenus.modal.description')}</label>
                           <textarea
                             className="wizard-textarea-large"
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            placeholder="Descripción del menú (opcional)"
+                            placeholder={t('adminMenus.modal.descriptionPlaceholder')}
                           />
                         </div>
                       </div>
@@ -1421,7 +1453,7 @@ export default function Menus() {
                       borderRadius: '12px'
                     }}
                   >
-                    {editing?.id ? 'Cerrar' : 'Cancelar'}
+                    {editing?.id ? t('adminMenus.close') : t('adminMenus.cancel')}
                   </button>
                   <button 
                     type="submit" 
@@ -1433,7 +1465,7 @@ export default function Menus() {
                       borderRadius: '12px'
                     }}
                   >
-                    {editing?.id ? 'Actualizar' : 'Crear'}
+                    {editing?.id ? t('adminMenus.update') : t('adminMenus.create')}
                   </button>
                   {editing?.id && (
                     <button
@@ -1453,7 +1485,7 @@ export default function Menus() {
                         border: 'none'
                       }}
                     >
-                      Guardar y Cerrar
+                      {t('adminMenus.saveAndClose')}
                     </button>
                   )}
                 </div>
@@ -1468,7 +1500,7 @@ export default function Menus() {
                       color: 'white',
                       border: 'none'
                     }}>
-                      Primero debes guardar el menú antes de agregar secciones.
+                      {t('adminMenus.modal.saveMenuFirst')}
                     </div>
                   ) : (
                     <>
@@ -1476,19 +1508,19 @@ export default function Menus() {
                         <div className="wizard-step-centered">
                           <div className="wizard-fields-container">
                             <div className="wizard-field-large">
-                              <label className="wizard-label">Nombre de la sección *</label>
+                              <label className="wizard-label">{t('adminMenus.sections.name')}</label>
                               <input
                                 type="text"
                                 className="wizard-input-large"
                                 value={sectionFormData.name}
                                 onChange={(e) => setSectionFormData({ ...sectionFormData, name: e.target.value })}
                                 required
-                                placeholder="Ej: Entradas, Platos principales, Postres..."
+                                placeholder={t('adminMenus.sections.namePlaceholder')}
                               />
                             </div>
                             <div style={{ display: 'flex', gap: '16px' }}>
                               <div className="wizard-field-large" style={{ flex: 1 }}>
-                                <label className="wizard-label">Estado</label>
+                                <label className="wizard-label">{t('adminMenus.sections.status')}</label>
                                 <select
                                   className="wizard-input-large"
                                   value={sectionFormData.isActive ? 'true' : 'false'}
@@ -1499,8 +1531,8 @@ export default function Menus() {
                                     appearance: 'auto'
                                   }}
                                 >
-                                  <option value="true">Activa</option>
-                                  <option value="false">Inactiva</option>
+                                  <option value="true">{t('adminMenus.sections.active')}</option>
+                                  <option value="false">{t('adminMenus.sections.inactive')}</option>
                                 </select>
                               </div>
                             </div>
@@ -1515,7 +1547,9 @@ export default function Menus() {
                                   borderRadius: '12px'
                                 }}
                               >
-                                {editingSection ? 'Actualizar' : 'Agregar'} Sección
+                                {editingSection
+                                  ? t('adminMenus.sections.updateSection')
+                                  : t('adminMenus.sections.addSection')}
                               </button>
                               {editingSection && (
                                 <button
@@ -1532,7 +1566,7 @@ export default function Menus() {
                                     borderRadius: '12px'
                                   }}
                                 >
-                                  Cancelar
+                                  {t('adminMenus.cancel')}
                                 </button>
                               )}
                             </div>
@@ -1547,11 +1581,11 @@ export default function Menus() {
                         fontWeight: 700,
                         marginBottom: '24px',
                         color: 'var(--admin-text)'
-                      }}>Secciones del menú</h6>
+                      }}>{t('adminMenus.sections.listTitle')}</h6>
                       {loadingSections ? (
                         <div className="text-center py-3">
                           <div className="spinner-border spinner-border-sm" role="status">
-                            <span className="visually-hidden">Cargando...</span>
+                            <span className="visually-hidden">{t('adminMenus.loading')}</span>
                           </div>
                         </div>
                       ) : sections.length === 0 ? (
@@ -1563,7 +1597,7 @@ export default function Menus() {
                           borderRadius: '12px',
                           border: '1px dashed var(--admin-border)'
                         }}>
-                          <p>No hay secciones creadas. Agrega una sección usando el formulario de arriba.</p>
+                          <p>{t('adminMenus.sections.empty')}</p>
                         </div>
                       ) : (
                         <div className="wizard-sections-list" style={{
@@ -1654,7 +1688,9 @@ export default function Menus() {
                                         : 'var(--admin-text-muted)',
                                       color: 'white'
                                     }}>
-                                      {section.isActive !== false ? 'Activa' : 'Inactiva'}
+                                      {section.isActive !== false
+                                        ? t('adminMenus.sections.active')
+                                        : t('adminMenus.sections.inactive')}
                                     </span>
                                     {section.itemCount !== undefined && (
                                       <span className="badge" style={{
@@ -1665,7 +1701,7 @@ export default function Menus() {
                                         fontSize: '0.75rem',
                                         fontWeight: 600
                                       }}>
-                                        {section.itemCount || 0} productos
+                                        {t('adminMenus.sections.productsCount', { count: section.itemCount || 0 })}
                                       </span>
                                     )}
                                   </div>
@@ -1684,7 +1720,7 @@ export default function Menus() {
                                       fontWeight: 600
                                     }}
                                   >
-                                    Editar
+                                    {t('adminMenus.edit')}
                                   </button>
                                   <button
                                     type="button"
@@ -1696,7 +1732,7 @@ export default function Menus() {
                                       fontWeight: 600
                                     }}
                                   >
-                                    Eliminar
+                                    {t('adminMenus.delete')}
                                   </button>
                                 </div>
                               </div>
@@ -1720,7 +1756,7 @@ export default function Menus() {
               <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
                 <h5 className="modal-title" style={{ color: '#856404' }}>
                   <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#ffc107' }}></i>
-                  Límite Alcanzado
+                  {t('adminMenus.limitModal.title')}
                 </h5>
                 <button 
                   type="button" 
@@ -1731,10 +1767,18 @@ export default function Menus() {
               </div>
               <div className="modal-body" style={{ padding: '24px' }}>
                 <p style={{ marginBottom: '16px', fontSize: '16px' }}>
-                  Has alcanzado el límite de <strong>{limitMessage.limit} menú(s)</strong> para tu plan <strong>{limitMessage.plan}</strong>.
+                  <Trans
+                    i18nKey="adminMenus.limitModal.reached"
+                    values={{ limit: limitMessage.limit, plan: limitMessage.plan }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <p style={{ marginBottom: '16px', fontSize: '16px' }}>
-                  Actualmente tienes <strong>{limitMessage.current} menú(s)</strong> creado(s).
+                  <Trans
+                    i18nKey="adminMenus.limitModal.current"
+                    values={{ current: limitMessage.current }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <div
                   style={{
@@ -1764,10 +1808,10 @@ export default function Menus() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#854d0e', marginBottom: 2 }}>
-                      ¿Necesitas más menús?
+                      {t('adminMenus.limitModal.needMoreTitle')}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
-                      Amplía tu suscripción para crear más menús y aprovechar todas las funcionalidades de AppMenuQR.
+                      {t('adminMenus.limitModal.needMoreDesc')}
                     </div>
                   </div>
                 </div>
@@ -1783,14 +1827,14 @@ export default function Menus() {
                   rel="noopener noreferrer"
                   style={{ textDecoration: 'none' }}
                 >
-                  Ver planes y suscripción
+                  {t('adminMenus.limitModal.viewPlans')}
                 </Link>
                 <button 
                   type="button" 
                   className="admin-btn admin-btn-secondary" 
                   onClick={() => setShowLimitModal(false)}
                 >
-                  Por el momento no me interesa
+                  {t('adminMenus.limitModal.notInterested')}
                 </button>
               </div>
             </div>
@@ -1801,10 +1845,10 @@ export default function Menus() {
       {/* Modal de confirmación para eliminar menú */}
       <ConfirmModal
         show={showConfirmDeleteMenu}
-        title="Eliminar Menú"
-        message="¿Estás seguro de eliminar este menú? Esta acción no se puede deshacer y también se eliminarán todas las secciones y productos asociados."
-        confirmText="Eliminar"
-        cancelText="Cancelar"
+        title={t('adminMenus.confirm.deleteMenuTitle')}
+        message={t('adminMenus.confirm.deleteMenuMessage')}
+        confirmText={t('adminMenus.delete')}
+        cancelText={t('adminMenus.cancel')}
         variant="danger"
         onConfirm={handleDeleteConfirm}
         onCancel={() => {
@@ -1816,10 +1860,10 @@ export default function Menus() {
       {/* Modal de confirmación para eliminar sección */}
       <ConfirmModal
         show={showConfirmDeleteSection}
-        title="Eliminar Sección"
-        message="¿Estás seguro de eliminar esta sección? Esta acción no se puede deshacer y también se eliminarán todos los productos asociados a esta sección."
-        confirmText="Eliminar"
-        cancelText="Cancelar"
+        title={t('adminMenus.confirm.deleteSectionTitle')}
+        message={t('adminMenus.confirm.deleteSectionMessage')}
+        confirmText={t('adminMenus.delete')}
+        cancelText={t('adminMenus.cancel')}
         variant="danger"
         onConfirm={handleDeleteSectionConfirm}
         onCancel={() => {

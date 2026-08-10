@@ -14,6 +14,18 @@ export class MenuItemsService {
     private readonly i18nService: I18nService,
   ) {}
 
+  private async resolveMenuSourceLocale(menuId: string, tenantId: string): Promise<string> {
+    try {
+      const rows = await this.postgres.queryRaw<{ source_locale: string | null }>(
+        `SELECT source_locale FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+        [menuId, tenantId],
+      );
+      return String(rows[0]?.source_locale || 'es-ES') || 'es-ES';
+    } catch {
+      return 'es-ES';
+    }
+  }
+
   async findAll(tenantId: string | null, menuId?: string, sectionId?: string, productName?: string, restaurantId?: string) {
     let query = `
       SELECT 
@@ -94,7 +106,7 @@ export class MenuItemsService {
           sectionId: item.section_id,
           menuName: item.menuName || 'Sin menú',
           sectionName: item.sectionName || 'Sin sección',
-          restaurantName: item.restaurantName || 'Sin restaurante',
+          restaurantName: item.restaurantName || 'Sin comercio',
           restaurantTemplate: item.restaurantTemplate || 'classic',
           tenantName: item.tenantName || null,
           tenantId: item.tenantId || null,
@@ -111,7 +123,7 @@ export class MenuItemsService {
 
   /**
    * Listar productos para SUPER_ADMIN filtrando por tenantId y/o restaurantId (IDs exactos).
-   * Se usa cuando el admin elige usuario y/o restaurante en los selects.
+   * Se usa cuando el admin elige usuario y/o comercio en los selects.
    */
   async findAllForSuperAdminByIds(
     tenantId?: string,
@@ -206,7 +218,7 @@ export class MenuItemsService {
           sectionId: item.section_id,
           menuName: item.menuName || 'Sin menú',
           sectionName: item.sectionName || 'Sin sección',
-          restaurantName: item.restaurantName || 'Sin restaurante',
+          restaurantName: item.restaurantName || 'Sin comercio',
           restaurantTemplate: item.restaurantTemplate || 'classic',
           tenantName: item.tenantName || null,
           tenantId: item.tenantId || null,
@@ -353,7 +365,7 @@ export class MenuItemsService {
           sectionId: item.section_id,
           menuName: item.menuName || 'Sin menú',
           sectionName: item.sectionName || 'Sin sección',
-          restaurantName: item.restaurantName || 'Sin restaurante',
+          restaurantName: item.restaurantName || 'Sin comercio',
           restaurantTemplate: item.restaurantTemplate || 'classic',
           tenantName: item.tenantName || null,
           tenantId: item.tenantId || null,
@@ -526,14 +538,19 @@ export class MenuItemsService {
       ]
     );
 
-    // Persistir campos traducibles en `translations` (compatibilidad i18n).
+    // Persistir campos traducibles en el locale base del menú.
     const itemTranslations: { [key: string]: string } = {
       name: data.name,
     };
     if (data.description !== undefined) {
       itemTranslations.description = data.description || '';
     }
-    await this.i18nService.saveTranslations(tenantId, 'menu_item', id, itemTranslations, 'es-ES');
+    const sourceLocale = data.menuId
+      ? await this.resolveMenuSourceLocale(data.menuId, tenantId)
+      : 'es-ES';
+    await this.i18nService.saveTranslations(tenantId, 'menu_item', id, itemTranslations, sourceLocale, {
+      sourceLocale,
+    });
 
     // Crear precios si se proporcionan
     if (data.prices && data.prices.length > 0) {
@@ -763,7 +780,13 @@ export class MenuItemsService {
       hasAny = true;
     }
     if (hasAny) {
-      await this.i18nService.saveTranslations(tenantId, 'menu_item', id, translations, 'es-ES');
+      const menuId = String(data.menuId || item.menu_id || '');
+      const sourceLocale = menuId
+        ? await this.resolveMenuSourceLocale(menuId, tenantId)
+        : 'es-ES';
+      await this.i18nService.saveTranslations(tenantId, 'menu_item', id, translations, sourceLocale, {
+        sourceLocale,
+      });
     }
 
     return this.findById(id, tenantId);

@@ -1,0 +1,77 @@
+{
+  "title": "Technical support",
+  "lead": "Open a ticket to report problems or ask for help. The team will get a notification and you can track progress from this same section.",
+  "status": {
+    "open": "Open",
+    "in_progress": "In progress",
+    "closed": "Closed"
+  },
+  "docsCard": {
+    "title": "Documentation",
+    "body": "For how to use the app, check the <docsLink>panel documentation</docsLink>."
+  },
+  "tips": {
+    "title": "Tips for a good report",
+    "expectedVsActual": "Describe what you expected and what happened instead.",
+    "reproSteps": "Concrete steps to reproduce the problem.",
+    "environment": "Browser, operating system, and whether it is mobile or desktop.",
+    "errors": "Error message text or what you see in the console (F12).",
+    "attachments": "You can attach screenshots in JPG or PNG (up to 5 images, 5 MB each)."
+  },
+  "form": {
+    "title": "Create ticket",
+    "subject": "Subject",
+    "subjectPlaceholder": "Brief summary of the problem",
+    "description": "Description",
+    "descriptionPlaceholder": "Include steps to reproduce, browser, error messages…",
+    "attachments": "Attached images (optional)",
+    "attachmentsHint": "JPG, JPEG, or PNG. Max 5 files, 5 MB each.",
+    "chooseFiles": "Choose files",
+    "noFilesSelected": "No files selected",
+    "filesSelected_one": "{{count}} file selected",
+    "filesSelected_other": "{{count}} files selected",
+    "submit": "Submit ticket",
+    "submitting": "Sending…"
+  },
+  "list": {
+    "title": "My tickets",
+    "refresh": "Refresh",
+    "loading": "Loading…",
+    "empty": "You don't have any tickets yet. Use the form above to create one.",
+    "colNumber": "#",
+    "colSubject": "Subject",
+    "colStatus": "Status",
+    "colAttachments": "Att.",
+    "colUpdated": "Updated",
+    "view": "View",
+    "showing": "Showing {{shown}} of {{total}} tickets."
+  },
+  "detail": {
+    "breadcrumbSupport": "Support",
+    "breadcrumbTicket": "Ticket #{{number}}",
+    "breadcrumbTicketLoading": "Ticket #…",
+    "createdStatus": "Created {{date}} · Status:",
+    "attachmentsTitle": "Attached images",
+    "historyTitle": "History",
+    "closedMessage": "This ticket is closed. No more messages can be sent.",
+    "replyTitle": "Your reply",
+    "replyPlaceholder": "Write your message…",
+    "replySubmit": "Send reply",
+    "replySubmitting": "Sending…",
+    "loading": "Loading…"
+  },
+  "alerts": {
+    "listLoadError": "Could not load the ticket list.",
+    "invalidImageType": "Only JPG, JPEG, or PNG images are allowed.",
+    "imageTooLarge": "Each image must be at most 5 MB.",
+    "createError": "Could not create the ticket.",
+    "ticketLoadError": "Could not load the ticket.",
+    "replyError": "Could not send the reply."
+  },
+  "public": {
+    "metaTitle": "Support | AppMenuQR",
+    "metaDescription": "AppMenuQR technical support: sign in with your account to contact the team.",
+    "title": "Technical support",
+    "body": "To contact technical support, sign in with your AppMenuQR account. In the admin panel you will find the support section with contact details and the incident form."
+  }
+}

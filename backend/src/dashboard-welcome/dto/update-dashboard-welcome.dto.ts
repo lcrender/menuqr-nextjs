@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { TENANT_PLAN_KEYS } from '../../common/plan-limits/plan-limits.constants';
 
 export class DashboardWelcomePlanMessageDto {
@@ -11,6 +11,10 @@ export class DashboardWelcomePlanMessageDto {
 }
 
 export class UpdateDashboardWelcomeDto {
+  @IsOptional()
+  @IsIn(['es', 'en'])
+  locale?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => DashboardWelcomePlanMessageDto)

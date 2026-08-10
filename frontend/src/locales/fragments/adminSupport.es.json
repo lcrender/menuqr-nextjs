@@ -1,0 +1,77 @@
+{
+  "title": "Soporte técnico",
+  "lead": "Abrí un ticket para reportar problemas o pedir ayuda. El equipo recibirá una notificación y podrás hacer seguimiento desde esta misma sección.",
+  "status": {
+    "open": "Abierto",
+    "in_progress": "En progreso",
+    "closed": "Cerrado"
+  },
+  "docsCard": {
+    "title": "Documentación",
+    "body": "Para uso de la app, revisá la <docsLink>documentación del panel</docsLink>."
+  },
+  "tips": {
+    "title": "Consejos para un buen reporte",
+    "expectedVsActual": "Describí qué esperabas y qué ocurrió en su lugar.",
+    "reproSteps": "Pasos concretos para reproducir el problema.",
+    "environment": "Navegador, sistema operativo y si es en móvil o escritorio.",
+    "errors": "Texto de mensajes de error o lo que veas en consola (F12).",
+    "attachments": "Podés adjuntar capturas en JPG o PNG (hasta 5 imágenes, 5 MB cada una)."
+  },
+  "form": {
+    "title": "Crear ticket",
+    "subject": "Asunto",
+    "subjectPlaceholder": "Resumen breve del problema",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Incluí pasos para reproducir, navegador, mensajes de error…",
+    "attachments": "Imágenes adjuntas (opcional)",
+    "attachmentsHint": "JPG, JPEG o PNG. Máximo 5 archivos, 5 MB c/u.",
+    "chooseFiles": "Elegir archivos",
+    "noFilesSelected": "Sin archivos seleccionados",
+    "filesSelected_one": "{{count}} archivo seleccionado",
+    "filesSelected_other": "{{count}} archivos seleccionados",
+    "submit": "Enviar ticket",
+    "submitting": "Enviando…"
+  },
+  "list": {
+    "title": "Mis tickets",
+    "refresh": "Actualizar",
+    "loading": "Cargando…",
+    "empty": "Todavía no tenés tickets. Usá el formulario de arriba para crear uno.",
+    "colNumber": "#",
+    "colSubject": "Asunto",
+    "colStatus": "Estado",
+    "colAttachments": "Adj.",
+    "colUpdated": "Actualizado",
+    "view": "Ver",
+    "showing": "Mostrando {{shown}} de {{total}} tickets."
+  },
+  "detail": {
+    "breadcrumbSupport": "Soporte",
+    "breadcrumbTicket": "Ticket #{{number}}",
+    "breadcrumbTicketLoading": "Ticket #…",
+    "createdStatus": "Creado {{date}} · Estado:",
+    "attachmentsTitle": "Imágenes adjuntas",
+    "historyTitle": "Historial",
+    "closedMessage": "Este ticket está cerrado. No se pueden enviar más mensajes.",
+    "replyTitle": "Tu respuesta",
+    "replyPlaceholder": "Escribí tu mensaje…",
+    "replySubmit": "Enviar respuesta",
+    "replySubmitting": "Enviando…",
+    "loading": "Cargando…"
+  },
+  "alerts": {
+    "listLoadError": "No se pudo cargar el listado de tickets.",
+    "invalidImageType": "Solo se permiten imágenes JPG, JPEG o PNG.",
+    "imageTooLarge": "Cada imagen debe pesar como máximo 5 MB.",
+    "createError": "No se pudo crear el ticket.",
+    "ticketLoadError": "No se pudo cargar el ticket.",
+    "replyError": "No se pudo enviar la respuesta."
+  },
+  "public": {
+    "metaTitle": "Soporte | AppMenuQR",
+    "metaDescription": "Soporte técnico AppMenuQR: accedé con tu cuenta para contactar al equipo.",
+    "title": "Soporte técnico",
+    "body": "Para comunicarte con soporte técnico, iniciá sesión con tu cuenta de AppMenuQR. Desde el panel administrador vas a encontrar la sección de soporte con los datos de contacto y el formulario de incidencias."
+  }
+}

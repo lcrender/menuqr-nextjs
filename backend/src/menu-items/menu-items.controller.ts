@@ -96,7 +96,7 @@ export class MenuItemsController {
     const tenantIdQuery = req.query.tenantId as string | undefined;
     const restaurantIdQuery = req.query.restaurantId as string | undefined;
 
-    // SUPER_ADMIN: filtrar por usuario (tenant) y/o restaurante por ID; productos solo al hacer clic
+    // SUPER_ADMIN: filtrar por usuario (tenant) y/o comercio por ID; productos solo al hacer clic
     if (req.user.role === 'SUPER_ADMIN' && (tenantIdQuery || restaurantIdQuery)) {
       const limitNum = limit ? parseInt(limit, 10) : undefined;
       const offsetNum = offset ? parseInt(offset, 10) : undefined;

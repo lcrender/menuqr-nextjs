@@ -1,0 +1,517 @@
+{
+  "common": {
+    "watchOnYoutube": "Watch on YouTube"
+  },
+  "primerosPasosVideo": {
+    "title": "Video: getting started",
+    "description": "A step-by-step walkthrough for creating your QR menu, building sections and products, and choosing a template.",
+    "iframeTitle": "How to create a QR menu in AppMenuQR: business, sections, products and template"
+  },
+  "traduccionesVideo": {
+    "title": "Video: translations",
+    "description": "How to add languages, edit text and use auto-translation in the dashboard.",
+    "iframeTitle": "Menu translations in AppMenuQR: languages and auto-translation"
+  },
+  "intro": {
+    "p1": "Before creating your business and menus, you need to <strong>sign up</strong> for AppMenuQR, <strong>verify your email address</strong> (check your spam folder too if you don't see the message), and <strong>log in</strong>. Only then can you save changes and publish your digital menu.",
+    "summaryCardTitle": "📋 Full Flow Summary",
+    "step1": "<link>Create a Business</link> → Fill in all the details, upload a logo and cover photo, choose a template and currency",
+    "step2": "<link>Create a Menu</link> → Assign the menu to the business (you can create several menus per business)",
+    "step3": "<link>Create Sections</link> → Organize your menu into categories (Starters, Main Dishes, etc.)",
+    "step4": "<link>Create Products</link> → Add products with prices, descriptions and icons, and assign them to sections",
+    "step5": "<link>Reorder Products</link> → Use drag and drop to organize the order of products within each section",
+    "step6": "<link>Import menu with CSV</link> → Load sections and products from a CSV file (an alternative to the step-by-step flow)",
+    "step7": "<link>Design templates</link> → Visual look of the business; you can change it whenever you want",
+    "step8": "<link>Publish Menu</link> → Change the menu status to \"Published\" so it becomes visible",
+    "step9": "<link>Schedule menu</link> → Define visibility days and times (Pro and Premium plans)",
+    "step10": "<link>Download QR</link> → Generate and download the QR code to share with your customers",
+    "step11": "<link>Print menu on paper</link> → Generate a print-ready version with templates and layout options",
+    "adminCardTitle": "Business, content and account management",
+    "admin1": "<link>Deactivate business</link> — The online menu and QR stop showing until you reactivate the venue.",
+    "admin2": "<link>Delete business</link> — Removes the whole business and its associated data (irreversible action).",
+    "admin3": "<link>Menus: visibility and deletion</link> — Unpublished menus, deleting a menu without deleting products, and products with no menu assigned.",
+    "admin4": "<link>Translations</link> — Steps and limits depending on your plan (only if your subscription allows it).",
+    "admin5": "<link>Bulk product editing</link> — Delete or move products between menus or businesses; watch out for duplicates and plan limits.",
+    "admin6": "<link>Edit a product</link> — Activate/deactivate, texts, prices and photo (depending on your plan).",
+    "admin7": "<link>Subscriptions and payments</link> — Payment methods, markets and cancellation whenever you want."
+  },
+  "crearRestaurante": {
+    "cardTitle": "1️⃣ Create a Business",
+    "p1": "The first step to start using AppMenuQR is to create a business. Each business can have multiple menus.",
+    "p2": "Usually, <strong>the first time you log in</strong> you should see a message or wizard to create <strong>your first business</strong> in a quick, guided way. If that doesn't happen in your account, no problem: you can create it manually by following the steps below.",
+    "step1": "<strong>Go to the Businesses section:</strong> Click \"Businesses\" in the side menu.",
+    "step2": "<strong>Click \"Create Business\":</strong> You'll see a button to create a new business.",
+    "step3Intro": "<strong>Fill in the business details:</strong>",
+    "fieldName": "<strong>Business name:</strong> The name that will appear on the menus",
+    "fieldDescription": "<strong>Description:</strong> Optional. A short presentation of your business for anyone viewing the online menu.",
+    "fieldAddress": "<strong>Address:</strong> The physical address of the venue. It's used to <strong>locate the business on the map</strong> (e.g. Google Maps) and to be able to <strong>enable or show the link to Google reviews</strong>, depending on the settings you turn on.",
+    "fieldPhone": "<strong>Phone:</strong> Contact number. On the public view it's usually shown as a <strong>tap-to-call link</strong> directly from a mobile device.",
+    "fieldWhatsapp": "<strong>WhatsApp:</strong> You can provide a number or WhatsApp link so customers can message you in one click.",
+    "fieldEmail": "<strong>Email:</strong> Contact email address",
+    "fieldLogoLabel": "<strong>Business logo:</strong>",
+    "fieldLogoSpecs": [
+      "Recommended: square image, 512x512px or 1024x1024px",
+      "Formats: JPG, PNG",
+      "Maximum size: 2MB"
+    ],
+    "fieldCoverLabel": "<strong>Cover photo:</strong>",
+    "fieldCoverSpecs": [
+      "Recommended: horizontal image, 1920x1080px or 1920x600px",
+      "Formats: JPG, PNG",
+      "Maximum size: 5MB"
+    ],
+    "fieldTemplate": "<strong>Template:</strong> Choose a starting design for your menus (Classic, Modern, Foodie, Italian Food, etc.). <strong>You can change templates whenever you want</strong>; your menu and product data are not lost when you change the design.",
+    "fieldCurrency": "<strong>Currency:</strong> Set the business's <strong>main currency</strong> (the one shown by default in prices). Optionally, you can list <strong>other currencies you accept as payment</strong> at the venue, so it's clear on the menu.",
+    "step4": "<strong>Save the business:</strong> Click \"Save\" to create your business.",
+    "nextStep": "<strong>Next step:</strong> create one or more <strong>menus</strong> for this business (each menu will later have its own sections and products).",
+    "tip": "<strong>💡 Tip:</strong> You can edit the business details at any time from the \"Businesses\" section."
+  },
+  "crearMenu": {
+    "cardTitle": "2️⃣ Create a Menu",
+    "p1": "Once you've created a business, you can create one or several menus for it. This lets you have different menus (for example: lunch menu, dinner menu, weekend menu, etc.).",
+    "step1": "<strong>Go to the Menus section:</strong> Click \"Menus\" in the side menu.",
+    "step2": "<strong>Click \"Create Menu\":</strong> You'll see a button to create a new menu.",
+    "step3Intro": "<strong>Fill in the menu details:</strong>",
+    "fieldBusiness": "<strong>Business:</strong> Select the business this menu belongs to. You can <strong>leave it unassigned for now</strong> and link it to a business later.",
+    "fieldName": "<strong>Menu name:</strong> For example, \"Lunch Menu\", \"Dinner Menu\", etc. Users will see a <strong>button or option with this name</strong> to open the products included in that menu.",
+    "fieldDescription": "<strong>Description:</strong> Optional. Used to clarify when this menu applies or what it includes.",
+    "step4": "<strong>Save the menu:</strong> Click \"Save\" to create your menu.",
+    "p2": "Inside each menu you'll create <strong>sections</strong> (for example starters, main dishes, drinks, desserts, etc.) and then the products within each section. If you'd rather load everything at once from a spreadsheet, the CSV alternative is below.",
+    "alternative": "<strong>Alternative:</strong> <link>import menu and products with a CSV file</link>.",
+    "tip": "<strong>💡 Important:</strong> A business can have multiple menus. This lets you organize your offerings in different ways (by time of day, season, type of food, etc.)."
+  },
+  "importarMenuCsv": {
+    "cardTitle": "Import menu and products with CSV",
+    "p1": "In addition to the step-by-step wizard, you can <strong>create a full menu</strong> (sections and products) by uploading a <strong>CSV</strong> file. It's useful if you already have your menu in a spreadsheet or want to migrate from another system.",
+    "fromAppHeading": "From the app",
+    "fromAppStep1": "In <strong>Menus</strong>, choose <strong>New menu</strong> and the <strong>Import menu with CSV</strong> option.",
+    "fromAppStep2": "On screen, select the <strong>business the menu belongs to</strong>, the <strong>menu name</strong> and, if you want, the <strong>description</strong>.",
+    "fromAppStep3": "<a>Download the sample template (CSV)</a> and fill in or adapt your rows; then upload the file.",
+    "sectionsHeading": "Sections in the CSV",
+    "sectionsLi1": "<code>nombre_seccion</code>: the category's visible name (for example Starters, Mains). The <strong>order of the sections</strong> in the menu is the order in which each name <strong>first appears</strong> when reading the CSV from top to bottom.",
+    "sectionsLi2": "For several products in the same section, <strong>repeat the same</strong> <code>nombre_seccion</code> in each row. You can change the section order later in <strong>Edit menu</strong>.",
+    "productsHeading": "Products and prices",
+    "productsLi1": "<code>nombre_producto</code> (required), <code>descripcion_producto</code> (optional).",
+    "productsLi2": "<code>destacado</code>: you can use values like <code>si</code>, <code>sí</code>, <code>yes</code>, <code>true</code> or <code>1</code> to mark a product as featured. If your plan doesn't allow it, the system will turn it off and flag it in the results.",
+    "productsLi3": "Up to <strong>five prices</strong> per product: columns <code>moneda_1</code>…<code>moneda_5</code>, <code>precio_1</code>…<code>precio_5</code> and <code>etiqueta_1</code>…<code>etiqueta_5</code>.",
+    "productsLi4": "<strong>Currency:</strong> a three-letter ISO code (for example <code>USD</code>, <code>EUR</code>, <code>ARS</code>). If you fill in a <code>precio_N</code>, you must provide the matching <code>moneda_N</code>.",
+    "productsLi5": "<strong>Price label:</strong> <strong>optional</strong> (for example \"Small\", \"Large\", \"Daily menu\"). Useful when the same product has several prices.",
+    "productsLi6": "Each product must have at least <code>moneda_1</code> and <code>precio_1</code> with an amount greater than zero. Amounts can use a comma or a period as the decimal separator.",
+    "allergensHeading": "Allergens and icons",
+    "allergensP1": "The <code>alergenos</code> column accepts several codes separated by comma, semicolon or slash (<code>,</code> <code>;</code> <code>|</code>). They must match the system's <strong>active codes</strong> (uppercase or lowercase). Here's the list of available allergens:",
+    "allergensP2": "If a code doesn't exist, it's <strong>ignored</strong> and the import may show a warning for that row.",
+    "afterImportHeading": "After importing",
+    "afterImportP": "The menu is left in an editable state: you can <strong>change the name, sections, products and prices</strong> from the dashboard. <strong>Product photos</strong> don't come from the CSV; if your plan allows them, add them later from the menu or product editor. The menu is left in <strong>draft</strong>: in <strong>Menus</strong>, use the <strong>Publish</strong> button to make it <strong>published</strong> and visible online.",
+    "limitsHeading": "Import limits",
+    "limitsLi1": "The import respects your plan's <strong>menu and product limits</strong>; if you exceed them, you'll see an explanatory error.",
+    "finalP": "Once the menu is imported, <strong>you can fully edit it</strong> at any time: name, sections, products, prices, texts and (depending on your plan) images. You don't need to re-upload the CSV for small day-to-day changes."
+  },
+  "crearSecciones": {
+    "audienceTitle": "Before you start",
+    "audienceP1": "This guide is for people who already have a <strong>menu created</strong> and want to organize it into categories (starters, mains, drinks, etc.). If you haven't created the menu yet, check out <link>Create a menu</link> first.",
+    "audienceItems": [
+      "Access to the dashboard with permission to edit menus.",
+      "A clear naming convention for customers (avoid unclear internal abbreviations)."
+    ],
+    "cardTitle": "3️⃣ Create Menu Sections",
+    "p1": "Sections group products on the public menu: for example <strong>Starters</strong>, <strong>Main Dishes</strong>, <strong>Non-Alcoholic Drinks</strong>, <strong>Coffee</strong>, etc. A single menu can have as many sections as you need, within your plan's limits.",
+    "p2": "The <strong>order of the sections</strong> determines how the menu reads from top to bottom in the customer's view. You can change it at any time by dragging and dropping, without deleting products.",
+    "step1": "<strong>Edit the menu:</strong> From the \"Menus\" section, click the edit button on the menu you want to modify.",
+    "step2": "<strong>Select \"Menu sections\":</strong> In the edit modal, choose the \"📑 Menu sections\" option.",
+    "step3Intro": "<strong>Create a new section:</strong>",
+    "step3Li1": "Enter the section name (e.g. \"Starters\", \"Main Dishes\", \"Desserts\").",
+    "step3Li2": "Click \"<strong>Add Section</strong>\": you'll see it inserted into the menu.",
+    "step3Li3": "As you add more sections, you can set the <strong>order</strong> (this determines the position each one will appear in on the menu).",
+    "step3Li4": "To change the order, click the <strong>three horizontal lines</strong> that appear to the left of each section and drag it to the position you want.",
+    "step3Li5": "Mark whether the section is active or not, when applicable.",
+    "step4": "<strong>Save the changes</strong> whenever the form requires it.",
+    "renameP": "If later you want to <strong>rename</strong> a section, do it from the same place: the visible name updates on the menu once you save. Products already in that section stay associated unless you manually move them to another category from <link>Menu products</link>.",
+    "tip": "<strong>💡 Tip:</strong> If you imported the menu with <link>CSV</link>, the initial section order follows the order they first appeared in the file; you can still reorder them here.",
+    "faq": {
+      "0": {
+        "q": "I don't see the sections option when editing the menu.",
+        "a": "Make sure you're in <strong>Menus</strong> and that you opened the <strong>edit</strong> modal for the right menu. If your role is read-only, ask whoever manages the account for access."
+      },
+      "1": {
+        "q": "Can I leave a section empty?",
+        "a": "Yes, but it may look odd or take up space on the public menu. It's common to hide or move products before publishing, or deactivate the section if the interface allows it."
+      },
+      "2": {
+        "q": "Are sections shared across several menus?",
+        "a": "Each menu has <strong>its own list of sections</strong>. If you need the same structure in another menu, create it again or use <link>CSV import</link> / duplication, depending on what your dashboard flow offers."
+      }
+    }
+  },
+  "crearProductos": {
+    "cardTitle": "4️⃣ Create Products and Add Them to the Menu",
+    "p1": "Products are the dishes, drinks or items you offer on your menu. You can create products and then assign them to your menus' sections.",
+    "step1": "<strong>Edit the menu:</strong> From the \"Menus\" section, click the edit button on the menu.",
+    "step2": "<strong>Select \"Menu products\":</strong> In the edit modal, choose the \"🍽️ Menu products\" option.",
+    "step3Intro": "<strong>Create a new product:</strong>",
+    "createButton": "Click \"➕ Create new product\"",
+    "sub1Title": "<strong>Step 1 - Basic information:</strong>",
+    "sub1Items": [
+      "Product name",
+      "Description (optional)",
+      "Select the menu sections where you want this product to appear"
+    ],
+    "sub2Title": "<strong>Step 2 - Prices:</strong>",
+    "sub2Item1": "Add one or several prices for the product",
+    "sub2Item2": "You can have different prices with labels (e.g. \"Portion\", \"Single\", \"Double\", \"Triple\")",
+    "sub2Item3": "<strong>Select the currency for each price:</strong> by default, the <strong>main currency you set on the business</strong> is suggested; you can change it per line if you need to.",
+    "sub2Item4": "Enter the price amount",
+    "sub3Title": "<strong>Step 3 - Icons and features:</strong>",
+    "sub3Items": [
+      "Select icons that represent the product's features (Gluten-Free, Vegetarian, Vegan, Spicy, etc.)",
+      "These icons will appear next to the product on the public menu"
+    ],
+    "step4": "<strong>Save the product:</strong> Click \"Save\" to create the product and add it to the menu.",
+    "step5": "<strong>Repeat the process:</strong> Create all the products you need for each section of your menu.",
+    "tip": "<strong>💡 Tip:</strong> You can create products from the \"Products\" section in the side menu and then assign them to different menus and sections."
+  },
+  "reordenarProductos": {
+    "audienceTitle": "When to use this guide",
+    "audienceP1": "After loading products into several sections, you'll often need to <strong>adjust the reading order</strong> (highlight daily specials, move desserts to the end, group drinks visually, etc.). You don't need to delete or recreate items: the order is saved as soon as you drop each item.",
+    "cardTitle": "5️⃣ Change the Order of Products",
+    "p1": "You can rearrange the order in which products appear within each section using <strong>drag and drop</strong>. In many dashboard versions you can also <strong>move an item from one section to another</strong> by dragging it to the target block.",
+    "step1": "<strong>Edit the menu:</strong> From the \"Menus\" section, click the edit button on the menu.",
+    "step2": "<strong>Select \"Menu products\":</strong> In the edit modal, choose the \"🍽️ Menu products\" option.",
+    "step3Intro": "<strong>Reorder the products:</strong>",
+    "step3Items": [
+      "Click and hold on the product you want to move (you'll see the ⋮⋮ icon)",
+      "Drag the product to the desired position within the same section",
+      "You'll see a blue line indicating where the product will be inserted",
+      "Release the mouse to place the product in the new position"
+    ],
+    "step4": "<strong>The order is saved automatically:</strong> Once you release the product, the new order is saved automatically in the system.",
+    "p2": "If you're working with a lot of items, it's a good idea to publish the menu and check the <strong>public view</strong> on mobile: the order can look different on a small screen than in the editor.",
+    "warning": "<strong>⚠️ Note:</strong> You can also move products between different sections by dragging them from one section to another. If something won't move, reload the page and check that another user isn't editing the same menu at the same time.",
+    "faq": {
+      "0": {
+        "q": "The order doesn't save or reverts back.",
+        "a": "Wait for autosave to finish, check your connection and try again. If the problem continues, close and reopen the menu editor to rule out an outdated state in the browser."
+      },
+      "1": {
+        "q": "Can I sort alphabetically in one click?",
+        "a": "If the app doesn't offer an alphabetical sort button, ordering is <strong>manual</strong>. For very long lists you can combine <link>CSV</link> (row order) with fine-tuned editing afterward."
+      }
+    }
+  },
+  "plantillas": {
+    "audienceTitle": "What this guide covers",
+    "audienceP1": "Templates define the <strong>colors, fonts and layout</strong> of the public menu. They don't replace your texts or prices: they only change the visual wrapper. You can experiment without fear of losing product data.",
+    "cardTitle": "6️⃣ Design Templates",
+    "p1": "When you <strong>create a business</strong>, you select a <strong>default template</strong> for the online menu. That choice only defines the visual look: <strong>you can change templates as many times as you need without losing the data</strong> of your menus, sections or products (prices, texts, etc. are kept).",
+    "p2": "To <strong>preview</strong> how your menu will look with another template and/or <strong>change it</strong>, use the <strong>Menu templates</strong> option (or equivalent in the app) from the dashboard: there you can explore the available designs before applying one.",
+    "p3": "<strong>How a template is applied to the business:</strong> once you choose a template for that business, the same design is applied to the public view of <strong>all menus</strong> at that business. If you change templates, the menu updates visually right away for your customers.",
+    "p4": "Many templates let you <strong>edit visual details</strong> after applying them: for example, turning the display of the <strong>business name</strong>, <strong>logo</strong> or <strong>description</strong> on or off, and adjusting <strong>primary and secondary colors</strong> or other options depending on the design. Check the template configurator for which toggles and colors are available for your active template.",
+    "p5": "<strong>Brand consistency:</strong> it helps if the logo, template colors and business cover photo tell the same visual story. If you only change the template but keep photos with a different style, the menu may look mismatched; adjust the cover or colors until everything fits together.",
+    "p6": "<strong>Performance and readability:</strong> templates with lots of images or very dark backgrounds can affect contrast or speed on weak mobile networks. Always test the public link on a phone with medium brightness and with the system's dark mode if your customers use it.",
+    "tip": "<strong>💡 Tip:</strong> If you try out several styles, publish the menu and open the business's public link to see the real result your customers will see. The QR points to the same public page described in <link>Download QR code</link>.",
+    "faq": {
+      "0": {
+        "q": "I changed templates and don't see the change on the menu.",
+        "a": "Check that the menu is <link><strong>published</strong></link>, that you're looking at the <strong>correct business</strong>, and force a cache-free refresh in the browser (Ctrl+F5 or equivalent)."
+      },
+      "1": {
+        "q": "Can each menu have a different template?",
+        "a": "In AppMenuQR the template is usually applied at the <strong>business level</strong>: all published menus at that venue share the same design. If you need different styles, consider creating another business on the account (subject to plan limits) or contacting support about your commercial options."
+      }
+    }
+  },
+  "publicarMenu": {
+    "audienceTitle": "Published vs. draft",
+    "audienceP1": "A menu in <strong>draft</strong> is not part of the menu customers see on the public link. Only <strong>published</strong> menus (assigned to the correct business) appear alongside the venue's other active menus.",
+    "cardTitle": "Publish the menu",
+    "p1": "For a menu to be part of your customers' online experience, you need to control whether it's <strong>published</strong> or in <strong>draft</strong>.",
+    "checklistHeading": "Quick checklist before publishing",
+    "checklist1": "Check prices and currencies on your best-selling products.",
+    "checklist2": "Confirm the <link>sections</link> are in the desired reading order.",
+    "checklist3": "Hide or deactivate products you don't want to show yet.",
+    "checklist4": "Open the preview or the public link on a real mobile device.",
+    "step1": "<strong>Edit the menu you want to publish or unpublish</strong> from the \"Menus\" section (edit icon or action on the menu row).",
+    "step2": "In the <strong>menu list</strong>, look at the <strong>Status</strong> column: there you'll see whether each menu is <strong>published</strong> or in <strong>draft</strong>.",
+    "step3": "In that row's <strong>actions</strong> you'll find a button to <strong>publish</strong> or <strong>unpublish</strong> the menu (the label may vary depending on the current status).",
+    "p2": "<strong>Important:</strong> even if a menu is <strong>unpublished</strong>, the customer can still access the business's <strong>link or QR code</strong>; what happens is that <strong>they won't see that menu</strong> until you <strong>publish</strong> it again. Any other menus that remain published will still show normally.",
+    "p3": "If you need to <strong>remove a menu from the page without deleting it</strong>, unpublishing is the usual way to do it. If you want to delete the menu but keep the products, also read <link>Menu: visibility and deletion</link>.",
+    "faq": {
+      "0": {
+        "q": "I published the menu but the QR still doesn't show it.",
+        "a": "Verify that the menu is published <strong>and</strong> linked to the business whose QR you're scanning. Also check whether the business is <link><strong>active</strong></link> and that no other menu is blocking the expected navigation."
+      },
+      "1": {
+        "q": "Can I schedule automatic publishing times?",
+        "a": "Yes, on <strong>Pro</strong> and <strong>Premium</strong> plans you can <link>schedule visibility</link> for each menu by days, times and (optionally) dates. The menu still needs to be <strong>published</strong>; scheduling controls when it's shown within that status. If your plan doesn't include the feature, the flow is <strong>manual</strong>: publish or unpublish as needed."
+      }
+    }
+  },
+  "programarMenu": {
+    "audienceTitle": "Availability by plan",
+    "audienceP1": "Menu scheduling is available on <strong>Pro</strong> and <strong>Premium</strong> plans. If your plan is Free or another plan that doesn't include it, you'll see a notice when you open the screen, and you can review options in <link>Subscriptions and payments</link>. Scheduling <strong>doesn't replace</strong> publishing the menu: a draft menu doesn't appear on the page even if it has schedule settings configured.",
+    "cardTitle": "Schedule menu visibility",
+    "p1": "With this feature you can define <strong>which days</strong> and, if you want, <strong>at what time</strong> each menu is shown on the business's public page. It's useful for lunch vs. dinner menus, weekend menus or promotions that only apply on certain days.",
+    "checklistHeading": "Checklist before scheduling",
+    "checklist1": "Confirm the menu is <link><strong>published</strong></link>.",
+    "checklist2": "Check the business's <strong>time zone</strong> (scheduling uses that time zone).",
+    "checklist3": "If you have several menus, schedule each one separately as needed.",
+    "step1": "Go to the <strong>Menus</strong> section of the dashboard and click <scheduleLink><strong>Schedule menu</strong></scheduleLink>.",
+    "step2": "Choose the <strong>business</strong> you want to apply the schedule to.",
+    "step3": "Review or adjust the <strong>business's time zone</strong>: days and times are evaluated based on that zone.",
+    "step4": "For each menu in the list, turn on the <strong>Schedule visibility</strong> switch.",
+    "step5": "Check the <strong>visible days</strong> (Monday to Sunday). If you don't check any, the menu won't be shown while scheduling is active.",
+    "step6": "<strong>Time range (optional):</strong> you can set a <em>From</em> and <em>To</em> time. If you leave them empty, the menu is visible all day on the selected days.",
+    "step7": "<strong>Limit by dates (optional):</strong> turn this on if scheduling should only apply between a start date and, if you set one, an end date. If you don't turn it on, the rule repeats every week according to the selected days.",
+    "step8": "Click <strong>Save schedule</strong> to apply the changes to all the business's menus you've configured.",
+    "p2": "If a menu has scheduling <strong>turned off</strong>, it behaves as usual: while published, it's shown on the menu with no day or time restriction (except for validity or other system rules). If scheduling is <strong>active</strong>, outside of the configured hours the menu won't appear on the business page, but it's <strong>still reachable via its direct URL</strong>. To remove it: turn off \"Schedule visibility\" (or \"Remove schedule\") and click <strong>Save schedule</strong>.",
+    "example": "<strong>Example:</strong> \"Lunch\" menu published, scheduling active, Mon–Fri, 12:00–16:00. Outside that range — even though it's still published — it won't appear on the online menu until the configured window starts.",
+    "faq": {
+      "0": {
+        "q": "Does scheduling publish or unpublish the menu automatically?",
+        "a": "No. It only controls <strong>when a menu that's already published is shown</strong>. To hide it completely, use <strong>unpublish</strong> (see <link>Publish the menu</link>)."
+      },
+      "1": {
+        "q": "I scheduled the menu but it doesn't appear at the expected time.",
+        "a": "Check the business's <strong>time zone</strong>, that the menu is <strong>published</strong>, and that you selected the correct day. Save again if you made changes without clicking <strong>Save schedule</strong>."
+      },
+      "2": {
+        "q": "Can I use scheduling on the Free plan?",
+        "a": "No. You need the <strong>Pro</strong> or <strong>Premium</strong> plan. Check <link>Subscriptions and payments</link> to upgrade your plan."
+      }
+    }
+  },
+  "imprimirCarta": {
+    "audienceTitle": "What is it for?",
+    "audienceP1": "Paper printing generates a <strong>print-ready preview</strong> of your menu, independent of the business's online template. You can choose a print design, which menus to include and how sections are split across pages. It doesn't change the digital menu or the QR code.",
+    "cardTitle": "Print the menu on paper",
+    "p1": "From the dashboard you can prepare a paper version of one or several menus for a business, with design and content options before sending it to the printer or saving it as a PDF from the browser.",
+    "checklistHeading": "Checklist before printing",
+    "checklist1": "Check prices and names in the menus you're going to include.",
+    "checklist2": "Make sure the business has a logo or cover photo if you want to show them.",
+    "checklist3": "If you use translations, choose the correct language in the options.",
+    "step1": "Go to <strong>Businesses</strong> in the dashboard and, on the venue you want, click <strong>Print menu</strong>.",
+    "step2": "The print screen will open with a <strong>preview</strong> on the left and <strong>Print options</strong> on the right.",
+    "step3Intro": "Choose the <strong>print template</strong>:",
+    "step3Items": [
+      "<strong>Classic</strong> — clean design, prices on the right.",
+      "<strong>Elegant</strong> — serif typography and centered header.",
+      "<strong>Modern</strong> — minimalist style with a color stripe.",
+      "<strong>Bistro</strong> — warm background, price below the name."
+    ],
+    "step4": "In <strong>Business details</strong>, check or uncheck what to show: logo, cover photo, name and description (options without an image or text are disabled).",
+    "step5Intro": "In <strong>Sections</strong>, choose the layout:",
+    "step5Items": [
+      "<strong>One below the other</strong> — all sections in a continuous flow.",
+      "<strong>One section per page</strong> — each section starts on a new page (useful for long menus)."
+    ],
+    "step6": "If your business has <strong>several active languages</strong>, choose the menu's language in the corresponding selector.",
+    "step7": "In <strong>Menus to print</strong>, check the menus you want to include. You can use <strong>All</strong> or <strong>None</strong> as a shortcut. The preview updates as you change the selection.",
+    "step8": "When you're happy with the preview, click <strong>Print</strong>. The browser's print dialog will open; from there you can choose a printer or <strong>Save as PDF</strong>.",
+    "p2": "The business's contact details (address, phone, WhatsApp, email and website) are included at the bottom of the printed menu, based on what you've set up in the venue's profile.",
+    "tip": "<strong>Tip:</strong> in the browser's print dialog, turn off the browser's own headers and footers if you don't want them, and check margins and orientation (portrait usually works better). Try a test page before a large print run.",
+    "faq": {
+      "0": {
+        "q": "Do I need to publish the menu to print it?",
+        "a": "It's not required. The screen tries to load the published content; if a menu is still in draft, it may fall back to the dashboard data. Either way, it's a good idea to review the content before printing."
+      },
+      "1": {
+        "q": "Does the print template change the online menu?",
+        "a": "No. The print template only affects the paper/PDF version. The digital menu keeps using the <link>business's template</link> configured in the dashboard."
+      },
+      "2": {
+        "q": "I printed and sections get cut off or there's too much blank space.",
+        "a": "Try the <strong>One section per page</strong> option or the opposite one, depending on the length of your menu, and adjust the scale or margins in the browser's print dialog (for example \"Fit to width\")."
+      }
+    }
+  },
+  "descargarQr": {
+    "cardTitle": "7️⃣ Business QR Code",
+    "p1": "Once you've created and published at least one menu, the system <strong>automatically generates a QR code for the business</strong> that you can <strong>download or print</strong> so customers can scan it with their phones and open the menu. <strong>We recommend always testing the QR before and after printing it</strong> (size, contrast and that it points to the right venue).",
+    "p2": "The QR belongs to the <strong>business</strong> as a whole, not to a single isolated menu: whoever scans it accesses the venue's public page and will see <strong>all the menus you have published</strong> for that business.",
+    "warning": "<strong>⚠️ Very important — business name and QR:</strong> the QR code and the public link are tied to the business's current identity in the system. If you <strong>change the business name</strong> (or other data that's part of the URL or public profile), <strong>the QR and links printed or saved before may stop matching</strong> what you see on screen now: in practice it's as if you had \"changed the sign\": whoever has the old material could land on a different page or an error. That's why, every time you change the name or another key part of the link, you should <strong>download or reprint the QR from the dashboard again</strong> and replace the old codes on tables, storefronts and social media.",
+    "dashboardHeading": "View and download from the dashboard",
+    "dashboardStep1": "Log in and open the <strong>admin dashboard</strong>.",
+    "dashboardStep2": "From there, go to the flow that shows the <strong>business's QR code</strong> (it's usually next to the business summary, public link or quick actions; the side menu may have an entry like \"QR\", \"Share\" or similar depending on your version).",
+    "dashboardStep3": "On that screen you can <strong>view the QR at full size</strong>, copy the <strong>public link</strong> and use the <strong>download</strong> button to save the image before printing.",
+    "dashboardStep4": "Check the result by scanning the downloaded file with your phone; if something doesn't match (venue name or visible menus), first check that the menus are <strong>published</strong> and that the business name is final.",
+    "downloadHeading": "Download the QR",
+    "downloadItems": [
+      "Click the \"Download QR\" or \"Download\" button",
+      "The QR code will download as an image (PNG or JPG)",
+      "You can print this QR code and place it on the tables of your business"
+    ],
+    "success": "<strong>✅ Benefits of the QR:</strong> Customers can access the menu without needing to download an app, and they'll always see the most up-to-date version of your published menus."
+  },
+  "desactivarRestaurante": {
+    "audienceTitle": "Deactivate ≠ delete",
+    "audienceP1": "<strong>Deactivating</strong> pauses the public menu and QR code without deleting any data. <strong>Deleting</strong> the business is irreversible. If you're just closing temporarily or going on vacation, use deactivate.",
+    "cardTitle": "Deactivate the business",
+    "p1": "You can <strong>deactivate</strong> a business whenever you want to temporarily pause the digital menu (vacation, venue closed, a rebrand in progress, renovations, etc.).",
+    "whatHappensHeading": "What happens when you deactivate",
+    "whatHappens1": "The venue's <strong>public page</strong> stops showing as available (a message or unavailable screen, depending on the version).",
+    "whatHappens2": "The <strong>QR code</strong> that pointed to that page stops showing the usual menu until you reactivate.",
+    "whatHappens3": "In the dashboard you'll still see the business, menus and products, ready for when you reactivate it.",
+    "howToHeading": "How to do it (general flow)",
+    "howTo1": "Log in and go to <strong>Businesses</strong> (or the equivalent section listing your venues).",
+    "howTo2": "Select the business and look for the <strong>active / inactive</strong>, <strong>enabled</strong> toggle or similar action, depending on the wording in your version.",
+    "howTo3": "Save or confirm if the system asks for confirmation.",
+    "howTo4": "Test the public link or QR on mobile to verify the pause was applied.",
+    "p2": "To show everything again, <strong>reactivate it</strong> from the same business management screen. There's no need to reload menus unless you modified them while it was paused.",
+    "note": "<strong>Note:</strong> Deactivating <strong>doesn't delete data</strong>; it only hides the public experience until you reactivate. If you need to permanently delete the business, read <link>Delete the business</link> very carefully.",
+    "faq": {
+      "0": {
+        "q": "Do customers see an error or a friendly message?",
+        "a": "It depends on the deployed version of AppMenuQR; what matters is that <strong>they won't see the working menu</strong> until you reactivate. If you need a custom message, check with support to see if there's a closing-message option."
+      },
+      "1": {
+        "q": "Does the subscription keep running if the venue is deactivated?",
+        "a": "Billing depends on the current <link>subscription terms</link>: deactivating the business doesn't always cancel the automatic charge. Check your billing panel or contact support if you also want to pause the plan."
+      }
+    }
+  },
+  "eliminarRestaurante": {
+    "audienceTitle": "Before deleting",
+    "audienceItem1": "Export or note down anything you need to keep (if your plan includes export or manual backups).",
+    "audienceItem2": "Let the rest of the team know so no one keeps editing that venue.",
+    "audienceItem3": "If you just want to hide the menu, prefer to <link><strong>deactivate</strong></link> instead.",
+    "cardTitle": "Delete the business",
+    "p1": "<strong>Deleting a business is a final action.</strong> The data associated with that business in AppMenuQR is deleted (menus, settings, internal links, depending on the system's logic and what the confirmation screen states).",
+    "flowHeading": "Typical dashboard flow",
+    "flow1": "Go to <strong>Businesses</strong> and find the venue to delete.",
+    "flow2": "Open the business's <strong>advanced actions</strong> or context menu (depending on the app's design).",
+    "flow3": "Choose <strong>Delete</strong> or equivalent and read the full warning text.",
+    "flow4": "Confirm by typing the name or text the system requests, to avoid accidental deletions.",
+    "p2": "You won't be able to recover the information after confirming: make backups or exports beforehand if your plan allows them and you need to keep a history. Public links and QR codes will stop resolving to the previous content.",
+    "danger": "<strong>Danger zone:</strong> only delete if you're sure. If you just want to hide the menu for a while, prefer to <strong>deactivate</strong> the business instead of deleting it.",
+    "faq": {
+      "0": {
+        "q": "Are the menus and products deleted too?",
+        "a": "Yes: deleting the <strong>business</strong> removes the business context and whatever hangs off it, according to the on-screen confirmation. Don't confuse this with <link>deleting just a menu</link>, which can leave orphaned products in the account."
+      }
+    }
+  },
+  "menuVisibilidadEliminacion": {
+    "audienceTitle": "Key concepts",
+    "audienceP1": "<strong>Unpublishing</strong> a menu takes it off the online menu without deleting it from the dashboard. <strong>Deleting</strong> a menu removes it from the system; the products can remain in your account with no menu assigned until you reorganize them.",
+    "cardTitle": "Menus: visibility and deletion",
+    "publishedHeading": "Published and unpublished menus",
+    "publishedP1": "Customers can keep accessing the <strong>business's public page</strong> (link or QR) even if some menus are in <strong>draft</strong> or <strong>unpublished</strong>. In that case they'll only see menus that are <strong>published</strong> and <strong>assigned to that business</strong>; the rest won't appear on the page until you publish them again.",
+    "publishedP2": "To change a menu's status (publish / unpublish), follow the steps in <link>Publish the menu</link>.",
+    "deleteHeading": "Delete a menu",
+    "deleteP1": "If you <strong>delete a menu</strong>, the menu itself is removed from the app, but <strong>the products are not deleted automatically</strong>: they remain in your account <strong>with no menu assigned</strong> (\"loose\" or orphaned products).",
+    "deleteP2": "You'll then need to <strong>assign them manually</strong> to another menu or manage them from the product list, depending on how your dashboard flow is organized. If you have many loose items, use <link>bulk editing</link> to move them or carefully delete duplicates.",
+    "deleteP3": "<strong>Good practice:</strong> before deleting, unpublish and wait a day of operation to confirm that no customer depended on that menu (for example a breakfast menu vs. the main menu).",
+    "faq": {
+      "0": {
+        "q": "I deleted a menu and now I see products with \"no menu\".",
+        "a": "This is expected behavior: the products remain in the account. Assign them to another menu from product editing or with bulk actions. If you don't need them, you can delete them from the list to free up plan quota."
+      },
+      "1": {
+        "q": "Can I recover a deleted menu?",
+        "a": "Generally <strong>no</strong>: deletion is final unless the system shows a trash/recycle bin (uncommon). That's why it's best to unpublish first and export or duplicate content if your flow allows it."
+      }
+    }
+  },
+  "traducciones": {
+    "audienceTitle": "Availability by plan",
+    "audienceP1": "Translations and the number of active languages depend on your <link>subscription plan</link>. If you don't see the languages section, your current plan probably doesn't include it, or it needs to be enabled from settings.",
+    "cardTitle": "Translations",
+    "p1": "AppMenuQR can include tools to <strong>translate or review</strong> menu text (names, descriptions, sections, etc.) according to the <strong>languages</strong> your plan supports.",
+    "p2": "<strong>Quality tips:</strong> keep roughly the same length across languages so the design doesn't break on mobile; review the names of signature dishes (they're not always translated literally); and update every language whenever you change prices or allergens.",
+    "p3": "<strong>General steps:</strong>",
+    "step1": "Go to the <strong>translations area</strong> or equivalent in the dashboard (for example from the side menu or from the menu/business settings).",
+    "step2": "Choose the <strong>source language</strong> and the <strong>target language</strong> you want to complete or review.",
+    "step3": "Edit the texts shown by the interface and <strong>save</strong> your changes; in many cases you'll be able to see what's missing or still pending review.",
+    "step4": "Publish the menu once the texts are ready so the public menu reflects the correct language, according to your site's logic (language selector, detection, etc., depending on the version).",
+    "warning": "<strong>Availability and limits:</strong> translations and the number of active languages <strong>depend on the subscription plan</strong>. If your plan doesn't include this feature, the option may not appear or may show as locked. Check the limits in the <strong>subscription / plan</strong> section or in the message shown on the translations screen itself.",
+    "faq": {
+      "0": {
+        "q": "I translated it, but the menu still shows the old language.",
+        "a": "Check that you saved each block, that the menu is <link><strong>published</strong></link>, and that the visitor is using the correct language selector (if one exists). Clear your browser cache in a private window to rule out an old cached view."
+      },
+      "1": {
+        "q": "Can I bulk-import translations?",
+        "a": "If the app doesn't offer a specific i18n import, many teams prepare text in a spreadsheet and copy it field by field, or use <link>CSV</link> just for the main language and then complete translations in the dashboard."
+      }
+    }
+  },
+  "edicionMasivaProductos": {
+    "audienceTitle": "When to use bulk actions",
+    "audienceP1": "They're useful when <strong>changing seasons</strong>, <strong>merging menus</strong>, fixing incorrect categories, or cleaning up duplicates after an import. Always check your plan's <strong>product limit</strong> before duplicating or moving large batches.",
+    "cardTitle": "Bulk product editing",
+    "p1": "From the list or the dashboard's bulk actions, you can apply changes to <strong>several products at once</strong> (depending on the options your version of AppMenuQR offers).",
+    "commonActionsHeading": "Common actions",
+    "commonAction1": "<strong>Delete selected products</strong> to remove them from the menu (always confirm before deleting).",
+    "commonAction2": "<strong>Move them to another menu</strong> at the <strong>same business</strong> or, if your account allows it, to <strong>another business you also own</strong>.",
+    "commonAction3": "<strong>Duplicate or copy</strong> (if available) to build menu variants: watch out for the total product quota.",
+    "recommendedFlowHeading": "Recommended flow",
+    "recommendedFlow1": "Filter or search the list until you have only the items you want to touch.",
+    "recommendedFlow2": "Check the selection boxes and choose the bulk action in the top bar or context menu.",
+    "recommendedFlow3": "Read the operation summary (how many items, target menu, whether it's irreversible).",
+    "recommendedFlow4": "Confirm and wait for the success message; refresh the list if needed.",
+    "p2": "<strong>Duplicates and plan quota:</strong> many operations (like moving or copying between menus) can <strong>duplicate</strong> products if you're not clear on what each action does. The system counts products against your <strong>plan limit</strong>; you could unintentionally exceed the quota.",
+    "p3": "<strong>Good practice:</strong> after moving or cloning, check the total number of active products; if you need to free up quota, you can <strong>delete duplicates</strong> or merge items into a single product before adding new dishes. For fine-tuning a single item, use <link>Edit a product</link>.",
+    "faq": {
+      "0": {
+        "q": "I moved products and now they appear twice on the menu.",
+        "a": "Copies probably remained in both the source and destination menus. Go back to the list, spot duplicates by name and delete or merge them manually. In the future, move instead of duplicate if the interface distinguishes between the two."
+      },
+      "1": {
+        "q": "The bulk action fails partway through.",
+        "a": "Check your internet connection, batch size and plan limits. If the error persists, try with fewer selected products and note down the exact error message for support."
+      }
+    }
+  },
+  "editarProductosDetalle": {
+    "audienceTitle": "Scope of editing",
+    "audienceP1": "From a product's page you can change texts, prices, visibility and the image (if your plan allows it). Changes affect <strong>all the menus</strong> where that product is linked, unless the app shows a variant per menu.",
+    "cardTitle": "Edit a product",
+    "p1": "Open the product from the relevant menu (for example <strong>Menu products</strong> or the general product list) and use the edit screen.",
+    "fieldsHeading": "Fields you can usually edit",
+    "field1": "<strong>Activate / deactivate:</strong> you can hide a product from the menu without deleting it, depending on the toggles or status shown in the form.",
+    "field2": "<strong>Name and description:</strong> change the text at any time; it's reflected in the public view once you save.",
+    "field3": "<strong>Prices:</strong> change existing amounts or add <strong>new price options</strong> (for example sizes or variants) with their currency and label, when the form allows it.",
+    "field4": "<strong>Product photo:</strong> if your <strong>subscription plan</strong> includes images on the menu, you can upload or change the photo from the same edit screen; if it's not included, the option may not appear or may be limited.",
+    "field5": "<strong>Icons and allergens:</strong> update them whenever the recipe or supplier changes; it helps meet legal and accessibility expectations on the menu.",
+    "p2": "If you need to apply the same change to many dishes (for example, a 5% price increase on all mains), check whether your flow allows <link1>bulk editing</link1> or a new, controlled <link2>CSV import</link2>.",
+    "tip": "Always save your changes before leaving the screen so customers see the updated information.",
+    "faq": {
+      "0": {
+        "q": "I changed the price but the menu still shows the old value.",
+        "a": "Confirm you clicked <strong>Save</strong>, that the product is still <strong>active</strong>, and that the menu is <link><strong>published</strong></link>. Try an incognito window to rule out browser cache."
+      },
+      "1": {
+        "q": "It won't let me upload a photo.",
+        "a": "Check the size/format limits and whether your <link>plan</link> includes photos on products. If the error is generic, try a lighter image (compressed JPEG)."
+      }
+    }
+  },
+  "suscripcionesPagos": {
+    "audienceTitle": "Account management",
+    "audienceP1": "The plan defines limits (menus, products, extra features). Charges and receipts depend on the payment gateway active in your region. If you change plans, check what happens to data that exceeds the new quota.",
+    "cardTitle": "Subscriptions and payments",
+    "p1": "Your AppMenuQR subscription is managed from your account and gives you access to the plan you've purchased (menu and product limits, extra features, translations, etc.).",
+    "paymentMethodsHeading": "Common payment methods",
+    "paymentMethod1": "<strong>Argentina:</strong> charges are usually processed with <strong>Mercado Pago</strong> (or another method shown at checkout in your region).",
+    "paymentMethod2": "<strong>Rest of the world:</strong> <strong>PayPal</strong> or other methods shown to you when subscribing or renewing are usually used.",
+    "planChangesHeading": "Plan changes and renewal",
+    "p2": "<strong>Upgrading</strong> usually unlocks more menus, products or modules (translations, images, etc.) right away. <strong>Downgrading</strong> may require you, in the dashboard, to adjust content that exceeds the new limit before confirming the change.",
+    "p3": "You can <strong>cancel or stop the renewal</strong> whenever you want from the subscription or billing settings offered in the dashboard (the exact process may vary depending on the active integration). Keep your payment receipts and confirmation email in case you need a claim or refund under the processor's policies.",
+    "smallPrint": "The exact button text and the currency shown depend on your country and the payment gateway available at the time of payment.",
+    "faq": {
+      "0": {
+        "q": "I was charged twice or don't recognize the charge.",
+        "a": "Check the business details and the transaction description in Mercado Pago / PayPal. If it still doesn't add up, open a claim with the payment gateway and contact AppMenuQR support with screenshots and the charge date."
+      },
+      "1": {
+        "q": "I downgraded my plan and some menu options disappeared.",
+        "a": "That's normal: some features stay locked until you upgrade again or adjust your content to the new limits. Check the <link1>translations</link1> and <link2>bulk editing</link2> guides to bring your menu in line with your current plan."
+      }
+    }
+  },
+  "catalogoPlantillas": {
+    "audienceTitle": "What you'll find here",
+    "audienceP1": "A summary of the available <strong>digital menu templates</strong>. Each one has a page with its features; use the link to see details, examples and which type of business it fits best.",
+    "cardTitle": "Available templates",
+    "viewFeatures": "View features"
+  }
+}

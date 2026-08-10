@@ -203,11 +203,37 @@ export class AdminMessagesService {
     const declaredCountry = this.asOptionalString(extra?.declaredCountry);
     const countryLabel = this.formatCountryLabel(registrationCountry || declaredCountry);
 
+    const deviceType = this.asOptionalString(extra?.deviceType);
+    const browser = this.asOptionalString(extra?.browser);
+    const os = this.asOptionalString(extra?.os);
+    const language = this.asOptionalString(extra?.language);
+    const timezone = this.asOptionalString(extra?.timezone);
+    const hasDeviceInfo = Boolean(deviceType || browser || os || language || timezone);
+
     const extraForDump = { ...(extra || {}) };
     delete extraForDump.registrationCountry;
     delete extraForDump.declaredCountry;
+    delete extraForDump.deviceType;
+    delete extraForDump.browser;
+    delete extraForDump.os;
+    delete extraForDump.language;
+    delete extraForDump.timezone;
     const extraHtml = Object.keys(extraForDump).length
       ? `<h3 style="margin-top: 20px; margin-bottom: 8px;">Detalles</h3><pre style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e5e7eb; white-space: pre-wrap;">${this.escapeHtml(JSON.stringify(extraForDump, null, 2))}</pre>`
+      : '';
+
+    const deviceHtml = hasDeviceInfo
+      ? `
+            <h2 style="margin: 20px 0 10px 0; font-size: 16px;">Dispositivo / navegador</h2>
+            <table class="kv">
+              <tbody>
+                <tr><td>Tipo</td><td>${this.escapeHtml(deviceType || '—')}</td></tr>
+                <tr><td>Sistema</td><td>${this.escapeHtml(os || '—')}</td></tr>
+                <tr><td>Navegador</td><td>${this.escapeHtml(browser || '—')}</td></tr>
+                <tr><td>Idioma</td><td>${this.escapeHtml(language || '—')}</td></tr>
+                <tr><td>Zona horaria</td><td>${this.escapeHtml(timezone || '—')}</td></tr>
+              </tbody>
+            </table>`
       : '';
 
     return `
@@ -248,6 +274,7 @@ export class AdminMessagesService {
                 <tr><td>País (conexión)</td><td>${this.escapeHtml(countryLabel)}</td></tr>
               </tbody>
             </table>
+            ${deviceHtml}
             ${extraHtml}
           </div>
           <div class="footer">

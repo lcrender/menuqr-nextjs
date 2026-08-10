@@ -8,9 +8,18 @@ import { QRModule } from '../qr/qr.module';
 import { I18nModule } from '../common/i18n/i18n.module';
 import { MenuItemsModule } from '../menu-items/menu-items.module';
 import { MenuSectionsModule } from '../menu-sections/menu-sections.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [DatabaseModule, QRModule, PlanLimitsModule, I18nModule, MenuItemsModule, MenuSectionsModule],
+  imports: [
+    DatabaseModule,
+    QRModule,
+    PlanLimitsModule,
+    I18nModule,
+    MenuItemsModule,
+    MenuSectionsModule,
+    UsersModule,
+  ],
   controllers: [MenusController],
   providers: [MenusService, MenusCsvImportService],
   exports: [MenusService, MenusCsvImportService],

@@ -16,16 +16,16 @@ export class PublicController {
   @Public()
   @CacheTTL(300) // Cache por 5 minutos
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Obtener restaurante público por slug (cacheable)' })
-  @ApiParam({ name: 'slug', description: 'Slug del restaurante' })
+  @ApiOperation({ summary: 'Obtener comercio público por slug (cacheable)' })
+  @ApiParam({ name: 'slug', description: 'Slug del comercio' })
   @ApiQuery({ name: 'locale', required: false, description: 'Idioma (es-ES, en-US, etc.)', example: 'es-ES' })
   @ApiResponse({
     status: 200,
-    description: 'Restaurante encontrado',
+    description: 'Comercio encontrado',
   })
   @ApiResponse({
     status: 404,
-    description: 'Restaurante no encontrado',
+    description: 'Comercio no encontrado',
   })
   async getRestaurantBySlug(
     @Param('slug') slug: string,
@@ -39,7 +39,7 @@ export class PublicController {
   @CacheTTL(300) // Cache por 5 minutos
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener menú público por slug (cacheable)' })
-  @ApiParam({ name: 'restaurantSlug', description: 'Slug del restaurante' })
+  @ApiParam({ name: 'restaurantSlug', description: 'Slug del comercio' })
   @ApiParam({ name: 'menuSlug', description: 'Slug del menú' })
   @ApiQuery({ name: 'locale', required: false, description: 'Idioma (es-ES, en-US, etc.)', example: 'es-ES' })
   @ApiResponse({

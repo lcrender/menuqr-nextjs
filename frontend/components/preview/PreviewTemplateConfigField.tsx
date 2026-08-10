@@ -1,6 +1,12 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../lib/axios';
 import type { TemplateConfigOption } from '../../lib/template-config-schema';
+import {
+  translateTemplateConfigOptionDescription,
+  translateTemplateConfigOptionLabel,
+  translateTemplateConfigSelectLabel,
+} from '../../lib/template-config-i18n';
 import styles from './PreviewTemplateConfigField.module.css';
 
 type Props = {
@@ -8,7 +14,7 @@ type Props = {
   value: unknown;
   onChange: (value: unknown) => void;
   highlighted?: boolean;
-  /** Si se indica, las imágenes se suben al API del restaurante (admin). */
+  /** Si se indica, las imágenes se suben al API del comercio (admin). */
   restaurantId?: string;
 };
 
@@ -19,10 +25,13 @@ export default function PreviewTemplateConfigField({
   highlighted,
   restaurantId,
 }: Props) {
+  const { t } = useTranslation();
   const id = `preview-opt-${option.id}`;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const label = translateTemplateConfigOptionLabel(t, option);
+  const description = translateTemplateConfigOptionDescription(t, option);
 
   const fieldClass = `${styles.field}${highlighted ? ` ${styles.fieldHighlighted}` : ''}`;
 
@@ -30,8 +39,8 @@ export default function PreviewTemplateConfigField({
     const imageUrl = typeof value === 'string' && value.trim() ? value : '';
     return (
       <div className={fieldClass} id={`field-${option.id}`} data-field-id={option.id}>
-        <label className={styles.label}>{option.label}</label>
-        {option.description ? <p className={styles.hint}>{option.description}</p> : null}
+        <label className={styles.label}>{label}</label>
+        {description ? <p className={styles.hint}>{description}</p> : null}
         {imageUrl ? (
           <div className={styles.imagePreview}>
             <img src={imageUrl} alt="" />
@@ -60,7 +69,7 @@ export default function PreviewTemplateConfigField({
                   onChange(URL.createObjectURL(file));
                 }
               } catch (err: any) {
-                setUploadError(err?.response?.data?.message || 'Error al subir la imagen');
+                setUploadError(err?.response?.data?.message || t('adminTemplates.configure.uploadError'));
               } finally {
                 setUploading(false);
               }
@@ -72,7 +81,7 @@ export default function PreviewTemplateConfigField({
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
           >
-            {uploading ? 'Cargando…' : 'Subir imagen'}
+            {uploading ? t('adminTemplates.configure.uploading') : t('adminTemplates.configure.uploadImage')}
           </button>
           {imageUrl ? (
             <button
@@ -80,7 +89,9 @@ export default function PreviewTemplateConfigField({
               className={styles.btnSecondary}
               onClick={() => onChange(option.default ?? '')}
             >
-              {option.default ? 'Restaurar' : 'Quitar'}
+              {option.default
+                ? t('adminTemplates.configure.restoreDefault')
+                : t('adminTemplates.configOptions.removeImage')}
             </button>
           ) : null}
         </div>
@@ -99,9 +110,9 @@ export default function PreviewTemplateConfigField({
             checked={value === true}
             onChange={(e) => onChange(e.target.checked)}
           />
-          <span>{option.label}</span>
+          <span>{label}</span>
         </label>
-        {option.description ? <p className={styles.hintIndented}>{option.description}</p> : null}
+        {description ? <p className={styles.hintIndented}>{description}</p> : null}
       </div>
     );
   }
@@ -110,9 +121,9 @@ export default function PreviewTemplateConfigField({
     return (
       <div className={fieldClass} id={`field-${option.id}`} data-field-id={option.id}>
         <label htmlFor={id} className={styles.label}>
-          {option.label}
+          {label}
         </label>
-        {option.description ? <p className={styles.hint}>{option.description}</p> : null}
+        {description ? <p className={styles.hint}>{description}</p> : null}
         <input
           id={id}
           type="number"
@@ -128,13 +139,13 @@ export default function PreviewTemplateConfigField({
     return (
       <div className={fieldClass} id={`field-${option.id}`} data-field-id={option.id}>
         <label htmlFor={id} className={styles.label}>
-          {option.label}
+          {label}
         </label>
-        {option.description ? <p className={styles.hint}>{option.description}</p> : null}
+        {description ? <p className={styles.hint}>{description}</p> : null}
         <select id={id} className={styles.input} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)}>
           {option.options.map((o) => (
             <option key={o.value} value={o.value}>
-              {o.label}
+              {translateTemplateConfigSelectLabel(t, option.id, o.value, o.label)}
             </option>
           ))}
         </select>
@@ -148,9 +159,9 @@ export default function PreviewTemplateConfigField({
     return (
       <div className={fieldClass} id={`field-${option.id}`} data-field-id={option.id}>
         <label htmlFor={id} className={styles.label}>
-          {option.label}
+          {label}
         </label>
-        {option.description ? <p className={styles.hint}>{option.description}</p> : null}
+        {description ? <p className={styles.hint}>{description}</p> : null}
         <div className={styles.colorRow}>
           <input id={id} type="color" className={styles.colorPicker} value={validHex} onChange={(e) => onChange(e.target.value)} />
           <input
@@ -174,9 +185,9 @@ export default function PreviewTemplateConfigField({
   return (
     <div className={fieldClass} id={`field-${option.id}`} data-field-id={option.id}>
       <label htmlFor={id} className={styles.label}>
-        {option.label}
+        {label}
       </label>
-      {option.description ? <p className={styles.hint}>{option.description}</p> : null}
+      {description ? <p className={styles.hint}>{description}</p> : null}
       <input
         id={id}
         type="text"

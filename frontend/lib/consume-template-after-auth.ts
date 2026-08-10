@@ -40,8 +40,8 @@ function buildRestaurantPayload(templateId: string): Record<string, unknown> {
 }
 
 /**
- * Tras login/registro: deriva a wizard, selector de restaurante o upgrade según el intent pendiente.
- * No limpia el intent si hace falta upgrade, wizard o elección de restaurante.
+ * Tras login/registro: deriva a wizard, selector de comercio o upgrade según el intent pendiente.
+ * No limpia el intent si hace falta upgrade, wizard o elección de comercio.
  */
 export async function consumeTemplateAfterAuth(
   api: AxiosInstance,
@@ -81,7 +81,7 @@ export async function consumeTemplateAfterAuth(
     q.set('intentTemplate', intent.apiTemplateId);
     return {
       action: 'needs_restaurant',
-      wizardHref: `/admin/restaurants?${q.toString()}`,
+      wizardHref: `/admin/comercios?${q.toString()}`,
     };
   }
 

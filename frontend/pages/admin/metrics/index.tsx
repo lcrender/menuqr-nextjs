@@ -136,7 +136,7 @@ export default function Metrics() {
         </div>
         <div className="col-md-3 col-sm-6">
           <div className="admin-stat-card">
-            <p className="admin-stat-title">Total Restaurantes</p>
+            <p className="admin-stat-title">Total Comercios</p>
             <h2 className="admin-stat-value">{metrics.general.totalRestaurants}</h2>
             <small className="text-muted">
               {metrics.general.activeRestaurants} activos / {metrics.general.inactiveRestaurants} inactivos
@@ -210,7 +210,7 @@ export default function Metrics() {
                 <thead>
                   <tr>
                     <th>Plantilla</th>
-                    <th>Restaurantes</th>
+                    <th>Comercios</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -233,7 +233,7 @@ export default function Metrics() {
                 <thead>
                   <tr>
                     <th>Moneda</th>
-                    <th>Restaurantes</th>
+                    <th>Comercios</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -250,13 +250,13 @@ export default function Metrics() {
         </div>
         <div className="col-md-6">
           <div className="admin-card">
-            <h5 className="admin-card-title">Restaurantes por Tenant</h5>
+            <h5 className="admin-card-title">Comercios por Tenant</h5>
             <div className="table-responsive">
               <table className="table table-sm">
                 <thead>
                   <tr>
                     <th>Tenant</th>
-                    <th>Restaurantes</th>
+                    <th>Comercios</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -277,14 +277,14 @@ export default function Metrics() {
       <div className="row g-4 mb-4">
         <div className="col-md-4">
           <div className="admin-card">
-            <h5 className="admin-card-title">Top 10 Usuarios con Más Restaurantes</h5>
+            <h5 className="admin-card-title">Top 10 Usuarios con Más Comercios</h5>
             <div className="table-responsive">
               <table className="table table-sm">
                 <thead>
                   <tr>
                     <th>#</th>
                     <th>Email</th>
-                    <th>Restaurantes</th>
+                    <th>Comercios</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -302,13 +302,13 @@ export default function Metrics() {
         </div>
         <div className="col-md-4">
           <div className="admin-card">
-            <h5 className="admin-card-title">Top 10 Restaurantes con Más Menús</h5>
+            <h5 className="admin-card-title">Top 10 Comercios con Más Menús</h5>
             <div className="table-responsive">
               <table className="table table-sm">
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Restaurante</th>
+                    <th>Comercio</th>
                     <th>Menús</th>
                   </tr>
                 </thead>
@@ -360,7 +360,7 @@ export default function Metrics() {
             <div className="row g-3">
               <div className="col-md-3">
                 <div className="admin-stat-card" style={{ background: metrics.quality.restaurantsWithoutMenus > 0 ? '#fff3cd' : '#d1e7dd' }}>
-                  <p className="admin-stat-title">Restaurantes sin Menús</p>
+                  <p className="admin-stat-title">Comercios sin Menús</p>
                   <h2 className="admin-stat-value">{metrics.quality.restaurantsWithoutMenus}</h2>
                 </div>
               </div>
@@ -399,7 +399,7 @@ export default function Metrics() {
                     <tr>
                       <th>Mes</th>
                       <th>Usuarios</th>
-                      <th>Restaurantes</th>
+                      <th>Comercios</th>
                       <th>Menús</th>
                       <th>Productos</th>
                     </tr>
@@ -449,7 +449,7 @@ export default function Metrics() {
         </div>
         <div className="col-md-6">
           <div className="admin-card">
-            <h5 className="admin-card-title">Últimos Restaurantes Creados</h5>
+            <h5 className="admin-card-title">Últimos Comercios Creados</h5>
             <div className="table-responsive">
               <table className="table table-sm">
                 <thead>

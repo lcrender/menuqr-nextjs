@@ -6,12 +6,12 @@ export class UpdateRestaurantDto {
   @IsString()
   @IsOptional()
   tenantId?: string;
-  @ApiProperty({ description: 'Nombre del restaurante', required: false })
+  @ApiProperty({ description: 'Nombre del comercio', required: false })
   @IsString()
   @IsOptional()
   name?: string;
 
-  @ApiProperty({ description: 'Descripción del restaurante', required: false })
+  @ApiProperty({ description: 'Descripción del comercio', required: false })
   @IsString()
   @IsOptional()
   description?: string;
@@ -46,22 +46,22 @@ export class UpdateRestaurantDto {
   @IsOptional()
   address?: string;
 
-  @ApiProperty({ description: 'Teléfono del restaurante', required: false })
+  @ApiProperty({ description: 'Teléfono del comercio', required: false })
   @IsString()
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ description: 'WhatsApp del restaurante', required: false })
+  @ApiProperty({ description: 'WhatsApp del comercio', required: false })
   @IsString()
   @IsOptional()
   whatsapp?: string;
 
-  @ApiProperty({ description: 'Email del restaurante', required: false })
+  @ApiProperty({ description: 'Email del comercio', required: false })
   @IsEmail()
   @IsOptional()
   email?: string;
 
-  @ApiProperty({ description: 'Sitio web del restaurante', required: false })
+  @ApiProperty({ description: 'Sitio web del comercio', required: false })
   @ValidateIf((o) => o.website && o.website.trim() !== '')
   @IsUrl({}, { message: 'Debe ser una URL válida' })
   @IsOptional()
@@ -78,7 +78,7 @@ export class UpdateRestaurantDto {
   isActive?: boolean;
 
   @ApiProperty({ 
-    description: 'Template de diseño del restaurante', 
+    description: 'Template de diseño del comercio', 
     enum: ['classic', 'minimalist', 'foodie', 'burgers', 'italianFood', 'gourmet', 'proMobile', 'nightClub', 'smartFood', 'beachBar', 'solNoche'],
     required: false 
   })

@@ -1,82 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../src/i18n/config';
+import locationEs from '../src/locales/fragments/location.es.json';
+import locationEn from '../src/locales/fragments/location.en.json';
+import {
+  COUNTRY_OPTIONS,
+  findCountryOption,
+  getCountryFlag,
+  type CountryOption,
+} from '../lib/countries';
 
-interface Country {
-  code: string;
-  name: string;
-}
-
-// Lista de países más comunes (puedes expandir esta lista)
-const countries: Country[] = [
-  { code: 'AR', name: 'Argentina' },
-  { code: 'BO', name: 'Bolivia' },
-  { code: 'BR', name: 'Brasil' },
-  { code: 'CL', name: 'Chile' },
-  { code: 'CO', name: 'Colombia' },
-  { code: 'CR', name: 'Costa Rica' },
-  { code: 'CU', name: 'Cuba' },
-  { code: 'DO', name: 'República Dominicana' },
-  { code: 'EC', name: 'Ecuador' },
-  { code: 'SV', name: 'El Salvador' },
-  { code: 'GT', name: 'Guatemala' },
-  { code: 'HN', name: 'Honduras' },
-  { code: 'MX', name: 'México' },
-  { code: 'NI', name: 'Nicaragua' },
-  { code: 'PA', name: 'Panamá' },
-  { code: 'PY', name: 'Paraguay' },
-  { code: 'PE', name: 'Perú' },
-  { code: 'PR', name: 'Puerto Rico' },
-  { code: 'UY', name: 'Uruguay' },
-  { code: 'VE', name: 'Venezuela' },
-  { code: 'ES', name: 'España' },
-  { code: 'US', name: 'Estados Unidos' },
-  { code: 'CA', name: 'Canadá' },
-  { code: 'FR', name: 'Francia' },
-  { code: 'IT', name: 'Italia' },
-  { code: 'DE', name: 'Alemania' },
-  { code: 'GB', name: 'Reino Unido' },
-  { code: 'PT', name: 'Portugal' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'NZ', name: 'Nueva Zelanda' },
-  { code: 'JP', name: 'Japón' },
-  { code: 'CN', name: 'China' },
-  { code: 'IN', name: 'India' },
-  { code: 'RU', name: 'Rusia' },
-  { code: 'ZA', name: 'Sudáfrica' },
-  { code: 'EG', name: 'Egipto' },
-  { code: 'MA', name: 'Marruecos' },
-  { code: 'TR', name: 'Turquía' },
-  { code: 'KR', name: 'Corea del Sur' },
-  { code: 'TH', name: 'Tailandia' },
-  { code: 'ID', name: 'Indonesia' },
-  { code: 'PH', name: 'Filipinas' },
-  { code: 'VN', name: 'Vietnam' },
-  { code: 'MY', name: 'Malasia' },
-  { code: 'SG', name: 'Singapur' },
-  { code: 'AE', name: 'Emiratos Árabes Unidos' },
-  { code: 'SA', name: 'Arabia Saudí' },
-  { code: 'IL', name: 'Israel' },
-  { code: 'GR', name: 'Grecia' },
-  { code: 'NL', name: 'Países Bajos' },
-  { code: 'BE', name: 'Bélgica' },
-  { code: 'CH', name: 'Suiza' },
-  { code: 'AT', name: 'Austria' },
-  { code: 'SE', name: 'Suecia' },
-  { code: 'NO', name: 'Noruega' },
-  { code: 'DK', name: 'Dinamarca' },
-  { code: 'FI', name: 'Finlandia' },
-  { code: 'PL', name: 'Polonia' },
-  { code: 'CZ', name: 'República Checa' },
-  { code: 'HU', name: 'Hungría' },
-  { code: 'RO', name: 'Rumania' },
-  { code: 'BG', name: 'Bulgaria' },
-  { code: 'HR', name: 'Croacia' },
-  { code: 'RS', name: 'Serbia' },
-  { code: 'IE', name: 'Irlanda' },
-  { code: 'IS', name: 'Islandia' },
-  { code: 'LU', name: 'Luxemburgo' },
-  { code: 'MT', name: 'Malta' },
-  { code: 'CY', name: 'Chipre' },
-].sort((a, b) => a.name.localeCompare(b.name));
+i18n.addResourceBundle('es-ES', 'translation', { location: locationEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { location: locationEn }, true, true);
 
 interface CountrySelectorProps {
   value: string;
@@ -86,23 +21,35 @@ interface CountrySelectorProps {
 }
 
 export default function CountrySelector({ value, onChange, required = false, className = '' }: CountrySelectorProps) {
+  const { t, i18n: i18nInstance } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [filteredCountries, setFilteredCountries] = useState(countries);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (searchTerm) {
-      const filtered = countries.filter(country =>
-        country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        country.code.toLowerCase().includes(searchTerm.toLowerCase())
+  const localizeCountry = (country: CountryOption) =>
+    t(`location.countries.${country.code}`, { defaultValue: country.name });
+
+  const sortedCountries = useMemo(() => {
+    return [...COUNTRY_OPTIONS].sort((a, b) =>
+      localizeCountry(a).localeCompare(localizeCountry(b), i18nInstance.language),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-sort when language changes
+  }, [i18nInstance.language, t]);
+
+  const filteredCountries = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return sortedCountries;
+    return sortedCountries.filter((country) => {
+      const localized = localizeCountry(country).toLowerCase();
+      return (
+        localized.includes(term) ||
+        country.name.toLowerCase().includes(term) ||
+        country.code.toLowerCase().includes(term)
       );
-      setFilteredCountries(filtered);
-    } else {
-      setFilteredCountries(countries);
-    }
-  }, [searchTerm]);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, sortedCountries, i18nInstance.language, t]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -122,9 +69,10 @@ export default function CountrySelector({ value, onChange, required = false, cla
     };
   }, []);
 
-  const selectedCountry = countries.find(c => c.name === value || c.code === value);
+  const selectedCountry = findCountryOption(value);
 
-  const handleSelect = (country: Country) => {
+  const handleSelect = (country: CountryOption) => {
+    // Guardar nombre canónico (ES) para provincias/monedas/BD
     onChange(country.name);
     setSearchTerm('');
     setIsOpen(false);
@@ -134,8 +82,7 @@ export default function CountrySelector({ value, onChange, required = false, cla
     const term = e.target.value;
     setSearchTerm(term);
     setIsOpen(true);
-    
-    // Si el usuario escribe directamente, actualizar el valor
+
     if (!term) {
       onChange('');
     }
@@ -145,16 +92,18 @@ export default function CountrySelector({ value, onChange, required = false, cla
     setIsOpen(true);
   };
 
+  const displayValue = selectedCountry ? localizeCountry(selectedCountry) : value || '';
+
   return (
     <div className={`position-relative ${className}`}>
       <input
         ref={inputRef}
         type="text"
         className="form-control"
-        value={isOpen ? searchTerm : (selectedCountry?.name || value || '')}
+        value={isOpen ? searchTerm : displayValue}
         onChange={handleInputChange}
         onFocus={handleInputFocus}
-        placeholder="Buscar país..."
+        placeholder={t('location.searchCountry')}
         required={required}
         autoComplete="off"
       />
@@ -163,7 +112,7 @@ export default function CountrySelector({ value, onChange, required = false, cla
           ref={dropdownRef}
           className="admin-select-dropdown w-100"
           role="listbox"
-          aria-label="Lista de países"
+          aria-label={t('location.countriesListAria')}
         >
           {filteredCountries.length > 0 ? (
             filteredCountries.map((country) => (
@@ -180,37 +129,15 @@ export default function CountrySelector({ value, onChange, required = false, cla
                   <span aria-hidden style={{ fontSize: '1.25rem', lineHeight: 1 }}>
                     {getCountryFlag(country.code)}
                   </span>
-                  <span>{country.name}</span>
+                  <span>{localizeCountry(country)}</span>
                 </div>
               </div>
             ))
           ) : (
-            <div className="admin-select-dropdown__empty">No se encontraron países</div>
+            <div className="admin-select-dropdown__empty">{t('location.noCountriesFound')}</div>
           )}
         </div>
       )}
     </div>
   );
 }
-
-function getCountryFlag(code: string): string {
-  // Emojis de banderas basados en códigos de país
-  const flagEmojis: { [key: string]: string } = {
-    'AR': '🇦🇷', 'BO': '🇧🇴', 'BR': '🇧🇷', 'CL': '🇨🇱', 'CO': '🇨🇴',
-    'CR': '🇨🇷', 'CU': '🇨🇺', 'DO': '🇩🇴', 'EC': '🇪🇨', 'SV': '🇸🇻',
-    'GT': '🇬🇹', 'HN': '🇭🇳', 'MX': '🇲🇽', 'NI': '🇳🇮', 'PA': '🇵🇦',
-    'PY': '🇵🇾', 'PE': '🇵🇪', 'PR': '🇵🇷', 'UY': '🇺🇾', 'VE': '🇻🇪',
-    'ES': '🇪🇸', 'US': '🇺🇸', 'CA': '🇨🇦', 'FR': '🇫🇷', 'IT': '🇮🇹',
-    'DE': '🇩🇪', 'GB': '🇬🇧', 'PT': '🇵🇹', 'AU': '🇦🇺', 'NZ': '🇳🇿',
-    'JP': '🇯🇵', 'CN': '🇨🇳', 'IN': '🇮🇳', 'RU': '🇷🇺', 'ZA': '🇿🇦',
-    'EG': '🇪🇬', 'MA': '🇲🇦', 'TR': '🇹🇷', 'KR': '🇰🇷', 'TH': '🇹🇭',
-    'ID': '🇮🇩', 'PH': '🇵🇭', 'VN': '🇻🇳', 'MY': '🇲🇾', 'SG': '🇸🇬',
-    'AE': '🇦🇪', 'SA': '🇸🇦', 'IL': '🇮🇱', 'GR': '🇬🇷', 'NL': '🇳🇱',
-    'BE': '🇧🇪', 'CH': '🇨🇭', 'AT': '🇦🇹', 'SE': '🇸🇪', 'NO': '🇳🇴',
-    'DK': '🇩🇰', 'FI': '🇫🇮', 'PL': '🇵🇱', 'CZ': '🇨🇿', 'HU': '🇭🇺',
-    'RO': '🇷🇴', 'BG': '🇧🇬', 'HR': '🇭🇷', 'RS': '🇷🇸', 'IE': '🇮🇪',
-    'IS': '🇮🇸', 'LU': '🇱🇺', 'MT': '🇲🇹', 'CY': '🇨🇾',
-  };
-  return flagEmojis[code] || '🌍';
-}
-

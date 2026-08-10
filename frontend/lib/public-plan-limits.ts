@@ -127,8 +127,8 @@ export async function fetchPublicPlanLimits(): Promise<
 }
 
 export function formatRestaurantsLine(limit: number): string {
-  if (limit === 1) return '1 restaurante';
-  return `${limit} restaurantes`;
+  if (limit === 1) return '1 comercio';
+  return `${limit} comercios`;
 }
 
 export function formatMenusLine(limit: number): string {

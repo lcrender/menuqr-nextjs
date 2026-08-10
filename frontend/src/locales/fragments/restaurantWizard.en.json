@@ -1,0 +1,165 @@
+{
+  "title": "Create your first business",
+  "subtitle": "Follow these steps to set up your business",
+  "steps": {
+    "basic": "Basic information",
+    "location": "Location",
+    "contact": "Contact",
+    "payment": "Payment methods",
+    "images": "Images",
+    "template": "Template"
+  },
+  "step1": {
+    "title": "Basic information",
+    "description": "Fill in the basic information for your business",
+    "name": "Business name *",
+    "namePlaceholder": "E.g.: The Harbor Grill",
+    "descriptionLabel": "Description",
+    "boldTitle": "Bold (Ctrl+B)",
+    "lineBreakTitle": "Line break",
+    "boldPlaceholder": "bold text",
+    "descriptionPlaceholder": "Describe your business (optional). Use **text** for bold and Enter for line breaks.",
+    "descriptionHint": "{{count}}/2000 characters - Use **text** for bold"
+  },
+  "step2": {
+    "title": "Location",
+    "description": "Fill in the location and address of your business",
+    "country": "Country *",
+    "province": "State / Region",
+    "city": "City",
+    "address": "Address",
+    "addressPlaceholder": "Street and number",
+    "postalCode": "Postal code",
+    "optional": "Optional"
+  },
+  "step3": {
+    "title": "Contact",
+    "description": "Add your business contact information",
+    "phone": "Phone",
+    "phonePlaceholder": "+54 11 1234-5678",
+    "usePhoneForWhatsApp": "Use this number for WhatsApp",
+    "whatsapp": "WhatsApp",
+    "whatsappPlaceholderPhone": "The phone number will be used",
+    "whatsappPlaceholderExample": "E.g.: +54 11 1234-5678 or 1123456789",
+    "whatsappHintWithCountry": "The country code for {{country}} will be added automatically if you do not include it",
+    "whatsappHintNoCountry": "Enter the number with country code (e.g.: +54 11 1234-5678) or just the local number",
+    "email": "Email",
+    "emailPlaceholder": "contact@business.com (optional)",
+    "website": "Website",
+    "websitePlaceholder": "laparrilla22.com or https://www.business.com (optional)"
+  },
+  "step4": {
+    "title": "Payment methods",
+    "description": "Set up payment currencies for your business",
+    "defaultCurrency": "Default payment currency *",
+    "additionalCurrencies": "Additional currencies (optional)",
+    "additionalCurrenciesHint": "Click the currencies you want to accept in addition to the default currency",
+    "selectedCount": "{{count}} currency(ies) selected",
+    "selectAdditional": "Select additional currencies",
+    "additionalModalTitle": "Additional currencies",
+    "close": "Close"
+  },
+  "step5": {
+    "title": "Images",
+    "description": "Add your business logo and cover photo",
+    "logo": "Business logo",
+    "logoHint": "Recommended: square image of at least 400×400 px (PNG or JPG).",
+    "logoPreviewAlt": "Logo preview",
+    "removeLogo": "Remove logo",
+    "cover": "Cover photo",
+    "coverPreviewAlt": "Cover preview",
+    "removeCover": "Remove cover",
+    "changeImage": "Change image",
+    "uploadHint": "Drag an image or click to select"
+  },
+  "step6": {
+    "title": "Template and colors",
+    "description": "Choose your menu design and brand colors. Then you will continue with menu creation.",
+    "templateLabel": "Design template",
+    "templateHelp": "Select a template. You can change it later and adjust your brand colors.",
+    "templateHint": "This template will be applied to all menus of this business",
+    "proNote": "Available on Pro/Business plan",
+    "previewAlt": "Preview {{name}}",
+    "brandColors": "Brand colors",
+    "brandColorsHelp": "Customize your business primary colors. These colors apply to buttons, titles, and highlighted elements.",
+    "primaryColor": "Primary color",
+    "secondaryColor": "Secondary color"
+  },
+  "templates": {
+    "classic": {
+      "name": "Classic",
+      "desc": "Traditional and elegant design"
+    },
+    "minimalist": {
+      "name": "Minimalist",
+      "desc": "Clean and contemporary design"
+    },
+    "foodie": {
+      "name": "Foodie",
+      "desc": "Gastronomic and appetizing design"
+    },
+    "smartFood": {
+      "name": "Smart Food",
+      "desc": "Clear design with allergen filters"
+    },
+    "gourmet": {
+      "name": "Gourmet",
+      "desc": "Refined premium style"
+    },
+    "proMobile": {
+      "name": "Modern Food",
+      "desc": "Modern design with side tabs and product photos"
+    },
+    "beachBar": {
+      "name": "Beach Life",
+      "desc": "Beach bar with configurable background and horizontal cards"
+    },
+    "solNoche": {
+      "name": "Sol & Noche",
+      "desc": "Light/dark mode, featured items, and day/night covers"
+    },
+    "nightClub": {
+      "name": "Neon Club",
+      "desc": "Dark theme with side tabs, no photos"
+    },
+    "burgers": {
+      "name": "Burgers",
+      "desc": "Bold and dynamic burger-style design"
+    },
+    "italianFood": {
+      "name": "Italian Food",
+      "desc": "Elegant with Italian flag colors"
+    }
+  },
+  "currencies": {
+    "USD": "USD - US Dollar",
+    "EUR": "EUR - Euro",
+    "ARS": "ARS - Argentine Peso",
+    "MXN": "MXN - Mexican Peso",
+    "CLP": "CLP - Chilean Peso",
+    "COP": "COP - Colombian Peso",
+    "PEN": "PEN - Peruvian Sol",
+    "BRL": "BRL - Brazilian Real",
+    "UYU": "UYU - Uruguayan Peso",
+    "PYG": "PYG - Paraguayan Guaraní",
+    "BOB": "BOB - Boliviano",
+    "VES": "VES - Venezuelan Bolívar"
+  },
+  "footer": {
+    "back": "← Back",
+    "cancel": "Cancel",
+    "next": "Next →",
+    "creating": "Creating…",
+    "create": "Create Business",
+    "saving": "Saving…",
+    "continueToMenu": "Continue to menu →"
+  },
+  "proLock": {
+    "title": "Pro template",
+    "close": "Close",
+    "body": "The <strong>{{name}}</strong> template is available only for <strong>Pro</strong> or <strong>Business</strong> users.",
+    "hint": "You can continue with a free template (you can change it later) or view subscription plans. This template is for Pro users only.",
+    "continueFree": "Continue with free template",
+    "viewPlans": "View subscription plans"
+  }
+}

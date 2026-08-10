@@ -165,7 +165,7 @@ export default function PrintMenuPage() {
       setLocales(localeList);
       setSelectedLocale(localeList.includes('es-ES') ? 'es-ES' : localeList[0] ?? 'es-ES');
     } catch (err: any) {
-      setError(err?.userMessage || err?.response?.data?.message || 'No se pudo cargar el restaurante.');
+      setError(err?.userMessage || err?.response?.data?.message || 'No se pudo cargar el comercio.');
       setRestaurant(null);
       setMenus([]);
     } finally {
@@ -308,7 +308,7 @@ export default function PrintMenuPage() {
       <div className="admin-main">
         <div className="print-menu-toolbar no-print">
           <div>
-            <Link href="/admin/restaurants" className="btn btn-sm btn-outline-secondary me-2">
+            <Link href="/admin/comercios" className="btn btn-sm btn-outline-secondary me-2">
               ← Volver
             </Link>
             <h1 className="admin-title d-inline-block mb-0 ms-1">
@@ -336,7 +336,7 @@ export default function PrintMenuPage() {
         ) : error ? (
           <div className="alert alert-danger no-print">{error}</div>
         ) : !restaurant ? (
-          <div className="alert alert-warning no-print">Restaurante no encontrado.</div>
+          <div className="alert alert-warning no-print">Comercio no encontrado.</div>
         ) : (
           <div className="print-menu-page">
             <div className="print-menu-preview-wrap">
@@ -479,7 +479,7 @@ export default function PrintMenuPage() {
               </div>
 
               <div className="print-menu-options-group">
-                <h3>Datos del restaurante</h3>
+                <h3>Datos del comercio</h3>
                 <label className="print-menu-check">
                   <input
                     type="checkbox"
@@ -545,7 +545,7 @@ export default function PrintMenuPage() {
                   </button>
                 </div>
                 {menus.length === 0 ? (
-                  <p className="text-muted small mb-0">Este restaurante no tiene menús.</p>
+                  <p className="text-muted small mb-0">Este comercio no tiene menús.</p>
                 ) : (
                   menus.map((menu) => (
                     <label key={menu.id} className="print-menu-check">

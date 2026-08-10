@@ -1,9 +1,22 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../../../src/i18n/config';
+import adminTemplatesEs from '../../../../src/locales/fragments/adminTemplates.es.json';
+import adminTemplatesEn from '../../../../src/locales/fragments/adminTemplates.en.json';
 import api from '../../../../lib/axios';
 import AdminLayout from '../../../../components/AdminLayout';
-import { TEMPLATE_CONFIG_SCHEMAS, TEMPLATE_NAMES, TemplateConfigOption } from '../../../../lib/template-config-schema';
+import { TEMPLATE_CONFIG_SCHEMAS, TemplateConfigOption } from '../../../../lib/template-config-schema';
+import {
+  translateTemplateConfigOptionDescription,
+  translateTemplateConfigOptionLabel,
+  translateTemplateConfigSelectLabel,
+  translateTemplateName,
+} from '../../../../lib/template-config-i18n';
+
+i18n.addResourceBundle('es-ES', 'translation', { adminTemplates: adminTemplatesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { adminTemplates: adminTemplatesEn }, true, true);
 
 function normalizePlanKeyForTemplate(plan: string | null | undefined): string {
   const raw = (plan || 'free').toString().toLowerCase().trim().replace(/\s+/g, '_');
@@ -16,6 +29,7 @@ function planAllowsTranslationFlagTemplateOption(plan: string | null | undefined
 }
 
 export default function ConfigureTemplate() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { restaurantId } = router.query;
   const [restaurant, setRestaurant] = useState<{
@@ -63,12 +77,16 @@ export default function ConfigureTemplate() {
           ? data.templateConfig[opt.id]
           : opt.default;
       });
-      // Los colores del restaurante tienen prioridad (las plantillas ya los usan así)
+      // Los colores del comercio tienen prioridad (las plantillas ya los usan así)
       if (data.primaryColor != null && data.primaryColor !== '') defaults.primaryColor = data.primaryColor;
       if (data.secondaryColor != null && data.secondaryColor !== '') defaults.secondaryColor = data.secondaryColor;
       setFormValues(defaults);
     } catch (e: any) {
-      setError(e.response?.status === 404 ? 'Restaurante no encontrado' : 'Error al cargar el restaurante');
+      setError(
+        e.response?.status === 404
+          ? t('adminTemplates.configure.notFound')
+          : t('adminTemplates.configure.loadError'),
+      );
     } finally {
       setLoading(false);
     }
@@ -98,9 +116,9 @@ export default function ConfigureTemplate() {
         primaryColor: String(formValues.primaryColor ?? ''),
         secondaryColor: String(formValues.secondaryColor ?? ''),
       } : null);
-      setSuccessMessage('Configuración guardada correctamente.');
+      setSuccessMessage(t('adminTemplates.configure.saved'));
     } catch (e: any) {
-      setError(e.response?.data?.message || 'Error al guardar');
+      setError(e.response?.data?.message || t('adminTemplates.configure.saveError'));
     } finally {
       setSaving(false);
     }
@@ -117,50 +135,53 @@ export default function ConfigureTemplate() {
         planAllowsTranslationFlagTemplateOption(restaurant.tenantPlan),
     );
   }, [restaurant, schema, viewer?.role]);
-  const templateLabel = TEMPLATE_NAMES[templateId] || templateId;
+  const templateLabel = translateTemplateName(t, templateId);
 
   if (!restaurantId) return null;
 
   return (
     <AdminLayout>
       <div className="admin-main" style={{ padding: '20px', paddingTop: '40px', maxWidth: '720px' }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: '24px' }}>
+        <nav aria-label={t('adminTemplates.configure.breadcrumb')} style={{ marginBottom: '24px' }}>
           <Link href="/admin/templates" style={{ color: 'var(--admin-primary)', textDecoration: 'none', fontSize: '0.9375rem' }}>
-            ← Volver a Plantillas
+            {t('adminTemplates.configure.backToTemplates')}
           </Link>
         </nav>
 
         {loading ? (
           <div className="text-center py-5">
             <div className="spinner-border" role="status">
-              <span className="visually-hidden">Cargando...</span>
+              <span className="visually-hidden">{t('adminTemplates.configure.loading')}</span>
             </div>
           </div>
         ) : error || !restaurant ? (
           <div className="admin-card" style={{ padding: '24px' }}>
-            <p style={{ color: 'var(--admin-error)', marginBottom: '16px' }}>{error || 'Restaurante no encontrado'}</p>
+            <p style={{ color: 'var(--admin-error)', marginBottom: '16px' }}>
+              {error || t('adminTemplates.configure.notFound')}
+            </p>
             <Link href="/admin/templates" className="admin-btn" style={{ display: 'inline-block' }}>
-              Volver a Plantillas
+              {t('adminTemplates.configure.backToTemplatesShort')}
             </Link>
           </div>
         ) : (
           <>
             <div className="admin-card" style={{ marginBottom: '24px', padding: '24px' }}>
               <h1 className="admin-title" style={{ marginBottom: '8px' }}>
-                Configuración de plantilla
+                {t('adminTemplates.configure.title')}
               </h1>
               <p style={{ color: 'var(--admin-text-muted)', marginBottom: '0', fontSize: '0.9375rem' }}>
-                <strong>{restaurant.name}</strong> · Plantilla actual: <strong>{templateLabel}</strong>
+                <strong>{restaurant.name}</strong> · {t('adminTemplates.configure.currentTemplate')}{' '}
+                <strong>{templateLabel}</strong>
               </p>
             </div>
 
             {schema.length === 0 ? (
               <div className="admin-card" style={{ padding: '32px', textAlign: 'center', color: 'var(--admin-text-muted)' }}>
                 <p style={{ marginBottom: '0' }}>
-                  Esta plantilla no tiene opciones de configuración definidas aún. Se irán añadiendo por plantilla.
+                  {t('adminTemplates.configure.noOptions')}
                 </p>
                 <Link href="/admin/templates" className="admin-btn" style={{ display: 'inline-block', marginTop: '20px' }}>
-                  Volver a Plantillas
+                  {t('adminTemplates.configure.backToTemplatesShort')}
                 </Link>
               </div>
             ) : (
@@ -189,14 +210,14 @@ export default function ConfigureTemplate() {
                     {saving ? (
                       <>
                         <span className="spinner-border spinner-border-sm me-2" role="status" />
-                        Guardando...
+                        {t('adminTemplates.configure.saving')}
                       </>
                     ) : (
-                      'Guardar configuración'
+                      t('adminTemplates.configure.save')
                     )}
                   </button>
                   <Link href="/admin/templates" style={{ lineHeight: '40px', color: 'var(--admin-text-muted)' }}>
-                    Cancelar
+                    {t('adminTemplates.configure.cancel')}
                   </Link>
                 </div>
               </form>
@@ -219,18 +240,21 @@ function Field({
   onChange: (value: unknown) => void;
   restaurantId?: string;
 }) {
+  const { t } = useTranslation();
   const id = `opt-${option.id}`;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const label = translateTemplateConfigOptionLabel(t, option);
+  const description = translateTemplateConfigOptionDescription(t, option);
 
   if (option.type === 'image') {
     const imageUrl = typeof value === 'string' && value.trim() ? value : String(option.default ?? '');
     return (
       <div style={{ marginBottom: '20px' }}>
-        <label className="form-label">{option.label}</label>
-        {option.description && (
-          <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '8px' }}>{option.description}</p>
+        <label className="form-label">{label}</label>
+        {description && (
+          <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '8px' }}>{description}</p>
         )}
         {imageUrl ? (
           <div
@@ -266,7 +290,7 @@ function Field({
                 const res = await api.post(`/media/restaurants/${restaurantId}/${uploadPath}`, fd);
                 if (res.data?.url) onChange(res.data.url);
               } catch (err: any) {
-                setUploadError(err.response?.data?.message || 'Error al subir la imagen');
+                setUploadError(err.response?.data?.message || t('adminTemplates.configure.uploadError'));
               } finally {
                 setUploading(false);
               }
@@ -278,7 +302,7 @@ function Field({
             disabled={uploading || !restaurantId}
             onClick={() => fileInputRef.current?.click()}
           >
-            {uploading ? 'Subiendo…' : 'Subir imagen'}
+            {uploading ? t('adminTemplates.configure.uploading') : t('adminTemplates.configure.uploadImage')}
           </button>
           {option.default ? (
             <button
@@ -287,7 +311,7 @@ function Field({
               disabled={uploading}
               onClick={() => onChange(option.default)}
             >
-              Restaurar predeterminada
+              {t('adminTemplates.configure.restoreDefault')}
             </button>
           ) : null}
         </div>
@@ -307,10 +331,10 @@ function Field({
             onChange={(e) => onChange(e.target.checked)}
             style={{ width: '18px', height: '18px' }}
           />
-          <span>{option.label}</span>
+          <span>{label}</span>
         </label>
-        {option.description && (
-          <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginTop: '4px', marginLeft: '28px' }}>{option.description}</p>
+        {description && (
+          <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginTop: '4px', marginLeft: '28px' }}>{description}</p>
         )}
       </div>
     );
@@ -318,8 +342,8 @@ function Field({
   if (option.type === 'number') {
     return (
       <div style={{ marginBottom: '20px' }}>
-        <label htmlFor={id} className="form-label">{option.label}</label>
-        {option.description && <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '6px' }}>{option.description}</p>}
+        <label htmlFor={id} className="form-label">{label}</label>
+        {description && <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '6px' }}>{description}</p>}
         <input
           id={id}
           type="number"
@@ -334,8 +358,8 @@ function Field({
   if (option.type === 'select' && option.options) {
     return (
       <div style={{ marginBottom: '20px' }}>
-        <label htmlFor={id} className="form-label">{option.label}</label>
-        {option.description && <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '6px' }}>{option.description}</p>}
+        <label htmlFor={id} className="form-label">{label}</label>
+        {description && <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '6px' }}>{description}</p>}
         <select
           id={id}
           className="wizard-input-large"
@@ -344,7 +368,9 @@ function Field({
           style={{ width: '100%', maxWidth: '280px' }}
         >
           {option.options.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+            <option key={o.value} value={o.value}>
+              {translateTemplateConfigSelectLabel(t, option.id, o.value, o.label)}
+            </option>
           ))}
         </select>
       </div>
@@ -355,8 +381,8 @@ function Field({
     const validHex = /^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#007bff';
     return (
       <div style={{ marginBottom: '20px' }}>
-        <label htmlFor={id} className="form-label">{option.label}</label>
-        {option.description && <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '8px' }}>{option.description}</p>}
+        <label htmlFor={id} className="form-label">{label}</label>
+        {description && <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '8px' }}>{description}</p>}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <input
             id={id}
@@ -385,8 +411,8 @@ function Field({
   }
   return (
     <div style={{ marginBottom: '20px' }}>
-      <label htmlFor={id} className="form-label">{option.label}</label>
-      {option.description && <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '6px' }}>{option.description}</p>}
+      <label htmlFor={id} className="form-label">{label}</label>
+      {description && <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '6px' }}>{description}</p>}
       <input
         id={id}
         type="text"

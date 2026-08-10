@@ -16,6 +16,30 @@ export class RestaurantsService {
     private readonly i18nService: I18nService,
   ) {}
 
+  private async resolveRestaurantSourceLocale(
+    tenantId: string,
+    restaurantId: string,
+    preferred?: string | null,
+  ): Promise<string> {
+    const preferredNorm =
+      preferred === 'en-US' || preferred === 'en' ? 'en-US' : preferred === 'es-ES' || preferred === 'es' ? 'es-ES' : null;
+    try {
+      const rows = await this.postgres.queryRaw<{ locale: string }>(
+        `SELECT locale FROM translations
+         WHERE tenant_id = $1 AND entity_type = 'restaurant' AND entity_id = $2
+         ORDER BY CASE WHEN locale = 'en-US' THEN 0 WHEN locale = 'es-ES' THEN 1 ELSE 2 END, locale ASC
+         LIMIT 5`,
+        [tenantId, restaurantId],
+      );
+      const locales = rows.map((r) => r.locale).filter(Boolean);
+      if (preferredNorm && locales.includes(preferredNorm)) return preferredNorm;
+      if (locales[0]) return locales[0];
+    } catch {
+      /* ignore */
+    }
+    return preferredNorm || 'es-ES';
+  }
+
   private parseTemplateConfigJson(raw: unknown): Record<string, unknown> {
     if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
       return raw as Record<string, unknown>;
@@ -32,7 +56,7 @@ export class RestaurantsService {
   }
 
   /**
-   * Lista todos los restaurantes del tenant (sin límite por plan).
+   * Lista todos los comercios del tenant (sin límite por plan).
    * El límite del plan aplica a cuántos pueden estar activos a la vez; el usuario ve todos y elige cuál usar.
    */
   async findAll(tenantId: string) {
@@ -124,7 +148,7 @@ export class RestaurantsService {
     
     const params: any[] = [];
     
-    // Si se proporciona un nombre, filtrar por nombre de restaurante (búsqueda parcial, case-insensitive)
+    // Si se proporciona un nombre, filtrar por nombre de comercio (búsqueda parcial, case-insensitive)
     if (restaurantName) {
       query += ` AND LOWER(r.name) LIKE LOWER($${params.length + 1})`;
       params.push(`%${restaurantName}%`);
@@ -163,9 +187,9 @@ export class RestaurantsService {
   }
 
   /**
-   * Estado de configuración del restaurante seleccionado (sin modificar modelos ni BD).
-   * Evalúa: tiene restaurante, tiene menú, tiene producto vinculado a menú del restaurante.
-   * Incluye datos para avisos: restaurante inactivo, menús no publicados, menús sin productos.
+   * Estado de configuración del comercio seleccionado (sin modificar modelos ni BD).
+   * Evalúa: tiene comercio, tiene menú, tiene producto vinculado a menú del comercio.
+   * Incluye datos para avisos: comercio inactivo, menús no publicados, menús sin productos.
    */
   async getConfigState(tenantId: string, restaurantId?: string | null): Promise<{
     hasRestaurant: boolean;
@@ -227,7 +251,7 @@ export class RestaurantsService {
   }
 
   /**
-   * Estado de configuración de un solo restaurante (debe pertenecer al tenant).
+   * Estado de configuración de un solo comercio (debe pertenecer al tenant).
    */
   private async getConfigStateForRestaurant(tenantId: string, restaurantId: string): Promise<{
     hasRestaurant: boolean;
@@ -355,7 +379,7 @@ export class RestaurantsService {
   }
 
   /**
-   * Lista de estados de configuración de todos los restaurantes del tenant (para dashboard con una ficha por restaurante).
+   * Lista de estados de configuración de todos los comercios del tenant (para dashboard con una ficha por comercio).
    */
   async getDashboardCards(tenantId: string): Promise<Array<{
     restaurantId: string;
@@ -440,7 +464,7 @@ export class RestaurantsService {
     const result = await this.postgres.queryRaw<any>(query, params);
 
     if (!result[0]) {
-      throw new NotFoundException(`Restaurante con ID ${id} no encontrado`);
+      throw new NotFoundException(`Comercio con ID ${id} no encontrado`);
     }
 
     const restaurant = result[0];
@@ -476,8 +500,10 @@ export class RestaurantsService {
     additionalCurrencies?: string[];
     primaryColor?: string;
     secondaryColor?: string;
+    /** Locale BCP-47 del contenido base (es-ES | en-US). */
+    sourceLocale?: string;
   }) {
-    // Validar límite de restaurantes según el plan
+    // Validar límite de comercios según el plan
     await this.validateRestaurantLimit(tenantId);
 
     const template = data.template || 'classic';
@@ -557,18 +583,27 @@ export class RestaurantsService {
         );
       } catch (error) {
         // Si falla, simplemente no almacenamos WhatsApp por ahora
-        this.logger.warn(`No se pudo almacenar WhatsApp para restaurante ${id}`);
+        this.logger.warn(`No se pudo almacenar WhatsApp para comercio ${id}`);
       }
     }
 
-    // Compatibilidad i18n: persistimos campos traducibles en `translations` (default es-ES).
+    // Persistimos campos traducibles en el locale preferido del usuario (es-ES | en-US).
+    const sourceLocale =
+      data.sourceLocale === 'en-US' || data.sourceLocale === 'en' ? 'en-US' : 'es-ES';
     const restaurantTranslations: { [key: string]: string } = {
       name: data.name,
     };
     if (data.description !== undefined) {
       restaurantTranslations.description = data.description || '';
     }
-    await this.i18nService.saveTranslations(tenantId, 'restaurant', id, restaurantTranslations, 'es-ES');
+    await this.i18nService.saveTranslations(
+      tenantId,
+      'restaurant',
+      id,
+      restaurantTranslations,
+      sourceLocale,
+      { sourceLocale },
+    );
 
     return this.findById(id, tenantId);
   }
@@ -597,6 +632,7 @@ export class RestaurantsService {
     additionalCurrencies?: string[];
     primaryColor?: string;
     secondaryColor?: string;
+    sourceLocale?: string;
   },
     opts?: { userRole?: string },
   ) {
@@ -735,7 +771,7 @@ export class RestaurantsService {
     if (data.isActive !== undefined) {
       updates.push(`is_active = $${paramIndex++}`);
       params.push(data.isActive);
-      this.logger.log(`Actualizando is_active a ${data.isActive} para restaurante ${id}`);
+      this.logger.log(`Actualizando is_active a ${data.isActive} para comercio ${id}`);
 
       // Al activar uno, respetar límite de activos del plan: desactivar otros si ya se alcanzó el límite
       if (data.isActive === true && !restaurant.isActive) {
@@ -783,7 +819,7 @@ export class RestaurantsService {
       params
     );
 
-    // Compatibilidad i18n: persistimos cambios en `translations` (default es-ES).
+    // Persistimos cambios en el locale del contenido (preferencia del usuario o existente).
     const translations: { [key: string]: string } = {};
     let hasAny = false;
     if (data.name !== undefined) {
@@ -795,18 +831,25 @@ export class RestaurantsService {
       hasAny = true;
     }
     if (hasAny) {
-      await this.i18nService.saveTranslations(tenantId, 'restaurant', id, translations, 'es-ES');
+      const sourceLocale = await this.resolveRestaurantSourceLocale(
+        tenantId,
+        id,
+        data.sourceLocale,
+      );
+      await this.i18nService.saveTranslations(tenantId, 'restaurant', id, translations, sourceLocale, {
+        sourceLocale,
+      });
     }
 
-    this.logger.debug(`UPDATE ejecutado. Recargando restaurante ${id}`);
+    this.logger.debug(`UPDATE ejecutado. Recargando comercio ${id}`);
     const updated = await this.findById(id, tenantId);
-    this.logger.debug(`Restaurante actualizado - primaryColor: ${updated.primaryColor}, secondaryColor: ${updated.secondaryColor}`);
+    this.logger.debug(`Comercio actualizado - primaryColor: ${updated.primaryColor}, secondaryColor: ${updated.secondaryColor}`);
     return updated;
   }
 
   async delete(id: string, tenantId: string) {
     await this.findById(id, tenantId);
-    // Liberar el slug para poder reutilizarlo al crear un nuevo restaurante (constraint unique tenant_id + slug)
+    // Liberar el slug para poder reutilizarlo al crear un nuevo comercio (constraint unique tenant_id + slug)
     const freedSlug = `deleted_${id}`;
 
     await this.postgres.executeRaw(
@@ -814,13 +857,13 @@ export class RestaurantsService {
       [freedSlug, id, tenantId]
     );
 
-    return { message: 'Restaurante eliminado exitosamente' };
+    return { message: 'Comercio eliminado exitosamente' };
   }
 
   /**
-   * Transfiere un restaurante completo a otro usuario (tenant destino), incluyendo menús, secciones,
+   * Transfiere un comercio completo a otro usuario (tenant destino), incluyendo menús, secciones,
    * productos, precios, media y traducciones asociadas. Conserva IDs/QR y aplica límite de productos
-   * activos del plan destino desactivando excedentes del restaurante transferido.
+   * activos del plan destino desactivando excedentes del comercio transferido.
    */
   async transferOwnershipToUser(restaurantId: string, targetUserId: string, actorUserId?: string) {
     if (!restaurantId || !targetUserId) {
@@ -870,14 +913,14 @@ export class RestaurantsService {
     );
     const restaurant = restaurantRows[0];
     if (!restaurant || restaurant.deleted_at) {
-      throw new NotFoundException('Restaurante no encontrado');
+      throw new NotFoundException('Comercio no encontrado');
     }
 
     const sourceTenantId = restaurant.tenant_id;
     const targetTenantId = targetUser.tenant_id;
     if (sourceTenantId === targetTenantId) {
       return {
-        message: 'El restaurante ya pertenece al tenant del usuario destino',
+        message: 'El comercio ya pertenece al tenant del usuario destino',
         restaurantId,
         sourceTenantId,
         targetTenantId,
@@ -903,7 +946,7 @@ export class RestaurantsService {
     );
     if (slugConflict.length > 0) {
       throw new BadRequestException(
-        `No se puede transferir: ya existe un restaurante con slug "${restaurant.slug}" en el tenant destino.`,
+        `No se puede transferir: ya existe un comercio con slug "${restaurant.slug}" en el tenant destino.`,
       );
     }
 
@@ -1081,7 +1124,7 @@ export class RestaurantsService {
     await syncRestaurantMenuHierarchyTenant(this.postgres, restaurantId, targetTenantId);
 
     return {
-      message: 'Restaurante transferido exitosamente',
+      message: 'Comercio transferido exitosamente',
       restaurantId,
       restaurantName: restaurant.name,
       sourceTenantId,
@@ -1112,7 +1155,7 @@ export class RestaurantsService {
       return;
     }
 
-    // Contar restaurantes activos del tenant (solo los no eliminados)
+    // Contar comercios activos del tenant (solo los no eliminados)
     const count = await this.postgres.queryRaw<any>(
       `SELECT COUNT(*) as total 
        FROM restaurants 
@@ -1122,13 +1165,13 @@ export class RestaurantsService {
 
     const total = parseInt(count[0].total) || 0;
 
-    this.logger.log(`Validando límite de restaurantes: tenantId=${tenantId}, plan=${plan}, limit=${limit}, total=${total}`);
+    this.logger.log(`Validando límite de comercios: tenantId=${tenantId}, plan=${plan}, limit=${limit}, total=${total}`);
 
     if (total >= limit) {
       throw new BadRequestException(
-        `Has alcanzado el límite de ${limit} restaurante(s) para el plan ${plan}. ` +
-        `Actualmente tienes ${total} restaurante(s) creado(s). ` +
-        `Por favor, actualiza tu plan para crear más restaurantes.`
+        `Has alcanzado el límite de ${limit} comercio(s) para el plan ${plan}. ` +
+        `Actualmente tienes ${total} comercio(s) creado(s). ` +
+        `Por favor, actualiza tu plan para crear más comercios.`
       );
     }
   }

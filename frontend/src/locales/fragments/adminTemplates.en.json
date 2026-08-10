@@ -1,0 +1,181 @@
+{
+  "title": "Templates",
+  "subtitle": "Select a template to apply to your businesses",
+  "loading": "Loading...",
+  "restaurantsByTemplate": "Your businesses by template",
+  "emptyRestaurants": "You don't have any businesses yet. Create one under Businesses and assign a template here.",
+  "table": {
+    "business": "Business",
+    "template": "Template",
+    "action": "Action"
+  },
+  "configureTemplate": "Configure template",
+  "classicFallback": "Classic",
+  "catalogTitle": "Template catalog",
+  "showingAll": "Showing all {{count}} templates",
+  "showingFiltered": "Showing {{filtered}} of {{total}} templates",
+  "emptyFilters": "No templates match this filter combination. Try \"All\" for one of the criteria.",
+  "alert": {
+    "appliedTitle": "Template applied",
+    "appliedMessage": "Go to template settings to adjust colors and options.",
+    "errorTitle": "Error",
+    "applyError": "Error applying template."
+  },
+  "configure": {
+    "breadcrumb": "Breadcrumb",
+    "backToTemplates": "← Back to Templates",
+    "backToTemplatesShort": "Back to Templates",
+    "loading": "Loading...",
+    "notFound": "Business not found",
+    "loadError": "Error loading business",
+    "title": "Template settings",
+    "currentTemplate": "Current template:",
+    "noOptions": "This template has no configuration options defined yet. They will be added per template.",
+    "saved": "Settings saved successfully.",
+    "saveError": "Error saving",
+    "saving": "Saving...",
+    "save": "Save settings",
+    "cancel": "Cancel",
+    "uploadImage": "Upload image",
+    "uploading": "Uploading…",
+    "restoreDefault": "Restore default",
+    "uploadError": "Error uploading image"
+  },
+  "templateNames": {
+    "classic": "Classic",
+    "minimalist": "Minimalist",
+    "foodie": "Foodie",
+    "burgers": "Burgers",
+    "italianFood": "Italian Food",
+    "gourmet": "Gourmet",
+    "proMobile": "Modern Food",
+    "nightClub": "Neon Club",
+    "smartFood": "Smart Food",
+    "beachBar": "Beach Life",
+    "solNoche": "Sol & Noche"
+  },
+  "configOptions": {
+    "yes": "Yes",
+    "no": "No",
+    "empty": "—",
+    "removeImage": "Remove",
+    "primaryColor": {
+      "label": "Primary color",
+      "description": "Main template color (buttons, titles, highlighted elements)."
+    },
+    "secondaryColor": {
+      "label": "Secondary color",
+      "description": "Secondary color (accents, borders, highlighted text)."
+    },
+    "showCoverImage": {
+      "label": "Show cover image",
+      "description": "If disabled, the cover image is not shown in the template."
+    },
+    "showLogo": {
+      "label": "Show logo",
+      "description": "If disabled, the business logo is not shown."
+    },
+    "showRestaurantName": {
+      "label": "Show business name",
+      "description": "If disabled, the business name is not shown."
+    },
+    "showRestaurantDescription": {
+      "label": "Show business description",
+      "description": "If disabled, the business description is not shown."
+    },
+    "restaurantNameColor": {
+      "label": "Business name color",
+      "description": "Text color for the business name in the header."
+    },
+    "sectionTitleFontSize": {
+      "label": "Section title font size",
+      "description": "Text size for menu category titles (for example: Burgers, Sides).",
+      "values": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "xlarge": "Extra large"
+      }
+    },
+    "showTranslationFlags": {
+      "label": "Show translation flags",
+      "description": "If disabled, flag icons are hidden in the public menu language switcher when multiple translations are available."
+    },
+    "fontFamily": {
+      "label": "Typography",
+      "description": "Font for template titles and body text.",
+      "values": {
+        "serif": "Serif (Georgia)",
+        "sans": "Sans (Helvetica)",
+        "century": "Century Schoolbook",
+        "baskerville": "Baskerville",
+        "palatino": "Palatino",
+        "playfair": "Playfair Display (default)",
+        "cormorant": "Cormorant Garamond",
+        "bodoni": "Bodoni Moda",
+        "eb-garamond": "EB Garamond",
+        "lora": "Lora",
+        "cinzel": "Cinzel"
+      }
+    },
+    "showProductImages": {
+      "label": "Show product photos",
+      "description": "Show the product photo when available (no placeholder if missing)."
+    },
+    "backgroundImageUrl": {
+      "label": "Background image",
+      "description": "Full-screen background photo. Each business can have its own."
+    },
+    "colorMode": {
+      "label": "Color mode",
+      "description": "Base look of the menu when automatic day/night switching is off.",
+      "values": {
+        "light": "Light",
+        "dark": "Dark"
+      }
+    },
+    "autoDayNightSwitch": {
+      "label": "Switch by day/night schedule",
+      "description": "Toggles light and dark mode based on the timezone and configured hours."
+    },
+    "templateTimezone": {
+      "label": "Timezone",
+      "description": "Timezone used to decide day or night. If unset, the business timezone is used.",
+      "values": {
+        "America_Argentina_Buenos_Aires": "Argentina (Buenos Aires)",
+        "America_Montevideo": "Uruguay (Montevideo)",
+        "America_Santiago": "Chile (Santiago)",
+        "America_Sao_Paulo": "Brazil (São Paulo)",
+        "America_Mexico_City": "Mexico (Mexico City)",
+        "America_Bogota": "Colombia (Bogotá)",
+        "America_Lima": "Peru (Lima)",
+        "Europe_Madrid": "Spain (Madrid)",
+        "UTC": "UTC"
+      }
+    },
+    "dayStartHour": {
+      "label": "Day start hour",
+      "description": "Local hour from which it is considered day (light mode). Value from 0 to 23."
+    },
+    "dayEndHour": {
+      "label": "Day end hour",
+      "description": "Local hour from which night begins (dark mode). Value from 0 to 23."
+    },
+    "dayLogoUrl": {
+      "label": "Logo (light mode)",
+      "description": "Logo for light mode. If unset, the business logo is used."
+    },
+    "nightLogoUrl": {
+      "label": "Logo (dark mode)",
+      "description": "Logo for dark mode. If unset, the day logo or business logo is used."
+    },
+    "dayCoverImageUrl": {
+      "label": "Day cover",
+      "description": "Cover image for light mode. Takes priority over the business cover."
+    },
+    "nightCoverImageUrl": {
+      "label": "Night cover",
+      "description": "Cover image for dark mode. Takes priority over the business cover."
+    }
+  }
+}

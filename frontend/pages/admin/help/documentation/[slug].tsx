@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import type { GetStaticPaths, GetStaticProps, InferGetStaticPropsType } from 'next';
+import { useTranslation } from 'react-i18next';
 import AdminLayout from '../../../../components/AdminLayout';
 import { DocumentationShell } from '../../../../components/documentation/DocumentationShell';
 import { DOC_BODY_BY_SLUG } from '../../../../components/documentation/DocumentationBodies';
@@ -7,6 +8,7 @@ import {
   DOCUMENTATION_SLUGS_STATIC,
   getDocBySlug,
   isValidDocSlug,
+  translateDocSection,
   type DocSection,
 } from '../../../../lib/documentation-nav';
 
@@ -15,7 +17,8 @@ const BASE = '/admin/help/documentation';
 type Props = InferGetStaticPropsType<typeof getStaticProps>;
 
 export default function AdminDocumentationSlugPage({ slug }: Props) {
-  const meta = getDocBySlug(slug)!;
+  const { t } = useTranslation();
+  const meta = translateDocSection(getDocBySlug(slug)!, t);
   const render = DOC_BODY_BY_SLUG[slug as DocSection['slug']]!;
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import AdminLayout from '../../../../components/AdminLayout';
 import DashboardConfigNav from '../../../../components/DashboardConfigNav';
@@ -15,8 +15,12 @@ type PlanRow = {
 };
 
 type ApiResponse = {
+  locale?: string;
+  locales?: string[];
   plans: PlanRow[];
 };
+
+type ContentLocale = 'es' | 'en';
 
 export default function AdminConfigDashboardCtaCard() {
   const router = useRouter();
@@ -27,6 +31,7 @@ export default function AdminConfigDashboardCtaCard() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [activePlan, setActivePlan] = useState<string>('free');
+  const [activeLocale, setActiveLocale] = useState<ContentLocale>('es');
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -44,27 +49,37 @@ export default function AdminConfigDashboardCtaCard() {
     }
   }, [router]);
 
-  const load = async () => {
+  const load = useCallback(async (locale: ContentLocale) => {
     setLoading(true);
     setError(null);
     setSuccess(null);
     try {
-      const res = await api.get<ApiResponse>('/admin/dashboard/cta-card');
+      const res = await api.get<ApiResponse>('/admin/dashboard/cta-card', {
+        params: { locale },
+      });
       setPlans(res.data.plans || []);
-      if (res.data.plans?.[0]?.planKey) setActivePlan(res.data.plans[0].planKey);
+      if (res.data.plans?.[0]?.planKey) {
+        setActivePlan((prev) =>
+          res.data.plans.some((p) => p.planKey === prev) ? prev : res.data.plans[0].planKey,
+        );
+      }
     } catch (e: any) {
       setError(getApiErrorMessage(e, 'No se pudo cargar la configuración'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!user || user.role !== 'SUPER_ADMIN') return;
-    load();
-  }, [user]);
+    void load(activeLocale);
+  }, [user, activeLocale, load]);
 
-  const updatePlanField = (planKey: string, field: keyof Omit<PlanRow, 'planKey' | 'label'>, value: string) => {
+  const updatePlanField = (
+    planKey: string,
+    field: keyof Omit<PlanRow, 'planKey' | 'label'>,
+    value: string,
+  ) => {
     setPlans((prev) => prev.map((p) => (p.planKey === planKey ? { ...p, [field]: value } : p)));
   };
 
@@ -74,6 +89,7 @@ export default function AdminConfigDashboardCtaCard() {
     setSuccess(null);
     try {
       const res = await api.patch<ApiResponse>('/admin/dashboard/cta-card', {
+        locale: activeLocale,
         plans: plans.map((p) => ({
           planKey: p.planKey,
           title: p.title,
@@ -83,7 +99,11 @@ export default function AdminConfigDashboardCtaCard() {
         })),
       });
       setPlans(res.data.plans || []);
-      setSuccess('Cards guardadas. Se verán en el dashboard según el plan de cada usuario.');
+      setSuccess(
+        activeLocale === 'en'
+          ? 'Cards saved. English users will see this content on the dashboard.'
+          : 'Cards guardadas. Se verán en el dashboard según el plan de cada usuario.',
+      );
     } catch (e: any) {
       setError(getApiErrorMessage(e, 'No se pudo guardar'));
     } finally {
@@ -112,11 +132,32 @@ export default function AdminConfigDashboardCtaCard() {
 
         <h2 className="h5 mb-3">Mensaje card</h2>
         <p className="text-muted small mb-4">
-          Cuarta tarjeta del dashboard (debajo de restaurantes, menús y productos), según el plan de cada usuario.
+          Cuarta tarjeta del dashboard según el plan y el idioma preferido del usuario.
         </p>
 
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
+
+        <ul className="nav nav-pills mb-3 gap-1">
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeLocale === 'es' ? 'active' : ''}`}
+              onClick={() => setActiveLocale('es')}
+            >
+              Español
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeLocale === 'en' ? 'active' : ''}`}
+              onClick={() => setActiveLocale('en')}
+            >
+              English
+            </button>
+          </li>
+        </ul>
 
         {loading ? (
           <div className="text-center py-5">
@@ -126,6 +167,9 @@ export default function AdminConfigDashboardCtaCard() {
           <>
             <div className="card shadow-sm mb-4">
               <div className="card-body">
+                <p className="small text-muted mb-3">
+                  Idioma activo: <strong>{activeLocale === 'en' ? 'English' : 'Español'}</strong>
+                </p>
                 <ul className="nav nav-tabs mb-3">
                   {plans.map((p) => (
                     <li className="nav-item" key={p.planKey}>
@@ -143,7 +187,9 @@ export default function AdminConfigDashboardCtaCard() {
                 {active && (
                   <>
                     <div className="mb-3">
-                      <label className="form-label">Título ({active.label})</label>
+                      <label className="form-label">
+                        Título ({active.label} · {activeLocale === 'en' ? 'EN' : 'ES'})
+                      </label>
                       <input
                         className="form-control"
                         value={active.title}
@@ -191,7 +237,9 @@ export default function AdminConfigDashboardCtaCard() {
             {active && (
               <div className="card shadow-sm">
                 <div className="card-body">
-                  <div className="small text-muted mb-2">Vista previa — plan {active.label}</div>
+                  <div className="small text-muted mb-2">
+                    Vista previa — plan {active.label} ({activeLocale === 'en' ? 'EN' : 'ES'})
+                  </div>
                   <div
                     className="admin-stat-card d-flex flex-column justify-content-center p-3"
                     style={{

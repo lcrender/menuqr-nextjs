@@ -36,11 +36,11 @@ export class MetricsService {
         this.postgres.queryRaw<{ count: string }>(
           `SELECT COUNT(*) as count FROM tenants WHERE deleted_at IS NULL`,
         ),
-        // Total de restaurantes
+        // Total de comercios
         this.postgres.queryRaw<{ count: string }>(
           `SELECT COUNT(*) as count FROM restaurants WHERE deleted_at IS NULL`,
         ),
-        // Restaurantes activos
+        // Comercios activos
         this.postgres.queryRaw<{ count: string }>(
           `SELECT COUNT(*) as count FROM restaurants WHERE deleted_at IS NULL AND is_active = true`,
         ),
@@ -192,7 +192,7 @@ export class MetricsService {
         products: typeof data.products === 'number' ? data.products : parseInt(String(data.products || '0'), 10),
       }));
 
-      // Top usuarios con más restaurantes
+      // Top usuarios con más comercios
       const topUsersByRestaurants = await this.postgres.queryRaw<{
         email: string;
         restaurantCount: string;
@@ -208,7 +208,7 @@ export class MetricsService {
         LIMIT 10`,
       );
 
-      // Top restaurantes con más menús
+      // Top comercios con más menús
       const topRestaurantsByMenus = await this.postgres.queryRaw<{
         name: string;
         menuCount: string;
@@ -274,7 +274,7 @@ export class MetricsService {
         LIMIT 10`,
       );
 
-      // Últimos restaurantes creados
+      // Últimos comercios creados
       const recentRestaurants = await this.postgres.queryRaw<{
         id: string;
         name: string;
@@ -287,7 +287,7 @@ export class MetricsService {
         LIMIT 10`,
       );
 
-      // Distribución de restaurantes por tenant
+      // Distribución de comercios por tenant
       const restaurantsByTenant = await this.postgres.queryRaw<{
         tenantName: string;
         restaurantCount: string;

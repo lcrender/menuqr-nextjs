@@ -96,7 +96,7 @@ export default function TemplatePreviewEditPanel({
           data-field-id="restaurantName"
         >
           <label htmlFor="preview-restaurant-name" className={styles.fieldLabel}>
-            Nombre del restaurante
+            Nombre del comercio
           </label>
           <input
             id="preview-restaurant-name"
@@ -137,7 +137,7 @@ export default function TemplatePreviewEditPanel({
         ))}
       </section>
 
-      <p className={styles.footerNote}>Los cambios son solo de vista previa y no se guardan en tu restaurante.</p>
+      <p className={styles.footerNote}>Los cambios son solo de vista previa y no se guardan en tu comercio.</p>
     </aside>
   );
 }

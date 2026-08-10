@@ -1,0 +1,83 @@
+{
+  "title": "Support tickets",
+  "subtitle": "Manage user reports: open a ticket to see the thread, account and subscription details, and reply from the detail view.",
+  "loading": "Loading…",
+  "emDash": "—",
+  "ellipsis": "…",
+  "status": {
+    "open": "Open",
+    "in_progress": "In progress",
+    "closed": "Closed"
+  },
+  "filters": {
+    "status": "Status",
+    "all": "All",
+    "userEmail": "User email",
+    "userEmailPlaceholder": "contains…",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply filters"
+  },
+  "errors": {
+    "loadList": "Could not load tickets.",
+    "loadTicket": "Could not load the ticket.",
+    "sendReply": "Could not send the reply.",
+    "updateStatus": "Could not update the status.",
+    "invalidTicketNumber": "Enter a valid ticket number.",
+    "linkTicket": "Could not link the ticket."
+  },
+  "table": {
+    "number": "#",
+    "user": "User",
+    "subject": "Subject",
+    "status": "Status",
+    "images": "Img",
+    "created": "Created",
+    "updated": "Updated",
+    "empty": "No tickets match these filters.",
+    "total": "Total: {{total}} (showing {{showing}})",
+    "open": "Open",
+    "current": "Current"
+  },
+  "detail": {
+    "breadcrumbTickets": "Tickets",
+    "createdAt": "Created {{date}}",
+    "caseId": "Case: {{id}}",
+    "linkCase": {
+      "title": "Link ticket to another case",
+      "ticketNumber": "Primary ticket number",
+      "placeholder": "E.g. 1042",
+      "linking": "Linking…",
+      "submit": "Link tickets"
+    },
+    "related": {
+      "title": "Tickets in the same case"
+    },
+    "attachments": {
+      "title": "Attached images"
+    },
+    "history": {
+      "title": "History"
+    },
+    "closedNotice": "Ticket closed. Reopen it (Open or In progress status) to reply.",
+    "reply": {
+      "title": "Reply (Super Admin)",
+      "placeholder": "Reply to the user…",
+      "sending": "Sending…",
+      "submit": "Send reply"
+    },
+    "userPanel": {
+      "title": "User",
+      "email": "Email:",
+      "name": "Name:",
+      "role": "Role:",
+      "tenant": "Tenant:",
+      "tenantValue": "{{name}} ({{plan}})",
+      "effectivePlan": "Effective plan (summary):",
+      "subscriptionsTitle": "Recent subscriptions",
+      "planLine": "Plan: {{plan}} · {{planType}}",
+      "periodEnd": "Period end: {{date}}",
+      "noSubscriptions": "No subscription rows."
+    }
+  }
+}

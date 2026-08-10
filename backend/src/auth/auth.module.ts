@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
 
 // Estrategias de autenticación
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -53,22 +52,8 @@ import { RecaptchaModule } from '../common/recaptcha/recaptcha.module';
         },
       }),
     }),
-
-    // ========================================
-    // RATE LIMITING ESPECÍFICO PARA AUTH
-    // ========================================
-    ThrottlerModule.forRoot([
-      {
-        name: 'auth',
-        ttl: 60000, // 1 minuto
-        limit: 5, // 5 intentos por minuto
-      },
-      {
-        name: 'login',
-        ttl: 300000, // 5 minutos
-        limit: 3, // 3 intentos de login por 5 minutos
-      },
-    ]),
+    // Rate limit global: AppModule (ThrottlerModule). En AuthController se aplica
+    // ThrottlerGuard solo a login/registro/recuperación — no a /auth/me.
   ],
 
   // ========================================

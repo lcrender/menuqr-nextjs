@@ -135,10 +135,23 @@ export class MenuTranslationsService {
     return rows[0];
   }
 
+  async getSourceLocale(tenantId: string, menuId: string): Promise<string> {
+    try {
+      const rows = await this.postgres.queryRaw<{ source_locale: string | null }>(
+        `SELECT source_locale FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+        [menuId, tenantId],
+      );
+      const raw = String(rows[0]?.source_locale || 'es-ES').trim();
+      return raw || 'es-ES';
+    } catch {
+      return 'es-ES';
+    }
+  }
+
   async listMenusForRestaurant(tenantId: string, restaurantId: string) {
     const hasManifestCol = await this.menusHaveTranslationManifestColumn();
     const hasAutoTranslatedCol = await this.menusHaveAutoTranslatedColumn();
-    const cols = ['id', 'name', 'slug', 'restaurant_id', 'status'];
+    const cols = ['id', 'name', 'slug', 'restaurant_id', 'status', 'COALESCE(source_locale, \'es-ES\') AS source_locale'];
     if (hasManifestCol) cols.push('translation_manifest');
     if (hasAutoTranslatedCol) cols.push('COALESCE(auto_translated, false) AS auto_translated');
     const selectList = cols.join(', ');
@@ -151,12 +164,14 @@ export class MenuTranslationsService {
     );
     const out = [];
     for (const m of menus) {
-      const locales = await this.distinctLocalesForMenu(tenantId, m.id);
+      const sourceLocale = String(m.source_locale || 'es-ES');
+      const locales = await this.distinctLocalesForMenu(tenantId, m.id, sourceLocale);
       out.push({
         id: m.id,
         name: m.name,
         slug: m.slug,
         status: m.status,
+        sourceLocale,
         translationManifest: hasManifestCol ? (m.translation_manifest ?? null) : null,
         autoTranslated: hasAutoTranslatedCol ? !!m.auto_translated : false,
         autoTranslatedLocales: await this.autoTranslate.getCompletedAutoTranslateLocales(tenantId, m.id),
@@ -166,7 +181,12 @@ export class MenuTranslationsService {
     return out;
   }
 
-  private async distinctLocalesForMenu(tenantId: string, menuId: string): Promise<string[]> {
+  private async distinctLocalesForMenu(
+    tenantId: string,
+    menuId: string,
+    sourceLocale?: string,
+  ): Promise<string[]> {
+    const source = sourceLocale || (await this.getSourceLocale(tenantId, menuId));
     const rows = await this.postgres.queryRaw<{ locale: string }>(
       `SELECT DISTINCT t.locale
        FROM translations t
@@ -188,16 +208,17 @@ export class MenuTranslationsService {
         .map((r) => r.locale)
         .filter((l): l is string => typeof l === 'string' && l.trim().length > 0),
     );
-    if (!set.has('es-ES')) set.add('es-ES');
+    if (!set.has(source)) set.add(source);
     return Array.from(set).sort((a, b) => {
-      if (a === 'es-ES') return -1;
-      if (b === 'es-ES') return 1;
+      if (a === source) return -1;
+      if (b === source) return 1;
       return a.localeCompare(b);
     });
   }
 
   async getWorkbench(tenantId: string, menuId: string, locale: string) {
     await this.assertMenuBelongs(tenantId, menuId);
+    const sourceLocale = await this.getSourceLocale(tenantId, menuId);
     const hasManifestCol = await this.menusHaveTranslationManifestColumn();
     const menuRow = await this.postgres.queryRaw<any>(
       hasManifestCol
@@ -206,7 +227,7 @@ export class MenuTranslationsService {
       [menuId],
     );
     const m0 = menuRow[0];
-    const baseMenu = await this.i18n.getTranslations(tenantId, 'menu', menuId, 'es-ES');
+    const baseMenu = await this.i18n.getTranslations(tenantId, 'menu', menuId, sourceLocale);
     const curMenu = await this.i18n.getTranslations(tenantId, 'menu', menuId, locale);
     const menuStale = await this.i18n.getStaleKeyMap(tenantId, 'menu', menuId, locale);
 
@@ -216,7 +237,7 @@ export class MenuTranslationsService {
     );
     const sectionRows = await Promise.all(
       sections.map(async (s: any) => {
-        const base = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, 'es-ES');
+        const base = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, sourceLocale);
         const cur = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, locale);
         const st = await this.i18n.getStaleKeyMap(tenantId, 'menu_section', s.id, locale);
         return {
@@ -234,7 +255,7 @@ export class MenuTranslationsService {
     );
     const itemRows = await Promise.all(
       items.map(async (it: any) => {
-        const base = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, 'es-ES');
+        const base = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, sourceLocale);
         const cur = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, locale);
         const st = await this.i18n.getStaleKeyMap(tenantId, 'menu_item', it.id, locale);
         return {
@@ -268,10 +289,13 @@ export class MenuTranslationsService {
   }
 
   async saveWorkbench(tenantId: string, menuId: string, locale: string, dto: SaveMenuLocaleWorkbenchDto) {
-    if (locale === 'es-ES') {
-      throw new BadRequestException('Usá la pantalla de menús para editar el idioma por defecto (es-ES).');
-    }
     await this.assertMenuBelongs(tenantId, menuId);
+    const sourceLocale = await this.getSourceLocale(tenantId, menuId);
+    if (locale === sourceLocale) {
+      throw new BadRequestException(
+        `Usá la pantalla de menús para editar el idioma por defecto (${sourceLocale}).`,
+      );
+    }
 
     await this.i18n.saveTranslations(
       tenantId,
@@ -394,11 +418,12 @@ export class MenuTranslationsService {
   }
 
   async addLocale(tenantId: string, menuId: string, dto: AddMenuLocaleDto) {
-    if (dto.locale === 'es-ES') {
-      throw new BadRequestException('es-ES es el idioma por defecto del menú.');
-    }
     await this.assertMenuBelongs(tenantId, menuId);
-    const existing = await this.distinctLocalesForMenu(tenantId, menuId);
+    const sourceLocale = await this.getSourceLocale(tenantId, menuId);
+    if (dto.locale === sourceLocale) {
+      throw new BadRequestException(`${sourceLocale} ya es el idioma por defecto del menú.`);
+    }
+    const existing = await this.distinctLocalesForMenu(tenantId, menuId, sourceLocale);
     if (existing.includes(dto.locale)) {
       throw new BadRequestException('Ese idioma ya está configurado para este menú.');
     }
@@ -408,16 +433,17 @@ export class MenuTranslationsService {
       [menuId],
     );
     const m = menu[0];
-    const esMenu = await this.i18n.getTranslations(tenantId, 'menu', menuId, 'es-ES');
+    const baseMenu = await this.i18n.getTranslations(tenantId, 'menu', menuId, sourceLocale);
     await this.i18n.saveTranslations(
       tenantId,
       'menu',
       menuId,
       {
-        name: (esMenu.name as string) || m.name,
-        description: (esMenu.description as string) || m.description || '',
+        name: (baseMenu.name as string) || m.name,
+        description: (baseMenu.description as string) || m.description || '',
       },
       dto.locale,
+      { sourceLocale },
     );
 
     const sections = await this.postgres.queryRaw<any>(
@@ -425,13 +451,14 @@ export class MenuTranslationsService {
       [menuId],
     );
     for (const s of sections) {
-      const es = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, 'es-ES');
+      const base = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, sourceLocale);
       await this.i18n.saveTranslations(
         tenantId,
         'menu_section',
         s.id,
-        { name: (es.name as string) || s.name },
+        { name: (base.name as string) || s.name },
         dto.locale,
+        { sourceLocale },
       );
     }
 
@@ -440,16 +467,17 @@ export class MenuTranslationsService {
       [menuId],
     );
     for (const it of items) {
-      const es = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, 'es-ES');
+      const base = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, sourceLocale);
       await this.i18n.saveTranslations(
         tenantId,
         'menu_item',
         it.id,
         {
-          name: (es.name as string) || it.name,
-          description: (es.description as string) || it.description || '',
+          name: (base.name as string) || it.name,
+          description: (base.description as string) || it.description || '',
         },
         dto.locale,
+        { sourceLocale },
       );
     }
 
@@ -496,11 +524,12 @@ export class MenuTranslationsService {
     if (!locale || !MENU_LOCALE_BCP47_REGEX.test(locale)) {
       throw new BadRequestException('Código de idioma (locale) inválido.');
     }
-    if (locale === 'es-ES') {
-      throw new BadRequestException('No se puede eliminar el idioma base (es-ES).');
-    }
     await this.assertMenuBelongs(tenantId, menuId);
-    const distinct = await this.distinctLocalesForMenu(tenantId, menuId);
+    const sourceLocale = await this.getSourceLocale(tenantId, menuId);
+    if (locale === sourceLocale) {
+      throw new BadRequestException(`No se puede eliminar el idioma base (${sourceLocale}).`);
+    }
+    const distinct = await this.distinctLocalesForMenu(tenantId, menuId, sourceLocale);
     if (!distinct.includes(locale)) {
       throw new NotFoundException('Ese idioma no está configurado en este menú.');
     }
@@ -528,13 +557,14 @@ export class MenuTranslationsService {
   }
 
   async renameLocale(tenantId: string, menuId: string, dto: RenameMenuLocaleDto) {
-    if (dto.fromLocale === 'es-ES' || dto.toLocale === 'es-ES') {
-      throw new BadRequestException('No se puede renombrar hacia o desde es-ES.');
+    await this.assertMenuBelongs(tenantId, menuId);
+    const sourceLocale = await this.getSourceLocale(tenantId, menuId);
+    if (dto.fromLocale === sourceLocale || dto.toLocale === sourceLocale) {
+      throw new BadRequestException(`No se puede renombrar hacia o desde el idioma base (${sourceLocale}).`);
     }
     if (dto.fromLocale === dto.toLocale) {
       throw new BadRequestException('Los locales origen y destino deben ser distintos.');
     }
-    await this.assertMenuBelongs(tenantId, menuId);
 
     const entityIds = await this.collectEntityIdsForMenu(menuId);
     const placeholdersDel = entityIds.map((_, i) => `$${i + 3}`).join(', ');
@@ -588,5 +618,150 @@ export class MenuTranslationsService {
     );
     ids.push(...its.map((i) => i.id));
     return ids;
+  }
+
+  /**
+   * Cambia el idioma base del menú: el locale elegido pasa a ser la fuente canónica
+   * (columnas name/description + source_locale). El idioma base anterior queda como traducción.
+   */
+  async setDefaultLocale(tenantId: string, menuId: string, localeRaw: string) {
+    const newSource = this.normalizeMenuLocaleTag(localeRaw);
+    if (!newSource || !MENU_LOCALE_BCP47_REGEX.test(newSource)) {
+      throw new BadRequestException('Código de idioma (locale) inválido.');
+    }
+    await this.assertMenuBelongs(tenantId, menuId);
+    const oldSource = await this.getSourceLocale(tenantId, menuId);
+    if (newSource === oldSource) {
+      return { ok: true, sourceLocale: oldSource, locales: await this.distinctLocalesForMenu(tenantId, menuId, oldSource) };
+    }
+
+    const locales = await this.distinctLocalesForMenu(tenantId, menuId, oldSource);
+    if (!locales.includes(newSource)) {
+      throw new BadRequestException(
+        'Ese idioma aún no está en el menú. Agregalo primero y después marcalo como idioma por defecto.',
+      );
+    }
+
+    const menu = await this.postgres.queryRaw<any>(
+      `SELECT id, name, description FROM menus WHERE id = $1 LIMIT 1`,
+      [menuId],
+    );
+    const m = menu[0];
+    const oldMenuT = await this.i18n.getTranslations(tenantId, 'menu', menuId, oldSource);
+    const newMenuT = await this.i18n.getTranslations(tenantId, 'menu', menuId, newSource);
+    const newMenuName = String(newMenuT.name || m.name || '').trim() || m.name;
+    const newMenuDesc = String(newMenuT.description ?? m.description ?? '');
+
+    // Conservar el contenido anterior del base como traducción
+    await this.i18n.saveTranslations(
+      tenantId,
+      'menu',
+      menuId,
+      {
+        name: String(oldMenuT.name || m.name || ''),
+        description: String(oldMenuT.description ?? m.description ?? ''),
+      },
+      oldSource,
+      { sourceLocale: newSource },
+    );
+    await this.i18n.saveTranslations(
+      tenantId,
+      'menu',
+      menuId,
+      { name: newMenuName, description: newMenuDesc },
+      newSource,
+      { sourceLocale: newSource },
+    );
+    await this.postgres.executeRaw(
+      `UPDATE menus SET name = $1, description = $2, source_locale = $3, updated_at = NOW()
+       WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL`,
+      [newMenuName, newMenuDesc || null, newSource, menuId, tenantId],
+    );
+
+    const sections = await this.postgres.queryRaw<any>(
+      `SELECT id, name FROM menu_sections WHERE menu_id = $1 AND deleted_at IS NULL`,
+      [menuId],
+    );
+    for (const s of sections) {
+      const oldT = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, oldSource);
+      const newT = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, newSource);
+      const newName = String(newT.name || s.name || '').trim() || s.name;
+      await this.i18n.saveTranslations(
+        tenantId,
+        'menu_section',
+        s.id,
+        { name: String(oldT.name || s.name || '') },
+        oldSource,
+        { sourceLocale: newSource },
+      );
+      await this.i18n.saveTranslations(
+        tenantId,
+        'menu_section',
+        s.id,
+        { name: newName },
+        newSource,
+        { sourceLocale: newSource },
+      );
+      await this.postgres.executeRaw(
+        `UPDATE menu_sections SET name = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
+        [newName, s.id, tenantId],
+      );
+    }
+
+    const items = await this.postgres.queryRaw<any>(
+      `SELECT id, name, description FROM menu_items WHERE menu_id = $1 AND deleted_at IS NULL`,
+      [menuId],
+    );
+    for (const it of items) {
+      const oldT = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, oldSource);
+      const newT = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, newSource);
+      const newName = String(newT.name || it.name || '').trim() || it.name;
+      const newDesc = String(newT.description ?? it.description ?? '');
+      await this.i18n.saveTranslations(
+        tenantId,
+        'menu_item',
+        it.id,
+        {
+          name: String(oldT.name || it.name || ''),
+          description: String(oldT.description ?? it.description ?? ''),
+        },
+        oldSource,
+        { sourceLocale: newSource },
+      );
+      await this.i18n.saveTranslations(
+        tenantId,
+        'menu_item',
+        it.id,
+        { name: newName, description: newDesc },
+        newSource,
+        { sourceLocale: newSource },
+      );
+      await this.postgres.executeRaw(
+        `UPDATE menu_items SET name = $1, description = $2, updated_at = NOW() WHERE id = $3 AND tenant_id = $4`,
+        [newName, newDesc || null, it.id, tenantId],
+      );
+    }
+
+    if (await this.menusHaveTranslationManifestColumn()) {
+      const manifest = this.parseManifest(
+        (await this.postgres.queryRaw<any>(
+          `SELECT translation_manifest FROM menus WHERE id = $1 LIMIT 1`,
+          [menuId],
+        ))[0]?.translation_manifest,
+      );
+      // El nuevo base no necesita entrada de “extra”; el viejo base sí como traducción.
+      let next = manifest.filter((e) => e.locale !== newSource);
+      if (!next.some((e) => e.locale === oldSource)) {
+        next = next.concat([{ locale: oldSource }]);
+      }
+      await this.writeManifest(menuId, tenantId, next);
+    }
+
+    this.i18n.clearCache(tenantId);
+    return {
+      ok: true,
+      sourceLocale: newSource,
+      locales: await this.distinctLocalesForMenu(tenantId, menuId, newSource),
+    };
   }
 }

@@ -1,0 +1,165 @@
+{
+  "title": "Crea tu primer comercio",
+  "subtitle": "Sigue estos pasos para configurar tu comercio",
+  "steps": {
+    "basic": "Información básica",
+    "location": "Ubicación",
+    "contact": "Contacto",
+    "payment": "Medios de pago",
+    "images": "Imágenes",
+    "template": "Plantilla"
+  },
+  "step1": {
+    "title": "Información básica",
+    "description": "Completa la información básica de tu comercio",
+    "name": "Nombre del comercio *",
+    "namePlaceholder": "Ej: La Parrilla del Sur",
+    "descriptionLabel": "Descripción",
+    "boldTitle": "Negrita (Ctrl+B)",
+    "lineBreakTitle": "Salto de línea",
+    "boldPlaceholder": "texto en negrita",
+    "descriptionPlaceholder": "Describe tu comercio (opcional). Usa **texto** para negrita y Enter para saltos de línea.",
+    "descriptionHint": "{{count}}/2000 caracteres - Usa **texto** para negrita"
+  },
+  "step2": {
+    "title": "Ubicación",
+    "description": "Completa la ubicación y dirección de tu comercio",
+    "country": "País *",
+    "province": "Provincia / Región",
+    "city": "Ciudad",
+    "address": "Dirección",
+    "addressPlaceholder": "Calle y número",
+    "postalCode": "Código Postal",
+    "optional": "Opcional"
+  },
+  "step3": {
+    "title": "Contacto",
+    "description": "Agrega la información de contacto de tu comercio",
+    "phone": "Teléfono",
+    "phonePlaceholder": "+54 11 1234-5678",
+    "usePhoneForWhatsApp": "Usar este número para WhatsApp",
+    "whatsapp": "WhatsApp",
+    "whatsappPlaceholderPhone": "Se usará el número de teléfono",
+    "whatsappPlaceholderExample": "Ej: +54 11 1234-5678 o 1123456789",
+    "whatsappHintWithCountry": "Se agregará automáticamente el código de país de {{country}} si no lo incluyes",
+    "whatsappHintNoCountry": "Ingresa el número con código de país (ej: +54 11 1234-5678) o solo el número local",
+    "email": "Email",
+    "emailPlaceholder": "contacto@comercio.com (opcional)",
+    "website": "Sitio Web",
+    "websitePlaceholder": "laparrilla22.com o https://www.comercio.com (opcional)"
+  },
+  "step4": {
+    "title": "Medios de pago",
+    "description": "Configura las monedas de pago para tu comercio",
+    "defaultCurrency": "Moneda de pago por defecto *",
+    "additionalCurrencies": "Monedas adicionales (opcional)",
+    "additionalCurrenciesHint": "Haz clic en las monedas que deseas aceptar además de la moneda por defecto",
+    "selectedCount": "{{count}} moneda(s) seleccionada(s)",
+    "selectAdditional": "Seleccionar monedas adicionales",
+    "additionalModalTitle": "Monedas adicionales",
+    "close": "Cerrar"
+  },
+  "step5": {
+    "title": "Imágenes",
+    "description": "Agrega el logo y la foto de portada de tu comercio",
+    "logo": "Logo del comercio",
+    "logoHint": "Recomendado: imagen cuadrada de al menos 400×400 px (PNG o JPG).",
+    "logoPreviewAlt": "Vista previa del logo",
+    "removeLogo": "Quitar logo",
+    "cover": "Foto de portada",
+    "coverPreviewAlt": "Vista previa de portada",
+    "removeCover": "Quitar portada",
+    "changeImage": "Cambiar imagen",
+    "uploadHint": "Arrastra una imagen o haz clic para seleccionar"
+  },
+  "step6": {
+    "title": "Plantilla y colores",
+    "description": "Elige el diseño de tu menú y los colores de marca. Después continuarás con la creación del menú.",
+    "templateLabel": "Plantilla de diseño",
+    "templateHelp": "Seleccioná una plantilla. Luego podrás cambiarla y ajustar los colores de tu marca.",
+    "templateHint": "Esta plantilla se aplicará a todos los menús de este comercio",
+    "proNote": "Disponible para plan Pro/Business",
+    "previewAlt": "Vista previa {{name}}",
+    "brandColors": "Colores de marca",
+    "brandColorsHelp": "Personaliza los colores principales de tu comercio. Estos colores se aplicarán a botones, títulos y elementos destacados.",
+    "primaryColor": "Color primario",
+    "secondaryColor": "Color secundario"
+  },
+  "templates": {
+    "classic": {
+      "name": "Clásico",
+      "desc": "Diseño tradicional y elegante"
+    },
+    "minimalist": {
+      "name": "Minimalista",
+      "desc": "Diseño limpio y contemporáneo"
+    },
+    "foodie": {
+      "name": "Foodie",
+      "desc": "Diseño gastronómico y apetitoso"
+    },
+    "smartFood": {
+      "name": "Smart Food",
+      "desc": "Diseño claro con filtros de alérgenos"
+    },
+    "gourmet": {
+      "name": "Gourmet",
+      "desc": "Estilo refinado y premium"
+    },
+    "proMobile": {
+      "name": "Modern Food",
+      "desc": "Diseño moderno con tabs laterales y fotos de producto"
+    },
+    "beachBar": {
+      "name": "Beach Life",
+      "desc": "Beach bar con fondo configurable y cards horizontales"
+    },
+    "solNoche": {
+      "name": "Sol & Noche",
+      "desc": "Modo claro/oscuro, destacados y portadas día/noche"
+    },
+    "nightClub": {
+      "name": "Neon Club",
+      "desc": "Tema oscuro con tabs laterales, sin fotos"
+    },
+    "burgers": {
+      "name": "Burgers",
+      "desc": "Bold y dinámico estilo hamburguesería"
+    },
+    "italianFood": {
+      "name": "Italian Food",
+      "desc": "Elegante con colores de la bandera italiana"
+    }
+  },
+  "currencies": {
+    "USD": "USD - Dólar estadounidense",
+    "EUR": "EUR - Euro",
+    "ARS": "ARS - Peso argentino",
+    "MXN": "MXN - Peso mexicano",
+    "CLP": "CLP - Peso chileno",
+    "COP": "COP - Peso colombiano",
+    "PEN": "PEN - Sol peruano",
+    "BRL": "BRL - Real brasileño",
+    "UYU": "UYU - Peso uruguayo",
+    "PYG": "PYG - Guaraní paraguayo",
+    "BOB": "BOB - Boliviano",
+    "VES": "VES - Bolívar venezolano"
+  },
+  "footer": {
+    "back": "← Anterior",
+    "cancel": "Cancelar",
+    "next": "Siguiente →",
+    "creating": "Creando…",
+    "create": "Crear Comercio",
+    "saving": "Guardando…",
+    "continueToMenu": "Continuar al menú →"
+  },
+  "proLock": {
+    "title": "Plantilla Pro",
+    "close": "Cerrar",
+    "body": "La plantilla <strong>{{name}}</strong> está disponible solo para usuarios <strong>Pro</strong> o <strong>Business</strong>.",
+    "hint": "Podés seguir con una plantilla gratuita (más adelante la vas a poder cambiar) o ver los planes de suscripción. Esta plantilla es solo para usuarios Pro.",
+    "continueFree": "Continuar con plantilla gratuita",
+    "viewPlans": "Ver planes de suscripción"
+  }
+}

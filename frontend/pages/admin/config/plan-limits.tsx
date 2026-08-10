@@ -132,7 +132,7 @@ export default function AdminConfigPlanLimits() {
       <div className="admin-page-config-plan-limits" style={{ maxWidth: 960 }}>
         <h1 className="admin-title mb-2">Límites por plan</h1>
         <p className="text-muted mb-4">
-          Valores efectivos para restaurantes, menús, productos y plantillas. Se guardan en base de datos; si no hubiera
+          Valores efectivos para comercios, menús, productos y plantillas. Se guardan en base de datos; si no hubiera
           tabla migrada, la API usa solo los defaults del código.
         </p>
 
@@ -186,7 +186,7 @@ export default function AdminConfigPlanLimits() {
                 <div className="card-body">
                   <div className="row g-3">
                     <div className="col-md-4">
-                      <label className="form-label small">Límite restaurantes (-1 = ilimitado)</label>
+                      <label className="form-label small">Límite comercios (-1 = ilimitado)</label>
                       <input
                         type="number"
                         className="form-control"

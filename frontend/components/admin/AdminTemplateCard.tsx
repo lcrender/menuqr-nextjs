@@ -1,8 +1,13 @@
 import OptimizedPicture from '../OptimizedPicture';
 import Link from 'next/link';
 import { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import i18n from '../../src/i18n/config';
+import templatesCatalogEs from '../../src/locales/fragments/templatesCatalog.es.json';
+import templatesCatalogEn from '../../src/locales/fragments/templatesCatalog.en.json';
 import { getTemplateBySlug } from '../../lib/menu-templates-catalog';
 import { getPlantillaHeroMockupByApiTemplateId } from '../../lib/plantilla-landing-hero-images';
+import { translateTemplatesCatalogTaxonomy } from '../../lib/templates-catalog-i18n';
 import { apiTemplateIdToCatalogSlug } from '../../lib/template-selection-intent';
 import {
   PREVIEW_DEFAULT_IMAGE,
@@ -10,6 +15,9 @@ import {
   type TemplateCatalogItem,
 } from '../../lib/templates-catalog';
 import styles from './AdminTemplateCard.module.css';
+
+i18n.addResourceBundle('es-ES', 'translation', { templatesCatalog: templatesCatalogEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { templatesCatalog: templatesCatalogEn }, true, true);
 
 export interface AdminRestaurantOption {
   id: string;
@@ -39,6 +47,7 @@ export default function AdminTemplateCard({
   onRestaurantSelect,
   onApply,
 }: AdminTemplateCardProps) {
+  const { t } = useTranslation();
   const [imageError, setImageError] = useState(false);
   const catalogSlug = apiTemplateIdToCatalogSlug(template.id);
   const catalogMeta = getTemplateBySlug(catalogSlug);
@@ -60,7 +69,7 @@ export default function AdminTemplateCard({
       >
         <OptimizedPicture
           src={imageSrc}
-          alt={`Vista previa plantilla ${template.name}`}
+          alt={t('templatesCatalog.adminCard.previewAlt', { name: template.name })}
           fill
           className={`${styles.cardImage} ${usesMockup ? styles.cardImageMockup : ''}`}
           onError={() => setImageError(true)}
@@ -71,18 +80,24 @@ export default function AdminTemplateCard({
         <div className={styles.cardTitleRow}>
           <h3 className={styles.cardTitle}>{template.name}</h3>
           {isProTemplate ? (
-            <span className={`${styles.badge} ${styles.badgePro}`}>Pro</span>
+            <span className={`${styles.badge} ${styles.badgePro}`}>
+              {t('templatesCatalog.card.pro')}
+            </span>
           ) : (
-            <span className={`${styles.badge} ${styles.badgeFree}`}>Free</span>
+            <span className={`${styles.badge} ${styles.badgeFree}`}>
+              {t('templatesCatalog.card.free')}
+            </span>
           )}
         </div>
 
         {catalogMeta ? (
-          <div className={styles.badgeRow} aria-label="Rubro y estilo">
-            <span className={`${styles.badge} ${styles.badgeCategory}`}>{catalogMeta.categoria}</span>
+          <div className={styles.badgeRow} aria-label={t('templatesCatalog.card.rubroEstiloAria')}>
+            <span className={`${styles.badge} ${styles.badgeCategory}`}>
+              {translateTemplatesCatalogTaxonomy(t, 'categoria', catalogMeta.categoria)}
+            </span>
             {catalogMeta.estilos.map((estilo) => (
               <span key={estilo} className={`${styles.badge} ${styles.badgeStyle}`}>
-                {estilo}
+                {translateTemplatesCatalogTaxonomy(t, 'estilo', estilo)}
               </span>
             ))}
           </div>
@@ -99,19 +114,24 @@ export default function AdminTemplateCard({
             rel="noopener noreferrer"
             className={styles.previewButton}
           >
-            Ver vista previa
+            {t('templatesCatalog.adminCard.preview')}
           </a>
 
           {proLocked ? (
             <p className={styles.proLockedMsg}>
-              Disponible en plan <strong>Pro</strong> o{' '}
-              <strong>Premium</strong>.{' '}
-              <Link href="/admin/profile/subscription/checkout?plan=pro">Mejorar plan</Link>
+              <Trans
+                i18nKey="templatesCatalog.adminCard.proLocked"
+                components={{
+                  pro: <strong />,
+                  premium: <strong />,
+                  upgrade: <Link href="/admin/profile/subscription/checkout?plan=pro" />,
+                }}
+              />
             </p>
           ) : (
             <>
               <label className={styles.applyLabel} htmlFor={`template-restaurant-${template.id}`}>
-                Aplicar a restaurante
+                {t('templatesCatalog.adminCard.applyToRestaurant')}
               </label>
               <div className={styles.selectWrap}>
                 <select
@@ -127,11 +147,13 @@ export default function AdminTemplateCard({
                 }}
                 disabled={applyingTemplate?.startsWith(template.id) ?? false}
               >
-                <option value="">Elegir restaurante…</option>
+                <option value="">{t('templatesCatalog.adminCard.chooseRestaurant')}</option>
                 {restaurants.map((restaurant) => (
                   <option key={restaurant.id} value={restaurant.id}>
                     {restaurant.name}{' '}
-                    {getRestaurantTemplate(restaurant.id) === template.id ? '(Actual)' : ''}
+                    {getRestaurantTemplate(restaurant.id) === template.id
+                      ? t('templatesCatalog.adminCard.current')
+                      : ''}
                   </option>
                 ))}
                 </select>
@@ -147,10 +169,10 @@ export default function AdminTemplateCard({
                   {isApplying ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" />
-                      Aplicando...
+                      {t('templatesCatalog.adminCard.applying')}
                     </>
                   ) : (
-                    'Aplicar plantilla'
+                    t('templatesCatalog.adminCard.apply')
                   )}
                 </button>
               ) : null}

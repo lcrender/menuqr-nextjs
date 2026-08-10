@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import type { GetStaticPaths, GetStaticProps, InferGetStaticPropsType } from 'next';
+import { useTranslation } from 'react-i18next';
 import LandingNav from '../../components/LandingNav';
 import LandingFooter from '../../components/LandingFooter';
 import { DocumentationShell } from '../../components/documentation/DocumentationShell';
@@ -8,6 +9,7 @@ import {
   DOCUMENTATION_SLUGS_STATIC,
   getDocBySlug,
   isValidDocSlug,
+  translateDocSection,
   type DocSection,
 } from '../../lib/documentation-nav';
 import { buildDocumentacionJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
@@ -17,7 +19,8 @@ const BASE = '/documentacion';
 type Props = InferGetStaticPropsType<typeof getStaticProps>;
 
 export default function DocumentacionSlugPage({ slug }: Props) {
-  const meta = getDocBySlug(slug)!;
+  const { t } = useTranslation();
+  const meta = translateDocSection(getDocBySlug(slug)!, t);
   const render = DOC_BODY_BY_SLUG[slug as DocSection['slug']]!;
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   const canonicalUrl =

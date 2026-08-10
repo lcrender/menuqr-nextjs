@@ -108,6 +108,16 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/admin/restaurants',
+        destination: '/admin/comercios',
+        permanent: true,
+      },
+      {
+        source: '/admin/restaurants/:path*',
+        destination: '/admin/comercios/:path*',
+        permanent: true,
+      },
+      {
         source: '/menu-qr-restaurante',
         destination: '/',
         permanent: true,

@@ -19,7 +19,7 @@ export class PlanLimitsAdminController {
     return {
       plans,
       legend: {
-        unlimited: 'Usa -1 en restaurantes/menús/productos donde la app admite ilimitado (ej. menús en Premium).',
+        unlimited: 'Usa -1 en comercios/menús/productos donde la app admite ilimitado (ej. menús en Premium).',
         templates: 'gourmetTemplate + proOnlyTemplatesInAdmin definen plantillas extra para ese plan.',
       },
     };

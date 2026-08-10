@@ -6,9 +6,10 @@ import { PlanLimitsModule } from '../common/plan-limits/plan-limits.module';
 import { DashboardWelcomeModule } from '../dashboard-welcome/dashboard-welcome.module';
 import { ConfigModule } from '@nestjs/config';
 import { I18nModule } from '../common/i18n/i18n.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [DatabaseModule, ConfigModule, PlanLimitsModule, I18nModule, DashboardWelcomeModule],
+  imports: [DatabaseModule, ConfigModule, PlanLimitsModule, I18nModule, DashboardWelcomeModule, UsersModule],
   controllers: [RestaurantsController],
   providers: [RestaurantsService],
   exports: [RestaurantsService],

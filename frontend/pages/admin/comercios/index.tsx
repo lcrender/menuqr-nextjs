@@ -2,7 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import React from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { Trans, useTranslation } from 'react-i18next';
 import api from '../../../lib/axios';
+import i18n from '../../../src/i18n/config';
+import adminBusinessesEs from '../../../src/locales/fragments/adminBusinesses.es.json';
+import adminBusinessesEn from '../../../src/locales/fragments/adminBusinesses.en.json';
 import AdminLayout from '../../../components/AdminLayout';
 import CountrySelector from '../../../components/CountrySelector';
 import ProvinceSelector from '../../../components/ProvinceSelector';
@@ -14,6 +18,11 @@ import AlertModal from '../../../components/AlertModal';
 import { isValidApiTemplateId, readTemplateIntent } from '../../../lib/template-selection-intent';
 import LogoCropModal from '../../../components/LogoCropModal';
 import CoverCropModal from '../../../components/CoverCropModal';
+
+i18n.addResourceBundle('es-ES', 'translation', { adminBusinesses: adminBusinessesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { adminBusinesses: adminBusinessesEn }, true, true);
+
+const CURRENCY_CODES = ['USD', 'EUR', 'ARS', 'MXN', 'CLP', 'COP', 'PEN', 'BRL', 'UYU', 'PYG', 'BOB', 'VES'] as const;
 
 // Códigos de país comunes para WhatsApp
 const countryCodes: { [key: string]: string } = {
@@ -35,7 +44,7 @@ const countryCodes: { [key: string]: string } = {
 /** Frase exacta que el usuario debe escribir para confirmar el cambio de nombre (afecta al QR). */
 const RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE = 'MODIFICARQR';
 
-/** Frase para confirmar traspaso de restaurante a otro usuario (solo SUPER_ADMIN). */
+/** Frase para confirmar traspaso de comercio a otro usuario (solo SUPER_ADMIN). */
 const RESTAURANT_TRANSFER_CONFIRM_PHRASE = 'TRANSFERIR';
 
 interface TransferCandidateUser {
@@ -94,6 +103,7 @@ const normalizeWhatsAppForBackend = (phone: string, country?: string): string =>
 };
 
 export default function Restaurants() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,7 +146,7 @@ export default function Restaurants() {
   const [coverCropSrc, setCoverCropSrc] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-  /** Nombre del restaurante al abrir el modal de edición (para detectar cambio y avisar del QR). */
+  /** Nombre del comercio al abrir el modal de edición (para detectar cambio y avisar del QR). */
   const nameWhenEditSessionStartedRef = useRef('');
   const [showQrNameWarningModal, setShowQrNameWarningModal] = useState(false);
   const [qrNameConfirmInput, setQrNameConfirmInput] = useState('');
@@ -157,7 +167,7 @@ export default function Restaurants() {
   const [transferUsersLoading, setTransferUsersLoading] = useState(false);
   const [transferLoading, setTransferLoading] = useState(false);
   const [transferConfirmText, setTransferConfirmText] = useState('');
-  /** SUPER_ADMIN: tenant destino al crear restaurante (el backend lo exige). */
+  /** SUPER_ADMIN: tenant destino al crear comercio (el backend lo exige). */
   const [tenantsForWizard, setTenantsForWizard] = useState<Array<{ id: string; name?: string }>>([]);
   const [selectedTenantIdForCreate, setSelectedTenantIdForCreate] = useState('');
   const [showAlert, setShowAlert] = useState(false);
@@ -245,7 +255,7 @@ export default function Restaurants() {
     fetchPlan();
   }, [user?.id, isSuperAdmin]);
 
-  // Calcular si el usuario puede crear más restaurantes
+  // Calcular si el usuario puede crear más comercios
   const getRestaurantLimit = () => {
     if (isSuperAdmin) return -1;
     if (!tenantPlan) return 1;
@@ -274,7 +284,7 @@ export default function Restaurants() {
     return restaurants.length < limit;
   };
 
-  // Abrir wizard automáticamente si viene con parámetro wizard=true o si no hay restaurantes (ADMIN o SUPER_ADMIN)
+  // Abrir wizard automáticamente si viene con parámetro wizard=true o si no hay comercios (ADMIN o SUPER_ADMIN)
   useEffect(() => {
     if (!user || loading) return;
     if (router.query.wizard === 'true') {
@@ -287,9 +297,9 @@ export default function Restaurants() {
         setFormData((prev) => ({ ...prev, template: it }));
       }
       setShowWizard(true);
-      router.replace('/admin/restaurants', undefined, { shallow: true });
+      router.replace('/admin/comercios', undefined, { shallow: true });
     } else if (restaurants.length === 0 && !filterName) {
-      // Sin restaurantes: modo creación. Limpiar editing para no hacer PUT a un id ya borrado.
+      // Sin comercios: modo creación. Limpiar editing para no hacer PUT a un id ya borrado.
       setEditing(null);
       const fromIntent = readTemplateIntent()?.apiTemplateId;
       if (fromIntent && isValidApiTemplateId(fromIntent)) {
@@ -346,7 +356,7 @@ export default function Restaurants() {
       setRestaurants(restaurants);
       setTotal(totalCount);
     } catch (error) {
-      console.error('Error cargando restaurantes:', error);
+      console.error('Error cargando comercios:', error);
     } finally {
       setLoading(false);
     }
@@ -419,7 +429,7 @@ export default function Restaurants() {
 
       let restaurantId: string;
 
-      // editing puede quedar apuntando a un restaurante ya borrado (modal cerrado sin limpiar, etc.)
+      // editing puede quedar apuntando a un comercio ya borrado (modal cerrado sin limpiar, etc.)
       const editingId = editing?.id;
       const editingStillInList =
         !!editingId && restaurants.some((r: { id: string }) => r.id === editingId);
@@ -428,8 +438,8 @@ export default function Restaurants() {
       if (!shouldUpdate && isSuperAdmin) {
         if (!selectedTenantIdForCreate?.trim()) {
           setAlertData({
-            title: 'Falta la cuenta',
-            message: 'Elegí en qué cuenta (tenant) se crea el restaurante.',
+            title: t('adminBusinesses.alerts.missingTenantTitle'),
+            message: t('adminBusinesses.alerts.missingTenantMessage'),
             variant: 'error',
           });
           setShowAlert(true);
@@ -469,13 +479,13 @@ export default function Restaurants() {
 
       // Si es una creación nueva (no edición), preparar / abrir wizard de menú
       if (!editing) {
-        // Recargar restaurantes primero para tener la lista actualizada
+        // Recargar comercios primero para tener la lista actualizada
         await loadRestaurants();
         setNewRestaurantId(restaurantId);
         if (openMenuWizard) {
           setShowMenuWizard(true);
         } else {
-          // Mantener el wizard de restaurante abierto para el paso de plantilla
+          // Mantener el wizard de comercio abierto para el paso de plantilla
           setShowWizard(true);
         }
       } else {
@@ -495,14 +505,14 @@ export default function Restaurants() {
       }
       return restaurantId;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Error guardando restaurante';
+      const errorMessage = error.response?.data?.message || t('adminBusinesses.alerts.saveError');
       setAlertData({
-        title: 'Error',
+        title: t('adminBusinesses.alerts.error'),
         message: errorMessage,
         variant: 'error',
       });
       setShowAlert(true);
-      // Si el error es por límite alcanzado, recargar restaurantes para actualizar el estado
+      // Si el error es por límite alcanzado, recargar comercios para actualizar el estado
       if (errorMessage.includes('límite') || errorMessage.includes('limit')) {
         loadRestaurants();
       }
@@ -533,8 +543,8 @@ export default function Restaurants() {
       setCoverPreview(null);
     } catch (error: any) {
       setAlertData({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error asignando la plantilla',
+        title: t('adminBusinesses.alerts.error'),
+        message: error.response?.data?.message || t('adminBusinesses.alerts.assignTemplateError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -566,8 +576,8 @@ export default function Restaurants() {
   const handleConfirmQrNameChange = async () => {
     if (qrNameConfirmInput !== RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE) {
       setAlertData({
-        title: 'Confirmación incorrecta',
-        message: `Debés escribir exactamente ${RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE} para continuar.`,
+        title: t('adminBusinesses.alerts.confirmIncorrectTitle'),
+        message: t('adminBusinesses.alerts.confirmIncorrectMessage', { phrase: RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE }),
         variant: 'warning',
       });
       setShowAlert(true);
@@ -697,7 +707,7 @@ export default function Restaurants() {
 
   const handleEdit = async (restaurant: any) => {
     try {
-      // Obtener los datos completos del restaurante (incluyendo address, phone, email)
+      // Obtener los datos completos del comercio (incluyendo address, phone, email)
       const res = await api.get(`/restaurants/${restaurant.id}`);
       const fullRestaurant = res.data;
       
@@ -766,10 +776,10 @@ export default function Restaurants() {
       setCoverFile(null);
       setShowModal(true);
     } catch (error: any) {
-      console.error('Error cargando datos del restaurante:', error);
+      console.error('Error cargando datos del comercio:', error);
       setAlertData({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error cargando datos del restaurante',
+        title: t('adminBusinesses.alerts.error'),
+        message: error.response?.data?.message || t('adminBusinesses.alerts.loadError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -910,19 +920,21 @@ export default function Restaurants() {
       const data = res.data || {};
       if (data.moved === false) {
         setAlertData({
-          title: 'Sin cambios',
-          message: data.message || 'El restaurante ya pertenece al tenant del usuario seleccionado.',
+          title: t('adminBusinesses.alerts.noChangesTitle'),
+          message: data.message || t('adminBusinesses.alerts.noChangesMessage'),
           variant: 'info',
         });
       } else {
         const deactivated = data.deactivatedByLimit ?? 0;
         const extra =
           deactivated > 0
-            ? ` Se desactivaron ${deactivated} producto(s) por el límite del plan del destino.`
+            ? t('adminBusinesses.alerts.transferDeactivatedExtra', { count: deactivated })
             : '';
         setAlertData({
-          title: 'Transferencia completada',
-          message: `Restaurante transferido a ${data.targetUserEmail || 'el usuario destino'}.${extra}`,
+          title: t('adminBusinesses.alerts.transferDoneTitle'),
+          message: t('adminBusinesses.alerts.transferDoneMessage', {
+            email: data.targetUserEmail || t('adminBusinesses.alerts.transferDoneFallbackEmail'),
+          }) + extra,
           variant: 'success',
         });
       }
@@ -931,8 +943,8 @@ export default function Restaurants() {
       loadRestaurants();
     } catch (error: any) {
       setAlertData({
-        title: 'Error al transferir',
-        message: error.response?.data?.message || 'No se pudo transferir el restaurante',
+        title: t('adminBusinesses.alerts.transferErrorTitle'),
+        message: error.response?.data?.message || t('adminBusinesses.alerts.transferErrorMessage'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -957,15 +969,15 @@ export default function Restaurants() {
       setRestaurantToDelete(null);
       setDeleteConfirmText('');
       setAlertData({
-        title: 'Éxito',
-        message: 'Restaurante eliminado correctamente',
+        title: t('adminBusinesses.alerts.success'),
+        message: t('adminBusinesses.alerts.deletedMessage'),
         variant: 'success',
       });
       setShowAlert(true);
     } catch (error: any) {
       setAlertData({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error eliminando restaurante',
+        title: t('adminBusinesses.alerts.error'),
+        message: error.response?.data?.message || t('adminBusinesses.alerts.deleteError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -993,8 +1005,8 @@ export default function Restaurants() {
     const url = getRestaurantPublicUrl(selectedRestaurantForQR);
     if (!url) {
       setAlertData({
-        title: 'Error',
-        message: 'No se puede generar la URL del restaurante.',
+        title: t('adminBusinesses.alerts.error'),
+        message: t('adminBusinesses.alerts.urlError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -1031,7 +1043,7 @@ export default function Restaurants() {
       const userData = localStorage.getItem('user');
       const user = userData ? JSON.parse(userData) : null;
       
-      console.log('Restaurante actual:', restaurant);
+      console.log('Comercio actual:', restaurant);
       console.log('isActive actual:', restaurant.isActive);
       console.log('Nuevo isActive:', !restaurant.isActive);
       
@@ -1050,14 +1062,14 @@ export default function Restaurants() {
       
       console.log('Respuesta del servidor:', response.data);
       
-      // Recargar restaurantes después de actualizar
+      // Recargar comercios después de actualizar
       await loadRestaurants();
     } catch (error: any) {
-      console.error('Error actualizando restaurante:', error);
+      console.error('Error actualizando comercio:', error);
       console.error('Detalles del error:', error.response?.data);
       setAlertData({
-        title: 'Error',
-        message: error.response?.data?.message || error.message || 'Error actualizando restaurante',
+        title: t('adminBusinesses.alerts.error'),
+        message: error.response?.data?.message || error.message || t('adminBusinesses.alerts.updateError'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -1066,7 +1078,7 @@ export default function Restaurants() {
 
   return (
     <AdminLayout>
-      {/* Mostrar wizard de menú si se acaba de crear un restaurante */}
+      {/* Mostrar wizard de menú si se acaba de crear un comercio */}
       {showMenuWizard && newRestaurantId ? (
         <div className="restaurant-wizard-container">
           <MenuWizard
@@ -1082,7 +1094,7 @@ export default function Restaurants() {
             onCancel={() => {
               setShowMenuWizard(false);
               setNewRestaurantId(null);
-              // Limpiar formulario del restaurante
+              // Limpiar formulario del comercio
               setShowWizard(false);
       setFormData({
         name: '', description: '', street: '', city: '', province: '', postalCode: '', country: '',
@@ -1096,13 +1108,13 @@ export default function Restaurants() {
             }}
           />
         </div>
-      ) : /* Mostrar wizard de restaurante si no hay restaurantes (sin filtro) o si se solicita crear uno nuevo */
+      ) : /* Mostrar wizard de comercio si no hay comercios (sin filtro) o si se solicita crear uno nuevo */
       showWizard || (!loading && restaurants.length === 0 && !filterName) ? (
         <div className="restaurant-wizard-container">
           {isSuperAdmin && (
             <div className="mb-3 p-3 border rounded bg-light">
               <label className="form-label fw-semibold mb-1" htmlFor="restaurant-create-tenant">
-                Cuenta (tenant)
+                {t('adminBusinesses.tenant.label')}
               </label>
               <select
                 id="restaurant-create-tenant"
@@ -1110,15 +1122,15 @@ export default function Restaurants() {
                 value={selectedTenantIdForCreate}
                 onChange={(e) => setSelectedTenantIdForCreate(e.target.value)}
               >
-                <option value="">Seleccioná la cuenta…</option>
-                {tenantsForWizard.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name || t.id}
+                <option value="">{t('adminBusinesses.tenant.placeholder')}</option>
+                {tenantsForWizard.map((tenantItem) => (
+                  <option key={tenantItem.id} value={tenantItem.id}>
+                    {tenantItem.name || tenantItem.id}
                   </option>
                 ))}
               </select>
               <p className="text-muted small mb-0 mt-2">
-                El restaurante se asocia al tenant elegido. Si solo tenés una cuenta, se selecciona sola.
+                {t('adminBusinesses.tenant.help')}
               </p>
             </div>
           )}
@@ -1156,7 +1168,7 @@ export default function Restaurants() {
       ) : (
         <>
           <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-            <h1 className="admin-title mb-0">Restaurantes</h1>
+            <h1 className="admin-title mb-0">{t('adminBusinesses.title')}</h1>
             <div className="admin-quick-links">
               <button type="button" className="admin-btn" onClick={() => {
               if (canCreateRestaurant()) {
@@ -1177,12 +1189,12 @@ export default function Restaurants() {
                 setLimitMessage({
                   limit,
                   current: restaurants.length,
-                  plan: plan === 'free' ? 'gratuito' : plan
+                  plan,
                 });
                 setShowLimitModal(true);
               }
             }}>
-                + Nuevo Restaurante
+                {t('adminBusinesses.createNew')}
               </button>
             </div>
           </div>
@@ -1191,11 +1203,14 @@ export default function Restaurants() {
             <div className="mb-3 p-3 bg-light rounded border">
               <div className="d-flex align-items-center gap-2 mb-2">
                 <strong style={{ fontSize: '1.1rem' }}>
-                  {total || restaurants.length}/{getRestaurantLimit() === -1 ? '∞' : getRestaurantLimit()} restaurantes disponibles
+                  {t('adminBusinesses.planUsage', {
+                    current: total || restaurants.length,
+                    limit: getRestaurantLimit() === -1 ? '∞' : getRestaurantLimit(),
+                  })}
                 </strong>
               </div>
               <p className="mb-0 text-muted" style={{ fontSize: '0.9rem' }}>
-                Puedes ampliar la cantidad de restaurantes disponibles cambiando tu plan de suscripción.
+                {t('adminBusinesses.planUsageHint')}
               </p>
             </div>
           )}
@@ -1204,13 +1219,13 @@ export default function Restaurants() {
             <div className="mb-3">
               <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 admin-restaurants-filter">
                 <label htmlFor="filterName" className="form-label mb-0 flex-shrink-0" style={{ whiteSpace: 'nowrap' }}>
-                  Filtrar por nombre:
+                  {t('adminBusinesses.filter.label')}
                 </label>
                 <input
                   id="filterName"
                   type="text"
                   className="form-control admin-restaurants-filter-input"
-                  placeholder="Nombre del restaurante"
+                  placeholder={t('adminBusinesses.filter.placeholder')}
                   value={filterName}
                   onChange={(e) => {
                     e.stopPropagation();
@@ -1237,7 +1252,7 @@ export default function Restaurants() {
                       e.stopPropagation();
                       setFilterName('');
                     }}
-                    title="Limpiar filtro"
+                    title={t('adminBusinesses.filter.clear')}
                   >
                     ✕
                   </button>
@@ -1249,7 +1264,7 @@ export default function Restaurants() {
           {loading ? (
             <div className="text-center">
               <div className="spinner-border" role="status">
-                <span className="visually-hidden">Cargando...</span>
+                <span className="visually-hidden">{t('adminBusinesses.loading')}</span>
               </div>
             </div>
           ) : (
@@ -1258,10 +1273,10 @@ export default function Restaurants() {
           <table className="table table-admin-restaurants">
             <thead>
               <tr>
-                <th className="admin-restaurants-col-photo">Foto</th>
-                <th className="admin-restaurants-col-status">Estado</th>
-                <th className="admin-restaurants-col-menus text-nowrap">Menús</th>
-                <th className="admin-restaurants-col-actions">Acciones</th>
+                <th className="admin-restaurants-col-photo">{t('adminBusinesses.table.photo')}</th>
+                <th className="admin-restaurants-col-status">{t('adminBusinesses.table.status')}</th>
+                <th className="admin-restaurants-col-menus text-nowrap">{t('adminBusinesses.table.menus')}</th>
+                <th className="admin-restaurants-col-actions">{t('adminBusinesses.table.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1282,13 +1297,13 @@ export default function Restaurants() {
                       />
                     ) : (
                       <div className="admin-restaurants-thumb admin-restaurants-thumb-placeholder">
-                        <span className="text-muted">Sin foto</span>
+                        <span className="text-muted">{t('adminBusinesses.table.noPhoto')}</span>
                       </div>
                     )}
                     </td>
                     <td className="admin-restaurants-col-status">
                     <span className={`badge ${restaurant.isActive ? 'bg-success' : 'bg-secondary'}`}>
-                      {restaurant.isActive ? 'Activo' : 'Inactivo'}
+                      {restaurant.isActive ? t('adminBusinesses.table.active') : t('adminBusinesses.table.inactive')}
                     </span>
                     </td>
                     <td className="admin-restaurants-col-menus">{restaurant.menuCount || 0}</td>
@@ -1300,9 +1315,9 @@ export default function Restaurants() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-sm btn-info"
-                        title="Ver restaurante en nueva pestaña"
+                        title={t('adminBusinesses.actions.viewTitle')}
                       >
-                        👁️ Ver
+                        {t('adminBusinesses.actions.view')}
                       </a>
                     )}
                     {restaurant.slug && (
@@ -1310,20 +1325,20 @@ export default function Restaurants() {
                         type="button"
                         className="btn btn-sm btn-info text-white" 
                         onClick={() => handleViewQR(restaurant)}
-                        title="Ver y descargar QR"
+                        title={t('adminBusinesses.actions.viewQrTitle')}
                       >
-                        Ver QR
+                        {t('adminBusinesses.actions.viewQr')}
                       </button>
                     )}
                     <Link
-                      href={`/admin/restaurants/${restaurant.id}/print-menu`}
+                      href={`/admin/comercios/${restaurant.id}/print-menu`}
                       className="btn btn-sm btn-secondary"
-                      title="Imprimir carta"
+                      title={t('adminBusinesses.actions.printMenuTitle')}
                     >
-                      Imprimir carta
+                      {t('adminBusinesses.actions.printMenu')}
                     </Link>
                     <button type="button" className="btn btn-sm btn-primary" onClick={() => handleEdit(restaurant)}>
-                      Editar
+                      {t('adminBusinesses.actions.edit')}
                     </button>
                     <button 
                       type="button"
@@ -1331,16 +1346,16 @@ export default function Restaurants() {
                       onClick={() => handleToggleActive(restaurant)}
                       disabled={loading}
                     >
-                      {restaurant.isActive ? 'Desactivar' : 'Activar'}
+                      {restaurant.isActive ? t('adminBusinesses.actions.deactivate') : t('adminBusinesses.actions.activate')}
                     </button>
                     {isSuperAdmin && (
                       <button
                         type="button"
                         className="btn btn-sm btn-outline-primary"
                         onClick={() => handleTransferClick(restaurant)}
-                        title="Transferir restaurante a otro usuario"
+                        title={t('adminBusinesses.actions.transferTitle')}
                       >
-                        Transferir
+                        {t('adminBusinesses.actions.transfer')}
                       </button>
                     )}
                     <button 
@@ -1348,7 +1363,7 @@ export default function Restaurants() {
                       className="btn btn-sm btn-danger d-none d-md-inline-block" 
                       onClick={() => handleDeleteClick(restaurant.id)}
                     >
-                      Eliminar
+                      {t('adminBusinesses.actions.delete')}
                     </button>
                     </div>
                     </td>
@@ -1371,18 +1386,18 @@ export default function Restaurants() {
                   />
                 ) : (
                   <div className="admin-restaurants-thumb admin-restaurants-thumb-placeholder admin-restaurants-mobile-thumb">
-                    <span className="text-muted">Sin foto</span>
+                    <span className="text-muted">{t('adminBusinesses.table.noPhoto')}</span>
                   </div>
                 )}
                 <div className="admin-restaurants-mobile-head-text">
                   <span className="admin-restaurants-mobile-name">{restaurant.name}</span>
                   <span className={`badge ${restaurant.isActive ? 'bg-success' : 'bg-secondary'} admin-restaurants-mobile-badge`}>
-                    {restaurant.isActive ? 'Activo' : 'Inactivo'}
+                    {restaurant.isActive ? t('adminBusinesses.table.active') : t('adminBusinesses.table.inactive')}
                   </span>
                 </div>
               </div>
               <p className="admin-restaurants-mobile-menus">
-                Menús: <strong>{restaurant.menuCount ?? 0}</strong>
+                {t('adminBusinesses.mobile.menusLabel')} <strong>{restaurant.menuCount ?? 0}</strong>
               </p>
               <div className="admin-restaurants-mobile-grid">
                 {restaurant.slug ? (
@@ -1392,15 +1407,15 @@ export default function Restaurants() {
                     rel="noopener noreferrer"
                     className="btn btn-sm btn-info"
                   >
-                    👁️ Ver
+                    {t('adminBusinesses.actions.view')}
                   </a>
                 ) : (
-                  <button type="button" className="btn btn-sm btn-info" disabled title="Activa el restaurante y el menú para ver">
-                    👁️ Ver
+                  <button type="button" className="btn btn-sm btn-info" disabled title={t('adminBusinesses.actions.viewDisabledTitle')}>
+                    {t('adminBusinesses.actions.view')}
                   </button>
                 )}
                 <button type="button" className="btn btn-sm btn-primary" onClick={() => handleEdit(restaurant)}>
-                  Editar
+                  {t('adminBusinesses.actions.edit')}
                 </button>
                 {restaurant.slug ? (
                   <button
@@ -1408,18 +1423,18 @@ export default function Restaurants() {
                     className="btn btn-sm btn-info text-white"
                     onClick={() => handleViewQR(restaurant)}
                   >
-                    Ver QR
+                    {t('adminBusinesses.actions.viewQr')}
                   </button>
                 ) : (
-                  <button type="button" className="btn btn-sm btn-info text-white" disabled title="Completa la configuración para el QR">
-                    Ver QR
+                  <button type="button" className="btn btn-sm btn-info text-white" disabled title={t('adminBusinesses.actions.viewQrDisabledTitle')}>
+                    {t('adminBusinesses.actions.viewQr')}
                   </button>
                 )}
                 <Link
-                  href={`/admin/restaurants/${restaurant.id}/print-menu`}
+                  href={`/admin/comercios/${restaurant.id}/print-menu`}
                   className="btn btn-sm btn-secondary"
                 >
-                  Imprimir carta
+                  {t('adminBusinesses.actions.printMenu')}
                 </Link>
                 <button
                   type="button"
@@ -1427,7 +1442,7 @@ export default function Restaurants() {
                   onClick={() => handleToggleActive(restaurant)}
                   disabled={loading}
                 >
-                  {restaurant.isActive ? 'Desactivar' : 'Activar'}
+                  {restaurant.isActive ? t('adminBusinesses.actions.deactivate') : t('adminBusinesses.actions.activate')}
                 </button>
                 {isSuperAdmin && (
                   <button
@@ -1435,7 +1450,7 @@ export default function Restaurants() {
                     className="btn btn-sm btn-outline-primary"
                     onClick={() => handleTransferClick(restaurant)}
                   >
-                    Transferir
+                    {t('adminBusinesses.actions.transfer')}
                   </button>
                 )}
               </div>
@@ -1450,14 +1465,18 @@ export default function Restaurants() {
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-center gap-3 mt-4 admin-restaurants-pagination">
               <div className="text-center text-md-start">
                 <span className="text-muted">
-                  Mostrando {((page - 1) * itemsPerPage) + 1} - {Math.min(page * itemsPerPage, total)} de {total}
+                  {t('adminBusinesses.pagination.showing', {
+                    from: ((page - 1) * itemsPerPage) + 1,
+                    to: Math.min(page * itemsPerPage, total),
+                    total,
+                  })}
                 </span>
               </div>
               <nav className="admin-restaurants-pagination-nav">
                 <ul className="pagination mb-0">
                   <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
                     <button className="page-link" onClick={() => setPage(page - 1)} disabled={page === 1}>
-                      Anterior
+                      {t('adminBusinesses.pagination.previous')}
                     </button>
                   </li>
                   {Array.from({ length: Math.ceil(total / itemsPerPage) }, (_, i) => i + 1)
@@ -1478,7 +1497,7 @@ export default function Restaurants() {
                     ))}
                   <li className={`page-item ${page >= Math.ceil(total / itemsPerPage) ? 'disabled' : ''}`}>
                     <button className="page-link" onClick={() => setPage(page + 1)} disabled={page >= Math.ceil(total / itemsPerPage)}>
-                      Siguiente
+                      {t('adminBusinesses.pagination.next')}
                     </button>
                   </li>
                 </ul>
@@ -1493,7 +1512,7 @@ export default function Restaurants() {
           <div className="modal-dialog modal-lg">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">{editing ? 'Editar' : 'Nuevo'} Restaurante</h5>
+                <h5 className="modal-title">{editing ? t('adminBusinesses.form.editTitle') : t('adminBusinesses.form.newTitle')}</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -1501,14 +1520,14 @@ export default function Restaurants() {
                     setShowModal(false);
                     setEditing(null);
                   }}
-                  aria-label="Cerrar"
+                  aria-label={t('adminBusinesses.form.close')}
                 />
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                   {/* Nombre (obligatorio) */}
                   <div className="mb-3">
-                    <label className="form-label">Nombre *</label>
+                    <label className="form-label">{t('adminBusinesses.form.name')}</label>
                     <input
                       type="text"
                       className="form-control"
@@ -1520,7 +1539,7 @@ export default function Restaurants() {
 
                   {/* Descripción */}
                   <div className="mb-3">
-                    <label className="form-label">Descripción</label>
+                    <label className="form-label">{t('adminBusinesses.form.description')}</label>
                     <div className="d-flex gap-2 mb-2">
                       <button
                         type="button"
@@ -1531,20 +1550,21 @@ export default function Restaurants() {
                             const start = textarea.selectionStart;
                             const end = textarea.selectionEnd;
                             const selectedText = formData.description.substring(start, end);
+                            const boldPlaceholder = t('adminBusinesses.form.boldPlaceholder');
                             const newText = formData.description.substring(0, start) + 
-                                          `**${selectedText || 'texto en negrita'}**` + 
+                                          `**${selectedText || boldPlaceholder}**` + 
                                           formData.description.substring(end);
                             setFormData({ ...formData, description: newText });
                             setTimeout(() => {
                               textarea.focus();
                               textarea.setSelectionRange(
                                 start + 2, 
-                                end + (selectedText ? 2 : 18)
+                                end + (selectedText ? 2 : 2 + boldPlaceholder.length)
                               );
                             }, 0);
                           }
                         }}
-                        title="Negrita (Ctrl+B)"
+                        title={t('adminBusinesses.form.boldTitle')}
                       >
                         <strong>B</strong>
                       </button>
@@ -1565,7 +1585,7 @@ export default function Restaurants() {
                             }, 0);
                           }
                         }}
-                        title="Salto de línea"
+                        title={t('adminBusinesses.form.lineBreakTitle')}
                       >
                         ↵
                       </button>
@@ -1583,35 +1603,36 @@ export default function Restaurants() {
                           const start = textarea.selectionStart;
                           const end = textarea.selectionEnd;
                           const selectedText = formData.description.substring(start, end);
+                          const boldPlaceholder = t('adminBusinesses.form.boldPlaceholder');
                           const newText = formData.description.substring(0, start) + 
-                                        `**${selectedText || 'texto en negrita'}**` + 
+                                        `**${selectedText || boldPlaceholder}**` + 
                                         formData.description.substring(end);
                           setFormData({ ...formData, description: newText });
                           setTimeout(() => {
                             textarea.focus();
                             textarea.setSelectionRange(
                               start + 2, 
-                              end + (selectedText ? 2 : 18)
+                              end + (selectedText ? 2 : 2 + boldPlaceholder.length)
                             );
                           }, 0);
                         }
                       }}
                       rows={6}
-                      placeholder="Descripción del restaurante (opcional). Usa **texto** para negrita y Enter para saltos de línea."
+                      placeholder={t('adminBusinesses.form.descriptionPlaceholder')}
                       maxLength={2000}
                       style={{ whiteSpace: 'pre-wrap' }}
                     />
                     <small className="form-text text-muted">
-                      {formData.description.length}/2000 caracteres - Usa **texto** para negrita
+                      {t('adminBusinesses.form.descriptionHint', { count: formData.description.length })}
                     </small>
                   </div>
 
                   {/* Logo y portada: misma UX que el wizard (arrastrar o clic) */}
                   <div className="mb-3 wizard-media-grid-mobile">
                     <div className="mb-4">
-                      <label className="form-label wizard-label">Logo</label>
+                      <label className="form-label wizard-label">{t('adminBusinesses.form.logo')}</label>
                       <small className="form-text text-muted d-block mb-2">
-                        Recomendado: imagen cuadrada de al menos 400×400 px (PNG o JPG).
+                        {t('adminBusinesses.form.logoHint')}
                       </small>
                       <div
                         className={`wizard-image-upload-zone ${logoPreview ? 'has-image' : ''}`}
@@ -1636,7 +1657,7 @@ export default function Restaurants() {
                         />
                         {logoPreview ? (
                           <div className="wizard-image-preview-wrap">
-                            <img src={logoPreview} alt="Vista previa del logo" className="wizard-preview-image" />
+                            <img src={logoPreview} alt={t('adminBusinesses.form.logoPreviewAlt')} className="wizard-preview-image" />
                             <button
                               type="button"
                               className="btn btn-danger btn-sm"
@@ -1645,7 +1666,7 @@ export default function Restaurants() {
                                 ev.stopPropagation();
                                 clearLogoSelection();
                               }}
-                              aria-label="Quitar logo"
+                              aria-label={t('adminBusinesses.form.removeLogo')}
                               style={{
                                 position: 'absolute',
                                 top: '8px',
@@ -1662,20 +1683,20 @@ export default function Restaurants() {
                               ×
                             </button>
                             <div className="wizard-upload-change-overlay">
-                              <span className="wizard-upload-change-btn">Cambiar imagen</span>
+                              <span className="wizard-upload-change-btn">{t('adminBusinesses.form.changeImage')}</span>
                             </div>
                           </div>
                         ) : (
                           <div className="wizard-upload-placeholder">
                             <div className="wizard-upload-icon">🖼️</div>
-                            <span className="wizard-upload-text">Arrastrá una imagen o hacé clic para elegir</span>
+                            <span className="wizard-upload-text">{t('adminBusinesses.form.uploadHint')}</span>
                           </div>
                         )}
                       </div>
                     </div>
 
                     <div className="mb-3">
-                      <label className="form-label wizard-label">Foto de portada</label>
+                      <label className="form-label wizard-label">{t('adminBusinesses.form.cover')}</label>
                       <div
                         className={`wizard-image-upload-zone ${coverPreview ? 'has-image' : ''}`}
                         onClick={() => coverInputRef.current?.click()}
@@ -1701,7 +1722,7 @@ export default function Restaurants() {
                           <div className="wizard-image-preview-wrap">
                             <img
                               src={coverPreview}
-                              alt="Vista previa de portada"
+                              alt={t('adminBusinesses.form.coverPreviewAlt')}
                               className="wizard-preview-image cover"
                             />
                             <button
@@ -1712,7 +1733,7 @@ export default function Restaurants() {
                                 ev.stopPropagation();
                                 clearCoverSelection();
                               }}
-                              aria-label="Quitar portada"
+                              aria-label={t('adminBusinesses.form.removeCover')}
                               style={{
                                 position: 'absolute',
                                 top: '8px',
@@ -1729,13 +1750,13 @@ export default function Restaurants() {
                               ×
                             </button>
                             <div className="wizard-upload-change-overlay">
-                              <span className="wizard-upload-change-btn">Cambiar imagen</span>
+                              <span className="wizard-upload-change-btn">{t('adminBusinesses.form.changeImage')}</span>
                             </div>
                           </div>
                         ) : (
                           <div className="wizard-upload-placeholder">
                             <div className="wizard-upload-icon">📷</div>
-                            <span className="wizard-upload-text">Arrastrá una imagen o hacé clic para elegir</span>
+                            <span className="wizard-upload-text">{t('adminBusinesses.form.uploadHint')}</span>
                           </div>
                         )}
                       </div>
@@ -1744,7 +1765,7 @@ export default function Restaurants() {
 
                   {/* País */}
                   <div className="mb-3">
-                    <label className="form-label">País</label>
+                    <label className="form-label">{t('adminBusinesses.form.country')}</label>
                     <CountrySelector
                       value={formData.country}
                       onChange={(value) => setFormData({ ...formData, country: value, province: '', city: '' })}
@@ -1754,7 +1775,7 @@ export default function Restaurants() {
 
                   {/* Provincia/Región */}
                   <div className="mb-3">
-                    <label className="form-label">Provincia / Región</label>
+                    <label className="form-label">{t('adminBusinesses.form.province')}</label>
                     <ProvinceSelector
                       country={formData.country}
                       value={formData.province}
@@ -1765,7 +1786,7 @@ export default function Restaurants() {
 
                   {/* Ciudad */}
                   <div className="mb-3">
-                    <label className="form-label">Ciudad</label>
+                    <label className="form-label">{t('adminBusinesses.form.city')}</label>
                     <CitySelector
                       country={formData.country}
                       province={formData.province}
@@ -1780,34 +1801,34 @@ export default function Restaurants() {
 
                   {/* Dirección */}
                   <div className="mb-3">
-                    <label className="form-label">Dirección</label>
+                    <label className="form-label">{t('adminBusinesses.form.address')}</label>
                     <input
                       type="text"
                       className="form-control"
                       value={formData.street}
                       onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                      placeholder="Calle y número"
+                      placeholder={t('adminBusinesses.form.addressPlaceholder')}
                     />
                   </div>
 
                   {/* Código postal */}
                   <div className="mb-3">
-                    <label className="form-label">Código Postal</label>
+                    <label className="form-label">{t('adminBusinesses.form.postalCode')}</label>
                     <input
                       type="text"
                       className="form-control"
                       value={formData.postalCode}
                       onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                      placeholder="Opcional"
+                      placeholder={t('adminBusinesses.form.optional')}
                     />
                   </div>
 
                   <hr className="my-4" />
-                  <h6 className="mb-3">CONTACTO</h6>
+                  <h6 className="mb-3">{t('adminBusinesses.form.contactSection')}</h6>
 
                   {/* Teléfono */}
                   <div className="mb-3">
-                    <label className="form-label">Teléfono</label>
+                    <label className="form-label">{t('adminBusinesses.form.phone')}</label>
                     <input
                       type="text"
                       className="form-control"
@@ -1841,14 +1862,14 @@ export default function Restaurants() {
                         }}
                       />
                       <label className="form-check-label" htmlFor="usePhoneForWhatsApp">
-                        Usar este número para WhatsApp
+                        {t('adminBusinesses.form.usePhoneForWhatsApp')}
                       </label>
                     </div>
                   </div>
 
                   {/* WhatsApp input */}
                   <div className="mb-3">
-                    <label className="form-label">WhatsApp</label>
+                    <label className="form-label">{t('adminBusinesses.form.whatsapp')}</label>
                     <input
                       type="text"
                       className="form-control"
@@ -1873,30 +1894,30 @@ export default function Restaurants() {
                         }
                       }}
                       disabled={formData.usePhoneForWhatsApp}
-                      placeholder={formData.usePhoneForWhatsApp ? "Se usará el número de teléfono" : "Ej: +54 11 1234-5678 o 1123456789"}
+                      placeholder={formData.usePhoneForWhatsApp ? t('adminBusinesses.form.whatsappPlaceholderPhone') : t('adminBusinesses.form.whatsappPlaceholderExample')}
                     />
                     <small className="form-text text-muted">
                       {formData.country 
-                        ? `Se agregará automáticamente el código de país de ${formData.country} si no lo incluyes`
-                        : 'Ingresa el número con código de país (ej: +54 11 1234-5678) o solo el número local'}
+                        ? t('adminBusinesses.form.whatsappHintWithCountry', { country: formData.country })
+                        : t('adminBusinesses.form.whatsappHintNoCountry')}
                     </small>
                   </div>
 
                   {/* Email */}
                   <div className="mb-3">
-                    <label className="form-label">Email</label>
+                    <label className="form-label">{t('adminBusinesses.form.email')}</label>
                     <input
                       type="email"
                       className="form-control"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="Opcional"
+                      placeholder={t('adminBusinesses.form.optional')}
                     />
                   </div>
 
                   {/* Sitio web */}
                   <div className="mb-3">
-                    <label className="form-label">Sitio Web</label>
+                    <label className="form-label">{t('adminBusinesses.form.website')}</label>
                     <input
                       type="text"
                       className="form-control"
@@ -1908,79 +1929,58 @@ export default function Restaurants() {
                           setFormData({ ...formData, website: normalized });
                         }
                       }}
-                      placeholder="Ej: dsa.com (opcional)"
+                      placeholder={t('adminBusinesses.form.websitePlaceholder')}
                     />
                   </div>
 
                   {/* Template de diseño */}
                   <div className="mb-3">
-                    <label className="form-label">Plantilla de Diseño</label>
+                    <label className="form-label">{t('adminBusinesses.form.template')}</label>
                     <select
                       className="form-select"
                       value={formData.template}
                       onChange={(e) => setFormData({ ...formData, template: e.target.value })}
                     >
-                      <option value="classic">Clásico</option>
-                      <option value="modern">Moderno</option>
-                      <option value="foodie">Foodie</option>
+                      <option value="classic">{t('adminBusinesses.form.templateClassic')}</option>
+                      <option value="modern">{t('adminBusinesses.form.templateModern')}</option>
+                      <option value="foodie">{t('adminBusinesses.form.templateFoodie')}</option>
                     </select>
                     <small className="form-text text-muted">
-                      Esta plantilla se aplicará a todos los menús de este restaurante
+                      {t('adminBusinesses.form.templateHint')}
                     </small>
                   </div>
 
                   <hr className="my-4" />
-                  <h6 className="mb-3">MEDIOS DE PAGO</h6>
+                  <h6 className="mb-3">{t('adminBusinesses.form.paymentSection')}</h6>
 
                   {/* Moneda por defecto */}
                   <div className="mb-3">
-                    <label className="form-label">Moneda de pago por defecto *</label>
+                    <label className="form-label">{t('adminBusinesses.form.defaultCurrency')}</label>
                     <select
                       className="form-select"
                       value={formData.defaultCurrency || 'USD'}
                       onChange={(e) => setFormData({ ...formData, defaultCurrency: e.target.value })}
                       required
                     >
-                      <option value="USD">USD - Dólar estadounidense</option>
-                      <option value="EUR">EUR - Euro</option>
-                      <option value="ARS">ARS - Peso argentino</option>
-                      <option value="MXN">MXN - Peso mexicano</option>
-                      <option value="CLP">CLP - Peso chileno</option>
-                      <option value="COP">COP - Peso colombiano</option>
-                      <option value="PEN">PEN - Sol peruano</option>
-                      <option value="BRL">BRL - Real brasileño</option>
-                      <option value="UYU">UYU - Peso uruguayo</option>
-                      <option value="PYG">PYG - Guaraní paraguayo</option>
-                      <option value="BOB">BOB - Boliviano</option>
-                      <option value="VES">VES - Bolívar venezolano</option>
+                      {CURRENCY_CODES.map((code) => (
+                        <option key={code} value={code}>
+                          {t(`adminBusinesses.currencies.${code}`)}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   {/* Monedas adicionales */}
                   <div className="mb-3">
-                    <label className="form-label">Monedas adicionales (opcional)</label>
+                    <label className="form-label">{t('adminBusinesses.form.additionalCurrencies')}</label>
                     <p className="form-text text-muted" style={{ marginBottom: '16px', fontSize: '14px' }}>
-                      Haz clic en las monedas que deseas aceptar además de la moneda por defecto
+                      {t('adminBusinesses.form.additionalCurrenciesHint')}
                     </p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                      {['USD', 'EUR', 'ARS', 'MXN', 'CLP', 'COP', 'PEN', 'BRL', 'UYU', 'PYG', 'BOB', 'VES']
+                      {CURRENCY_CODES
                         .filter(c => c !== formData.defaultCurrency)
                         .map(currency => {
                           const isSelected = formData.additionalCurrencies?.includes(currency) || false;
-                          const currencyLabels: { [key: string]: string } = {
-                            'USD': 'USD - Dólar estadounidense',
-                            'EUR': 'EUR - Euro',
-                            'ARS': 'ARS - Peso argentino',
-                            'MXN': 'MXN - Peso mexicano',
-                            'CLP': 'CLP - Peso chileno',
-                            'COP': 'COP - Peso colombiano',
-                            'PEN': 'PEN - Sol peruano',
-                            'BRL': 'BRL - Real brasileño',
-                            'UYU': 'UYU - Peso uruguayo',
-                            'PYG': 'PYG - Guaraní paraguayo',
-                            'BOB': 'BOB - Boliviano',
-                            'VES': 'VES - Bolívar venezolano',
-                          };
                           
                           return (
                             <button
@@ -1991,13 +1991,11 @@ export default function Restaurants() {
                               onClick={() => {
                                 const currentCurrencies = formData.additionalCurrencies || [];
                                 if (isSelected) {
-                                  // Remover la moneda
                                   setFormData({
                                     ...formData,
                                     additionalCurrencies: currentCurrencies.filter(c => c !== currency),
                                   });
                                 } else {
-                                  // Agregar la moneda
                                   setFormData({
                                     ...formData,
                                     additionalCurrencies: [...currentCurrencies, currency],
@@ -2005,7 +2003,7 @@ export default function Restaurants() {
                                 }
                               }}
                             >
-                              {currencyLabels[currency] || currency}
+                              {t(`adminBusinesses.currencies.${currency}`)}
                             </button>
                           );
                         })}
@@ -2022,10 +2020,10 @@ export default function Restaurants() {
                         setEditing(null);
                       }}
                     >
-                      Cancelar
+                      {t('adminBusinesses.form.cancel')}
                     </button>
                     <button type="submit" className="btn btn-primary">
-                      {editing ? 'Actualizar' : 'Crear'}
+                      {editing ? t('adminBusinesses.form.update') : t('adminBusinesses.form.create')}
                     </button>
                   </div>
                   {editing && (
@@ -2037,7 +2035,7 @@ export default function Restaurants() {
                         handleDeleteClick(editing.id);
                       }}
                     >
-                      Eliminar restaurante
+                      {t('adminBusinesses.form.deleteBusiness')}
                     </button>
                   )}
                 </div>
@@ -2059,12 +2057,12 @@ export default function Restaurants() {
             <div className="modal-content border-warning" style={{ borderWidth: '2px' }}>
               <div className="modal-header bg-warning bg-opacity-25">
                 <h5 className="modal-title" id="qr-name-warning-title">
-                  Cambio de nombre y código QR
+                  {t('adminBusinesses.qrNameModal.title')}
                 </h5>
                 <button
                   type="button"
                   className="btn-close"
-                  aria-label="Cerrar"
+                  aria-label={t('adminBusinesses.qrNameModal.close')}
                   onClick={() => {
                     setShowQrNameWarningModal(false);
                     setQrNameConfirmInput('');
@@ -2073,15 +2071,16 @@ export default function Restaurants() {
               </div>
               <div className="modal-body">
                 <p className="mb-3">
-                  <strong>Advertencia:</strong> si cambiás el nombre del restaurante, el{' '}
-                  <strong>código QR y el enlace público</strong> pueden dejar de coincidir con el material que ya imprimiste o compartiste.
-                  Quien use un QR o enlace antiguo podría ver un error o una página distinta.
+                  <Trans
+                    i18nKey="adminBusinesses.qrNameModal.body"
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <p className="mb-3 small text-muted mb-4">
-                  Para confirmar que entendés las consecuencias, escribí exactamente la siguiente palabra en mayúsculas (sin espacios):
+                  {t('adminBusinesses.qrNameModal.confirmHint')}
                 </p>
                 <label className="form-label fw-semibold" htmlFor="qr-name-confirm-input">
-                  Confirmación ({RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE})
+                  {t('adminBusinesses.qrNameModal.confirmLabel', { phrase: RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE })}
                 </label>
                 <input
                   id="qr-name-confirm-input"
@@ -2103,7 +2102,7 @@ export default function Restaurants() {
                     setQrNameConfirmInput('');
                   }}
                 >
-                  Cancelar
+                  {t('adminBusinesses.qrNameModal.cancel')}
                 </button>
                 <button
                   type="button"
@@ -2111,7 +2110,7 @@ export default function Restaurants() {
                   disabled={qrNameConfirmInput !== RESTAURANT_NAME_CHANGE_CONFIRM_PHRASE}
                   onClick={() => void handleConfirmQrNameChange()}
                 >
-                  Confirmar y guardar
+                  {t('adminBusinesses.qrNameModal.confirmSave')}
                 </button>
               </div>
             </div>
@@ -2119,13 +2118,13 @@ export default function Restaurants() {
         </div>
       )}
 
-      {/* Modal para mostrar QR del restaurante */}
+      {/* Modal para mostrar QR del comercio */}
       {showQRModal && selectedRestaurantForQR && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex={-1}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Código QR - {selectedRestaurantForQR.name}</h5>
+                <h5 className="modal-title">{t('adminBusinesses.qrModal.title', { name: selectedRestaurantForQR.name })}</h5>
                 <button 
                   type="button" 
                   className="btn-close" 
@@ -2157,12 +2156,12 @@ export default function Restaurants() {
                       {getRestaurantPublicUrl(selectedRestaurantForQR)}
                     </p>
                     <p className="text-muted small">
-                      Escanea este código QR para ver el restaurante en tu dispositivo móvil
+                      {t('adminBusinesses.qrModal.scanHint')}
                     </p>
                   </>
                 ) : (
                   <p className="text-danger">
-                    No se puede generar el QR. Asegúrate de que el restaurante tenga un slug.
+                    {t('adminBusinesses.qrModal.noSlug')}
                   </p>
                 )}
               </div>
@@ -2175,7 +2174,7 @@ export default function Restaurants() {
                     setSelectedRestaurantForQR(null);
                   }}
                 >
-                  Cerrar
+                  {t('adminBusinesses.qrModal.close')}
                 </button>
                 {getRestaurantPublicUrl(selectedRestaurantForQR) && (
                   <button 
@@ -2183,7 +2182,7 @@ export default function Restaurants() {
                     className="btn btn-primary" 
                     onClick={handleDownloadQR}
                   >
-                    Descargar QR
+                    {t('adminBusinesses.qrModal.download')}
                   </button>
                 )}
               </div>
@@ -2200,21 +2199,32 @@ export default function Restaurants() {
               <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
                 <h5 className="modal-title" style={{ color: '#856404' }}>
                   <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#ffc107' }}></i>
-                  Límite Alcanzado
+                  {t('adminBusinesses.limitModal.title')}
                 </h5>
                 <button 
                   type="button" 
                   className="btn-close" 
                   onClick={() => setShowLimitModal(false)}
-                  aria-label="Close"
+                  aria-label={t('adminBusinesses.form.close')}
                 ></button>
               </div>
               <div className="modal-body" style={{ padding: '24px' }}>
                 <p style={{ marginBottom: '16px', fontSize: '16px' }}>
-                  Has alcanzado el límite de <strong>{limitMessage.limit} restaurante(s)</strong> para tu plan <strong>{limitMessage.plan}</strong>.
+                  <Trans
+                    i18nKey="adminBusinesses.limitModal.reached"
+                    values={{
+                      limit: limitMessage.limit,
+                      plan: limitMessage.plan === 'free' ? t('adminBusinesses.planFree') : limitMessage.plan,
+                    }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <p style={{ marginBottom: '16px', fontSize: '16px' }}>
-                  Actualmente tienes <strong>{limitMessage.current} restaurante(s)</strong> creado(s).
+                  <Trans
+                    i18nKey="adminBusinesses.limitModal.current"
+                    values={{ current: limitMessage.current }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <div
                   style={{
@@ -2244,10 +2254,10 @@ export default function Restaurants() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#854d0e', marginBottom: 2 }}>
-                      ¿Necesitas más restaurantes?
+                      {t('adminBusinesses.limitModal.needMoreTitle')}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
-                      Amplía tu suscripción para crear más restaurantes y aprovechar todas las funcionalidades de AppMenuQR.
+                      {t('adminBusinesses.limitModal.needMoreBody')}
                     </div>
                   </div>
                 </div>
@@ -2263,14 +2273,14 @@ export default function Restaurants() {
                   rel="noopener noreferrer"
                   style={{ textDecoration: 'none' }}
                 >
-                  Ver planes y suscripción
+                  {t('adminBusinesses.limitModal.viewPlans')}
                 </Link>
                 <button 
                   type="button" 
                   className="admin-btn admin-btn-secondary" 
                   onClick={() => setShowLimitModal(false)}
                 >
-                  Por el momento no me interesa
+                  {t('adminBusinesses.limitModal.notInterested')}
                 </button>
               </div>
             </div>
@@ -2278,7 +2288,7 @@ export default function Restaurants() {
         </div>
       )}
 
-      {/* Modal transferir restaurante (solo SUPER_ADMIN) */}
+      {/* Modal transferir comercio (solo SUPER_ADMIN) */}
       {showTransferModal && restaurantToTransfer && (
         <div
           className="modal show"
@@ -2288,47 +2298,57 @@ export default function Restaurants() {
           <div className="modal-dialog modal-dialog-centered modal-lg" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Transferir restaurante</h5>
+                <h5 className="modal-title">{t('adminBusinesses.transferModal.title')}</h5>
                 <button
                   type="button"
                   className="btn-close"
                   onClick={closeTransferModal}
-                  aria-label="Cerrar"
+                  aria-label={t('adminBusinesses.transferModal.close')}
                   disabled={transferLoading}
                 />
               </div>
               <div className="modal-body">
                 <p className="mb-2">
-                  Vas a mover <strong>{restaurantToTransfer.name}</strong>
-                  {restaurantToTransfer.tenantName ? (
-                    <> (cuenta actual: <span className="text-muted">{restaurantToTransfer.tenantName}</span>)</>
-                  ) : null}{' '}
-                  con todos sus menús y productos a la cuenta de otro usuario.
+                  <Trans
+                    i18nKey={
+                      restaurantToTransfer.tenantName
+                        ? 'adminBusinesses.transferModal.introWithAccount'
+                        : 'adminBusinesses.transferModal.introNoAccount'
+                    }
+                    values={{
+                      name: restaurantToTransfer.name,
+                      tenant: restaurantToTransfer.tenantName,
+                    }}
+                    components={{
+                      strong: <strong />,
+                      muted: <span className="text-muted" />,
+                    }}
+                  />
                 </p>
                 <ul className="small text-muted mb-3">
-                  <li>El enlace y el QR del restaurante no cambian.</li>
-                  <li>Si el plan del destino tiene límite de productos activos, los excedentes quedarán desactivados.</li>
-                  <li>El usuario destino debe tener cuenta activa con tenant (no super admin).</li>
+                  <li>{t('adminBusinesses.transferModal.bulletQr')}</li>
+                  <li>{t('adminBusinesses.transferModal.bulletLimits')}</li>
+                  <li>{t('adminBusinesses.transferModal.bulletUser')}</li>
                 </ul>
 
                 <label htmlFor="transferUserFilter" className="form-label">
-                  Buscar usuario destino
+                  {t('adminBusinesses.transferModal.searchLabel')}
                 </label>
                 <input
                   id="transferUserFilter"
                   type="text"
                   className="form-control mb-2"
-                  placeholder="Email, nombre o tenant..."
+                  placeholder={t('adminBusinesses.transferModal.searchPlaceholder')}
                   value={transferUserFilter}
                   onChange={(e) => setTransferUserFilter(e.target.value)}
                   disabled={transferLoading || transferUsersLoading}
                 />
 
                 <label htmlFor="transferTargetUser" className="form-label">
-                  Usuario destino
+                  {t('adminBusinesses.transferModal.targetLabel')}
                 </label>
                 {transferUsersLoading ? (
-                  <div className="text-muted small py-2">Cargando usuarios...</div>
+                  <div className="text-muted small py-2">{t('adminBusinesses.transferModal.loadingUsers')}</div>
                 ) : (
                   <select
                     id="transferTargetUser"
@@ -2337,7 +2357,7 @@ export default function Restaurants() {
                     onChange={(e) => setTransferTargetUserId(e.target.value)}
                     disabled={transferLoading}
                   >
-                    <option value="">Seleccioná un usuario...</option>
+                    <option value="">{t('adminBusinesses.transferModal.selectUser')}</option>
                     {getFilteredTransferUsers().map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.email}
@@ -2351,12 +2371,16 @@ export default function Restaurants() {
                 )}
                 {!transferUsersLoading && getFilteredTransferUsers().length === 0 && (
                   <p className="text-muted small mt-2 mb-0">
-                    No hay usuarios que coincidan. Probá otro término de búsqueda.
+                    {t('adminBusinesses.transferModal.noUsers')}
                   </p>
                 )}
 
                 <p className="mt-3 mb-2">
-                  Escribe <strong>{RESTAURANT_TRANSFER_CONFIRM_PHRASE}</strong> para confirmar.
+                  <Trans
+                    i18nKey="adminBusinesses.transferModal.confirmHint"
+                    values={{ phrase: RESTAURANT_TRANSFER_CONFIRM_PHRASE }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <input
                   type="text"
@@ -2374,7 +2398,7 @@ export default function Restaurants() {
                   onClick={closeTransferModal}
                   disabled={transferLoading}
                 >
-                  Cancelar
+                  {t('adminBusinesses.transferModal.cancel')}
                 </button>
                 <button
                   type="button"
@@ -2386,7 +2410,7 @@ export default function Restaurants() {
                     transferConfirmText.trim() !== RESTAURANT_TRANSFER_CONFIRM_PHRASE
                   }
                 >
-                  {transferLoading ? 'Transfiriendo...' : 'Confirmar transferencia'}
+                  {transferLoading ? t('adminBusinesses.transferModal.transferring') : t('adminBusinesses.transferModal.confirm')}
                 </button>
               </div>
             </div>
@@ -2394,7 +2418,7 @@ export default function Restaurants() {
         </div>
       )}
 
-      {/* Modal de confirmación para eliminar restaurante */}
+      {/* Modal de confirmación para eliminar comercio */}
       {showConfirmDelete && (
         <div
           className="modal show"
@@ -2410,7 +2434,7 @@ export default function Restaurants() {
               <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
                 <h5 className="modal-title" style={{ color: '#721c24' }}>
                   <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#dc3545' }}></i>
-                  Eliminar Restaurante
+                  {t('adminBusinesses.deleteModal.title')}
                 </h5>
                 <button
                   type="button"
@@ -2420,20 +2444,24 @@ export default function Restaurants() {
                     setRestaurantToDelete(null);
                     setDeleteConfirmText('');
                   }}
-                  aria-label="Close"
+                  aria-label={t('adminBusinesses.form.close')}
                 ></button>
               </div>
               <div className="modal-body" style={{ padding: '24px' }}>
                 <p style={{ marginBottom: '12px', fontSize: '16px' }}>
-                  ¿Estás seguro de eliminar este restaurante? Esta acción no se puede deshacer y también se eliminarán todos los menús y productos asociados.
+                  {t('adminBusinesses.deleteModal.body')}
                 </p>
                 <p className="mb-2">
-                  Escribe <strong>ELIMINAR</strong> para confirmar.
+                  <Trans
+                    i18nKey="adminBusinesses.deleteModal.confirmHint"
+                    values={{ phrase: t('adminBusinesses.deleteModal.confirmPhrase') }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="ELIMINAR"
+                  placeholder={t('adminBusinesses.deleteModal.confirmPhrase')}
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                 />
@@ -2448,15 +2476,15 @@ export default function Restaurants() {
                     setDeleteConfirmText('');
                   }}
                 >
-                  Cancelar
+                  {t('adminBusinesses.deleteModal.cancel')}
                 </button>
                 <button
                   type="button"
                   className="btn btn-danger"
                   onClick={handleDeleteConfirm}
-                  disabled={deleteConfirmText.trim() !== 'ELIMINAR'}
+                  disabled={deleteConfirmText.trim() !== t('adminBusinesses.deleteModal.confirmPhrase')}
                 >
-                  Eliminar
+                  {t('adminBusinesses.deleteModal.confirm')}
                 </button>
               </div>
             </div>

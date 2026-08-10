@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { Trans, useTranslation } from 'react-i18next';
 import api, { type AxiosErrorWithMessage } from '../../../lib/axios';
 import { getApiErrorMessage } from '../../../lib/api-error-message';
 import AdminLayout from '../../../components/AdminLayout';
@@ -62,6 +63,7 @@ function loadVisibleColumnsFromStorage(): Record<ProductTableColumnKey, boolean>
 
 export default function Products() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [products, setProducts] = useState<any[]>([]);
   const [menus, setMenus] = useState<any[]>([]);
   const [restaurants, setRestaurants] = useState<any[]>([]);
@@ -93,7 +95,7 @@ export default function Products() {
   /** Selección múltiple y acciones en lote */
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [bulkAction, setBulkAction] = useState<string>('');
-  /** '' = mismo restaurante que la selección; si no, id de restaurante destino para listar menús */
+  /** '' = mismo comercio que la selección; si no, id de comercio destino para listar menús */
   const [bulkDestinationRestaurantId, setBulkDestinationRestaurantId] = useState('');
   const [bulkTargetMenuId, setBulkTargetMenuId] = useState('');
   const [bulkTargetSectionId, setBulkTargetSectionId] = useState('');
@@ -162,18 +164,18 @@ export default function Products() {
   const productColumnDefs = useMemo(
     () =>
       [
-        { key: 'position' as const, label: 'Posición' },
-        { key: 'photo' as const, label: 'Foto' },
-        ...(isSuperAdmin ? [{ key: 'tenant' as const, label: 'Tenant' }] : []),
-        { key: 'restaurant' as const, label: 'Restaurante' },
-        ...(isSuperAdmin ? [{ key: 'template' as const, label: 'Plantilla' }] : []),
-        { key: 'menu' as const, label: 'Menú' },
-        { key: 'section' as const, label: 'Sección' },
-        { key: 'prices' as const, label: 'Precios' },
-        { key: 'icons' as const, label: 'Íconos' },
-        { key: 'status' as const, label: 'Estado' },
+        { key: 'position' as const, label: t('adminProducts.columns.position') },
+        { key: 'photo' as const, label: t('adminProducts.columns.photo') },
+        ...(isSuperAdmin ? [{ key: 'tenant' as const, label: t('adminProducts.columns.tenant') }] : []),
+        { key: 'restaurant' as const, label: t('adminProducts.columns.restaurant') },
+        ...(isSuperAdmin ? [{ key: 'template' as const, label: t('adminProducts.columns.template') }] : []),
+        { key: 'menu' as const, label: t('adminProducts.columns.menu') },
+        { key: 'section' as const, label: t('adminProducts.columns.section') },
+        { key: 'prices' as const, label: t('adminProducts.columns.prices') },
+        { key: 'icons' as const, label: t('adminProducts.columns.icons') },
+        { key: 'status' as const, label: t('adminProducts.columns.status') },
       ] satisfies { key: ProductTableColumnKey; label: string }[],
-    [isSuperAdmin],
+    [isSuperAdmin, t],
   );
 
   const showProductColumn = (key: ProductTableColumnKey) => visibleColumns[key] !== false;
@@ -368,11 +370,11 @@ export default function Products() {
       
       // Cargar iconos disponibles (esto requeriría un endpoint, por ahora usamos valores por defecto)
       setAvailableIcons([
-        { code: 'celiaco', label: 'Sin Gluten' },
-        { code: 'vegetariano', label: 'Vegetariano' },
-        { code: 'vegano', label: 'Vegano' },
-        { code: 'picante', label: 'Picante' },
-        { code: 'sin-lactosa', label: 'Sin Lactosa' },
+        { code: 'celiaco', label: t('adminProducts.icons.celiaco') },
+        { code: 'vegetariano', label: t('adminProducts.icons.vegetariano') },
+        { code: 'vegano', label: t('adminProducts.icons.vegano') },
+        { code: 'picante', label: t('adminProducts.icons.picante') },
+        { code: 'sin-lactosa', label: t('adminProducts.icons.sinLactosa') },
       ]);
 
       fetchPublicPlanLimits()
@@ -407,7 +409,7 @@ export default function Products() {
     }
   }, [isSuperAdmin, filterMenuId]);
 
-  // Menús filtrados por restaurante (para el dropdown de filtro)
+  // Menús filtrados por comercio (para el dropdown de filtro)
   const menusForFilter = filterRestaurantId
     ? menus.filter((m: any) => (m.restaurantId || m.restaurant_id) === filterRestaurantId)
     : menus;
@@ -418,8 +420,8 @@ export default function Products() {
       // Validar que si hay menuId, también haya sectionId
       if (formData.menuId && !formData.sectionId) {
         setAlertData({
-          title: 'Validación',
-          message: 'Si seleccionas un menú, debes seleccionar también una sección',
+          title: t('adminProducts.alerts.validation'),
+          message: t('adminProducts.alerts.menuNeedsSection'),
           variant: 'warning',
         });
         setShowAlert(true);
@@ -491,10 +493,10 @@ export default function Products() {
       loadData();
     } catch (error: unknown) {
       setAlertData({
-        title: 'Error',
+        title: t('adminProducts.alerts.error'),
         message:
           (error as AxiosErrorWithMessage).userMessage ||
-          getApiErrorMessage(error, 'Error guardando producto'),
+          getApiErrorMessage(error, t('adminProducts.alerts.saveFailed')),
         variant: 'error',
       });
       setShowAlert(true);
@@ -642,8 +644,8 @@ export default function Products() {
     } catch (err: any) {
       setProducts(previousProducts);
       setAlertData({
-        title: 'Error',
-        message: err.response?.data?.message || 'Error al cambiar el orden',
+        title: t('adminProducts.alerts.error'),
+        message: err.response?.data?.message || t('adminProducts.alerts.reorderFailed'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -788,30 +790,30 @@ export default function Products() {
 
   const validateBulkSelection = (): string | null => {
     const sel = getSelectedProducts();
-    if (sel.length === 0) return 'Seleccioná al menos un producto de la lista.';
-    if (!bulkAction) return 'Elegí una acción en el desplegable.';
+    if (sel.length === 0) return t('adminProducts.bulk.errors.selectAtLeastOne');
+    if (!bulkAction) return t('adminProducts.bulk.errors.chooseAction');
 
     if (bulkAction === 'copy' || bulkAction === 'copy_delete') {
       for (const p of sel) {
         if (!(p.menuId || p.menu_id)) {
-          return 'Para copiar en lote, todos los productos deben tener un menú asignado.';
+          return t('adminProducts.bulk.errors.allNeedMenu');
         }
       }
       const rids = new Set(
         sel.map((p) => getRestaurantIdForProduct(p)).filter((x): x is string => Boolean(x)),
       );
       if (rids.size > 1) {
-        return 'Los productos seleccionados deben pertenecer al mismo restaurante.';
+        return t('adminProducts.bulk.errors.sameRestaurant');
       }
       if (!bulkTargetMenuId) {
-        return 'Elegí menú y sección de destino.';
+        return t('adminProducts.bulk.errors.chooseMenuSection');
       }
       if (bulkTargetSectionId === SECTION_DEST_NEW) {
         if (!bulkNewSectionName.trim()) {
-          return 'Escribí el nombre de la nueva sección.';
+          return t('adminProducts.bulk.errors.writeNewSection');
         }
       } else if (!bulkTargetSectionId) {
-        return 'Elegí menú y sección de destino.';
+        return t('adminProducts.bulk.errors.chooseMenuSection');
       }
       const destMenu = menus.find((m: any) => m.id === bulkTargetMenuId);
       const destTenant = destMenu?.tenantId ?? destMenu?.tenant_id;
@@ -820,12 +822,12 @@ export default function Products() {
         .filter((x): x is string => Boolean(x));
       const uniqueTenants = new Set(tenantIds);
       if (uniqueTenants.size > 1) {
-        return 'Los productos seleccionados deben ser de la misma organización para copiar en lote.';
+        return t('adminProducts.bulk.errors.sameOrg');
       }
       if (destTenant != null && uniqueTenants.size === 1) {
         const onlyT = tenantIds[0];
         if (String(destTenant) !== String(onlyT)) {
-          return 'El menú de destino debe ser de la misma organización que los productos seleccionados.';
+          return t('adminProducts.bulk.errors.menuSameOrg');
         }
       }
       const destRid = destMenu?.restaurantId ?? destMenu?.restaurant_id;
@@ -836,7 +838,7 @@ export default function Products() {
             : null
           : bulkDestinationRestaurantId;
       if (expectedRid && destRid && String(destRid) !== String(expectedRid)) {
-        return 'El menú elegido no corresponde al restaurante de destino indicado.';
+        return t('adminProducts.bulk.errors.menuWrongRestaurant');
       }
     }
     return null;
@@ -865,15 +867,15 @@ export default function Products() {
       setBulkDeleteMode(null);
       await loadData();
       setAlertData({
-        title: 'Listo',
-        message: `Se eliminaron ${n} producto(s).`,
+        title: t('adminProducts.alerts.success'),
+        message: t('adminProducts.bulk.deletedOk', { count: n }),
         variant: 'success',
       });
       setShowAlert(true);
     } catch (err: any) {
       setAlertData({
-        title: 'Error',
-        message: err.response?.data?.message || 'No se pudieron eliminar todos los productos.',
+        title: t('adminProducts.alerts.error'),
+        message: err.response?.data?.message || t('adminProducts.bulk.deleteAllFailed'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -905,7 +907,7 @@ export default function Products() {
         const secRes = await api.post('/menu-sections', createBody);
         resolvedSectionId = secRes.data?.id;
         if (!resolvedSectionId) {
-          throw new Error('No se obtuvo el id de la nueva sección.');
+          throw new Error(t('adminProducts.bulk.sectionIdMissing'));
         }
       }
 
@@ -938,17 +940,17 @@ export default function Products() {
       setBulkDeleteMode(null);
       await loadData();
       setAlertData({
-        title: 'Listo',
+        title: t('adminProducts.alerts.success'),
         message: deleteAfter
-          ? `Se copiaron ${copiedOk.length} producto(s) y se eliminaron los originales.`
-          : `Se copiaron ${copiedOk.length} producto(s) al menú indicado.`,
+          ? t('adminProducts.bulk.copiedAndDeletedOk', { count: copiedOk.length })
+          : t('adminProducts.bulk.copiedOk', { count: copiedOk.length }),
         variant: 'success',
       });
       setShowAlert(true);
     } catch (err: any) {
       setAlertData({
-        title: 'Error',
-        message: err.response?.data?.message || 'Error al ejecutar la acción en lote.',
+        title: t('adminProducts.alerts.error'),
+        message: err.response?.data?.message || t('adminProducts.bulk.bulkActionFailed'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -960,7 +962,7 @@ export default function Products() {
   const handleBulkApply = () => {
     const err = validateBulkSelection();
     if (err) {
-      setAlertData({ title: 'Atención', message: err, variant: 'warning' });
+      setAlertData({ title: t('adminProducts.alerts.attention'), message: err, variant: 'warning' });
       setShowAlert(true);
       return;
     }
@@ -993,8 +995,8 @@ export default function Products() {
     if (copyTargetSectionId === SECTION_DEST_NEW) {
       if (!copyNewSectionName.trim()) {
         setAlertData({
-          title: 'Atención',
-          message: 'Escribí el nombre de la nueva sección.',
+          title: t('adminProducts.alerts.attention'),
+          message: t('adminProducts.alerts.writeNewSection'),
           variant: 'warning',
         });
         setShowAlert(true);
@@ -1019,7 +1021,7 @@ export default function Products() {
         const secRes = await api.post('/menu-sections', createBody);
         sectionId = secRes.data?.id;
         if (!sectionId) {
-          throw new Error('No se obtuvo el id de la nueva sección.');
+          throw new Error(t('adminProducts.bulk.sectionIdMissing'));
         }
       }
       const copyBody: Record<string, string> = {
@@ -1036,12 +1038,12 @@ export default function Products() {
       setCopyTargetSectionId('');
       setCopyNewSectionName('');
       loadData();
-      setAlertData({ title: 'Listo', message: 'Producto copiado al menú indicado.', variant: 'success' });
+      setAlertData({ title: t('adminProducts.alerts.success'), message: t('adminProducts.copyModal.success'), variant: 'success' });
       setShowAlert(true);
     } catch (err: any) {
       setAlertData({
-        title: 'Error',
-        message: err.response?.data?.message || 'No se pudo copiar el producto.',
+        title: t('adminProducts.alerts.error'),
+        message: err.response?.data?.message || t('adminProducts.copyModal.failed'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -1065,8 +1067,8 @@ export default function Products() {
       setProductToDelete(null);
     } catch (error: any) {
       setAlertData({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error eliminando producto',
+        title: t('adminProducts.alerts.error'),
+        message: error.response?.data?.message || t('adminProducts.alerts.deleteFailed'),
         variant: 'error',
       });
       setShowAlert(true);
@@ -1193,7 +1195,7 @@ export default function Products() {
     <AdminLayout>
       <div className="admin-products-page">
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 admin-products-header">
-        <h1 className="admin-title mb-0">Productos</h1>
+        <h1 className="admin-title mb-0">{t('adminProducts.title')}</h1>
         <div className="admin-quick-links">
           <button
             type="button"
@@ -1207,25 +1209,25 @@ export default function Products() {
             }}
             disabled={isSuperAdmin ? (!selectedTenantId && !selectedRestaurantId ? true : restaurants.length === 0) : restaurants.length === 0}
           >
-            + Nuevo Producto
+            {t('adminProducts.newProduct')}
           </button>
         </div>
       </div>
 
       {isSuperAdmin && (
         <div className="admin-card mb-4">
-          <h2 className="admin-card-title mb-3">Buscar productos por usuario y/o restaurante</h2>
+          <h2 className="admin-card-title mb-3">{t('adminProducts.superAdminSearch.title')}</h2>
           <p className="text-muted small mb-3">
-            Elige al menos un usuario (organización) o un restaurante. Al hacer clic en &quot;Ver productos&quot; se cargarán los productos.
+            {t('adminProducts.superAdminSearch.hint')}
           </p>
           <div className="row g-3 mb-3">
             <div className="col-12 col-md-6">
-              <label className="form-label fw-semibold">Usuario (organización)</label>
+              <label className="form-label fw-semibold">{t('adminProducts.superAdminSearch.userLabel')}</label>
               <div className="position-relative">
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Escriba y elija una opción de la lista"
+                  placeholder={t('adminProducts.superAdminSearch.userPlaceholder')}
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
                   onFocus={() => setUserDropdownOpen(true)}
@@ -1256,7 +1258,7 @@ export default function Products() {
                         </button>
                       ))}
                     {tenants.filter((t) => !userSearch || t.name.toLowerCase().includes(userSearch.toLowerCase())).length === 0 && (
-                      <div className="list-group-item text-muted small">No hay coincidencias</div>
+                      <div className="list-group-item text-muted small">{t('adminProducts.superAdminSearch.noMatches')}</div>
                     )}
                   </div>
                 )}
@@ -1266,19 +1268,19 @@ export default function Products() {
                       {tenants.find((t) => t.id === selectedTenantId)?.name ?? selectedTenantId}
                     </span>
                     <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => { setSelectedTenantId(null); setUserSearch(''); }}>
-                      Quitar
+                      {t('adminProducts.remove')}
                     </button>
                   </div>
                 )}
               </div>
             </div>
             <div className="col-12 col-md-6">
-              <label className="form-label fw-semibold">Restaurante</label>
+              <label className="form-label fw-semibold">{t('adminProducts.superAdminSearch.restaurantLabel')}</label>
               <div className="position-relative">
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Opcional: escriba y elija un restaurante"
+                  placeholder={t('adminProducts.superAdminSearch.restaurantPlaceholder')}
                   value={restaurantSearch}
                   onChange={(e) => setRestaurantSearch(e.target.value)}
                   onFocus={() => setRestaurantDropdownOpen(true)}
@@ -1317,7 +1319,7 @@ export default function Products() {
                       const matchTenant = !selectedTenantId || (r.tenantId || r.tenant_id) === selectedTenantId;
                       return matchSearch && matchTenant;
                     }).length === 0 && (
-                      <div className="list-group-item text-muted small">No hay coincidencias</div>
+                      <div className="list-group-item text-muted small">{t('adminProducts.superAdminSearch.noMatches')}</div>
                     )}
                   </div>
                 )}
@@ -1327,7 +1329,7 @@ export default function Products() {
                       {allRestaurants.find((r) => r.id === selectedRestaurantId)?.name ?? selectedRestaurantId}
                     </span>
                     <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => { setSelectedRestaurantId(null); setRestaurantSearch(''); }}>
-                      Quitar
+                      {t('adminProducts.remove')}
                     </button>
                   </div>
                 )}
@@ -1335,7 +1337,7 @@ export default function Products() {
             </div>
           </div>
           <p className="text-muted small mb-2">
-            El botón se habilita cuando eliges <strong>al menos una opción</strong> de las listas de arriba (haz clic en una fila al escribir o al abrir el desplegable).
+            <Trans i18nKey="adminProducts.superAdminSearch.enableHint" components={{ strong: <strong /> }} />
           </p>
           <div className="d-flex align-items-center gap-2 flex-wrap">
             <button
@@ -1344,7 +1346,7 @@ export default function Products() {
               disabled={!selectedTenantId && !selectedRestaurantId}
               onClick={() => setSuperAdminSearched(true)}
             >
-              Ver productos
+              {t('adminProducts.superAdminSearch.viewProducts')}
             </button>
             {superAdminSearched && (selectedTenantId || selectedRestaurantId) && (
               <button
@@ -1360,7 +1362,7 @@ export default function Products() {
                   setTotal(0);
                 }}
               >
-                Limpiar y buscar de nuevo
+                {t('adminProducts.superAdminSearch.clearSearch')}
               </button>
             )}
           </div>
@@ -1370,10 +1372,10 @@ export default function Products() {
       {!loading && !isSuperAdmin && restaurants.length === 0 && (
         <div className="admin-card mb-4" style={{ textAlign: 'center', padding: '2rem' }}>
           <p className="mb-3" style={{ fontSize: '1.1rem', color: 'var(--admin-text-secondary)' }}>
-            Para crear un producto primero necesitas tener al menos un restaurante y un menú.
+            {t('adminProducts.empty.needRestaurant')}
           </p>
-          <a href="/admin/restaurants?wizard=true" className="admin-btn">
-            Crear mi primer restaurante
+          <a href="/admin/comercios?wizard=true" className="admin-btn">
+            {t('adminProducts.empty.createFirstRestaurant')}
           </a>
         </div>
       )}
@@ -1384,29 +1386,29 @@ export default function Products() {
         <div className="mb-3 p-3 bg-light rounded border">
           <div className="d-flex align-items-center gap-2 mb-2">
             <strong style={{ fontSize: '1.1rem' }}>
-              {total || products.length}/{getProductLimit() === -1 ? '∞' : getProductLimit()} productos disponibles
+              {t('adminProducts.planUsage.available', { used: total || products.length, limit: getProductLimit() === -1 ? '∞' : getProductLimit() })}
             </strong>
           </div>
           <p className="mb-0 text-muted" style={{ fontSize: '0.9rem' }}>
-            Puedes ampliar la cantidad de productos disponibles cambiando tu plan de suscripción.
+            {t('adminProducts.planUsage.upgradeHint')}
           </p>
         </div>
       )}
 
-      {/* Sección de filtros: nombre, restaurante, menú, sección */}
+      {/* Sección de filtros: nombre, comercio, menú, sección */}
       <div className="mb-3 p-3 bg-light rounded border admin-products-filters">
-        <h6 className="mb-3 fw-semibold">Filtros</h6>
+        <h6 className="mb-3 fw-semibold">{t('adminProducts.filters')}</h6>
         <div className="admin-products-filters-grid">
           <div className="admin-products-filter-item">
             <label htmlFor="filterProductName" className="form-label mb-1 small text-muted admin-products-filter-label">
-              Nombre
+              {t('adminProducts.name')}
             </label>
             <input
               id="filterProductName"
               type="text"
               className="form-control form-control-sm admin-products-filter-control"
-              placeholder="Nombre del producto"
-              aria-label="Filtrar por nombre del producto"
+              placeholder={t('adminProducts.filter.namePlaceholder')}
+              aria-label={t('adminProducts.filter.nameAria')}
               value={filterProductName}
               onChange={(e) => setFilterProductName(e.target.value)}
             />
@@ -1415,56 +1417,56 @@ export default function Products() {
             <>
               <div className="admin-products-filter-item">
                 <label htmlFor="filterRestaurantName" className="form-label mb-1 small text-muted admin-products-filter-label">
-                  Restaurante
+                  {t('adminProducts.columns.restaurant')}
                 </label>
                 <input
                   id="filterRestaurantName"
                   type="text"
                   className="form-control form-control-sm admin-products-filter-control"
-                  placeholder="Nombre del restaurante"
-                  aria-label="Filtrar por restaurante"
+                  placeholder={t('adminProducts.filter.restaurantPlaceholder')}
+                  aria-label={t('adminProducts.filter.restaurantAria')}
                   value={filterRestaurantName}
                   onChange={(e) => setFilterRestaurantName(e.target.value)}
                 />
               </div>
               <div className="admin-products-filter-item">
                 <label htmlFor="filterMenuName" className="form-label mb-1 small text-muted admin-products-filter-label">
-                  Menú
+                  {t('adminProducts.columns.menu')}
                 </label>
                 <input
                   id="filterMenuName"
                   type="text"
                   className="form-control form-control-sm admin-products-filter-control"
-                  placeholder="Nombre del menú"
-                  aria-label="Filtrar por menú"
+                  placeholder={t('adminProducts.filter.menuPlaceholder')}
+                  aria-label={t('adminProducts.filter.menuAria')}
                   value={filterMenuName}
                   onChange={(e) => setFilterMenuName(e.target.value)}
                 />
               </div>
               <div className="admin-products-filter-item">
                 <label htmlFor="filterSectionName" className="form-label mb-1 small text-muted admin-products-filter-label">
-                  Sección
+                  {t('adminProducts.columns.section')}
                 </label>
                 <input
                   id="filterSectionName"
                   type="text"
                   className="form-control form-control-sm admin-products-filter-control"
-                  placeholder="Nombre de la sección"
-                  aria-label="Filtrar por sección"
+                  placeholder={t('adminProducts.filter.sectionPlaceholder')}
+                  aria-label={t('adminProducts.filter.sectionAria')}
                   value={filterSectionName}
                   onChange={(e) => setFilterSectionName(e.target.value)}
                 />
               </div>
               <div className="admin-products-filter-item">
                 <label htmlFor="filterTenantName" className="form-label mb-1 small text-muted admin-products-filter-label">
-                  Tenant
+                  {t('adminProducts.columns.tenant')}
                 </label>
                 <input
                   id="filterTenantName"
                   type="text"
                   className="form-control form-control-sm admin-products-filter-control"
-                  placeholder="Nombre del tenant"
-                  aria-label="Filtrar por tenant"
+                  placeholder={t('adminProducts.filter.tenantPlaceholder')}
+                  aria-label={t('adminProducts.filter.tenantAria')}
                   value={filterTenantName}
                   onChange={(e) => setFilterTenantName(e.target.value)}
                 />
@@ -1474,12 +1476,12 @@ export default function Products() {
             <>
               <div className="admin-products-filter-item">
                 <label htmlFor="filterRestaurantId" className="form-label mb-1 small text-muted admin-products-filter-label">
-                  Restaurante
+                  {t('adminProducts.columns.restaurant')}
                 </label>
                 <select
                   id="filterRestaurantId"
                   className="form-select form-select-sm admin-products-filter-select"
-                  aria-label="Filtrar por restaurante"
+                  aria-label={t('adminProducts.filter.restaurantAria')}
                   value={filterRestaurantId}
                   onChange={(e) => {
                     setFilterRestaurantId(e.target.value);
@@ -1487,7 +1489,7 @@ export default function Products() {
                     setFilterSectionId('');
                   }}
                 >
-                  <option value="">Todos los restaurantes</option>
+                  <option value="">{t('adminProducts.filter.allRestaurants')}</option>
                   {restaurants.map((r: any) => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
@@ -1495,16 +1497,16 @@ export default function Products() {
               </div>
               <div className="admin-products-filter-item">
                 <label htmlFor="filterMenuId" className="form-label mb-1 small text-muted admin-products-filter-label">
-                  Menú
+                  {t('adminProducts.columns.menu')}
                 </label>
                 <select
                   id="filterMenuId"
                   className="form-select form-select-sm admin-products-filter-select"
-                  aria-label="Filtrar por menú"
+                  aria-label={t('adminProducts.filter.menuAria')}
                   value={filterMenuId}
                   onChange={(e) => { setFilterMenuId(e.target.value); setFilterSectionId(''); }}
                 >
-                  <option value="">Todos los menús</option>
+                  <option value="">{t('adminProducts.filter.allMenus')}</option>
                   {menusForFilter.map((m: any) => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
@@ -1512,17 +1514,17 @@ export default function Products() {
               </div>
               <div className="admin-products-filter-item">
                 <label htmlFor="filterSectionId" className="form-label mb-1 small text-muted admin-products-filter-label">
-                  Sección
+                  {t('adminProducts.columns.section')}
                 </label>
                 <select
                   id="filterSectionId"
                   className="form-select form-select-sm admin-products-filter-select"
-                  aria-label="Filtrar por sección"
+                  aria-label={t('adminProducts.filter.sectionAria')}
                   value={filterSectionId}
                   onChange={(e) => setFilterSectionId(e.target.value)}
                   disabled={!filterMenuId}
                 >
-                  <option value="">Todas las secciones</option>
+                  <option value="">{t('adminProducts.filter.allSections')}</option>
                   {filterSections.map((s: any) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
@@ -1545,9 +1547,9 @@ export default function Products() {
                 setFilterMenuId('');
                 setFilterSectionId('');
               }}
-              title="Limpiar filtros"
+              title={t('adminProducts.clearFiltersTitle')}
             >
-              ✕ Limpiar filtros
+              {t('adminProducts.clearFilters')}
             </button>
             </div>
           )}
@@ -1557,14 +1559,14 @@ export default function Products() {
       {!loading && products.length > 0 && (
         <div className="admin-products-tools-row mb-3">
           <div className="admin-products-tools-panel admin-products-bulk-bar p-3 border rounded bg-white">
-          <div className="fw-semibold text-secondary small text-uppercase mb-2">Selección en lote</div>
+          <div className="fw-semibold text-secondary small text-uppercase mb-2">{t('adminProducts.bulk.title')}</div>
           <div className="admin-products-bulk-toolbar">
             <button
               type="button"
               className="btn btn-sm btn-outline-primary"
               onClick={toggleSelectAllProducts}
             >
-              {allVisibleProductsSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}
+              {allVisibleProductsSelected ? t('adminProducts.bulk.deselectAll') : t('adminProducts.bulk.selectAll')}
             </button>
             <span className="text-muted small">
               {selectedProductIds.length} seleccionado(s)
@@ -1573,7 +1575,7 @@ export default function Products() {
           <div className="admin-products-bulk-grid">
             <div className="admin-products-bulk-field">
               <label className="form-label small mb-0 text-muted" htmlFor="bulk-action-select">
-                Acción
+                {t('adminProducts.bulk.action')}
               </label>
               <select
                 id="bulk-action-select"
@@ -1581,10 +1583,10 @@ export default function Products() {
                 value={bulkAction}
                 onChange={(e) => setBulkAction(e.target.value)}
               >
-                <option value="">Elegí una acción…</option>
-                <option value="copy">Copiar a otro menú</option>
-                <option value="copy_delete">Copiar a otro menú y eliminar</option>
-                <option value="delete">Eliminar seleccionados</option>
+                <option value="">{t('adminProducts.bulk.chooseAction')}</option>
+                <option value="copy">{t('adminProducts.bulk.copyToMenu')}</option>
+                <option value="copy_delete">{t('adminProducts.bulk.copyAndDelete')}</option>
+                <option value="delete">{t('adminProducts.bulk.deleteSelected')}</option>
               </select>
             </div>
             {(bulkAction === 'copy' || bulkAction === 'copy_delete') && (() => {
@@ -1622,16 +1624,16 @@ export default function Products() {
                       const nm =
                         restaurantPool.find((r: any) => String(r.id) === String(rid0))?.name ||
                         'este local';
-                      return `Mismo restaurante (${nm})`;
+                      return t('adminProducts.bulk.sameRestaurantNamed', { name: nm });
                     })()
-                  : 'Mismo restaurante (selección)';
+                  : t('adminProducts.bulk.sameRestaurantSelection');
               const canListMenus = Boolean(sameRestaurant && effectiveRid);
 
               return (
                 <>
                   <div className="admin-products-bulk-field">
                     <label className="form-label small mb-0 text-muted" htmlFor="bulk-dest-restaurant">
-                      Restaurante destino
+                      {t('adminProducts.bulk.destinationRestaurant')}
                     </label>
                     <select
                       id="bulk-dest-restaurant"
@@ -1641,7 +1643,7 @@ export default function Products() {
                       disabled={!sameRestaurant}
                     >
                       <option value="">
-                        {sameRestaurant ? sameRestaurantLabel : 'Productos del mismo local'}
+                        {sameRestaurant ? sameRestaurantLabel : t('adminProducts.bulk.sameLocalProducts')}
                       </option>
                       {otherRestaurants.map((r: any) => (
                         <option key={r.id} value={r.id}>
@@ -1652,7 +1654,7 @@ export default function Products() {
                   </div>
                   <div className="admin-products-bulk-field">
                     <label className="form-label small mb-0 text-muted" htmlFor="bulk-target-menu">
-                      Menú destino
+                      {t('adminProducts.bulk.destinationMenu')}
                     </label>
                     <select
                       id="bulk-target-menu"
@@ -1667,10 +1669,10 @@ export default function Products() {
                     >
                       <option value="">
                         {!sameRestaurant
-                          ? 'Productos deben ser del mismo restaurante'
+                          ? t('adminProducts.bulk.mustSameRestaurant')
                           : canListMenus
-                            ? 'Seleccioná un menú'
-                            : 'Elegí restaurante arriba'}
+                            ? t('adminProducts.bulk.selectMenu')
+                            : t('adminProducts.bulk.chooseRestaurantAbove')}
                       </option>
                       {menuOpts.map((m: any) => (
                         <option key={m.id} value={m.id}>
@@ -1681,7 +1683,7 @@ export default function Products() {
                   </div>
                   <div className="admin-products-bulk-field">
                     <label className="form-label small mb-0 text-muted" htmlFor="bulk-target-section">
-                      Sección destino
+                      {t('adminProducts.bulk.destinationSection')}
                     </label>
                     <select
                       id="bulk-target-section"
@@ -1690,19 +1692,19 @@ export default function Products() {
                       onChange={(e) => setBulkTargetSectionId(e.target.value)}
                       disabled={!bulkTargetMenuId}
                     >
-                      <option value="">{bulkTargetMenuId ? 'Seleccioná sección' : 'Primero el menú'}</option>
+                      <option value="">{bulkTargetMenuId ? t('adminProducts.bulk.selectSection') : t('adminProducts.bulk.firstMenu')}</option>
                       {bulkCopySections.map((s: any) => (
                         <option key={s.id} value={s.id}>
                           {s.name}
                         </option>
                       ))}
-                      <option value={SECTION_DEST_NEW}>+ Nueva sección…</option>
+                      <option value={SECTION_DEST_NEW}>{t('adminProducts.bulk.newSection')}</option>
                     </select>
                   </div>
                   {bulkTargetSectionId === SECTION_DEST_NEW && bulkTargetMenuId ? (
                     <div className="admin-products-bulk-field">
                       <label className="form-label small mb-0 text-muted" htmlFor="bulk-new-section-name">
-                        Nombre de la nueva sección
+                        {t('adminProducts.bulk.newSectionName')}
                       </label>
                       <input
                         id="bulk-new-section-name"
@@ -1710,7 +1712,7 @@ export default function Products() {
                         className="form-control form-control-sm"
                         value={bulkNewSectionName}
                         onChange={(e) => setBulkNewSectionName(e.target.value)}
-                        placeholder="Ej. Entrantes, Bebidas…"
+                        placeholder={t('adminProducts.bulk.newSectionPlaceholder')}
                         maxLength={160}
                         autoComplete="off"
                       />
@@ -1726,7 +1728,7 @@ export default function Products() {
               disabled={bulkLoading || selectedProductIds.length === 0 || !bulkAction}
               onClick={handleBulkApply}
             >
-              {bulkLoading ? 'Aplicando…' : 'Aplicar'}
+              {bulkLoading ? t('adminProducts.bulk.applying') : t('adminProducts.bulk.apply')}
             </button>
             </div>
           </div>
@@ -1734,12 +1736,12 @@ export default function Products() {
 
           <div className="admin-products-tools-panel admin-products-columns-bar p-3 border rounded bg-white d-none d-lg-flex flex-column">
             <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
-              <div className="fw-semibold text-secondary small text-uppercase">Columnas visibles</div>
+              <div className="fw-semibold text-secondary small text-uppercase">{t('adminProducts.visibleColumns.title')}</div>
               <button type="button" className="btn btn-link btn-sm p-0 text-decoration-none" onClick={resetVisibleColumns}>
-                Mostrar todas
+                {t('adminProducts.visibleColumns.showAll')}
               </button>
             </div>
-            <p className="text-muted small mb-2 mb-lg-3">Elegí qué columnas ver en la tabla de escritorio.</p>
+            <p className="text-muted small mb-2 mb-lg-3">{t('adminProducts.visibleColumns.hint')}</p>
             <div className="admin-products-columns-grid">
               {productColumnDefs.map((col) => (
                 <div key={col.key} className="form-check admin-products-column-check mb-0">
@@ -1765,7 +1767,7 @@ export default function Products() {
       {loading ? (
         <div className="text-center">
           <div className="spinner-border" role="status">
-            <span className="visually-hidden">Cargando...</span>
+            <span className="visually-hidden">{t('adminProducts.loading')}</span>
           </div>
         </div>
       ) : (
@@ -1774,26 +1776,26 @@ export default function Products() {
           <table className="table table-admin-products">
             <thead>
               <tr>
-                <th style={{ width: '40px' }} className="text-center" aria-label="Seleccionar" />
-                <th style={{ width: '44px' }} aria-label="Arrastrar para ordenar" />
+                <th style={{ width: '40px' }} className="text-center" aria-label={t('adminProducts.select')} />
+                <th style={{ width: '44px' }} aria-label={t('adminProducts.table.dragToReorder')} />
                 {showProductColumn('position') && (
-                  <th style={{ width: '72px' }} className="text-center">Pos.</th>
+                  <th style={{ width: '72px' }} className="text-center">{t('adminProducts.posShort')}</th>
                 )}
                 {showProductColumn('photo') && (
                   <th style={{ width: '64px' }} className="text-center admin-products-col-photo">
                     Foto
                   </th>
                 )}
-                <th>Nombre</th>
-                {isSuperAdmin && showProductColumn('tenant') && <th>Tenant</th>}
-                {showProductColumn('restaurant') && <th>Restaurante</th>}
-                {isSuperAdmin && showProductColumn('template') && <th>Plantilla</th>}
-                {showProductColumn('menu') && <th>Menú</th>}
-                {showProductColumn('section') && <th>Sección</th>}
-                {showProductColumn('prices') && <th className="admin-products-col-prices">Precios</th>}
-                {showProductColumn('icons') && <th className="admin-products-col-icons">Íconos</th>}
-                {showProductColumn('status') && <th>Estado</th>}
-                <th className="admin-products-col-actions">Acciones</th>
+                <th>{t('adminProducts.name')}</th>
+                {isSuperAdmin && showProductColumn('tenant') && <th>{t('adminProducts.columns.tenant')}</th>}
+                {showProductColumn('restaurant') && <th>{t('adminProducts.columns.restaurant')}</th>}
+                {isSuperAdmin && showProductColumn('template') && <th>{t('adminProducts.columns.template')}</th>}
+                {showProductColumn('menu') && <th>{t('adminProducts.columns.menu')}</th>}
+                {showProductColumn('section') && <th>{t('adminProducts.columns.section')}</th>}
+                {showProductColumn('prices') && <th className="admin-products-col-prices">{t('adminProducts.columns.prices')}</th>}
+                {showProductColumn('icons') && <th className="admin-products-col-icons">{t('adminProducts.columns.icons')}</th>}
+                {showProductColumn('status') && <th>{t('adminProducts.columns.status')}</th>}
+                <th className="admin-products-col-actions">{t('adminProducts.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1817,7 +1819,7 @@ export default function Products() {
                       className="form-check-input"
                       checked={selectedProductIds.includes(product.id)}
                       onChange={() => toggleProductSelected(product.id)}
-                      aria-label={`Seleccionar ${product.name}`}
+                      aria-label={t('adminProducts.form.selectProductAria', { name: product.name })}
                     />
                   </td>
                   <td
@@ -1839,7 +1841,7 @@ export default function Products() {
                   <td className="text-center align-middle">
                     <span
                       className="admin-products-position-badge"
-                      title={`Posición ${position} de ${total} en la sección`}
+                      title={t('adminProducts.table.positionTitle', { position, total })}
                     >
                       {position}
                       {total > 0 ? <span className="admin-products-position-total">/{total}</span> : null}
@@ -1856,7 +1858,7 @@ export default function Products() {
                         loading="lazy"
                       />
                     ) : (
-                      <span className="admin-products-photo-empty" title="Sin foto">
+                      <span className="admin-products-photo-empty" title={t('adminProducts.table.noPhoto')}>
                         —
                       </span>
                     )}
@@ -1874,22 +1876,22 @@ export default function Products() {
                   )}
                   {showProductColumn('restaurant') && (
                   <td className="admin-products-cell-truncate">
-                    {product.restaurantName ? (
+                    {product.restaurantName && product.restaurantName !== 'Sin restaurante' ? (
                       <span>{product.restaurantName}</span>
                     ) : (
-                      <span className="text-muted">Sin restaurante</span>
+                      <span className="text-muted">{t('adminProducts.table.noRestaurant')}</span>
                     )}
                   </td>
                   )}
                   {isSuperAdmin && showProductColumn('template') && (
                     <td>
                       <span className="badge bg-secondary">
-                        {product.restaurantTemplate ? (product.restaurantTemplate === 'italianFood' ? 'Italian Food' : product.restaurantTemplate.charAt(0).toUpperCase() + product.restaurantTemplate.slice(1)) : 'Clásico'}
+                        {product.restaurantTemplate ? (product.restaurantTemplate === 'italianFood' ? 'Italian Food' : product.restaurantTemplate.charAt(0).toUpperCase() + product.restaurantTemplate.slice(1)) : t('adminProducts.classicTemplate')}
                       </span>
                     </td>
                   )}
                   {showProductColumn('menu') && (
-                  <td className="admin-products-cell-truncate">{product.menuName || (product.menuId || product.menu_id ? getMenuName(product.menuId || product.menu_id) : <span className="text-muted">Sin asignar</span>)}</td>
+                  <td className="admin-products-cell-truncate">{product.menuName || (product.menuId || product.menu_id ? getMenuName(product.menuId || product.menu_id) : <span className="text-muted">{t('adminProducts.table.unassigned')}</span>)}</td>
                   )}
                   {showProductColumn('section') && (
                   <td className="admin-products-cell-truncate">{product.sectionName || (product.sectionId || product.section_id ? getSectionName(product.sectionId || product.section_id) : <span className="text-muted">-</span>)}</td>
@@ -1927,21 +1929,21 @@ export default function Products() {
                   {showProductColumn('status') && (
                   <td>
                     <span className={`badge ${product.active ? 'bg-success' : 'bg-secondary'}`}>
-                      {product.active ? 'Activo' : 'Inactivo'}
+                      {product.active ? t('adminProducts.active') : t('adminProducts.inactive')}
                     </span>
                   </td>
                   )}
                   <td className="admin-products-col-actions">
                     <div className="admin-products-actions">
                     <button className="btn btn-sm btn-primary" onClick={() => handleEdit(product)}>
-                      Editar
+                      {t('adminProducts.edit')}
                     </button>
                     <button
                       type="button"
                       className="btn btn-sm btn-outline-secondary btn-copy-menu"
                       onClick={() => handleCopyToMenuClick(product)}
                     >
-                      Copiar
+                      {t('adminProducts.copy')}
                     </button>
                     <button
                       type="button"
@@ -1953,7 +1955,7 @@ export default function Products() {
                           });
                           loadData();
                         } catch (error: any) {
-                          alert(error.response?.data?.message || 'Error al cambiar el estado del producto');
+                          alert(error.response?.data?.message || t('adminProducts.alerts.toggleStatusFailed'));
                         }
                       }}
                     >
@@ -1963,7 +1965,7 @@ export default function Products() {
                       className="btn btn-sm btn-danger" 
                       onClick={() => handleDeleteClick(product.id)}
                     >
-                      Eliminar
+                      {t('adminProducts.delete')}
                     </button>
                     </div>
                   </td>
@@ -1980,7 +1982,7 @@ export default function Products() {
               ? product.restaurantTemplate === 'italianFood'
                 ? 'Italian Food'
                 : product.restaurantTemplate.charAt(0).toUpperCase() + product.restaurantTemplate.slice(1)
-              : 'Clásico';
+              : t('adminProducts.classicTemplate');
             const menuLabel =
               product.menuName ||
               (product.menuId || product.menu_id ? getMenuName(product.menuId || product.menu_id) : null);
@@ -2004,9 +2006,9 @@ export default function Products() {
                     style={{ width: '1.15rem', height: '1.15rem' }}
                     checked={selectedProductIds.includes(product.id)}
                     onChange={() => toggleProductSelected(product.id)}
-                    aria-label={`Seleccionar ${product.name}`}
+                    aria-label={t('adminProducts.form.selectProductAria', { name: product.name })}
                   />
-                  <div className="admin-products-mobile-reorder" role="group" aria-label="Cambiar orden">
+                  <div className="admin-products-mobile-reorder" role="group" aria-label={t('adminProducts.table.reorderAria')}>
                     <button
                       type="button"
                       className="admin-products-mobile-move"
@@ -2030,53 +2032,53 @@ export default function Products() {
                   </div>
                   <span
                     className="admin-products-mobile-order"
-                    title={`Posición ${position} de ${total} en la sección`}
+                    title={t('adminProducts.table.positionTitle', { position, total })}
                   >
                     {position}
                   </span>
                   <div className="admin-products-mobile-head-text">
                     <span className="admin-products-mobile-name">{product.name}</span>
                     <span className={`badge ${product.active ? 'bg-success' : 'bg-secondary'} admin-products-mobile-badge`}>
-                      {product.active ? 'Activo' : 'Inactivo'}
+                      {product.active ? t('adminProducts.active') : t('adminProducts.inactive')}
                     </span>
                   </div>
                 </div>
                 {isSuperAdmin && product.tenantName && (
                   <p className="admin-products-mobile-meta">
-                    <span className="admin-products-mobile-meta-label">Tenant:</span>{' '}
+                    <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaTenant')}</span>{' '}
                     <span className="badge bg-info">{product.tenantName}</span>
                   </p>
                 )}
                 <p className="admin-products-mobile-meta">
-                  <span className="admin-products-mobile-meta-label">Restaurante:</span>{' '}
+                  <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaRestaurant')}</span>{' '}
                   <strong>
-                    {product.restaurantName ? product.restaurantName : 'Sin restaurante'}
+                    {product.restaurantName && product.restaurantName !== 'Sin restaurante' ? product.restaurantName : t('adminProducts.table.noRestaurant')}
                   </strong>
                 </p>
                 {isSuperAdmin && (
                   <p className="admin-products-mobile-meta">
-                    <span className="admin-products-mobile-meta-label">Plantilla:</span>{' '}
+                    <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaTemplate')}</span>{' '}
                     <span className="badge bg-secondary">{templateShort}</span>
                   </p>
                 )}
                 <p className="admin-products-mobile-meta">
-                  <span className="admin-products-mobile-meta-label">Menú:</span>{' '}
-                  {menuLabel ? <strong>{menuLabel}</strong> : <span className="text-muted">Sin asignar</span>}
+                  <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaMenu')}</span>{' '}
+                  {menuLabel ? <strong>{menuLabel}</strong> : <span className="text-muted">{t('adminProducts.table.unassigned')}</span>}
                 </p>
                 <p className="admin-products-mobile-meta">
-                  <span className="admin-products-mobile-meta-label">Sección:</span>{' '}
+                  <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaSection')}</span>{' '}
                   {sectionLabel ? <strong>{sectionLabel}</strong> : <span className="text-muted">—</span>}
                 </p>
                 <p className="admin-products-mobile-meta">
-                  <span className="admin-products-mobile-meta-label">Posición:</span>{' '}
+                  <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaPosition')}</span>{' '}
                   <strong>
                     {position}
                     {total > 0 ? ` de ${total}` : ''}
                   </strong>
-                  <span className="text-muted"> en la sección</span>
+                  <span className="text-muted">{t('adminProducts.table.inSection')}</span>
                 </p>
                 <div className="admin-products-mobile-prices">
-                  <span className="admin-products-mobile-meta-label">Precios:</span>{' '}
+                  <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaPrices')}</span>{' '}
                   {product.prices && product.prices.length > 0 ? (
                     <div className="admin-products-mobile-price-badges">
                       {product.prices.map((price: any, idx: number) => (
@@ -2090,7 +2092,7 @@ export default function Products() {
                   )}
                 </div>
                 <div className="admin-products-mobile-icons">
-                  <span className="admin-products-mobile-meta-label">Íconos:</span>{' '}
+                  <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaIcons')}</span>{' '}
                   {product.icons && product.icons.length > 0 ? (
                     <div className="admin-products-mobile-icon-badges">
                       {product.icons.map((icon: string, idx: number) => (
@@ -2105,14 +2107,14 @@ export default function Products() {
                 </div>
                 <div className="admin-products-mobile-grid">
                   <button type="button" className="btn btn-sm btn-primary" onClick={() => handleEdit(product)}>
-                    Editar
+                    {t('adminProducts.edit')}
                   </button>
                   <button
                     type="button"
                     className="btn btn-sm btn-outline-secondary btn-copy-menu"
                     onClick={() => handleCopyToMenuClick(product)}
                   >
-                    Copiar a otro menú
+                    {t('adminProducts.table.copyToOtherMenu')}
                   </button>
                   <button
                     type="button"
@@ -2124,14 +2126,14 @@ export default function Products() {
                         });
                         loadData();
                       } catch (error: any) {
-                        alert(error.response?.data?.message || 'Error al cambiar el estado del producto');
+                        alert(error.response?.data?.message || t('adminProducts.alerts.toggleStatusFailed'));
                       }
                     }}
                   >
                     {product.active ? 'Desactivar' : 'Activar'}
                   </button>
                   <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDeleteClick(product.id)}>
-                    Eliminar
+                    {t('adminProducts.delete')}
                   </button>
                 </div>
               </div>
@@ -2153,7 +2155,7 @@ export default function Products() {
             <ul className="pagination mb-0">
               <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
                 <button className="page-link" onClick={() => setPage(page - 1)} disabled={page === 1}>
-                  Anterior
+                  {t('adminProducts.previous')}
                 </button>
               </li>
               {Array.from({ length: Math.ceil(total / itemsPerPage) }, (_, i) => i + 1)
@@ -2174,7 +2176,7 @@ export default function Products() {
                 ))}
               <li className={`page-item ${page >= Math.ceil(total / itemsPerPage) ? 'disabled' : ''}`}>
                 <button className="page-link" onClick={() => setPage(page + 1)} disabled={page >= Math.ceil(total / itemsPerPage)}>
-                  Siguiente
+                  {t('adminProducts.next')}
                 </button>
               </li>
             </ul>
@@ -2192,15 +2194,15 @@ export default function Products() {
           <div className="modal-dialog modal-lg admin-product-edit-modal">
             <div className="modal-content" style={{ borderRadius: '10px', overflow: 'hidden' }}>
               <div className="modal-header admin-product-edit-modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
-                <h5 className="modal-title" style={{ margin: 0, fontWeight: 600, fontSize: '1.15rem' }}>{editing ? 'Editar' : 'Nuevo'} Producto</h5>
-                <button type="button" className="btn-close" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); setShowConfirmDeleteImage(false); }} aria-label="Cerrar"></button>
+                <h5 className="modal-title" style={{ margin: 0, fontWeight: 600, fontSize: '1.15rem' }}>{editing ? t('adminProducts.form.editTitle') : t('adminProducts.form.newTitle')}</h5>
+                <button type="button" className="btn-close" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); setShowConfirmDeleteImage(false); }} aria-label={t('adminProducts.close')}></button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="modal-body admin-product-edit-modal-body" style={{ padding: '24px 28px', maxHeight: '70vh', overflowY: 'auto' }}>
                   <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
-                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Asignación</h6>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>{t('adminProducts.form.assignment')}</h6>
                   <div className="mb-3">
-                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>Menú (Opcional - puede crearse sin menú)</label>
+                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>{t('adminProducts.form.menuOptional')}</label>
                     <select
                       className="form-select"
                       value={formData.menuId}
@@ -2218,26 +2220,26 @@ export default function Products() {
                         setSelectedMenu(newMenuId);
                       }}
                     >
-                      <option value="">Sin menú (crear producto independiente)</option>
+                      <option value="">{t('adminProducts.form.noMenu')}</option>
                       {menus.map((menu) => (
                         <option key={menu.id} value={menu.id}>
                           {menu.name}
                         </option>
                       ))}
                     </select>
-                    <small className="text-muted" style={{ display: 'block', marginTop: '6px', fontSize: '0.8125rem' }}>Puedes crear el producto sin menú y asignarlo después a cualquier menú</small>
+                    <small className="text-muted" style={{ display: 'block', marginTop: '6px', fontSize: '0.8125rem' }}>{t('adminProducts.form.menuHint')}</small>
                   </div>
                   
                   {formData.menuId && (
                     <div className="mb-0">
-                      <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>Sección *</label>
+                      <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>{t('adminProducts.form.sectionRequired')}</label>
                       <select
                         className="form-select"
                         value={formData.sectionId}
                         onChange={(e) => setFormData({ ...formData, sectionId: e.target.value })}
                         required
                       >
-                        <option value="">Seleccionar sección</option>
+                        <option value="">{t('adminProducts.form.selectSection')}</option>
                         {sections.map((section) => (
                           <option key={section.id} value={section.id}>
                             {section.name}
@@ -2249,9 +2251,9 @@ export default function Products() {
                   </section>
 
                   <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
-                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Contenido</h6>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>{t('adminProducts.form.content')}</h6>
                   <div className="mb-3">
-                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>Nombre *</label>
+                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>{t('adminProducts.form.nameRequired')}</label>
                     <input
                       type="text"
                       className="form-control"
@@ -2262,7 +2264,7 @@ export default function Products() {
                   </div>
                   
                   <div className="mb-0">
-                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>Descripción (opcional)</label>
+                    <label className="form-label" style={{ marginBottom: '6px', fontWeight: 500 }}>{t('adminProducts.form.descriptionOptional')}</label>
                     <textarea
                       className="form-control"
                       value={formData.description}
@@ -2274,11 +2276,11 @@ export default function Products() {
                   </section>
 
                   <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
-                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Precios</h6>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>{t('adminProducts.form.prices')}</h6>
                   <div className="mb-3">
                     {formData.prices.length > 1 && (
                       <p className="text-muted small mb-2 admin-product-price-reorder-hint" style={{ fontSize: '0.8125rem' }}>
-                        Arrastrá cada fila desde ☰ para cambiar el orden en que se muestran los precios.
+                        {t('adminProducts.form.pricesDragHint')}
                       </p>
                     )}
                     {formData.prices.map((price, index) => (
@@ -2301,7 +2303,7 @@ export default function Products() {
                         {formData.prices.length > 1 ? (
                           <div
                             className="admin-product-price-drag"
-                            title="Arrastrar para reordenar"
+                            title={t('adminProducts.form.dragPriceReorder')}
                           >
                             <span style={{ fontSize: '1.1rem', color: '#6c757d', userSelect: 'none' }} aria-hidden>
                               ☰
@@ -2312,7 +2314,7 @@ export default function Products() {
                           <input
                             type="text"
                             className="form-control admin-product-price-currency"
-                            placeholder="Moneda (USD, ARS)"
+                            placeholder={t('adminProducts.form.currencyPlaceholder')}
                             value={price.currency}
                             onChange={(e) => updatePrice(index, 'currency', e.target.value)}
                             required
@@ -2320,7 +2322,7 @@ export default function Products() {
                           <input
                             type="text"
                             className="form-control admin-product-price-label"
-                            placeholder="Etiqueta (Opcional)"
+                            placeholder={t('adminProducts.form.labelPlaceholder')}
                             value={price.label}
                             onChange={(e) => updatePrice(index, 'label', e.target.value)}
                           />
@@ -2346,7 +2348,7 @@ export default function Products() {
                               }
                             }}
                             step="0.01"
-                            placeholder="Ej.: 12,50"
+                            placeholder={t('adminProducts.form.amountPlaceholder')}
                           />
                         </div>
                         {formData.prices.length > 1 ? (
@@ -2354,7 +2356,7 @@ export default function Products() {
                             type="button"
                             className="btn btn-sm btn-danger admin-product-price-remove"
                             onClick={() => removePrice(index)}
-                            aria-label="Eliminar precio"
+                            aria-label={t('adminProducts.form.removePrice')}
                           >
                             ×
                           </button>
@@ -2362,14 +2364,14 @@ export default function Products() {
                       </div>
                     ))}
                     <button type="button" className="btn btn-sm btn-secondary" onClick={addPrice} style={{ marginTop: '8px' }}>
-                      + Agregar Precio
+                      {t('adminProducts.form.addPrice')}
                     </button>
                   </div>
                   </section>
 
                   {editing && (
                     <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
-                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Imagen de producto</h6>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>{t('adminProducts.form.productImage')}</h6>
                     <div className="mb-0">
                       {!canAddEditPhotos ? (
                         <div
@@ -2385,7 +2387,7 @@ export default function Products() {
                         >
                           <div style={{ fontSize: '36px', marginBottom: '12px', opacity: 0.5 }}>📷</div>
                           <p style={{ margin: 0, color: '#999', fontSize: '14px', marginBottom: '8px' }}>
-                            Arrastra imágenes aquí o haz clic para seleccionar
+                            {t('adminProducts.form.dropImages')}
                           </p>
                           <div
                             style={{
@@ -2401,10 +2403,10 @@ export default function Products() {
                             }}
                           >
                             <p style={{ margin: 0, color: '#856404', fontSize: '13px', fontWeight: 500 }}>
-                              <strong>⚠️ Función no disponible para tu plan</strong>
+                              <strong>{t('adminProducts.form.planFeatureUnavailable')}</strong>
                               <br />
                               <span style={{ fontSize: '12px' }}>
-                                Amplía tu suscripción para poder agregar imágenes a tus productos.
+                                {t('adminProducts.form.planFeatureHint')}
                               </span>
                             </p>
                             <a
@@ -2423,7 +2425,7 @@ export default function Products() {
                                 fontWeight: 600,
                               }}
                             >
-                              Ver planes y suscripción
+                              {t('adminProducts.form.viewPlans')}
                             </a>
                           </div>
                         </div>
@@ -2461,7 +2463,7 @@ export default function Products() {
                           >
                             <div style={{ fontSize: '36px', marginBottom: '8px' }}>📷</div>
                             <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
-                              Arrastra una imagen o haz clic para seleccionar
+                              {t('adminProducts.form.dropImageSingle')}
                             </p>
                           </div>
                           ) : null}
@@ -2478,8 +2480,8 @@ export default function Products() {
                                   e.preventDefault();
                                   setShowConfirmDeleteImage(true);
                                 }}
-                                aria-label="Eliminar imagen"
-                                title="Eliminar imagen"
+                                aria-label={t('adminProducts.form.removeImage')}
+                                title={t('adminProducts.form.removeImage')}
                               >
                                 ×
                               </button>
@@ -2492,7 +2494,7 @@ export default function Products() {
                   )}
 
                   <section style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e9ecef' }}>
-                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Íconos</h6>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>{t('adminProducts.form.icons')}</h6>
                   <div className="mb-0">
                     <div className="d-flex flex-wrap gap-2">
                       {availableIcons.map((icon) => (
@@ -2512,7 +2514,7 @@ export default function Products() {
                   </section>
 
                   <section style={{ marginBottom: 0 }}>
-                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>Estado</h6>
+                    <h6 style={{ marginBottom: '14px', fontWeight: 600, color: '#495057', fontSize: '0.9rem' }}>{t('adminProducts.form.status')}</h6>
                   <div className="mb-0 admin-product-status-switches">
                     <div className="form-check form-switch">
                       <input
@@ -2524,7 +2526,7 @@ export default function Products() {
                         onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                       />
                       <label className="form-check-label" htmlFor="product-active-switch">
-                        Producto activo
+                        {t('adminProducts.form.productActive')}
                       </label>
                     </div>
                     {canHighlightProducts && (
@@ -2538,7 +2540,7 @@ export default function Products() {
                           onChange={(e) => setFormData({ ...formData, highlighted: e.target.checked })}
                         />
                         <label className="form-check-label" htmlFor="product-highlighted-switch">
-                          Producto destacado
+                          {t('adminProducts.form.productHighlighted')}
                         </label>
                       </div>
                     )}
@@ -2547,10 +2549,10 @@ export default function Products() {
                 </div>
                 <div className="modal-footer admin-product-edit-modal-footer" style={{ padding: '16px 28px', borderTop: '1px solid #dee2e6', backgroundColor: '#f8f9fa', gap: '10px' }}>
                   <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setEditing(null); setEditPhotos([]); setShowConfirmDeleteImage(false); }}>
-                    Cancelar
+                    {t('adminProducts.cancel')}
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    {editing ? 'Actualizar' : 'Crear'}
+                    {editing ? t('adminProducts.update') : t('adminProducts.create')}
                   </button>
                 </div>
               </form>
@@ -2567,7 +2569,7 @@ export default function Products() {
               <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
                 <h5 className="modal-title" style={{ color: '#856404' }}>
                   <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#ffc107' }}></i>
-                  Límite de Productos Alcanzado
+                  {t('adminProducts.limitModal.title')}
                 </h5>
                 <button 
                   type="button" 
@@ -2578,10 +2580,18 @@ export default function Products() {
               </div>
               <div className="modal-body" style={{ padding: '24px' }}>
                 <p style={{ marginBottom: '16px', fontSize: '16px' }}>
-                  Has alcanzado el límite de <strong>{getProductLimit()}</strong> producto(s) para tu plan <strong>{tenantPlan || 'gratuito'}</strong>.
+                  <Trans
+                    i18nKey="adminProducts.limitModal.reached"
+                    values={{ limit: getProductLimit(), plan: tenantPlan || t('adminProducts.limitModal.freePlan') }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <p style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
-                  Actualmente tienes <strong>{total || products.length}</strong> producto(s) creado(s).
+                  <Trans
+                    i18nKey="adminProducts.limitModal.current"
+                    values={{ count: total || products.length }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <div
                   style={{
@@ -2611,10 +2621,10 @@ export default function Products() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#854d0e', marginBottom: 2 }}>
-                      Para crear más productos
+                      {t('adminProducts.limitModal.toCreateMore')}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
-                      Amplía tu suscripción para aumentar el límite de productos disponibles.
+                      {t('adminProducts.limitModal.upgradeHint')}
                     </div>
                   </div>
                 </div>
@@ -2630,14 +2640,14 @@ export default function Products() {
                   rel="noopener noreferrer"
                   style={{ textDecoration: 'none' }}
                 >
-                  Ver planes y suscripción
+                  {t('adminProducts.form.viewPlans')}
                 </Link>
                 <button 
                   type="button" 
                   className="admin-btn admin-btn-secondary" 
                   onClick={() => setShowLimitModal(false)}
                 >
-                  Por el momento no me interesa
+                  {t('adminProducts.limitModal.notInterested')}
                 </button>
               </div>
             </div>
@@ -2651,7 +2661,7 @@ export default function Products() {
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Copiar a otro menú</h5>
+                <h5 className="modal-title">{t('adminProducts.copyModal.title')}</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -2660,16 +2670,16 @@ export default function Products() {
                     setProductToCopy(null);
                     setCopyNewSectionName('');
                   }}
-                  aria-label="Cerrar"
+                  aria-label={t('adminProducts.close')}
                 />
               </div>
               <form onSubmit={handleCopyToMenuSubmit}>
                 <div className="modal-body">
                   <p className="text-muted small mb-3">
-                    Copiar &quot;{productToCopy.name}&quot; a un menú y sección del mismo restaurante.
+                    {t('adminProducts.copyModal.intro', { name: productToCopy.name })}
                   </p>
                   <div className="mb-3">
-                    <label className="form-label">Menú de destino</label>
+                    <label className="form-label">{t('adminProducts.copyModal.destinationMenu')}</label>
                     <select
                       className="form-select"
                       value={copyTargetMenuId}
@@ -2680,7 +2690,7 @@ export default function Products() {
                       }}
                       required
                     >
-                      <option value="">Seleccione un menú</option>
+                      <option value="">{t('adminProducts.copyModal.selectMenu')}</option>
                       {(() => {
                         const currentMenuId = productToCopy.menuId || productToCopy.menu_id;
                         const currentMenu = menus.find(m => m.id === currentMenuId);
@@ -2695,7 +2705,7 @@ export default function Products() {
                     </select>
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">Sección de destino</label>
+                    <label className="form-label">{t('adminProducts.copyModal.destinationSection')}</label>
                     <select
                       className="form-select"
                       value={copyTargetSectionId}
@@ -2703,17 +2713,17 @@ export default function Products() {
                       required
                       disabled={!copyTargetMenuId}
                     >
-                      <option value="">{copyTargetMenuId ? 'Seleccione una sección' : 'Primero elija un menú'}</option>
+                      <option value="">{copyTargetMenuId ? t('adminProducts.copyModal.selectSection') : t('adminProducts.copyModal.firstChooseMenu')}</option>
                       {copySections.map(s => (
                         <option key={s.id} value={s.id}>{s.name}</option>
                       ))}
-                      <option value={SECTION_DEST_NEW}>+ Nueva sección…</option>
+                      <option value={SECTION_DEST_NEW}>{t('adminProducts.copyModal.newSection')}</option>
                     </select>
                   </div>
                   {copyTargetSectionId === SECTION_DEST_NEW && copyTargetMenuId ? (
                     <div className="mb-0">
                       <label className="form-label" htmlFor="copy-new-section-name">
-                        Nombre de la nueva sección
+                        {t('adminProducts.copyModal.newSectionName')}
                       </label>
                       <input
                         id="copy-new-section-name"
@@ -2721,7 +2731,7 @@ export default function Products() {
                         className="form-control"
                         value={copyNewSectionName}
                         onChange={(e) => setCopyNewSectionName(e.target.value)}
-                        placeholder="Ej. Postres, Vinos…"
+                        placeholder={t('adminProducts.bulk.newSectionPlaceholder')}
                         maxLength={160}
                         autoComplete="off"
                       />
@@ -2738,7 +2748,7 @@ export default function Products() {
                       setCopyNewSectionName('');
                     }}
                   >
-                    Cancelar
+                    {t('adminProducts.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -2750,7 +2760,7 @@ export default function Products() {
                       (copyTargetSectionId === SECTION_DEST_NEW && !copyNewSectionName.trim())
                     }
                   >
-                    {copyLoading ? 'Copiando…' : 'Copiar'}
+                    {copyLoading ? t('adminProducts.copyModal.copying') : t('adminProducts.copyModal.copy')}
                   </button>
                 </div>
               </form>
@@ -2762,10 +2772,10 @@ export default function Products() {
       {/* Modal de confirmación para eliminar producto */}
       <ConfirmModal
         show={showConfirmDeleteImage}
-        title="Eliminar imagen"
-        message="¿Eliminar la imagen de este producto? Se borrará del sistema y podrás subir otra."
-        confirmText="Eliminar"
-        cancelText="Cancelar"
+        title={t('adminProducts.confirm.deleteImageTitle')}
+        message={t('adminProducts.confirm.deleteImageMessage')}
+        confirmText={t('adminProducts.delete')}
+        cancelText={t('adminProducts.cancel')}
         variant="danger"
         onConfirm={async () => {
           setShowConfirmDeleteImage(false);
@@ -2776,10 +2786,10 @@ export default function Products() {
 
       <ConfirmModal
         show={showConfirmDelete}
-        title="Eliminar Producto"
-        message="¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer."
-        confirmText="Eliminar"
-        cancelText="Cancelar"
+        title={t('adminProducts.confirm.deleteProductTitle')}
+        message={t('adminProducts.confirm.deleteProductMessage')}
+        confirmText={t('adminProducts.delete')}
+        cancelText={t('adminProducts.cancel')}
         variant="danger"
         onConfirm={handleDeleteConfirm}
         onCancel={() => {
@@ -2790,14 +2800,14 @@ export default function Products() {
 
       <ConfirmModal
         show={showBulkDeleteConfirm}
-        title={bulkDeleteMode === 'copy_delete' ? 'Copiar y eliminar originales' : 'Eliminar productos seleccionados'}
+        title={bulkDeleteMode === 'copy_delete' ? t('adminProducts.confirm.bulkCopyDeleteTitle') : t('adminProducts.confirm.bulkDeleteTitle')}
         message={
           bulkDeleteMode === 'copy_delete'
-            ? `Se copiarán ${selectedProductIds.length} producto(s) al menú y sección elegidos y después se eliminarán los originales. Si necesitás conservar esa versión en el menú actual, tendrás que volver a crearlos o copiarlos de nuevo. ¿Continuar?`
-            : `Se eliminarán ${selectedProductIds.length} producto(s). Tendrás que volver a crearlos desde cero si los necesitas. Esta acción no se puede deshacer. ¿Continuar?`
+            ? t('adminProducts.confirm.bulkCopyDeleteMessage', { count: selectedProductIds.length })
+            : t('adminProducts.confirm.bulkDeleteMessage', { count: selectedProductIds.length })
         }
-        confirmText="Aceptar"
-        cancelText="Cancelar"
+        confirmText={t('adminProducts.accept')}
+        cancelText={t('adminProducts.cancel')}
         variant="danger"
         onConfirm={handleBulkDeleteConfirm}
         onCancel={() => {

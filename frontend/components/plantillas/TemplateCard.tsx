@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import OptimizedPicture from '../OptimizedPicture';
 import { getPlantillaHeroMockupImage } from '../../lib/plantilla-landing-hero-images';
+import { translateTemplatesCatalogTaxonomy } from '../../lib/templates-catalog-i18n';
 import type { MenuTemplateCatalogItem } from '../../types/menu-template-catalog';
 import TemplateCardActions from './TemplateCardActions';
 import styles from './Plantillas.module.css';
@@ -9,6 +11,7 @@ export interface TemplateCardProps {
 }
 
 export default function TemplateCard({ template }: TemplateCardProps) {
+  const { t } = useTranslation();
   const heroMockup = getPlantillaHeroMockupImage(template.slug);
   const imageSrc = heroMockup ?? template.imagen;
   const usesMockup = Boolean(heroMockup);
@@ -20,7 +23,7 @@ export default function TemplateCard({ template }: TemplateCardProps) {
       >
         <OptimizedPicture
           src={imageSrc}
-          alt={`Vista previa plantilla menú QR ${template.nombre}`}
+          alt={t('templatesCatalog.card.previewAlt', { name: template.nombre })}
           fill
           className={`${styles.cardImage} ${
             usesMockup
@@ -37,24 +40,30 @@ export default function TemplateCard({ template }: TemplateCardProps) {
         <div className={styles.cardTitleRow}>
           <h2 className={styles.cardTitle}>{template.nombre}</h2>
           {template.plan === 'pro' ? (
-            <span className={`${styles.badge} ${styles.badgePro}`}>Pro</span>
+            <span className={`${styles.badge} ${styles.badgePro}`}>
+              {t('templatesCatalog.card.pro')}
+            </span>
           ) : (
-            <span className={`${styles.badge} ${styles.badgeFree}`}>Free</span>
+            <span className={`${styles.badge} ${styles.badgeFree}`}>
+              {t('templatesCatalog.card.free')}
+            </span>
           )}
         </div>
-        <div className={styles.badgeRow} aria-label="Categoría">
-          <span className={`${styles.badge} ${styles.badgeCategory}`}>{template.categoria}</span>
+        <div className={styles.badgeRow} aria-label={t('templatesCatalog.card.categoryAria')}>
+          <span className={`${styles.badge} ${styles.badgeCategory}`}>
+            {translateTemplatesCatalogTaxonomy(t, 'categoria', template.categoria)}
+          </span>
           {template.estilos.map((e) => (
             <span key={e} className={`${styles.badge} ${styles.badgeStyle}`}>
-              {e}
+              {translateTemplatesCatalogTaxonomy(t, 'estilo', e)}
             </span>
           ))}
         </div>
-        <p className={styles.tagsLabel}>Tags</p>
+        <p className={styles.tagsLabel}>{t('templatesCatalog.card.tagsLabel')}</p>
         <div className={styles.badgeRow}>
           {template.tags.map((tag) => (
             <span key={tag} className={`${styles.badge} ${styles.badgeTag}`}>
-              {tag}
+              {translateTemplatesCatalogTaxonomy(t, 'tag', tag)}
             </span>
           ))}
         </div>

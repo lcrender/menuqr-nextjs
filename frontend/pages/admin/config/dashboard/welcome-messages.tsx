@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import AdminLayout from '../../../../components/AdminLayout';
 import DashboardConfigNav from '../../../../components/DashboardConfigNav';
@@ -12,9 +12,13 @@ type PlanRow = {
 };
 
 type ApiResponse = {
+  locale?: string;
+  locales?: string[];
   plans: PlanRow[];
   placeholders: string[];
 };
+
+type ContentLocale = 'es' | 'en';
 
 export default function AdminConfigDashboardWelcomeMessages() {
   const router = useRouter();
@@ -26,6 +30,7 @@ export default function AdminConfigDashboardWelcomeMessages() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [activePlan, setActivePlan] = useState<string>('free');
+  const [activeLocale, setActiveLocale] = useState<ContentLocale>('es');
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -43,26 +48,32 @@ export default function AdminConfigDashboardWelcomeMessages() {
     }
   }, [router]);
 
-  const load = async () => {
+  const load = useCallback(async (locale: ContentLocale) => {
     setLoading(true);
     setError(null);
     setSuccess(null);
     try {
-      const res = await api.get<ApiResponse>('/admin/dashboard/welcome-messages');
+      const res = await api.get<ApiResponse>('/admin/dashboard/welcome-messages', {
+        params: { locale },
+      });
       setPlans(res.data.plans || []);
       setPlaceholders(res.data.placeholders || []);
-      if (res.data.plans?.[0]?.planKey) setActivePlan(res.data.plans[0].planKey);
+      if (res.data.plans?.[0]?.planKey) {
+        setActivePlan((prev) =>
+          res.data.plans.some((p) => p.planKey === prev) ? prev : res.data.plans[0].planKey,
+        );
+      }
     } catch (e: any) {
       setError(getApiErrorMessage(e, 'No se pudieron cargar los mensajes'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!user || user.role !== 'SUPER_ADMIN') return;
-    load();
-  }, [user]);
+    void load(activeLocale);
+  }, [user, activeLocale, load]);
 
   const updatePlanHtml = (planKey: string, html: string) => {
     setPlans((prev) => prev.map((p) => (p.planKey === planKey ? { ...p, html } : p)));
@@ -74,10 +85,15 @@ export default function AdminConfigDashboardWelcomeMessages() {
     setSuccess(null);
     try {
       const res = await api.patch<ApiResponse>('/admin/dashboard/welcome-messages', {
+        locale: activeLocale,
         plans: plans.map((p) => ({ planKey: p.planKey, html: p.html })),
       });
       setPlans(res.data.plans || []);
-      setSuccess('Mensajes guardados. Se verán en el dashboard según el plan de cada usuario.');
+      setSuccess(
+        activeLocale === 'en'
+          ? 'Messages saved. English users will see this content on the dashboard.'
+          : 'Mensajes guardados. Se verán en el dashboard según el plan de cada usuario.',
+      );
     } catch (e: any) {
       setError(getApiErrorMessage(e, 'No se pudo guardar'));
     } finally {
@@ -106,11 +122,32 @@ export default function AdminConfigDashboardWelcomeMessages() {
 
         <h2 className="h5 mb-3">Mensajes bienvenida</h2>
         <p className="text-muted small mb-4">
-          HTML de bienvenida según el plan de cada usuario (Free, Starter, Pro, etc.).
+          HTML de bienvenida según el plan y el idioma preferido del usuario (Español / English).
         </p>
 
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
+
+        <ul className="nav nav-pills mb-3 gap-1">
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeLocale === 'es' ? 'active' : ''}`}
+              onClick={() => setActiveLocale('es')}
+            >
+              Español
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeLocale === 'en' ? 'active' : ''}`}
+              onClick={() => setActiveLocale('en')}
+            >
+              English
+            </button>
+          </li>
+        </ul>
 
         {loading ? (
           <div className="text-center py-5">
@@ -120,6 +157,8 @@ export default function AdminConfigDashboardWelcomeMessages() {
           <div className="card shadow-sm">
             <div className="card-body">
               <p className="small text-muted mb-3">
+                Idioma activo: <strong>{activeLocale === 'en' ? 'English' : 'Español'}</strong>
+                {' · '}
                 Placeholders:{' '}
                 {placeholders.map((ph) => (
                   <code key={ph} className="me-2">
@@ -144,7 +183,9 @@ export default function AdminConfigDashboardWelcomeMessages() {
 
               {active && (
                 <>
-                  <label className="form-label">HTML para plan {active.label}</label>
+                  <label className="form-label">
+                    HTML para plan {active.label} ({activeLocale === 'en' ? 'EN' : 'ES'})
+                  </label>
                   <textarea
                     className="form-control font-monospace mb-3"
                     rows={8}
@@ -157,9 +198,12 @@ export default function AdminConfigDashboardWelcomeMessages() {
                       className="dashboard-welcome-preview"
                       dangerouslySetInnerHTML={{
                         __html: active.html
-                          .replace(/\{\{firstName\}\}/g, 'Alejandro')
-                          .replace(/\{\{lastName\}\}/g, 'García')
-                          .replace(/\{\{email\}\}/g, 'usuario@ejemplo.com')
+                          .replace(/\{\{firstName\}\}/g, activeLocale === 'en' ? 'Alex' : 'Alejandro')
+                          .replace(/\{\{lastName\}\}/g, activeLocale === 'en' ? 'Garcia' : 'García')
+                          .replace(
+                            /\{\{email\}\}/g,
+                            activeLocale === 'en' ? 'user@example.com' : 'usuario@ejemplo.com',
+                          )
                           .replace(/\{\{plan\}\}/g, active.planKey)
                           .replace(/\{\{planName\}\}/g, active.label),
                       }}

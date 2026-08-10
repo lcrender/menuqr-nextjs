@@ -159,7 +159,7 @@ export default function AdminConfigSubscriptions() {
               <div className="px-3 px-md-4 py-3 border-bottom bg-light">
                 <h2 className="h5 fw-semibold mb-0">Planes del tenant (límites en la app)</h2>
                 <p className="small text-muted mb-0 mt-1">
-                  Restaurantes, menús y productos; plantilla Gourmet, fotos y destacar productos.
+                  Comercios, menús y productos; plantilla Gourmet, fotos y destacar productos.
                 </p>
               </div>
               <div className="table-responsive d-none d-md-block">
@@ -167,7 +167,7 @@ export default function AdminConfigSubscriptions() {
                   <thead>
                     <tr>
                       <th>Plan</th>
-                      <th>Restaurantes</th>
+                      <th>Comercios</th>
                       <th>Menús</th>
                       <th>Productos</th>
                       <th>Plantillas estándar</th>
@@ -210,7 +210,7 @@ export default function AdminConfigSubscriptions() {
                     <div className="small text-muted mb-2">{row.key}</div>
                     <div className="small">
                       <div>
-                        <strong>Restaurantes:</strong> {formatLimit(row.restaurantLimit)}
+                        <strong>Comercios:</strong> {formatLimit(row.restaurantLimit)}
                       </div>
                       <div>
                         <strong>Menús:</strong> {formatLimit(row.menuLimit)}

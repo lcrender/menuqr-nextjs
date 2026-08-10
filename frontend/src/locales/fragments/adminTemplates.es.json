@@ -1,0 +1,181 @@
+{
+  "title": "Plantillas",
+  "subtitle": "Selecciona una plantilla para aplicar a tus comercios",
+  "loading": "Cargando...",
+  "restaurantsByTemplate": "Tus comercios por plantilla",
+  "emptyRestaurants": "Aún no tienes comercios. Crea uno en Comercios y asígnale una plantilla aquí.",
+  "table": {
+    "business": "Comercio",
+    "template": "Plantilla",
+    "action": "Acción"
+  },
+  "configureTemplate": "Configurar plantilla",
+  "classicFallback": "Clásica",
+  "catalogTitle": "Catálogo de plantillas",
+  "showingAll": "Mostrando las {{count}} plantillas",
+  "showingFiltered": "Mostrando {{filtered}} de {{total}} plantillas",
+  "emptyFilters": "No hay plantillas con esta combinación de filtros. Probá con \"Todos\" en algún criterio.",
+  "alert": {
+    "appliedTitle": "Plantilla aplicada",
+    "appliedMessage": "Entra a configurar la plantilla para ajustar colores y opciones.",
+    "errorTitle": "Error",
+    "applyError": "Error aplicando plantilla."
+  },
+  "configure": {
+    "breadcrumb": "Navegación",
+    "backToTemplates": "← Volver a Plantillas",
+    "backToTemplatesShort": "Volver a Plantillas",
+    "loading": "Cargando...",
+    "notFound": "Comercio no encontrado",
+    "loadError": "Error al cargar el comercio",
+    "title": "Configuración de plantilla",
+    "currentTemplate": "Plantilla actual:",
+    "noOptions": "Esta plantilla no tiene opciones de configuración definidas aún. Se irán añadiendo por plantilla.",
+    "saved": "Configuración guardada correctamente.",
+    "saveError": "Error al guardar",
+    "saving": "Guardando...",
+    "save": "Guardar configuración",
+    "cancel": "Cancelar",
+    "uploadImage": "Subir imagen",
+    "uploading": "Subiendo…",
+    "restoreDefault": "Restaurar predeterminada",
+    "uploadError": "Error al subir la imagen"
+  },
+  "templateNames": {
+    "classic": "Clásica",
+    "minimalist": "Minimalista",
+    "foodie": "Foodie",
+    "burgers": "Burgers",
+    "italianFood": "Italian Food",
+    "gourmet": "Gourmet",
+    "proMobile": "Modern Food",
+    "nightClub": "Neon Club",
+    "smartFood": "Smart Food",
+    "beachBar": "Beach Life",
+    "solNoche": "Sol & Noche"
+  },
+  "configOptions": {
+    "yes": "Sí",
+    "no": "No",
+    "empty": "—",
+    "removeImage": "Quitar",
+    "primaryColor": {
+      "label": "Color principal",
+      "description": "Color principal de la plantilla (botones, títulos, elementos destacados)."
+    },
+    "secondaryColor": {
+      "label": "Color secundario",
+      "description": "Color secundario (acentos, bordes, texto destacado)."
+    },
+    "showCoverImage": {
+      "label": "Mostrar imagen de portada",
+      "description": "Si está desactivado, no se muestra la imagen de portada en la plantilla."
+    },
+    "showLogo": {
+      "label": "Mostrar logo",
+      "description": "Si está desactivado, no se muestra el logo del comercio."
+    },
+    "showRestaurantName": {
+      "label": "Mostrar nombre del comercio",
+      "description": "Si está desactivado, no se muestra el nombre del comercio."
+    },
+    "showRestaurantDescription": {
+      "label": "Mostrar descripción del comercio",
+      "description": "Si está desactivado, no se muestra la descripción del comercio."
+    },
+    "restaurantNameColor": {
+      "label": "Color del nombre del comercio",
+      "description": "Color del texto del nombre del comercio en la cabecera."
+    },
+    "sectionTitleFontSize": {
+      "label": "Tamaño de letra de los títulos de sección",
+      "description": "Tamaño del texto de las categorías del menú (por ejemplo: Hamburguesas, Acompañamientos).",
+      "values": {
+        "small": "Pequeño",
+        "medium": "Mediano",
+        "large": "Grande",
+        "xlarge": "Extra grande"
+      }
+    },
+    "showTranslationFlags": {
+      "label": "Mostrar banderas de traducciones",
+      "description": "Si está desactivado, se ocultan los iconos de bandera en el selector de idiomas del menú público cuando hay varias traducciones."
+    },
+    "fontFamily": {
+      "label": "Tipografía",
+      "description": "Fuente para títulos y textos de la plantilla.",
+      "values": {
+        "serif": "Serif (Georgia)",
+        "sans": "Sans (Helvetica)",
+        "century": "Century Schoolbook",
+        "baskerville": "Baskerville",
+        "palatino": "Palatino",
+        "playfair": "Playfair Display (por defecto)",
+        "cormorant": "Cormorant Garamond",
+        "bodoni": "Bodoni Moda",
+        "eb-garamond": "EB Garamond",
+        "lora": "Lora",
+        "cinzel": "Cinzel"
+      }
+    },
+    "showProductImages": {
+      "label": "Mostrar fotos de productos",
+      "description": "Mostrar foto del producto cuando exista (sin placeholder si no hay foto)."
+    },
+    "backgroundImageUrl": {
+      "label": "Imagen de fondo",
+      "description": "Foto de fondo a pantalla completa. Cada comercio puede tener la suya."
+    },
+    "colorMode": {
+      "label": "Modo de color",
+      "description": "Apariencia base de la carta cuando no está activo el cambio automático por horario.",
+      "values": {
+        "light": "Claro",
+        "dark": "Oscuro"
+      }
+    },
+    "autoDayNightSwitch": {
+      "label": "Cambiar según horario día/noche",
+      "description": "Alterna entre modo claro y oscuro según el uso horario y las horas configuradas."
+    },
+    "templateTimezone": {
+      "label": "Uso horario",
+      "description": "Zona horaria para calcular si es día o noche. Si no se define, usa la del comercio.",
+      "values": {
+        "America_Argentina_Buenos_Aires": "Argentina (Buenos Aires)",
+        "America_Montevideo": "Uruguay (Montevideo)",
+        "America_Santiago": "Chile (Santiago)",
+        "America_Sao_Paulo": "Brasil (São Paulo)",
+        "America_Mexico_City": "México (Ciudad de México)",
+        "America_Bogota": "Colombia (Bogotá)",
+        "America_Lima": "Perú (Lima)",
+        "Europe_Madrid": "España (Madrid)",
+        "UTC": "UTC"
+      }
+    },
+    "dayStartHour": {
+      "label": "Hora de inicio del día",
+      "description": "Hora local desde la cual se considera día (modo claro). Valor de 0 a 23."
+    },
+    "dayEndHour": {
+      "label": "Hora de fin del día",
+      "description": "Hora local desde la cual comienza la noche (modo oscuro). Valor de 0 a 23."
+    },
+    "dayLogoUrl": {
+      "label": "Logo (modo claro)",
+      "description": "Logo para el modo claro. Si no se define, usa el logo del comercio."
+    },
+    "nightLogoUrl": {
+      "label": "Logo (modo oscuro)",
+      "description": "Logo para el modo oscuro. Si no se define, usa el logo de día o el del comercio."
+    },
+    "dayCoverImageUrl": {
+      "label": "Portada de día",
+      "description": "Imagen de portada para el modo claro. Tiene prioridad sobre la portada del comercio."
+    },
+    "nightCoverImageUrl": {
+      "label": "Portada de noche",
+      "description": "Imagen de portada para el modo oscuro. Tiene prioridad sobre la portada del comercio."
+    }
+  }
+}

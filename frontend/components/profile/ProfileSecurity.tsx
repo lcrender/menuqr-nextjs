@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../lib/axios';
 
 interface SessionItem {
@@ -19,12 +20,19 @@ export default function ProfileSecurity({
   onCloseChangePassword,
   onChangePasswordSuccess,
 }: ProfileSecurityProps) {
+  const { t, i18n } = useTranslation();
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [revokeLoading, setRevokeLoading] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '', revokeOtherSessions: false });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+    revokeOtherSessions: false,
+  });
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
 
   useEffect(() => {
     const load = async () => {
@@ -41,14 +49,21 @@ export default function ProfileSecurity({
   }, []);
 
   const handleRevokeAll = async () => {
-    if (!confirm('Se cerrarán todas las sesiones en otros dispositivos. Tendrás que volver a iniciar sesión allí. ¿Continuar?')) return;
+    if (!confirm(t('myProfile.security.revokeAllConfirm'))) return;
     setRevokeLoading(true);
     try {
       await api.post('/auth/me/revoke-all-sessions');
-      setSessions([{ id: 'current', device: 'Este dispositivo', lastActive: new Date().toISOString(), current: true }]);
+      setSessions([
+        {
+          id: 'current',
+          device: t('myProfile.security.thisDevice'),
+          lastActive: new Date().toISOString(),
+          current: true,
+        },
+      ]);
       onChangePasswordSuccess();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'No se pudieron cerrar las sesiones.');
+      alert(err.response?.data?.message || t('myProfile.security.revokeAllError'));
     } finally {
       setRevokeLoading(false);
     }
@@ -58,11 +73,11 @@ export default function ProfileSecurity({
     e.preventDefault();
     setPasswordError(null);
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError('La nueva contraseña y la confirmación no coinciden.');
+      setPasswordError(t('myProfile.security.passwordMismatch'));
       return;
     }
     if (passwordForm.newPassword.length < 8) {
-      setPasswordError('La contraseña debe tener al menos 8 caracteres.');
+      setPasswordError(t('myProfile.security.passwordMinLength'));
       return;
     }
     setPasswordLoading(true);
@@ -76,7 +91,7 @@ export default function ProfileSecurity({
       onCloseChangePassword();
       onChangePasswordSuccess();
     } catch (err: any) {
-      setPasswordError(err.response?.data?.message || 'No se pudo cambiar la contraseña.');
+      setPasswordError(err.response?.data?.message || t('myProfile.security.passwordChangeError'));
     } finally {
       setPasswordLoading(false);
     }
@@ -85,16 +100,15 @@ export default function ProfileSecurity({
   return (
     <section className="card profile-section">
       <div className="card-header bg-white border-bottom">
-        <h2 className="h5 mb-0 fw-semibold">Seguridad</h2>
+        <h2 className="h5 mb-0 fw-semibold">{t('myProfile.security.title')}</h2>
       </div>
       <div className="card-body">
-        {/* Cambio de contraseña: inline o modal según estado */}
         {showChangePassword ? (
           <div className="border rounded p-3 mb-4 bg-light">
-            <h3 className="h6 mb-3">Cambiar contraseña</h3>
+            <h3 className="h6 mb-3">{t('myProfile.security.changePassword')}</h3>
             <form onSubmit={handleChangePassword}>
               <div className="mb-2">
-                <label className="form-label small">Contraseña actual</label>
+                <label className="form-label small">{t('myProfile.security.currentPassword')}</label>
                 <input
                   type="password"
                   className="form-control"
@@ -104,7 +118,7 @@ export default function ProfileSecurity({
                 />
               </div>
               <div className="mb-2">
-                <label className="form-label small">Nueva contraseña</label>
+                <label className="form-label small">{t('myProfile.security.newPassword')}</label>
                 <input
                   type="password"
                   className="form-control"
@@ -115,7 +129,7 @@ export default function ProfileSecurity({
                 />
               </div>
               <div className="mb-2">
-                <label className="form-label small">Confirmar nueva contraseña</label>
+                <label className="form-label small">{t('myProfile.security.confirmNewPassword')}</label>
                 <input
                   type="password"
                   className="form-control"
@@ -133,37 +147,38 @@ export default function ProfileSecurity({
                   onChange={(e) => setPasswordForm((f) => ({ ...f, revokeOtherSessions: e.target.checked }))}
                 />
                 <label className="form-check-label small" htmlFor="revokeOther">
-                  Cerrar sesión en todos los demás dispositivos
+                  {t('myProfile.security.revokeOtherSessions')}
                 </label>
               </div>
               {passwordError && <div className="text-danger small mb-2">{passwordError}</div>}
               <div className="d-flex gap-2">
                 <button type="submit" className="btn btn-primary btn-sm" disabled={passwordLoading}>
-                  {passwordLoading ? '…' : 'Actualizar contraseña'}
+                  {passwordLoading ? '…' : t('myProfile.security.updatePassword')}
                 </button>
                 <button type="button" className="btn btn-outline-secondary btn-sm" onClick={onCloseChangePassword}>
-                  Cancelar
+                  {t('myProfile.security.cancel')}
                 </button>
               </div>
             </form>
           </div>
         ) : null}
 
-        {/* Sesiones activas */}
-        <h3 className="h6 mb-2">Sesiones activas</h3>
+        <h3 className="h6 mb-2">{t('myProfile.security.activeSessions')}</h3>
         {sessionsLoading ? (
-          <p className="text-muted small">Cargando…</p>
+          <p className="text-muted small">{t('myProfile.security.loadingSessions')}</p>
         ) : sessions.length === 0 ? (
-          <p className="text-muted small">No hay sesiones registradas.</p>
+          <p className="text-muted small">{t('myProfile.security.noSessions')}</p>
         ) : (
           <ul className="list-group list-group-flush mb-3">
             {sessions.map((s) => (
               <li key={s.id} className="list-group-item d-flex justify-content-between align-items-center px-0">
                 <div>
                   <span className="fw-medium">{s.device}</span>
-                  {s.current && <span className="badge bg-primary ms-2">Actual</span>}
+                  {s.current && (
+                    <span className="badge bg-primary ms-2">{t('myProfile.security.currentSession')}</span>
+                  )}
                   <div className="small text-muted">
-                    {new Date(s.lastActive).toLocaleString('es')}
+                    {new Date(s.lastActive).toLocaleString(dateLocale)}
                   </div>
                 </div>
               </li>
@@ -176,16 +191,15 @@ export default function ProfileSecurity({
           onClick={handleRevokeAll}
           disabled={revokeLoading || sessions.length <= 1}
         >
-          {revokeLoading ? '…' : 'Cerrar todas las sesiones'}
+          {revokeLoading ? '…' : t('myProfile.security.revokeAllSessions')}
         </button>
         {sessions.length <= 1 && (
-          <p className="small text-muted mt-2 mb-0">Solo hay una sesión activa.</p>
+          <p className="small text-muted mt-2 mb-0">{t('myProfile.security.onlyOneSession')}</p>
         )}
 
-        {/* 2FA: preparado para futuro */}
         <hr className="my-4" />
-        <h3 className="h6 mb-2">Autenticación en dos pasos (2FA)</h3>
-        <p className="small text-muted mb-0">Próximamente podrás activar verificación en dos pasos para mayor seguridad.</p>
+        <h3 className="h6 mb-2">{t('myProfile.security.twoFactorTitle')}</h3>
+        <p className="small text-muted mb-0">{t('myProfile.security.twoFactorHelp')}</p>
       </div>
     </section>
   );

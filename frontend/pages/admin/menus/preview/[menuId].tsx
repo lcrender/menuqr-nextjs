@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import api from '../../../../lib/axios';
+import i18n from '../../../../src/i18n/config';
+import adminMenusEs from '../../../../src/locales/fragments/adminMenus.es.json';
+import adminMenusEn from '../../../../src/locales/fragments/adminMenus.en.json';
 import AdminMenuPreviewConfigDrawer from '../../../../components/preview/AdminMenuPreviewConfigDrawer';
 import {
   buildTemplateMenuLocales,
@@ -24,6 +28,9 @@ import NightClubTemplate from '../../../../templates/nightclub/NightClubTemplate
 import SmartFoodTemplate from '../../../../templates/smartfood/SmartFoodTemplate';
 import BeachBarTemplate from '../../../../templates/beachbar/BeachBarTemplate';
 import SolNocheTemplate from '../../../../templates/solnoche/SolNocheTemplate';
+
+i18n.addResourceBundle('es-ES', 'translation', { adminMenus: adminMenusEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { adminMenus: adminMenusEn }, true, true);
 
 function normalizePlanKey(plan: string | null | undefined): string {
   const raw = (plan || 'free').toString().toLowerCase().trim().replace(/\s+/g, '_');
@@ -174,6 +181,7 @@ function mapPublicSectionsToPreview(sectionsRaw: unknown[]): MenuSectionRow[] {
  * URL: /admin/menus/preview/[menuId]
  */
 export default function AdminMenuPreviewPage() {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const menuId = typeof router.query.menuId === 'string' ? router.query.menuId : '';
   const restaurantNameFromQuery =
@@ -262,12 +270,12 @@ export default function AdminMenuPreviewPage() {
             }
           } catch (err: any) {
             if (err?.response?.status !== 404) {
-              console.error('Error cargando restaurante para preview:', err);
+              console.error('Error cargando comercio para preview:', err);
             }
           }
         }
 
-        // Fallback: listar restaurantes y buscar por id
+        // Fallback: listar comercios y buscar por id
         if (!restaurantData && restaurantId) {
           try {
             const listRes = await api.get('/restaurants', {
@@ -351,7 +359,7 @@ export default function AdminMenuPreviewPage() {
         const nextRestaurant = {
           ...(restaurantData || {}),
           id: restaurantData?.id || restaurantId || menuData.id,
-          name: restaurantName || 'Restaurante',
+          name: restaurantName || t('adminMenus.preview.fallbackBusinessName'),
           slug: restaurantData?.slug || menuData.restaurantSlug || 'preview',
           description: restaurantData?.description || menuData.restaurantDescription || undefined,
           address: restaurantData?.address || menuData.restaurantAddress || undefined,
@@ -436,7 +444,7 @@ export default function AdminMenuPreviewPage() {
         localeReadyRef.current = true;
       } catch (err: any) {
         if (!cancelled) {
-          setError(err?.response?.data?.message || err?.message || 'No se pudo cargar la vista previa');
+          setError(err?.response?.data?.message || err?.message || t('adminMenus.preview.loadError'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -446,7 +454,7 @@ export default function AdminMenuPreviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [menuId, restaurantNameFromQuery, router.isReady]);
+  }, [menuId, restaurantNameFromQuery, router.isReady, t]);
 
   // Ajustar locale si deja de estar disponible
   useEffect(() => {
@@ -582,7 +590,7 @@ export default function AdminMenuPreviewPage() {
   const templateOptions = useMemo(
     () =>
       [...TEMPLATES_CATALOG]
-        .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }))
+        .sort((a, b) => a.name.localeCompare(b.name, i18n.language, { sensitivity: 'base' }))
         .map((t) => ({
           id: t.id,
           name: t.name,
@@ -659,7 +667,7 @@ export default function AdminMenuPreviewPage() {
 
   const handleSaveConfig = useCallback(async () => {
     if (!restaurant?.id) {
-      setConfigSaveError('No se pudo identificar el restaurante');
+      setConfigSaveError(t('adminMenus.preview.identifyBusinessError'));
       return;
     }
     const currentMeta = TEMPLATES_CATALOG.find((t) => t.id === (restaurant.template || 'classic'));
@@ -686,11 +694,11 @@ export default function AdminMenuPreviewPage() {
       setConfigSaveSuccess(null);
       setConfigDrawerOpen(false);
     } catch (err: any) {
-      setConfigSaveError(err?.response?.data?.message || 'Error al guardar la configuración');
+      setConfigSaveError(err?.response?.data?.message || t('adminMenus.preview.saveConfigError'));
     } finally {
       setConfigSaving(false);
     }
-  }, [applyConfigToRestaurant, configValues, hasProTemplatesAccess, restaurant]);
+  }, [applyConfigToRestaurant, configValues, hasProTemplatesAccess, restaurant, t]);
 
   const templateBody = useMemo(() => {
     if (!menu || !restaurant) return null;
@@ -759,13 +767,19 @@ export default function AdminMenuPreviewPage() {
   ]);
 
   const statusLabel =
-    menu?.status === 'PUBLISHED' ? 'Publicado' : menu?.status === 'DRAFT' ? 'Borrador' : menu?.status || '';
+    menu?.status === 'PUBLISHED'
+      ? t('adminMenus.preview.statusPublished')
+      : menu?.status === 'DRAFT'
+        ? t('adminMenus.preview.statusDraft')
+        : menu?.status || '';
 
   return (
     <>
       <Head>
         <title>
-          {menu?.name ? `Vista previa: ${menu.name}` : 'Vista previa del menú'} | AppMenuQR
+          {menu?.name
+            ? t('adminMenus.preview.titleWithName', { name: menu.name })
+            : t('adminMenus.preview.titleDefault')}
         </title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
@@ -774,7 +788,7 @@ export default function AdminMenuPreviewPage() {
         <header className="admin-menu-preview-bar">
           <div className="admin-menu-preview-bar-inner">
             <div className="admin-menu-preview-bar-text">
-              <strong>Vista previa</strong>
+              <strong>{t('adminMenus.preview.barTitle')}</strong>
               {menu?.name ? <span className="admin-menu-preview-menu-name">{menu.name}</span> : null}
               {statusLabel ? (
                 <span
@@ -790,7 +804,7 @@ export default function AdminMenuPreviewPage() {
               <div
                 className="admin-menu-preview-toggle"
                 role="group"
-                aria-label="Modo de vista"
+                aria-label={t('adminMenus.preview.viewMode')}
               >
                 <button
                   type="button"
@@ -798,7 +812,7 @@ export default function AdminMenuPreviewPage() {
                   onClick={() => setViewMode('mobile')}
                   aria-pressed={viewMode === 'mobile'}
                 >
-                  Móvil
+                  {t('adminMenus.preview.mobile')}
                 </button>
                 <button
                   type="button"
@@ -806,7 +820,7 @@ export default function AdminMenuPreviewPage() {
                   onClick={() => setViewMode('desktop')}
                   aria-pressed={viewMode === 'desktop'}
                 >
-                  Desktop
+                  {t('adminMenus.preview.desktop')}
                 </button>
               </div>
               <button
@@ -821,7 +835,7 @@ export default function AdminMenuPreviewPage() {
                 aria-expanded={configDrawerOpen}
                 aria-controls="admin-preview-config-drawer"
               >
-                Configurar
+                {t('adminMenus.preview.configure')}
               </button>
             </div>
           </div>
@@ -856,7 +870,7 @@ export default function AdminMenuPreviewPage() {
           {loading ? (
             <div className="admin-menu-preview-state">
               <div className="spinner-border text-secondary" role="status">
-                <span className="visually-hidden">Cargando…</span>
+                <span className="visually-hidden">{t('adminMenus.preview.loading')}</span>
               </div>
             </div>
           ) : error ? (
@@ -866,7 +880,7 @@ export default function AdminMenuPreviewPage() {
           ) : viewMode === 'mobile' ? (
             <div className="admin-menu-preview-phone-stage">
               <div className="preview-phone-wrap">
-                <div className="preview-phone" aria-label="Vista previa en móvil">
+                <div className="preview-phone" aria-label={t('adminMenus.preview.mobileAria')}>
                   <div className="preview-phone-screen">
                     <div className="preview-phone-live">{templateBody}</div>
                   </div>
@@ -874,10 +888,12 @@ export default function AdminMenuPreviewPage() {
               </div>
               <div className="admin-menu-preview-hint">
                 <p className="admin-menu-preview-hint-title">
-                  Vista móvil{menu?.status === 'DRAFT' ? ' · borrador' : ''}.
+                  {t('adminMenus.preview.mobileHint', {
+                    draftSuffix: menu?.status === 'DRAFT' ? t('adminMenus.preview.draftSuffix') : '',
+                  })}
                 </p>
                 <p className="admin-menu-preview-hint-note">
-                  Puede haber variaciones mínimas según la resolución de cada teléfono.
+                  {t('adminMenus.preview.mobileNote')}
                 </p>
               </div>
             </div>

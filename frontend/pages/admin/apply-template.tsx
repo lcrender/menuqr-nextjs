@@ -71,7 +71,7 @@ export default function ApplyTemplatePage() {
           const q = new URLSearchParams();
           q.set('wizard', 'true');
           q.set('intentTemplate', storedIntent.apiTemplateId);
-          router.replace(`/admin/restaurants?${q.toString()}`);
+          router.replace(`/admin/comercios?${q.toString()}`);
           return;
         }
         setRestaurants(list);
@@ -126,14 +126,14 @@ export default function ApplyTemplatePage() {
       <div className={styles.wrap}>
         <div className={styles.card}>
           <p className={styles.eyebrow}>Plantilla seleccionada</p>
-          <h1 className={styles.title}>¿A qué restaurante querés aplicar «{templateLabel}»?</h1>
+          <h1 className={styles.title}>¿A qué comercio querés aplicar «{templateLabel}»?</h1>
           <p className={styles.lead}>
             Elegí el local donde querés usar el diseño <strong>{templateName}</strong>. Podés cambiar la plantilla más
             adelante desde el panel.
           </p>
 
           <label className={styles.label} htmlFor="apply-template-restaurant">
-            Restaurante
+            Comercio
           </label>
           <select
             id="apply-template-restaurant"
@@ -142,7 +142,7 @@ export default function ApplyTemplatePage() {
             onChange={(e) => setSelectedId(e.target.value)}
             disabled={applying}
           >
-            <option value="">Elegir restaurante…</option>
+            <option value="">Elegir comercio…</option>
             {restaurants.map((restaurant) => (
               <option key={restaurant.id} value={restaurant.id}>
                 {restaurant.name}
@@ -166,8 +166,8 @@ export default function ApplyTemplatePage() {
           </div>
 
           <p className={styles.hint}>
-            ¿Querés crear un restaurante nuevo?{' '}
-            <Link href={`/admin/restaurants?wizard=true&intentTemplate=${encodeURIComponent(templateApiId)}`}>
+            ¿Querés crear un comercio nuevo?{' '}
+            <Link href={`/admin/comercios?wizard=true&intentTemplate=${encodeURIComponent(templateApiId)}`}>
               Abrí el asistente de alta
             </Link>
           </p>

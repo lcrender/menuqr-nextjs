@@ -1,0 +1,219 @@
+{
+  "searchLabel": "Buscar en la guía",
+  "searchPlaceholder": "Ej. CSV, QR, secciones…",
+  "noMatches": "Sin coincidencias",
+  "indexButton": "☰ Índice",
+  "close": "Cerrar",
+  "closeMenu": "Cerrar menú",
+  "navAriaLabel": "Secciones de la documentación",
+  "docsTitle": "Documentación",
+  "guideStart": "Inicio de la guía",
+  "guideEnd": "Fin de la guía",
+  "introH1": "📚 Documentación — AppMenuQR",
+  "introLead": "Guía completa para usar AppMenuQR y crear menús digitales profesionales.",
+  "seeAlso": "Ver también en la guía",
+  "faq": "Problemas frecuentes",
+  "redirecting": "Redirigiendo a la documentación…",
+  "sections": {
+    "intro": {
+      "title": "Documentación — Inicio",
+      "shortTitle": "Inicio",
+      "group": "Introducción",
+      "metaTitlePublic": "Documentación | AppMenuQR",
+      "metaTitleAdmin": "Documentación | Ayuda",
+      "metaDescription": "Guía AppMenuQR: registro, comercio, menús, CSV, plantillas, publicación, programación, QR, impresión en papel, administración del negocio, traducciones, suscripciones y pagos.",
+      "keywords": "inicio guía flujo resumen pasos registro sesión",
+      "searchText": "resumen flujo completo crear comercio menú csv secciones productos qr verificar email"
+    },
+    "crear-restaurante": {
+      "title": "Crear un comercio",
+      "shortTitle": "Comercio",
+      "group": "Primeros pasos",
+      "metaTitlePublic": "Crear un comercio | Documentación AppMenuQR",
+      "metaTitleAdmin": "Crear un comercio | Ayuda",
+      "metaDescription": "Alta del primer comercio en AppMenuQR: datos, dirección en mapa, teléfono, WhatsApp, logo, plantilla por defecto y moneda principal.",
+      "keywords": "comercio crear logo portada moneda plantilla dirección whatsapp maps video tutorial youtube",
+      "searchText": "comercios menú lateral crear guardar primera vez asistente video tutorial primeros pasos"
+    },
+    "crear-menu": {
+      "title": "Crear un menú",
+      "shortTitle": "Menú",
+      "group": "Primeros pasos",
+      "metaTitlePublic": "Crear un menú | Documentación AppMenuQR",
+      "metaTitleAdmin": "Crear un menú | Ayuda",
+      "metaDescription": "Cómo crear menús por comercio: nombre visible para clientes, descripción opcional y secciones dentro del menú.",
+      "keywords": "menú crear borrador comercio nombre botón secciones video tutorial youtube",
+      "searchText": "menús nuevo guardar almuerzo cena entradas principales video tutorial primeros pasos"
+    },
+    "crear-secciones": {
+      "title": "Crear secciones del menú",
+      "shortTitle": "Secciones",
+      "group": "Menú",
+      "metaTitlePublic": "Secciones del menú | Documentación AppMenuQR",
+      "metaTitleAdmin": "Secciones del menú | Ayuda",
+      "metaDescription": "Organizar categorías en el menú: agregar sección, orden con arrastre y líneas de agarre.",
+      "keywords": "secciones categorías menú orden drag agregar",
+      "searchText": "secciones del menú agregar orden tres líneas"
+    },
+    "crear-productos": {
+      "title": "Crear productos",
+      "shortTitle": "Productos",
+      "group": "Menú",
+      "metaTitlePublic": "Crear productos | Documentación AppMenuQR",
+      "metaTitleAdmin": "Crear productos | Ayuda",
+      "metaDescription": "Alta de productos con precios en la moneda del comercio, iconos y asignación a secciones.",
+      "keywords": "productos precios iconos moneda destacado",
+      "searchText": "productos del menú crear precio moneda principal comercio"
+    },
+    "reordenar-productos": {
+      "title": "Reordenar productos",
+      "shortTitle": "Orden",
+      "group": "Menú",
+      "metaTitlePublic": "Reordenar productos | Documentación AppMenuQR",
+      "metaTitleAdmin": "Reordenar productos | Ayuda",
+      "metaDescription": "Cambiar el orden de productos con arrastrar y soltar dentro de una sección o entre secciones.",
+      "keywords": "orden arrastrar drag drop productos",
+      "searchText": "reordenar arrastra suelta sección"
+    },
+    "importar-menu-csv": {
+      "title": "Importar menú con CSV",
+      "shortTitle": "CSV",
+      "group": "Menú",
+      "metaTitlePublic": "Importar menú con CSV | Documentación AppMenuQR",
+      "metaTitleAdmin": "Importar menú con CSV | Ayuda",
+      "metaDescription": "Importar secciones y productos desde CSV: columnas, alérgenos, límites del plan y edición posterior completa.",
+      "keywords": "csv importar plantilla secciones productos precios",
+      "searchText": "nombre_seccion nombre_producto moneda precio importación editar después"
+    },
+    "plantillas": {
+      "title": "Plantillas de diseño",
+      "shortTitle": "Diseño",
+      "group": "Diseño",
+      "metaTitlePublic": "Plantillas de diseño | Documentación AppMenuQR",
+      "metaTitleAdmin": "Plantillas de diseño | Ayuda",
+      "metaDescription": "Plantilla por defecto al crear el comercio, Menú plantillas para previsualizar, colores y opciones del negocio.",
+      "keywords": "plantilla diseño preview colores logo nombre classic foodie",
+      "searchText": "plantilla comercio editar activar desactivar primarios secundarios"
+    },
+    "publicar-menu": {
+      "title": "Publicar el menú",
+      "shortTitle": "Publicar",
+      "group": "Publicación",
+      "metaTitlePublic": "Publicar el menú | Documentación AppMenuQR",
+      "metaTitleAdmin": "Publicar el menú | Ayuda",
+      "metaDescription": "Estado borrador o publicado, botones publicar y despublicar; enlace del comercio con menús ocultos hasta publicar.",
+      "keywords": "publicar borrador despublicar estado acciones lista menús",
+      "searchText": "columna estado qr visible oculto"
+    },
+    "programar-menu": {
+      "title": "Programar un menú",
+      "shortTitle": "Programar menú",
+      "group": "Publicación",
+      "metaTitlePublic": "Programar visibilidad del menú | Documentación AppMenuQR",
+      "metaTitleAdmin": "Programar visibilidad del menú | Ayuda",
+      "metaDescription": "Programación semanal de menús en planes Pro y Premium: días, horarios, fechas y huso horario del comercio.",
+      "keywords": "programar horario días semana visibilidad pro premium timezone",
+      "searchText": "lunes martes horario desde hasta fechas guardar programación menús"
+    },
+    "descargar-qr": {
+      "title": "Descargar código QR",
+      "shortTitle": "Código QR",
+      "group": "Publicación",
+      "metaTitlePublic": "Código QR del comercio | Documentación AppMenuQR",
+      "metaTitleAdmin": "Código QR del comercio | Ayuda",
+      "metaDescription": "QR del comercio en el dashboard: todos los menús publicados, descarga, impresión y aviso si cambias el nombre.",
+      "keywords": "qr código descargar dashboard comercio menús nombre enlace",
+      "searchText": "imprimir escanear google maps cambiar nombre nuevo qr"
+    },
+    "imprimir-carta": {
+      "title": "Imprimir la carta en papel",
+      "shortTitle": "Imprimir carta",
+      "group": "Publicación",
+      "metaTitlePublic": "Imprimir carta en papel | Documentación AppMenuQR",
+      "metaTitleAdmin": "Imprimir carta en papel | Ayuda",
+      "metaDescription": "Imprimí tu menú en papel desde el panel: plantillas, logo, secciones, idioma y menús a incluir.",
+      "keywords": "imprimir papel carta plantilla pdf logo secciones idioma menús",
+      "searchText": "imprimir carta comercio clásica elegante moderna bistro vista previa"
+    },
+    "desactivar-restaurante": {
+      "title": "Desactivar el comercio",
+      "shortTitle": "Desactivar local",
+      "group": "Administración del negocio",
+      "metaTitlePublic": "Desactivar comercio | Documentación AppMenuQR",
+      "metaTitleAdmin": "Desactivar comercio | Ayuda",
+      "metaDescription": "Qué ocurre si desactivás el comercio: la página pública y el QR no se muestran hasta reactivarlo.",
+      "keywords": "desactivar comercio ocultar pausa cerrar página pública qr",
+      "searchText": "comercio inactivo volver activar cartel online"
+    },
+    "eliminar-restaurante": {
+      "title": "Eliminar el comercio",
+      "shortTitle": "Eliminar local",
+      "group": "Administración del negocio",
+      "metaTitlePublic": "Eliminar comercio | Documentación AppMenuQR",
+      "metaTitleAdmin": "Eliminar comercio | Ayuda",
+      "metaDescription": "Eliminar un comercio borra todos los datos asociados de forma irreversible.",
+      "keywords": "eliminar comercio borrar datos permanentemente peligro",
+      "searchText": "borrar negocio irreversible menús productos"
+    },
+    "menu-visibilidad-y-eliminacion": {
+      "title": "Menú: visibilidad y eliminación",
+      "shortTitle": "Menú / borrar",
+      "group": "Administración del negocio",
+      "metaTitlePublic": "Despublicar y eliminar menús | Documentación AppMenuQR",
+      "metaTitleAdmin": "Despublicar y eliminar menús | Ayuda",
+      "metaDescription": "Menús despublicados en la carta online, eliminar menú sin borrar productos y productos huérfanos.",
+      "keywords": "despublicar menú eliminar menú productos sin menú visible carta",
+      "searchText": "borrar menu productos asignar huérfano"
+    },
+    "traducciones": {
+      "title": "Traducciones",
+      "shortTitle": "Traducciones",
+      "group": "Contenido e idiomas",
+      "metaTitlePublic": "Traducciones del menú | Documentación AppMenuQR",
+      "metaTitleAdmin": "Traducciones del menú | Ayuda",
+      "metaDescription": "Pasos para traducir contenido en AppMenuQR y límites según tu plan de suscripción.",
+      "keywords": "traducciones idiomas i18n plan límites suscripción video tutorial youtube traducción automática",
+      "searchText": "traducir menu texto segundo idioma"
+    },
+    "edicion-masiva-productos": {
+      "title": "Edición masiva de productos",
+      "shortTitle": "Edición masiva",
+      "group": "Productos avanzado",
+      "metaTitlePublic": "Edición masiva de productos | Documentación AppMenuQR",
+      "metaTitleAdmin": "Edición masiva de productos | Ayuda",
+      "metaDescription": "Acciones masivas sobre productos: borrar, mover entre menús y comercios, duplicados y límites del plan.",
+      "keywords": "masivo borrar mover duplicar plan límite productos",
+      "searchText": "trasladar otro comercio copiar cantidad"
+    },
+    "editar-productos-detalle": {
+      "title": "Editar un producto",
+      "shortTitle": "Editar producto",
+      "group": "Productos avanzado",
+      "metaTitlePublic": "Editar producto: precios y estado | Documentación AppMenuQR",
+      "metaTitleAdmin": "Editar producto: precios y estado | Ayuda",
+      "metaDescription": "Activar o desactivar un producto, nombre, descripción, precios y foto según tu plan.",
+      "keywords": "editar producto precio foto activar desactivar",
+      "searchText": "descripción opciones precio imagen plan"
+    },
+    "suscripciones-y-pagos": {
+      "title": "Suscripciones y pagos",
+      "shortTitle": "Suscripción",
+      "group": "Cuenta y facturación",
+      "metaTitlePublic": "Suscripciones y pagos | Documentación AppMenuQR",
+      "metaTitleAdmin": "Suscripciones y pagos | Ayuda",
+      "metaDescription": "Medios de pago (Mercado Pago Argentina, PayPal internacional), baja cuando quieras.",
+      "keywords": "suscripción pago mercadopago paypal argentina baja cancelar",
+      "searchText": "facturación plan cobro mensual"
+    },
+    "catalogo-plantillas": {
+      "title": "Plantillas",
+      "shortTitle": "Plantillas",
+      "group": "Plantillas",
+      "metaTitlePublic": "Plantillas | Documentación AppMenuQR",
+      "metaTitleAdmin": "Plantillas | Ayuda",
+      "metaDescription": "Resumen de las plantillas de carta digital disponibles y enlace a las características de cada una.",
+      "keywords": "plantillas catálogo características smart food beach gourmet minimalista classic foodie burgers",
+      "searchText": "ficha plantilla caracteristicas smart-food beach-bar gourmet minimalista night-club modern-food italian-food sol-noche foodie classic burgers"
+    }
+  }
+}

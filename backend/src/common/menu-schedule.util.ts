@@ -1,5 +1,5 @@
 /**
- * Programación semanal de visibilidad de menús (timezone del restaurante).
+ * Programación semanal de visibilidad de menús (timezone del comercio).
  * days: 1 = lunes … 7 = domingo (ISO).
  * startTime/endTime: "HH:mm" local; ambos null/vacío = todo el día.
  * dateRangeEnabled + startDate/endDate (YYYY-MM-DD): opcional; si está activo limita el rango calendário.
@@ -185,7 +185,7 @@ export function isWithinScheduleWindow(
 
 /**
  * Si scheduleEnabled es false → visible.
- * Si true → debe coincidir rango de fechas (si aplica), días y horario en timezone del restaurante.
+ * Si true → debe coincidir rango de fechas (si aplica), días y horario en timezone del comercio.
  */
 export function isMenuScheduledVisibleNow(args: {
   scheduleEnabled?: boolean | null;

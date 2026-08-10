@@ -19,6 +19,8 @@ import { MenusCsvImportService } from './menus-csv-import.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 import { Roles } from '../common/decorators/roles.decorator';
+import { UsersService } from '../users/users.service';
+import { preferredLanguageToContentLocale } from '../common/i18n/content-locale';
 
 @ApiTags('menus')
 @Controller('menus')
@@ -28,6 +30,7 @@ export class MenusController {
   constructor(
     private readonly menusService: MenusService,
     private readonly menusCsvImportService: MenusCsvImportService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Get()
@@ -124,7 +127,7 @@ export class MenusController {
   }
 
   @Get('assignable')
-  @ApiOperation({ summary: 'Menús del tenant asignables a un restaurante (sin local u otro local)' })
+  @ApiOperation({ summary: 'Menús del tenant asignables a un comercio (sin local u otro local)' })
   async findAssignable(
     @Query('targetRestaurantId') targetRestaurantId: string,
     @Query('tenantId') tenantIdQuery: string,
@@ -203,12 +206,16 @@ export class MenusController {
       );
     }
 
+    const me = await this.usersService.findById(req.user.id);
+    const sourceLocale = preferredLanguageToContentLocale((me as any)?.preferredLanguage);
+
     return this.menusService.create(tenantId, {
       restaurantId: createMenuDto.restaurantId || null,
       name: createMenuDto.name,
       description: createMenuDto.description,
       validFrom: createMenuDto.validFrom ? new Date(createMenuDto.validFrom) : undefined,
       validTo: createMenuDto.validTo ? new Date(createMenuDto.validTo) : undefined,
+      sourceLocale,
     });
   }
 

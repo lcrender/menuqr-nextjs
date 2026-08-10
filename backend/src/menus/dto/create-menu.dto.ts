@@ -2,7 +2,7 @@ import { IsString, IsNotEmpty, IsOptional, IsDateString, IsIn } from 'class-vali
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateMenuDto {
-  @ApiProperty({ description: 'ID del restaurante', required: false })
+  @ApiProperty({ description: 'ID del comercio', required: false })
   @IsString()
   @IsOptional()
   restaurantId?: string;

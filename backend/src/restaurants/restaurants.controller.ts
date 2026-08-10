@@ -6,6 +6,8 @@ import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 import { TransferRestaurantOwnerDto } from './dto/transfer-restaurant-owner.dto';
 import { Roles } from '../common/decorators/roles.decorator';
+import { UsersService } from '../users/users.service';
+import { preferredLanguageToContentLocale } from '../common/i18n/content-locale';
 
 @ApiTags('restaurants')
 @Controller('restaurants')
@@ -15,10 +17,11 @@ export class RestaurantsController {
   constructor(
     private readonly restaurantsService: RestaurantsService,
     private readonly dashboardWelcome: DashboardWelcomeService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Get('config-state')
-  @ApiOperation({ summary: 'Estado de configuración del restaurante seleccionado' })
+  @ApiOperation({ summary: 'Estado de configuración del comercio seleccionado' })
   @ApiResponse({ status: 200, description: 'hasRestaurant, hasMenu, hasProductLinkedToMenu, isComplete, progressPercentage' })
   async getConfigState(@Request() req, @Query('restaurantId') restaurantId?: string) {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? (req.query.tenantId as string) : req.user.tenantId;
@@ -35,7 +38,7 @@ export class RestaurantsController {
   }
 
   @Get('dashboard-stats')
-  @ApiOperation({ summary: 'Conteos y límites del plan para el dashboard (restaurantes, menús, productos)' })
+  @ApiOperation({ summary: 'Conteos y límites del plan para el dashboard (comercios, menús, productos)' })
   @ApiResponse({ status: 200, description: 'totalRestaurants, totalMenus, totalProducts, restaurantLimit, productLimit, plan' })
   async getDashboardStats(@Request() req) {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? (req.query.tenantId as string) : req.user.tenantId;
@@ -65,8 +68,8 @@ export class RestaurantsController {
   }
 
   @Get('dashboard-cards')
-  @ApiOperation({ summary: 'Fichas de todos los restaurantes del tenant para el dashboard (una por restaurante)' })
-  @ApiResponse({ status: 200, description: 'Array de estado de configuración por restaurante' })
+  @ApiOperation({ summary: 'Fichas de todos los comercios del tenant para el dashboard (una por comercio)' })
+  @ApiResponse({ status: 200, description: 'Array de estado de configuración por comercio' })
   async getDashboardCards(@Request() req) {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? (req.query.tenantId as string) : req.user.tenantId;
     if (!tenantId) return [];
@@ -74,11 +77,11 @@ export class RestaurantsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar restaurantes del tenant' })
-  @ApiResponse({ status: 200, description: 'Lista de restaurantes' })
+  @ApiOperation({ summary: 'Listar comercios del tenant' })
+  @ApiResponse({ status: 200, description: 'Lista de comercios' })
   async findAll(@Request() req) {
-    // Si es SUPER_ADMIN y no hay tenantId en query, devolver todos los restaurantes
-    // Si hay restaurantName en query, filtrar por nombre de restaurante
+    // Si es SUPER_ADMIN y no hay tenantId en query, devolver todos los comercios
+    // Si hay restaurantName en query, filtrar por nombre de comercio
     if (req.user.role === 'SUPER_ADMIN' && !req.query.tenantId) {
       const restaurantName = req.query.restaurantName as string | undefined;
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
@@ -96,18 +99,18 @@ export class RestaurantsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener restaurante por ID' })
-  @ApiResponse({ status: 200, description: 'Restaurante encontrado' })
-  @ApiResponse({ status: 404, description: 'Restaurante no encontrado' })
+  @ApiOperation({ summary: 'Obtener comercio por ID' })
+  @ApiResponse({ status: 200, description: 'Comercio encontrado' })
+  @ApiResponse({ status: 404, description: 'Comercio no encontrado' })
   async findOne(@Param('id') id: string, @Request() req) {
     const tenantId = req.user.role === 'SUPER_ADMIN' ? req.query.tenantId : req.user.tenantId;
     return this.restaurantsService.findById(id, tenantId);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Crear nuevo restaurante' })
-  @ApiResponse({ status: 201, description: 'Restaurante creado exitosamente' })
-  @ApiResponse({ status: 400, description: 'Límite de restaurantes alcanzado' })
+  @ApiOperation({ summary: 'Crear nuevo comercio' })
+  @ApiResponse({ status: 201, description: 'Comercio creado exitosamente' })
+  @ApiResponse({ status: 400, description: 'Límite de comercios alcanzado' })
   async create(@Body() createRestaurantDto: CreateRestaurantDto, @Request() req) {
     const { tenantId: tenantIdFromBody, ...payload } = createRestaurantDto;
     const tenantId =
@@ -116,18 +119,20 @@ export class RestaurantsController {
     if (!tenantId) {
       throw new BadRequestException(
         req.user.role === 'SUPER_ADMIN'
-          ? 'Indicá la cuenta (tenantId) donde crear el restaurante.'
+          ? 'Indicá la cuenta (tenantId) donde crear el comercio.'
           : 'Tenant ID es requerido',
       );
     }
 
-    return this.restaurantsService.create(tenantId, payload);
+    const me = await this.usersService.findById(req.user.id);
+    const sourceLocale = preferredLanguageToContentLocale((me as any)?.preferredLanguage);
+    return this.restaurantsService.create(tenantId, { ...payload, sourceLocale });
   }
 
   @Post(':id/transfer-ownership')
   @Roles('SUPER_ADMIN')
-  @ApiOperation({ summary: 'Transferir restaurante (con menús/productos) a otro usuario/tenant' })
-  @ApiResponse({ status: 200, description: 'Restaurante transferido exitosamente' })
+  @ApiOperation({ summary: 'Transferir comercio (con menús/productos) a otro usuario/tenant' })
+  @ApiResponse({ status: 200, description: 'Comercio transferido exitosamente' })
   async transferOwnership(
     @Param('id') id: string,
     @Body() dto: TransferRestaurantOwnerDto,
@@ -137,20 +142,20 @@ export class RestaurantsController {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Actualizar restaurante' })
-  @ApiResponse({ status: 200, description: 'Restaurante actualizado exitosamente' })
+  @ApiOperation({ summary: 'Actualizar comercio' })
+  @ApiResponse({ status: 200, description: 'Comercio actualizado exitosamente' })
   async update(
     @Param('id') id: string,
     @Body() updateRestaurantDto: UpdateRestaurantDto,
     @Request() req,
   ) {
-    // Para SUPER_ADMIN, obtener tenantId del body o del query, sino del restaurante existente
+    // Para SUPER_ADMIN, obtener tenantId del body o del query, sino del comercio existente
     let tenantId: string;
     
     if (req.user.role === 'SUPER_ADMIN') {
       tenantId = updateRestaurantDto.tenantId || req.query.tenantId as string;
       
-      // Si no está en el body ni en query, obtenerlo del restaurante (sin filtrar por tenant)
+      // Si no está en el body ni en query, obtenerlo del comercio (sin filtrar por tenant)
       if (!tenantId) {
         try {
           const restaurant = await this.restaurantsService.findById(id);
@@ -165,15 +170,25 @@ export class RestaurantsController {
     }
     
     if (!tenantId) {
-      throw new BadRequestException('No se pudo determinar el tenant para actualizar el restaurante.');
+      throw new BadRequestException('No se pudo determinar el tenant para actualizar el comercio.');
     }
 
-    return this.restaurantsService.update(id, tenantId, updateRestaurantDto, { userRole: req.user.role });
+    const me = await this.usersService.findById(req.user.id);
+    const sourceLocale = preferredLanguageToContentLocale((me as any)?.preferredLanguage);
+    const { tenantId: _tenantId, ...payload } = updateRestaurantDto as UpdateRestaurantDto & {
+      tenantId?: string;
+    };
+    return this.restaurantsService.update(
+      id,
+      tenantId,
+      { ...payload, sourceLocale },
+      { userRole: req.user.role },
+    );
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar restaurante' })
-  @ApiResponse({ status: 200, description: 'Restaurante eliminado exitosamente' })
+  @ApiOperation({ summary: 'Eliminar comercio' })
+  @ApiResponse({ status: 200, description: 'Comercio eliminado exitosamente' })
   async remove(@Param('id') id: string, @Request() req) {
     let tenantId: string | undefined;
 
@@ -193,7 +208,7 @@ export class RestaurantsController {
 
     if (!tenantId) {
       throw new BadRequestException(
-        'No se pudo determinar el tenant del restaurante para eliminarlo.',
+        'No se pudo determinar el tenant del comercio para eliminarlo.',
       );
     }
 

@@ -436,10 +436,17 @@ export class AutoTranslateService {
       canRun = false;
       reason = `Alcanzaste el límite mensual (${monthlyLimit} usos).`;
       reasonCode = 'monthly_limit';
-    } else if (targetLocale === 'es-ES') {
-      canRun = false;
-      reason = 'Elegí un idioma distinto de es-ES.';
-      reasonCode = 'invalid_locale';
+    } else {
+      try {
+        const sourceLocale = await this.getMenuSourceLocale(tenantId, menuId);
+        if (this.isSameMenuLocale(targetLocale, sourceLocale)) {
+          canRun = false;
+          reason = `Elegí un idioma distinto del idioma base (${sourceLocale}).`;
+          reasonCode = 'invalid_locale';
+        }
+      } catch {
+        /* ignore */
+      }
     }
 
     return {
@@ -490,8 +497,9 @@ export class AutoTranslateService {
     if (monthlyLimit > 0 && used >= monthlyLimit) {
       throw new ForbiddenException(`Límite mensual alcanzado (${monthlyLimit} traducciones automáticas).`);
     }
-    if (targetLocale === 'es-ES') {
-      throw new BadRequestException('No se puede traducir al idioma base.');
+    const sourceLocale = await this.getMenuSourceLocale(tenantId, menuId);
+    if (this.isSameMenuLocale(targetLocale, sourceLocale)) {
+      throw new BadRequestException(`No se puede traducir al idioma base (${sourceLocale}).`);
     }
     const st = await this.readMenuAutoTranslateState(tenantId, menuId);
     if (!force) {
@@ -502,16 +510,32 @@ export class AutoTranslateService {
         );
       }
     }
-    const locales = await this.distinctLocalesForMenu(tenantId, menuId);
+    const locales = await this.distinctLocalesForMenu(tenantId, menuId, sourceLocale);
     if (!locales.includes(targetLocale)) {
       throw new BadRequestException(
         `El idioma ${targetLocale} no está agregado al menú. Agregalo primero en Traducciones.`,
       );
     }
-    return { id: st.id };
+    return { id: st.id, sourceLocale };
   }
 
-  private async distinctLocalesForMenu(tenantId: string, menuId: string): Promise<string[]> {
+  private async getMenuSourceLocale(tenantId: string, menuId: string): Promise<string> {
+    try {
+      const rows = await this.postgres.queryRaw<{ source_locale: string | null }>(
+        `SELECT source_locale FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+        [menuId, tenantId],
+      );
+      return String(rows[0]?.source_locale || 'es-ES') || 'es-ES';
+    } catch {
+      return 'es-ES';
+    }
+  }
+
+  private async distinctLocalesForMenu(
+    tenantId: string,
+    menuId: string,
+    sourceLocale = 'es-ES',
+  ): Promise<string[]> {
     const rows = await this.postgres.queryRaw<{ locale: string }>(
       `SELECT DISTINCT t.locale
        FROM translations t
@@ -529,18 +553,22 @@ export class AutoTranslateService {
       [tenantId, menuId],
     );
     const set = new Set(rows.map((r) => r.locale).filter(Boolean));
-    if (!set.has('es-ES')) set.add('es-ES');
+    if (!set.has(sourceLocale)) set.add(sourceLocale);
     return Array.from(set);
   }
 
-  private async collectSegments(tenantId: string, menuId: string): Promise<TextSegment[]> {
+  private async collectSegments(
+    tenantId: string,
+    menuId: string,
+    sourceLocale: string,
+  ): Promise<TextSegment[]> {
     const menuRows = await this.postgres.queryRaw<{ id: string; name: string; description: string | null }>(
       `SELECT id, name, description FROM menus WHERE id = $1 LIMIT 1`,
       [menuId],
     );
     const m0 = menuRows[0];
     if (!m0) return [];
-    const baseMenu = await this.i18n.getTranslations(tenantId, 'menu', menuId, 'es-ES');
+    const baseMenu = await this.i18n.getTranslations(tenantId, 'menu', menuId, sourceLocale);
     const name = ((baseMenu.name as string) || m0.name || '').trim();
     const desc = ((baseMenu.description as string) || m0.description || '').trim();
     const out: TextSegment[] = [];
@@ -552,7 +580,7 @@ export class AutoTranslateService {
       [menuId],
     );
     for (const s of sections) {
-      const base = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, 'es-ES');
+      const base = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, sourceLocale);
       const sn = ((base.name as string) || s.name || '').trim();
       if (sn) out.push({ entityType: 'menu_section', entityId: s.id, field: 'name', text: sn });
     }
@@ -562,7 +590,7 @@ export class AutoTranslateService {
       [menuId],
     );
     for (const it of items) {
-      const base = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, 'es-ES');
+      const base = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, sourceLocale);
       const nm = ((base.name as string) || it.name || '').trim();
       const d = ((base.description as string) || it.description || '').trim();
       if (nm) out.push({ entityType: 'menu_item', entityId: it.id, field: 'name', text: nm });
@@ -816,12 +844,19 @@ export class AutoTranslateService {
     tenantPlan: string | null | undefined;
   }): Promise<{ segmentCount: number; apiUnits: number; cacheHits: number }> {
     const { tenantId, menuId, userId, targetLocale, force, tenantPlan } = params;
-    await this.assertPreconditionsAndGetMenu(tenantId, menuId, userId, targetLocale, tenantPlan, force);
+    const pre = await this.assertPreconditionsAndGetMenu(
+      tenantId,
+      menuId,
+      userId,
+      targetLocale,
+      tenantPlan,
+      force,
+    );
 
-    const sourceLocale = 'es-ES';
-    const segments = await this.collectSegments(tenantId, menuId);
+    const sourceLocale = pre.sourceLocale || (await this.getMenuSourceLocale(tenantId, menuId));
+    const segments = await this.collectSegments(tenantId, menuId, sourceLocale);
     if (segments.length === 0) {
-      throw new BadRequestException('No hay textos en español para traducir en este menú.');
+      throw new BadRequestException('No hay textos en el idioma base para traducir en este menú.');
     }
 
     const uniqueTexts: string[] = [];

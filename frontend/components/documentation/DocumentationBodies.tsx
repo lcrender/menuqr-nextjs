@@ -1,9 +1,16 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import type { DocSection } from '../../lib/documentation-nav';
-import { docHref, getDocBySlug } from '../../lib/documentation-nav';
+import { docHref, getDocBySlug, translateDocSection } from '../../lib/documentation-nav';
 import { MENU_TEMPLATES_CATALOG, sortTemplatesByCatalogOrder } from '../../lib/menu-templates-catalog';
 import { plantillaCaracteristicasHref } from '../../lib/plantillas-catalog-url';
+import i18n from '../../src/i18n/config';
+import documentationBodiesEs from '../../src/locales/fragments/documentationBodies.es.json';
+import documentationBodiesEn from '../../src/locales/fragments/documentationBodies.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { documentationBodies: documentationBodiesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { documentationBodies: documentationBodiesEn }, true, true);
 
 type BodyProps = { basePath: string };
 
@@ -17,17 +24,19 @@ function DocAudienceBlock({ title, children }: { title: string; children: ReactN
 }
 
 function DocSeeAlso({ basePath, slugs }: { basePath: string; slugs: DocSection['slug'][] }): ReactNode {
+  const { t } = useTranslation();
   return (
     <div className="card mb-4 border-0 bg-light">
       <div className="card-body py-3">
-        <h3 className="h6 text-uppercase text-muted mb-3">Ver también en la guía</h3>
+        <h3 className="h6 text-uppercase text-muted mb-3">{t('documentation.seeAlso')}</h3>
         <ul className="mb-0 ps-3">
           {slugs.map((slug) => {
             const doc = getDocBySlug(slug);
             if (!doc) return null;
+            const localized = translateDocSection(doc, t);
             return (
               <li key={slug} className="mb-2">
-                <Link href={docHref(basePath, slug)}>{doc.title}</Link>
+                <Link href={docHref(basePath, slug)}>{localized.title}</Link>
               </li>
             );
           })}
@@ -38,10 +47,11 @@ function DocSeeAlso({ basePath, slugs }: { basePath: string; slugs: DocSection['
 }
 
 function DocFaqBlock({ items }: { items: { q: string; a: ReactNode }[] }): ReactNode {
+  const { t } = useTranslation();
   return (
     <div className="card mb-4 border-secondary">
       <div className="card-header bg-white">
-        <h3 className="h5 mb-0">Problemas frecuentes</h3>
+        <h3 className="h5 mb-0">{t('documentation.faq')}</h3>
       </div>
       <div className="card-body">
         {items.map(({ q, a }, i) => (
@@ -63,22 +73,23 @@ const TRADUCCIONES_VIDEO_ID = 'j3hupAJNHmI';
 const TRADUCCIONES_VIDEO_URL = `https://www.youtube.com/embed/${TRADUCCIONES_VIDEO_ID}`;
 const TRADUCCIONES_VIDEO_WATCH = `https://youtu.be/${TRADUCCIONES_VIDEO_ID}`;
 
-/** Video tutorial del flujo inicial (restaurante → menú → secciones → productos → plantilla). */
+/** Video tutorial del flujo inicial (comercio → menú → secciones → productos → plantilla). */
 function DocPrimerosPasosVideo(): ReactNode {
+  const { t } = useTranslation();
   return (
     <div className="card mb-4 border-0 bg-light">
       <div className="card-body">
-        <h2 className="h5 mb-2">Video: primeros pasos</h2>
+        <h2 className="h5 mb-2">{t('documentationBodies.primerosPasosVideo.title')}</h2>
         <p className="mb-3 text-muted small">
-          Recorrido paso a paso para crear tu menú QR, armar secciones y productos, y elegir una plantilla.{' '}
+          {t('documentationBodies.primerosPasosVideo.description')}{' '}
           <a href={PRIMEROS_PASOS_VIDEO_WATCH} target="_blank" rel="noopener noreferrer">
-            Abrir en YouTube
+            {t('documentationBodies.common.watchOnYoutube')}
           </a>
         </p>
         <div className="ratio ratio-16x9 rounded overflow-hidden bg-dark">
           <iframe
             src={PRIMEROS_PASOS_VIDEO_URL}
-            title="Cómo crear un menú QR en App Menu QR: restaurante, secciones, productos y plantilla"
+            title={t('documentationBodies.primerosPasosVideo.iframeTitle')}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             loading="lazy"
@@ -92,20 +103,21 @@ function DocPrimerosPasosVideo(): ReactNode {
 
 /** Video tutorial de traducciones / menú multidioma. */
 function DocTraduccionesVideo(): ReactNode {
+  const { t } = useTranslation();
   return (
     <div className="card mb-4 border-0 bg-light">
       <div className="card-body">
-        <h2 className="h5 mb-2">Video: traducciones</h2>
+        <h2 className="h5 mb-2">{t('documentationBodies.traduccionesVideo.title')}</h2>
         <p className="mb-3 text-muted small">
-          Cómo agregar idiomas, editar textos y usar la traducción automática en el panel.{' '}
+          {t('documentationBodies.traduccionesVideo.description')}{' '}
           <a href={TRADUCCIONES_VIDEO_WATCH} target="_blank" rel="noopener noreferrer">
-            Abrir en YouTube
+            {t('documentationBodies.common.watchOnYoutube')}
           </a>
         </p>
         <div className="ratio ratio-16x9 rounded overflow-hidden bg-dark">
           <iframe
             src={TRADUCCIONES_VIDEO_URL}
-            title="Traducciones de menú en App Menu QR: idiomas y traducción automática"
+            title={t('documentationBodies.traduccionesVideo.iframeTitle')}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             loading="lazy"
@@ -118,96 +130,84 @@ function DocTraduccionesVideo(): ReactNode {
 }
 
 export function DocIntroBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
       <p className="mb-4">
-        Antes de crear tu restaurante y tus menús, necesitás{' '}
-        <strong>registrarte</strong> en AppMenuQR, <strong>verificar tu correo electrónico</strong> (revisá también la carpeta de spam si no ves el mensaje) e{' '}
-        <strong>iniciar sesión</strong>. Solo así podrás guardar cambios y publicar tu carta digital.
+        <Trans i18nKey="documentationBodies.intro.p1" components={{ strong: <strong /> }} />
       </p>
 
       <div className="card mb-5 border-primary">
         <div className="card-header bg-primary text-white">
-          <h2 className="h4 mb-0">📋 Resumen del Flujo Completo</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.intro.summaryCardTitle')}</h2>
         </div>
         <div className="card-body">
           <ol className="mb-0">
             <li className="mb-2">
-              <Link href={docHref(basePath, 'crear-restaurante')} className="fw-bold text-decoration-underline">
-                Crear Restaurante
-              </Link>
-              {' '}
-              → Completa toda la información, sube logo y foto de portada, selecciona plantilla y moneda
+              <Trans
+                i18nKey="documentationBodies.intro.step1"
+                components={{ link: <Link href={docHref(basePath, 'crear-restaurante')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'crear-menu')} className="fw-bold text-decoration-underline">
-                Crear Menú
-              </Link>
-              {' '}
-              → Asigna el menú al restaurante (puedes crear varios menús por restaurante)
+              <Trans
+                i18nKey="documentationBodies.intro.step2"
+                components={{ link: <Link href={docHref(basePath, 'crear-menu')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'crear-secciones')} className="fw-bold text-decoration-underline">
-                Crear Secciones
-              </Link>
-              {' '}
-              → Organiza tu menú en categorías (Entradas, Platos Principales, etc.)
+              <Trans
+                i18nKey="documentationBodies.intro.step3"
+                components={{ link: <Link href={docHref(basePath, 'crear-secciones')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'crear-productos')} className="fw-bold text-decoration-underline">
-                Crear Productos
-              </Link>
-              {' '}
-              → Agrega productos con precios, descripciones e iconos, y asígnalos a las secciones
+              <Trans
+                i18nKey="documentationBodies.intro.step4"
+                components={{ link: <Link href={docHref(basePath, 'crear-productos')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'reordenar-productos')} className="fw-bold text-decoration-underline">
-                Reordenar Productos
-              </Link>
-              {' '}
-              → Usa drag and drop para organizar el orden de los productos en cada sección
+              <Trans
+                i18nKey="documentationBodies.intro.step5"
+                components={{ link: <Link href={docHref(basePath, 'reordenar-productos')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'importar-menu-csv')} className="fw-bold text-decoration-underline">
-                Importar menú con CSV
-              </Link>
-              {' '}
-              → Cargá secciones y productos desde un archivo CSV (alternativa al flujo paso a paso)
+              <Trans
+                i18nKey="documentationBodies.intro.step6"
+                components={{ link: <Link href={docHref(basePath, 'importar-menu-csv')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'plantillas')} className="fw-bold text-decoration-underline">
-                Plantillas de diseño
-              </Link>
-              {' '}
-              → Aspecto visual del restaurante; podés cambiarlas cuando quieras
+              <Trans
+                i18nKey="documentationBodies.intro.step7"
+                components={{ link: <Link href={docHref(basePath, 'plantillas')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'publicar-menu')} className="fw-bold text-decoration-underline">
-                Publicar Menú
-              </Link>
-              {' '}
-              → Cambia el estado del menú a &quot;Publicado&quot; para que esté visible
+              <Trans
+                i18nKey="documentationBodies.intro.step8"
+                components={{ link: <Link href={docHref(basePath, 'publicar-menu')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'programar-menu')} className="fw-bold text-decoration-underline">
-                Programar menú
-              </Link>
-              {' '}
-              → Define días y horarios de visibilidad (planes Pro y Premium)
+              <Trans
+                i18nKey="documentationBodies.intro.step9"
+                components={{ link: <Link href={docHref(basePath, 'programar-menu')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'descargar-qr')} className="fw-bold text-decoration-underline">
-                Descargar QR
-              </Link>
-              {' '}
-              → Genera y descarga el código QR para compartir con tus clientes
+              <Trans
+                i18nKey="documentationBodies.intro.step10"
+                components={{ link: <Link href={docHref(basePath, 'descargar-qr')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'imprimir-carta')} className="fw-bold text-decoration-underline">
-                Imprimir carta en papel
-              </Link>
-              {' '}
-              → Generá una versión para imprimir con plantillas y opciones de diseño
+              <Trans
+                i18nKey="documentationBodies.intro.step11"
+                components={{ link: <Link href={docHref(basePath, 'imprimir-carta')} className="fw-bold text-decoration-underline" /> }}
+              />
             </li>
           </ol>
         </div>
@@ -215,58 +215,51 @@ export function DocIntroBody({ basePath }: BodyProps): ReactNode {
 
       <div className="card mb-5 border-secondary">
         <div className="card-header bg-secondary text-white">
-          <h2 className="h5 mb-0">Administración del negocio, contenido y cuenta</h2>
+          <h2 className="h5 mb-0">{t('documentationBodies.intro.adminCardTitle')}</h2>
         </div>
         <div className="card-body">
           <ul className="mb-0 ps-3">
             <li className="mb-2">
-              <Link href={docHref(basePath, 'desactivar-restaurante')} className="fw-semibold text-decoration-underline">
-                Desactivar restaurante
-              </Link>
-              {' — '}
-              La carta online y el QR no se muestran hasta que reactives el local.
+              <Trans
+                i18nKey="documentationBodies.intro.admin1"
+                components={{ link: <Link href={docHref(basePath, 'desactivar-restaurante')} className="fw-semibold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'eliminar-restaurante')} className="fw-semibold text-decoration-underline">
-                Eliminar restaurante
-              </Link>
-              {' — '}
-              Borra todo el negocio y sus datos asociados (acción irreversible).
+              <Trans
+                i18nKey="documentationBodies.intro.admin2"
+                components={{ link: <Link href={docHref(basePath, 'eliminar-restaurante')} className="fw-semibold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'menu-visibilidad-y-eliminacion')} className="fw-semibold text-decoration-underline">
-                Menús: visibilidad y eliminación
-              </Link>
-              {' — '}
-              Menús despublicados, borrar menú sin borrar productos y productos sin menú asignado.
+              <Trans
+                i18nKey="documentationBodies.intro.admin3"
+                components={{ link: <Link href={docHref(basePath, 'menu-visibilidad-y-eliminacion')} className="fw-semibold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'traducciones')} className="fw-semibold text-decoration-underline">
-                Traducciones
-              </Link>
-              {' — '}
-              Pasos y límites según plan (solo si tu suscripción lo permite).
+              <Trans
+                i18nKey="documentationBodies.intro.admin4"
+                components={{ link: <Link href={docHref(basePath, 'traducciones')} className="fw-semibold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'edicion-masiva-productos')} className="fw-semibold text-decoration-underline">
-                Edición masiva de productos
-              </Link>
-              {' — '}
-              Borrar, mover entre menús o restaurantes; cuidado con duplicados y límites del plan.
+              <Trans
+                i18nKey="documentationBodies.intro.admin5"
+                components={{ link: <Link href={docHref(basePath, 'edicion-masiva-productos')} className="fw-semibold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-2">
-              <Link href={docHref(basePath, 'editar-productos-detalle')} className="fw-semibold text-decoration-underline">
-                Editar un producto
-              </Link>
-              {' — '}
-              Activar/desactivar, textos, precios y foto (según plan).
+              <Trans
+                i18nKey="documentationBodies.intro.admin6"
+                components={{ link: <Link href={docHref(basePath, 'editar-productos-detalle')} className="fw-semibold text-decoration-underline" /> }}
+              />
             </li>
             <li className="mb-0">
-              <Link href={docHref(basePath, 'suscripciones-y-pagos')} className="fw-semibold text-decoration-underline">
-                Suscripciones y pagos
-              </Link>
-              {' — '}
-              Medios de pago, mercados y baja cuando quieras.
+              <Trans
+                i18nKey="documentationBodies.intro.admin7"
+                components={{ link: <Link href={docHref(basePath, 'suscripciones-y-pagos')} className="fw-semibold text-decoration-underline" /> }}
+              />
             </li>
           </ul>
         </div>
@@ -276,79 +269,72 @@ export function DocIntroBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocCrearRestauranteBody(): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
       <DocPrimerosPasosVideo />
       <div className="card mb-4">
       <div className="card-header bg-primary text-white">
-        <h2 className="h4 mb-0">1️⃣ Crear un Restaurante</h2>
+        <h2 className="h4 mb-0">{t('documentationBodies.crearRestaurante.cardTitle')}</h2>
       </div>
       <div className="card-body">
+        <p className="mb-3">{t('documentationBodies.crearRestaurante.p1')}</p>
         <p className="mb-3">
-          El primer paso para comenzar a usar AppMenuQR es crear un restaurante. Cada restaurante puede tener múltiples menús.
-        </p>
-        <p className="mb-3">
-          Por lo general, <strong>la primera vez que iniciás sesión</strong> debería aparecerte un mensaje o asistente para crear{' '}
-          <strong>tu primer restaurante</strong> de forma guiada y rápida. Si eso no ocurre en tu cuenta, no hay problema: podés crearlo manualmente siguiendo los pasos de abajo.
+          <Trans i18nKey="documentationBodies.crearRestaurante.p2" components={{ strong: <strong /> }} />
         </p>
         <ol>
           <li className="mb-2">
-            <strong>Accede a la sección Restaurantes:</strong> Haz clic en &quot;Restaurantes&quot; en el menú lateral.
+            <Trans i18nKey="documentationBodies.crearRestaurante.step1" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            <strong>Haz clic en &quot;Crear Restaurante&quot;:</strong> Verás un botón para crear un nuevo restaurante.
+            <Trans i18nKey="documentationBodies.crearRestaurante.step2" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            <strong>Completa la información del restaurante:</strong>
+            <Trans i18nKey="documentationBodies.crearRestaurante.step3Intro" components={{ strong: <strong /> }} />
             <ul className="mt-2">
-              <li><strong>Nombre del restaurante:</strong> El nombre que aparecerá en los menús</li>
-              <li><strong>Descripción:</strong> Opcional. Una breve presentación de tu negocio para quien vea la carta online.</li>
+              <li><Trans i18nKey="documentationBodies.crearRestaurante.fieldName" components={{ strong: <strong /> }} /></li>
+              <li><Trans i18nKey="documentationBodies.crearRestaurante.fieldDescription" components={{ strong: <strong /> }} /></li>
               <li>
-                <strong>Dirección:</strong> La dirección física del local. Se utiliza para{' '}
-                <strong>ubicar el negocio en el mapa</strong> (por ejemplo Google Maps) y para poder{' '}
-                <strong>habilitar o mostrar el enlace a las reseñas en Google</strong>, según la configuración que activés.
+                <Trans i18nKey="documentationBodies.crearRestaurante.fieldAddress" components={{ strong: <strong /> }} />
               </li>
               <li>
-                <strong>Teléfono:</strong> Número de contacto. En la vista pública suele mostrarse como{' '}
-                <strong>enlace para llamar</strong> directamente desde el móvil.
+                <Trans i18nKey="documentationBodies.crearRestaurante.fieldPhone" components={{ strong: <strong /> }} />
               </li>
               <li>
-                <strong>WhatsApp:</strong> Podés indicar un número o enlace de WhatsApp para que los clientes te escriban en un clic.
+                <Trans i18nKey="documentationBodies.crearRestaurante.fieldWhatsapp" components={{ strong: <strong /> }} />
               </li>
-              <li><strong>Email:</strong> Correo electrónico de contacto</li>
-              <li><strong>Logo del restaurante:</strong>
+              <li><Trans i18nKey="documentationBodies.crearRestaurante.fieldEmail" components={{ strong: <strong /> }} /></li>
+              <li><Trans i18nKey="documentationBodies.crearRestaurante.fieldLogoLabel" components={{ strong: <strong /> }} />
                 <ul>
-                  <li>Recomendado: imagen cuadrada, 512x512px o 1024x1024px</li>
-                  <li>Formatos: JPG, PNG</li>
-                  <li>Tamaño máximo: 2MB</li>
+                  {(t('documentationBodies.crearRestaurante.fieldLogoSpecs', { returnObjects: true }) as string[]).map((spec) => (
+                    <li key={spec}>{spec}</li>
+                  ))}
                 </ul>
               </li>
-              <li><strong>Foto de portada:</strong>
+              <li><Trans i18nKey="documentationBodies.crearRestaurante.fieldCoverLabel" components={{ strong: <strong /> }} />
                 <ul>
-                  <li>Recomendado: imagen horizontal, 1920x1080px o 1920x600px</li>
-                  <li>Formatos: JPG, PNG</li>
-                  <li>Tamaño máximo: 5MB</li>
+                  {(t('documentationBodies.crearRestaurante.fieldCoverSpecs', { returnObjects: true }) as string[]).map((spec) => (
+                    <li key={spec}>{spec}</li>
+                  ))}
                 </ul>
               </li>
               <li>
-                <strong>Plantilla:</strong> Elegís un diseño inicial para tus menús (Classic, Modern, Foodie, Italian Food, etc.).{' '}
-                <strong>Podés cambiar de plantilla cuando quieras</strong>; los datos de tus menús y productos no se pierden al cambiar el diseño.
+                <Trans i18nKey="documentationBodies.crearRestaurante.fieldTemplate" components={{ strong: <strong /> }} />
               </li>
               <li>
-                <strong>Moneda:</strong> Definís la <strong>moneda principal</strong> del restaurante (la que verás por defecto en precios).{' '}
-                Opcionalmente podés indicar <strong>otras monedas que aceptás como medio de pago</strong> en el negocio, para que quede claro en la carta.
+                <Trans i18nKey="documentationBodies.crearRestaurante.fieldCurrency" components={{ strong: <strong /> }} />
               </li>
             </ul>
           </li>
           <li className="mb-2">
-            <strong>Guarda el restaurante:</strong> Haz clic en &quot;Guardar&quot; para crear tu restaurante.
+            <Trans i18nKey="documentationBodies.crearRestaurante.step4" components={{ strong: <strong /> }} />
           </li>
         </ol>
         <p className="mb-0 mt-3">
-          <strong>Siguiente paso:</strong> crear uno o varios <strong>menús</strong> para este restaurante (cada menú tendrá después sus secciones y productos).
+          <Trans i18nKey="documentationBodies.crearRestaurante.nextStep" components={{ strong: <strong /> }} />
         </p>
         <div className="alert alert-info mt-3">
-          <strong>💡 Tip:</strong> Puedes editar la información del restaurante en cualquier momento desde la sección &quot;Restaurantes&quot;.
+          <Trans i18nKey="documentationBodies.crearRestaurante.tip" components={{ strong: <strong /> }} />
         </div>
       </div>
     </div>
@@ -357,51 +343,50 @@ export function DocCrearRestauranteBody(): ReactNode {
 }
 
 export function DocCrearMenuBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
       <DocPrimerosPasosVideo />
       <div className="card mb-4">
       <div className="card-header bg-success text-white">
-        <h2 className="h4 mb-0">2️⃣ Crear un Menú</h2>
+        <h2 className="h4 mb-0">{t('documentationBodies.crearMenu.cardTitle')}</h2>
       </div>
       <div className="card-body">
-        <p className="mb-3">
-          Una vez que hayas creado un restaurante, puedes crear uno o varios menús para ese restaurante. Esto te permite tener diferentes menús (por ejemplo: menú de almuerzo, menú de cena, menú de fin de semana, etc.).
-        </p>
+        <p className="mb-3">{t('documentationBodies.crearMenu.p1')}</p>
         <ol>
           <li className="mb-2">
-            <strong>Accede a la sección Menús:</strong> Haz clic en &quot;Menús&quot; en el menú lateral.
+            <Trans i18nKey="documentationBodies.crearMenu.step1" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            <strong>Haz clic en &quot;Crear Menú&quot;:</strong> Verás un botón para crear un nuevo menú.
+            <Trans i18nKey="documentationBodies.crearMenu.step2" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            <strong>Completa la información del menú:</strong>
+            <Trans i18nKey="documentationBodies.crearMenu.step3Intro" components={{ strong: <strong /> }} />
             <ul className="mt-2">
               <li>
-                <strong>Restaurante:</strong> Selecciona el restaurante al que pertenece este menú. Podés{' '}
-                <strong>dejarlo sin asignar por ahora</strong> y asociarlo a un restaurante más adelante.
+                <Trans i18nKey="documentationBodies.crearMenu.fieldBusiness" components={{ strong: <strong /> }} />
               </li>
               <li>
-                <strong>Nombre del menú:</strong> Por ejemplo, &quot;Menú de Almuerzo&quot;, &quot;Menú de Cena&quot;, etc.{' '}
-                Los usuarios verán un <strong>botón u opción con este nombre</strong> para abrir los productos incluidos en ese menú.
+                <Trans i18nKey="documentationBodies.crearMenu.fieldName" components={{ strong: <strong /> }} />
               </li>
-              <li><strong>Descripción:</strong> Opcional. Sirve para aclarar cuándo aplica este menú o qué incluye.</li>
+              <li><Trans i18nKey="documentationBodies.crearMenu.fieldDescription" components={{ strong: <strong /> }} /></li>
             </ul>
           </li>
           <li className="mb-2">
-            <strong>Guarda el menú:</strong> Haz clic en &quot;Guardar&quot; para crear tu menú.
+            <Trans i18nKey="documentationBodies.crearMenu.step4" components={{ strong: <strong /> }} />
           </li>
         </ol>
         <p className="mb-3 mt-3">
-          Dentro de cada menú vas a crear las <strong>secciones</strong> (por ejemplo entradas, platos principales, bebidas, postres, etc.) y después los productos dentro de cada sección. Si preferís cargar todo de golpe desde una hoja de cálculo, más abajo tenés la alternativa CSV.
+          <Trans i18nKey="documentationBodies.crearMenu.p2" components={{ strong: <strong /> }} />
         </p>
         <p className="mb-0">
-          <strong>Alternativa:</strong>{' '}
-          <Link href={docHref(basePath, 'importar-menu-csv')}>importar menú y productos con un archivo CSV</Link>.
+          <Trans
+            i18nKey="documentationBodies.crearMenu.alternative"
+            components={{ strong: <strong />, link: <Link href={docHref(basePath, 'importar-menu-csv')} /> }}
+          />
         </p>
         <div className="alert alert-info mt-3">
-          <strong>💡 Importante:</strong> Un restaurante puede tener múltiples menús. Esto te permite organizar tus ofertas de diferentes maneras (por horario, por temporada, por tipo de comida, etc.).
+          <Trans i18nKey="documentationBodies.crearMenu.tip" components={{ strong: <strong /> }} />
         </div>
       </div>
     </div>
@@ -410,68 +395,67 @@ export function DocCrearMenuBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocImportarMenuCsvBody(): ReactNode {
+  const { t } = useTranslation();
   return (
     <div className="card mb-4">
       <div className="card-header bg-secondary text-white">
-        <h2 className="h4 mb-0">Importar menú y productos con CSV</h2>
+        <h2 className="h4 mb-0">{t('documentationBodies.importarMenuCsv.cardTitle')}</h2>
       </div>
       <div className="card-body">
         <p className="mb-3">
-          Además del asistente paso a paso, podés <strong>crear un menú completo</strong> (secciones y productos) subiendo un archivo{' '}
-          <strong>CSV</strong>. Es útil si ya tenés la carta en una hoja de cálculo o si querés migrar desde otro sistema.
+          <Trans i18nKey="documentationBodies.importarMenuCsv.p1" components={{ strong: <strong /> }} />
         </p>
-        <h3 className="h6 text-uppercase text-muted mb-2">Desde la aplicación</h3>
+        <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.importarMenuCsv.fromAppHeading')}</h3>
         <ol className="mb-4">
           <li className="mb-2">
-            En <strong>Menús</strong>, elegí <strong>Nuevo menú</strong> y la opción <strong>Importar menú con CSV</strong>.
+            <Trans i18nKey="documentationBodies.importarMenuCsv.fromAppStep1" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            Seleccioná en pantalla el <strong>restaurante al que pertenece el menú</strong>, el <strong>nombre del menú</strong> y, si querés, la <strong>descripción</strong>.
+            <Trans i18nKey="documentationBodies.importarMenuCsv.fromAppStep2" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            <a href="/templates/menu-import-ejemplo.csv" download>
-              Descargá la plantilla de ejemplo (CSV)
-            </a>{' '}
-            y rellená o adaptá tus filas; después subí el archivo.
+            <Trans
+              i18nKey="documentationBodies.importarMenuCsv.fromAppStep3"
+              components={{ a: <a href="/templates/menu-import-ejemplo.csv" download /> }}
+            />
           </li>
         </ol>
 
-        <h3 className="h6 text-uppercase text-muted mb-2">Secciones en el CSV</h3>
+        <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.importarMenuCsv.sectionsHeading')}</h3>
         <ul className="mb-4">
           <li className="mb-2">
-            <code>nombre_seccion</code>: nombre visible de la categoría (por ejemplo Entradas, Principales). El <strong>orden de las secciones</strong> en el menú es el orden en que cada nombre aparece <strong>por primera vez</strong> al leer el CSV de arriba abajo.
+            <Trans i18nKey="documentationBodies.importarMenuCsv.sectionsLi1" components={{ strong: <strong />, code: <code /> }} />
           </li>
           <li className="mb-2">
-            Para varios productos de la misma sección, <strong>repetí el mismo</strong> <code>nombre_seccion</code> en cada fila. Podés cambiar el orden de las secciones después en <strong>Editar menú</strong>.
+            <Trans i18nKey="documentationBodies.importarMenuCsv.sectionsLi2" components={{ strong: <strong />, code: <code /> }} />
           </li>
         </ul>
 
-        <h3 className="h6 text-uppercase text-muted mb-2">Productos y precios</h3>
+        <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.importarMenuCsv.productsHeading')}</h3>
         <ul className="mb-4">
           <li className="mb-2">
-            <code>nombre_producto</code> (obligatorio), <code>descripcion_producto</code> (opcional).
+            <Trans i18nKey="documentationBodies.importarMenuCsv.productsLi1" components={{ code: <code /> }} />
           </li>
           <li className="mb-2">
-            <code>destacado</code>: podés usar valores como <code>si</code>, <code>sí</code>, <code>yes</code>, <code>true</code> o <code>1</code> para marcar destacado. Si tu plan no lo permite, el sistema lo desactivará y lo avisará en los resultados.
+            <Trans i18nKey="documentationBodies.importarMenuCsv.productsLi2" components={{ code: <code /> }} />
           </li>
           <li className="mb-2">
-            Hasta <strong>cinco precios</strong> por producto: columnas <code>moneda_1</code>…<code>moneda_5</code>, <code>precio_1</code>…<code>precio_5</code> y <code>etiqueta_1</code>…<code>etiqueta_5</code>.
+            <Trans i18nKey="documentationBodies.importarMenuCsv.productsLi3" components={{ strong: <strong />, code: <code /> }} />
           </li>
           <li className="mb-2">
-            <strong>Moneda:</strong> código ISO en tres letras (por ejemplo <code>USD</code>, <code>EUR</code>, <code>ARS</code>). Si completás un <code>precio_N</code>, tenés que indicar la <code>moneda_N</code> correspondiente.
+            <Trans i18nKey="documentationBodies.importarMenuCsv.productsLi4" components={{ strong: <strong />, code: <code /> }} />
           </li>
           <li className="mb-2">
-            <strong>Etiqueta del precio:</strong> es <strong>opcional</strong> (por ejemplo &quot;Chica&quot;, &quot;Grande&quot;, &quot;Menú del día&quot;). Sirve cuando el mismo producto tiene varios importes.
+            <Trans i18nKey="documentationBodies.importarMenuCsv.productsLi5" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            Cada producto debe tener al menos <code>moneda_1</code> y <code>precio_1</code> con un importe mayor que cero. Los montos pueden usar coma o punto decimal.
+            <Trans i18nKey="documentationBodies.importarMenuCsv.productsLi6" components={{ code: <code /> }} />
           </li>
         </ul>
 
-        <h3 className="h6 text-uppercase text-muted mb-2">Alérgenos e iconos</h3>
+        <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.importarMenuCsv.allergensHeading')}</h3>
         <p className="mb-2">
-          La columna <code>alergenos</code> admite varios códigos separados por coma, punto y coma o barra (<code>,</code> <code>;</code> <code>|</code>).
-          Deben coincidir con los <strong>códigos activos</strong> del sistema (mayúsculas o minúsculas). Esta es la lista de alérgenos disponibles:
+          <Trans i18nKey="documentationBodies.importarMenuCsv.allergensP1" components={{ strong: <strong />, code: <code /> }} />
         </p>
         <ul className="mb-4">
           <li><code>celiaco</code></li>
@@ -482,23 +466,23 @@ export function DocImportarMenuCsvBody(): ReactNode {
           <li><code>sin-lactosa</code></li>
         </ul>
         <p className="mb-4">
-          Si un código no existe, se <strong>ignora</strong> y el import puede mostrar un aviso para esa fila.
+          <Trans i18nKey="documentationBodies.importarMenuCsv.allergensP2" components={{ strong: <strong /> }} />
         </p>
 
-        <h3 className="h6 text-uppercase text-muted mb-2">Después de importar</h3>
+        <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.importarMenuCsv.afterImportHeading')}</h3>
         <p className="mb-3">
-          El menú queda en estado editable: podés <strong>cambiar nombre, secciones, productos y precios</strong> desde el panel. Las <strong>fotos de producto</strong> no vienen del CSV; si tu plan las permite, cargalas después desde la edición del menú o del producto. El menú queda en <strong>borrador</strong>: en <strong>Menús</strong> usá el botón <strong>Publicar</strong> para pasarlo a <strong>publicado</strong> y que esté visible online.
+          <Trans i18nKey="documentationBodies.importarMenuCsv.afterImportP" components={{ strong: <strong /> }} />
         </p>
 
-        <h3 className="h6 text-uppercase text-muted mb-2">Límites disponibles para las importaciones</h3>
+        <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.importarMenuCsv.limitsHeading')}</h3>
         <ul className="mb-4">
           <li className="mb-2">
-            El import respeta los <strong>límites de menús y productos</strong> de tu plan; si los superás, verás un error explicativo.
+            <Trans i18nKey="documentationBodies.importarMenuCsv.limitsLi1" components={{ strong: <strong /> }} />
           </li>
         </ul>
 
         <p className="mb-0">
-          Una vez importado el menú, <strong>podés editarlo por completo</strong> en cualquier momento: nombre, secciones, productos, precios, textos y (según tu plan) imágenes. No hace falta volver a subir el CSV para pequeños cambios del día a día.
+          <Trans i18nKey="documentationBodies.importarMenuCsv.finalP" components={{ strong: <strong /> }} />
         </p>
       </div>
     </div>
@@ -506,58 +490,66 @@ export function DocImportarMenuCsvBody(): ReactNode {
 }
 
 export function DocCrearSeccionesBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Antes de empezar">
+      <DocAudienceBlock title={t('documentationBodies.crearSecciones.audienceTitle')}>
         <p className="mb-2">
-          Esta guía es para quienes ya tienen un <strong>menú creado</strong> y quieren organizarlo en categorías (entradas, principales, bebidas, etc.). Si todavía no creaste el menú, revisá primero{' '}
-          <Link href={docHref(basePath, 'crear-menu')}>Crear un menú</Link>.
+          <Trans
+            i18nKey="documentationBodies.crearSecciones.audienceP1"
+            components={{ strong: <strong />, link: <Link href={docHref(basePath, 'crear-menu')} /> }}
+          />
         </p>
         <ul className="mb-0 ps-3">
-          <li>Acceso al panel con permisos para editar menús.</li>
-          <li>Convención de nombres clara para clientes (evitá siglas internas poco claras).</li>
+          {(t('documentationBodies.crearSecciones.audienceItems', { returnObjects: true }) as string[]).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-info text-white">
-          <h2 className="h4 mb-0">3️⃣ Crear Secciones del Menú</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.crearSecciones.cardTitle')}</h2>
         </div>
         <div className="card-body">
           <p className="mb-3">
-            Las secciones agrupan los productos en la carta pública: por ejemplo <strong>Entradas</strong>, <strong>Platos principales</strong>, <strong>Bebidas sin alcohol</strong>, <strong>Cafetería</strong>, etc. Un mismo menú puede tener tantas secciones como necesites dentro de los límites de tu plan.
+            <Trans i18nKey="documentationBodies.crearSecciones.p1" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-3">
-            El <strong>orden de las secciones</strong> define cómo se lee el menú de arriba abajo en la vista del cliente. Podés cambiarlo en cualquier momento con arrastrar y soltar, sin borrar productos.
+            <Trans i18nKey="documentationBodies.crearSecciones.p2" components={{ strong: <strong /> }} />
           </p>
           <ol>
             <li className="mb-2">
-              <strong>Edita el menú:</strong> Desde la sección &quot;Menús&quot;, haz clic en el botón de editar del menú que quieres modificar.
+              <Trans i18nKey="documentationBodies.crearSecciones.step1" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              <strong>Selecciona &quot;Secciones del menú&quot;:</strong> En el modal de edición, elige la opción &quot;📑 Secciones del menú&quot;.
+              <Trans i18nKey="documentationBodies.crearSecciones.step2" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              <strong>Crea una nueva sección:</strong>
+              <Trans i18nKey="documentationBodies.crearSecciones.step3Intro" components={{ strong: <strong /> }} />
               <ul className="mt-2">
-                <li>Ingresa el nombre de la sección (ej: &quot;Entradas&quot;, &quot;Platos Principales&quot;, &quot;Postres&quot;).</li>
-                <li>Haz clic en &quot;<strong>Agregar Sección</strong>&quot;: verás cómo se inserta en el menú.</li>
-                <li>Cuando agregues más secciones, podrás ir definiendo el <strong>orden</strong> (esto determina en qué posición aparecerá cada una en la carta).</li>
-                <li>Para cambiar el orden, hacé clic en las <strong>tres líneas horizontales</strong> que aparecen a la izquierda de cada sección y arrastrá hasta la posición que quieras.</li>
-                <li>Marca si la sección está activa o no cuando aplique.</li>
+                <li>{t('documentationBodies.crearSecciones.step3Li1')}</li>
+                <li><Trans i18nKey="documentationBodies.crearSecciones.step3Li2" components={{ strong: <strong /> }} /></li>
+                <li><Trans i18nKey="documentationBodies.crearSecciones.step3Li3" components={{ strong: <strong /> }} /></li>
+                <li><Trans i18nKey="documentationBodies.crearSecciones.step3Li4" components={{ strong: <strong /> }} /></li>
+                <li>{t('documentationBodies.crearSecciones.step3Li5')}</li>
               </ul>
             </li>
             <li className="mb-2">
-              <strong>Guarda los cambios</strong> cuando el formulario lo requiera.
+              <Trans i18nKey="documentationBodies.crearSecciones.step4" components={{ strong: <strong /> }} />
             </li>
           </ol>
           <p className="mb-3 mt-3">
-            Si más adelante querés <strong>renombrar</strong> una sección, hacelo desde el mismo lugar: el nombre visible se actualiza en la carta al guardar. Los productos que ya estaban en esa sección siguen asociados salvo que los muevas manualmente a otra categoría desde{' '}
-            <Link href={docHref(basePath, 'crear-productos')}>Productos del menú</Link>.
+            <Trans
+              i18nKey="documentationBodies.crearSecciones.renameP"
+              components={{ strong: <strong />, link: <Link href={docHref(basePath, 'crear-productos')} /> }}
+            />
           </p>
           <div className="alert alert-info mt-3 mb-0">
-            <strong>💡 Tip:</strong> Si importaste la carta con{' '}
-            <Link href={docHref(basePath, 'importar-menu-csv')}>CSV</Link>, el orden inicial de secciones sigue el orden en que aparecieron por primera vez en el archivo; igual podés reordenarlas aquí.
+            <Trans
+              i18nKey="documentationBodies.crearSecciones.tip"
+              components={{ strong: <strong />, link: <Link href={docHref(basePath, 'importar-menu-csv')} /> }}
+            />
           </div>
         </div>
       </div>
@@ -570,28 +562,20 @@ export function DocCrearSeccionesBody({ basePath }: BodyProps): ReactNode {
       <DocFaqBlock
         items={[
           {
-            q: 'No veo la opción de secciones al editar el menú.',
-            a: (
-              <>
-                Confirmá que estás en <strong>Menús</strong> y que abriste el modal de <strong>editar</strong> el menú correcto. Si tu rol es solo de lectura, pedí acceso a quien administre la cuenta.
-              </>
-            ),
+            q: t('documentationBodies.crearSecciones.faq.0.q'),
+            a: <Trans i18nKey="documentationBodies.crearSecciones.faq.0.a" components={{ strong: <strong /> }} />,
           },
           {
-            q: '¿Puedo dejar una sección vacía?',
-            a: (
-              <>
-                Sí, pero en la carta pública puede verse raro o ocupar espacio. Lo habitual es ocultar productos o moverlos antes de publicar, o desactivar la sección si la interfaz lo permite.
-              </>
-            ),
+            q: t('documentationBodies.crearSecciones.faq.1.q'),
+            a: <Trans i18nKey="documentationBodies.crearSecciones.faq.1.a" />,
           },
           {
-            q: '¿Las secciones se comparten entre varios menús?',
+            q: t('documentationBodies.crearSecciones.faq.2.q'),
             a: (
-              <>
-                Cada menú tiene <strong>su propia lista de secciones</strong>. Si necesitás la misma estructura en otro menú, creala de nuevo o usá{' '}
-                <Link href={docHref(basePath, 'importar-menu-csv')}>importación CSV</Link> / duplicación según lo que ofrezca tu flujo en el panel.
-              </>
+              <Trans
+                i18nKey="documentationBodies.crearSecciones.faq.2.a"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'importar-menu-csv')} /> }}
+              />
             ),
           },
         ]}
@@ -601,61 +585,60 @@ export function DocCrearSeccionesBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocCrearProductosBody(): ReactNode {
+  const { t } = useTranslation();
   return (
     <div className="card mb-4">
       <div className="card-header bg-warning text-dark">
-        <h2 className="h4 mb-0">4️⃣ Crear Productos y Agregarlos al Menú</h2>
+        <h2 className="h4 mb-0">{t('documentationBodies.crearProductos.cardTitle')}</h2>
       </div>
       <div className="card-body">
-        <p className="mb-3">
-          Los productos son los platos, bebidas o items que ofreces en tu menú. Puedes crear productos y luego asignarlos a las secciones de tus menús.
-        </p>
+        <p className="mb-3">{t('documentationBodies.crearProductos.p1')}</p>
         <ol>
           <li className="mb-2">
-            <strong>Edita el menú:</strong> Desde la sección &quot;Menús&quot;, haz clic en el botón de editar del menú.
+            <Trans i18nKey="documentationBodies.crearProductos.step1" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            <strong>Selecciona &quot;Productos del menú&quot;:</strong> En el modal de edición, elige la opción &quot;🍽️ Productos del menú&quot;.
+            <Trans i18nKey="documentationBodies.crearProductos.step2" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            <strong>Crea un nuevo producto:</strong>
+            <Trans i18nKey="documentationBodies.crearProductos.step3Intro" components={{ strong: <strong /> }} />
             <ul className="mt-2">
-              <li>Haz clic en &quot;➕ Crear nuevo producto&quot;</li>
-              <li><strong>Paso 1 - Información básica:</strong>
+              <li>{t('documentationBodies.crearProductos.createButton')}</li>
+              <li><Trans i18nKey="documentationBodies.crearProductos.sub1Title" components={{ strong: <strong /> }} />
                 <ul>
-                  <li>Nombre del producto</li>
-                  <li>Descripción (opcional)</li>
-                  <li>Selecciona las secciones del menú donde quieres que aparezca este producto</li>
+                  {(t('documentationBodies.crearProductos.sub1Items', { returnObjects: true }) as string[]).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </li>
-              <li><strong>Paso 2 - Precios:</strong>
+              <li><Trans i18nKey="documentationBodies.crearProductos.sub2Title" components={{ strong: <strong /> }} />
                 <ul>
-                  <li>Agrega uno o varios precios para el producto</li>
-                  <li>Puedes tener diferentes precios con etiquetas (ej: &quot;Porción&quot;, &quot;Simple&quot;, &quot;Doble&quot;, &quot;Triple&quot;)</li>
+                  <li>{t('documentationBodies.crearProductos.sub2Item1')}</li>
+                  <li>{t('documentationBodies.crearProductos.sub2Item2')}</li>
                   <li>
-                    <strong>Selecciona la moneda para cada precio:</strong> por defecto se sugiere la{' '}
-                    <strong>moneda principal que configuraste en el restaurante</strong>; podés cambiarla por línea si lo necesitás.
+                    <Trans i18nKey="documentationBodies.crearProductos.sub2Item3" components={{ strong: <strong /> }} />
                   </li>
-                  <li>Ingresa el monto del precio</li>
+                  <li>{t('documentationBodies.crearProductos.sub2Item4')}</li>
                 </ul>
               </li>
-              <li><strong>Paso 3 - Iconos y características:</strong>
+              <li><Trans i18nKey="documentationBodies.crearProductos.sub3Title" components={{ strong: <strong /> }} />
                 <ul>
-                  <li>Selecciona iconos que representen características del producto (Sin Gluten, Vegetariano, Vegano, Picante, etc.)</li>
-                  <li>Estos iconos aparecerán junto al producto en el menú público</li>
+                  {(t('documentationBodies.crearProductos.sub3Items', { returnObjects: true }) as string[]).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </li>
             </ul>
           </li>
           <li className="mb-2">
-            <strong>Guarda el producto:</strong> Haz clic en &quot;Guardar&quot; para crear el producto y agregarlo al menú.
+            <Trans i18nKey="documentationBodies.crearProductos.step4" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            <strong>Repite el proceso:</strong> Crea todos los productos que necesites para cada sección de tu menú.
+            <Trans i18nKey="documentationBodies.crearProductos.step5" components={{ strong: <strong /> }} />
           </li>
         </ol>
         <div className="alert alert-info mt-3">
-          <strong>💡 Tip:</strong> Puedes crear productos desde la sección &quot;Productos&quot; del menú lateral y luego asignarlos a diferentes menús y secciones.
+          <Trans i18nKey="documentationBodies.crearProductos.tip" components={{ strong: <strong /> }} />
         </div>
       </div>
     </div>
@@ -663,47 +646,47 @@ export function DocCrearProductosBody(): ReactNode {
 }
 
 export function DocReordenarProductosBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Cuándo usar esta guía">
+      <DocAudienceBlock title={t('documentationBodies.reordenarProductos.audienceTitle')}>
         <p className="mb-2">
-          Después de cargar productos en varias secciones, suele hacer falta <strong>ajustar el orden de lectura</strong> (destacar platos del día, subir postres al final, agrupar visualmente bebidas, etc.). No necesitás borrar ni volver a crear ítems: el orden se guarda al soltar cada arrastre.
+          <Trans i18nKey="documentationBodies.reordenarProductos.audienceP1" components={{ strong: <strong /> }} />
         </p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-danger text-white">
-          <h2 className="h4 mb-0">5️⃣ Cambiar el Orden de los Productos</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.reordenarProductos.cardTitle')}</h2>
         </div>
         <div className="card-body">
           <p className="mb-3">
-            Podés reorganizar el orden en que aparecen los productos dentro de cada sección usando <strong>arrastrar y soltar</strong> (drag and drop). En muchas versiones del panel también podés <strong>cruzar de una sección a otra</strong> arrastrando el ítem hasta el bloque destino.
+            <Trans i18nKey="documentationBodies.reordenarProductos.p1" components={{ strong: <strong /> }} />
           </p>
           <ol>
             <li className="mb-2">
-              <strong>Edita el menú:</strong> Desde la sección &quot;Menús&quot;, haz clic en el botón de editar del menú.
+              <Trans i18nKey="documentationBodies.reordenarProductos.step1" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              <strong>Selecciona &quot;Productos del menú&quot;:</strong> En el modal de edición, elige la opción &quot;🍽️ Productos del menú&quot;.
+              <Trans i18nKey="documentationBodies.reordenarProductos.step2" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              <strong>Reordena los productos:</strong>
+              <Trans i18nKey="documentationBodies.reordenarProductos.step3Intro" components={{ strong: <strong /> }} />
               <ul className="mt-2">
-                <li>Haz clic y mantén presionado sobre el producto que quieres mover (verás el icono ⋮⋮)</li>
-                <li>Arrastra el producto a la posición deseada dentro de la misma sección</li>
-                <li>Verás una línea azul que indica dónde se insertará el producto</li>
-                <li>Suelta el mouse para colocar el producto en la nueva posición</li>
+                {(t('documentationBodies.reordenarProductos.step3Items', { returnObjects: true }) as string[]).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
             </li>
             <li className="mb-2">
-              <strong>El orden se guarda automáticamente:</strong> Una vez que sueltas el producto, el nuevo orden se guarda automáticamente en el sistema.
+              <Trans i18nKey="documentationBodies.reordenarProductos.step4" components={{ strong: <strong /> }} />
             </li>
           </ol>
           <p className="mb-0 mt-3">
-            Si trabajás con muchos ítems, conviene publicar el menú y revisar la <strong>vista pública</strong> en el móvil: el orden en pantalla chica a veces se percibe distinto que en el editor.
+            <Trans i18nKey="documentationBodies.reordenarProductos.p2" components={{ strong: <strong /> }} />
           </p>
           <div className="alert alert-warning mt-3 mb-0">
-            <strong>⚠️ Nota:</strong> También puedes mover productos entre diferentes secciones arrastrándolos de una sección a otra. Si algo no se mueve, recargá la página y comprobá que no haya otro usuario editando el mismo menú a la vez.
+            <Trans i18nKey="documentationBodies.reordenarProductos.warning" components={{ strong: <strong /> }} />
           </div>
         </div>
       </div>
@@ -713,20 +696,16 @@ export function DocReordenarProductosBody({ basePath }: BodyProps): ReactNode {
       <DocFaqBlock
         items={[
           {
-            q: 'El orden no se guarda o vuelve atrás.',
-            a: (
-              <>
-                Esperá a que termine el guardado automático, revisá tu conexión y probá de nuevo. Si el problema continúa, cerrá y volvé a abrir el editor del menú para descartar un estado desactualizado en el navegador.
-              </>
-            ),
+            q: t('documentationBodies.reordenarProductos.faq.0.q'),
+            a: <Trans i18nKey="documentationBodies.reordenarProductos.faq.0.a" />,
           },
           {
-            q: '¿Puedo ordenar alfabéticamente de un golpe?',
+            q: t('documentationBodies.reordenarProductos.faq.1.q'),
             a: (
-              <>
-                Si la app no ofrece un botón de orden alfabético, el orden es <strong>manual</strong>. Para listas muy largas podés combinar{' '}
-                <Link href={docHref(basePath, 'importar-menu-csv')}>CSV</Link> (orden de filas) con edición fina después.
-              </>
+              <Trans
+                i18nKey="documentationBodies.reordenarProductos.faq.1.a"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'importar-menu-csv')} /> }}
+              />
             ),
           },
         ]}
@@ -736,41 +715,43 @@ export function DocReordenarProductosBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocPlantillasBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Qué cubre esta guía">
+      <DocAudienceBlock title={t('documentationBodies.plantillas.audienceTitle')}>
         <p className="mb-0">
-          Las plantillas definen <strong>colores, tipografías y disposición</strong> de la carta pública. No sustituyen a tus textos ni precios: solo cambian el envoltorio visual. Podés experimentar sin miedo a perder datos de productos.
+          <Trans i18nKey="documentationBodies.plantillas.audienceP1" components={{ strong: <strong /> }} />
         </p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-secondary text-white">
-          <h2 className="h4 mb-0">6️⃣ Plantillas de Diseño</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.plantillas.cardTitle')}</h2>
         </div>
         <div className="card-body">
           <p className="mb-3">
-            Cuando <strong>creás un restaurante</strong>, seleccionás una <strong>plantilla por defecto</strong> para la carta online. Esa elección solo define el aspecto visual:{' '}
-            <strong>podés cambiar de plantilla las veces que necesites sin perder los datos</strong> de tus menús, secciones ni productos (precios, textos, etc. se mantienen).
+            <Trans i18nKey="documentationBodies.plantillas.p1" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-3">
-            Para <strong>previsualizar</strong> cómo se verá tu carta con otra plantilla y/o <strong>cambiarla</strong>, usá la opción <strong>Menú plantillas</strong> (o equivalente en la app) desde el panel: ahí podés explorar los diseños disponibles antes de aplicar uno.
+            <Trans i18nKey="documentationBodies.plantillas.p2" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-3">
-            <strong>Cómo se aplica una plantilla al restaurante:</strong> una vez elegida la plantilla para ese negocio, el mismo diseño se aplica a la vista pública de <strong>todos los menús</strong> de ese restaurante. Si cambiás de plantilla, la carta se actualiza visualmente de inmediato para tus clientes.
+            <Trans i18nKey="documentationBodies.plantillas.p3" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-3">
-            Muchas plantillas permiten <strong>editar detalles del aspecto</strong> después de aplicarlas: por ejemplo activar o desactivar la visualización del <strong>nombre del negocio</strong>, del <strong>logo</strong>, de la <strong>descripción</strong>, y ajustar <strong>colores primarios y secundarios</strong> u otras opciones según el diseño. Revisá en el configurador de plantillas qué interruptores y colores están disponibles para tu plantilla activa.
+            <Trans i18nKey="documentationBodies.plantillas.p4" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-3">
-            <strong>Coherencia de marca:</strong> conviene que el logo, los colores de la plantilla y la foto de portada del restaurante cuenten la misma historia visual. Si cambiás solo la plantilla pero dejás fotos con otra estética, la carta puede verse desalineada; ajustá portada o colores hasta que el conjunto te cierre.
+            <Trans i18nKey="documentationBodies.plantillas.p5" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-3">
-            <strong>Rendimiento y lectura:</strong> plantillas con muchas imágenes o fondos muy oscuros pueden afectar contraste o velocidad en redes móviles débiles. Siempre probá el enlace público en un celular con brillo medio y con modo oscuro del sistema si tus clientes lo usan.
+            <Trans i18nKey="documentationBodies.plantillas.p6" components={{ strong: <strong /> }} />
           </p>
           <div className="alert alert-info mt-3 mb-0">
-            <strong>💡 Tip:</strong> Si probás varios estilos, publicá el menú y abrís el enlace público del restaurante para ver el resultado real que verán los clientes. El QR apunta al mismo espacio público descrito en{' '}
-            <Link href={docHref(basePath, 'descargar-qr')}>Descargar código QR</Link>.
+            <Trans
+              i18nKey="documentationBodies.plantillas.tip"
+              components={{ strong: <strong />, link: <Link href={docHref(basePath, 'descargar-qr')} /> }}
+            />
           </div>
         </div>
       </div>
@@ -780,20 +761,17 @@ export function DocPlantillasBody({ basePath }: BodyProps): ReactNode {
       <DocFaqBlock
         items={[
           {
-            q: 'Cambié de plantilla y no veo el cambio en la carta.',
+            q: t('documentationBodies.plantillas.faq.0.q'),
             a: (
-              <>
-                Comprobá que el menú esté <Link href={docHref(basePath, 'publicar-menu')}><strong>publicado</strong></Link>, que estés mirando el <strong>restaurante correcto</strong> y forzá un refresco sin caché en el navegador (Ctrl+F5 o equivalente).
-              </>
+              <Trans
+                i18nKey="documentationBodies.plantillas.faq.0.a"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'publicar-menu')} /> }}
+              />
             ),
           },
           {
-            q: '¿Cada menú puede tener una plantilla distinta?',
-            a: (
-              <>
-                En AppMenuQR la plantilla suele aplicarse a <strong>nivel restaurante</strong>: todos los menús publicados de ese local comparten el mismo diseño. Si necesitás estilos distintos, evaluá crear otro restaurante en la cuenta (según límites del plan) o contactá soporte según vuestra política comercial.
-              </>
-            ),
+            q: t('documentationBodies.plantillas.faq.1.q'),
+            a: <Trans i18nKey="documentationBodies.plantillas.faq.1.a" components={{ strong: <strong /> }} />,
           },
         ]}
       />
@@ -802,46 +780,54 @@ export function DocPlantillasBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocPublicarMenuBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Publicar vs borrador">
+      <DocAudienceBlock title={t('documentationBodies.publicarMenu.audienceTitle')}>
         <p className="mb-0">
-          Un menú en <strong>borrador</strong> no forma parte de la carta que ven los clientes en el enlace público. Solo los menús <strong>publicados</strong> (y asignados al restaurante correcto) aparecen junto con el resto de menús activos del local.
+          <Trans i18nKey="documentationBodies.publicarMenu.audienceP1" components={{ strong: <strong /> }} />
         </p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-dark text-white">
-          <h2 className="h4 mb-0">Publicar el menú</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.publicarMenu.cardTitle')}</h2>
         </div>
         <div className="card-body">
           <p className="mb-3">
-            Para que un menú forme parte de la experiencia online de tus clientes, tenés que controlar si está <strong>publicado</strong> o en <strong>borrador</strong>.
+            <Trans i18nKey="documentationBodies.publicarMenu.p1" components={{ strong: <strong /> }} />
           </p>
-          <h3 className="h6 text-uppercase text-muted mb-2">Checklist rápido antes de publicar</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.publicarMenu.checklistHeading')}</h3>
           <ul className="mb-4 ps-3">
-            <li className="mb-2">Revisá precios y monedas en los productos más vendidos.</li>
-            <li className="mb-2">Confirmá que las <Link href={docHref(basePath, 'crear-secciones')}>secciones</Link> estén en el orden de lectura deseado.</li>
-            <li className="mb-2">Ocultá o desactivá productos que no quieras mostrar aún.</li>
-            <li className="mb-2">Abrí la vista previa o el enlace público en un móvil real.</li>
+            <li className="mb-2">{t('documentationBodies.publicarMenu.checklist1')}</li>
+            <li className="mb-2">
+              <Trans
+                i18nKey="documentationBodies.publicarMenu.checklist2"
+                components={{ link: <Link href={docHref(basePath, 'crear-secciones')} /> }}
+              />
+            </li>
+            <li className="mb-2">{t('documentationBodies.publicarMenu.checklist3')}</li>
+            <li className="mb-2">{t('documentationBodies.publicarMenu.checklist4')}</li>
           </ul>
           <ol className="mb-4">
             <li className="mb-2">
-              <strong>Edita el menú que querés publicar o despublicar</strong> desde la sección &quot;Menús&quot; (icono o acción de editar sobre la fila del menú).
+              <Trans i18nKey="documentationBodies.publicarMenu.step1" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              En la <strong>lista de menús</strong>, fijate en la columna <strong>Estado</strong>: ahí verás si cada uno está <strong>publicado</strong> o como <strong>borrador</strong>.
+              <Trans i18nKey="documentationBodies.publicarMenu.step2" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              En las <strong>acciones</strong> de esa fila encontrarás un botón para <strong>publicar</strong> o <strong>despublicar</strong> el menú (el texto puede variar según el estado actual).
+              <Trans i18nKey="documentationBodies.publicarMenu.step3" components={{ strong: <strong /> }} />
             </li>
           </ol>
           <p className="mb-3">
-            <strong>Importante:</strong> aunque un menú esté <strong>despublicado</strong>, el cliente puede seguir entrando al <strong>enlace o QR del restaurante</strong>; lo que ocurre es que <strong>no verá ese menú</strong> en la carta hasta que lo vuelvas a <strong>publicar</strong>. El resto de menús que sigan publicados sí se mostrarán con normalidad.
+            <Trans i18nKey="documentationBodies.publicarMenu.p2" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-0">
-            Si necesitás <strong>quitar un menú de la carta sin borrarlo</strong>, la despublicación es el camino habitual. Si querés borrar el menú pero conservar productos, leé también{' '}
-            <Link href={docHref(basePath, 'menu-visibilidad-y-eliminacion')}>Menú: visibilidad y eliminación</Link>.
+            <Trans
+              i18nKey="documentationBodies.publicarMenu.p3"
+              components={{ strong: <strong />, link: <Link href={docHref(basePath, 'menu-visibilidad-y-eliminacion')} /> }}
+            />
           </p>
         </div>
       </div>
@@ -851,20 +837,21 @@ export function DocPublicarMenuBody({ basePath }: BodyProps): ReactNode {
       <DocFaqBlock
         items={[
           {
-            q: 'Publico el menú pero el QR sigue sin mostrarlo.',
+            q: t('documentationBodies.publicarMenu.faq.0.q'),
             a: (
-              <>
-                Verificá que el menú esté publicado <strong>y</strong> asociado al restaurante cuyo QR estás escaneando. Revisá también si el restaurante está <Link href={docHref(basePath, 'desactivar-restaurante')}><strong>activo</strong></Link> y que no haya otro menú tapando la navegación esperada.
-              </>
+              <Trans
+                i18nKey="documentationBodies.publicarMenu.faq.0.a"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'desactivar-restaurante')} /> }}
+              />
             ),
           },
           {
-            q: '¿Puedo programar horarios de publicación automáticos?',
+            q: t('documentationBodies.publicarMenu.faq.1.q'),
             a: (
-              <>
-                Sí, en planes <strong>Pro</strong> y <strong>Premium</strong> podés{' '}
-                <Link href={docHref(basePath, 'programar-menu')}>programar la visibilidad</Link> de cada menú por días, horarios y (opcionalmente) fechas. El menú debe seguir estando <strong>publicado</strong>; la programación controla cuándo se muestra dentro de ese estado. Si tu plan no incluye la función, el flujo es <strong>manual</strong>: publicá o despublicá cuando corresponda.
-              </>
+              <Trans
+                i18nKey="documentationBodies.publicarMenu.faq.1.a"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'programar-menu')} /> }}
+              />
             ),
           },
         ]}
@@ -874,79 +861,78 @@ export function DocPublicarMenuBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocProgramarMenuBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Disponibilidad según plan">
+      <DocAudienceBlock title={t('documentationBodies.programarMenu.audienceTitle')}>
         <p className="mb-0">
-          La programación de menús está disponible en planes <strong>Pro</strong> y{' '}
-          <strong>Premium</strong>. Si tu plan es Free u otro que no la incluya, verás un aviso al entrar a la pantalla
-          y podrás revisar opciones en{' '}
-          <Link href={docHref(basePath, 'suscripciones-y-pagos')}>Suscripciones y pagos</Link>. La programación{' '}
-          <strong>no reemplaza</strong> publicar el menú: un menú en borrador no aparece en la carta aunque tenga horarios
-          configurados.
+          <Trans
+            i18nKey="documentationBodies.programarMenu.audienceP1"
+            components={{ strong: <strong />, link: <Link href={docHref(basePath, 'suscripciones-y-pagos')} /> }}
+          />
         </p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-dark text-white">
-          <h2 className="h4 mb-0">Programar visibilidad del menú</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.programarMenu.cardTitle')}</h2>
         </div>
         <div className="card-body">
           <p className="mb-3">
-            Con esta función podés definir <strong>qué días</strong> y, si querés, <strong>en qué horario</strong> se muestra
-            cada menú en la carta pública del restaurante. Es útil para cartas de mediodía vs. noche, menús de fin de semana
-            o promociones que solo aplican ciertos días.
+            <Trans i18nKey="documentationBodies.programarMenu.p1" components={{ strong: <strong /> }} />
           </p>
-          <h3 className="h6 text-uppercase text-muted mb-2">Checklist antes de programar</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.programarMenu.checklistHeading')}</h3>
           <ul className="mb-4 ps-3">
             <li className="mb-2">
-              Confirmá que el menú esté <Link href={docHref(basePath, 'publicar-menu')}><strong>publicado</strong></Link>.
+              <Trans
+                i18nKey="documentationBodies.programarMenu.checklist1"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'publicar-menu')} /> }}
+              />
             </li>
-            <li className="mb-2">Verificá el <strong>huso horario</strong> del restaurante (la programación usa esa zona horaria).</li>
-            <li className="mb-2">Si tenés varios menús, programá cada uno por separado según corresponda.</li>
+            <li className="mb-2">
+              <Trans i18nKey="documentationBodies.programarMenu.checklist2" components={{ strong: <strong /> }} />
+            </li>
+            <li className="mb-2">{t('documentationBodies.programarMenu.checklist3')}</li>
           </ul>
           <ol className="mb-4">
             <li className="mb-2">
-              Entrá a la sección <strong>Menús</strong> del panel y pulsá{' '}
-              <Link href="/admin/menus/schedule" target="_blank" rel="noopener noreferrer"><strong>Programar menú</strong></Link>.
+              <Trans
+                i18nKey="documentationBodies.programarMenu.step1"
+                components={{
+                  strong: <strong />,
+                  scheduleLink: (
+                    <Link href="/admin/menus/schedule" target="_blank" rel="noopener noreferrer" />
+                  ),
+                }}
+              />
             </li>
             <li className="mb-2">
-              Elegí el <strong>restaurante</strong> al que quieras aplicar la programación.
+              <Trans i18nKey="documentationBodies.programarMenu.step2" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              Revisá o ajustá el <strong>huso horario del restaurante</strong>: los días y horarios se evalúan según esa zona.
+              <Trans i18nKey="documentationBodies.programarMenu.step3" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              Para cada menú de la lista, activá el interruptor <strong>Programar visibilidad</strong>.
+              <Trans i18nKey="documentationBodies.programarMenu.step4" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              Marcá los <strong>días visibles</strong> (lunes a domingo). Si no marcás ninguno, el menú no se mostrará mientras
-              la programación esté activa.
+              <Trans i18nKey="documentationBodies.programarMenu.step5" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              <strong>Horario (opcional):</strong> podés indicar <em>Desde</em> y <em>Hasta</em>. Si los dejás vacíos, el menú
-              se ve todo el día en los días elegidos.
+              <Trans i18nKey="documentationBodies.programarMenu.step6" components={{ strong: <strong />, em: <em /> }} />
             </li>
             <li className="mb-2">
-              <strong>Limitar por fechas (opcional):</strong> activá esta opción si la programación debe aplicar solo entre
-              un día de inicio y, si lo indicás, un día de finalización. Si no la activás, la regla se repite cada semana
-              según los días marcados.
+              <Trans i18nKey="documentationBodies.programarMenu.step7" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              Pulsá <strong>Guardar programación</strong> para aplicar los cambios a todos los menús del restaurante que
-              hayas configurado.
+              <Trans i18nKey="documentationBodies.programarMenu.step8" components={{ strong: <strong /> }} />
             </li>
           </ol>
           <p className="mb-3">
-            Si un menú tiene la programación <strong>desactivada</strong>, se comporta como siempre: estando publicado, se
-            muestra en la carta sin restricción de día u hora (salvo vigencia u otras reglas del sistema). Si la
-            programación está <strong>activa</strong>, fuera de horario el menú no aparece en la página del restaurante,
-            pero <strong>sigue accesible por su URL directa</strong>. Para quitarla: desactivá «Programar visibilidad» (o
-            «Quitar programación») y pulsá <strong>Guardar programación</strong>.
+            <Trans i18nKey="documentationBodies.programarMenu.p2" components={{ strong: <strong /> }} />
           </p>
           <div className="alert alert-info mb-0">
-            <strong>Ejemplo:</strong> menú &quot;Almuerzo&quot; publicado, programación activa, días lun–vie, horario 12:00–16:00.
-            Fuera de ese rango —aunque siga publicado— no aparecerá en la carta online hasta que entre la ventana configurada.
+            <Trans i18nKey="documentationBodies.programarMenu.example" components={{ strong: <strong /> }} />
           </div>
         </div>
       </div>
@@ -956,30 +942,25 @@ export function DocProgramarMenuBody({ basePath }: BodyProps): ReactNode {
       <DocFaqBlock
         items={[
           {
-            q: '¿La programación publica o despublica el menú automáticamente?',
+            q: t('documentationBodies.programarMenu.faq.0.q'),
             a: (
-              <>
-                No. Solo controla <strong>cuándo se muestra</strong> un menú que ya está <strong>publicado</strong>. Para ocultarlo por completo, usá <strong>despublicar</strong> (ver{' '}
-                <Link href={docHref(basePath, 'publicar-menu')}>Publicar el menú</Link>).
-              </>
+              <Trans
+                i18nKey="documentationBodies.programarMenu.faq.0.a"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'publicar-menu')} /> }}
+              />
             ),
           },
           {
-            q: 'Programé el menú pero no aparece en el horario esperado.',
-            a: (
-              <>
-                Revisá el <strong>huso horario</strong> del restaurante, que el menú esté <strong>publicado</strong> y que
-                hayas marcado el día correcto. Guardá de nuevo si hiciste cambios sin pulsar <strong>Guardar programación</strong>.
-              </>
-            ),
+            q: t('documentationBodies.programarMenu.faq.1.q'),
+            a: <Trans i18nKey="documentationBodies.programarMenu.faq.1.a" components={{ strong: <strong /> }} />,
           },
           {
-            q: '¿Puedo usar la programación con plan Free?',
+            q: t('documentationBodies.programarMenu.faq.2.q'),
             a: (
-              <>
-                No. Necesitás plan <strong>Pro</strong> o <strong>Premium</strong>. Consultá{' '}
-                <Link href={docHref(basePath, 'suscripciones-y-pagos')}>Suscripciones y pagos</Link> para actualizar tu plan.
-              </>
+              <Trans
+                i18nKey="documentationBodies.programarMenu.faq.2.a"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'suscripciones-y-pagos')} /> }}
+              />
             ),
           },
         ]}
@@ -989,79 +970,70 @@ export function DocProgramarMenuBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocImprimirCartaBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="¿Para qué sirve?">
+      <DocAudienceBlock title={t('documentationBodies.imprimirCarta.audienceTitle')}>
         <p className="mb-0">
-          La impresión en papel genera una <strong>vista previa lista para imprimir</strong> de tu carta, independiente de la
-          plantilla online del restaurante. Podés elegir diseño de impresión, qué menús incluir y cómo se reparten las secciones
-          en las páginas. No modifica la carta digital ni el QR.
+          <Trans i18nKey="documentationBodies.imprimirCarta.audienceP1" components={{ strong: <strong /> }} />
         </p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-dark text-white">
-          <h2 className="h4 mb-0">Imprimir la carta en papel</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.imprimirCarta.cardTitle')}</h2>
         </div>
         <div className="card-body">
-          <p className="mb-3">
-            Desde el panel podés preparar una versión en papel de uno o varios menús de un restaurante, con opciones de diseño
-            y contenido antes de enviar a la impresora o guardar como PDF desde el navegador.
-          </p>
-          <h3 className="h6 text-uppercase text-muted mb-2">Checklist antes de imprimir</h3>
+          <p className="mb-3">{t('documentationBodies.imprimirCarta.p1')}</p>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.imprimirCarta.checklistHeading')}</h3>
           <ul className="mb-4 ps-3">
-            <li className="mb-2">Revisá precios y nombres en los menús que vas a incluir.</li>
-            <li className="mb-2">Comprobá que el restaurante tenga logo o portada si querés mostrarlos.</li>
-            <li className="mb-2">Si usás traducciones, elegí el idioma correcto en las opciones.</li>
+            <li className="mb-2">{t('documentationBodies.imprimirCarta.checklist1')}</li>
+            <li className="mb-2">{t('documentationBodies.imprimirCarta.checklist2')}</li>
+            <li className="mb-2">{t('documentationBodies.imprimirCarta.checklist3')}</li>
           </ul>
           <ol className="mb-4">
             <li className="mb-2">
-              Entrá a <strong>Restaurantes</strong> en el panel y, sobre el local deseado, pulsá <strong>Imprimir carta</strong>.
+              <Trans i18nKey="documentationBodies.imprimirCarta.step1" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              Se abrirá la pantalla de impresión con una <strong>vista previa</strong> a la izquierda y las{' '}
-              <strong>Opciones de impresión</strong> a la derecha.
+              <Trans i18nKey="documentationBodies.imprimirCarta.step2" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              Elegí la <strong>plantilla de impresión</strong>:
+              <Trans i18nKey="documentationBodies.imprimirCarta.step3Intro" components={{ strong: <strong /> }} />
               <ul className="mt-2 mb-0">
-                <li><strong>Clásica</strong> — diseño limpio, precios a la derecha.</li>
-                <li><strong>Elegante</strong> — tipografía serif y encabezado centrado.</li>
-                <li><strong>Moderna</strong> — estilo minimalista con franja de color.</li>
-                <li><strong>Bistro</strong> — fondo cálido, precio debajo del nombre.</li>
+                {(t('documentationBodies.imprimirCarta.step3Items', { returnObjects: true }) as string[]).map((item, idx) => (
+                  <li key={idx}>
+                    <Trans i18nKey={`documentationBodies.imprimirCarta.step3Items.${idx}`} components={{ strong: <strong /> }} />
+                  </li>
+                ))}
               </ul>
             </li>
             <li className="mb-2">
-              En <strong>Datos del restaurante</strong>, marcá o desmarcá qué mostrar: logo, portada, nombre y descripción
-              (las opciones sin imagen o texto quedan deshabilitadas).
+              <Trans i18nKey="documentationBodies.imprimirCarta.step4" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              En <strong>Secciones</strong>, elegí el layout:
+              <Trans i18nKey="documentationBodies.imprimirCarta.step5Intro" components={{ strong: <strong /> }} />
               <ul className="mt-2 mb-0">
-                <li><strong>Una debajo de la otra</strong> — todas las secciones en flujo continuo.</li>
-                <li><strong>Una sección por página</strong> — cada sección comienza en una página nueva (útil para menús largos).</li>
+                {(t('documentationBodies.imprimirCarta.step5Items', { returnObjects: true }) as string[]).map((item, idx) => (
+                  <li key={idx}>
+                    <Trans i18nKey={`documentationBodies.imprimirCarta.step5Items.${idx}`} components={{ strong: <strong /> }} />
+                  </li>
+                ))}
               </ul>
             </li>
             <li className="mb-2">
-              Si tu restaurante tiene <strong>varios idiomas</strong> activos, elegí el idioma de la carta en el selector correspondiente.
+              <Trans i18nKey="documentationBodies.imprimirCarta.step6" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              En <strong>Menús a imprimir</strong>, marcá los menús que quieras incluir. Podés usar <strong>Todos</strong> o{' '}
-              <strong>Ninguno</strong> como atajo. La vista previa se actualiza al cambiar la selección.
+              <Trans i18nKey="documentationBodies.imprimirCarta.step7" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              Cuando la vista previa te convenga, pulsá <strong>Imprimir</strong>. Se abrirá el diálogo de impresión del
-              navegador; ahí podés elegir impresora o <strong>Guardar como PDF</strong>.
+              <Trans i18nKey="documentationBodies.imprimirCarta.step8" components={{ strong: <strong /> }} />
             </li>
           </ol>
-          <p className="mb-3">
-            Al pie de la carta impresa se incluyen los datos de contacto del restaurante (dirección, teléfono, WhatsApp, email
-            y web) según lo que tengas cargado en la ficha del local.
-          </p>
+          <p className="mb-3">{t('documentationBodies.imprimirCarta.p2')}</p>
           <div className="alert alert-warning mb-0">
-            <strong>Consejo:</strong> en el diálogo de impresión del navegador, desactivá encabezados y pies de página propios
-            del navegador si no los querés, y revisá márgenes y orientación (vertical suele funcionar mejor). Probá una hoja
-            de prueba antes de una tirada grande.
+            <Trans i18nKey="documentationBodies.imprimirCarta.tip" components={{ strong: <strong /> }} />
           </div>
         </div>
       </div>
@@ -1071,31 +1043,21 @@ export function DocImprimirCartaBody({ basePath }: BodyProps): ReactNode {
       <DocFaqBlock
         items={[
           {
-            q: '¿Necesito publicar el menú para imprimirlo?',
+            q: t('documentationBodies.imprimirCarta.faq.0.q'),
+            a: <Trans i18nKey="documentationBodies.imprimirCarta.faq.0.a" />,
+          },
+          {
+            q: t('documentationBodies.imprimirCarta.faq.1.q'),
             a: (
-              <>
-                No es obligatorio. La pantalla intenta cargar el contenido publicado; si un menú aún está en borrador, puede
-                usar los datos del panel como respaldo. Igual conviene tener el contenido revisado antes de imprimir.
-              </>
+              <Trans
+                i18nKey="documentationBodies.imprimirCarta.faq.1.a"
+                components={{ link: <Link href={docHref(basePath, 'plantillas')} /> }}
+              />
             ),
           },
           {
-            q: '¿La plantilla de impresión cambia la carta online?',
-            a: (
-              <>
-                No. La plantilla de impresión solo afecta el papel/PDF. La carta digital sigue usando la{' '}
-                <Link href={docHref(basePath, 'plantillas')}>plantilla del restaurante</Link> configurada en el panel.
-              </>
-            ),
-          },
-          {
-            q: 'Imprimí y se cortan secciones o queda mucho espacio en blanco.',
-            a: (
-              <>
-                Probá la opción <strong>Una sección por página</strong> o la contraria según el largo de tu menú, y ajustá
-                escala o márgenes en el diálogo de impresión del navegador (por ejemplo &quot;Ajustar al ancho&quot;).
-              </>
-            ),
+            q: t('documentationBodies.imprimirCarta.faq.2.q'),
+            a: <Trans i18nKey="documentationBodies.imprimirCarta.faq.2.a" components={{ strong: <strong /> }} />,
           },
         ]}
       />
@@ -1104,55 +1066,48 @@ export function DocImprimirCartaBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocDescargarQrBody(): ReactNode {
+  const { t } = useTranslation();
   return (
     <div className="card mb-4">
       <div className="card-header bg-dark text-white">
-        <h2 className="h4 mb-0">7️⃣ Código QR del restaurante</h2>
+        <h2 className="h4 mb-0">{t('documentationBodies.descargarQr.cardTitle')}</h2>
       </div>
       <div className="card-body">
         <p className="mb-3">
-          Una vez que hayas creado y publicado al menos un menú, el sistema <strong>genera automáticamente un código QR del restaurante</strong> que podés <strong>descargar o imprimir</strong> para que los clientes lo escaneen con el móvil y abran la carta. <strong>Te recomendamos probar siempre el QR antes y después de imprimirlo</strong> (tamaño, contraste y que apunte al local correcto).
+          <Trans i18nKey="documentationBodies.descargarQr.p1" components={{ strong: <strong /> }} />
         </p>
         <p className="mb-3">
-          El QR es del <strong>restaurante</strong> (del negocio), no de un solo menú aislado: quien escanea accede al espacio público del local y verá <strong>todos los menús que tengas publicados</strong> para ese restaurante.
+          <Trans i18nKey="documentationBodies.descargarQr.p2" components={{ strong: <strong /> }} />
         </p>
         <div className="alert alert-warning mb-4">
-          <strong>⚠️ Muy importante — nombre del restaurante y QR:</strong> el código QR y el enlace público están ligados a la identidad actual del negocio en el sistema. Si{' '}
-          <strong>cambiás el nombre del restaurante</strong> (u otros datos que formen parte de la URL o del perfil público),{' '}
-          <strong>el QR y los enlaces impresos o guardados antes pueden dejar de coincidir</strong> con lo que ves ahora en pantalla: en la práctica es como si hubieras &quot;cambiado de cartel&quot;: quien tenga el material antiguo podría llegar a una página distinta o a un error. Por eso, cada vez que modifiqués el nombre u otra clave del enlace, <strong>vuelve a descargar o reimprimí el QR desde el panel</strong> y reemplazá los códigos viejos en mesas, vidriera y redes.
+          <Trans i18nKey="documentationBodies.descargarQr.warning" components={{ strong: <strong /> }} />
         </div>
 
-        <h3 className="h6 text-uppercase text-muted mb-2">Ver y descargar desde el panel (dashboard)</h3>
+        <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.descargarQr.dashboardHeading')}</h3>
         <ol className="mb-4">
           <li className="mb-2">
-            Iniciá sesión y abrí el <strong>panel de administración</strong> (dashboard).
+            <Trans i18nKey="documentationBodies.descargarQr.dashboardStep1" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            Desde ahí, entrá al flujo donde se muestra el <strong>código QR del restaurante</strong> (suele estar junto al resumen del negocio, enlace público o accesos rápidos; el menú lateral puede tener una entrada tipo &quot;QR&quot;, &quot;Compartir&quot; o similar según tu versión).
+            <Trans i18nKey="documentationBodies.descargarQr.dashboardStep2" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            En esa pantalla podés <strong>ver el QR en grande</strong>, copiar el <strong>enlace público</strong> y usar el botón de <strong>descarga</strong> para guardar la imagen antes de imprimir.
+            <Trans i18nKey="documentationBodies.descargarQr.dashboardStep3" components={{ strong: <strong /> }} />
           </li>
           <li className="mb-2">
-            Verificá el resultado escaneando el archivo descargado con tu teléfono; si algo no coincide (nombre del local o menús visibles), revisá primero que los menús estén <strong>publicados</strong> y que el nombre del restaurante sea el definitivo.
+            <Trans i18nKey="documentationBodies.descargarQr.dashboardStep4" components={{ strong: <strong /> }} />
           </li>
         </ol>
 
-        <h3 className="h6 text-uppercase text-muted mb-2">Descarga el QR</h3>
+        <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.descargarQr.downloadHeading')}</h3>
         <ul className="mb-4">
-          <li className="mb-2">
-            Haz clic en el botón &quot;Descargar QR&quot; o &quot;Descargar&quot;
-          </li>
-          <li className="mb-2">
-            El código QR se descargará como una imagen (PNG o JPG)
-          </li>
-          <li className="mb-2">
-            Puedes imprimir este código QR y colocarlo en las mesas de tu restaurante
-          </li>
+          {(t('documentationBodies.descargarQr.downloadItems', { returnObjects: true }) as string[]).map((item) => (
+            <li className="mb-2" key={item}>{item}</li>
+          ))}
         </ul>
 
         <div className="alert alert-success mt-3 mb-0">
-          <strong>✅ Ventajas del QR:</strong> Los clientes pueden acceder al menú sin necesidad de descargar una app, y siempre verán la versión más actualizada de tus menús publicados.
+          <Trans i18nKey="documentationBodies.descargarQr.success" components={{ strong: <strong /> }} />
         </div>
       </div>
     </div>
@@ -1160,41 +1115,44 @@ export function DocDescargarQrBody(): ReactNode {
 }
 
 export function DocDesactivarRestauranteBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Desactivar ≠ eliminar">
+      <DocAudienceBlock title={t('documentationBodies.desactivarRestaurante.audienceTitle')}>
         <p className="mb-0">
-          <strong>Desactivar</strong> pausa la carta pública y el QR sin borrar datos. <strong>Eliminar</strong> el restaurante es irreversible. Si solo cerrás temporalmente o estás de vacaciones, usá desactivar.
+          <Trans i18nKey="documentationBodies.desactivarRestaurante.audienceP1" components={{ strong: <strong /> }} />
         </p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-warning text-dark">
-          <h2 className="h4 mb-0">Desactivar el restaurante</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.desactivarRestaurante.cardTitle')}</h2>
         </div>
         <div className="card-body">
           <p className="mb-3">
-            Podés <strong>desactivar</strong> un restaurante cuando quieras pausar temporalmente la carta digital (vacaciones, local cerrado, cambio de marca en preparación, reformas, etc.).
+            <Trans i18nKey="documentationBodies.desactivarRestaurante.p1" components={{ strong: <strong /> }} />
           </p>
-          <h3 className="h6 text-uppercase text-muted mb-2">Qué pasa al desactivar</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.desactivarRestaurante.whatHappensHeading')}</h3>
           <ul className="mb-4 ps-3">
-            <li className="mb-2">La <strong>página pública</strong> del local deja de mostrarse como disponible (mensaje o pantalla de no disponible según la versión).</li>
-            <li className="mb-2">El <strong>código QR</strong> que apuntaba a ese espacio deja de mostrar la carta habitual hasta la reactivación.</li>
-            <li className="mb-2">En el panel seguís viendo el restaurante, menús y productos para cuando vuelvas a activarlo.</li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.desactivarRestaurante.whatHappens1" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.desactivarRestaurante.whatHappens2" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2">{t('documentationBodies.desactivarRestaurante.whatHappens3')}</li>
           </ul>
-          <h3 className="h6 text-uppercase text-muted mb-2">Cómo hacerlo (flujo general)</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.desactivarRestaurante.howToHeading')}</h3>
           <ol className="mb-4">
-            <li className="mb-2">Iniciá sesión e ingresá a <strong>Restaurantes</strong> (o la sección equivalente donde listás tus locales).</li>
-            <li className="mb-2">Seleccioná el restaurante y buscá el interruptor o acción de <strong>activo / inactivo</strong>, <strong>habilitado</strong> o similar según el texto de tu versión.</li>
-            <li className="mb-2">Guardá o confirmá si el sistema pide confirmación.</li>
-            <li className="mb-2">Probá el enlace público o el QR en el móvil para verificar que la pausa se aplicó.</li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.desactivarRestaurante.howTo1" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.desactivarRestaurante.howTo2" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2">{t('documentationBodies.desactivarRestaurante.howTo3')}</li>
+            <li className="mb-2">{t('documentationBodies.desactivarRestaurante.howTo4')}</li>
           </ol>
           <p className="mb-3">
-            Para volver a mostrar todo, <strong>reactivalo</strong> desde la misma gestión de restaurantes. No hace falta volver a cargar menús salvo que los hayas modificado mientras estaba pausado.
+            <Trans i18nKey="documentationBodies.desactivarRestaurante.p2" components={{ strong: <strong /> }} />
           </p>
           <div className="alert alert-info mb-0">
-            <strong>Nota:</strong> Desactivar <strong>no borra datos</strong>; solo oculta la experiencia pública hasta que reactives. Si necesitás borrar definitivamente el negocio, leé{' '}
-            <Link href={docHref(basePath, 'eliminar-restaurante')}>Eliminar el restaurante</Link> con mucho cuidado.
+            <Trans
+              i18nKey="documentationBodies.desactivarRestaurante.note"
+              components={{ strong: <strong />, link: <Link href={docHref(basePath, 'eliminar-restaurante')} /> }}
+            />
           </div>
         </div>
       </div>
@@ -1204,19 +1162,16 @@ export function DocDesactivarRestauranteBody({ basePath }: BodyProps): ReactNode
       <DocFaqBlock
         items={[
           {
-            q: '¿Los clientes ven un error o un mensaje amigable?',
-            a: (
-              <>
-                Depende de la versión desplegada de AppMenuQR; lo importante es que <strong>no verán la carta operativa</strong> hasta que reactives. Si necesitás un mensaje personalizado, consultá con soporte si hay opción de texto de cierre.
-              </>
-            ),
+            q: t('documentationBodies.desactivarRestaurante.faq.0.q'),
+            a: <Trans i18nKey="documentationBodies.desactivarRestaurante.faq.0.a" components={{ strong: <strong /> }} />,
           },
           {
-            q: '¿La suscripción sigue corriendo si el local está desactivado?',
+            q: t('documentationBodies.desactivarRestaurante.faq.1.q'),
             a: (
-              <>
-                La facturación del plan depende de los <Link href={docHref(basePath, 'suscripciones-y-pagos')}>términos de suscripción</Link> vigentes: desactivar el restaurante no siempre cancela el cobro automáticamente. Revisá tu panel de facturación o contactá soporte si querés pausar también el plan.
-              </>
+              <Trans
+                i18nKey="documentationBodies.desactivarRestaurante.faq.1.a"
+                components={{ link: <Link href={docHref(basePath, 'suscripciones-y-pagos')} /> }}
+              />
             ),
           },
         ]}
@@ -1226,36 +1181,40 @@ export function DocDesactivarRestauranteBody({ basePath }: BodyProps): ReactNode
 }
 
 export function DocEliminarRestauranteBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Antes de eliminar">
+      <DocAudienceBlock title={t('documentationBodies.eliminarRestaurante.audienceTitle')}>
         <ul className="mb-0 ps-3">
-          <li className="mb-2">Exportá o anotá lo que necesites conservar (si tu plan incluye exportación o copias manuales).</li>
-          <li className="mb-2">Avisá al resto del equipo para que nadie siga editando ese local.</li>
-          <li className="mb-0">Si solo querés ocultar la carta, preferí <Link href={docHref(basePath, 'desactivar-restaurante')}><strong>desactivar</strong></Link>.</li>
+          <li className="mb-2">{t('documentationBodies.eliminarRestaurante.audienceItem1')}</li>
+          <li className="mb-2">{t('documentationBodies.eliminarRestaurante.audienceItem2')}</li>
+          <li className="mb-0">
+            <Trans
+              i18nKey="documentationBodies.eliminarRestaurante.audienceItem3"
+              components={{ strong: <strong />, link: <Link href={docHref(basePath, 'desactivar-restaurante')} /> }}
+            />
+          </li>
         </ul>
       </DocAudienceBlock>
 
       <div className="card mb-4 border-danger">
         <div className="card-header bg-danger text-white">
-          <h2 className="h4 mb-0">Eliminar el restaurante</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.eliminarRestaurante.cardTitle')}</h2>
         </div>
         <div className="card-body">
           <p className="mb-3">
-            <strong>Eliminar un restaurante es una acción definitiva.</strong> Se borran los datos asociados a ese negocio en AppMenuQR (menús, configuración, vínculos internos según la lógica del sistema y lo que indique la pantalla de confirmación).
+            <Trans i18nKey="documentationBodies.eliminarRestaurante.p1" components={{ strong: <strong /> }} />
           </p>
-          <h3 className="h6 text-uppercase text-muted mb-2">Flujo típico en el panel</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.eliminarRestaurante.flowHeading')}</h3>
           <ol className="mb-4">
-            <li className="mb-2">Entrá a <strong>Restaurantes</strong> y ubicá el local a borrar.</li>
-            <li className="mb-2">Abrí las <strong>acciones avanzadas</strong> o el menú contextual del restaurante (según diseño de la app).</li>
-            <li className="mb-2">Elegí <strong>Eliminar</strong> o equivalente y leé el texto de advertencia completo.</li>
-            <li className="mb-2">Confirmá escribiendo el nombre o el texto que pida el sistema para evitar borrados accidentales.</li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.eliminarRestaurante.flow1" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.eliminarRestaurante.flow2" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.eliminarRestaurante.flow3" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2">{t('documentationBodies.eliminarRestaurante.flow4')}</li>
           </ol>
-          <p className="mb-3">
-            No podrás recuperar la información después de confirmar: hacé copias o exportaciones previas si tu plan las permite y necesitás conservar histórico. Los enlaces públicos y QR dejarán de resolver al contenido anterior.
-          </p>
+          <p className="mb-3">{t('documentationBodies.eliminarRestaurante.p2')}</p>
           <div className="alert alert-danger mb-0">
-            <strong>Zona de riesgo:</strong> solo eliminá si estás seguro. Si solo querés ocultar la carta un tiempo, preferí <strong>desactivar</strong> el restaurante en lugar de borrarlo.
+            <Trans i18nKey="documentationBodies.eliminarRestaurante.danger" components={{ strong: <strong /> }} />
           </div>
         </div>
       </div>
@@ -1265,11 +1224,12 @@ export function DocEliminarRestauranteBody({ basePath }: BodyProps): ReactNode {
       <DocFaqBlock
         items={[
           {
-            q: '¿Se borran también los menús y productos?',
+            q: t('documentationBodies.eliminarRestaurante.faq.0.q'),
             a: (
-              <>
-                Sí: al eliminar el <strong>restaurante</strong> se elimina el contexto del negocio y lo que cuelgue de él según la confirmación en pantalla. No confundas con <Link href={docHref(basePath, 'menu-visibilidad-y-eliminacion')}>eliminar solo un menú</Link>, que puede dejar productos huérfanos en la cuenta.
-              </>
+              <Trans
+                i18nKey="documentationBodies.eliminarRestaurante.faq.0.a"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'menu-visibilidad-y-eliminacion')} /> }}
+              />
             ),
           },
         ]}
@@ -1279,38 +1239,43 @@ export function DocEliminarRestauranteBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocMenuVisibilidadEliminacionBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Conceptos clave">
+      <DocAudienceBlock title={t('documentationBodies.menuVisibilidadEliminacion.audienceTitle')}>
         <p className="mb-0">
-          <strong>Despublicar</strong> un menú lo saca de la carta online sin borrarlo del panel. <strong>Eliminar</strong> un menú lo quita del sistema; los productos pueden quedar en tu cuenta sin menú asignado hasta que los reorganices.
+          <Trans i18nKey="documentationBodies.menuVisibilidadEliminacion.audienceP1" components={{ strong: <strong /> }} />
         </p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-primary text-white">
-          <h2 className="h4 mb-0">Menús: visibilidad y eliminación</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.menuVisibilidadEliminacion.cardTitle')}</h2>
         </div>
         <div className="card-body">
-          <h3 className="h6 text-uppercase text-muted mb-2">Menús publicados y despublicados</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.menuVisibilidadEliminacion.publishedHeading')}</h3>
           <p className="mb-3">
-            Los clientes pueden seguir entrando a la <strong>página pública del restaurante</strong> (enlace o QR) aunque algunos menús estén en <strong>borrador</strong> o <strong>despublicados</strong>. En ese caso verán únicamente los menús que estén <strong>publicados</strong> y <strong>asignados a ese restaurante</strong>; el resto no aparecerá en la carta hasta que los publiques de nuevo.
+            <Trans i18nKey="documentationBodies.menuVisibilidadEliminacion.publishedP1" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-4">
-            Para cambiar el estado de un menú (publicar / despublicar), seguí los pasos de{' '}
-            <Link href={docHref(basePath, 'publicar-menu')}>Publicar el menú</Link>.
+            <Trans
+              i18nKey="documentationBodies.menuVisibilidadEliminacion.publishedP2"
+              components={{ link: <Link href={docHref(basePath, 'publicar-menu')} /> }}
+            />
           </p>
 
-          <h3 className="h6 text-uppercase text-muted mb-2">Eliminar un menú</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.menuVisibilidadEliminacion.deleteHeading')}</h3>
           <p className="mb-3">
-            Si <strong>eliminás un menú</strong>, el propio menú se borra de la aplicación, pero <strong>los productos no se eliminan automáticamente</strong>: quedan en tu cuenta <strong>sin ese menú asignado</strong> (productos &quot;sueltos&quot; o huérfanos).
+            <Trans i18nKey="documentationBodies.menuVisibilidadEliminacion.deleteP1" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-3">
-            Después tendrás que <strong>asignarlos manualmente</strong> a otro menú o gestionarlos desde el listado de productos, según cómo esté organizado tu flujo en el panel. Si tenés muchos ítems sueltos, usá{' '}
-            <Link href={docHref(basePath, 'edicion-masiva-productos')}>edición masiva</Link> para moverlos o borrar duplicados con cuidado.
+            <Trans
+              i18nKey="documentationBodies.menuVisibilidadEliminacion.deleteP2"
+              components={{ strong: <strong />, link: <Link href={docHref(basePath, 'edicion-masiva-productos')} /> }}
+            />
           </p>
           <p className="mb-0">
-            <strong>Buena práctica:</strong> antes de eliminar, despublicá y esperá un día de operación para confirmar que ningún cliente dependía de ese menú (por ejemplo menú de desayuno vs menú principal).
+            <Trans i18nKey="documentationBodies.menuVisibilidadEliminacion.deleteP3" components={{ strong: <strong /> }} />
           </p>
         </div>
       </div>
@@ -1320,20 +1285,12 @@ export function DocMenuVisibilidadEliminacionBody({ basePath }: BodyProps): Reac
       <DocFaqBlock
         items={[
           {
-            q: 'Eliminé un menú y ahora veo productos “sin menú”.',
-            a: (
-              <>
-                Es el comportamiento esperado: los productos siguen en la cuenta. Asignalos a otro menú desde la edición de productos o con acciones masivas. Si no los necesitás, podés borrarlos desde el listado para liberar cupo del plan.
-              </>
-            ),
+            q: t('documentationBodies.menuVisibilidadEliminacion.faq.0.q'),
+            a: <Trans i18nKey="documentationBodies.menuVisibilidadEliminacion.faq.0.a" />,
           },
           {
-            q: '¿Puedo recuperar un menú borrado?',
-            a: (
-              <>
-                Por lo general <strong>no</strong>: la eliminación es definitiva salvo que el sistema muestre papelera (poco habitual). Por eso conviene despublicar primero y exportar o duplicar contenido si tu flujo lo permite.
-              </>
-            ),
+            q: t('documentationBodies.menuVisibilidadEliminacion.faq.1.q'),
+            a: <Trans i18nKey="documentationBodies.menuVisibilidadEliminacion.faq.1.a" components={{ strong: <strong /> }} />,
           },
         ]}
       />
@@ -1342,11 +1299,15 @@ export function DocMenuVisibilidadEliminacionBody({ basePath }: BodyProps): Reac
 }
 
 export function DocTraduccionesBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Disponibilidad según plan">
+      <DocAudienceBlock title={t('documentationBodies.traducciones.audienceTitle')}>
         <p className="mb-0">
-          Las traducciones y la cantidad de idiomas activos dependen de tu <Link href={docHref(basePath, 'suscripciones-y-pagos')}>plan de suscripción</Link>. Si no ves la sección de idiomas, es probable que tu plan actual no la incluya o que haya que activarla desde configuración.
+          <Trans
+            i18nKey="documentationBodies.traducciones.audienceP1"
+            components={{ link: <Link href={docHref(basePath, 'suscripciones-y-pagos')} /> }}
+          />
         </p>
       </DocAudienceBlock>
 
@@ -1354,34 +1315,34 @@ export function DocTraduccionesBody({ basePath }: BodyProps): ReactNode {
 
       <div className="card mb-4">
         <div className="card-header bg-info text-white">
-          <h2 className="h4 mb-0">Traducciones</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.traducciones.cardTitle')}</h2>
         </div>
         <div className="card-body">
           <p className="mb-3">
-            AppMenuQR puede incluir herramientas para <strong>traducir o revisar textos</strong> del menú (nombres, descripciones, secciones, etc.) según los <strong>idiomas</strong> que soporte tu plan.
+            <Trans i18nKey="documentationBodies.traducciones.p1" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-3">
-            <strong>Consejos de calidad:</strong> mantené la misma longitud aproximada entre idiomas para que el diseño no se rompa en móvil; revisá nombres de platos propios (no siempre se traducen literalmente); y actualizá todas las lenguas cuando cambies precios o alérgenos.
+            <Trans i18nKey="documentationBodies.traducciones.p2" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-3">
-            <strong>Pasos generales:</strong>
+            <Trans i18nKey="documentationBodies.traducciones.p3" components={{ strong: <strong /> }} />
           </p>
           <ol className="mb-4">
             <li className="mb-2">
-              Entrá al <strong>área de traducciones</strong> o equivalente en el panel (por ejemplo desde el menú lateral o desde la configuración del menú / restaurante).
+              <Trans i18nKey="documentationBodies.traducciones.step1" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              Elegí el <strong>idioma de origen</strong> y el <strong>idioma destino</strong> que quieras completar o revisar.
+              <Trans i18nKey="documentationBodies.traducciones.step2" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              Editá los textos indicados por la interfaz y <strong>guardá</strong> los cambios; en muchos casos podrás ver qué falta por traducir o qué quedó pendiente de revisión.
+              <Trans i18nKey="documentationBodies.traducciones.step3" components={{ strong: <strong /> }} />
             </li>
             <li className="mb-2">
-              Publicá el menú cuando los textos estén listos para que la carta pública refleje el idioma correcto según la lógica de tu sitio (selector de idioma, detección, etc., según versión).
+              {t('documentationBodies.traducciones.step4')}
             </li>
           </ol>
           <div className="alert alert-warning mb-0">
-            <strong>Disponibilidad y límites:</strong> las traducciones y la cantidad de idiomas activos <strong>dependen del plan de suscripción</strong>. Si tu plan no incluye esta función, la opción puede no aparecer o mostrarse bloqueada. Consultá los límites en la sección de <strong>suscripción / plan</strong> o en el mensaje que muestre la propia pantalla de traducciones.
+            <Trans i18nKey="documentationBodies.traducciones.warning" components={{ strong: <strong /> }} />
           </div>
         </div>
       </div>
@@ -1391,20 +1352,21 @@ export function DocTraduccionesBody({ basePath }: BodyProps): ReactNode {
       <DocFaqBlock
         items={[
           {
-            q: 'Traduje pero en la carta sigue el idioma anterior.',
+            q: t('documentationBodies.traducciones.faq.0.q'),
             a: (
-              <>
-                Verificá que guardaste cada bloque, que el menú esté <Link href={docHref(basePath, 'publicar-menu')}><strong>publicado</strong></Link> y que el visitante esté usando el selector de idioma correcto (si existe). Limpiá caché del navegador en una ventana privada para descartar vista vieja.
-              </>
+              <Trans
+                i18nKey="documentationBodies.traducciones.faq.0.a"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'publicar-menu')} /> }}
+              />
             ),
           },
           {
-            q: '¿Puedo importar traducciones masivas?',
+            q: t('documentationBodies.traducciones.faq.1.q'),
             a: (
-              <>
-                Si la app no ofrece import específico de i18n, muchos equipos preparan textos en hoja de cálculo y los copian campo a campo, o usan{' '}
-                <Link href={docHref(basePath, 'importar-menu-csv')}>CSV</Link> solo para el idioma principal y luego completan traducciones en el panel.
-              </>
+              <Trans
+                i18nKey="documentationBodies.traducciones.faq.1.a"
+                components={{ link: <Link href={docHref(basePath, 'importar-menu-csv')} /> }}
+              />
             ),
           },
         ]}
@@ -1414,47 +1376,44 @@ export function DocTraduccionesBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocEdicionMasivaProductosBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Cuándo usar acciones masivas">
+      <DocAudienceBlock title={t('documentationBodies.edicionMasivaProductos.audienceTitle')}>
         <p className="mb-0">
-          Son útiles al <strong>cambiar de temporada</strong>, al <strong>fusionar menús</strong>, al corregir categorías equivocadas o al limpiar duplicados después de una importación. Siempre revisá el <strong>límite de productos</strong> de tu plan antes de duplicar o mover lotes grandes.
+          <Trans i18nKey="documentationBodies.edicionMasivaProductos.audienceP1" components={{ strong: <strong /> }} />
         </p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-warning text-dark">
-          <h2 className="h4 mb-0">Edición masiva de productos</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.edicionMasivaProductos.cardTitle')}</h2>
         </div>
         <div className="card-body">
           <p className="mb-3">
-            Desde el listado o las acciones masivas del panel podés aplicar cambios a <strong>varios productos a la vez</strong> (según las opciones que ofrezca tu versión de AppMenuQR).
+            <Trans i18nKey="documentationBodies.edicionMasivaProductos.p1" components={{ strong: <strong /> }} />
           </p>
-          <h3 className="h6 text-uppercase text-muted mb-2">Acciones habituales</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.edicionMasivaProductos.commonActionsHeading')}</h3>
           <ul className="mb-4 ps-3">
-            <li className="mb-2">
-              <strong>Borrar productos seleccionados</strong> para quitarlos de la carta (confirmá siempre antes de eliminar).
-            </li>
-            <li className="mb-2">
-              <strong>Trasladarlos a otro menú</strong> del <strong>mismo restaurante</strong> o, si tu cuenta lo permite, a un <strong>otro restaurante que también te pertenezca</strong>.
-            </li>
-            <li className="mb-2">
-              <strong>Duplicar o copiar</strong> (si está disponible) para armar variantes de carta: ojo con el cupo total de productos.
-            </li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.edicionMasivaProductos.commonAction1" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.edicionMasivaProductos.commonAction2" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.edicionMasivaProductos.commonAction3" components={{ strong: <strong /> }} /></li>
           </ul>
-          <h3 className="h6 text-uppercase text-muted mb-2">Flujo recomendado</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.edicionMasivaProductos.recommendedFlowHeading')}</h3>
           <ol className="mb-4 ps-3">
-            <li className="mb-2">Filtrá o buscá los ítems en el listado hasta tener solo los que querés tocar.</li>
-            <li className="mb-2">Marcá las casillas de selección y elegí la acción masiva en la barra superior o menú contextual.</li>
-            <li className="mb-2">Leé el resumen de la operación (cuántos ítems, menú destino, irreversibilidad).</li>
-            <li className="mb-2">Confirmá y esperá el mensaje de éxito; refrescá el listado si hace falta.</li>
+            <li className="mb-2">{t('documentationBodies.edicionMasivaProductos.recommendedFlow1')}</li>
+            <li className="mb-2">{t('documentationBodies.edicionMasivaProductos.recommendedFlow2')}</li>
+            <li className="mb-2">{t('documentationBodies.edicionMasivaProductos.recommendedFlow3')}</li>
+            <li className="mb-2">{t('documentationBodies.edicionMasivaProductos.recommendedFlow4')}</li>
           </ol>
           <p className="mb-3">
-            <strong>Duplicados y cantidad del plan:</strong> muchas operaciones (como mover o copiar entre menús) pueden <strong>duplicar</strong> productos si no tenés claro qué hace cada acción. El sistema cuenta los productos frente al <strong>límite de tu plan</strong>; podrías superar el cupo sin querer.
+            <Trans i18nKey="documentationBodies.edicionMasivaProductos.p2" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-0">
-            <strong>Buena práctica:</strong> después de mover o clonar, revisá el total de productos activos; si necesitás liberar cupo, podés <strong>borrar duplicados</strong> o combinar ítems en un solo producto antes de seguir cargando nuevos platos. Para ajustes finos de un ítem, usá{' '}
-            <Link href={docHref(basePath, 'editar-productos-detalle')}>Editar un producto</Link>.
+            <Trans
+              i18nKey="documentationBodies.edicionMasivaProductos.p3"
+              components={{ strong: <strong />, link: <Link href={docHref(basePath, 'editar-productos-detalle')} /> }}
+            />
           </p>
         </div>
       </div>
@@ -1464,20 +1423,12 @@ export function DocEdicionMasivaProductosBody({ basePath }: BodyProps): ReactNod
       <DocFaqBlock
         items={[
           {
-            q: 'Moví productos y ahora aparecen dos veces en la carta.',
-            a: (
-              <>
-                Probablemente quedaron copias en el menú origen y en el destino. Volvé al listado, identificá duplicados por nombre y borrá o fusioná manualmente. En el futuro mové en lugar de duplicar si la interfaz lo distingue.
-              </>
-            ),
+            q: t('documentationBodies.edicionMasivaProductos.faq.0.q'),
+            a: <Trans i18nKey="documentationBodies.edicionMasivaProductos.faq.0.a" />,
           },
           {
-            q: 'La acción masiva falla a mitad de proceso.',
-            a: (
-              <>
-                Revisá conexión a internet, tamaño del lote y límites del plan. Si el error persiste, probá con menos productos seleccionados y anotá el mensaje exacto para soporte.
-              </>
-            ),
+            q: t('documentationBodies.edicionMasivaProductos.faq.1.q'),
+            a: <Trans i18nKey="documentationBodies.edicionMasivaProductos.faq.1.a" />,
           },
         ]}
       />
@@ -1486,47 +1437,42 @@ export function DocEdicionMasivaProductosBody({ basePath }: BodyProps): ReactNod
 }
 
 export function DocEditarProductosDetalleBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Alcance de la edición">
+      <DocAudienceBlock title={t('documentationBodies.editarProductosDetalle.audienceTitle')}>
         <p className="mb-0">
-          Desde la ficha de un producto podés cambiar textos, precios, visibilidad e imagen (si el plan lo permite). Los cambios impactan en <strong>todos los menús</strong> donde ese producto esté asociado, salvo que la app muestre una variante por menú.
+          <Trans i18nKey="documentationBodies.editarProductosDetalle.audienceP1" components={{ strong: <strong /> }} />
         </p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-warning text-dark">
-          <h2 className="h4 mb-0">Editar un producto</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.editarProductosDetalle.cardTitle')}</h2>
         </div>
         <div className="card-body">
           <p className="mb-3">
-            Abrí el producto desde el menú correspondiente (por ejemplo <strong>Productos del menú</strong> o el listado general de productos) y usá la pantalla de edición.
+            <Trans i18nKey="documentationBodies.editarProductosDetalle.p1" components={{ strong: <strong /> }} />
           </p>
-          <h3 className="h6 text-uppercase text-muted mb-2">Campos que suelen editarse</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.editarProductosDetalle.fieldsHeading')}</h3>
           <ul className="mb-4 ps-3">
-            <li className="mb-2">
-              <strong>Activar / desactivar:</strong> podés ocultar un producto en la carta sin borrarlo, según los interruptores o el estado que muestre el formulario.
-            </li>
-            <li className="mb-2">
-              <strong>Nombre y descripción:</strong> modificá los textos en cualquier momento; se reflejan en la vista pública al guardar.
-            </li>
-            <li className="mb-2">
-              <strong>Precios:</strong> cambiá importes existentes o agregá <strong>nuevas opciones de precio</strong> (por ejemplo tamaños o variantes) con su moneda y etiqueta cuando el formulario lo permita.
-            </li>
-            <li className="mb-2">
-              <strong>Foto del producto:</strong> si tu <strong>plan de suscripción</strong> incluye imágenes en carta, podrás subir o cambiar la foto desde la misma edición; si no está incluido, la opción puede no mostrarse o estar limitada.
-            </li>
-            <li className="mb-2">
-              <strong>Iconos y alérgenos:</strong> actualizalos cuando cambie la receta o el proveedor; ayuda a cumplir expectativas legales y de accesibilidad en la carta.
-            </li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.editarProductosDetalle.field1" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.editarProductosDetalle.field2" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.editarProductosDetalle.field3" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.editarProductosDetalle.field4" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.editarProductosDetalle.field5" components={{ strong: <strong /> }} /></li>
           </ul>
           <p className="mb-3">
-            Si necesitás aplicar el mismo cambio a muchos platos (por ejemplo subir un 5 % todos los principales), evaluá si tu flujo permite{' '}
-            <Link href={docHref(basePath, 'edicion-masiva-productos')}>edición masiva</Link> o una nueva{' '}
-            <Link href={docHref(basePath, 'importar-menu-csv')}>importación CSV</Link> controlada.
+            <Trans
+              i18nKey="documentationBodies.editarProductosDetalle.p2"
+              components={{
+                link1: <Link href={docHref(basePath, 'edicion-masiva-productos')} />,
+                link2: <Link href={docHref(basePath, 'importar-menu-csv')} />,
+              }}
+            />
           </p>
           <div className="alert alert-info mb-0">
-            Guardá siempre los cambios antes de salir de la pantalla para que los clientes vean la información actualizada.
+            {t('documentationBodies.editarProductosDetalle.tip')}
           </div>
         </div>
       </div>
@@ -1536,19 +1482,21 @@ export function DocEditarProductosDetalleBody({ basePath }: BodyProps): ReactNod
       <DocFaqBlock
         items={[
           {
-            q: 'Cambié el precio y en la carta sigue el valor viejo.',
+            q: t('documentationBodies.editarProductosDetalle.faq.0.q'),
             a: (
-              <>
-                Confirmá que pulsaste <strong>Guardar</strong>, que el producto siga <strong>activo</strong> y que el menú esté <Link href={docHref(basePath, 'publicar-menu')}><strong>publicado</strong></Link>. Probá en una ventana de incógnito para descartar caché del navegador.
-              </>
+              <Trans
+                i18nKey="documentationBodies.editarProductosDetalle.faq.0.a"
+                components={{ strong: <strong />, link: <Link href={docHref(basePath, 'publicar-menu')} /> }}
+              />
             ),
           },
           {
-            q: 'No me deja subir foto.',
+            q: t('documentationBodies.editarProductosDetalle.faq.1.q'),
             a: (
-              <>
-                Revisá límites de tamaño/formato y si tu <Link href={docHref(basePath, 'suscripciones-y-pagos')}>plan</Link> incluye fotos en producto. Si el error es genérico, probá otra imagen más liviana (JPEG comprimido).
-              </>
+              <Trans
+                i18nKey="documentationBodies.editarProductosDetalle.faq.1.a"
+                components={{ link: <Link href={docHref(basePath, 'suscripciones-y-pagos')} /> }}
+              />
             ),
           },
         ]}
@@ -1558,41 +1506,32 @@ export function DocEditarProductosDetalleBody({ basePath }: BodyProps): ReactNod
 }
 
 export function DocSuscripcionesPagosBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   return (
     <>
-      <DocAudienceBlock title="Gestión de la cuenta">
-        <p className="mb-0">
-          El plan define límites (menús, productos, funciones extra). Los cobros y comprobantes dependen de la pasarela activa en tu región. Si cambiás de plan, revisá qué pasa con datos que excedan el nuevo cupo.
-        </p>
+      <DocAudienceBlock title={t('documentationBodies.suscripcionesPagos.audienceTitle')}>
+        <p className="mb-0">{t('documentationBodies.suscripcionesPagos.audienceP1')}</p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-dark text-white">
-          <h2 className="h4 mb-0">Suscripciones y pagos</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.suscripcionesPagos.cardTitle')}</h2>
         </div>
         <div className="card-body">
-          <p className="mb-3">
-            La suscripción a AppMenuQR se gestiona desde tu cuenta y te da acceso al plan contratado (límites de menús, productos, funciones extra, traducciones, etc.).
-          </p>
-          <h3 className="h6 text-uppercase text-muted mb-2">Medios de pago habituales</h3>
+          <p className="mb-3">{t('documentationBodies.suscripcionesPagos.p1')}</p>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.suscripcionesPagos.paymentMethodsHeading')}</h3>
           <ul className="mb-4 ps-3">
-            <li className="mb-2">
-              <strong>Argentina:</strong> los cobros habituales se procesan con <strong>Mercado Pago</strong> (u otro medio que indique la pantalla de checkout en tu región).
-            </li>
-            <li className="mb-2">
-              <strong>Resto del mundo:</strong> suele utilizarse <strong>PayPal</strong> u otros métodos que se te muestren al contratar o renovar.
-            </li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.suscripcionesPagos.paymentMethod1" components={{ strong: <strong /> }} /></li>
+            <li className="mb-2"><Trans i18nKey="documentationBodies.suscripcionesPagos.paymentMethod2" components={{ strong: <strong /> }} /></li>
           </ul>
-          <h3 className="h6 text-uppercase text-muted mb-2">Cambios de plan y renovación</h3>
+          <h3 className="h6 text-uppercase text-muted mb-2">{t('documentationBodies.suscripcionesPagos.planChangesHeading')}</h3>
           <p className="mb-3">
-            Al <strong>subir de plan</strong> suelen habilitarse de inmediato más menús, productos o módulos (traducciones, imágenes, etc.). Al <strong>bajar de plan</strong>, el panel puede pedirte que ajustes contenido que supere el nuevo límite antes de confirmar el cambio.
+            <Trans i18nKey="documentationBodies.suscripcionesPagos.p2" components={{ strong: <strong /> }} />
           </p>
           <p className="mb-3">
-            Podés <strong>darte de baja o cancelar la renovación</strong> cuando quieras desde la configuración de suscripción o facturación que ofrezca el panel (el proceso exacto puede variar según la integración activa). Guardá comprobantes de pago y el correo de confirmación por si necesitás reclamo o reembolso según políticas del procesador.
+            <Trans i18nKey="documentationBodies.suscripcionesPagos.p3" components={{ strong: <strong /> }} />
           </p>
-          <p className="mb-0 text-muted small">
-            Los textos exactos de botones y la moneda mostrada dependen de tu país y de la pasarela disponible en el momento del pago.
-          </p>
+          <p className="mb-0 text-muted small">{t('documentationBodies.suscripcionesPagos.smallPrint')}</p>
         </div>
       </div>
 
@@ -1601,21 +1540,19 @@ export function DocSuscripcionesPagosBody({ basePath }: BodyProps): ReactNode {
       <DocFaqBlock
         items={[
           {
-            q: 'Me cobraron dos veces o no reconozco el cargo.',
-            a: (
-              <>
-                Revisá en Mercado Pago / PayPal el detalle del comercio y el concepto. Si sigue sin cuadrar, abrí un reclamo en la pasarela y contactá a soporte de AppMenuQR con capturas y fecha del cobro.
-              </>
-            ),
+            q: t('documentationBodies.suscripcionesPagos.faq.0.q'),
+            a: <Trans i18nKey="documentationBodies.suscripcionesPagos.faq.0.a" />,
           },
           {
-            q: 'Bajé de plan y desaparecieron opciones del menú.',
+            q: t('documentationBodies.suscripcionesPagos.faq.1.q'),
             a: (
-              <>
-                Es normal: algunas funciones quedan bloqueadas hasta que vuelvas a subir de plan o ajustes tu contenido a los límites nuevos. Revisá guías de{' '}
-                <Link href={docHref(basePath, 'traducciones')}>traducciones</Link> e{' '}
-                <Link href={docHref(basePath, 'edicion-masiva-productos')}>edición masiva</Link> para alinear la carta al plan actual.
-              </>
+              <Trans
+                i18nKey="documentationBodies.suscripcionesPagos.faq.1.a"
+                components={{
+                  link1: <Link href={docHref(basePath, 'traducciones')} />,
+                  link2: <Link href={docHref(basePath, 'edicion-masiva-productos')} />,
+                }}
+              />
             ),
           },
         ]}
@@ -1625,41 +1562,41 @@ export function DocSuscripcionesPagosBody({ basePath }: BodyProps): ReactNode {
 }
 
 export function DocCatalogoPlantillasBody({ basePath }: BodyProps): ReactNode {
+  const { t } = useTranslation();
   const templates = sortTemplatesByCatalogOrder(MENU_TEMPLATES_CATALOG);
 
   return (
     <>
-      <DocAudienceBlock title="Qué vas a encontrar">
+      <DocAudienceBlock title={t('documentationBodies.catalogoPlantillas.audienceTitle')}>
         <p className="mb-0">
-          Resumen de las <strong>plantillas de carta digital</strong> disponibles. Cada una tiene una página con sus
-          características; usá el enlace para ver el detalle, ejemplos y para qué tipo de negocio encaja mejor.
+          <Trans i18nKey="documentationBodies.catalogoPlantillas.audienceP1" components={{ strong: <strong /> }} />
         </p>
       </DocAudienceBlock>
 
       <div className="card mb-4">
         <div className="card-header bg-secondary text-white">
-          <h2 className="h4 mb-0">Plantillas disponibles</h2>
+          <h2 className="h4 mb-0">{t('documentationBodies.catalogoPlantillas.cardTitle')}</h2>
         </div>
         <div className="card-body p-0">
           <ul className="list-group list-group-flush mb-0">
-            {templates.map((t) => {
-              const estilos = Array.isArray(t.estilos) ? t.estilos.filter(Boolean) : [];
-              const resumenParts = [t.categoria, ...estilos.slice(0, 2)].filter(Boolean);
+            {templates.map((tpl) => {
+              const estilos = Array.isArray(tpl.estilos) ? tpl.estilos.filter(Boolean) : [];
+              const resumenParts = [tpl.categoria, ...estilos.slice(0, 2)].filter(Boolean);
               const resumen = resumenParts
                 .map((s) => String(s).charAt(0).toUpperCase() + String(s).slice(1))
                 .join(' · ');
               return (
-                <li key={t.slug} className="list-group-item px-3 py-3">
+                <li key={tpl.slug} className="list-group-item px-3 py-3">
                   <div className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
                     <div>
-                      <h3 className="h6 mb-1">{t.nombre}</h3>
+                      <h3 className="h6 mb-1">{tpl.nombre}</h3>
                       {resumen ? <p className="small text-muted mb-0">{resumen}</p> : null}
                     </div>
                     <Link
-                      href={plantillaCaracteristicasHref(t.slug)}
+                      href={plantillaCaracteristicasHref(tpl.slug)}
                       className="btn btn-sm btn-outline-primary flex-shrink-0"
                     >
-                      Ver características
+                      {t('documentationBodies.catalogoPlantillas.viewFeatures')}
                     </Link>
                   </div>
                 </li>

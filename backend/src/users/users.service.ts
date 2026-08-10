@@ -41,12 +41,17 @@ export class UsersService {
       emailVerified: row.email_verified || false,
       emailVerificationToken: row.email_verification_token || null,
       emailVerifiedAt: row.email_verified_at || null,
+      pendingEmail: row.pending_email ?? null,
+      emailChangeToken: row.email_change_token ?? null,
+      emailChangeExpiresAt: row.email_change_expires_at ?? null,
+      autoTranslateEnabled: row.auto_translate_enabled ?? null,
       pendingPlan: row.pending_plan ?? null,
       pendingBillingCycle: row.pending_billing_cycle ?? null,
       lastLoginAt: row.last_login_at,
       revokedSessionsBefore: row.revoked_sessions_before ?? null,
       registrationCountry: row.registration_country ?? null,
       declaredCountry: row.declared_country ?? null,
+      preferredLanguage: row.preferred_language === 'en' ? 'en' : 'es',
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       deletedAt: row.deleted_at,
@@ -76,11 +81,26 @@ export class UsersService {
     pendingBillingCycle?: 'monthly' | 'yearly' | null;
     registrationCountry?: string | null;
     declaredCountry?: string | null;
+      acceptedTermsAt?: Date | null;
+    marketingOptIn?: boolean;
+    marketingOptInAt?: Date | null;
+    preferredLanguage?: string | null;
   }): Promise<User> {
     const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+    const marketingOptIn = data.marketingOptIn === true;
     await this.postgres.executeRaw(
-      `INSERT INTO users (id, email, password_hash, first_name, last_name, role, tenant_id, is_active, email_verified, email_verification_token, pending_plan, pending_billing_cycle, registration_country, declared_country, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6::"UserRole", $7, $8, $9, $10, $11, $12::"PlanType", $13, $14, NOW(), NOW())`,
+      `INSERT INTO users (
+         id, email, password_hash, first_name, last_name, role, tenant_id, is_active,
+         email_verified, email_verification_token, pending_plan, pending_billing_cycle,
+         registration_country, declared_country, accepted_terms_at, marketing_opt_in, marketing_opt_in_at,
+         created_at, updated_at
+       )
+       VALUES (
+         $1, $2, $3, $4, $5, $6::"UserRole", $7, $8,
+         $9, $10, $11, $12::"PlanType",
+         $13, $14, $15, $16, $17,
+         NOW(), NOW()
+       )`,
       [
         id,
         data.email,
@@ -96,6 +116,9 @@ export class UsersService {
         data.pendingBillingCycle ?? null,
         data.registrationCountry ?? null,
         data.declaredCountry ?? null,
+        data.acceptedTermsAt ?? null,
+        marketingOptIn,
+        marketingOptIn ? (data.marketingOptInAt ?? new Date()) : null,
       ]
     );
     const user = await this.findById(id);
@@ -286,9 +309,51 @@ export class UsersService {
     return user as UserWithVerification;
   }
 
+  /**
+   * Suscripción activa con plan distinto de free (incluye promo/internal no-free y planes de pago).
+   */
+  async hasNonFreeActiveSubscription(userId: string): Promise<boolean> {
+    const rows = await this.postgres.queryRaw<{ ok: number }>(
+      `SELECT 1 AS ok
+       FROM subscriptions
+       WHERE user_id = $1
+         AND status = 'active'
+         AND LOWER(COALESCE(subscription_plan, 'free')) <> 'free'
+       LIMIT 1`,
+      [userId],
+    );
+    if (rows.length > 0) return true;
+
+    const tenantRows = await this.postgres.queryRaw<{ plan: string | null }>(
+      `SELECT t.plan
+       FROM users u
+       INNER JOIN tenants t ON t.id = u.tenant_id AND t.deleted_at IS NULL
+       WHERE u.id = $1 AND u.deleted_at IS NULL
+       LIMIT 1`,
+      [userId],
+    );
+    const plan = String(tenantRows[0]?.plan || 'free').toLowerCase();
+    return plan !== 'free';
+  }
+
+  /** Normaliza preferencia de moneda/región: AR (ARS/MP) o null/otro (USD/PayPal). */
+  private normalizeDeclaredCountry(value: string | null | undefined): string | null {
+    if (value === undefined || value === null || value === '') return null;
+    const code = String(value).trim().toUpperCase();
+    if (code === 'AR') return 'AR';
+    // Preferencia explícita USD (evita que registrationCountry=AR fuerce Mercado Pago).
+    if (code === 'US' || code === 'GLOBAL' || code === 'ES') return 'US';
+    return code.length === 2 ? code : null;
+  }
+
   async updateProfile(
     id: string,
-    data: { firstName?: string; lastName?: string; declaredCountry?: string | null },
+    data: {
+      firstName?: string;
+      lastName?: string;
+      declaredCountry?: string | null;
+      preferredLanguage?: string | null;
+    },
   ): Promise<UserWithVerification> {
     const updates: string[] = ['updated_at = NOW()'];
     const params: any[] = [];
@@ -303,10 +368,37 @@ export class UsersService {
       params.push(data.lastName || null);
       i++;
     }
-    if (data.declaredCountry !== undefined) {
-      updates.push(`declared_country = $${i}`);
-      params.push(data.declaredCountry || null);
+    if (data.preferredLanguage !== undefined) {
+      const lang = String(data.preferredLanguage || 'es').trim().toLowerCase() === 'en' ? 'en' : 'es';
+      updates.push(`preferred_language = $${i}`);
+      params.push(lang);
       i++;
+    }
+    if (data.declaredCountry !== undefined) {
+      const current = await this.findById(id);
+      if (!current) throw new NotFoundException('Usuario no encontrado');
+
+      const nextCountry = this.normalizeDeclaredCountry(data.declaredCountry);
+      const registration = this.normalizeDeclaredCountry(current.registrationCountry);
+      const prevDeclared = this.normalizeDeclaredCountry(current.declaredCountry);
+      const prevCurrency =
+        (prevDeclared ?? registration) === 'AR' ? 'ARS' : 'USD';
+      const nextCurrency = (nextCountry ?? registration) === 'AR' ? 'ARS' : 'USD';
+
+      if (prevCurrency !== nextCurrency && (await this.hasNonFreeActiveSubscription(id))) {
+        throw new BadRequestException(
+          'No podés cambiar la moneda porque tenés una suscripción activa. Comunicate con soporte para solicitar el cambio.',
+        );
+      }
+
+      updates.push(`declared_country = $${i}`);
+      params.push(nextCountry);
+      i++;
+    }
+    if (updates.length <= 1) {
+      const user = await this.findById(id);
+      if (!user) throw new NotFoundException('Usuario no encontrado');
+      return user as UserWithVerification;
     }
     params.push(id);
     await this.postgres.executeRaw(
@@ -420,6 +512,12 @@ export class UsersService {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          role: user.role,
+          tenantId: null,
+          declaredCountry: user.declaredCountry ?? null,
+          registrationCountry: user.registrationCountry ?? null,
+          lastLoginAt: user.lastLoginAt ?? null,
+          createdAt: user.createdAt ?? null,
         },
         restaurants: [],
         menus: [],
@@ -427,7 +525,7 @@ export class UsersService {
       };
     }
 
-    // Obtener restaurantes con sus plantillas
+    // Obtener comercios con sus plantillas
     const restaurants = await this.postgres.queryRaw<any>(
       `SELECT 
         r.id,
@@ -487,8 +585,11 @@ export class UsersService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        tenantId: user.tenantId,
         declaredCountry: user.declaredCountry ?? null,
         registrationCountry: user.registrationCountry ?? null,
+        lastLoginAt: user.lastLoginAt ?? null,
+        createdAt: user.createdAt ?? null,
       },
       restaurants: restaurants.map((r: any) => ({
         id: r.id,
@@ -504,7 +605,7 @@ export class UsersService {
         slug: m.slug,
         status: m.status,
         restaurantId: m.restaurantId,
-        restaurantName: m.restaurantName || 'Sin restaurante',
+        restaurantName: m.restaurantName || 'Sin comercio',
         restaurantTemplate: m.restaurantTemplate || 'classic',
       })),
       products: products.map((p: any) => ({
@@ -514,7 +615,7 @@ export class UsersService {
         menuId: p.menuId,
         menuName: p.menuName || 'Sin menú',
         restaurantId: p.restaurantId,
-        restaurantName: p.restaurantName || 'Sin restaurante',
+        restaurantName: p.restaurantName || 'Sin comercio',
         restaurantTemplate: p.restaurantTemplate || 'classic',
       })),
     };
@@ -542,6 +643,80 @@ export class UsersService {
       'UPDATE users SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1',
       [userId]
     );
+  }
+
+  /** Usuarios que optaron por recibir novedades (super admin). */
+  async listMarketingOptInUsers(opts?: {
+    email?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ data: any[]; total: number }> {
+    const limit = Math.min(Math.max(opts?.limit ?? 50, 1), 200);
+    const offset = Math.max(opts?.offset ?? 0, 0);
+    const emailFilter = (opts?.email || '').trim().toLowerCase();
+    const params: any[] = [];
+    let where = `u.deleted_at IS NULL AND u.marketing_opt_in = true`;
+    if (emailFilter) {
+      params.push(`%${emailFilter}%`);
+      where += ` AND LOWER(u.email) LIKE $${params.length}`;
+    }
+
+    const countRows = await this.postgres.queryRaw<{ total: string }>(
+      `SELECT COUNT(*)::text AS total FROM users u WHERE ${where}`,
+      params,
+    );
+    const total = parseInt(countRows[0]?.total || '0', 10) || 0;
+
+    params.push(limit);
+    const limitIdx = params.length;
+    params.push(offset);
+    const offsetIdx = params.length;
+
+    const rows = await this.postgres.queryRaw<any>(
+      `SELECT
+         u.id,
+         u.email,
+         u.first_name AS "firstName",
+         u.last_name AS "lastName",
+         u.role,
+         u.is_active AS "isActive",
+         u.email_verified AS "emailVerified",
+         u.marketing_opt_in AS "marketingOptIn",
+         u.marketing_opt_in_at AS "marketingOptInAt",
+         u.accepted_terms_at AS "acceptedTermsAt",
+         u.created_at AS "createdAt",
+         u.registration_country AS "registrationCountry",
+         u.declared_country AS "declaredCountry",
+         t.name AS "tenantName",
+         t.plan AS "tenantPlan"
+       FROM users u
+       LEFT JOIN tenants t ON t.id = u.tenant_id
+       WHERE ${where}
+       ORDER BY u.marketing_opt_in_at DESC NULLS LAST, u.created_at DESC
+       LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      params,
+    );
+
+    return {
+      data: rows.map((r) => ({
+        id: r.id,
+        email: r.email,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        role: r.role,
+        isActive: r.isActive,
+        emailVerified: r.emailVerified,
+        marketingOptIn: r.marketingOptIn,
+        marketingOptInAt: r.marketingOptInAt,
+        acceptedTermsAt: r.acceptedTermsAt,
+        createdAt: r.createdAt,
+        registrationCountry: r.registrationCountry,
+        declaredCountry: r.declaredCountry,
+        tenantName: r.tenantName,
+        tenantPlan: r.tenantPlan,
+      })),
+      total,
+    };
   }
 }
 

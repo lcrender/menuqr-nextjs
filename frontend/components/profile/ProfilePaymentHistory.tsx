@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../lib/axios';
 
 export interface PaymentItem {
@@ -23,8 +24,10 @@ export default function ProfilePaymentHistory({
   apiPath = '/subscriptions/me/payments',
   queryParams = {},
 }: ProfilePaymentHistoryProps) {
+  const { t, i18n } = useTranslation();
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
 
   useEffect(() => {
     const load = async () => {
@@ -42,22 +45,18 @@ export default function ProfilePaymentHistory({
   }, [apiPath, JSON.stringify(queryParams)]);
 
   if (loading) {
-    return <p className="text-muted small">Cargando historial…</p>;
+    return <p className="text-muted small">{t('myProfile.payments.loading')}</p>;
   }
 
   if (payments.length === 0) {
-    return (
-      <p className="text-muted small mb-0">
-        No hay pagos registrados. El historial se actualiza con cada facturación.
-      </p>
-    );
+    return <p className="text-muted small mb-0">{t('myProfile.payments.empty')}</p>;
   }
 
   return (
     <div className={embedded ? '' : 'card profile-section'}>
       {!embedded && (
         <div className="card-header bg-white border-bottom">
-          <h2 className="h5 mb-0 fw-semibold">Historial de pagos</h2>
+          <h2 className="h5 mb-0 fw-semibold">{t('myProfile.payments.title')}</h2>
         </div>
       )}
       <div className={embedded ? '' : 'card-body'}>
@@ -65,17 +64,17 @@ export default function ProfilePaymentHistory({
           <table className="table table-sm table-hover align-middle">
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Monto</th>
-                <th>Moneda</th>
-                <th>Estado</th>
-                <th>ID transacción</th>
+                <th>{t('myProfile.payments.date')}</th>
+                <th>{t('myProfile.payments.amount')}</th>
+                <th>{t('myProfile.payments.currency')}</th>
+                <th>{t('myProfile.payments.status')}</th>
+                <th>{t('myProfile.payments.transactionId')}</th>
               </tr>
             </thead>
             <tbody>
               {payments.map((p, idx) => (
                 <tr key={p.externalId || idx}>
-                  <td>{new Date(p.date).toLocaleDateString('es', { dateStyle: 'medium' })}</td>
+                  <td>{new Date(p.date).toLocaleDateString(dateLocale, { dateStyle: 'medium' })}</td>
                   <td>{p.amount}</td>
                   <td>{p.currency}</td>
                   <td>

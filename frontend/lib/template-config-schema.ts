@@ -69,21 +69,21 @@ const VISIBILITY_OPTIONS: TemplateConfigOption[] = [
   {
     id: 'showLogo',
     label: 'Mostrar logo',
-    description: 'Si está desactivado, no se muestra el logo del restaurante.',
+    description: 'Si está desactivado, no se muestra el logo del comercio.',
     type: 'boolean',
     default: true,
   },
   {
     id: 'showRestaurantName',
-    label: 'Mostrar nombre del restaurante',
-    description: 'Si está desactivado, no se muestra el nombre del restaurante.',
+    label: 'Mostrar nombre del comercio',
+    description: 'Si está desactivado, no se muestra el nombre del comercio.',
     type: 'boolean',
     default: true,
   },
   {
     id: 'showRestaurantDescription',
-    label: 'Mostrar descripción del restaurante',
-    description: 'Si está desactivado, no se muestra la descripción del restaurante.',
+    label: 'Mostrar descripción del comercio',
+    description: 'Si está desactivado, no se muestra la descripción del comercio.',
     type: 'boolean',
     default: true,
   },
@@ -117,28 +117,28 @@ const BURGERS_OPTIONS: TemplateConfigOption[] = [
   {
     id: 'showLogo',
     label: 'Mostrar logo',
-    description: 'Si está desactivado, no se muestra el logo del restaurante.',
+    description: 'Si está desactivado, no se muestra el logo del comercio.',
     type: 'boolean',
     default: true,
   },
   {
     id: 'showRestaurantName',
-    label: 'Mostrar nombre del restaurante',
-    description: 'Si está desactivado, no se muestra el nombre del restaurante.',
+    label: 'Mostrar nombre del comercio',
+    description: 'Si está desactivado, no se muestra el nombre del comercio.',
     type: 'boolean',
     default: true,
   },
   {
     id: 'restaurantNameColor',
-    label: 'Color del nombre del restaurante',
-    description: 'Color del texto del nombre del restaurante en la cabecera.',
+    label: 'Color del nombre del comercio',
+    description: 'Color del texto del nombre del comercio en la cabecera.',
     type: 'color',
     default: '#2c3e50',
   },
   {
     id: 'showRestaurantDescription',
-    label: 'Mostrar descripción del restaurante',
-    description: 'Si está desactivado, no se muestra la descripción del restaurante.',
+    label: 'Mostrar descripción del comercio',
+    description: 'Si está desactivado, no se muestra la descripción del comercio.',
     type: 'boolean',
     default: true,
   },
@@ -175,7 +175,7 @@ const GOURMET_OPTIONS: TemplateConfigOption[] = [
       { value: 'palatino', label: 'Palatino' },
     ],
   },
-  { id: 'showLogo', label: 'Mostrar logo', description: 'Mostrar el logo del restaurante.', type: 'boolean', default: true },
+  { id: 'showLogo', label: 'Mostrar logo', description: 'Mostrar el logo del comercio.', type: 'boolean', default: true },
   { id: 'showCoverImage', label: 'Mostrar imagen de portada', description: 'Mostrar la imagen de portada.', type: 'boolean', default: true },
   { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista (sin placeholder si no hay foto).', type: 'boolean', default: true },
 ];
@@ -202,24 +202,24 @@ const NIGHT_CLUB_OPTIONS: TemplateConfigOption[] = [
 /** Smart Food: sin portada, filtros de alérgenos en menú público. */
 const SMART_FOOD_OPTIONS: TemplateConfigOption[] = [
   ...COMMON_COLOR_OPTIONS,
-  { id: 'showLogo', label: 'Mostrar logo', description: 'Mostrar el logo del restaurante.', type: 'boolean', default: true },
-  { id: 'showRestaurantName', label: 'Mostrar nombre del restaurante', description: 'Mostrar el nombre del restaurante.', type: 'boolean', default: true },
-  { id: 'showRestaurantDescription', label: 'Mostrar descripción del restaurante', description: 'Mostrar la descripción del restaurante.', type: 'boolean', default: true },
+  { id: 'showLogo', label: 'Mostrar logo', description: 'Mostrar el logo del comercio.', type: 'boolean', default: true },
+  { id: 'showRestaurantName', label: 'Mostrar nombre del comercio', description: 'Mostrar el nombre del comercio.', type: 'boolean', default: true },
+  { id: 'showRestaurantDescription', label: 'Mostrar descripción del comercio', description: 'Mostrar la descripción del comercio.', type: 'boolean', default: true },
 ];
 
-/** Beach Life: fondo configurable por restaurante, cards horizontales sobre playa. */
+/** Beach Life: fondo configurable por comercio, cards horizontales sobre playa. */
 const BEACH_BAR_OPTIONS: TemplateConfigOption[] = [
   ...COMMON_COLOR_OPTIONS,
   {
     id: 'backgroundImageUrl',
     label: 'Imagen de fondo',
-    description: 'Foto de fondo a pantalla completa. Cada restaurante puede tener la suya.',
+    description: 'Foto de fondo a pantalla completa. Cada comercio puede tener la suya.',
     type: 'image',
     default: DEFAULT_BEACH_BAR_BACKGROUND_IMAGE,
   },
-  { id: 'showLogo', label: 'Mostrar logo', description: 'Mostrar el logo del restaurante.', type: 'boolean', default: true },
-  { id: 'showRestaurantName', label: 'Mostrar nombre del restaurante', description: 'Mostrar el nombre del restaurante.', type: 'boolean', default: true },
-  { id: 'showRestaurantDescription', label: 'Mostrar descripción del restaurante', description: 'Mostrar la descripción del restaurante.', type: 'boolean', default: true },
+  { id: 'showLogo', label: 'Mostrar logo', description: 'Mostrar el logo del comercio.', type: 'boolean', default: true },
+  { id: 'showRestaurantName', label: 'Mostrar nombre del comercio', description: 'Mostrar el nombre del comercio.', type: 'boolean', default: true },
+  { id: 'showRestaurantDescription', label: 'Mostrar descripción del comercio', description: 'Mostrar la descripción del comercio.', type: 'boolean', default: true },
   { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista.', type: 'boolean', default: true },
 ];
 
@@ -247,7 +247,7 @@ const SOL_NOCHE_OPTIONS: TemplateConfigOption[] = [
   {
     id: 'templateTimezone',
     label: 'Uso horario',
-    description: 'Zona horaria para calcular si es día o noche. Si no se define, usa la del restaurante.',
+    description: 'Zona horaria para calcular si es día o noche. Si no se define, usa la del comercio.',
     type: 'select',
     default: 'America/Argentina/Buenos_Aires',
     options: SOL_NOCHE_TIMEZONE_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
@@ -269,7 +269,7 @@ const SOL_NOCHE_OPTIONS: TemplateConfigOption[] = [
   {
     id: 'dayLogoUrl',
     label: 'Logo (modo claro)',
-    description: 'Logo para el modo claro. Si no se define, usa el logo del restaurante.',
+    description: 'Logo para el modo claro. Si no se define, usa el logo del comercio.',
     type: 'image',
     default: '',
     imageUploadPath: 'template-logo-day',
@@ -277,7 +277,7 @@ const SOL_NOCHE_OPTIONS: TemplateConfigOption[] = [
   {
     id: 'nightLogoUrl',
     label: 'Logo (modo oscuro)',
-    description: 'Logo para el modo oscuro. Si no se define, usa el logo de día o el del restaurante.',
+    description: 'Logo para el modo oscuro. Si no se define, usa el logo de día o el del comercio.',
     type: 'image',
     default: '',
     imageUploadPath: 'template-logo-night',
@@ -285,7 +285,7 @@ const SOL_NOCHE_OPTIONS: TemplateConfigOption[] = [
   {
     id: 'dayCoverImageUrl',
     label: 'Portada de día',
-    description: 'Imagen de portada para el modo claro. Tiene prioridad sobre la portada del restaurante.',
+    description: 'Imagen de portada para el modo claro. Tiene prioridad sobre la portada del comercio.',
     type: 'image',
     default: '',
     imageUploadPath: 'template-cover-day',
@@ -293,7 +293,7 @@ const SOL_NOCHE_OPTIONS: TemplateConfigOption[] = [
   {
     id: 'nightCoverImageUrl',
     label: 'Portada de noche',
-    description: 'Imagen de portada para el modo oscuro. Tiene prioridad sobre la portada del restaurante.',
+    description: 'Imagen de portada para el modo oscuro. Tiene prioridad sobre la portada del comercio.',
     type: 'image',
     default: '',
     imageUploadPath: 'template-cover-night',

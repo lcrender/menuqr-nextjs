@@ -130,7 +130,7 @@ export default function ImportarMenuFotoPage() {
       setTenants(Array.isArray(tPayload) ? tPayload : []);
       setRestaurants(Array.isArray(rPayload) ? rPayload : []);
     } catch (e: any) {
-      setError(e?.userMessage || e?.response?.data?.message || 'No se pudieron cargar cuentas/restaurantes');
+      setError(e?.userMessage || e?.response?.data?.message || 'No se pudieron cargar cuentas/comercios');
     } finally {
       setListsLoading(false);
     }
@@ -190,12 +190,12 @@ export default function ImportarMenuFotoPage() {
   }> => {
     if (restaurantMode === 'existing') {
       if (!selectedRestaurantId) {
-        throw new Error('Seleccioná un restaurante existente');
+        throw new Error('Seleccioná un comercio existente');
       }
       const r = restaurants.find((x) => x.id === selectedRestaurantId);
       const tenantId = tenantIdOfRestaurant(r || { id: '', name: '' }) || selectedTenantId;
       if (!tenantId) {
-        throw new Error('No se pudo determinar la cuenta del restaurante');
+        throw new Error('No se pudo determinar la cuenta del comercio');
       }
       setResolvedRestaurantId(selectedRestaurantId);
       setResolvedTenantId(tenantId);
@@ -206,7 +206,7 @@ export default function ImportarMenuFotoPage() {
     }
 
     if (!newRestaurantName.trim()) {
-      throw new Error('Ingresá el nombre del restaurante');
+      throw new Error('Ingresá el nombre del comercio');
     }
 
     setCreatingRestaurant(true);
@@ -218,7 +218,7 @@ export default function ImportarMenuFotoPage() {
       });
       const tenantId = tenantRes.data?.id || tenantRes.data?.data?.id;
       if (!tenantId) {
-        throw new Error('No se pudo crear la cuenta para el restaurante');
+        throw new Error('No se pudo crear la cuenta para el comercio');
       }
 
       const createRes = await api.post('/restaurants', {
@@ -231,7 +231,7 @@ export default function ImportarMenuFotoPage() {
       const restaurantId = createRes.data?.id || createRes.data?.data?.id;
       const slug = createRes.data?.slug || createRes.data?.data?.slug || '';
       if (!restaurantId) {
-        throw new Error('No se obtuvo el ID del restaurante creado');
+        throw new Error('No se obtuvo el ID del comercio creado');
       }
       if (newRestaurantLogo) {
         const fd = new FormData();
@@ -271,7 +271,7 @@ export default function ImportarMenuFotoPage() {
       try {
         await ensureRestaurant();
       } catch (e: any) {
-        setError(e?.userMessage || e?.response?.data?.message || e?.message || 'Error con el restaurante');
+        setError(e?.userMessage || e?.response?.data?.message || e?.message || 'Error con el comercio');
         return;
       }
       setStep(2);
@@ -462,7 +462,7 @@ export default function ImportarMenuFotoPage() {
       selectedTenantId ||
       tenantIdOfRestaurant(restaurants.find((r) => r.id === restaurantId) || { id: '', name: '' });
     if (!restaurantId || !tenantId) {
-      setError('Falta restaurante o cuenta destino');
+      setError('Falta comercio o cuenta destino');
       return;
     }
     if (!menuName.trim()) {
@@ -500,7 +500,7 @@ export default function ImportarMenuFotoPage() {
       selectedTenantId ||
       tenantIdOfRestaurant(restaurants.find((r) => r.id === restaurantId) || { id: '', name: '' });
     if (!restaurantId || !tenantId) {
-      setError('Falta restaurante destino');
+      setError('Falta comercio destino');
       return;
     }
     setSavingTemplate(true);
@@ -517,7 +517,7 @@ export default function ImportarMenuFotoPage() {
       if (slug) {
         window.open(`/restaurant/${slug}`, '_blank');
       }
-      await router.push('/admin/restaurants');
+      await router.push('/admin/comercios');
     } catch (e: any) {
       setError(e?.userMessage || e?.response?.data?.message || 'No se pudo aplicar la plantilla');
     } finally {
@@ -598,10 +598,10 @@ export default function ImportarMenuFotoPage() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label fw-semibold d-block mb-2">Restaurante destino *</label>
+                <label className="form-label fw-semibold d-block mb-2">Comercio destino *</label>
                 {listsLoading && <p className="text-muted small">Cargando…</p>}
                 <div className="mb-3">
-                  <div className="btn-group" role="group" aria-label="Tipo de restaurante">
+                  <div className="btn-group" role="group" aria-label="Tipo de comercio">
                     <button
                       type="button"
                       className={`btn ${restaurantMode === 'existing' ? 'btn-primary' : 'btn-outline-primary'}`}
@@ -640,7 +640,7 @@ export default function ImportarMenuFotoPage() {
                       </select>
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label">Restaurante *</label>
+                      <label className="form-label">Comercio *</label>
                       <select
                         className="form-select"
                         value={selectedRestaurantId}
@@ -664,7 +664,7 @@ export default function ImportarMenuFotoPage() {
                 ) : (
                   <div className="row g-3">
                     <div className="col-md-6">
-                      <label className="form-label">Nombre del restaurante *</label>
+                      <label className="form-label">Nombre del comercio *</label>
                       <input
                         className="form-control"
                         value={newRestaurantName}
@@ -682,7 +682,7 @@ export default function ImportarMenuFotoPage() {
                       />
                     </div>
                     <div className="col-12">
-                      <label className="form-label">Descripción del restaurante (opcional)</label>
+                      <label className="form-label">Descripción del comercio (opcional)</label>
                       <textarea
                         className="form-control"
                         rows={2}
@@ -874,9 +874,9 @@ export default function ImportarMenuFotoPage() {
 
           {step === 4 && importDone && (
             <>
-              <h2 className="h5 mb-3">4. Plantilla del restaurante</h2>
+              <h2 className="h5 mb-3">4. Plantilla del comercio</h2>
               <p className="text-muted small">
-                El menú ya se creó y publicó. Elegí la plantilla visual del restaurante.
+                El menú ya se creó y publicó. Elegí la plantilla visual del comercio.
               </p>
               <div className="row g-3">
                 {TEMPLATES_CATALOG.map((t) => (
@@ -945,7 +945,7 @@ export default function ImportarMenuFotoPage() {
                 disabled={creatingRestaurant || !canGoNextFromStep(1)}
                 onClick={() => void handleNext()}
               >
-                {creatingRestaurant ? 'Creando restaurante…' : 'Siguiente'}
+                {creatingRestaurant ? 'Creando comercio…' : 'Siguiente'}
               </button>
             )}
             {step === 2 && (
@@ -968,8 +968,8 @@ export default function ImportarMenuFotoPage() {
                 >
                   {savingTemplate ? 'Guardando…' : 'Aplicar plantilla y ver carta'}
                 </button>
-                <Link href="/admin/restaurants" className="btn btn-outline-secondary">
-                  Ir a restaurantes
+                <Link href="/admin/comercios" className="btn btn-outline-secondary">
+                  Ir a comercios
                 </Link>
               </>
             )}

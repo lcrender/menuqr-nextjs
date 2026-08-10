@@ -6,7 +6,7 @@ export class TrackingService {
   constructor(private readonly postgres: PostgresService) {}
 
   /**
-   * Devuelve vistas de menú y escaneos QR por restaurante.
+   * Devuelve vistas de menú y escaneos QR por comercio.
    * Si las tablas menu_views/qr_scans no existen, devuelve { menuViews: 0, qrScans: 0 }.
    */
   async getDashboardStats(restaurantId: string): Promise<{ menuViews: number; qrScans: number }> {

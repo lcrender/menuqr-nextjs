@@ -96,10 +96,18 @@
     "passwordRequirements": "La contraseña debe tener al menos 8 caracteres, incluyendo mayúsculas, minúsculas, números y caracteres especiales"
   },
   "navigation": {
-    "dashboard": "Panel Principal",
-    "restaurants": "Restaurantes",
+    "dashboard": "Dashboard",
+    "restaurants": "Comercios",
+    "businesses": "Comercios",
     "menus": "Menús",
     "items": "Productos",
+    "products": "Productos",
+    "templates": "Plantillas",
+    "translations": "Traducciones",
+    "profile": "Mi perfil",
+    "users": "Usuarios",
+    "news": "Novedades",
+    "metrics": "Métricas",
     "orders": "Pedidos",
     "customers": "Clientes",
     "reports": "Reportes",
@@ -108,13 +116,30 @@
     "help": "Ayuda",
     "support": "Soporte",
     "documentation": "Documentación",
+    "tools": "Herramientas",
+    "importMenuFromPhoto": "Importar menú desde foto",
+    "promoCodes": "Códigos promo",
+    "subscriptions": "Suscripciones",
+    "planLimits": "Límites de planes",
+    "welcomeMessages": "Mensajes bienvenida",
+    "ctaCard": "Mensaje card",
+    "autoTranslate": "Traducción automática (beta)",
+    "messages": "Mensajes",
+    "paymentEvents": "Pagos y eventos",
+    "supportTickets": "Tickets de soporte",
     "about": "Acerca de",
     "contact": "Contacto",
     "privacy": "Privacidad",
     "terms": "Términos",
     "home": "Inicio",
     "admin": "Administración",
-    "superAdmin": "Super Administrador"
+    "superAdmin": "Super Administrador",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "menu": "Menú",
+    "logout": "Cerrar Sesión",
+    "showSidebar": "Mostrar menú lateral",
+    "hideSidebar": "Ocultar menú lateral"
   },
   "dashboard": {
     "welcome": "Bienvenido",
@@ -135,6 +160,87 @@
     "totalCustomers": "Total de Clientes",
     "activeUsers": "Usuarios Activos",
     "systemHealth": "Estado del Sistema"
+  },
+  "dashboardPage": {
+    "title": "Dashboard",
+    "loading": "Cargando...",
+    "welcomeFallback": "Bienvenido, {{name}}",
+    "promoApplied": "Tu código promocional se aplicó correctamente. Ya tenés el plan {{plan}} activo.",
+    "promoPlanFallback": "tu plan",
+    "templateApplied": "Tu plantilla <strong>{{name}}</strong> ya está aplicada. Podés personalizarla en <configure>Configurar plantilla</configure>.",
+    "close": "Cerrar",
+    "proTemplateRequires": "La plantilla <strong>{{name}}</strong> requiere plan Pro. Podés seguir con el plan Free y activarla cuando te suscribas.",
+    "upgradeToPro": "Mejorar a Pro",
+    "notNow": "Ahora no",
+    "stats": {
+      "restaurants": "Comercios",
+      "menus": "Menús",
+      "products": "Productos",
+      "tenants": "Tenants",
+      "users": "Usuarios",
+      "createdAvailable": "creados / disponibles",
+      "manageRestaurants": "Gestionar Comercios",
+      "manageMenus": "Gestionar Menús",
+      "manageProducts": "Gestionar Productos"
+    },
+    "ctaFallback": {
+      "title": "¿Necesitás crear más productos?",
+      "description": "Probá por 30 días cualquiera de nuestros planes.",
+      "buttonText": "Gestionar suscripción"
+    },
+    "wizard": {
+      "welcomeTitle": "🎉 Bienvenido",
+      "welcomeBody": "En pocos minutos vas a tener tu menú digital con QR listo para usar.",
+      "howItWorks": "Así funciona:",
+      "step1": "1️⃣ 🏪 Crear tu comercio",
+      "step2": "2️⃣ 📋 Armar tu menú",
+      "step3": "3️⃣ 🍔 Cargar productos",
+      "step4": "4️⃣ 📱 Descargar tu QR",
+      "createRestaurant": "Crear mi comercio",
+      "createMenu": "Crear mi menú",
+      "addProducts": "Agregar productos",
+      "downloadQr": "Descargar mi QR",
+      "completeStepsOverlay": "Completa los pasos para activar tu QR",
+      "completeSetup": "Completa la configuración",
+      "progress": "Progreso",
+      "checkRestaurant": "Comercio creado",
+      "checkMenu": "Menú publicado en el local",
+      "checkProduct": "Producto en menú publicado"
+    },
+    "restaurant": {
+      "defaultName": "Comercio",
+      "configPending": "Configuración pendiente",
+      "inactive": "<strong>{{name}} está desactivado.</strong> Activá el local en <manage>Gestionar Comercios</manage>.",
+      "inactiveQr": "<strong>{{name}} está desactivado.</strong> El QR no funcionará hasta que lo actives en <manage>Gestionar Comercios</manage>.",
+      "unpublishedMenus": "<strong>Menús no publicados en {{name}}.</strong> Publicalos desde <manage>Gestionar Menús</manage>.",
+      "noProducts": "<strong>Sin productos:</strong> {{names}}. <add>Agregar productos</add>",
+      "menusOfLocal": "Menús de este local",
+      "productCount": "{{count}} producto(s)",
+      "subscription": "Suscripción:",
+      "email": "Email:",
+      "phone": "Teléfono:",
+      "whatsapp": "WhatsApp:",
+      "phoneWhatsapp": "Teléfono / WhatsApp:",
+      "web": "Web:",
+      "downloadQr": "Descargar QR",
+      "viewRestaurant": "Ver comercio",
+      "printMenu": "Imprimir carta",
+      "completeToActivateQr": "Completa menú y productos para activar el QR"
+    },
+    "template": {
+      "label": "Plantilla:",
+      "configure": "Configuración de plantilla",
+      "change": "Cambiar plantilla"
+    },
+    "menuStatus": {
+      "published": "Publicado",
+      "draft": "Borrador",
+      "archived": "Archivado"
+    },
+    "configNav": {
+      "welcomeMessages": "Mensajes bienvenida",
+      "ctaCard": "Mensaje card"
+    }
   },
   "restaurants": {
     "title": "Restaurantes",
@@ -178,14 +284,13 @@
     "menuValidTo": "Válido Hasta",
     "menuSections": "Secciones del Menú",
     "menuItems": "Productos del Menú",
-    "menuPublished": "Menú publicado exitosamente",
+    "menuPublished": "Publicado",
     "menuUnpublished": "Menú despublicado exitosamente",
     "menuCreated": "Menú creado exitosamente",
     "menuUpdated": "Menú actualizado exitosamente",
     "menuDeleted": "Menú eliminado exitosamente",
     "menuNotFound": "Menú no encontrado",
     "menuDraft": "Borrador",
-    "menuPublished": "Publicado",
     "menuArchived": "Archivado",
     "menuTemplateClassic": "Clásico",
     "menuTemplateModern": "Moderno",
@@ -400,6 +505,2721 @@
     "BRL": "Real Brasileño",
     "UYU": "Peso Uruguayo",
     "PYG": "Guaraní Paraguayo"
+  },
+  "myProfile": {
+    "title": "Mi perfil",
+    "subtitle": "Gestiona tu información personal, seguridad y suscripción.",
+    "loading": "Cargando...",
+    "loadError": "No se pudo cargar el perfil.",
+    "loadErrorRateLimit": "Demasiadas solicitudes. Esperá unos segundos y recargá la página.",
+    "errorTitle": "Error",
+    "doneTitle": "Listo",
+    "close": "Cerrar",
+    "personalInfo": {
+      "title": "Información personal",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "firstNamePlaceholder": "Tu nombre",
+      "lastNamePlaceholder": "Tu apellido",
+      "email": "Email",
+      "verified": "Verificado",
+      "notVerified": "No verificado",
+      "accountCreatedAt": "Fecha de creación de cuenta",
+      "preferences": "Preferencias",
+      "language": "Idioma",
+      "languageHelp": "Define el idioma del panel y el idioma por defecto de los comercios y menús nuevos.",
+      "languageEs": "Español",
+      "languageEn": "English",
+      "currency": "Moneda",
+      "currencyArs": "Pesos Argentinos (ARS) — Mercado Pago",
+      "currencyUsd": "Dólares (USD) — PayPal",
+      "currencyHelp": "Define la moneda y el medio de pago de las suscripciones.",
+      "currencyLocked": "No podés cambiar la moneda porque tenés una suscripción activa. Comunicate con <support>soporte</support> para solicitar el cambio.",
+      "saveChanges": "Guardar cambios",
+      "saving": "Guardando…",
+      "changePassword": "Cambiar contraseña",
+      "saveError": "No se pudo guardar.",
+      "profileUpdated": "Perfil actualizado correctamente.",
+      "changeEmail": "Cambiar email",
+      "changeEmailHelp": "Se enviará un correo de confirmación al nuevo email. El cambio no se aplicará hasta que hagas clic en el enlace.",
+      "newEmail": "Nuevo email",
+      "newEmailPlaceholder": "nuevo@ejemplo.com",
+      "currentPassword": "Contraseña actual",
+      "requestChange": "Solicitar cambio",
+      "sending": "Enviando…",
+      "newEmailRequired": "Ingresa el nuevo email.",
+      "currentPasswordRequired": "Ingresa tu contraseña actual.",
+      "emailChangeRequestError": "No se pudo enviar la solicitud. Revisa los datos.",
+      "emailChangeRequestSuccess": "Se envió un email de confirmación al nuevo correo. Revisa tu bandeja de entrada."
+    },
+    "security": {
+      "title": "Seguridad",
+      "changePassword": "Cambiar contraseña",
+      "currentPassword": "Contraseña actual",
+      "newPassword": "Nueva contraseña",
+      "confirmNewPassword": "Confirmar nueva contraseña",
+      "revokeOtherSessions": "Cerrar sesión en todos los demás dispositivos",
+      "updatePassword": "Actualizar contraseña",
+      "cancel": "Cancelar",
+      "passwordMismatch": "La nueva contraseña y la confirmación no coinciden.",
+      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres.",
+      "passwordChangeError": "No se pudo cambiar la contraseña.",
+      "passwordUpdated": "Contraseña actualizada correctamente.",
+      "activeSessions": "Sesiones activas",
+      "loadingSessions": "Cargando…",
+      "noSessions": "No hay sesiones registradas.",
+      "currentSession": "Actual",
+      "thisDevice": "Este dispositivo",
+      "revokeAllSessions": "Cerrar todas las sesiones",
+      "revokeAllConfirm": "Se cerrarán todas las sesiones en otros dispositivos. Tendrás que volver a iniciar sesión allí. ¿Continuar?",
+      "revokeAllError": "No se pudieron cerrar las sesiones.",
+      "onlyOneSession": "Solo hay una sesión activa.",
+      "twoFactorTitle": "Autenticación en dos pasos (2FA)",
+      "twoFactorHelp": "Próximamente podrás activar verificación en dos pasos para mayor seguridad."
+    },
+    "subscription": {
+      "title": "Suscripción",
+      "manage": "Gestionar suscripción",
+      "currentStatus": "Estado actual",
+      "activePlan": "Plan activo:",
+      "noPaidSubscriptionsOrg": "Tu plan actual es <strong>{{plan}}</strong> (asignado por tu organización). No tienes suscripciones de pago propias.",
+      "noPaidSubscriptionsFree": "No tienes suscripciones de pago. Estás en plan <strong>Free</strong>.",
+      "viewPlans": "Ver planes y actualizar",
+      "yearly": "Anual",
+      "monthly": "Mensual",
+      "cancelAtPeriodEnd": "Esta suscripción se cancelará al final del período actual. No se renovará.",
+      "nextRenewal": "Próxima renovación: {{date}}",
+      "status": {
+        "active": "Activa",
+        "canceled": "Cancelada",
+        "past_due": "Pago pendiente",
+        "expired": "Expirada",
+        "incomplete": "Incompleta"
+      }
+    },
+    "coupons": {
+      "title": "Cupones",
+      "redeem": "Canjear cupón",
+      "help": "Si tenés un código promocional, podés validarlo aquí y continuar al checkout con el beneficio aplicado o activar planes especiales como Pro Team."
+    },
+    "payments": {
+      "title": "Historial de pagos",
+      "loading": "Cargando historial…",
+      "empty": "No hay pagos registrados. El historial se actualiza con cada facturación.",
+      "date": "Fecha",
+      "amount": "Monto",
+      "currency": "Moneda",
+      "status": "Estado",
+      "transactionId": "ID transacción"
+    }
+  },
+  "adminBusinesses": {
+    "title": "Comercios",
+    "createNew": "+ Nuevo Comercio",
+    "planFree": "gratuito",
+    "planUsage": "{{current}}/{{limit}} comercios disponibles",
+    "planUsageHint": "Puedes ampliar la cantidad de comercios disponibles cambiando tu plan de suscripción.",
+    "loading": "Cargando...",
+    "filter": {
+      "label": "Filtrar por nombre:",
+      "placeholder": "Nombre del comercio",
+      "clear": "Limpiar filtro"
+    },
+    "table": {
+      "photo": "Foto",
+      "status": "Estado",
+      "menus": "Menús",
+      "actions": "Acciones",
+      "noPhoto": "Sin foto",
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "actions": {
+      "view": "👁️ Ver",
+      "viewTitle": "Ver comercio en nueva pestaña",
+      "viewDisabledTitle": "Activa el comercio y el menú para ver",
+      "viewQr": "Ver QR",
+      "viewQrTitle": "Ver y descargar QR",
+      "viewQrDisabledTitle": "Completa la configuración para el QR",
+      "printMenu": "Imprimir carta",
+      "printMenuTitle": "Imprimir carta",
+      "edit": "Editar",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "transfer": "Transferir",
+      "transferTitle": "Transferir comercio a otro usuario",
+      "delete": "Eliminar"
+    },
+    "mobile": {
+      "menusLabel": "Menús:"
+    },
+    "pagination": {
+      "showing": "Mostrando {{from}} - {{to}} de {{total}}",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    },
+    "tenant": {
+      "label": "Cuenta (tenant)",
+      "placeholder": "Seleccioná la cuenta…",
+      "help": "El comercio se asocia al tenant elegido. Si solo tenés una cuenta, se selecciona sola."
+    },
+    "form": {
+      "editTitle": "Editar Comercio",
+      "newTitle": "Nuevo Comercio",
+      "close": "Cerrar",
+      "name": "Nombre *",
+      "description": "Descripción",
+      "boldTitle": "Negrita (Ctrl+B)",
+      "lineBreakTitle": "Salto de línea",
+      "boldPlaceholder": "texto en negrita",
+      "descriptionPlaceholder": "Descripción del comercio (opcional). Usa **texto** para negrita y Enter para saltos de línea.",
+      "descriptionHint": "{{count}}/2000 caracteres - Usa **texto** para negrita",
+      "logo": "Logo",
+      "logoHint": "Recomendado: imagen cuadrada de al menos 400×400 px (PNG o JPG).",
+      "logoPreviewAlt": "Vista previa del logo",
+      "removeLogo": "Quitar logo",
+      "cover": "Foto de portada",
+      "coverPreviewAlt": "Vista previa de portada",
+      "removeCover": "Quitar portada",
+      "changeImage": "Cambiar imagen",
+      "uploadHint": "Arrastrá una imagen o hacé clic para elegir",
+      "country": "País",
+      "province": "Provincia / Región",
+      "city": "Ciudad",
+      "address": "Dirección",
+      "addressPlaceholder": "Calle y número",
+      "postalCode": "Código Postal",
+      "optional": "Opcional",
+      "contactSection": "CONTACTO",
+      "phone": "Teléfono",
+      "usePhoneForWhatsApp": "Usar este número para WhatsApp",
+      "whatsapp": "WhatsApp",
+      "whatsappPlaceholderPhone": "Se usará el número de teléfono",
+      "whatsappPlaceholderExample": "Ej: +54 11 1234-5678 o 1123456789",
+      "whatsappHintWithCountry": "Se agregará automáticamente el código de país de {{country}} si no lo incluyes",
+      "whatsappHintNoCountry": "Ingresa el número con código de país (ej: +54 11 1234-5678) o solo el número local",
+      "email": "Email",
+      "website": "Sitio Web",
+      "websitePlaceholder": "Ej: dsa.com (opcional)",
+      "template": "Plantilla de Diseño",
+      "templateHint": "Esta plantilla se aplicará a todos los menús de este comercio",
+      "templateClassic": "Clásico",
+      "templateModern": "Moderno",
+      "templateFoodie": "Foodie",
+      "paymentSection": "MEDIOS DE PAGO",
+      "defaultCurrency": "Moneda de pago por defecto *",
+      "additionalCurrencies": "Monedas adicionales (opcional)",
+      "additionalCurrenciesHint": "Haz clic en las monedas que deseas aceptar además de la moneda por defecto",
+      "cancel": "Cancelar",
+      "update": "Actualizar",
+      "create": "Crear",
+      "deleteBusiness": "Eliminar comercio"
+    },
+    "currencies": {
+      "USD": "USD - Dólar estadounidense",
+      "EUR": "EUR - Euro",
+      "ARS": "ARS - Peso argentino",
+      "MXN": "MXN - Peso mexicano",
+      "CLP": "CLP - Peso chileno",
+      "COP": "COP - Peso colombiano",
+      "PEN": "PEN - Sol peruano",
+      "BRL": "BRL - Real brasileño",
+      "UYU": "UYU - Peso uruguayo",
+      "PYG": "PYG - Guaraní paraguayo",
+      "BOB": "BOB - Boliviano",
+      "VES": "VES - Bolívar venezolano"
+    },
+    "alerts": {
+      "error": "Error",
+      "success": "Éxito",
+      "missingTenantTitle": "Falta la cuenta",
+      "missingTenantMessage": "Elegí en qué cuenta (tenant) se crea el comercio.",
+      "saveError": "Error guardando comercio",
+      "assignTemplateError": "Error asignando la plantilla",
+      "confirmIncorrectTitle": "Confirmación incorrecta",
+      "confirmIncorrectMessage": "Debés escribir exactamente {{phrase}} para continuar.",
+      "loadError": "Error cargando datos del comercio",
+      "noChangesTitle": "Sin cambios",
+      "noChangesMessage": "El comercio ya pertenece al tenant del usuario seleccionado.",
+      "transferDoneTitle": "Transferencia completada",
+      "transferDoneMessage": "Comercio transferido a {{email}}.",
+      "transferDoneFallbackEmail": "el usuario destino",
+      "transferDeactivatedExtra": " Se desactivaron {{count}} producto(s) por el límite del plan del destino.",
+      "transferErrorTitle": "Error al transferir",
+      "transferErrorMessage": "No se pudo transferir el comercio",
+      "deletedMessage": "Comercio eliminado correctamente",
+      "deleteError": "Error eliminando comercio",
+      "urlError": "No se puede generar la URL del comercio.",
+      "updateError": "Error actualizando comercio"
+    },
+    "qrNameModal": {
+      "title": "Cambio de nombre y código QR",
+      "close": "Cerrar",
+      "body": "<strong>Advertencia:</strong> si cambiás el nombre del comercio, el <strong>código QR y el enlace público</strong> pueden dejar de coincidir con el material que ya imprimiste o compartiste. Quien use un QR o enlace antiguo podría ver un error o una página distinta.",
+      "confirmHint": "Para confirmar que entendés las consecuencias, escribí exactamente la siguiente palabra en mayúsculas (sin espacios):",
+      "confirmLabel": "Confirmación ({{phrase}})",
+      "cancel": "Cancelar",
+      "confirmSave": "Confirmar y guardar"
+    },
+    "qrModal": {
+      "title": "Código QR - {{name}}",
+      "scanHint": "Escanea este código QR para ver el comercio en tu dispositivo móvil",
+      "noSlug": "No se puede generar el QR. Asegúrate de que el comercio tenga un slug.",
+      "close": "Cerrar",
+      "download": "Descargar QR"
+    },
+    "limitModal": {
+      "title": "Límite Alcanzado",
+      "reached": "Has alcanzado el límite de <strong>{{limit}} comercio(s)</strong> para tu plan <strong>{{plan}}</strong>.",
+      "current": "Actualmente tienes <strong>{{current}} comercio(s)</strong> creado(s).",
+      "needMoreTitle": "¿Necesitas más comercios?",
+      "needMoreBody": "Amplía tu suscripción para crear más comercios y aprovechar todas las funcionalidades de AppMenuQR.",
+      "viewPlans": "Ver planes y suscripción",
+      "notInterested": "Por el momento no me interesa"
+    },
+    "transferModal": {
+      "title": "Transferir comercio",
+      "close": "Cerrar",
+      "introWithAccount": "Vas a mover <strong>{{name}}</strong> (cuenta actual: <muted>{{tenant}}</muted>) con todos sus menús y productos a la cuenta de otro usuario.",
+      "introNoAccount": "Vas a mover <strong>{{name}}</strong> con todos sus menús y productos a la cuenta de otro usuario.",
+      "bulletQr": "El enlace y el QR del comercio no cambian.",
+      "bulletLimits": "Si el plan del destino tiene límite de productos activos, los excedentes quedarán desactivados.",
+      "bulletUser": "El usuario destino debe tener cuenta activa con tenant (no super admin).",
+      "searchLabel": "Buscar usuario destino",
+      "searchPlaceholder": "Email, nombre o tenant...",
+      "targetLabel": "Usuario destino",
+      "loadingUsers": "Cargando usuarios...",
+      "selectUser": "Seleccioná un usuario...",
+      "noUsers": "No hay usuarios que coincidan. Probá otro término de búsqueda.",
+      "confirmHint": "Escribe <strong>{{phrase}}</strong> para confirmar.",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar transferencia",
+      "transferring": "Transfiriendo..."
+    },
+    "deleteModal": {
+      "title": "Eliminar Comercio",
+      "body": "¿Estás seguro de eliminar este comercio? Esta acción no se puede deshacer y también se eliminarán todos los menús y productos asociados.",
+      "confirmHint": "Escribe <strong>{{phrase}}</strong> para confirmar.",
+      "confirmPhrase": "ELIMINAR",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    }
+  },
+  "adminMenus": {
+    "title": "Menús",
+    "scheduleMenu": "Programar menú",
+    "scheduleMenuTooltip": "Programar visibilidad de menús por día y horario",
+    "newMenu": "+ Nuevo Menú",
+    "loading": "Cargando...",
+    "na": "N/A",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "publish": "Publicar",
+    "unpublish": "Despublicar",
+    "update": "Actualizar",
+    "create": "Crear",
+    "saveAndClose": "Guardar y Cerrar",
+    "add": "Agregar",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "error": "Error",
+    "success": "Éxito",
+    "validation": "Validación",
+    "tenant": "Tenant",
+    "plan": {
+      "free": "gratuito",
+      "proTeam": "Pro Team"
+    },
+    "status": {
+      "published": "Publicado",
+      "draft": "Borrador",
+      "archived": "Archivado"
+    },
+    "template": {
+      "classic": "Clásico"
+    },
+    "editOptions": {
+      "title": "Editar Menú: {{name}}",
+      "prompt": "¿Qué deseas editar de este menú?",
+      "infoTitle": "Información del menú",
+      "infoDesc": "Cambiar nombre, descripción y fechas",
+      "sectionsTitle": "Secciones del menú",
+      "sectionsDesc": "Crear, editar o eliminar secciones",
+      "productsTitle": "Productos del menú",
+      "productsDesc": "Agregar, quitar o reordenar productos"
+    },
+    "emptyBusiness": {
+      "message": "Para crear un menú primero necesitas tener al menos un comercio.",
+      "cta": "Crear mi primer comercio"
+    },
+    "quota": {
+      "available": "{{current}}/{{limit}} menús disponibles",
+      "hint": "Puedes ampliar la cantidad de menús disponibles cambiando tu plan de suscripción."
+    },
+    "filter": {
+      "business": "Comercio",
+      "allBusinesses": "Todos los comercios"
+    },
+    "table": {
+      "order": "Orden",
+      "name": "Nombre",
+      "tenant": "Tenant",
+      "business": "Comercio",
+      "template": "Plantilla",
+      "status": "Estado",
+      "sections": "Secciones",
+      "actions": "Acciones",
+      "noBusiness": "Sin comercio",
+      "viewMenu": "Ver menú",
+      "viewMenuTitle": "Ver menú en nueva pestaña",
+      "viewMenuDisabledTitle": "Slug o comercio incompleto",
+      "sectionsCount": "Secciones: "
+    },
+    "mobile": {
+      "tenant": "Tenant:",
+      "business": "Comercio:",
+      "template": "Plantilla:"
+    },
+    "pagination": {
+      "showing": "Mostrando {{from}} - {{to}} de {{total}}"
+    },
+    "modal": {
+      "editTitle": "Editar Menú",
+      "newTitle": "Nuevo Menú",
+      "tabInfo": "Información",
+      "tabSections": "Secciones",
+      "tabSectionsCount": "Secciones ({{count}})",
+      "business": "Comercio",
+      "unassigned": "Sin asignar",
+      "name": "Nombre *",
+      "namePlaceholder": "Nombre del menú",
+      "description": "Descripción (opcional)",
+      "descriptionPlaceholder": "Descripción del menú (opcional)",
+      "saveMenuFirst": "Primero debes guardar el menú antes de agregar secciones."
+    },
+    "sections": {
+      "name": "Nombre de la sección *",
+      "namePlaceholder": "Ej: Entradas, Platos principales, Postres...",
+      "status": "Estado",
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "updateSection": "Actualizar Sección",
+      "addSection": "Agregar Sección",
+      "listTitle": "Secciones del menú",
+      "empty": "No hay secciones creadas. Agrega una sección usando el formulario de arriba.",
+      "productsCount": "{{count}} productos"
+    },
+    "limitModal": {
+      "title": "Límite Alcanzado",
+      "reached": "Has alcanzado el límite de <strong>{{limit}} menú(s)</strong> para tu plan <strong>{{plan}}</strong>.",
+      "current": "Actualmente tienes <strong>{{current}} menú(s)</strong> creado(s).",
+      "needMoreTitle": "¿Necesitas más menús?",
+      "needMoreDesc": "Amplía tu suscripción para crear más menús y aprovechar todas las funcionalidades de AppMenuQR.",
+      "viewPlans": "Ver planes y suscripción",
+      "notInterested": "Por el momento no me interesa"
+    },
+    "confirm": {
+      "deleteMenuTitle": "Eliminar Menú",
+      "deleteMenuMessage": "¿Estás seguro de eliminar este menú? Esta acción no se puede deshacer y también se eliminarán todas las secciones y productos asociados.",
+      "deleteSectionTitle": "Eliminar Sección",
+      "deleteSectionMessage": "¿Estás seguro de eliminar esta sección? Esta acción no se puede deshacer y también se eliminarán todos los productos asociados a esta sección."
+    },
+    "alerts": {
+      "photoImportTitle": "Menú importado desde foto",
+      "photoImportTitleWarnings": "Menú importado desde foto (con avisos)",
+      "photoImportMessage": "El menú se creó y publicó desde las fotos. Ya debería verse en la carta pública. No se importaron fotos de productos.",
+      "csvImportTitle": "Menú importado",
+      "csvImportTitleWarnings": "Menú importado (con avisos)",
+      "csvImportMessage": "El menú se creó correctamente desde el CSV. Quedó en borrador: usá el botón «Publicar» en la fila de ese menú para que esté visible online. Si tu plan permite fotos en productos, podés cargarlas después desde la edición del menú.",
+      "warningsPrefix": "Avisos:",
+      "proFeatureTitle": "Función disponible en Pro",
+      "proFeatureMessage": "La programación de menús (días y horarios de visibilidad) está disponible en planes Pro o Premium. Actualizá tu suscripción para usarla.",
+      "viewSubscription": "Ver suscripción",
+      "saveMenuError": "Error guardando menú",
+      "deleteMenuError": "Error eliminando menú",
+      "publishSuccess": "Menú publicado correctamente",
+      "publishError": "Error publicando menú",
+      "unpublishSuccess": "Menú despublicado correctamente",
+      "unpublishError": "Error despublicando menú",
+      "saveMenuBeforeSections": "Primero debes guardar el menú antes de agregar secciones",
+      "sectionUpdated": "Sección actualizada correctamente",
+      "sectionCreated": "Sección creada correctamente",
+      "sectionSaveError": "Error guardando sección",
+      "sectionDeleted": "Sección eliminada correctamente",
+      "sectionDeleteError": "Error eliminando sección",
+      "sectionReorderError": "Error al guardar el orden de las secciones. Por favor, intenta nuevamente.",
+      "menuReorderError": "Error al guardar el orden de los menús: {{error}}. Por favor, intenta nuevamente.",
+      "unknownError": "Error desconocido",
+      "cannotGenerateUrl": "No se puede generar la URL del menú. Asegúrate de que el menú tenga un slug y esté asociado a un comercio."
+    },
+    "schedule": {
+      "title": "Programar menú",
+      "backToMenus": "← Volver a Menús",
+      "loading": "Cargando...",
+      "lockedLead": "Definí qué días y horarios se muestra cada menú en la carta pública, según el huso horario del comercio.",
+      "lockedMessage": "Esta función está disponible en planes <strong>Pro</strong> o <strong>Premium</strong>.",
+      "viewPlans": "Ver planes / suscripción",
+      "intro": "Definí cuándo aparece cada menú en la página del comercio. La URL directa del menú sigue disponible si está publicado. Para dejarlo siempre visible: desactivá «Programar visibilidad» y guardá.",
+      "saving": "Guardando…",
+      "save": "Guardar programación",
+      "needBusiness": "Necesitás al menos un comercio para programar menús.",
+      "createBusiness": "Crear comercio",
+      "business": "Comercio",
+      "timezone": "Huso horario del comercio",
+      "noMenus": "Este comercio no tiene menús todavía.",
+      "scheduleVisibility": "Programar visibilidad",
+      "outsideHours": "Fuera de este horario el menú <strong>no se lista</strong> en la página del comercio, pero se puede abrir por su enlace directo.",
+      "visibleDays": "Días visibles",
+      "timeOptional": "Horario (opcional)",
+      "timeHint": "Si dejás vacío, el menú se ve todo el día en los días elegidos.",
+      "from": "Desde",
+      "to": "Hasta",
+      "limitByDates": "Limitar por fechas",
+      "dateRangeHint": "Si no está activo, la programación aplica solo por días y horarios, sin importar la fecha del calendario.",
+      "startDate": "Día de inicio",
+      "endDate": "Día de finalización (opcional)",
+      "removeSchedule": "Quitar programación",
+      "removeHint": "Luego pulsá «Guardar programación» para aplicar.",
+      "noSchedule": "Sin programación: si está publicado, se muestra siempre en la página del comercio (dentro de vigencia). Recordá guardar los cambios.",
+      "days": {
+        "1": "Lun",
+        "2": "Mar",
+        "3": "Mié",
+        "4": "Jue",
+        "5": "Vie",
+        "6": "Sáb",
+        "7": "Dom"
+      },
+      "alerts": {
+        "missingDaysTitle": "Faltan días",
+        "missingDaysMessage": "Seleccioná al menos un día para el menú «{{name}}».",
+        "missingStartTitle": "Falta fecha de inicio",
+        "missingStartMessage": "Indicá el día de inicio para el menú «{{name}}».",
+        "invalidRangeTitle": "Rango inválido",
+        "invalidRangeMessage": "En «{{name}}», la fecha de finalización no puede ser anterior a la de inicio.",
+        "savedTitle": "Guardado",
+        "savedMessage": "La programación de menús se guardó correctamente.",
+        "errorTitle": "Error",
+        "errorMessage": "No se pudo guardar la programación."
+      }
+    },
+    "preview": {
+      "titleWithName": "Vista previa: {{name}} | AppMenuQR",
+      "titleDefault": "Vista previa del menú | AppMenuQR",
+      "barTitle": "Vista previa",
+      "viewMode": "Modo de vista",
+      "mobile": "Móvil",
+      "desktop": "Desktop",
+      "configure": "Configurar",
+      "loading": "Cargando…",
+      "mobileAria": "Vista previa en móvil",
+      "mobileHint": "Vista móvil{{draftSuffix}}.",
+      "draftSuffix": " · borrador",
+      "mobileNote": "Puede haber variaciones mínimas según la resolución de cada teléfono.",
+      "statusPublished": "Publicado",
+      "statusDraft": "Borrador",
+      "fallbackBusinessName": "Comercio",
+      "loadError": "No se pudo cargar la vista previa",
+      "identifyBusinessError": "No se pudo identificar el comercio",
+      "saveConfigError": "Error al guardar la configuración"
+    }
+  },
+  "adminProducts": {
+    "title": "Productos",
+    "newProduct": "+ Nuevo Producto",
+    "loading": "Cargando...",
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "create": "Crear",
+    "update": "Actualizar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "copy": "Copiar",
+    "accept": "Aceptar",
+    "remove": "Quitar",
+    "name": "Nombre",
+    "filters": "Filtros",
+    "clearFilters": "✕ Limpiar filtros",
+    "clearFiltersTitle": "Limpiar filtros",
+    "select": "Seleccionar",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "actions": "Acciones",
+    "posShort": "Pos.",
+    "classicTemplate": "Clásico",
+    "columns": {
+      "position": "Posición",
+      "photo": "Foto",
+      "tenant": "Tenant",
+      "restaurant": "Comercio",
+      "template": "Plantilla",
+      "menu": "Menú",
+      "section": "Sección",
+      "prices": "Precios",
+      "icons": "Íconos",
+      "status": "Estado"
+    },
+    "icons": {
+      "celiaco": "Sin Gluten",
+      "vegetariano": "Vegetariano",
+      "vegano": "Vegano",
+      "picante": "Picante",
+      "sinLactosa": "Sin Lactosa"
+    },
+    "superAdminSearch": {
+      "title": "Buscar productos por usuario y/o comercio",
+      "hint": "Elige al menos un usuario (organización) o un comercio. Al hacer clic en \"Ver productos\" se cargarán los productos.",
+      "userLabel": "Usuario (organización)",
+      "userPlaceholder": "Escriba y elija una opción de la lista",
+      "restaurantLabel": "Comercio",
+      "restaurantPlaceholder": "Opcional: escriba y elija un comercio",
+      "noMatches": "No hay coincidencias",
+      "enableHint": "El botón se habilita cuando eliges <strong>al menos una opción</strong> de las listas de arriba (haz clic en una fila al escribir o al abrir el desplegable).",
+      "viewProducts": "Ver productos",
+      "clearSearch": "Limpiar y buscar de nuevo"
+    },
+    "empty": {
+      "needRestaurant": "Para crear un producto primero necesitas tener al menos un comercio y un menú.",
+      "createFirstRestaurant": "Crear mi primer comercio"
+    },
+    "planUsage": {
+      "available": "{{used}}/{{limit}} productos disponibles",
+      "upgradeHint": "Puedes ampliar la cantidad de productos disponibles cambiando tu plan de suscripción."
+    },
+    "filter": {
+      "namePlaceholder": "Nombre del producto",
+      "nameAria": "Filtrar por nombre del producto",
+      "restaurantPlaceholder": "Nombre del comercio",
+      "restaurantAria": "Filtrar por comercio",
+      "menuPlaceholder": "Nombre del menú",
+      "menuAria": "Filtrar por menú",
+      "sectionPlaceholder": "Nombre de la sección",
+      "sectionAria": "Filtrar por sección",
+      "tenantPlaceholder": "Nombre del tenant",
+      "tenantAria": "Filtrar por tenant",
+      "allRestaurants": "Todos los comercios",
+      "allMenus": "Todos los menús",
+      "allSections": "Todas las secciones"
+    },
+    "bulk": {
+      "title": "Selección en lote",
+      "selectAll": "Seleccionar todos",
+      "deselectAll": "Deseleccionar todos",
+      "action": "Acción",
+      "chooseAction": "Elegí una acción…",
+      "copyToMenu": "Copiar a otro menú",
+      "copyAndDelete": "Copiar a otro menú y eliminar",
+      "deleteSelected": "Eliminar seleccionados",
+      "sameRestaurantNamed": "Mismo comercio ({{name}})",
+      "sameRestaurantSelection": "Mismo comercio (selección)",
+      "destinationRestaurant": "Comercio destino",
+      "sameLocalProducts": "Productos del mismo local",
+      "destinationMenu": "Menú destino",
+      "mustSameRestaurant": "Productos deben ser del mismo comercio",
+      "selectMenu": "Seleccioná un menú",
+      "chooseRestaurantAbove": "Elegí comercio arriba",
+      "destinationSection": "Sección destino",
+      "selectSection": "Seleccioná sección",
+      "firstMenu": "Primero el menú",
+      "newSection": "+ Nueva sección…",
+      "newSectionName": "Nombre de la nueva sección",
+      "newSectionPlaceholder": "Ej. Entrantes, Bebidas…",
+      "apply": "Aplicar",
+      "applying": "Aplicando…",
+      "errors": {
+        "selectAtLeastOne": "Seleccioná al menos un producto de la lista.",
+        "chooseAction": "Elegí una acción en el desplegable.",
+        "allNeedMenu": "Para copiar en lote, todos los productos deben tener un menú asignado.",
+        "sameRestaurant": "Los productos seleccionados deben pertenecer al mismo comercio.",
+        "chooseMenuSection": "Elegí menú y sección de destino.",
+        "writeNewSection": "Escribí el nombre de la nueva sección.",
+        "sameOrg": "Los productos seleccionados deben ser de la misma organización para copiar en lote.",
+        "menuSameOrg": "El menú de destino debe ser de la misma organización que los productos seleccionados.",
+        "menuWrongRestaurant": "El menú elegido no corresponde al comercio de destino indicado."
+      },
+      "deletedOk": "Se eliminaron {{count}} producto(s).",
+      "deleteAllFailed": "No se pudieron eliminar todos los productos.",
+      "copiedAndDeletedOk": "Se copiaron {{count}} producto(s) y se eliminaron los originales.",
+      "copiedOk": "Se copiaron {{count}} producto(s) al menú indicado.",
+      "bulkActionFailed": "Error al ejecutar la acción en lote.",
+      "sectionIdMissing": "No se obtuvo el id de la nueva sección."
+    },
+    "visibleColumns": {
+      "title": "Columnas visibles",
+      "showAll": "Mostrar todas",
+      "hint": "Elegí qué columnas ver en la tabla de escritorio."
+    },
+    "table": {
+      "dragToReorder": "Arrastrar para ordenar",
+      "positionTitle": "Posición {{position}} de {{total}} en la sección",
+      "noPhoto": "Sin foto",
+      "noRestaurant": "Sin comercio",
+      "unassigned": "Sin asignar",
+      "copyToOtherMenu": "Copiar a otro menú",
+      "reorderAria": "Cambiar orden",
+      "metaTenant": "Tenant:",
+      "metaRestaurant": "Comercio:",
+      "metaTemplate": "Plantilla:",
+      "metaMenu": "Menú:",
+      "metaSection": "Sección:",
+      "metaPosition": "Posición:",
+      "inSection": " en la sección",
+      "metaPrices": "Precios:",
+      "metaIcons": "Íconos:"
+    },
+    "form": {
+      "editTitle": "Editar Producto",
+      "newTitle": "Nuevo Producto",
+      "assignment": "Asignación",
+      "menuOptional": "Menú (Opcional - puede crearse sin menú)",
+      "noMenu": "Sin menú (crear producto independiente)",
+      "menuHint": "Puedes crear el producto sin menú y asignarlo después a cualquier menú",
+      "sectionRequired": "Sección *",
+      "selectSection": "Seleccionar sección",
+      "content": "Contenido",
+      "nameRequired": "Nombre *",
+      "descriptionOptional": "Descripción (opcional)",
+      "prices": "Precios",
+      "pricesDragHint": "Arrastrá cada fila desde ☰ para cambiar el orden en que se muestran los precios.",
+      "currencyPlaceholder": "Moneda (USD, ARS)",
+      "labelPlaceholder": "Etiqueta (Opcional)",
+      "amountPlaceholder": "Ej.: 12,50",
+      "removePrice": "Eliminar precio",
+      "addPrice": "+ Agregar Precio",
+      "productImage": "Imagen de producto",
+      "dropImages": "Arrastra imágenes aquí o haz clic para seleccionar",
+      "dropImageSingle": "Arrastra una imagen o haz clic para seleccionar",
+      "dragPriceReorder": "Arrastrar para reordenar",
+      "selectProductAria": "Seleccionar {{name}}",
+      "planFeatureUnavailable": "⚠️ Función no disponible para tu plan",
+      "planFeatureHint": "Amplía tu suscripción para poder agregar imágenes a tus productos.",
+      "viewPlans": "Ver planes y suscripción",
+      "removeImage": "Eliminar imagen",
+      "icons": "Íconos",
+      "status": "Estado",
+      "productActive": "Producto activo",
+      "productHighlighted": "Producto destacado"
+    },
+    "limitModal": {
+      "title": "Límite de Productos Alcanzado",
+      "reached": "Has alcanzado el límite de <strong>{{limit}}</strong> producto(s) para tu plan <strong>{{plan}}</strong>.",
+      "current": "Actualmente tienes <strong>{{count}}</strong> producto(s) creado(s).",
+      "toCreateMore": "Para crear más productos",
+      "upgradeHint": "Amplía tu suscripción para aumentar el límite de productos disponibles.",
+      "freePlan": "gratuito",
+      "notInterested": "Por el momento no me interesa"
+    },
+    "copyModal": {
+      "title": "Copiar a otro menú",
+      "intro": "Copiar \"{{name}}\" a un menú y sección del mismo comercio.",
+      "destinationMenu": "Menú de destino",
+      "selectMenu": "Seleccione un menú",
+      "destinationSection": "Sección de destino",
+      "selectSection": "Seleccione una sección",
+      "firstChooseMenu": "Primero elija un menú",
+      "newSection": "+ Nueva sección…",
+      "newSectionName": "Nombre de la nueva sección",
+      "copying": "Copiando…",
+      "copy": "Copiar",
+      "success": "Producto copiado al menú indicado.",
+      "failed": "No se pudo copiar el producto."
+    },
+    "confirm": {
+      "deleteImageTitle": "Eliminar imagen",
+      "deleteImageMessage": "¿Eliminar la imagen de este producto? Se borrará del sistema y podrás subir otra.",
+      "deleteProductTitle": "Eliminar Producto",
+      "deleteProductMessage": "¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.",
+      "bulkCopyDeleteTitle": "Copiar y eliminar originales",
+      "bulkDeleteTitle": "Eliminar productos seleccionados",
+      "bulkCopyDeleteMessage": "Se copiarán {{count}} producto(s) al menú y sección elegidos y después se eliminarán los originales. Si necesitás conservar esa versión en el menú actual, tendrás que volver a crearlos o copiarlos de nuevo. ¿Continuar?",
+      "bulkDeleteMessage": "Se eliminarán {{count}} producto(s). Tendrás que volver a crearlos desde cero si los necesitas. Esta acción no se puede deshacer. ¿Continuar?"
+    },
+    "alerts": {
+      "validation": "Validación",
+      "menuNeedsSection": "Si seleccionas un menú, debes seleccionar también una sección",
+      "error": "Error",
+      "success": "Listo",
+      "attention": "Atención",
+      "saveFailed": "Error guardando producto",
+      "reorderFailed": "Error al cambiar el orden",
+      "deleteFailed": "Error eliminando producto",
+      "toggleStatusFailed": "Error al cambiar el estado del producto",
+      "writeNewSection": "Escribí el nombre de la nueva sección."
+    }
+  },
+  "adminTemplates": {
+    "title": "Plantillas",
+    "subtitle": "Selecciona una plantilla para aplicar a tus comercios",
+    "loading": "Cargando...",
+    "restaurantsByTemplate": "Tus comercios por plantilla",
+    "emptyRestaurants": "Aún no tienes comercios. Crea uno en Comercios y asígnale una plantilla aquí.",
+    "table": {
+      "business": "Comercio",
+      "template": "Plantilla",
+      "action": "Acción"
+    },
+    "configureTemplate": "Configurar plantilla",
+    "classicFallback": "Clásica",
+    "catalogTitle": "Catálogo de plantillas",
+    "showingAll": "Mostrando las {{count}} plantillas",
+    "showingFiltered": "Mostrando {{filtered}} de {{total}} plantillas",
+    "emptyFilters": "No hay plantillas con esta combinación de filtros. Probá con \"Todos\" en algún criterio.",
+    "alert": {
+      "appliedTitle": "Plantilla aplicada",
+      "appliedMessage": "Entra a configurar la plantilla para ajustar colores y opciones.",
+      "errorTitle": "Error",
+      "applyError": "Error aplicando plantilla."
+    },
+    "configure": {
+      "breadcrumb": "Navegación",
+      "backToTemplates": "← Volver a Plantillas",
+      "backToTemplatesShort": "Volver a Plantillas",
+      "loading": "Cargando...",
+      "notFound": "Comercio no encontrado",
+      "loadError": "Error al cargar el comercio",
+      "title": "Configuración de plantilla",
+      "currentTemplate": "Plantilla actual:",
+      "noOptions": "Esta plantilla no tiene opciones de configuración definidas aún. Se irán añadiendo por plantilla.",
+      "saved": "Configuración guardada correctamente.",
+      "saveError": "Error al guardar",
+      "saving": "Guardando...",
+      "save": "Guardar configuración",
+      "cancel": "Cancelar",
+      "uploadImage": "Subir imagen",
+      "uploading": "Subiendo…",
+      "restoreDefault": "Restaurar predeterminada",
+      "uploadError": "Error al subir la imagen"
+    },
+    "templateNames": {
+      "classic": "Clásica",
+      "minimalist": "Minimalista",
+      "foodie": "Foodie",
+      "burgers": "Burgers",
+      "italianFood": "Italian Food",
+      "gourmet": "Gourmet",
+      "proMobile": "Modern Food",
+      "nightClub": "Neon Club",
+      "smartFood": "Smart Food",
+      "beachBar": "Beach Life",
+      "solNoche": "Sol & Noche"
+    },
+    "configOptions": {
+      "yes": "Sí",
+      "no": "No",
+      "empty": "—",
+      "removeImage": "Quitar",
+      "primaryColor": {
+        "label": "Color principal",
+        "description": "Color principal de la plantilla (botones, títulos, elementos destacados)."
+      },
+      "secondaryColor": {
+        "label": "Color secundario",
+        "description": "Color secundario (acentos, bordes, texto destacado)."
+      },
+      "showCoverImage": {
+        "label": "Mostrar imagen de portada",
+        "description": "Si está desactivado, no se muestra la imagen de portada en la plantilla."
+      },
+      "showLogo": {
+        "label": "Mostrar logo",
+        "description": "Si está desactivado, no se muestra el logo del comercio."
+      },
+      "showRestaurantName": {
+        "label": "Mostrar nombre del comercio",
+        "description": "Si está desactivado, no se muestra el nombre del comercio."
+      },
+      "showRestaurantDescription": {
+        "label": "Mostrar descripción del comercio",
+        "description": "Si está desactivado, no se muestra la descripción del comercio."
+      },
+      "restaurantNameColor": {
+        "label": "Color del nombre del comercio",
+        "description": "Color del texto del nombre del comercio en la cabecera."
+      },
+      "sectionTitleFontSize": {
+        "label": "Tamaño de letra de los títulos de sección",
+        "description": "Tamaño del texto de las categorías del menú (por ejemplo: Hamburguesas, Acompañamientos).",
+        "values": {
+          "small": "Pequeño",
+          "medium": "Mediano",
+          "large": "Grande",
+          "xlarge": "Extra grande"
+        }
+      },
+      "showTranslationFlags": {
+        "label": "Mostrar banderas de traducciones",
+        "description": "Si está desactivado, se ocultan los iconos de bandera en el selector de idiomas del menú público cuando hay varias traducciones."
+      },
+      "fontFamily": {
+        "label": "Tipografía",
+        "description": "Fuente para títulos y textos de la plantilla.",
+        "values": {
+          "serif": "Serif (Georgia)",
+          "sans": "Sans (Helvetica)",
+          "century": "Century Schoolbook",
+          "baskerville": "Baskerville",
+          "palatino": "Palatino",
+          "playfair": "Playfair Display (por defecto)",
+          "cormorant": "Cormorant Garamond",
+          "bodoni": "Bodoni Moda",
+          "eb-garamond": "EB Garamond",
+          "lora": "Lora",
+          "cinzel": "Cinzel"
+        }
+      },
+      "showProductImages": {
+        "label": "Mostrar fotos de productos",
+        "description": "Mostrar foto del producto cuando exista (sin placeholder si no hay foto)."
+      },
+      "backgroundImageUrl": {
+        "label": "Imagen de fondo",
+        "description": "Foto de fondo a pantalla completa. Cada comercio puede tener la suya."
+      },
+      "colorMode": {
+        "label": "Modo de color",
+        "description": "Apariencia base de la carta cuando no está activo el cambio automático por horario.",
+        "values": {
+          "light": "Claro",
+          "dark": "Oscuro"
+        }
+      },
+      "autoDayNightSwitch": {
+        "label": "Cambiar según horario día/noche",
+        "description": "Alterna entre modo claro y oscuro según el uso horario y las horas configuradas."
+      },
+      "templateTimezone": {
+        "label": "Uso horario",
+        "description": "Zona horaria para calcular si es día o noche. Si no se define, usa la del comercio.",
+        "values": {
+          "America_Argentina_Buenos_Aires": "Argentina (Buenos Aires)",
+          "America_Montevideo": "Uruguay (Montevideo)",
+          "America_Santiago": "Chile (Santiago)",
+          "America_Sao_Paulo": "Brasil (São Paulo)",
+          "America_Mexico_City": "México (Ciudad de México)",
+          "America_Bogota": "Colombia (Bogotá)",
+          "America_Lima": "Perú (Lima)",
+          "Europe_Madrid": "España (Madrid)",
+          "UTC": "UTC"
+        }
+      },
+      "dayStartHour": {
+        "label": "Hora de inicio del día",
+        "description": "Hora local desde la cual se considera día (modo claro). Valor de 0 a 23."
+      },
+      "dayEndHour": {
+        "label": "Hora de fin del día",
+        "description": "Hora local desde la cual comienza la noche (modo oscuro). Valor de 0 a 23."
+      },
+      "dayLogoUrl": {
+        "label": "Logo (modo claro)",
+        "description": "Logo para el modo claro. Si no se define, usa el logo del comercio."
+      },
+      "nightLogoUrl": {
+        "label": "Logo (modo oscuro)",
+        "description": "Logo para el modo oscuro. Si no se define, usa el logo de día o el del comercio."
+      },
+      "dayCoverImageUrl": {
+        "label": "Portada de día",
+        "description": "Imagen de portada para el modo claro. Tiene prioridad sobre la portada del comercio."
+      },
+      "nightCoverImageUrl": {
+        "label": "Portada de noche",
+        "description": "Imagen de portada para el modo oscuro. Tiene prioridad sobre la portada del comercio."
+      }
+    }
+  },
+  "adminTranslations": {
+    "title": "Traducciones",
+    "loading": "Cargando...",
+    "common": {
+      "error": "Error",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "save": "Guardar",
+      "saving": "Guardando…",
+      "beta": "beta"
+    },
+    "localeLabels": {
+      "es-ES": "Español",
+      "en-US": "English"
+    },
+    "localePresets": {
+      "groups": {
+        "englishGermanic": "Inglés y germánicos",
+        "romance": "Romances",
+        "spanishRegional": "Español regional",
+        "centralEasternEurope": "Europa central y oriental",
+        "asiaPacific": "Asia y Pacífico",
+        "middleEastAfrica": "Oriente Medio y África"
+      },
+      "items": {
+        "en-US": "Inglés (EE.UU.)",
+        "en-GB": "Inglés (Reino Unido)",
+        "en-CA": "Inglés (Canadá)",
+        "en-AU": "Inglés (Australia)",
+        "en-NZ": "Inglés (Nueva Zelanda)",
+        "en-IE": "Inglés (Irlanda)",
+        "de-DE": "Alemán (Alemania)",
+        "de-AT": "Alemán (Austria)",
+        "de-CH": "Alemán (Suiza)",
+        "nl-NL": "Neerlandés (Países Bajos)",
+        "nl-BE": "Neerlandés (Bélgica)",
+        "sv-SE": "Sueco",
+        "da-DK": "Danés",
+        "fi-FI": "Finlandés",
+        "is-IS": "Islandés",
+        "nb-NO": "Noruego (bokmål)",
+        "nn-NO": "Noruego (nynorsk)",
+        "fr-FR": "Francés (Francia)",
+        "fr-CA": "Francés (Canadá)",
+        "fr-BE": "Francés (Bélgica)",
+        "fr-CH": "Francés (Suiza)",
+        "it-IT": "Italiano (Italia)",
+        "it-CH": "Italiano (Suiza)",
+        "pt-BR": "Portugués (Brasil)",
+        "pt-PT": "Portugués (Portugal)",
+        "ro-RO": "Rumano",
+        "ca-ES": "Catalán",
+        "gl-ES": "Gallego",
+        "eu-ES": "Euskera",
+        "es-MX": "Español (México)",
+        "es-AR": "Español (Argentina)",
+        "es-CO": "Español (Colombia)",
+        "es-CL": "Español (Chile)",
+        "es-PE": "Español (Perú)",
+        "es-VE": "Español (Venezuela)",
+        "es-EC": "Español (Ecuador)",
+        "es-GT": "Español (Guatemala)",
+        "es-CR": "Español (Costa Rica)",
+        "es-PA": "Español (Panamá)",
+        "es-DO": "Español (Rep. Dominicana)",
+        "es-UY": "Español (Uruguay)",
+        "es-PY": "Español (Paraguay)",
+        "es-BO": "Español (Bolivia)",
+        "es-419": "Español (Latinoamérica, genérico)",
+        "pl-PL": "Polaco",
+        "cs-CZ": "Checo",
+        "sk-SK": "Eslovaco",
+        "hu-HU": "Húngaro",
+        "bg-BG": "Búlgaro",
+        "hr-HR": "Croata",
+        "sl-SI": "Esloveno",
+        "sr-RS": "Serbio (Serbia)",
+        "bs-BA": "Bosnio",
+        "mk-MK": "Macedonio",
+        "sq-AL": "Albanés",
+        "el-GR": "Griego",
+        "uk-UA": "Ucraniano",
+        "ru-RU": "Ruso",
+        "be-BY": "Bielorruso",
+        "lt-LT": "Lituano",
+        "lv-LV": "Letón",
+        "et-EE": "Estonio",
+        "zh-CN": "Chino (simplificado, China)",
+        "zh-TW": "Chino (tradicional, Taiwán)",
+        "zh-HK": "Chino (Hong Kong)",
+        "ja-JP": "Japonés",
+        "ko-KR": "Coreano",
+        "hi-IN": "Hindi (India)",
+        "bn-IN": "Bengalí (India)",
+        "ta-IN": "Tamil (India)",
+        "ur-PK": "Urdu (Pakistán)",
+        "th-TH": "Tailandés",
+        "vi-VN": "Vietnamita",
+        "id-ID": "Indonesio",
+        "ms-MY": "Malayo",
+        "fil-PH": "Filipino",
+        "km-KH": "Jemer",
+        "my-MM": "Birmano",
+        "ar-SA": "Árabe (Arabia Saudita)",
+        "ar-AE": "Árabe (Emiratos)",
+        "ar-EG": "Árabe (Egipto)",
+        "ar-MA": "Árabe (Marruecos)",
+        "ar-DZ": "Árabe (Argelia)",
+        "fa-IR": "Persa (Irán)",
+        "he-IL": "Hebreo",
+        "tr-TR": "Turco",
+        "sw-KE": "Suajili (Kenia)",
+        "af-ZA": "Afrikáans",
+        "am-ET": "Amárico"
+      }
+    },
+    "upgrade": {
+      "lead": "Podés traducir tu menú a <strong>varios idiomas</strong> para que tus clientes elijan la carta en su lengua.",
+      "body": "Es una opción pensada para cartas multilingües. <strong>Está disponible para planes Pro y Premium</strong> (editor por idioma, límites según tu suscripción y traducción automática en beta).",
+      "cardTranslationsTitle": "Traducciones",
+      "cardTranslationsDesc": "Gestioná idiomas por menú, banderas en la carta y editá textos para cada idioma.",
+      "cardAutoTitle": "Traducción automática",
+      "cardAutoDesc": "Generá borradores automáticos para ahorrar tiempo; revisá y publicá cuando esté listo.",
+      "availableOnPlans": "Disponible en Pro y Premium",
+      "promoTitle": "Pasá a Pro o Premium y probá traducciones y muchas funciones más",
+      "promoBody": "Los planes superiores desbloquean cartas multilingües, más capacidad y herramientas extra; compará opciones y elegí la que mejor encaje en tu negocio.",
+      "manageSubscription": "Gestionar suscripción"
+    },
+    "page": {
+      "publicToggleHint": "Usá el interruptor <strong>Menú público</strong> en cada idioma para mostrarlo u ocultarlo en la carta QR (sigue disponible en el editor aunque esté oculto).",
+      "needBusiness": "Para crear una traducción de menú primero necesitas tener al menos un comercio y un menú.",
+      "createFirstBusiness": "Crear mi primer comercio",
+      "businessLabel": "Comercio",
+      "searchPlaceholder": "Buscar por nombre…",
+      "search": "Buscar",
+      "selectBusiness": "Elegí un comercio…",
+      "selectBusinessHint": "Seleccioná un comercio para ver sus menús.",
+      "noMenus": "No hay menús en este comercio."
+    },
+    "menuCard": {
+      "addLocale": "Agregar idioma",
+      "nameAndLocales": "Nombre e idiomas",
+      "defaultBadge": "Por defecto",
+      "defaultBadgeTitle": "Idioma por defecto del menú",
+      "autoBadge": "Auto",
+      "autoBadgeTitle": "Traducción automática ya ejecutada para este idioma",
+      "publicMenu": "Menú público",
+      "publicToggleTitle": "Si está apagado, el idioma no aparece en la carta pública (sí en el editor)",
+      "translate": "Traducir",
+      "useAsDefault": "Usar como idioma por defecto",
+      "changing": "Cambiando…",
+      "useAsDefaultTitle": "El contenido de este idioma pasará a ser el canónico del menú",
+      "deleteLocale": "Borrar idioma",
+      "deleting": "Borrando…",
+      "editBase": "Editar base"
+    },
+    "autoTranslate": {
+      "title": "Traducción automática (beta)",
+      "help": "Traduce todos los textos desde <strong>{{source}}</strong> al idioma elegido. El consumo mensual depende de tu plan. Podés editar después a mano en «Traducir».",
+      "targetLocale": "Idioma destino",
+      "force": "Forzar retraducción (consume un uso aunque ya se haya traducido)",
+      "run": "Traducir automáticamente",
+      "processing": "Procesando…",
+      "confirmTitle": "Traducción automática",
+      "confirmTranslate": "Traducir",
+      "needLocale": "Agregá al menos un idioma distinto de {{source}}.",
+      "cannotRun": "No se puede ejecutar.",
+      "monthlyUsage": " Usos este mes: {{used}}/{{limit}}.",
+      "confirmMessage": "Se traducirá el menú desde {{source}} a {{locale}}.{{forceNote}}{{extra}} ¿Continuar?",
+      "forceNote": " Modo forzar: consume un uso aunque el menú ya tenga traducción automática previa.",
+      "success": "Listo: {{segments}} segmentos. Llamadas nuevas a la API: {{apiUnits}}. Reutilizados desde caché: {{cacheHits}}."
+    },
+    "addLocale": {
+      "title": "Agregar idioma",
+      "intro": "Se copiarán los textos actuales del idioma base ({{source}}) como punto de partida. Después podés refinarlas en el editor.",
+      "localeLabel": "Idioma (BCP-47)",
+      "searchPlaceholder": "Buscar por nombre o código (ej. catal, ca-ES)…",
+      "noMatches": "Sin coincidencias. Usá «Otro» abajo.",
+      "customOption": "Otro… (código BCP-47 manual)",
+      "selected": "Seleccionado: <strong>{{locale}}</strong>",
+      "customCodeLabel": "Código BCP-47 manual",
+      "customCodePlaceholder": "ej. sr-Latn-RS, zh-Hans-CN, lb-LU",
+      "customCodeHelp": "Idioma en minúsculas y subtags separados por guiones. Si no está en la lista, podés pegar el código exacto que necesites (respetando el límite de caracteres del servidor).",
+      "panelLabel": "Etiqueta en panel (opcional)",
+      "panelLabelPlaceholder": "Ej. English",
+      "flagLabel": "Código país para bandera (opcional, ISO 3166-1, 2 letras)",
+      "flagPlaceholder": "ES, US o CAT…",
+      "flagHelp": "<strong>2 letras ISO</strong> (ej. ES) = emoji de bandera. <strong>Más caracteres</strong> (ej. CAT) = insignia de texto en el panel y carta. Podés dejar vacío y se usará la región del BCP-47 si aplica.",
+      "showPublic": "Mostrar este idioma en el menú público (carta QR)",
+      "submit": "Agregar",
+      "needLocale": "Elegí un idioma de la lista o escribí un código BCP-47.",
+      "invalidLocale": "Código no válido. Usá al menos idioma + región u otro subtag (ej. en-US, es-MX, zh-CN, fil-PH).",
+      "alreadyBase": "{{locale}} ya es el idioma base del menú.",
+      "invalidFlag": "Usá 2–10 letras o números (ej. ES, US, CAT). Para emoji de país usá el código ISO de 2 letras.",
+      "success": "Idioma agregado. Podés abrir el editor para afinar las traducciones."
+    },
+    "settings": {
+      "title": "Nombre del menú e idiomas",
+      "menuNameLabel": "Nombre del menú (canónico / idioma por defecto{{sourceSuffix}})",
+      "labelsHeading": "Etiqueta y bandera por idioma",
+      "labelsHelp": "Ajustá cómo se muestra cada idioma en el panel y en el menú público. Incluye el idioma por defecto{{sourceParen}}. El código de país debe ser ISO de 2 letras (US, ES, IT…). Para <code>ca-ES</code> podés usar <strong>ES</strong> (bandera) o una etiqueta como <strong>CAT</strong>. Desmarcá «Visible en menú público» para ocultar un idioma en la carta (sigue disponible en el editor).",
+      "label": "Etiqueta",
+      "countryCode": "Código país (bandera)",
+      "visiblePublic": "Visible en menú público",
+      "renameHeading": "Corregir código de idioma (BCP-47)",
+      "renameHelp": "Si creaste por error <code>it-IT</code> pero el contenido es inglés, renombrá a <code>en-US</code>. No afecta al idioma por defecto{{sourceCode}}.",
+      "currentLocale": "Idioma actual",
+      "newCode": "Nuevo código",
+      "country": "País",
+      "countryPlaceholder": "ES o CAT",
+      "invalidFlagForLocale": "Código inválido para {{locale}}: 2–10 caracteres alfanuméricos (ej. ES, CAT).",
+      "invalidRenameCode": "El nuevo código debe ser BCP-47 válido (ej. en-US, es-MX, zh-CN).",
+      "saved": "Ajustes del menú actualizados."
+    },
+    "workbench": {
+      "title": "Traducir — <muted>{{locale}}</muted>",
+      "staleAlert": "Hay textos marcados como <strong>desactualizados</strong>: cambió el contenido en el idioma base después de la última traducción. Revisalos y guardá para confirmar que siguen siendo correctos en {{locale}}.",
+      "menuHeading": "Menú",
+      "name": "Nombre",
+      "description": "Descripción",
+      "stale": "Desactualizado",
+      "section": "Sección",
+      "reference": "(referencia: {{name}})",
+      "staleName": "Nombre desactualizado",
+      "ref": "Ref: {{name}}",
+      "save": "Guardar traducciones",
+      "saved": "Traducciones guardadas.",
+      "baseInfoTitle": "Idioma base",
+      "baseInfo": "El idioma por defecto ({{source}}) se edita desde la sección Menús. Acá solo se traduce a otros idiomas."
+    },
+    "alerts": {
+      "loadRestaurantsError": "No se pudieron cargar los comercios.",
+      "tenantUnavailableTitle": "Tenant no disponible",
+      "tenantUnavailable": "Elegí un comercio válido (con cuenta asociada).",
+      "translationsTitle": "Traducciones",
+      "loadMenusError": "Error al cargar menús",
+      "localeDeletedTitle": "Idioma eliminado",
+      "localeDeleted": "Se quitó {{locale}} del menú.",
+      "deleteLocaleTitle": "Eliminar idioma",
+      "defaultLocaleTitle": "Idioma por defecto",
+      "defaultLocaleSuccess": "Ahora el idioma base del menú es {{locale}}. El anterior ({{previous}}) quedó como traducción.",
+      "localeTitle": "Idioma",
+      "flagTitle": "Bandera / etiqueta",
+      "doneTitle": "Listo",
+      "addLocaleTitle": "Agregar idioma",
+      "localeCodeTitle": "Código de idioma",
+      "savedTitle": "Guardado",
+      "settingsTitle": "Ajustes",
+      "publicMenuTitle": "Menú público",
+      "autoTranslateTitle": "Traducción automática",
+      "editorTitle": "Editor",
+      "saveTitle": "Guardar"
+    },
+    "confirm": {
+      "deleteLocaleTitle": "Eliminar idioma",
+      "deleteLocaleMessage": "¿Eliminar el idioma «{{locale}}» y todas sus traducciones de este menú? Esta acción no se puede deshacer.",
+      "delete": "Eliminar"
+    }
+  },
+  "adminSupportTickets": {
+    "title": "Tickets de soporte",
+    "subtitle": "Gestioná reportes de usuarios: abrí un ticket para ver el hilo, datos de cuenta y suscripción, y respondé desde el detalle.",
+    "loading": "Cargando…",
+    "emDash": "—",
+    "ellipsis": "…",
+    "status": {
+      "open": "Abierto",
+      "in_progress": "En progreso",
+      "closed": "Cerrado"
+    },
+    "filters": {
+      "status": "Estado",
+      "all": "Todos",
+      "userEmail": "Email usuario",
+      "userEmailPlaceholder": "contiene…",
+      "from": "Desde",
+      "to": "Hasta",
+      "apply": "Aplicar filtros"
+    },
+    "errors": {
+      "loadList": "No se pudo cargar los tickets.",
+      "loadTicket": "No se pudo cargar el ticket.",
+      "sendReply": "No se pudo enviar la respuesta.",
+      "updateStatus": "No se pudo actualizar el estado.",
+      "invalidTicketNumber": "Ingresá un número de ticket válido.",
+      "linkTicket": "No se pudo unir el ticket."
+    },
+    "table": {
+      "number": "#",
+      "user": "Usuario",
+      "subject": "Asunto",
+      "status": "Estado",
+      "images": "Img",
+      "created": "Creado",
+      "updated": "Actualizado",
+      "empty": "No hay tickets con estos filtros.",
+      "total": "Total: {{total}} (mostrando {{showing}})",
+      "open": "Abrir",
+      "current": "Actual"
+    },
+    "detail": {
+      "breadcrumbTickets": "Tickets",
+      "createdAt": "Creado {{date}}",
+      "caseId": "Caso: {{id}}",
+      "linkCase": {
+        "title": "Unir ticket a otro caso",
+        "ticketNumber": "Número de ticket principal",
+        "placeholder": "Ej: 1042",
+        "linking": "Uniendo…",
+        "submit": "Unir tickets"
+      },
+      "related": {
+        "title": "Tickets del mismo caso"
+      },
+      "attachments": {
+        "title": "Imágenes adjuntas"
+      },
+      "history": {
+        "title": "Historial"
+      },
+      "closedNotice": "Ticket cerrado. Reabrilo (estado Abierto o En progreso) para responder.",
+      "reply": {
+        "title": "Respuesta (Super Admin)",
+        "placeholder": "Respuesta al usuario…",
+        "sending": "Enviando…",
+        "submit": "Enviar respuesta"
+      },
+      "userPanel": {
+        "title": "Usuario",
+        "email": "Email:",
+        "name": "Nombre:",
+        "role": "Rol:",
+        "tenant": "Tenant:",
+        "tenantValue": "{{name}} ({{plan}})",
+        "effectivePlan": "Plan efectivo (resumen):",
+        "subscriptionsTitle": "Suscripciones recientes",
+        "planLine": "Plan: {{plan}} · {{planType}}",
+        "periodEnd": "Fin período: {{date}}",
+        "noSubscriptions": "Sin filas de suscripción."
+      }
+    }
+  },
+  "templatesCatalog": {
+    "filters": {
+      "ariaLabel": "Filtrar plantillas",
+      "categoria": "Rubro",
+      "estilo": "Estilo",
+      "plan": "Plan",
+      "all": "Todos",
+      "free": "Gratis",
+      "pro": "Pro",
+      "clear": "Limpiar filtros",
+      "clearAria": "Limpiar filtros: mostrar todas las plantillas"
+    },
+    "card": {
+      "previewAlt": "Vista previa plantilla menú QR {{name}}",
+      "categoryAria": "Categoría",
+      "rubroEstiloAria": "Rubro y estilo",
+      "tagsLabel": "Tags",
+      "free": "Free",
+      "pro": "Pro",
+      "preview": "Vista previa",
+      "use": "Usar plantilla",
+      "processing": "Procesando…"
+    },
+    "adminCard": {
+      "previewAlt": "Vista previa plantilla {{name}}",
+      "preview": "Ver vista previa",
+      "applyToRestaurant": "Aplicar a comercio",
+      "chooseRestaurant": "Elegir comercio…",
+      "current": "(Actual)",
+      "apply": "Aplicar plantilla",
+      "applying": "Aplicando...",
+      "proLocked": "Disponible en plan <pro>Pro</pro> o <premium>Premium</premium>. <upgrade>Mejorar plan</upgrade>"
+    },
+    "premium": {
+      "label": "Premium",
+      "title": "Plan Premium",
+      "badge": "A medida",
+      "text": "Diseño y configuración personalizada para adaptar tu carta digital a las necesidades de tu negocio.",
+      "subtext": "Contactanos y armamos una propuesta a medida.",
+      "cta": "Consultar"
+    },
+    "taxonomy": {
+      "categoria": {
+        "gourmet": "Gourmet",
+        "hamburguesas": "Hamburguesas",
+        "italiano": "Italiano",
+        "nightclub": "Nightclub",
+        "playa": "Playa",
+        "restaurante": "Restaurante",
+        "saludable": "Saludable",
+        "visual": "Visual"
+      },
+      "estilo": {
+        "clasico": "Clásico",
+        "dark": "Dark",
+        "elegante": "Elegante",
+        "minimalista": "Minimalista",
+        "moderno": "Moderno",
+        "visual": "Visual"
+      },
+      "tag": {
+        "antipasti": "Antipasti",
+        "focaccia": "Focaccia",
+        "gelato": "Gelato",
+        "alergenos": "Alérgenos",
+        "alta_cocina": "Alta cocina",
+        "bar": "Bar",
+        "bar_de_playa": "Bar de playa",
+        "bistro": "Bistró",
+        "bodegon": "Bodegón",
+        "bowls": "Bowls",
+        "brunch": "Brunch",
+        "cafe": "Café",
+        "cerveceria": "Cervecería",
+        "cocina_de_autor": "Cocina de autor",
+        "cocktails": "Cocktails",
+        "comida_rapida": "Comida rápida",
+        "con_imagenes": "Con imágenes",
+        "desayunos": "Desayunos",
+        "destacados": "Destacados",
+        "discoteca": "Discoteca",
+        "ensaladas": "Ensaladas",
+        "hamburguesas": "Hamburguesas",
+        "menu_ejecutivo": "Menú ejecutivo",
+        "milanesas": "Milanesas",
+        "minimalista": "Minimalista",
+        "modo_oscuro": "Modo oscuro",
+        "musica": "Música",
+        "pancheria": "Panchería",
+        "parrilla": "Parrilla",
+        "pasta": "Pasta",
+        "picadas": "Picadas",
+        "pizza": "Pizza",
+        "portada": "Portada",
+        "postres": "Postres",
+        "pro": "Pro",
+        "restaurante_familiar": "Restaurante familiar",
+        "sandwiches": "Sándwiches",
+        "sin_gluten": "Sin gluten",
+        "snacks": "Snacks",
+        "street_food": "Street food",
+        "tapas": "Tapas",
+        "tradicional": "Tradicional",
+        "tragos": "Tragos",
+        "vegano": "Vegano",
+        "vegetariano": "Vegetariano",
+        "vinos": "Vinos"
+      }
+    }
+  },
+  "restaurantWizard": {
+    "title": "Crea tu primer comercio",
+    "subtitle": "Sigue estos pasos para configurar tu comercio",
+    "steps": {
+      "basic": "Información básica",
+      "location": "Ubicación",
+      "contact": "Contacto",
+      "payment": "Medios de pago",
+      "images": "Imágenes",
+      "template": "Plantilla"
+    },
+    "step1": {
+      "title": "Información básica",
+      "description": "Completa la información básica de tu comercio",
+      "name": "Nombre del comercio *",
+      "namePlaceholder": "Ej: La Parrilla del Sur",
+      "descriptionLabel": "Descripción",
+      "boldTitle": "Negrita (Ctrl+B)",
+      "lineBreakTitle": "Salto de línea",
+      "boldPlaceholder": "texto en negrita",
+      "descriptionPlaceholder": "Describe tu comercio (opcional). Usa **texto** para negrita y Enter para saltos de línea.",
+      "descriptionHint": "{{count}}/2000 caracteres - Usa **texto** para negrita"
+    },
+    "step2": {
+      "title": "Ubicación",
+      "description": "Completa la ubicación y dirección de tu comercio",
+      "country": "País *",
+      "province": "Provincia / Región",
+      "city": "Ciudad",
+      "address": "Dirección",
+      "addressPlaceholder": "Calle y número",
+      "postalCode": "Código Postal",
+      "optional": "Opcional"
+    },
+    "step3": {
+      "title": "Contacto",
+      "description": "Agrega la información de contacto de tu comercio",
+      "phone": "Teléfono",
+      "phonePlaceholder": "+54 11 1234-5678",
+      "usePhoneForWhatsApp": "Usar este número para WhatsApp",
+      "whatsapp": "WhatsApp",
+      "whatsappPlaceholderPhone": "Se usará el número de teléfono",
+      "whatsappPlaceholderExample": "Ej: +54 11 1234-5678 o 1123456789",
+      "whatsappHintWithCountry": "Se agregará automáticamente el código de país de {{country}} si no lo incluyes",
+      "whatsappHintNoCountry": "Ingresa el número con código de país (ej: +54 11 1234-5678) o solo el número local",
+      "email": "Email",
+      "emailPlaceholder": "contacto@comercio.com (opcional)",
+      "website": "Sitio Web",
+      "websitePlaceholder": "laparrilla22.com o https://www.comercio.com (opcional)"
+    },
+    "step4": {
+      "title": "Medios de pago",
+      "description": "Configura las monedas de pago para tu comercio",
+      "defaultCurrency": "Moneda de pago por defecto *",
+      "additionalCurrencies": "Monedas adicionales (opcional)",
+      "additionalCurrenciesHint": "Haz clic en las monedas que deseas aceptar además de la moneda por defecto",
+      "selectedCount": "{{count}} moneda(s) seleccionada(s)",
+      "selectAdditional": "Seleccionar monedas adicionales",
+      "additionalModalTitle": "Monedas adicionales",
+      "close": "Cerrar"
+    },
+    "step5": {
+      "title": "Imágenes",
+      "description": "Agrega el logo y la foto de portada de tu comercio",
+      "logo": "Logo del comercio",
+      "logoHint": "Recomendado: imagen cuadrada de al menos 400×400 px (PNG o JPG).",
+      "logoPreviewAlt": "Vista previa del logo",
+      "removeLogo": "Quitar logo",
+      "cover": "Foto de portada",
+      "coverPreviewAlt": "Vista previa de portada",
+      "removeCover": "Quitar portada",
+      "changeImage": "Cambiar imagen",
+      "uploadHint": "Arrastra una imagen o haz clic para seleccionar"
+    },
+    "step6": {
+      "title": "Plantilla y colores",
+      "description": "Elige el diseño de tu menú y los colores de marca. Después continuarás con la creación del menú.",
+      "templateLabel": "Plantilla de diseño",
+      "templateHelp": "Seleccioná una plantilla. Luego podrás cambiarla y ajustar los colores de tu marca.",
+      "templateHint": "Esta plantilla se aplicará a todos los menús de este comercio",
+      "proNote": "Disponible para plan Pro/Business",
+      "previewAlt": "Vista previa {{name}}",
+      "brandColors": "Colores de marca",
+      "brandColorsHelp": "Personaliza los colores principales de tu comercio. Estos colores se aplicarán a botones, títulos y elementos destacados.",
+      "primaryColor": "Color primario",
+      "secondaryColor": "Color secundario"
+    },
+    "templates": {
+      "classic": {
+        "name": "Clásico",
+        "desc": "Diseño tradicional y elegante"
+      },
+      "minimalist": {
+        "name": "Minimalista",
+        "desc": "Diseño limpio y contemporáneo"
+      },
+      "foodie": {
+        "name": "Foodie",
+        "desc": "Diseño gastronómico y apetitoso"
+      },
+      "smartFood": {
+        "name": "Smart Food",
+        "desc": "Diseño claro con filtros de alérgenos"
+      },
+      "gourmet": {
+        "name": "Gourmet",
+        "desc": "Estilo refinado y premium"
+      },
+      "proMobile": {
+        "name": "Modern Food",
+        "desc": "Diseño moderno con tabs laterales y fotos de producto"
+      },
+      "beachBar": {
+        "name": "Beach Life",
+        "desc": "Beach bar con fondo configurable y cards horizontales"
+      },
+      "solNoche": {
+        "name": "Sol & Noche",
+        "desc": "Modo claro/oscuro, destacados y portadas día/noche"
+      },
+      "nightClub": {
+        "name": "Neon Club",
+        "desc": "Tema oscuro con tabs laterales, sin fotos"
+      },
+      "burgers": {
+        "name": "Burgers",
+        "desc": "Bold y dinámico estilo hamburguesería"
+      },
+      "italianFood": {
+        "name": "Italian Food",
+        "desc": "Elegante con colores de la bandera italiana"
+      }
+    },
+    "currencies": {
+      "USD": "USD - Dólar estadounidense",
+      "EUR": "EUR - Euro",
+      "ARS": "ARS - Peso argentino",
+      "MXN": "MXN - Peso mexicano",
+      "CLP": "CLP - Peso chileno",
+      "COP": "COP - Peso colombiano",
+      "PEN": "PEN - Sol peruano",
+      "BRL": "BRL - Real brasileño",
+      "UYU": "UYU - Peso uruguayo",
+      "PYG": "PYG - Guaraní paraguayo",
+      "BOB": "BOB - Boliviano",
+      "VES": "VES - Bolívar venezolano"
+    },
+    "footer": {
+      "back": "← Anterior",
+      "cancel": "Cancelar",
+      "next": "Siguiente →",
+      "creating": "Creando…",
+      "create": "Crear Comercio",
+      "saving": "Guardando…",
+      "continueToMenu": "Continuar al menú →"
+    },
+    "proLock": {
+      "title": "Plantilla Pro",
+      "close": "Cerrar",
+      "body": "La plantilla <strong>{{name}}</strong> está disponible solo para usuarios <strong>Pro</strong> o <strong>Business</strong>.",
+      "hint": "Podés seguir con una plantilla gratuita (más adelante la vas a poder cambiar) o ver los planes de suscripción. Esta plantilla es solo para usuarios Pro.",
+      "continueFree": "Continuar con plantilla gratuita",
+      "viewPlans": "Ver planes de suscripción"
+    }
+  },
+  "menuWizard": {
+    "entry": {
+      "titleCreated": "¡Comercio creado exitosamente!",
+      "titleNew": "Nuevo menú",
+      "subtitleCreated": "Ahora creá, asigná o importá un menú para tu comercio",
+      "subtitleNew": "Elegí si querés crear un menú desde cero, vincular menús que ya existen o importar con un archivo CSV.",
+      "createTitle": "Crear nuevo menú",
+      "createDesc": "Crea un menú desde cero con nombre y descripción",
+      "selectTitle": "Seleccionar menús existentes",
+      "selectDesc": "Asigná menús que ya creaste (sin local u otro local) a este comercio",
+      "importTitle": "Importar menú con CSV",
+      "importDesc": "Elegís comercio y nombre del menú en pantalla; el CSV lleva secciones, orden y productos",
+      "skip": "Omitir por ahora",
+      "cancel": "Cancelar"
+    },
+    "selectMenus": {
+      "title": "Seleccionar menús existentes",
+      "subtitle": "Marcá los menús que querés vincular a <strong>{{name}}</strong>. Los menús asignados a otro local pasarán a este.",
+      "thisBusiness": "este comercio",
+      "targetBusiness": "Comercio destino",
+      "selectBusiness": "Seleccioná un comercio…",
+      "loading": "Cargando menús…",
+      "empty": "No hay menús disponibles para asignar. Podés crear uno nuevo o importar con CSV.",
+      "currentlyAt": "Actualmente en:",
+      "unassigned": "Sin comercio asignado",
+      "assign": "Asignar menús ({{count}})",
+      "saving": "Guardando…",
+      "loadError": "No se pudieron cargar los menús asignables",
+      "selectAtLeastOne": "Seleccioná al menos un menú para asignar a este comercio.",
+      "selectTargetBusiness": "Seleccioná el comercio al que querés vincular los menús.",
+      "assignError": "Error al asignar los menús"
+    },
+    "importCsv": {
+      "title": "Importar menú con CSV",
+      "intro1": "Un archivo CSV = un menú nuevo. Primero elegís el <strong>comercio</strong> y el <strong>nombre del menú</strong> en esta pantalla.",
+      "intro2": "En el CSV, el <strong>orden de las secciones</strong> es el orden en que aparecen por primera vez al leer el archivo de arriba abajo. Repetí el mismo <code>nombre_seccion</code> en cada fila de productos que pertenezcan a esa categoría. El orden se puede ajustar después en <strong>Editar menú</strong>. Cada fila incluye el <strong>producto</strong> con precios, destacado y alérgenos.",
+      "intro3": "Luego de la importación podés <strong>modificar el menú y sus productos de forma manual</strong> desde la administración. Si tu plan permite fotos en productos, podés <strong>cargarlas después</strong> desde la edición del menú. El menú queda en <strong>borrador</strong>: en <strong>Menús</strong> usá el botón <strong>Publicar</strong> para que esté visible online.",
+      "intro4": "Si querés más información sobre la importación con CSV, visitá la <docs>documentación: importar menú con CSV</docs>.",
+      "templateHint": "Descargá la plantilla de ejemplo para ver las columnas. El import respeta los límites de menús y productos de tu plan. Si tu CSV incluye la columna <code>nombre_restaurante</code>, debe coincidir con el comercio elegido abajo; también podés omitir esa columna y usar solo el selector.",
+      "downloadTemplate": "Descargar plantilla de ejemplo (CSV)",
+      "businessLabel": "Seleccioná el comercio al que pertenece el menú",
+      "selectBusiness": "Seleccioná un comercio…",
+      "menuNameLabel": "Nombre del menú",
+      "menuNamePlaceholder": "Ej. Menú principal",
+      "menuDescLabel": "Descripción del menú",
+      "optional": "(opcional)",
+      "menuDescPlaceholder": "Texto breve que verán los comensales al elegir el menú",
+      "fileLabel": "Archivo CSV",
+      "fileChangeHint": "{{size}} KB · Hacé clic para cambiar el archivo",
+      "removeFile": "Quitar archivo",
+      "dropHint": "Arrastrá un CSV o hacé clic para seleccionar",
+      "csvOnly": "Solo archivos .csv",
+      "importing": "Importando…",
+      "import": "Importar",
+      "invalidCsvPick": "Elegí un archivo .csv válido.",
+      "invalidCsvDrop": "Soltá un archivo .csv válido.",
+      "selectFile": "Seleccioná un archivo CSV.",
+      "selectBusinessAlert": "Seleccioná el comercio al que querés importar el menú.",
+      "enterMenuName": "Ingresá el nombre del menú.",
+      "importError": "Error al importar el CSV",
+      "importFailedAlert": "No se pudo crear el menú desde el CSV.\n\n{{detail}}\n\nRevisá el archivo y volvé a intentar; seguís en esta pantalla para corregirlo."
+    },
+    "create": {
+      "title": "Crear nuevo menú",
+      "subtitle": "Completa la información del menú paso a paso",
+      "stepInfo": "Información",
+      "stepSections": "Secciones",
+      "basicTitle": "Información básica",
+      "basicDesc": "Ingresa el nombre y descripción del menú",
+      "businessLabel": "Comercio *",
+      "selectBusiness": "Selecciona un comercio",
+      "menuNameLabel": "Nombre del menú *",
+      "menuNamePlaceholder": "Ej: Menú del Día, Menú Ejecutivo, etc.",
+      "descriptionLabel": "Descripción (opcional)",
+      "descriptionPlaceholder": "Describe tu menú...",
+      "enterMenuName": "Por favor ingresa un nombre para el menú",
+      "createError": "Error creando menú"
+    },
+    "sections": {
+      "title": "Secciones del menú",
+      "description": "Agrega, edita o elimina secciones. Arrastra para reordenar. <strong>Debes agregar al menos una sección activa para poder crear el menú.</strong>",
+      "nameLabel": "Nombre de la sección *",
+      "namePlaceholder": "Ej: Entradas, Platos principales, Postres...",
+      "statusLabel": "Estado",
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "update": "Actualizar",
+      "cancel": "Cancelar",
+      "add": "+ Agregar Sección",
+      "empty": "<strong>No hay secciones creadas.</strong> Agrega al menos una sección activa usando el formulario de arriba para poder crear el menú.",
+      "toggleTitle": "Haz clic para {{action}} esta sección",
+      "deactivate": "desactivar",
+      "activate": "activar",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "enterName": "Por favor ingresa un nombre para la sección",
+      "confirmDelete": "¿Estás seguro de eliminar esta sección?",
+      "needActiveEmpty": "Debes agregar al menos una sección activa antes de crear el menú. Por favor, agrega una sección usando el formulario de arriba.",
+      "needActiveInactive": "Debes tener al menos una sección activa antes de crear el menú. Tienes secciones creadas pero todas están inactivas. Por favor, edita una sección y márcala como \"Activa\".",
+      "needActiveTitle": "Debes agregar al menos una sección activa",
+      "needActiveWarning": "⚠️ Debes tener al menos una sección activa para crear el menú"
+    },
+    "footer": {
+      "back": "← Volver",
+      "previous": "← Anterior",
+      "cancel": "Cancelar",
+      "next": "Siguiente →",
+      "saving": "Guardando...",
+      "createMenu": "Crear Menú"
+    }
+  },
+  "productWizard": {
+    "common": {
+      "loading": "Cargando...",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "closeAria": "Cerrar",
+      "error": "Error",
+      "menu": "Menú",
+      "untitled": "Sin nombre",
+      "freePlan": "gratuito",
+      "previous": "← Anterior",
+      "next": "Siguiente →",
+      "saving": "Guardando...",
+      "creating": "Creando..."
+    },
+    "icons": {
+      "celiaco": "Sin Gluten",
+      "vegetariano": "Vegetariano",
+      "vegano": "Vegano",
+      "picante": "Picante",
+      "sinLactosa": "Sin Lactosa"
+    },
+    "alerts": {
+      "publishMenuError": "Error publicando el menú",
+      "unpublishMenuError": "Error despublicando el menú",
+      "cannotPreview": "No se puede previsualizar el menú.",
+      "saveOrderError": "Error guardando el orden de los productos",
+      "reorderError": "Error reordenando los productos",
+      "productNotFound": "Producto no encontrado",
+      "moveProductError": "Error moviendo el producto",
+      "sectionNameRequired": "Por favor ingresa un nombre para la sección",
+      "menuRequired": "Debes seleccionar un menú primero",
+      "createSectionError": "Error creando la sección",
+      "identifyMenuError": "No se pudo identificar el menú actual.",
+      "identifyRestaurantError": "No se pudo determinar el comercio de este menú.",
+      "loadProductsError": "Error al cargar productos",
+      "copyProductsError": "Error al copiar algunos productos",
+      "productNameRequired": "Por favor ingresa un nombre para el producto",
+      "sectionRequired": "Debes seleccionar al menos una sección del menú para continuar",
+      "sectionRequiredCreate": "Este menú no tiene secciones. Crea una sección antes de continuar",
+      "createProductError": "Error creando producto"
+    },
+    "manage": {
+      "subtitle": "Gestiona los productos de tu menú",
+      "empty": "Tu menú está vacío. Agrega secciones y productos para comenzar.",
+      "productCount_one": "{{count}} producto",
+      "productCount_other": "{{count}} productos",
+      "dropHere": "Arrastra productos aquí",
+      "noSection": "Sin sección",
+      "createNewTitle": "Crear nuevo producto",
+      "createNewDesc": "Crea un producto desde cero con nombre, descripción, precios e iconos",
+      "loadExistingTitle": "Cargar productos ya creados",
+      "loadExistingDesc": "Asigna productos que ya has creado a este menú",
+      "preview": "Previsualizar",
+      "publishing": "Publicando...",
+      "publishMenu": "📢 Publicar Menú",
+      "menuPublished": "✓ Menú publicado",
+      "unpublishing": "Despublicando...",
+      "unpublishMenu": "Despublicar menú"
+    },
+    "unpublishModal": {
+      "title": "Despublicar Menú",
+      "confirm": "¿Estás seguro de que deseas despublicar este menú?",
+      "important": "Importante:",
+      "warning": "El menú quedará despublicado y no será visible para los clientes hasta que lo vuelvas a publicar.",
+      "confirmAction": "Sí, despublicar"
+    },
+    "loadExistingModal": {
+      "title": "Cargar productos ya creados",
+      "intro": "Elige productos de otros menús del mismo comercio para copiarlos a este menú (se clonan con precios e iconos).",
+      "empty": "No hay productos en otros menús del mismo comercio. Crea productos en otro menú y vuelve a intentar, o crea uno nuevo aquí.",
+      "needSection": "Crea al menos una sección en este menú para poder copiar productos aquí.",
+      "addToSection": "Añadir a la sección",
+      "selectProducts": "Selecciona los productos a copiar:",
+      "copying": "Copiando…",
+      "copyProducts_one": "Copiar {{count}} producto al menú",
+      "copyProducts_other": "Copiar {{count}} productos al menú"
+    },
+    "limitModal": {
+      "title": "Límite de Productos Alcanzado",
+      "reached": "Has alcanzado el límite de <strong>{{limit}}</strong> producto(s) para tu plan <strong>{{plan}}</strong>.",
+      "current": "Actualmente tienes <strong>{{count}}</strong> producto(s) creado(s).",
+      "toCreateMore": "Para crear más productos",
+      "upgradeHint": "Amplía tu suscripción para aumentar el límite de productos disponibles.",
+      "viewPlans": "Ver planes y suscripción",
+      "notInterested": "Por el momento no me interesa"
+    },
+    "create": {
+      "title": "Crear nuevo producto",
+      "subtitle": "Completa la información del producto paso a paso",
+      "submit": "Crear Producto"
+    },
+    "steps": {
+      "info": "Información",
+      "prices": "Precios",
+      "others": "Otros"
+    },
+    "form": {
+      "basicTitle": "Información básica",
+      "basicDesc": "Ingresa el nombre y descripción del producto",
+      "restaurant": "Comercio",
+      "chooseRestaurant": "Elegí un comercio",
+      "menuOptional": "Menú (opcional)",
+      "chooseRestaurantFirst": "Elegí un comercio primero",
+      "unassigned": "Sin asignar (producto independiente)",
+      "menuHelp": "Podés crear el producto sin menú y asignarlo después. Los menús se filtran por el local elegido.",
+      "menuSections": "Secciones del menú",
+      "loadingSections": "(cargando...)",
+      "noSectionsWarning": "⚠️ Este menú no tiene secciones. El producto se guardará pero no se mostrará hasta que agregues secciones al menú y lo asignes.",
+      "createNewSection": "+ Crear nueva sección",
+      "noSectionSelected": "⚠️ No has seleccionado ninguna sección. El producto se guardará pero <strong>no se mostrará en el menú</strong> hasta que lo asignes a al menos una sección.",
+      "sectionsSelected_one": "✓ {{count}} sección seleccionada",
+      "sectionsSelected_other": "✓ {{count}} secciones seleccionadas",
+      "productName": "Nombre del producto *",
+      "productNamePlaceholder": "Ej: Pizza Margherita, Hamburguesa Clásica, etc.",
+      "descriptionOptional": "Descripción (opcional)",
+      "descriptionPlaceholder": "Describe tu producto..."
+    },
+    "prices": {
+      "title": "Precios",
+      "description": "Agrega uno o más precios para tu producto",
+      "reorderHint": " · Arrastrá cada fila desde ☰ para ordenar cómo se muestran.",
+      "dragTitle": "Arrastrar para reordenar",
+      "currency": "Moneda",
+      "labelOptional": "Etiqueta (opcional)",
+      "labelPlaceholder": "Ej: Regular, Grande, etc.",
+      "price": "Precio *",
+      "amountPlaceholder": "Ej.: 12,50",
+      "addAnother": "+ Agregar otro precio"
+    },
+    "others": {
+      "title": "Otros",
+      "description": "Selecciona iconos y agrega imágenes para tu producto (opcional)",
+      "highlightTitle": "Destacar producto",
+      "highlightLabel": "Mostrar este producto como destacado en las plantillas",
+      "iconsTitle": "Iconos",
+      "imagesTitle": "Imágenes del Producto",
+      "dropImagesLocked": "Arrastra imágenes aquí o haz clic para seleccionar",
+      "formatsLocked": "Formatos: JPG, PNG, GIF (máx. 5MB por imagen)",
+      "imagesProOnly": "⚠️ Imágenes disponibles solo en planes Pro, Pro Team y Premium",
+      "imagesUpgradeHint": "Amplía tu suscripción a Pro o Premium para poder agregar imágenes a tus productos.",
+      "viewPlans": "Ver planes y suscripciones",
+      "dropImage": "Arrastra una imagen aquí o haz clic para seleccionar",
+      "formats": "Formatos: JPG, PNG, GIF (máx. 5MB)",
+      "previewAlt": "Preview producto",
+      "replacePhoto": "Reemplazar foto"
+    },
+    "sectionModal": {
+      "title": "Seleccionar Sección",
+      "selectedMenuNoSection": "Has seleccionado el menú <strong>{{name}}</strong> pero no has elegido una sección.",
+      "chooseOrSave": "Selecciona una sección donde mostrar el producto o guárdalo sin sección (no se mostrará en el menú hasta que asignes una sección).",
+      "availableSections": "Secciones disponibles:",
+      "noSectionsYet": "Este menú no tiene secciones creadas aún.",
+      "warning": "<strong>⚠️ Advertencia:</strong> Si guardas el producto sin sección, no se mostrará en el menú hasta que asignes una sección.",
+      "saveWithoutSection": "Guardar sin sección"
+    },
+    "createSectionModal": {
+      "title": "Crear Nueva Sección",
+      "nameLabel": "Nombre de la sección *",
+      "namePlaceholder": "Ej: Entradas, Platos principales, Postres...",
+      "help": "La sección se creará para el menú seleccionado y se seleccionará automáticamente.",
+      "submit": "Crear sección"
+    }
+  },
+  "location": {
+    "searchCountry": "Buscar país...",
+    "countriesListAria": "Lista de países",
+    "noCountriesFound": "No se encontraron países",
+    "selectCountryFirst": "Selecciona un país primero",
+    "provincePlaceholder": "Ingresa la provincia/región",
+    "searchProvince": "Buscar provincia/región...",
+    "noProvincesFound": "No se encontraron provincias",
+    "selectProvinceFirst": "Selecciona una provincia primero",
+    "cityPlaceholder": "Ingresa la ciudad",
+    "searchCity": "Buscar ciudad...",
+    "noCitiesFound": "No se encontraron ciudades",
+    "countries": {
+      "AR": "Argentina",
+      "BO": "Bolivia",
+      "BR": "Brasil",
+      "CL": "Chile",
+      "CO": "Colombia",
+      "CR": "Costa Rica",
+      "CU": "Cuba",
+      "DO": "República Dominicana",
+      "EC": "Ecuador",
+      "SV": "El Salvador",
+      "GT": "Guatemala",
+      "HN": "Honduras",
+      "MX": "México",
+      "NI": "Nicaragua",
+      "PA": "Panamá",
+      "PY": "Paraguay",
+      "PE": "Perú",
+      "PR": "Puerto Rico",
+      "UY": "Uruguay",
+      "VE": "Venezuela",
+      "ES": "España",
+      "US": "Estados Unidos",
+      "CA": "Canadá",
+      "FR": "Francia",
+      "IT": "Italia",
+      "DE": "Alemania",
+      "GB": "Reino Unido",
+      "PT": "Portugal",
+      "AU": "Australia",
+      "NZ": "Nueva Zelanda",
+      "JP": "Japón",
+      "CN": "China",
+      "IN": "India",
+      "RU": "Rusia",
+      "ZA": "Sudáfrica",
+      "EG": "Egipto",
+      "MA": "Marruecos",
+      "TR": "Turquía",
+      "KR": "Corea del Sur",
+      "TH": "Tailandia",
+      "ID": "Indonesia",
+      "PH": "Filipinas",
+      "VN": "Vietnam",
+      "MY": "Malasia",
+      "SG": "Singapur",
+      "AE": "Emiratos Árabes Unidos",
+      "SA": "Arabia Saudí",
+      "IL": "Israel",
+      "GR": "Grecia",
+      "NL": "Países Bajos",
+      "BE": "Bélgica",
+      "CH": "Suiza",
+      "AT": "Austria",
+      "SE": "Suecia",
+      "NO": "Noruega",
+      "DK": "Dinamarca",
+      "FI": "Finlandia",
+      "PL": "Polonia",
+      "CZ": "República Checa",
+      "HU": "Hungría",
+      "RO": "Rumania",
+      "BG": "Bulgaria",
+      "HR": "Croacia",
+      "RS": "Serbia",
+      "IE": "Irlanda",
+      "IS": "Islandia",
+      "LU": "Luxemburgo",
+      "MT": "Malta",
+      "CY": "Chipre"
+    }
+  },
+  "adminSupport": {
+    "title": "Soporte técnico",
+    "lead": "Abrí un ticket para reportar problemas o pedir ayuda. El equipo recibirá una notificación y podrás hacer seguimiento desde esta misma sección.",
+    "status": {
+      "open": "Abierto",
+      "in_progress": "En progreso",
+      "closed": "Cerrado"
+    },
+    "docsCard": {
+      "title": "Documentación",
+      "body": "Para uso de la app, revisá la <docsLink>documentación del panel</docsLink>."
+    },
+    "tips": {
+      "title": "Consejos para un buen reporte",
+      "expectedVsActual": "Describí qué esperabas y qué ocurrió en su lugar.",
+      "reproSteps": "Pasos concretos para reproducir el problema.",
+      "environment": "Navegador, sistema operativo y si es en móvil o escritorio.",
+      "errors": "Texto de mensajes de error o lo que veas en consola (F12).",
+      "attachments": "Podés adjuntar capturas en JPG o PNG (hasta 5 imágenes, 5 MB cada una)."
+    },
+    "form": {
+      "title": "Crear ticket",
+      "subject": "Asunto",
+      "subjectPlaceholder": "Resumen breve del problema",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Incluí pasos para reproducir, navegador, mensajes de error…",
+      "attachments": "Imágenes adjuntas (opcional)",
+      "attachmentsHint": "JPG, JPEG o PNG. Máximo 5 archivos, 5 MB c/u.",
+      "chooseFiles": "Elegir archivos",
+      "noFilesSelected": "Sin archivos seleccionados",
+      "filesSelected_one": "{{count}} archivo seleccionado",
+      "filesSelected_other": "{{count}} archivos seleccionados",
+      "submit": "Enviar ticket",
+      "submitting": "Enviando…"
+    },
+    "list": {
+      "title": "Mis tickets",
+      "refresh": "Actualizar",
+      "loading": "Cargando…",
+      "empty": "Todavía no tenés tickets. Usá el formulario de arriba para crear uno.",
+      "colNumber": "#",
+      "colSubject": "Asunto",
+      "colStatus": "Estado",
+      "colAttachments": "Adj.",
+      "colUpdated": "Actualizado",
+      "view": "Ver",
+      "showing": "Mostrando {{shown}} de {{total}} tickets."
+    },
+    "detail": {
+      "breadcrumbSupport": "Soporte",
+      "breadcrumbTicket": "Ticket #{{number}}",
+      "breadcrumbTicketLoading": "Ticket #…",
+      "createdStatus": "Creado {{date}} · Estado:",
+      "attachmentsTitle": "Imágenes adjuntas",
+      "historyTitle": "Historial",
+      "closedMessage": "Este ticket está cerrado. No se pueden enviar más mensajes.",
+      "replyTitle": "Tu respuesta",
+      "replyPlaceholder": "Escribí tu mensaje…",
+      "replySubmit": "Enviar respuesta",
+      "replySubmitting": "Enviando…",
+      "loading": "Cargando…"
+    },
+    "alerts": {
+      "listLoadError": "No se pudo cargar el listado de tickets.",
+      "invalidImageType": "Solo se permiten imágenes JPG, JPEG o PNG.",
+      "imageTooLarge": "Cada imagen debe pesar como máximo 5 MB.",
+      "createError": "No se pudo crear el ticket.",
+      "ticketLoadError": "No se pudo cargar el ticket.",
+      "replyError": "No se pudo enviar la respuesta."
+    },
+    "public": {
+      "metaTitle": "Soporte | AppMenuQR",
+      "metaDescription": "Soporte técnico AppMenuQR: accedé con tu cuenta para contactar al equipo.",
+      "title": "Soporte técnico",
+      "body": "Para comunicarte con soporte técnico, iniciá sesión con tu cuenta de AppMenuQR. Desde el panel administrador vas a encontrar la sección de soporte con los datos de contacto y el formulario de incidencias."
+    }
+  },
+  "documentation": {
+    "searchLabel": "Buscar en la guía",
+    "searchPlaceholder": "Ej. CSV, QR, secciones…",
+    "noMatches": "Sin coincidencias",
+    "indexButton": "☰ Índice",
+    "close": "Cerrar",
+    "closeMenu": "Cerrar menú",
+    "navAriaLabel": "Secciones de la documentación",
+    "docsTitle": "Documentación",
+    "guideStart": "Inicio de la guía",
+    "guideEnd": "Fin de la guía",
+    "introH1": "📚 Documentación — AppMenuQR",
+    "introLead": "Guía completa para usar AppMenuQR y crear menús digitales profesionales.",
+    "seeAlso": "Ver también en la guía",
+    "faq": "Problemas frecuentes",
+    "redirecting": "Redirigiendo a la documentación…",
+    "sections": {
+      "intro": {
+        "title": "Documentación — Inicio",
+        "shortTitle": "Inicio",
+        "group": "Introducción",
+        "metaTitlePublic": "Documentación | AppMenuQR",
+        "metaTitleAdmin": "Documentación | Ayuda",
+        "metaDescription": "Guía AppMenuQR: registro, comercio, menús, CSV, plantillas, publicación, programación, QR, impresión en papel, administración del negocio, traducciones, suscripciones y pagos.",
+        "keywords": "inicio guía flujo resumen pasos registro sesión",
+        "searchText": "resumen flujo completo crear comercio menú csv secciones productos qr verificar email"
+      },
+      "crear-restaurante": {
+        "title": "Crear un comercio",
+        "shortTitle": "Comercio",
+        "group": "Primeros pasos",
+        "metaTitlePublic": "Crear un comercio | Documentación AppMenuQR",
+        "metaTitleAdmin": "Crear un comercio | Ayuda",
+        "metaDescription": "Alta del primer comercio en AppMenuQR: datos, dirección en mapa, teléfono, WhatsApp, logo, plantilla por defecto y moneda principal.",
+        "keywords": "comercio crear logo portada moneda plantilla dirección whatsapp maps video tutorial youtube",
+        "searchText": "comercios menú lateral crear guardar primera vez asistente video tutorial primeros pasos"
+      },
+      "crear-menu": {
+        "title": "Crear un menú",
+        "shortTitle": "Menú",
+        "group": "Primeros pasos",
+        "metaTitlePublic": "Crear un menú | Documentación AppMenuQR",
+        "metaTitleAdmin": "Crear un menú | Ayuda",
+        "metaDescription": "Cómo crear menús por comercio: nombre visible para clientes, descripción opcional y secciones dentro del menú.",
+        "keywords": "menú crear borrador comercio nombre botón secciones video tutorial youtube",
+        "searchText": "menús nuevo guardar almuerzo cena entradas principales video tutorial primeros pasos"
+      },
+      "crear-secciones": {
+        "title": "Crear secciones del menú",
+        "shortTitle": "Secciones",
+        "group": "Menú",
+        "metaTitlePublic": "Secciones del menú | Documentación AppMenuQR",
+        "metaTitleAdmin": "Secciones del menú | Ayuda",
+        "metaDescription": "Organizar categorías en el menú: agregar sección, orden con arrastre y líneas de agarre.",
+        "keywords": "secciones categorías menú orden drag agregar",
+        "searchText": "secciones del menú agregar orden tres líneas"
+      },
+      "crear-productos": {
+        "title": "Crear productos",
+        "shortTitle": "Productos",
+        "group": "Menú",
+        "metaTitlePublic": "Crear productos | Documentación AppMenuQR",
+        "metaTitleAdmin": "Crear productos | Ayuda",
+        "metaDescription": "Alta de productos con precios en la moneda del comercio, iconos y asignación a secciones.",
+        "keywords": "productos precios iconos moneda destacado",
+        "searchText": "productos del menú crear precio moneda principal comercio"
+      },
+      "reordenar-productos": {
+        "title": "Reordenar productos",
+        "shortTitle": "Orden",
+        "group": "Menú",
+        "metaTitlePublic": "Reordenar productos | Documentación AppMenuQR",
+        "metaTitleAdmin": "Reordenar productos | Ayuda",
+        "metaDescription": "Cambiar el orden de productos con arrastrar y soltar dentro de una sección o entre secciones.",
+        "keywords": "orden arrastrar drag drop productos",
+        "searchText": "reordenar arrastra suelta sección"
+      },
+      "importar-menu-csv": {
+        "title": "Importar menú con CSV",
+        "shortTitle": "CSV",
+        "group": "Menú",
+        "metaTitlePublic": "Importar menú con CSV | Documentación AppMenuQR",
+        "metaTitleAdmin": "Importar menú con CSV | Ayuda",
+        "metaDescription": "Importar secciones y productos desde CSV: columnas, alérgenos, límites del plan y edición posterior completa.",
+        "keywords": "csv importar plantilla secciones productos precios",
+        "searchText": "nombre_seccion nombre_producto moneda precio importación editar después"
+      },
+      "plantillas": {
+        "title": "Plantillas de diseño",
+        "shortTitle": "Diseño",
+        "group": "Diseño",
+        "metaTitlePublic": "Plantillas de diseño | Documentación AppMenuQR",
+        "metaTitleAdmin": "Plantillas de diseño | Ayuda",
+        "metaDescription": "Plantilla por defecto al crear el comercio, Menú plantillas para previsualizar, colores y opciones del negocio.",
+        "keywords": "plantilla diseño preview colores logo nombre classic foodie",
+        "searchText": "plantilla comercio editar activar desactivar primarios secundarios"
+      },
+      "publicar-menu": {
+        "title": "Publicar el menú",
+        "shortTitle": "Publicar",
+        "group": "Publicación",
+        "metaTitlePublic": "Publicar el menú | Documentación AppMenuQR",
+        "metaTitleAdmin": "Publicar el menú | Ayuda",
+        "metaDescription": "Estado borrador o publicado, botones publicar y despublicar; enlace del comercio con menús ocultos hasta publicar.",
+        "keywords": "publicar borrador despublicar estado acciones lista menús",
+        "searchText": "columna estado qr visible oculto"
+      },
+      "programar-menu": {
+        "title": "Programar un menú",
+        "shortTitle": "Programar menú",
+        "group": "Publicación",
+        "metaTitlePublic": "Programar visibilidad del menú | Documentación AppMenuQR",
+        "metaTitleAdmin": "Programar visibilidad del menú | Ayuda",
+        "metaDescription": "Programación semanal de menús en planes Pro y Premium: días, horarios, fechas y huso horario del comercio.",
+        "keywords": "programar horario días semana visibilidad pro premium timezone",
+        "searchText": "lunes martes horario desde hasta fechas guardar programación menús"
+      },
+      "descargar-qr": {
+        "title": "Descargar código QR",
+        "shortTitle": "Código QR",
+        "group": "Publicación",
+        "metaTitlePublic": "Código QR del comercio | Documentación AppMenuQR",
+        "metaTitleAdmin": "Código QR del comercio | Ayuda",
+        "metaDescription": "QR del comercio en el dashboard: todos los menús publicados, descarga, impresión y aviso si cambias el nombre.",
+        "keywords": "qr código descargar dashboard comercio menús nombre enlace",
+        "searchText": "imprimir escanear google maps cambiar nombre nuevo qr"
+      },
+      "imprimir-carta": {
+        "title": "Imprimir la carta en papel",
+        "shortTitle": "Imprimir carta",
+        "group": "Publicación",
+        "metaTitlePublic": "Imprimir carta en papel | Documentación AppMenuQR",
+        "metaTitleAdmin": "Imprimir carta en papel | Ayuda",
+        "metaDescription": "Imprimí tu menú en papel desde el panel: plantillas, logo, secciones, idioma y menús a incluir.",
+        "keywords": "imprimir papel carta plantilla pdf logo secciones idioma menús",
+        "searchText": "imprimir carta comercio clásica elegante moderna bistro vista previa"
+      },
+      "desactivar-restaurante": {
+        "title": "Desactivar el comercio",
+        "shortTitle": "Desactivar local",
+        "group": "Administración del negocio",
+        "metaTitlePublic": "Desactivar comercio | Documentación AppMenuQR",
+        "metaTitleAdmin": "Desactivar comercio | Ayuda",
+        "metaDescription": "Qué ocurre si desactivás el comercio: la página pública y el QR no se muestran hasta reactivarlo.",
+        "keywords": "desactivar comercio ocultar pausa cerrar página pública qr",
+        "searchText": "comercio inactivo volver activar cartel online"
+      },
+      "eliminar-restaurante": {
+        "title": "Eliminar el comercio",
+        "shortTitle": "Eliminar local",
+        "group": "Administración del negocio",
+        "metaTitlePublic": "Eliminar comercio | Documentación AppMenuQR",
+        "metaTitleAdmin": "Eliminar comercio | Ayuda",
+        "metaDescription": "Eliminar un comercio borra todos los datos asociados de forma irreversible.",
+        "keywords": "eliminar comercio borrar datos permanentemente peligro",
+        "searchText": "borrar negocio irreversible menús productos"
+      },
+      "menu-visibilidad-y-eliminacion": {
+        "title": "Menú: visibilidad y eliminación",
+        "shortTitle": "Menú / borrar",
+        "group": "Administración del negocio",
+        "metaTitlePublic": "Despublicar y eliminar menús | Documentación AppMenuQR",
+        "metaTitleAdmin": "Despublicar y eliminar menús | Ayuda",
+        "metaDescription": "Menús despublicados en la carta online, eliminar menú sin borrar productos y productos huérfanos.",
+        "keywords": "despublicar menú eliminar menú productos sin menú visible carta",
+        "searchText": "borrar menu productos asignar huérfano"
+      },
+      "traducciones": {
+        "title": "Traducciones",
+        "shortTitle": "Traducciones",
+        "group": "Contenido e idiomas",
+        "metaTitlePublic": "Traducciones del menú | Documentación AppMenuQR",
+        "metaTitleAdmin": "Traducciones del menú | Ayuda",
+        "metaDescription": "Pasos para traducir contenido en AppMenuQR y límites según tu plan de suscripción.",
+        "keywords": "traducciones idiomas i18n plan límites suscripción video tutorial youtube traducción automática",
+        "searchText": "traducir menu texto segundo idioma"
+      },
+      "edicion-masiva-productos": {
+        "title": "Edición masiva de productos",
+        "shortTitle": "Edición masiva",
+        "group": "Productos avanzado",
+        "metaTitlePublic": "Edición masiva de productos | Documentación AppMenuQR",
+        "metaTitleAdmin": "Edición masiva de productos | Ayuda",
+        "metaDescription": "Acciones masivas sobre productos: borrar, mover entre menús y comercios, duplicados y límites del plan.",
+        "keywords": "masivo borrar mover duplicar plan límite productos",
+        "searchText": "trasladar otro comercio copiar cantidad"
+      },
+      "editar-productos-detalle": {
+        "title": "Editar un producto",
+        "shortTitle": "Editar producto",
+        "group": "Productos avanzado",
+        "metaTitlePublic": "Editar producto: precios y estado | Documentación AppMenuQR",
+        "metaTitleAdmin": "Editar producto: precios y estado | Ayuda",
+        "metaDescription": "Activar o desactivar un producto, nombre, descripción, precios y foto según tu plan.",
+        "keywords": "editar producto precio foto activar desactivar",
+        "searchText": "descripción opciones precio imagen plan"
+      },
+      "suscripciones-y-pagos": {
+        "title": "Suscripciones y pagos",
+        "shortTitle": "Suscripción",
+        "group": "Cuenta y facturación",
+        "metaTitlePublic": "Suscripciones y pagos | Documentación AppMenuQR",
+        "metaTitleAdmin": "Suscripciones y pagos | Ayuda",
+        "metaDescription": "Medios de pago (Mercado Pago Argentina, PayPal internacional), baja cuando quieras.",
+        "keywords": "suscripción pago mercadopago paypal argentina baja cancelar",
+        "searchText": "facturación plan cobro mensual"
+      },
+      "catalogo-plantillas": {
+        "title": "Plantillas",
+        "shortTitle": "Plantillas",
+        "group": "Plantillas",
+        "metaTitlePublic": "Plantillas | Documentación AppMenuQR",
+        "metaTitleAdmin": "Plantillas | Ayuda",
+        "metaDescription": "Resumen de las plantillas de carta digital disponibles y enlace a las características de cada una.",
+        "keywords": "plantillas catálogo características smart food beach gourmet minimalista classic foodie burgers",
+        "searchText": "ficha plantilla caracteristicas smart-food beach-bar gourmet minimalista night-club modern-food italian-food sol-noche foodie classic burgers"
+      }
+    }
+  },
+  "documentationBodies": {
+    "common": {
+      "watchOnYoutube": "Abrir en YouTube"
+    },
+    "primerosPasosVideo": {
+      "title": "Video: primeros pasos",
+      "description": "Recorrido paso a paso para crear tu menú QR, armar secciones y productos, y elegir una plantilla.",
+      "iframeTitle": "Cómo crear un menú QR en App Menu QR: comercio, secciones, productos y plantilla"
+    },
+    "traduccionesVideo": {
+      "title": "Video: traducciones",
+      "description": "Cómo agregar idiomas, editar textos y usar la traducción automática en el panel.",
+      "iframeTitle": "Traducciones de menú en App Menu QR: idiomas y traducción automática"
+    },
+    "intro": {
+      "p1": "Antes de crear tu comercio y tus menús, necesitás <strong>registrarte</strong> en AppMenuQR, <strong>verificar tu correo electrónico</strong> (revisá también la carpeta de spam si no ves el mensaje) e <strong>iniciar sesión</strong>. Solo así podrás guardar cambios y publicar tu carta digital.",
+      "summaryCardTitle": "📋 Resumen del Flujo Completo",
+      "step1": "<link>Crear Comercio</link> → Completa toda la información, sube logo y foto de portada, selecciona plantilla y moneda",
+      "step2": "<link>Crear Menú</link> → Asigna el menú al comercio (puedes crear varios menús por comercio)",
+      "step3": "<link>Crear Secciones</link> → Organiza tu menú en categorías (Entradas, Platos Principales, etc.)",
+      "step4": "<link>Crear Productos</link> → Agrega productos con precios, descripciones e iconos, y asígnalos a las secciones",
+      "step5": "<link>Reordenar Productos</link> → Usa drag and drop para organizar el orden de los productos en cada sección",
+      "step6": "<link>Importar menú con CSV</link> → Cargá secciones y productos desde un archivo CSV (alternativa al flujo paso a paso)",
+      "step7": "<link>Plantillas de diseño</link> → Aspecto visual del comercio; podés cambiarlas cuando quieras",
+      "step8": "<link>Publicar Menú</link> → Cambia el estado del menú a \"Publicado\" para que esté visible",
+      "step9": "<link>Programar menú</link> → Define días y horarios de visibilidad (planes Pro y Premium)",
+      "step10": "<link>Descargar QR</link> → Genera y descarga el código QR para compartir con tus clientes",
+      "step11": "<link>Imprimir carta en papel</link> → Generá una versión para imprimir con plantillas y opciones de diseño",
+      "adminCardTitle": "Administración del negocio, contenido y cuenta",
+      "admin1": "<link>Desactivar comercio</link> — La carta online y el QR no se muestran hasta que reactives el local.",
+      "admin2": "<link>Eliminar comercio</link> — Borra todo el negocio y sus datos asociados (acción irreversible).",
+      "admin3": "<link>Menús: visibilidad y eliminación</link> — Menús despublicados, borrar menú sin borrar productos y productos sin menú asignado.",
+      "admin4": "<link>Traducciones</link> — Pasos y límites según plan (solo si tu suscripción lo permite).",
+      "admin5": "<link>Edición masiva de productos</link> — Borrar, mover entre menús o comercios; cuidado con duplicados y límites del plan.",
+      "admin6": "<link>Editar un producto</link> — Activar/desactivar, textos, precios y foto (según plan).",
+      "admin7": "<link>Suscripciones y pagos</link> — Medios de pago, mercados y baja cuando quieras."
+    },
+    "crearRestaurante": {
+      "cardTitle": "1️⃣ Crear un Comercio",
+      "p1": "El primer paso para comenzar a usar AppMenuQR es crear un comercio. Cada comercio puede tener múltiples menús.",
+      "p2": "Por lo general, <strong>la primera vez que iniciás sesión</strong> debería aparecerte un mensaje o asistente para crear <strong>tu primer comercio</strong> de forma guiada y rápida. Si eso no ocurre en tu cuenta, no hay problema: podés crearlo manualmente siguiendo los pasos de abajo.",
+      "step1": "<strong>Accede a la sección Comercios:</strong> Haz clic en \"Comercios\" en el menú lateral.",
+      "step2": "<strong>Haz clic en \"Crear Comercio\":</strong> Verás un botón para crear un nuevo comercio.",
+      "step3Intro": "<strong>Completa la información del comercio:</strong>",
+      "fieldName": "<strong>Nombre del comercio:</strong> El nombre que aparecerá en los menús",
+      "fieldDescription": "<strong>Descripción:</strong> Opcional. Una breve presentación de tu negocio para quien vea la carta online.",
+      "fieldAddress": "<strong>Dirección:</strong> La dirección física del local. Se utiliza para <strong>ubicar el negocio en el mapa</strong> (por ejemplo Google Maps) y para poder <strong>habilitar o mostrar el enlace a las reseñas en Google</strong>, según la configuración que activés.",
+      "fieldPhone": "<strong>Teléfono:</strong> Número de contacto. En la vista pública suele mostrarse como <strong>enlace para llamar</strong> directamente desde el móvil.",
+      "fieldWhatsapp": "<strong>WhatsApp:</strong> Podés indicar un número o enlace de WhatsApp para que los clientes te escriban en un clic.",
+      "fieldEmail": "<strong>Email:</strong> Correo electrónico de contacto",
+      "fieldLogoLabel": "<strong>Logo del comercio:</strong>",
+      "fieldLogoSpecs": [
+        "Recomendado: imagen cuadrada, 512x512px o 1024x1024px",
+        "Formatos: JPG, PNG",
+        "Tamaño máximo: 2MB"
+      ],
+      "fieldCoverLabel": "<strong>Foto de portada:</strong>",
+      "fieldCoverSpecs": [
+        "Recomendado: imagen horizontal, 1920x1080px o 1920x600px",
+        "Formatos: JPG, PNG",
+        "Tamaño máximo: 5MB"
+      ],
+      "fieldTemplate": "<strong>Plantilla:</strong> Elegís un diseño inicial para tus menús (Classic, Modern, Foodie, Italian Food, etc.). <strong>Podés cambiar de plantilla cuando quieras</strong>; los datos de tus menús y productos no se pierden al cambiar el diseño.",
+      "fieldCurrency": "<strong>Moneda:</strong> Definís la <strong>moneda principal</strong> del comercio (la que verás por defecto en precios). Opcionalmente podés indicar <strong>otras monedas que aceptás como medio de pago</strong> en el negocio, para que quede claro en la carta.",
+      "step4": "<strong>Guarda el comercio:</strong> Haz clic en \"Guardar\" para crear tu comercio.",
+      "nextStep": "<strong>Siguiente paso:</strong> crear uno o varios <strong>menús</strong> para este comercio (cada menú tendrá después sus secciones y productos).",
+      "tip": "<strong>💡 Tip:</strong> Puedes editar la información del comercio en cualquier momento desde la sección \"Comercios\"."
+    },
+    "crearMenu": {
+      "cardTitle": "2️⃣ Crear un Menú",
+      "p1": "Una vez que hayas creado un comercio, puedes crear uno o varios menús para ese comercio. Esto te permite tener diferentes menús (por ejemplo: menú de almuerzo, menú de cena, menú de fin de semana, etc.).",
+      "step1": "<strong>Accede a la sección Menús:</strong> Haz clic en \"Menús\" en el menú lateral.",
+      "step2": "<strong>Haz clic en \"Crear Menú\":</strong> Verás un botón para crear un nuevo menú.",
+      "step3Intro": "<strong>Completa la información del menú:</strong>",
+      "fieldBusiness": "<strong>Comercio:</strong> Selecciona el comercio al que pertenece este menú. Podés <strong>dejarlo sin asignar por ahora</strong> y asociarlo a un comercio más adelante.",
+      "fieldName": "<strong>Nombre del menú:</strong> Por ejemplo, \"Menú de Almuerzo\", \"Menú de Cena\", etc. Los usuarios verán un <strong>botón u opción con este nombre</strong> para abrir los productos incluidos en ese menú.",
+      "fieldDescription": "<strong>Descripción:</strong> Opcional. Sirve para aclarar cuándo aplica este menú o qué incluye.",
+      "step4": "<strong>Guarda el menú:</strong> Haz clic en \"Guardar\" para crear tu menú.",
+      "p2": "Dentro de cada menú vas a crear las <strong>secciones</strong> (por ejemplo entradas, platos principales, bebidas, postres, etc.) y después los productos dentro de cada sección. Si preferís cargar todo de golpe desde una hoja de cálculo, más abajo tenés la alternativa CSV.",
+      "alternative": "<strong>Alternativa:</strong> <link>importar menú y productos con un archivo CSV</link>.",
+      "tip": "<strong>💡 Importante:</strong> Un comercio puede tener múltiples menús. Esto te permite organizar tus ofertas de diferentes maneras (por horario, por temporada, por tipo de comida, etc.)."
+    },
+    "importarMenuCsv": {
+      "cardTitle": "Importar menú y productos con CSV",
+      "p1": "Además del asistente paso a paso, podés <strong>crear un menú completo</strong> (secciones y productos) subiendo un archivo <strong>CSV</strong>. Es útil si ya tenés la carta en una hoja de cálculo o si querés migrar desde otro sistema.",
+      "fromAppHeading": "Desde la aplicación",
+      "fromAppStep1": "En <strong>Menús</strong>, elegí <strong>Nuevo menú</strong> y la opción <strong>Importar menú con CSV</strong>.",
+      "fromAppStep2": "Seleccioná en pantalla el <strong>comercio al que pertenece el menú</strong>, el <strong>nombre del menú</strong> y, si querés, la <strong>descripción</strong>.",
+      "fromAppStep3": "<a>Descargá la plantilla de ejemplo (CSV)</a> y rellená o adaptá tus filas; después subí el archivo.",
+      "sectionsHeading": "Secciones en el CSV",
+      "sectionsLi1": "<code>nombre_seccion</code>: nombre visible de la categoría (por ejemplo Entradas, Principales). El <strong>orden de las secciones</strong> en el menú es el orden en que cada nombre aparece <strong>por primera vez</strong> al leer el CSV de arriba abajo.",
+      "sectionsLi2": "Para varios productos de la misma sección, <strong>repetí el mismo</strong> <code>nombre_seccion</code> en cada fila. Podés cambiar el orden de las secciones después en <strong>Editar menú</strong>.",
+      "productsHeading": "Productos y precios",
+      "productsLi1": "<code>nombre_producto</code> (obligatorio), <code>descripcion_producto</code> (opcional).",
+      "productsLi2": "<code>destacado</code>: podés usar valores como <code>si</code>, <code>sí</code>, <code>yes</code>, <code>true</code> o <code>1</code> para marcar destacado. Si tu plan no lo permite, el sistema lo desactivará y lo avisará en los resultados.",
+      "productsLi3": "Hasta <strong>cinco precios</strong> por producto: columnas <code>moneda_1</code>…<code>moneda_5</code>, <code>precio_1</code>…<code>precio_5</code> y <code>etiqueta_1</code>…<code>etiqueta_5</code>.",
+      "productsLi4": "<strong>Moneda:</strong> código ISO en tres letras (por ejemplo <code>USD</code>, <code>EUR</code>, <code>ARS</code>). Si completás un <code>precio_N</code>, tenés que indicar la <code>moneda_N</code> correspondiente.",
+      "productsLi5": "<strong>Etiqueta del precio:</strong> es <strong>opcional</strong> (por ejemplo \"Chica\", \"Grande\", \"Menú del día\"). Sirve cuando el mismo producto tiene varios importes.",
+      "productsLi6": "Cada producto debe tener al menos <code>moneda_1</code> y <code>precio_1</code> con un importe mayor que cero. Los montos pueden usar coma o punto decimal.",
+      "allergensHeading": "Alérgenos e iconos",
+      "allergensP1": "La columna <code>alergenos</code> admite varios códigos separados por coma, punto y coma o barra (<code>,</code> <code>;</code> <code>|</code>). Deben coincidir con los <strong>códigos activos</strong> del sistema (mayúsculas o minúsculas). Esta es la lista de alérgenos disponibles:",
+      "allergensP2": "Si un código no existe, se <strong>ignora</strong> y el import puede mostrar un aviso para esa fila.",
+      "afterImportHeading": "Después de importar",
+      "afterImportP": "El menú queda en estado editable: podés <strong>cambiar nombre, secciones, productos y precios</strong> desde el panel. Las <strong>fotos de producto</strong> no vienen del CSV; si tu plan las permite, cargalas después desde la edición del menú o del producto. El menú queda en <strong>borrador</strong>: en <strong>Menús</strong> usá el botón <strong>Publicar</strong> para pasarlo a <strong>publicado</strong> y que esté visible online.",
+      "limitsHeading": "Límites disponibles para las importaciones",
+      "limitsLi1": "El import respeta los <strong>límites de menús y productos</strong> de tu plan; si los superás, verás un error explicativo.",
+      "finalP": "Una vez importado el menú, <strong>podés editarlo por completo</strong> en cualquier momento: nombre, secciones, productos, precios, textos y (según tu plan) imágenes. No hace falta volver a subir el CSV para pequeños cambios del día a día."
+    },
+    "crearSecciones": {
+      "audienceTitle": "Antes de empezar",
+      "audienceP1": "Esta guía es para quienes ya tienen un <strong>menú creado</strong> y quieren organizarlo en categorías (entradas, principales, bebidas, etc.). Si todavía no creaste el menú, revisá primero <link>Crear un menú</link>.",
+      "audienceItems": [
+        "Acceso al panel con permisos para editar menús.",
+        "Convención de nombres clara para clientes (evitá siglas internas poco claras)."
+      ],
+      "cardTitle": "3️⃣ Crear Secciones del Menú",
+      "p1": "Las secciones agrupan los productos en la carta pública: por ejemplo <strong>Entradas</strong>, <strong>Platos principales</strong>, <strong>Bebidas sin alcohol</strong>, <strong>Cafetería</strong>, etc. Un mismo menú puede tener tantas secciones como necesites dentro de los límites de tu plan.",
+      "p2": "El <strong>orden de las secciones</strong> define cómo se lee el menú de arriba abajo en la vista del cliente. Podés cambiarlo en cualquier momento con arrastrar y soltar, sin borrar productos.",
+      "step1": "<strong>Edita el menú:</strong> Desde la sección \"Menús\", haz clic en el botón de editar del menú que quieres modificar.",
+      "step2": "<strong>Selecciona \"Secciones del menú\":</strong> En el modal de edición, elige la opción \"📑 Secciones del menú\".",
+      "step3Intro": "<strong>Crea una nueva sección:</strong>",
+      "step3Li1": "Ingresa el nombre de la sección (ej: \"Entradas\", \"Platos Principales\", \"Postres\").",
+      "step3Li2": "Haz clic en \"<strong>Agregar Sección</strong>\": verás cómo se inserta en el menú.",
+      "step3Li3": "Cuando agregues más secciones, podrás ir definiendo el <strong>orden</strong> (esto determina en qué posición aparecerá cada una en la carta).",
+      "step3Li4": "Para cambiar el orden, hacé clic en las <strong>tres líneas horizontales</strong> que aparecen a la izquierda de cada sección y arrastrá hasta la posición que quieras.",
+      "step3Li5": "Marca si la sección está activa o no cuando aplique.",
+      "step4": "<strong>Guarda los cambios</strong> cuando el formulario lo requiera.",
+      "renameP": "Si más adelante querés <strong>renombrar</strong> una sección, hacelo desde el mismo lugar: el nombre visible se actualiza en la carta al guardar. Los productos que ya estaban en esa sección siguen asociados salvo que los muevas manualmente a otra categoría desde <link>Productos del menú</link>.",
+      "tip": "<strong>💡 Tip:</strong> Si importaste la carta con <link>CSV</link>, el orden inicial de secciones sigue el orden en que aparecieron por primera vez en el archivo; igual podés reordenarlas aquí.",
+      "faq": {
+        "0": {
+          "q": "No veo la opción de secciones al editar el menú.",
+          "a": "Confirmá que estás en <strong>Menús</strong> y que abriste el modal de <strong>editar</strong> el menú correcto. Si tu rol es solo de lectura, pedí acceso a quien administre la cuenta."
+        },
+        "1": {
+          "q": "¿Puedo dejar una sección vacía?",
+          "a": "Sí, pero en la carta pública puede verse raro o ocupar espacio. Lo habitual es ocultar productos o moverlos antes de publicar, o desactivar la sección si la interfaz lo permite."
+        },
+        "2": {
+          "q": "¿Las secciones se comparten entre varios menús?",
+          "a": "Cada menú tiene <strong>su propia lista de secciones</strong>. Si necesitás la misma estructura en otro menú, creala de nuevo o usá <link>importación CSV</link> / duplicación según lo que ofrezca tu flujo en el panel."
+        }
+      }
+    },
+    "crearProductos": {
+      "cardTitle": "4️⃣ Crear Productos y Agregarlos al Menú",
+      "p1": "Los productos son los platos, bebidas o items que ofreces en tu menú. Puedes crear productos y luego asignarlos a las secciones de tus menús.",
+      "step1": "<strong>Edita el menú:</strong> Desde la sección \"Menús\", haz clic en el botón de editar del menú.",
+      "step2": "<strong>Selecciona \"Productos del menú\":</strong> En el modal de edición, elige la opción \"🍽️ Productos del menú\".",
+      "step3Intro": "<strong>Crea un nuevo producto:</strong>",
+      "createButton": "Haz clic en \"➕ Crear nuevo producto\"",
+      "sub1Title": "<strong>Paso 1 - Información básica:</strong>",
+      "sub1Items": [
+        "Nombre del producto",
+        "Descripción (opcional)",
+        "Selecciona las secciones del menú donde quieres que aparezca este producto"
+      ],
+      "sub2Title": "<strong>Paso 2 - Precios:</strong>",
+      "sub2Item1": "Agrega uno o varios precios para el producto",
+      "sub2Item2": "Puedes tener diferentes precios con etiquetas (ej: \"Porción\", \"Simple\", \"Doble\", \"Triple\")",
+      "sub2Item3": "<strong>Selecciona la moneda para cada precio:</strong> por defecto se sugiere la <strong>moneda principal que configuraste en el comercio</strong>; podés cambiarla por línea si lo necesitás.",
+      "sub2Item4": "Ingresa el monto del precio",
+      "sub3Title": "<strong>Paso 3 - Iconos y características:</strong>",
+      "sub3Items": [
+        "Selecciona iconos que representen características del producto (Sin Gluten, Vegetariano, Vegano, Picante, etc.)",
+        "Estos iconos aparecerán junto al producto en el menú público"
+      ],
+      "step4": "<strong>Guarda el producto:</strong> Haz clic en \"Guardar\" para crear el producto y agregarlo al menú.",
+      "step5": "<strong>Repite el proceso:</strong> Crea todos los productos que necesites para cada sección de tu menú.",
+      "tip": "<strong>💡 Tip:</strong> Puedes crear productos desde la sección \"Productos\" del menú lateral y luego asignarlos a diferentes menús y secciones."
+    },
+    "reordenarProductos": {
+      "audienceTitle": "Cuándo usar esta guía",
+      "audienceP1": "Después de cargar productos en varias secciones, suele hacer falta <strong>ajustar el orden de lectura</strong> (destacar platos del día, subir postres al final, agrupar visualmente bebidas, etc.). No necesitás borrar ni volver a crear ítems: el orden se guarda al soltar cada arrastre.",
+      "cardTitle": "5️⃣ Cambiar el Orden de los Productos",
+      "p1": "Podés reorganizar el orden en que aparecen los productos dentro de cada sección usando <strong>arrastrar y soltar</strong> (drag and drop). En muchas versiones del panel también podés <strong>cruzar de una sección a otra</strong> arrastrando el ítem hasta el bloque destino.",
+      "step1": "<strong>Edita el menú:</strong> Desde la sección \"Menús\", haz clic en el botón de editar del menú.",
+      "step2": "<strong>Selecciona \"Productos del menú\":</strong> En el modal de edición, elige la opción \"🍽️ Productos del menú\".",
+      "step3Intro": "<strong>Reordena los productos:</strong>",
+      "step3Items": [
+        "Haz clic y mantén presionado sobre el producto que quieres mover (verás el icono ⋮⋮)",
+        "Arrastra el producto a la posición deseada dentro de la misma sección",
+        "Verás una línea azul que indica dónde se insertará el producto",
+        "Suelta el mouse para colocar el producto en la nueva posición"
+      ],
+      "step4": "<strong>El orden se guarda automáticamente:</strong> Una vez que sueltas el producto, el nuevo orden se guarda automáticamente en el sistema.",
+      "p2": "Si trabajás con muchos ítems, conviene publicar el menú y revisar la <strong>vista pública</strong> en el móvil: el orden en pantalla chica a veces se percibe distinto que en el editor.",
+      "warning": "<strong>⚠️ Nota:</strong> También puedes mover productos entre diferentes secciones arrastrándolos de una sección a otra. Si algo no se mueve, recargá la página y comprobá que no haya otro usuario editando el mismo menú a la vez.",
+      "faq": {
+        "0": {
+          "q": "El orden no se guarda o vuelve atrás.",
+          "a": "Esperá a que termine el guardado automático, revisá tu conexión y probá de nuevo. Si el problema continúa, cerrá y volvé a abrir el editor del menú para descartar un estado desactualizado en el navegador."
+        },
+        "1": {
+          "q": "¿Puedo ordenar alfabéticamente de un golpe?",
+          "a": "Si la app no ofrece un botón de orden alfabético, el orden es <strong>manual</strong>. Para listas muy largas podés combinar <link>CSV</link> (orden de filas) con edición fina después."
+        }
+      }
+    },
+    "plantillas": {
+      "audienceTitle": "Qué cubre esta guía",
+      "audienceP1": "Las plantillas definen <strong>colores, tipografías y disposición</strong> de la carta pública. No sustituyen a tus textos ni precios: solo cambian el envoltorio visual. Podés experimentar sin miedo a perder datos de productos.",
+      "cardTitle": "6️⃣ Plantillas de Diseño",
+      "p1": "Cuando <strong>creás un comercio</strong>, seleccionás una <strong>plantilla por defecto</strong> para la carta online. Esa elección solo define el aspecto visual: <strong>podés cambiar de plantilla las veces que necesites sin perder los datos</strong> de tus menús, secciones ni productos (precios, textos, etc. se mantienen).",
+      "p2": "Para <strong>previsualizar</strong> cómo se verá tu carta con otra plantilla y/o <strong>cambiarla</strong>, usá la opción <strong>Menú plantillas</strong> (o equivalente en la app) desde el panel: ahí podés explorar los diseños disponibles antes de aplicar uno.",
+      "p3": "<strong>Cómo se aplica una plantilla al comercio:</strong> una vez elegida la plantilla para ese negocio, el mismo diseño se aplica a la vista pública de <strong>todos los menús</strong> de ese comercio. Si cambiás de plantilla, la carta se actualiza visualmente de inmediato para tus clientes.",
+      "p4": "Muchas plantillas permiten <strong>editar detalles del aspecto</strong> después de aplicarlas: por ejemplo activar o desactivar la visualización del <strong>nombre del negocio</strong>, del <strong>logo</strong>, de la <strong>descripción</strong>, y ajustar <strong>colores primarios y secundarios</strong> u otras opciones según el diseño. Revisá en el configurador de plantillas qué interruptores y colores están disponibles para tu plantilla activa.",
+      "p5": "<strong>Coherencia de marca:</strong> conviene que el logo, los colores de la plantilla y la foto de portada del comercio cuenten la misma historia visual. Si cambiás solo la plantilla pero dejás fotos con otra estética, la carta puede verse desalineada; ajustá portada o colores hasta que el conjunto te cierre.",
+      "p6": "<strong>Rendimiento y lectura:</strong> plantillas con muchas imágenes o fondos muy oscuros pueden afectar contraste o velocidad en redes móviles débiles. Siempre probá el enlace público en un celular con brillo medio y con modo oscuro del sistema si tus clientes lo usan.",
+      "tip": "<strong>💡 Tip:</strong> Si probás varios estilos, publicá el menú y abrís el enlace público del comercio para ver el resultado real que verán los clientes. El QR apunta al mismo espacio público descrito en <link>Descargar código QR</link>.",
+      "faq": {
+        "0": {
+          "q": "Cambié de plantilla y no veo el cambio en la carta.",
+          "a": "Comprobá que el menú esté <link><strong>publicado</strong></link>, que estés mirando el <strong>comercio correcto</strong> y forzá un refresco sin caché en el navegador (Ctrl+F5 o equivalente)."
+        },
+        "1": {
+          "q": "¿Cada menú puede tener una plantilla distinta?",
+          "a": "En AppMenuQR la plantilla suele aplicarse a <strong>nivel comercio</strong>: todos los menús publicados de ese local comparten el mismo diseño. Si necesitás estilos distintos, evaluá crear otro comercio en la cuenta (según límites del plan) o contactá soporte según vuestra política comercial."
+        }
+      }
+    },
+    "publicarMenu": {
+      "audienceTitle": "Publicar vs borrador",
+      "audienceP1": "Un menú en <strong>borrador</strong> no forma parte de la carta que ven los clientes en el enlace público. Solo los menús <strong>publicados</strong> (y asignados al comercio correcto) aparecen junto con el resto de menús activos del local.",
+      "cardTitle": "Publicar el menú",
+      "p1": "Para que un menú forme parte de la experiencia online de tus clientes, tenés que controlar si está <strong>publicado</strong> o en <strong>borrador</strong>.",
+      "checklistHeading": "Checklist rápido antes de publicar",
+      "checklist1": "Revisá precios y monedas en los productos más vendidos.",
+      "checklist2": "Confirmá que las <link>secciones</link> estén en el orden de lectura deseado.",
+      "checklist3": "Ocultá o desactivá productos que no quieras mostrar aún.",
+      "checklist4": "Abrí la vista previa o el enlace público en un móvil real.",
+      "step1": "<strong>Edita el menú que querés publicar o despublicar</strong> desde la sección \"Menús\" (icono o acción de editar sobre la fila del menú).",
+      "step2": "En la <strong>lista de menús</strong>, fijate en la columna <strong>Estado</strong>: ahí verás si cada uno está <strong>publicado</strong> o como <strong>borrador</strong>.",
+      "step3": "En las <strong>acciones</strong> de esa fila encontrarás un botón para <strong>publicar</strong> o <strong>despublicar</strong> el menú (el texto puede variar según el estado actual).",
+      "p2": "<strong>Importante:</strong> aunque un menú esté <strong>despublicado</strong>, el cliente puede seguir entrando al <strong>enlace o QR del comercio</strong>; lo que ocurre es que <strong>no verá ese menú</strong> en la carta hasta que lo vuelvas a <strong>publicar</strong>. El resto de menús que sigan publicados sí se mostrarán con normalidad.",
+      "p3": "Si necesitás <strong>quitar un menú de la carta sin borrarlo</strong>, la despublicación es el camino habitual. Si querés borrar el menú pero conservar productos, leé también <link>Menú: visibilidad y eliminación</link>.",
+      "faq": {
+        "0": {
+          "q": "Publico el menú pero el QR sigue sin mostrarlo.",
+          "a": "Verificá que el menú esté publicado <strong>y</strong> asociado al comercio cuyo QR estás escaneando. Revisá también si el comercio está <link><strong>activo</strong></link> y que no haya otro menú tapando la navegación esperada."
+        },
+        "1": {
+          "q": "¿Puedo programar horarios de publicación automáticos?",
+          "a": "Sí, en planes <strong>Pro</strong> y <strong>Premium</strong> podés <link>programar la visibilidad</link> de cada menú por días, horarios y (opcionalmente) fechas. El menú debe seguir estando <strong>publicado</strong>; la programación controla cuándo se muestra dentro de ese estado. Si tu plan no incluye la función, el flujo es <strong>manual</strong>: publicá o despublicá cuando corresponda."
+        }
+      }
+    },
+    "programarMenu": {
+      "audienceTitle": "Disponibilidad según plan",
+      "audienceP1": "La programación de menús está disponible en planes <strong>Pro</strong> y <strong>Premium</strong>. Si tu plan es Free u otro que no la incluya, verás un aviso al entrar a la pantalla y podrás revisar opciones en <link>Suscripciones y pagos</link>. La programación <strong>no reemplaza</strong> publicar el menú: un menú en borrador no aparece en la carta aunque tenga horarios configurados.",
+      "cardTitle": "Programar visibilidad del menú",
+      "p1": "Con esta función podés definir <strong>qué días</strong> y, si querés, <strong>en qué horario</strong> se muestra cada menú en la carta pública del comercio. Es útil para cartas de mediodía vs. noche, menús de fin de semana o promociones que solo aplican ciertos días.",
+      "checklistHeading": "Checklist antes de programar",
+      "checklist1": "Confirmá que el menú esté <link><strong>publicado</strong></link>.",
+      "checklist2": "Verificá el <strong>huso horario</strong> del comercio (la programación usa esa zona horaria).",
+      "checklist3": "Si tenés varios menús, programá cada uno por separado según corresponda.",
+      "step1": "Entrá a la sección <strong>Menús</strong> del panel y pulsá <scheduleLink><strong>Programar menú</strong></scheduleLink>.",
+      "step2": "Elegí el <strong>comercio</strong> al que quieras aplicar la programación.",
+      "step3": "Revisá o ajustá el <strong>huso horario del comercio</strong>: los días y horarios se evalúan según esa zona.",
+      "step4": "Para cada menú de la lista, activá el interruptor <strong>Programar visibilidad</strong>.",
+      "step5": "Marcá los <strong>días visibles</strong> (lunes a domingo). Si no marcás ninguno, el menú no se mostrará mientras la programación esté activa.",
+      "step6": "<strong>Horario (opcional):</strong> podés indicar <em>Desde</em> y <em>Hasta</em>. Si los dejás vacíos, el menú se ve todo el día en los días elegidos.",
+      "step7": "<strong>Limitar por fechas (opcional):</strong> activá esta opción si la programación debe aplicar solo entre un día de inicio y, si lo indicás, un día de finalización. Si no la activás, la regla se repite cada semana según los días marcados.",
+      "step8": "Pulsá <strong>Guardar programación</strong> para aplicar los cambios a todos los menús del comercio que hayas configurado.",
+      "p2": "Si un menú tiene la programación <strong>desactivada</strong>, se comporta como siempre: estando publicado, se muestra en la carta sin restricción de día u hora (salvo vigencia u otras reglas del sistema). Si la programación está <strong>activa</strong>, fuera de horario el menú no aparece en la página del comercio, pero <strong>sigue accesible por su URL directa</strong>. Para quitarla: desactivá «Programar visibilidad» (o «Quitar programación») y pulsá <strong>Guardar programación</strong>.",
+      "example": "<strong>Ejemplo:</strong> menú \"Almuerzo\" publicado, programación activa, días lun–vie, horario 12:00–16:00. Fuera de ese rango —aunque siga publicado— no aparecerá en la carta online hasta que entre la ventana configurada.",
+      "faq": {
+        "0": {
+          "q": "¿La programación publica o despublica el menú automáticamente?",
+          "a": "No. Solo controla <strong>cuándo se muestra</strong> un menú que ya está <strong>publicado</strong>. Para ocultarlo por completo, usá <strong>despublicar</strong> (ver <link>Publicar el menú</link>)."
+        },
+        "1": {
+          "q": "Programé el menú pero no aparece en el horario esperado.",
+          "a": "Revisá el <strong>huso horario</strong> del comercio, que el menú esté <strong>publicado</strong> y que hayas marcado el día correcto. Guardá de nuevo si hiciste cambios sin pulsar <strong>Guardar programación</strong>."
+        },
+        "2": {
+          "q": "¿Puedo usar la programación con plan Free?",
+          "a": "No. Necesitás plan <strong>Pro</strong> o <strong>Premium</strong>. Consultá <link>Suscripciones y pagos</link> para actualizar tu plan."
+        }
+      }
+    },
+    "imprimirCarta": {
+      "audienceTitle": "¿Para qué sirve?",
+      "audienceP1": "La impresión en papel genera una <strong>vista previa lista para imprimir</strong> de tu carta, independiente de la plantilla online del comercio. Podés elegir diseño de impresión, qué menús incluir y cómo se reparten las secciones en las páginas. No modifica la carta digital ni el QR.",
+      "cardTitle": "Imprimir la carta en papel",
+      "p1": "Desde el panel podés preparar una versión en papel de uno o varios menús de un comercio, con opciones de diseño y contenido antes de enviar a la impresora o guardar como PDF desde el navegador.",
+      "checklistHeading": "Checklist antes de imprimir",
+      "checklist1": "Revisá precios y nombres en los menús que vas a incluir.",
+      "checklist2": "Comprobá que el comercio tenga logo o portada si querés mostrarlos.",
+      "checklist3": "Si usás traducciones, elegí el idioma correcto en las opciones.",
+      "step1": "Entrá a <strong>Comercios</strong> en el panel y, sobre el local deseado, pulsá <strong>Imprimir carta</strong>.",
+      "step2": "Se abrirá la pantalla de impresión con una <strong>vista previa</strong> a la izquierda y las <strong>Opciones de impresión</strong> a la derecha.",
+      "step3Intro": "Elegí la <strong>plantilla de impresión</strong>:",
+      "step3Items": [
+        "<strong>Clásica</strong> — diseño limpio, precios a la derecha.",
+        "<strong>Elegante</strong> — tipografía serif y encabezado centrado.",
+        "<strong>Moderna</strong> — estilo minimalista con franja de color.",
+        "<strong>Bistro</strong> — fondo cálido, precio debajo del nombre."
+      ],
+      "step4": "En <strong>Datos del comercio</strong>, marcá o desmarcá qué mostrar: logo, portada, nombre y descripción (las opciones sin imagen o texto quedan deshabilitadas).",
+      "step5Intro": "En <strong>Secciones</strong>, elegí el layout:",
+      "step5Items": [
+        "<strong>Una debajo de la otra</strong> — todas las secciones en flujo continuo.",
+        "<strong>Una sección por página</strong> — cada sección comienza en una página nueva (útil para menús largos)."
+      ],
+      "step6": "Si tu comercio tiene <strong>varios idiomas</strong> activos, elegí el idioma de la carta en el selector correspondiente.",
+      "step7": "En <strong>Menús a imprimir</strong>, marcá los menús que quieras incluir. Podés usar <strong>Todos</strong> o <strong>Ninguno</strong> como atajo. La vista previa se actualiza al cambiar la selección.",
+      "step8": "Cuando la vista previa te convenga, pulsá <strong>Imprimir</strong>. Se abrirá el diálogo de impresión del navegador; ahí podés elegir impresora o <strong>Guardar como PDF</strong>.",
+      "p2": "Al pie de la carta impresa se incluyen los datos de contacto del comercio (dirección, teléfono, WhatsApp, email y web) según lo que tengas cargado en la ficha del local.",
+      "tip": "<strong>Consejo:</strong> en el diálogo de impresión del navegador, desactivá encabezados y pies de página propios del navegador si no los querés, y revisá márgenes y orientación (vertical suele funcionar mejor). Probá una hoja de prueba antes de una tirada grande.",
+      "faq": {
+        "0": {
+          "q": "¿Necesito publicar el menú para imprimirlo?",
+          "a": "No es obligatorio. La pantalla intenta cargar el contenido publicado; si un menú aún está en borrador, puede usar los datos del panel como respaldo. Igual conviene tener el contenido revisado antes de imprimir."
+        },
+        "1": {
+          "q": "¿La plantilla de impresión cambia la carta online?",
+          "a": "No. La plantilla de impresión solo afecta el papel/PDF. La carta digital sigue usando la <link>plantilla del comercio</link> configurada en el panel."
+        },
+        "2": {
+          "q": "Imprimí y se cortan secciones o queda mucho espacio en blanco.",
+          "a": "Probá la opción <strong>Una sección por página</strong> o la contraria según el largo de tu menú, y ajustá escala o márgenes en el diálogo de impresión del navegador (por ejemplo \"Ajustar al ancho\")."
+        }
+      }
+    },
+    "descargarQr": {
+      "cardTitle": "7️⃣ Código QR del comercio",
+      "p1": "Una vez que hayas creado y publicado al menos un menú, el sistema <strong>genera automáticamente un código QR del comercio</strong> que podés <strong>descargar o imprimir</strong> para que los clientes lo escaneen con el móvil y abran la carta. <strong>Te recomendamos probar siempre el QR antes y después de imprimirlo</strong> (tamaño, contraste y que apunte al local correcto).",
+      "p2": "El QR es del <strong>comercio</strong> (del negocio), no de un solo menú aislado: quien escanea accede al espacio público del local y verá <strong>todos los menús que tengas publicados</strong> para ese comercio.",
+      "warning": "<strong>⚠️ Muy importante — nombre del comercio y QR:</strong> el código QR y el enlace público están ligados a la identidad actual del negocio en el sistema. Si <strong>cambiás el nombre del comercio</strong> (u otros datos que formen parte de la URL o del perfil público), <strong>el QR y los enlaces impresos o guardados antes pueden dejar de coincidir</strong> con lo que ves ahora en pantalla: en la práctica es como si hubieras \"cambiado de cartel\": quien tenga el material antiguo podría llegar a una página distinta o a un error. Por eso, cada vez que modifiqués el nombre u otra clave del enlace, <strong>vuelve a descargar o reimprimí el QR desde el panel</strong> y reemplazá los códigos viejos en mesas, vidriera y redes.",
+      "dashboardHeading": "Ver y descargar desde el panel (dashboard)",
+      "dashboardStep1": "Iniciá sesión y abrí el <strong>panel de administración</strong> (dashboard).",
+      "dashboardStep2": "Desde ahí, entrá al flujo donde se muestra el <strong>código QR del comercio</strong> (suele estar junto al resumen del negocio, enlace público o accesos rápidos; el menú lateral puede tener una entrada tipo \"QR\", \"Compartir\" o similar según tu versión).",
+      "dashboardStep3": "En esa pantalla podés <strong>ver el QR en grande</strong>, copiar el <strong>enlace público</strong> y usar el botón de <strong>descarga</strong> para guardar la imagen antes de imprimir.",
+      "dashboardStep4": "Verificá el resultado escaneando el archivo descargado con tu teléfono; si algo no coincide (nombre del local o menús visibles), revisá primero que los menús estén <strong>publicados</strong> y que el nombre del comercio sea el definitivo.",
+      "downloadHeading": "Descarga el QR",
+      "downloadItems": [
+        "Haz clic en el botón \"Descargar QR\" o \"Descargar\"",
+        "El código QR se descargará como una imagen (PNG o JPG)",
+        "Puedes imprimir este código QR y colocarlo en las mesas de tu comercio"
+      ],
+      "success": "<strong>✅ Ventajas del QR:</strong> Los clientes pueden acceder al menú sin necesidad de descargar una app, y siempre verán la versión más actualizada de tus menús publicados."
+    },
+    "desactivarRestaurante": {
+      "audienceTitle": "Desactivar ≠ eliminar",
+      "audienceP1": "<strong>Desactivar</strong> pausa la carta pública y el QR sin borrar datos. <strong>Eliminar</strong> el comercio es irreversible. Si solo cerrás temporalmente o estás de vacaciones, usá desactivar.",
+      "cardTitle": "Desactivar el comercio",
+      "p1": "Podés <strong>desactivar</strong> un comercio cuando quieras pausar temporalmente la carta digital (vacaciones, local cerrado, cambio de marca en preparación, reformas, etc.).",
+      "whatHappensHeading": "Qué pasa al desactivar",
+      "whatHappens1": "La <strong>página pública</strong> del local deja de mostrarse como disponible (mensaje o pantalla de no disponible según la versión).",
+      "whatHappens2": "El <strong>código QR</strong> que apuntaba a ese espacio deja de mostrar la carta habitual hasta la reactivación.",
+      "whatHappens3": "En el panel seguís viendo el comercio, menús y productos para cuando vuelvas a activarlo.",
+      "howToHeading": "Cómo hacerlo (flujo general)",
+      "howTo1": "Iniciá sesión e ingresá a <strong>Comercios</strong> (o la sección equivalente donde listás tus locales).",
+      "howTo2": "Seleccioná el comercio y buscá el interruptor o acción de <strong>activo / inactivo</strong>, <strong>habilitado</strong> o similar según el texto de tu versión.",
+      "howTo3": "Guardá o confirmá si el sistema pide confirmación.",
+      "howTo4": "Probá el enlace público o el QR en el móvil para verificar que la pausa se aplicó.",
+      "p2": "Para volver a mostrar todo, <strong>reactivalo</strong> desde la misma gestión de comercios. No hace falta volver a cargar menús salvo que los hayas modificado mientras estaba pausado.",
+      "note": "<strong>Nota:</strong> Desactivar <strong>no borra datos</strong>; solo oculta la experiencia pública hasta que reactives. Si necesitás borrar definitivamente el negocio, leé <link>Eliminar el comercio</link> con mucho cuidado.",
+      "faq": {
+        "0": {
+          "q": "¿Los clientes ven un error o un mensaje amigable?",
+          "a": "Depende de la versión desplegada de AppMenuQR; lo importante es que <strong>no verán la carta operativa</strong> hasta que reactives. Si necesitás un mensaje personalizado, consultá con soporte si hay opción de texto de cierre."
+        },
+        "1": {
+          "q": "¿La suscripción sigue corriendo si el local está desactivado?",
+          "a": "La facturación del plan depende de los <link>términos de suscripción</link> vigentes: desactivar el comercio no siempre cancela el cobro automáticamente. Revisá tu panel de facturación o contactá soporte si querés pausar también el plan."
+        }
+      }
+    },
+    "eliminarRestaurante": {
+      "audienceTitle": "Antes de eliminar",
+      "audienceItem1": "Exportá o anotá lo que necesites conservar (si tu plan incluye exportación o copias manuales).",
+      "audienceItem2": "Avisá al resto del equipo para que nadie siga editando ese local.",
+      "audienceItem3": "Si solo querés ocultar la carta, preferí <link><strong>desactivar</strong></link>.",
+      "cardTitle": "Eliminar el comercio",
+      "p1": "<strong>Eliminar un comercio es una acción definitiva.</strong> Se borran los datos asociados a ese negocio en AppMenuQR (menús, configuración, vínculos internos según la lógica del sistema y lo que indique la pantalla de confirmación).",
+      "flowHeading": "Flujo típico en el panel",
+      "flow1": "Entrá a <strong>Comercios</strong> y ubicá el local a borrar.",
+      "flow2": "Abrí las <strong>acciones avanzadas</strong> o el menú contextual del comercio (según diseño de la app).",
+      "flow3": "Elegí <strong>Eliminar</strong> o equivalente y leé el texto de advertencia completo.",
+      "flow4": "Confirmá escribiendo el nombre o el texto que pida el sistema para evitar borrados accidentales.",
+      "p2": "No podrás recuperar la información después de confirmar: hacé copias o exportaciones previas si tu plan las permite y necesitás conservar histórico. Los enlaces públicos y QR dejarán de resolver al contenido anterior.",
+      "danger": "<strong>Zona de riesgo:</strong> solo eliminá si estás seguro. Si solo querés ocultar la carta un tiempo, preferí <strong>desactivar</strong> el comercio en lugar de borrarlo.",
+      "faq": {
+        "0": {
+          "q": "¿Se borran también los menús y productos?",
+          "a": "Sí: al eliminar el <strong>comercio</strong> se elimina el contexto del negocio y lo que cuelgue de él según la confirmación en pantalla. No confundas con <link>eliminar solo un menú</link>, que puede dejar productos huérfanos en la cuenta."
+        }
+      }
+    },
+    "menuVisibilidadEliminacion": {
+      "audienceTitle": "Conceptos clave",
+      "audienceP1": "<strong>Despublicar</strong> un menú lo saca de la carta online sin borrarlo del panel. <strong>Eliminar</strong> un menú lo quita del sistema; los productos pueden quedar en tu cuenta sin menú asignado hasta que los reorganices.",
+      "cardTitle": "Menús: visibilidad y eliminación",
+      "publishedHeading": "Menús publicados y despublicados",
+      "publishedP1": "Los clientes pueden seguir entrando a la <strong>página pública del comercio</strong> (enlace o QR) aunque algunos menús estén en <strong>borrador</strong> o <strong>despublicados</strong>. En ese caso verán únicamente los menús que estén <strong>publicados</strong> y <strong>asignados a ese comercio</strong>; el resto no aparecerá en la carta hasta que los publiques de nuevo.",
+      "publishedP2": "Para cambiar el estado de un menú (publicar / despublicar), seguí los pasos de <link>Publicar el menú</link>.",
+      "deleteHeading": "Eliminar un menú",
+      "deleteP1": "Si <strong>eliminás un menú</strong>, el propio menú se borra de la aplicación, pero <strong>los productos no se eliminan automáticamente</strong>: quedan en tu cuenta <strong>sin ese menú asignado</strong> (productos \"sueltos\" o huérfanos).",
+      "deleteP2": "Después tendrás que <strong>asignarlos manualmente</strong> a otro menú o gestionarlos desde el listado de productos, según cómo esté organizado tu flujo en el panel. Si tenés muchos ítems sueltos, usá <link>edición masiva</link> para moverlos o borrar duplicados con cuidado.",
+      "deleteP3": "<strong>Buena práctica:</strong> antes de eliminar, despublicá y esperá un día de operación para confirmar que ningún cliente dependía de ese menú (por ejemplo menú de desayuno vs menú principal).",
+      "faq": {
+        "0": {
+          "q": "Eliminé un menú y ahora veo productos “sin menú”.",
+          "a": "Es el comportamiento esperado: los productos siguen en la cuenta. Asignalos a otro menú desde la edición de productos o con acciones masivas. Si no los necesitás, podés borrarlos desde el listado para liberar cupo del plan."
+        },
+        "1": {
+          "q": "¿Puedo recuperar un menú borrado?",
+          "a": "Por lo general <strong>no</strong>: la eliminación es definitiva salvo que el sistema muestre papelera (poco habitual). Por eso conviene despublicar primero y exportar o duplicar contenido si tu flujo lo permite."
+        }
+      }
+    },
+    "traducciones": {
+      "audienceTitle": "Disponibilidad según plan",
+      "audienceP1": "Las traducciones y la cantidad de idiomas activos dependen de tu <link>plan de suscripción</link>. Si no ves la sección de idiomas, es probable que tu plan actual no la incluya o que haya que activarla desde configuración.",
+      "cardTitle": "Traducciones",
+      "p1": "AppMenuQR puede incluir herramientas para <strong>traducir o revisar textos</strong> del menú (nombres, descripciones, secciones, etc.) según los <strong>idiomas</strong> que soporte tu plan.",
+      "p2": "<strong>Consejos de calidad:</strong> mantené la misma longitud aproximada entre idiomas para que el diseño no se rompa en móvil; revisá nombres de platos propios (no siempre se traducen literalmente); y actualizá todas las lenguas cuando cambies precios o alérgenos.",
+      "p3": "<strong>Pasos generales:</strong>",
+      "step1": "Entrá al <strong>área de traducciones</strong> o equivalente en el panel (por ejemplo desde el menú lateral o desde la configuración del menú / comercio).",
+      "step2": "Elegí el <strong>idioma de origen</strong> y el <strong>idioma destino</strong> que quieras completar o revisar.",
+      "step3": "Editá los textos indicados por la interfaz y <strong>guardá</strong> los cambios; en muchos casos podrás ver qué falta por traducir o qué quedó pendiente de revisión.",
+      "step4": "Publicá el menú cuando los textos estén listos para que la carta pública refleje el idioma correcto según la lógica de tu sitio (selector de idioma, detección, etc., según versión).",
+      "warning": "<strong>Disponibilidad y límites:</strong> las traducciones y la cantidad de idiomas activos <strong>dependen del plan de suscripción</strong>. Si tu plan no incluye esta función, la opción puede no aparecer o mostrarse bloqueada. Consultá los límites en la sección de <strong>suscripción / plan</strong> o en el mensaje que muestre la propia pantalla de traducciones.",
+      "faq": {
+        "0": {
+          "q": "Traduje pero en la carta sigue el idioma anterior.",
+          "a": "Verificá que guardaste cada bloque, que el menú esté <link><strong>publicado</strong></link> y que el visitante esté usando el selector de idioma correcto (si existe). Limpiá caché del navegador en una ventana privada para descartar vista vieja."
+        },
+        "1": {
+          "q": "¿Puedo importar traducciones masivas?",
+          "a": "Si la app no ofrece import específico de i18n, muchos equipos preparan textos en hoja de cálculo y los copian campo a campo, o usan <link>CSV</link> solo para el idioma principal y luego completan traducciones en el panel."
+        }
+      }
+    },
+    "edicionMasivaProductos": {
+      "audienceTitle": "Cuándo usar acciones masivas",
+      "audienceP1": "Son útiles al <strong>cambiar de temporada</strong>, al <strong>fusionar menús</strong>, al corregir categorías equivocadas o al limpiar duplicados después de una importación. Siempre revisá el <strong>límite de productos</strong> de tu plan antes de duplicar o mover lotes grandes.",
+      "cardTitle": "Edición masiva de productos",
+      "p1": "Desde el listado o las acciones masivas del panel podés aplicar cambios a <strong>varios productos a la vez</strong> (según las opciones que ofrezca tu versión de AppMenuQR).",
+      "commonActionsHeading": "Acciones habituales",
+      "commonAction1": "<strong>Borrar productos seleccionados</strong> para quitarlos de la carta (confirmá siempre antes de eliminar).",
+      "commonAction2": "<strong>Trasladarlos a otro menú</strong> del <strong>mismo comercio</strong> o, si tu cuenta lo permite, a un <strong>otro comercio que también te pertenezca</strong>.",
+      "commonAction3": "<strong>Duplicar o copiar</strong> (si está disponible) para armar variantes de carta: ojo con el cupo total de productos.",
+      "recommendedFlowHeading": "Flujo recomendado",
+      "recommendedFlow1": "Filtrá o buscá los ítems en el listado hasta tener solo los que querés tocar.",
+      "recommendedFlow2": "Marcá las casillas de selección y elegí la acción masiva en la barra superior o menú contextual.",
+      "recommendedFlow3": "Leé el resumen de la operación (cuántos ítems, menú destino, irreversibilidad).",
+      "recommendedFlow4": "Confirmá y esperá el mensaje de éxito; refrescá el listado si hace falta.",
+      "p2": "<strong>Duplicados y cantidad del plan:</strong> muchas operaciones (como mover o copiar entre menús) pueden <strong>duplicar</strong> productos si no tenés claro qué hace cada acción. El sistema cuenta los productos frente al <strong>límite de tu plan</strong>; podrías superar el cupo sin querer.",
+      "p3": "<strong>Buena práctica:</strong> después de mover o clonar, revisá el total de productos activos; si necesitás liberar cupo, podés <strong>borrar duplicados</strong> o combinar ítems en un solo producto antes de seguir cargando nuevos platos. Para ajustes finos de un ítem, usá <link>Editar un producto</link>.",
+      "faq": {
+        "0": {
+          "q": "Moví productos y ahora aparecen dos veces en la carta.",
+          "a": "Probablemente quedaron copias en el menú origen y en el destino. Volvé al listado, identificá duplicados por nombre y borrá o fusioná manualmente. En el futuro mové en lugar de duplicar si la interfaz lo distingue."
+        },
+        "1": {
+          "q": "La acción masiva falla a mitad de proceso.",
+          "a": "Revisá conexión a internet, tamaño del lote y límites del plan. Si el error persiste, probá con menos productos seleccionados y anotá el mensaje exacto para soporte."
+        }
+      }
+    },
+    "editarProductosDetalle": {
+      "audienceTitle": "Alcance de la edición",
+      "audienceP1": "Desde la ficha de un producto podés cambiar textos, precios, visibilidad e imagen (si el plan lo permite). Los cambios impactan en <strong>todos los menús</strong> donde ese producto esté asociado, salvo que la app muestre una variante por menú.",
+      "cardTitle": "Editar un producto",
+      "p1": "Abrí el producto desde el menú correspondiente (por ejemplo <strong>Productos del menú</strong> o el listado general de productos) y usá la pantalla de edición.",
+      "fieldsHeading": "Campos que suelen editarse",
+      "field1": "<strong>Activar / desactivar:</strong> podés ocultar un producto en la carta sin borrarlo, según los interruptores o el estado que muestre el formulario.",
+      "field2": "<strong>Nombre y descripción:</strong> modificá los textos en cualquier momento; se reflejan en la vista pública al guardar.",
+      "field3": "<strong>Precios:</strong> cambiá importes existentes o agregá <strong>nuevas opciones de precio</strong> (por ejemplo tamaños o variantes) con su moneda y etiqueta cuando el formulario lo permita.",
+      "field4": "<strong>Foto del producto:</strong> si tu <strong>plan de suscripción</strong> incluye imágenes en carta, podrás subir o cambiar la foto desde la misma edición; si no está incluido, la opción puede no mostrarse o estar limitada.",
+      "field5": "<strong>Iconos y alérgenos:</strong> actualizalos cuando cambie la receta o el proveedor; ayuda a cumplir expectativas legales y de accesibilidad en la carta.",
+      "p2": "Si necesitás aplicar el mismo cambio a muchos platos (por ejemplo subir un 5 % todos los principales), evaluá si tu flujo permite <link1>edición masiva</link1> o una nueva <link2>importación CSV</link2> controlada.",
+      "tip": "Guardá siempre los cambios antes de salir de la pantalla para que los clientes vean la información actualizada.",
+      "faq": {
+        "0": {
+          "q": "Cambié el precio y en la carta sigue el valor viejo.",
+          "a": "Confirmá que pulsaste <strong>Guardar</strong>, que el producto siga <strong>activo</strong> y que el menú esté <link><strong>publicado</strong></link>. Probá en una ventana de incógnito para descartar caché del navegador."
+        },
+        "1": {
+          "q": "No me deja subir foto.",
+          "a": "Revisá límites de tamaño/formato y si tu <link>plan</link> incluye fotos en producto. Si el error es genérico, probá otra imagen más liviana (JPEG comprimido)."
+        }
+      }
+    },
+    "suscripcionesPagos": {
+      "audienceTitle": "Gestión de la cuenta",
+      "audienceP1": "El plan define límites (menús, productos, funciones extra). Los cobros y comprobantes dependen de la pasarela activa en tu región. Si cambiás de plan, revisá qué pasa con datos que excedan el nuevo cupo.",
+      "cardTitle": "Suscripciones y pagos",
+      "p1": "La suscripción a AppMenuQR se gestiona desde tu cuenta y te da acceso al plan contratado (límites de menús, productos, funciones extra, traducciones, etc.).",
+      "paymentMethodsHeading": "Medios de pago habituales",
+      "paymentMethod1": "<strong>Argentina:</strong> los cobros habituales se procesan con <strong>Mercado Pago</strong> (u otro medio que indique la pantalla de checkout en tu región).",
+      "paymentMethod2": "<strong>Resto del mundo:</strong> suele utilizarse <strong>PayPal</strong> u otros métodos que se te muestren al contratar o renovar.",
+      "planChangesHeading": "Cambios de plan y renovación",
+      "p2": "Al <strong>subir de plan</strong> suelen habilitarse de inmediato más menús, productos o módulos (traducciones, imágenes, etc.). Al <strong>bajar de plan</strong>, el panel puede pedirte que ajustes contenido que supere el nuevo límite antes de confirmar el cambio.",
+      "p3": "Podés <strong>darte de baja o cancelar la renovación</strong> cuando quieras desde la configuración de suscripción o facturación que ofrezca el panel (el proceso exacto puede variar según la integración activa). Guardá comprobantes de pago y el correo de confirmación por si necesitás reclamo o reembolso según políticas del procesador.",
+      "smallPrint": "Los textos exactos de botones y la moneda mostrada dependen de tu país y de la pasarela disponible en el momento del pago.",
+      "faq": {
+        "0": {
+          "q": "Me cobraron dos veces o no reconozco el cargo.",
+          "a": "Revisá en Mercado Pago / PayPal el detalle del comercio y el concepto. Si sigue sin cuadrar, abrí un reclamo en la pasarela y contactá a soporte de AppMenuQR con capturas y fecha del cobro."
+        },
+        "1": {
+          "q": "Bajé de plan y desaparecieron opciones del menú.",
+          "a": "Es normal: algunas funciones quedan bloqueadas hasta que vuelvas a subir de plan o ajustes tu contenido a los límites nuevos. Revisá guías de <link1>traducciones</link1> e <link2>edición masiva</link2> para alinear la carta al plan actual."
+        }
+      }
+    },
+    "catalogoPlantillas": {
+      "audienceTitle": "Qué vas a encontrar",
+      "audienceP1": "Resumen de las <strong>plantillas de carta digital</strong> disponibles. Cada una tiene una página con sus características; usá el enlace para ver el detalle, ejemplos y para qué tipo de negocio encaja mejor.",
+      "cardTitle": "Plantillas disponibles",
+      "viewFeatures": "Ver características"
+    }
   }
 }
-

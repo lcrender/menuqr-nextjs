@@ -62,6 +62,13 @@ model User {
   revokedSessionsBefore  DateTime? @map("revoked_sessions_before")
   registrationCountry     String?   @map("registration_country") // detectado por IP al registrarse
   declaredCountry        String?   @map("declared_country")
+  /// Momento en que aceptó Términos y Política de Privacidad (obligatorio en registro).
+  acceptedTermsAt        DateTime? @map("accepted_terms_at")
+  /// Quiere recibir novedades / tips de producto (opt-in en registro).
+  marketingOptIn         Boolean   @default(false) @map("marketing_opt_in")
+  marketingOptInAt       DateTime? @map("marketing_opt_in_at")
+  /// Idioma preferido del panel y contenido nuevo: es | en
+  preferredLanguage      String    @default("es") @map("preferred_language")
   createdAt               DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
   deletedAt             DateTime? @map("deleted_at")
@@ -80,6 +87,7 @@ model User {
 
   // Índices y constraints
   @@unique([tenantId, email])
+  @@index([marketingOptIn])
   @@map("users")
 }
 
@@ -256,6 +264,8 @@ model Menu {
   sort       Int         @default(0) // Orden de visualización
   /// Metadatos de idiomas extra (label, bandera) para el panel Traducciones; ver API menu-translations
   translationManifest Json?     @map("translation_manifest")
+  /// Idioma base del menú (BCP-47). El contenido canónico se considera en este locale.
+  sourceLocale String      @default("es-ES") @map("source_locale")
   /// Si true, ya se ejecutó traducción automática al menos una vez (salvo “forzar retraducción”).
   autoTranslated Boolean   @default(false) @map("auto_translated")
   /// Locales (BCP-47) que ya se tradujeron automáticamente para este menú.
@@ -274,6 +284,7 @@ model Menu {
 
   // Índices y constraints
   // El constraint único se maneja a nivel de base de datos con índices parciales
+  @@index([sourceLocale])
   @@map("menus")
 }
 

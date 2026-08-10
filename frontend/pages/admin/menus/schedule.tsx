@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { Trans, useTranslation } from 'react-i18next';
 import AdminLayout from '../../../components/AdminLayout';
 import AlertModal from '../../../components/AlertModal';
 import api from '../../../lib/axios';
+import i18n from '../../../src/i18n/config';
+import adminMenusEs from '../../../src/locales/fragments/adminMenus.es.json';
+import adminMenusEn from '../../../src/locales/fragments/adminMenus.en.json';
 import {
   MENU_SCHEDULE_DAYS,
   emptyMenuSchedule,
@@ -12,6 +16,9 @@ import {
   type MenuScheduleConfig,
 } from '../../../lib/menu-schedule';
 import { SOL_NOCHE_TIMEZONE_OPTIONS } from '../../../lib/sol-noche-template';
+
+i18n.addResourceBundle('es-ES', 'translation', { adminMenus: adminMenusEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { adminMenus: adminMenusEn }, true, true);
 
 type RestaurantOption = {
   id: string;
@@ -42,6 +49,7 @@ function normalizeMenusPayload(raw: unknown): MenuRow[] {
 }
 
 export default function ProgramarMenusPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -182,8 +190,8 @@ export default function ProgramarMenusPage() {
         if (!draft) continue;
         if (draft.scheduleEnabled && draft.schedule.days.length === 0) {
           setAlert({
-            title: 'Faltan días',
-            message: `Seleccioná al menos un día para el menú «${menu.name}».`,
+            title: t('adminMenus.schedule.alerts.missingDaysTitle'),
+            message: t('adminMenus.schedule.alerts.missingDaysMessage', { name: menu.name }),
             variant: 'warning',
           });
           setSaving(false);
@@ -192,8 +200,8 @@ export default function ProgramarMenusPage() {
         if (draft.scheduleEnabled && draft.schedule.dateRangeEnabled) {
           if (!draft.schedule.startDate) {
             setAlert({
-              title: 'Falta fecha de inicio',
-              message: `Indicá el día de inicio para el menú «${menu.name}».`,
+              title: t('adminMenus.schedule.alerts.missingStartTitle'),
+              message: t('adminMenus.schedule.alerts.missingStartMessage', { name: menu.name }),
               variant: 'warning',
             });
             setSaving(false);
@@ -205,8 +213,8 @@ export default function ProgramarMenusPage() {
             draft.schedule.endDate < draft.schedule.startDate
           ) {
             setAlert({
-              title: 'Rango inválido',
-              message: `En «${menu.name}», la fecha de finalización no puede ser anterior a la de inicio.`,
+              title: t('adminMenus.schedule.alerts.invalidRangeTitle'),
+              message: t('adminMenus.schedule.alerts.invalidRangeMessage', { name: menu.name }),
               variant: 'warning',
             });
             setSaving(false);
@@ -240,15 +248,15 @@ export default function ProgramarMenusPage() {
       }
 
       setAlert({
-        title: 'Guardado',
-        message: 'La programación de menús se guardó correctamente.',
+        title: t('adminMenus.schedule.alerts.savedTitle'),
+        message: t('adminMenus.schedule.alerts.savedMessage'),
         variant: 'success',
       });
       await loadMenusForRestaurant(restaurantId);
     } catch (err: any) {
       setAlert({
-        title: 'Error',
-        message: err?.userMessage || err?.response?.data?.message || 'No se pudo guardar la programación.',
+        title: t('adminMenus.schedule.alerts.errorTitle'),
+        message: err?.userMessage || err?.response?.data?.message || t('adminMenus.schedule.alerts.errorMessage'),
         variant: 'error',
       });
     } finally {
@@ -261,7 +269,7 @@ export default function ProgramarMenusPage() {
       <AdminLayout>
         <div className="text-center py-5">
           <div className="spinner-border" role="status">
-            <span className="visually-hidden">Cargando...</span>
+            <span className="visually-hidden">{t('adminMenus.schedule.loading')}</span>
           </div>
         </div>
       </AdminLayout>
@@ -273,19 +281,21 @@ export default function ProgramarMenusPage() {
       <AdminLayout>
         <div className="admin-main py-4">
           <Link href="/admin/menus" className="btn btn-sm btn-outline-secondary mb-3">
-            ← Volver a Menús
+            {t('adminMenus.schedule.backToMenus')}
           </Link>
-          <h1 className="admin-title">Programar menú</h1>
+          <h1 className="admin-title">{t('adminMenus.schedule.title')}</h1>
           <p className="lead text-muted">
-            Definí qué días y horarios se muestra cada menú en la carta pública, según el huso horario del
-            restaurante.
+            {t('adminMenus.schedule.lockedLead')}
           </p>
           <div className="admin-card p-4">
             <p className="mb-3">
-              Esta función está disponible en planes <strong>Pro</strong> o <strong>Premium</strong>.
+              <Trans
+                i18nKey="adminMenus.schedule.lockedMessage"
+                components={{ strong: <strong /> }}
+              />
             </p>
             <Link href="/admin/profile/subscription" className="admin-btn">
-              Ver planes / suscripción
+              {t('adminMenus.schedule.viewPlans')}
             </Link>
           </div>
         </div>
@@ -299,13 +309,11 @@ export default function ProgramarMenusPage() {
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
           <div>
             <Link href="/admin/menus" className="btn btn-sm btn-outline-secondary mb-2">
-              ← Volver a Menús
+              {t('adminMenus.schedule.backToMenus')}
             </Link>
-            <h1 className="admin-title mb-0">Programar menú</h1>
+            <h1 className="admin-title mb-0">{t('adminMenus.schedule.title')}</h1>
             <p className="text-muted mb-0 mt-1">
-              Definí cuándo aparece cada menú en la página del restaurante. La URL directa del menú
-              sigue disponible si está publicado. Para dejarlo siempre visible: desactivá «Programar
-              visibilidad» y guardá.
+              {t('adminMenus.schedule.intro')}
             </p>
           </div>
           <button
@@ -314,15 +322,15 @@ export default function ProgramarMenusPage() {
             disabled={saving || !restaurantId || menus.length === 0}
             onClick={handleSave}
           >
-            {saving ? 'Guardando…' : 'Guardar programación'}
+            {saving ? t('adminMenus.schedule.saving') : t('adminMenus.schedule.save')}
           </button>
         </div>
 
         {restaurants.length === 0 ? (
           <div className="admin-card p-4 text-center">
-            <p className="mb-3">Necesitás al menos un restaurante para programar menús.</p>
-            <Link href="/admin/restaurants?wizard=true" className="admin-btn">
-              Crear restaurante
+            <p className="mb-3">{t('adminMenus.schedule.needBusiness')}</p>
+            <Link href="/admin/comercios?wizard=true" className="admin-btn">
+              {t('adminMenus.schedule.createBusiness')}
             </Link>
           </div>
         ) : (
@@ -331,7 +339,7 @@ export default function ProgramarMenusPage() {
               <div className="row g-3">
                 <div className="col-md-6">
                   <label className="form-label fw-semibold" htmlFor="schedule-restaurant">
-                    Restaurante
+                    {t('adminMenus.schedule.business')}
                   </label>
                   <select
                     id="schedule-restaurant"
@@ -348,7 +356,7 @@ export default function ProgramarMenusPage() {
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-semibold" htmlFor="schedule-timezone">
-                    Huso horario del restaurante
+                    {t('adminMenus.schedule.timezone')}
                   </label>
                   <select
                     id="schedule-timezone"
@@ -372,7 +380,7 @@ export default function ProgramarMenusPage() {
 
             {menus.length === 0 ? (
               <div className="admin-card p-4">
-                <p className="mb-0 text-muted">Este restaurante no tiene menús todavía.</p>
+                <p className="mb-0 text-muted">{t('adminMenus.schedule.noMenus')}</p>
               </div>
             ) : (
               <div className="menu-schedule-list">
@@ -403,17 +411,19 @@ export default function ProgramarMenusPage() {
                               })
                             }
                           />
-                          <span>Programar visibilidad</span>
+                          <span>{t('adminMenus.schedule.scheduleVisibility')}</span>
                         </label>
                       </div>
 
                       {draft.scheduleEnabled ? (
                         <div className="menu-schedule-card-body">
                           <p className="text-muted small mb-3">
-                            Fuera de este horario el menú <strong>no se lista</strong> en la página del
-                            restaurante, pero se puede abrir por su enlace directo.
+                            <Trans
+                              i18nKey="adminMenus.schedule.outsideHours"
+                              components={{ strong: <strong /> }}
+                            />
                           </p>
-                          <p className="menu-schedule-label">Días visibles</p>
+                          <p className="menu-schedule-label">{t('adminMenus.schedule.visibleDays')}</p>
                           <div className="menu-schedule-days">
                             {MENU_SCHEDULE_DAYS.map((day) => (
                               <label
@@ -427,19 +437,19 @@ export default function ProgramarMenusPage() {
                                   checked={draft.schedule.days.includes(day.value)}
                                   onChange={() => toggleDay(menu.id, day.value)}
                                 />
-                                {day.label}
+                                {t(`adminMenus.schedule.days.${day.value}`)}
                               </label>
                             ))}
                           </div>
 
-                          <p className="menu-schedule-label mt-3">Horario (opcional)</p>
+                          <p className="menu-schedule-label mt-3">{t('adminMenus.schedule.timeOptional')}</p>
                           <p className="text-muted small mb-2">
-                            Si dejás vacío, el menú se ve todo el día en los días elegidos.
+                            {t('adminMenus.schedule.timeHint')}
                           </p>
                           <div className="row g-2">
                             <div className="col-6 col-md-3">
                               <label className="form-label small mb-1" htmlFor={`start-${menu.id}`}>
-                                Desde
+                                {t('adminMenus.schedule.from')}
                               </label>
                               <input
                                 id={`start-${menu.id}`}
@@ -458,7 +468,7 @@ export default function ProgramarMenusPage() {
                             </div>
                             <div className="col-6 col-md-3">
                               <label className="form-label small mb-1" htmlFor={`end-${menu.id}`}>
-                                Hasta
+                                {t('adminMenus.schedule.to')}
                               </label>
                               <input
                                 id={`end-${menu.id}`}
@@ -496,11 +506,10 @@ export default function ProgramarMenusPage() {
                                 })
                               }
                             />
-                            <span>Limitar por fechas</span>
+                            <span>{t('adminMenus.schedule.limitByDates')}</span>
                           </label>
                           <p className="text-muted small mb-2 mt-1">
-                            Si no está activo, la programación aplica solo por días y horarios, sin
-                            importar la fecha del calendario.
+                            {t('adminMenus.schedule.dateRangeHint')}
                           </p>
                           {draft.schedule.dateRangeEnabled ? (
                             <div className="row g-2">
@@ -509,7 +518,7 @@ export default function ProgramarMenusPage() {
                                   className="form-label small mb-1"
                                   htmlFor={`date-start-${menu.id}`}
                                 >
-                                  Día de inicio
+                                  {t('adminMenus.schedule.startDate')}
                                 </label>
                                 <input
                                   id={`date-start-${menu.id}`}
@@ -531,7 +540,7 @@ export default function ProgramarMenusPage() {
                                   className="form-label small mb-1"
                                   htmlFor={`date-end-${menu.id}`}
                                 >
-                                  Día de finalización (opcional)
+                                  {t('adminMenus.schedule.endDate')}
                                 </label>
                                 <input
                                   id={`date-end-${menu.id}`}
@@ -562,17 +571,16 @@ export default function ProgramarMenusPage() {
                                 })
                               }
                             >
-                              Quitar programación
+                              {t('adminMenus.schedule.removeSchedule')}
                             </button>
                             <span className="text-muted small ms-2">
-                              Luego pulsá «Guardar programación» para aplicar.
+                              {t('adminMenus.schedule.removeHint')}
                             </span>
                           </div>
                         </div>
                       ) : (
                         <p className="text-muted small mb-0 mt-2">
-                          Sin programación: si está publicado, se muestra siempre en la página del
-                          restaurante (dentro de vigencia). Recordá guardar los cambios.
+                          {t('adminMenus.schedule.noSchedule')}
                         </p>
                       )}
                     </article>

@@ -99,7 +99,7 @@ export class PublicService {
 
   async getRestaurantBySlug(slug: string, locale: string = 'es-ES') {
     try {
-      // Obtener el restaurante con su tenant
+      // Obtener el comercio con su tenant
       const restaurantQuery = `
         SELECT 
           r.id,
@@ -135,14 +135,14 @@ export class PublicService {
       );
 
       if (restaurantResult.length === 0) {
-        throw new NotFoundException(`Restaurante con slug "${slug}" no encontrado`);
+        throw new NotFoundException(`Comercio con slug "${slug}" no encontrado`);
       }
 
       const restaurant = restaurantResult[0];
 
-      // El restaurante ya se obtuvo con is_active = true; el límite del plan (cuántos pueden estar activos) se aplica en el admin al activar/desactivar.
+      // El comercio ya se obtuvo con is_active = true; el límite del plan (cuántos pueden estar activos) se aplica en el admin al activar/desactivar.
 
-      // Obtener menús publicados de este restaurante (sin filtrar por "primeros N del tenant" para que el activo muestre sus menús)
+      // Obtener menús publicados de este comercio (sin filtrar por "primeros N del tenant" para que el activo muestre sus menús)
       const menusQuery = `
         SELECT 
           m.id,
@@ -196,12 +196,12 @@ export class PublicService {
             name: (translations.name as string) || m.name,
             description: (translations.description as string) || m.description || null,
             sort: m.sort || 0,
-            template: restaurant.template || 'classic', // Usar template del restaurante
+            template: restaurant.template || 'classic', // Usar template del comercio
           };
         }),
       );
 
-      // Aplicar traducciones al restaurante
+      // Aplicar traducciones al comercio
       const restaurantTranslations = await this.i18nService.getTranslations(
         restaurant.tenantId,
         'restaurant',
@@ -220,14 +220,14 @@ export class PublicService {
         templateConfig: restaurant.templateConfig ?? {},
       };
     } catch (error) {
-      this.logger.error(`Error obteniendo restaurante por slug "${slug}":`, error);
+      this.logger.error(`Error obteniendo comercio por slug "${slug}":`, error);
       throw error;
     }
   }
 
   async getMenuBySlug(restaurantSlug: string, menuSlug: string, locale: string = 'es-ES') {
     try {
-      // Obtener el menú con su restaurante usando slugs
+      // Obtener el menú con su comercio usando slugs
       const menuQuery = `
         SELECT 
           m.id,
@@ -267,12 +267,12 @@ export class PublicService {
       );
 
       if (menuResult.length === 0) {
-        throw new NotFoundException(`Menú con slug "${menuSlug}" no encontrado en el restaurante "${restaurantSlug}"`);
+        throw new NotFoundException(`Menú con slug "${menuSlug}" no encontrado en el comercio "${restaurantSlug}"`);
       }
 
       const menuData = menuResult[0];
 
-      // La programación semanal solo oculta el menú en la página del restaurante
+      // La programación semanal solo oculta el menú en la página del comercio
       // (lista de menús). La URL directa /r/:restaurant/:menu sigue disponible
       // si el menú está publicado y dentro de vigencia.
 
@@ -292,7 +292,7 @@ export class PublicService {
             )
           )?.map((m: any) => m.id) || [];
           if (!allowedMenuIds.includes(menuData.id)) {
-            throw new NotFoundException(`Menú con slug "${menuSlug}" no encontrado en el restaurante "${restaurantSlug}"`);
+            throw new NotFoundException(`Menú con slug "${menuSlug}" no encontrado en el comercio "${restaurantSlug}"`);
           }
         }
       }
@@ -482,7 +482,7 @@ export class PublicService {
         slug: menuData.slug,
         name: menuTranslations.name || menuData.name,
         description: menuTranslations.description || menuData.description || null,
-        template: menuData.restaurantTemplate || 'classic', // Usar template del restaurante
+        template: menuData.restaurantTemplate || 'classic', // Usar template del comercio
         primaryColor: menuData.restaurantPrimaryColor || '#007bff',
         secondaryColor: menuData.restaurantSecondaryColor || '#0056b3',
         sections: sectionsWithTranslations,
@@ -490,7 +490,7 @@ export class PublicService {
         translationLanguageManifest,
       };
     } catch (error) {
-      this.logger.error(`Error obteniendo menú por slug "${menuSlug}" del restaurante "${restaurantSlug}":`, error);
+      this.logger.error(`Error obteniendo menú por slug "${menuSlug}" del comercio "${restaurantSlug}":`, error);
       throw error;
     }
   }
@@ -498,7 +498,7 @@ export class PublicService {
   // Mantener compatibilidad con el endpoint anterior
   async getMenuById(id: string, locale: string = 'es-ES') {
     try {
-      // Obtener el menú con su restaurante
+      // Obtener el menú con su comercio
       const menuQuery = `
         SELECT 
           m.id,

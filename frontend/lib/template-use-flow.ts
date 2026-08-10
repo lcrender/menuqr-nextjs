@@ -96,7 +96,7 @@ async function waitForProPlanAccess(maxAttempts = 12, delayMs = 1500): Promise<s
   return null;
 }
 
-/** Tras confirmar pago Pro: si hay plantilla pendiente, deriva al selector de restaurantes. */
+/** Tras confirmar pago Pro: si hay plantilla pendiente, deriva al selector de comercios. */
 export async function tryContinueTemplateIntentAfterProUpgrade(router: NextRouter): Promise<boolean> {
   const intent = readTemplateIntent();
   if (!intent || intent.requiredPlan !== 'pro') return false;

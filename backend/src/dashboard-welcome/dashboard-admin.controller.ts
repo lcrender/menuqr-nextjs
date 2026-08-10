@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Patch } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Patch, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UpdateDashboardCtaCardsDto } from './dto/update-dashboard-cta-card.dto';
 import { UpdateDashboardWelcomeDto } from './dto/update-dashboard-welcome.dto';
@@ -13,9 +13,10 @@ export class DashboardAdminController {
   constructor(private readonly dashboardWelcome: DashboardWelcomeService) {}
 
   @Get('welcome-messages')
-  @ApiOperation({ summary: 'Mensajes de bienvenida del dashboard por plan (SUPER_ADMIN)' })
-  getWelcomeSettings() {
-    return this.dashboardWelcome.getAdminView();
+  @ApiOperation({ summary: 'Mensajes de bienvenida del dashboard por plan e idioma (SUPER_ADMIN)' })
+  @ApiQuery({ name: 'locale', required: false, enum: ['es', 'en'] })
+  getWelcomeSettings(@Query('locale') locale?: string) {
+    return this.dashboardWelcome.getAdminView(locale);
   }
 
   @Patch('welcome-messages')
@@ -26,8 +27,9 @@ export class DashboardAdminController {
 
   @Get('cta-card')
   @ApiOperation({ summary: 'Contenido de la card promocional del dashboard (SUPER_ADMIN)' })
-  getCtaCardSettings() {
-    return this.dashboardWelcome.getCtaCardAdmin();
+  @ApiQuery({ name: 'locale', required: false, enum: ['es', 'en'] })
+  getCtaCardSettings(@Query('locale') locale?: string) {
+    return this.dashboardWelcome.getCtaCardAdmin(locale);
   }
 
   @Patch('cta-card')

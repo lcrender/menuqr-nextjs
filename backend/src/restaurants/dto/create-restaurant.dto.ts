@@ -2,12 +2,12 @@ import { IsString, IsNotEmpty, IsOptional, IsEmail, IsUrl, ValidateIf, IsIn, IsA
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateRestaurantDto {
-  @ApiProperty({ description: 'Nombre del restaurante' })
+  @ApiProperty({ description: 'Nombre del comercio' })
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ description: 'Descripción del restaurante', required: false })
+  @ApiProperty({ description: 'Descripción del comercio', required: false })
   @IsString()
   @IsOptional()
   description?: string;
@@ -42,22 +42,22 @@ export class CreateRestaurantDto {
   @IsOptional()
   address?: string;
 
-  @ApiProperty({ description: 'Teléfono del restaurante', required: false })
+  @ApiProperty({ description: 'Teléfono del comercio', required: false })
   @IsString()
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ description: 'WhatsApp del restaurante', required: false })
+  @ApiProperty({ description: 'WhatsApp del comercio', required: false })
   @IsString()
   @IsOptional()
   whatsapp?: string;
 
-  @ApiProperty({ description: 'Email del restaurante', required: false })
+  @ApiProperty({ description: 'Email del comercio', required: false })
   @IsEmail()
   @IsOptional()
   email?: string;
 
-  @ApiProperty({ description: 'Sitio web del restaurante', required: false })
+  @ApiProperty({ description: 'Sitio web del comercio', required: false })
   @ValidateIf((o) => o.website && o.website.trim() !== '')
   @IsUrl({}, { message: 'Debe ser una URL válida' })
   @IsOptional()
@@ -69,7 +69,7 @@ export class CreateRestaurantDto {
   timezone?: string;
 
   @ApiProperty({ 
-    description: 'Template de diseño del restaurante', 
+    description: 'Template de diseño del comercio', 
     enum: ['classic', 'minimalist', 'foodie', 'burgers', 'italianFood', 'gourmet', 'proMobile', 'nightClub', 'smartFood', 'beachBar', 'solNoche'],
     default: 'classic',
     required: false 
@@ -117,7 +117,7 @@ export class CreateRestaurantDto {
   secondaryColor?: string;
 
   @ApiProperty({
-    description: 'ID del tenant donde crear el restaurante (obligatorio para SUPER_ADMIN)',
+    description: 'ID del tenant donde crear el comercio (obligatorio para SUPER_ADMIN)',
     required: false,
   })
   @IsString()

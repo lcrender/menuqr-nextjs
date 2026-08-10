@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { PostgresService } from './database/postgres.service';
 
 /**
- * Tras transferir un restaurante, menú/secciones/productos deben compartir el tenant del restaurante.
+ * Tras transferir un comercio, menú/secciones/productos deben compartir el tenant del comercio.
  * Estas utilidades permiten acceso por restaurant.tenant_id y reparan desincronización residual.
  */
 export async function syncMenuHierarchyTenant(

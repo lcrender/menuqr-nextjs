@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { Trans, useTranslation } from 'react-i18next';
 import PlanBadge from './PlanBadge';
 
 export interface SubscriptionItem {
@@ -15,14 +16,6 @@ export interface SubscriptionItem {
   cancelAtPeriodEnd?: boolean;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  active: 'Activa',
-  canceled: 'Cancelada',
-  past_due: 'Pago pendiente',
-  expired: 'Expirada',
-  incomplete: 'Incompleta',
-};
-
 interface ProfileSubscriptionProps {
   subscriptions: SubscriptionItem[];
   /** Plan actual del tenant (desde API dashboard-stats), para mostrar el estado real aunque no haya suscripción de pago */
@@ -37,21 +30,29 @@ export default function ProfileSubscription({
   feedback,
   onClearFeedback,
 }: ProfileSubscriptionProps) {
+  const { t, i18n } = useTranslation();
   const activeSubscription = subscriptions.find((s) => s.status === 'active');
   const effectivePlan = (currentPlan || activeSubscription?.subscriptionPlan || 'free').toLowerCase();
   const isFree = effectivePlan === 'free' && !activeSubscription;
+  const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
+
+  const statusLabel = (status: string) => {
+    const key = `myProfile.subscription.status.${status}`;
+    const translated = t(key);
+    return translated === key ? status : translated;
+  };
 
   return (
     <section className="card profile-section">
       <div className="card-header bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h2 className="h5 mb-0 fw-semibold">Suscripción</h2>
+        <h2 className="h5 mb-0 fw-semibold">{t('myProfile.subscription.title')}</h2>
         <div className="d-flex align-items-center gap-2">
           <PlanBadge plan={effectivePlan} />
           <Link
             href="/admin/profile/subscription"
             className={isFree ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary'}
           >
-            Gestionar suscripción
+            {t('myProfile.subscription.manage')}
           </Link>
         </div>
       </div>
@@ -59,25 +60,36 @@ export default function ProfileSubscription({
         {feedback && (
           <div className={`alert alert-${feedback.type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`} role="alert">
             {feedback.message}
-            <button type="button" className="btn-close" onClick={onClearFeedback} aria-label="Cerrar" />
+            <button type="button" className="btn-close" onClick={onClearFeedback} aria-label={t('myProfile.close')} />
           </div>
         )}
 
-        {/* Estado actual: plan desde API (currentPlan) o desde suscripciones */}
         {subscriptions.length === 0 ? (
           <div className="mb-4">
             <p className="text-muted mb-1">
-              {currentPlan && currentPlan !== 'free'
-                ? <>Tu plan actual es <strong className="text-capitalize">{currentPlan}</strong> (asignado por tu organización). No tienes suscripciones de pago propias.</>
-                : <>No tienes suscripciones de pago. Estás en plan <strong>Free</strong>.</>}
+              {currentPlan && currentPlan !== 'free' ? (
+                <Trans
+                  i18nKey="myProfile.subscription.noPaidSubscriptionsOrg"
+                  values={{ plan: currentPlan }}
+                  components={{ strong: <strong className="text-capitalize" /> }}
+                />
+              ) : (
+                <Trans
+                  i18nKey="myProfile.subscription.noPaidSubscriptionsFree"
+                  components={{ strong: <strong /> }}
+                />
+              )}
             </p>
-            <Link href="/admin/profile/subscription">Ver planes y actualizar</Link>
+            <Link href="/admin/profile/subscription">{t('myProfile.subscription.viewPlans')}</Link>
           </div>
         ) : (
           <div className="mb-4">
-            <h3 className="h6 mb-2">Estado actual</h3>
+            <h3 className="h6 mb-2">{t('myProfile.subscription.currentStatus')}</h3>
             {currentPlan && (
-              <p className="text-muted small mb-2">Plan activo: <strong className="text-capitalize">{currentPlan}</strong></p>
+              <p className="text-muted small mb-2">
+                {t('myProfile.subscription.activePlan')}{' '}
+                <strong className="text-capitalize">{currentPlan}</strong>
+              </p>
             )}
             <ul className="list-group list-group-flush">
               {subscriptions.map((s) => (
@@ -85,20 +97,29 @@ export default function ProfileSubscription({
                   <div className="d-flex justify-content-between align-items-start flex-wrap gap-2">
                     <div>
                       <PlanBadge plan={s.subscriptionPlan} className="me-2" />
-                      <span className="text-capitalize">{STATUS_LABELS[s.status] || s.status}</span>
-                      <span className="text-muted ms-2">({s.planType === 'yearly' ? 'Anual' : 'Mensual'})</span>
+                      <span className="text-capitalize">{statusLabel(s.status)}</span>
+                      <span className="text-muted ms-2">
+                        ({s.planType === 'yearly'
+                          ? t('myProfile.subscription.yearly')
+                          : t('myProfile.subscription.monthly')}
+                        )
+                      </span>
                       {s.paymentProvider !== 'internal' && (
                         <span className="text-muted small ms-2"> · {s.paymentProvider}</span>
                       )}
                       {s.currency && <span className="text-muted small ms-2"> · {s.currency}</span>}
                       {s.cancelAtPeriodEnd && (
                         <div className="alert alert-warning py-2 px-3 mt-2 mb-0 small">
-                          Esta suscripción se cancelará al final del período actual. No se renovará.
+                          {t('myProfile.subscription.cancelAtPeriodEnd')}
                         </div>
                       )}
                       {s.currentPeriodEnd && s.status === 'active' && !s.cancelAtPeriodEnd && (
                         <div className="small text-muted mt-1">
-                          Próxima renovación: {new Date(s.currentPeriodEnd).toLocaleDateString('es', { dateStyle: 'medium' })}
+                          {t('myProfile.subscription.nextRenewal', {
+                            date: new Date(s.currentPeriodEnd).toLocaleDateString(dateLocale, {
+                              dateStyle: 'medium',
+                            }),
+                          })}
                         </div>
                       )}
                     </div>

@@ -1,0 +1,219 @@
+{
+  "searchLabel": "Search the guide",
+  "searchPlaceholder": "e.g. CSV, QR, sections…",
+  "noMatches": "No matches",
+  "indexButton": "☰ Index",
+  "close": "Close",
+  "closeMenu": "Close menu",
+  "navAriaLabel": "Documentation sections",
+  "docsTitle": "Documentation",
+  "guideStart": "Start of the guide",
+  "guideEnd": "End of the guide",
+  "introH1": "📚 Documentation — AppMenuQR",
+  "introLead": "Complete guide to using AppMenuQR and creating professional digital menus.",
+  "seeAlso": "See also in the guide",
+  "faq": "Common issues",
+  "redirecting": "Redirecting to documentation…",
+  "sections": {
+    "intro": {
+      "title": "Documentation — Home",
+      "shortTitle": "Home",
+      "group": "Introduction",
+      "metaTitlePublic": "Documentation | AppMenuQR",
+      "metaTitleAdmin": "Documentation | Help",
+      "metaDescription": "AppMenuQR guide: registration, business, menus, CSV, templates, publishing, scheduling, QR, paper printing, business admin, translations, subscriptions and payments.",
+      "keywords": "home guide flow summary steps registration session",
+      "searchText": "summary full flow create business menu csv sections products qr verify email"
+    },
+    "crear-restaurante": {
+      "title": "Create a business",
+      "shortTitle": "Business",
+      "group": "Getting started",
+      "metaTitlePublic": "Create a business | AppMenuQR Documentation",
+      "metaTitleAdmin": "Create a business | Help",
+      "metaDescription": "Set up your first business in AppMenuQR: details, map address, phone, WhatsApp, logo, default template and main currency.",
+      "keywords": "business create logo cover currency template address whatsapp maps video tutorial youtube",
+      "searchText": "businesses side menu create save first time wizard video tutorial getting started"
+    },
+    "crear-menu": {
+      "title": "Create a menu",
+      "shortTitle": "Menu",
+      "group": "Getting started",
+      "metaTitlePublic": "Create a menu | AppMenuQR Documentation",
+      "metaTitleAdmin": "Create a menu | Help",
+      "metaDescription": "How to create menus per business: customer-facing name, optional description and sections within the menu.",
+      "keywords": "menu create draft business name button sections video tutorial youtube",
+      "searchText": "menus new save lunch dinner starters mains video tutorial getting started"
+    },
+    "crear-secciones": {
+      "title": "Create menu sections",
+      "shortTitle": "Sections",
+      "group": "Menu",
+      "metaTitlePublic": "Menu sections | AppMenuQR Documentation",
+      "metaTitleAdmin": "Menu sections | Help",
+      "metaDescription": "Organize categories in the menu: add section, reorder with drag and grip handles.",
+      "keywords": "sections categories menu order drag add",
+      "searchText": "menu sections add order three lines"
+    },
+    "crear-productos": {
+      "title": "Create products",
+      "shortTitle": "Products",
+      "group": "Menu",
+      "metaTitlePublic": "Create products | AppMenuQR Documentation",
+      "metaTitleAdmin": "Create products | Help",
+      "metaDescription": "Add products with prices in the business currency, icons and section assignment.",
+      "keywords": "products prices icons currency featured",
+      "searchText": "menu products create price main currency business"
+    },
+    "reordenar-productos": {
+      "title": "Reorder products",
+      "shortTitle": "Order",
+      "group": "Menu",
+      "metaTitlePublic": "Reorder products | AppMenuQR Documentation",
+      "metaTitleAdmin": "Reorder products | Help",
+      "metaDescription": "Change product order with drag and drop within a section or between sections.",
+      "keywords": "order drag drop products",
+      "searchText": "reorder drag drop section"
+    },
+    "importar-menu-csv": {
+      "title": "Import menu from CSV",
+      "shortTitle": "CSV",
+      "group": "Menu",
+      "metaTitlePublic": "Import menu from CSV | AppMenuQR Documentation",
+      "metaTitleAdmin": "Import menu from CSV | Help",
+      "metaDescription": "Import sections and products from CSV: columns, allergens, plan limits and full editing afterwards.",
+      "keywords": "csv import template sections products prices",
+      "searchText": "section_name product_name currency price import edit later"
+    },
+    "plantillas": {
+      "title": "Design templates",
+      "shortTitle": "Design",
+      "group": "Design",
+      "metaTitlePublic": "Design templates | AppMenuQR Documentation",
+      "metaTitleAdmin": "Design templates | Help",
+      "metaDescription": "Default template when creating the business, Menu templates to preview, colors and business options.",
+      "keywords": "template design preview colors logo name classic foodie",
+      "searchText": "business template edit enable disable primary secondary"
+    },
+    "publicar-menu": {
+      "title": "Publish the menu",
+      "shortTitle": "Publish",
+      "group": "Publishing",
+      "metaTitlePublic": "Publish the menu | AppMenuQR Documentation",
+      "metaTitleAdmin": "Publish the menu | Help",
+      "metaDescription": "Draft or published status, publish and unpublish buttons; business link with menus hidden until published.",
+      "keywords": "publish draft unpublish status actions menus list",
+      "searchText": "status column qr visible hidden"
+    },
+    "programar-menu": {
+      "title": "Schedule a menu",
+      "shortTitle": "Schedule menu",
+      "group": "Publishing",
+      "metaTitlePublic": "Schedule menu visibility | AppMenuQR Documentation",
+      "metaTitleAdmin": "Schedule menu visibility | Help",
+      "metaDescription": "Weekly menu scheduling on Pro and Premium plans: days, times, dates and business timezone.",
+      "keywords": "schedule hours days week visibility pro premium timezone",
+      "searchText": "monday tuesday hours from to dates save menu schedule"
+    },
+    "descargar-qr": {
+      "title": "Download QR code",
+      "shortTitle": "QR code",
+      "group": "Publishing",
+      "metaTitlePublic": "Business QR code | AppMenuQR Documentation",
+      "metaTitleAdmin": "Business QR code | Help",
+      "metaDescription": "Business QR on the dashboard: all published menus, download, print and notice if you change the name.",
+      "keywords": "qr code download dashboard business menus name link",
+      "searchText": "print scan google maps change name new qr"
+    },
+    "imprimir-carta": {
+      "title": "Print the menu on paper",
+      "shortTitle": "Print menu",
+      "group": "Publishing",
+      "metaTitlePublic": "Print paper menu | AppMenuQR Documentation",
+      "metaTitleAdmin": "Print paper menu | Help",
+      "metaDescription": "Print your menu on paper from the panel: templates, logo, sections, language and menus to include.",
+      "keywords": "print paper menu template pdf logo sections language menus",
+      "searchText": "print menu business classic elegant modern bistro preview"
+    },
+    "desactivar-restaurante": {
+      "title": "Deactivate the business",
+      "shortTitle": "Deactivate venue",
+      "group": "Business admin",
+      "metaTitlePublic": "Deactivate business | AppMenuQR Documentation",
+      "metaTitleAdmin": "Deactivate business | Help",
+      "metaDescription": "What happens if you deactivate the business: the public page and QR are hidden until you reactivate it.",
+      "keywords": "deactivate business hide pause close public page qr",
+      "searchText": "inactive business reactivate online sign"
+    },
+    "eliminar-restaurante": {
+      "title": "Delete the business",
+      "shortTitle": "Delete venue",
+      "group": "Business admin",
+      "metaTitlePublic": "Delete business | AppMenuQR Documentation",
+      "metaTitleAdmin": "Delete business | Help",
+      "metaDescription": "Deleting a business permanently removes all associated data.",
+      "keywords": "delete business erase data permanently danger",
+      "searchText": "delete business irreversible menus products"
+    },
+    "menu-visibilidad-y-eliminacion": {
+      "title": "Menu: visibility and deletion",
+      "shortTitle": "Menu / delete",
+      "group": "Business admin",
+      "metaTitlePublic": "Unpublish and delete menus | AppMenuQR Documentation",
+      "metaTitleAdmin": "Unpublish and delete menus | Help",
+      "metaDescription": "Unpublished menus on the online card, delete menu without deleting products and orphan products.",
+      "keywords": "unpublish menu delete menu products without menu visible card",
+      "searchText": "delete menu assign products orphan"
+    },
+    "traducciones": {
+      "title": "Translations",
+      "shortTitle": "Translations",
+      "group": "Content & languages",
+      "metaTitlePublic": "Menu translations | AppMenuQR Documentation",
+      "metaTitleAdmin": "Menu translations | Help",
+      "metaDescription": "Steps to translate content in AppMenuQR and limits based on your subscription plan.",
+      "keywords": "translations languages i18n plan limits subscription video tutorial youtube auto translation",
+      "searchText": "translate menu text second language"
+    },
+    "edicion-masiva-productos": {
+      "title": "Bulk product editing",
+      "shortTitle": "Bulk edit",
+      "group": "Advanced products",
+      "metaTitlePublic": "Bulk product editing | AppMenuQR Documentation",
+      "metaTitleAdmin": "Bulk product editing | Help",
+      "metaDescription": "Bulk actions on products: delete, move between menus and businesses, duplicates and plan limits.",
+      "keywords": "bulk delete move duplicate plan limit products",
+      "searchText": "transfer other business copy quantity"
+    },
+    "editar-productos-detalle": {
+      "title": "Edit a product",
+      "shortTitle": "Edit product",
+      "group": "Advanced products",
+      "metaTitlePublic": "Edit product: prices and status | AppMenuQR Documentation",
+      "metaTitleAdmin": "Edit product: prices and status | Help",
+      "metaDescription": "Enable or disable a product, name, description, prices and photo according to your plan.",
+      "keywords": "edit product price photo enable disable",
+      "searchText": "description options price image plan"
+    },
+    "suscripciones-y-pagos": {
+      "title": "Subscriptions and payments",
+      "shortTitle": "Subscription",
+      "group": "Account & billing",
+      "metaTitlePublic": "Subscriptions and payments | AppMenuQR Documentation",
+      "metaTitleAdmin": "Subscriptions and payments | Help",
+      "metaDescription": "Payment methods (Mercado Pago Argentina, PayPal international), cancel anytime.",
+      "keywords": "subscription payment mercadopago paypal argentina cancel unsubscribe",
+      "searchText": "billing plan monthly charge"
+    },
+    "catalogo-plantillas": {
+      "title": "Templates",
+      "shortTitle": "Templates",
+      "group": "Templates",
+      "metaTitlePublic": "Templates | AppMenuQR Documentation",
+      "metaTitleAdmin": "Templates | Help",
+      "metaDescription": "Overview of available digital menu templates and links to each template's features.",
+      "keywords": "templates catalog features smart food beach gourmet minimalist classic foodie burgers",
+      "searchText": "template card features smart-food beach-bar gourmet minimalist night-club modern-food italian-food sol-noche foodie classic burgers"
+    }
+  }
+}

@@ -1,31 +1,39 @@
 import { useState, useEffect, useRef } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import LogoCropModal from './LogoCropModal';
 import CoverCropModal from './CoverCropModal';
 import CountrySelector from './CountrySelector';
 import ProvinceSelector from './ProvinceSelector';
 import CitySelector from './CitySelector';
+import { findCountryOption } from '../lib/countries';
 import { getPlantillaHeroMockupByApiTemplateId } from '../lib/plantilla-landing-hero-images';
 import { PREVIEW_DEFAULT_IMAGE, PREVIEW_IMAGE_BASE } from '../lib/templates-catalog';
+import i18n from '../src/i18n/config';
+import restaurantWizardEs from '../src/locales/fragments/restaurantWizard.es.json';
+import restaurantWizardEn from '../src/locales/fragments/restaurantWizard.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { restaurantWizard: restaurantWizardEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { restaurantWizard: restaurantWizardEn }, true, true);
 
 const WIZARD_TEMPLATES: Array<{
   id: 'classic' | 'minimalist' | 'foodie' | 'burgers' | 'italianFood' | 'gourmet' | 'proMobile' | 'nightClub' | 'smartFood' | 'beachBar' | 'solNoche';
-  name: string;
-  desc: string;
   previewClass: string;
   requiresProOrPremium?: boolean;
 }> = [
-  { id: 'classic', name: 'Clásico', desc: 'Diseño tradicional y elegante', previewClass: 'classic' },
-  { id: 'minimalist', name: 'Minimalista', desc: 'Diseño limpio y contemporáneo', previewClass: 'minimalist' },
-  { id: 'foodie', name: 'Foodie', desc: 'Diseño gastronómico y apetitoso', previewClass: 'foodie' },
-  { id: 'smartFood', name: 'Smart Food', desc: 'Diseño claro con filtros de alérgenos', previewClass: 'smart-food' },
-  { id: 'gourmet', name: 'Gourmet', desc: 'Estilo refinado y premium', previewClass: 'gourmet', requiresProOrPremium: true },
-  { id: 'proMobile', name: 'Modern Food', desc: 'Diseño moderno con tabs laterales y fotos de producto', previewClass: 'modern-food', requiresProOrPremium: true },
-  { id: 'beachBar', name: 'Beach Life', desc: 'Beach bar con fondo configurable y cards horizontales', previewClass: 'beach-bar', requiresProOrPremium: true },
-  { id: 'solNoche', name: 'Sol & Noche', desc: 'Modo claro/oscuro, destacados y portadas día/noche', previewClass: 'sol-noche', requiresProOrPremium: true },
-  { id: 'nightClub', name: 'Neon Club', desc: 'Tema oscuro con tabs laterales, sin fotos', previewClass: 'night-club' },
-  { id: 'burgers', name: 'Burgers', desc: 'Bold y dinámico estilo hamburguesería', previewClass: 'burgers' },
-  { id: 'italianFood', name: 'Italian Food', desc: 'Elegante con colores de la bandera italiana', previewClass: 'italianfood' },
+  { id: 'classic', previewClass: 'classic' },
+  { id: 'minimalist', previewClass: 'minimalist' },
+  { id: 'foodie', previewClass: 'foodie' },
+  { id: 'smartFood', previewClass: 'smart-food' },
+  { id: 'gourmet', previewClass: 'gourmet', requiresProOrPremium: true },
+  { id: 'proMobile', previewClass: 'modern-food', requiresProOrPremium: true },
+  { id: 'beachBar', previewClass: 'beach-bar', requiresProOrPremium: true },
+  { id: 'solNoche', previewClass: 'sol-noche', requiresProOrPremium: true },
+  { id: 'nightClub', previewClass: 'night-club' },
+  { id: 'burgers', previewClass: 'burgers' },
+  { id: 'italianFood', previewClass: 'italianfood' },
 ];
+
+const CURRENCY_CODES = ['USD', 'EUR', 'ARS', 'MXN', 'CLP', 'COP', 'PEN', 'BRL', 'UYU', 'PYG', 'BOB', 'VES'] as const;
 
 // Función para validar dominio
 const isValidDomain = (domain: string): boolean => {
@@ -112,9 +120,9 @@ interface RestaurantWizardProps {
   setCoverFile: (file: File | null) => void;
   coverPreview: string | null;
   setCoverPreview: (preview: string | null) => void;
-  /** Crea el restaurante al terminar el paso 5. Devuelve el id o null si falló. */
+  /** Crea el comercio al terminar el paso 5. Devuelve el id o null si falló. */
   onCreateRestaurant: () => Promise<string | null>;
-  /** Asigna plantilla/colores al restaurante ya creado y continúa al menú. */
+  /** Asigna plantilla/colores al comercio ya creado y continúa al menú. */
   onAssignTemplateAndContinue: (restaurantId: string) => Promise<void>;
   onCancel?: () => void;
   userPlan?: string | null;
@@ -138,6 +146,7 @@ export default function RestaurantWizard({
   userPlan = null,
   isSuperAdmin = false,
 }: RestaurantWizardProps) {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 6;
   const restaurantCreateStep = 5;
@@ -159,22 +168,19 @@ export default function RestaurantWizard({
     .trim();
   const hasProTemplatesAccess =
     isSuperAdmin || normalizedPlan === 'pro' || normalizedPlan === 'pro_team' || normalizedPlan === 'premium';
-  const additionalCurrencies = ['USD', 'EUR', 'ARS', 'MXN', 'CLP', 'COP', 'PEN', 'BRL', 'UYU', 'PYG', 'BOB', 'VES']
-    .filter((c) => c !== formData.defaultCurrency);
-  const currencyLabels: { [key: string]: string } = {
-    USD: 'USD - Dólar estadounidense',
-    EUR: 'EUR - Euro',
-    ARS: 'ARS - Peso argentino',
-    MXN: 'MXN - Peso mexicano',
-    CLP: 'CLP - Peso chileno',
-    COP: 'COP - Peso colombiano',
-    PEN: 'PEN - Sol peruano',
-    BRL: 'BRL - Real brasileño',
-    UYU: 'UYU - Peso uruguayo',
-    PYG: 'PYG - Guaraní paraguayo',
-    BOB: 'BOB - Boliviano',
-    VES: 'VES - Bolívar venezolano',
-  };
+  const additionalCurrencies = CURRENCY_CODES.filter((c) => c !== formData.defaultCurrency);
+
+  const currencyLabel = (code: string) =>
+    t(`restaurantWizard.currencies.${code}`, { defaultValue: code });
+
+  const templateName = (id: string) => t(`restaurantWizard.templates.${id}.name`);
+  const templateDesc = (id: string) => t(`restaurantWizard.templates.${id}.desc`);
+
+  const countryDisplayName = (() => {
+    const opt = findCountryOption(formData.country);
+    if (!opt) return formData.country || '';
+    return t(`location.countries.${opt.code}`, { defaultValue: opt.name });
+  })();
 
   // Mapeo de nombres de países de APIs a nuestros nombres
   const countryNameMap: { [key: string]: string } = {
@@ -359,7 +365,7 @@ export default function RestaurantWizard({
   };
 
   const handleBack = () => {
-    // Tras crear el restaurante (paso 6) no se vuelve a los datos del restaurante.
+    // Tras crear el comercio (paso 6) no se vuelve a los datos del comercio.
     if (currentStep > 1 && currentStep < totalSteps && !createdRestaurantId) {
       setCurrentStep(currentStep - 1);
     }
@@ -432,38 +438,57 @@ export default function RestaurantWizard({
     });
   };
 
+  const insertBoldMarkup = (textarea: HTMLTextAreaElement) => {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = formData.description?.substring(start, end) || '';
+    const boldPlaceholder = t('restaurantWizard.step1.boldPlaceholder');
+    const newText =
+      (formData.description?.substring(0, start) || '') +
+      `**${selectedText || boldPlaceholder}**` +
+      (formData.description?.substring(end) || '');
+    setFormData({ ...formData, description: newText });
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + 2,
+        end + (selectedText ? 2 : 2 + boldPlaceholder.length)
+      );
+    }, 0);
+  };
+
   return (
     <div className="restaurant-wizard restaurant-wizard-mobile">
       <div className="wizard-header">
-        <h2 className="wizard-title">Crea tu primer restaurante</h2>
-        <p className="wizard-subtitle">Sigue estos pasos para configurar tu restaurante</p>
+        <h2 className="wizard-title">{t('restaurantWizard.title')}</h2>
+        <p className="wizard-subtitle">{t('restaurantWizard.subtitle')}</p>
       </div>
 
       <div className="wizard-progress">
         <div className="wizard-steps">
           <div className={`wizard-step ${currentStep >= 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>
             <div className="wizard-step-number">1</div>
-            <div className="wizard-step-label">Información básica</div>
+            <div className="wizard-step-label">{t('restaurantWizard.steps.basic')}</div>
           </div>
           <div className={`wizard-step ${currentStep >= 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>
             <div className="wizard-step-number">2</div>
-            <div className="wizard-step-label">Ubicación</div>
+            <div className="wizard-step-label">{t('restaurantWizard.steps.location')}</div>
           </div>
           <div className={`wizard-step ${currentStep >= 3 ? 'active' : ''} ${currentStep > 3 ? 'completed' : ''}`}>
             <div className="wizard-step-number">3</div>
-            <div className="wizard-step-label">Contacto</div>
+            <div className="wizard-step-label">{t('restaurantWizard.steps.contact')}</div>
           </div>
           <div className={`wizard-step ${currentStep >= 4 ? 'active' : ''} ${currentStep > 4 ? 'completed' : ''}`}>
             <div className="wizard-step-number">4</div>
-            <div className="wizard-step-label">Medios de pago</div>
+            <div className="wizard-step-label">{t('restaurantWizard.steps.payment')}</div>
           </div>
           <div className={`wizard-step ${currentStep >= 5 ? 'active' : ''} ${currentStep > 5 ? 'completed' : ''}`}>
             <div className="wizard-step-number">5</div>
-            <div className="wizard-step-label">Imágenes</div>
+            <div className="wizard-step-label">{t('restaurantWizard.steps.images')}</div>
           </div>
           <div className={`wizard-step ${currentStep >= 6 ? 'active' : ''}`}>
             <div className="wizard-step-number">6</div>
-            <div className="wizard-step-label">Plantilla</div>
+            <div className="wizard-step-label">{t('restaurantWizard.steps.template')}</div>
           </div>
         </div>
       </div>
@@ -473,51 +498,36 @@ export default function RestaurantWizard({
         {currentStep === 1 && (
           <div className="wizard-step-content wizard-step-centered">
             <div className="wizard-step-header">
-              <h3 className="wizard-step-title">Información básica</h3>
-              <p className="wizard-step-description">Completa la información básica de tu restaurante</p>
+              <h3 className="wizard-step-title">{t('restaurantWizard.step1.title')}</h3>
+              <p className="wizard-step-description">{t('restaurantWizard.step1.description')}</p>
             </div>
 
             <div className="wizard-fields-container">
               {/* Nombre */}
               <div className="wizard-field wizard-field-large">
-                <label className="wizard-label">Nombre del restaurante *</label>
+                <label className="wizard-label">{t('restaurantWizard.step1.name')}</label>
                 <input
                   type="text"
                   className="admin-form-control wizard-input-large"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ej: La Parrilla del Sur"
+                  placeholder={t('restaurantWizard.step1.namePlaceholder')}
                   required
                 />
               </div>
 
               {/* Descripción */}
               <div className="wizard-field wizard-field-large">
-                <label className="wizard-label">Descripción</label>
+                <label className="wizard-label">{t('restaurantWizard.step1.descriptionLabel')}</label>
                 <div className="d-flex gap-2 mb-2">
                   <button
                     type="button"
                     className="btn btn-sm btn-outline-secondary"
                     onClick={() => {
                       const textarea = document.getElementById('wizard-description-textarea') as HTMLTextAreaElement;
-                      if (textarea) {
-                        const start = textarea.selectionStart;
-                        const end = textarea.selectionEnd;
-                        const selectedText = formData.description?.substring(start, end) || '';
-                        const newText = (formData.description?.substring(0, start) || '') + 
-                                      `**${selectedText || 'texto en negrita'}**` + 
-                                      (formData.description?.substring(end) || '');
-                        setFormData({ ...formData, description: newText });
-                        setTimeout(() => {
-                          textarea.focus();
-                          textarea.setSelectionRange(
-                            start + 2, 
-                            end + (selectedText ? 2 : 18)
-                          );
-                        }, 0);
-                      }
+                      if (textarea) insertBoldMarkup(textarea);
                     }}
-                    title="Negrita (Ctrl+B)"
+                    title={t('restaurantWizard.step1.boldTitle')}
                   >
                     <strong>B</strong>
                   </button>
@@ -538,7 +548,7 @@ export default function RestaurantWizard({
                         }, 0);
                       }
                     }}
-                    title="Salto de línea"
+                    title={t('restaurantWizard.step1.lineBreakTitle')}
                   >
                     ↵
                   </button>
@@ -557,30 +567,16 @@ export default function RestaurantWizard({
                     // Ctrl+B para negrita
                     if (e.ctrlKey && e.key === 'b') {
                       e.preventDefault();
-                      const textarea = e.target as HTMLTextAreaElement;
-                      const start = textarea.selectionStart;
-                      const end = textarea.selectionEnd;
-                      const selectedText = formData.description?.substring(start, end) || '';
-                      const newText = (formData.description?.substring(0, start) || '') + 
-                                    `**${selectedText || 'texto en negrita'}**` + 
-                                    (formData.description?.substring(end) || '');
-                      setFormData({ ...formData, description: newText });
-                      setTimeout(() => {
-                        textarea.focus();
-                        textarea.setSelectionRange(
-                          start + 2, 
-                          end + (selectedText ? 2 : 18)
-                        );
-                      }, 0);
+                      insertBoldMarkup(e.target as HTMLTextAreaElement);
                     }
                   }}
-                  placeholder="Describe tu restaurante (opcional). Usa **texto** para negrita y Enter para saltos de línea."
+                  placeholder={t('restaurantWizard.step1.descriptionPlaceholder')}
                   rows={6}
                   maxLength={2000}
                   style={{ whiteSpace: 'pre-wrap' }}
                 />
                 <div className="wizard-char-counter">
-                  {(formData.description?.length || 0)}/2000 caracteres - Usa **texto** para negrita
+                  {t('restaurantWizard.step1.descriptionHint', { count: formData.description?.length || 0 })}
                 </div>
               </div>
             </div>
@@ -589,12 +585,12 @@ export default function RestaurantWizard({
 
         {currentStep === 2 && (
           <div className="wizard-step-content">
-            <h3 className="wizard-step-title">Ubicación</h3>
-            <p className="wizard-step-description">Completa la ubicación y dirección de tu restaurante</p>
+            <h3 className="wizard-step-title">{t('restaurantWizard.step2.title')}</h3>
+            <p className="wizard-step-description">{t('restaurantWizard.step2.description')}</p>
 
             {/* País */}
             <div className="wizard-field">
-              <label className="wizard-label">País *</label>
+              <label className="wizard-label">{t('restaurantWizard.step2.country')}</label>
               <CountrySelector
                 value={formData.country}
                 onChange={(value) => setFormData({
@@ -611,7 +607,7 @@ export default function RestaurantWizard({
             {/* Provincia/Región */}
             {formData.country && (
               <div className="wizard-field">
-                <label className="wizard-label">Provincia / Región</label>
+                <label className="wizard-label">{t('restaurantWizard.step2.province')}</label>
                 <ProvinceSelector
                   country={formData.country}
                   value={formData.province}
@@ -624,7 +620,7 @@ export default function RestaurantWizard({
             {/* Ciudad */}
             {formData.province && (
               <div className="wizard-field">
-                <label className="wizard-label">Ciudad</label>
+                <label className="wizard-label">{t('restaurantWizard.step2.city')}</label>
                 <CitySelector
                   country={formData.country}
                   province={formData.province}
@@ -637,25 +633,25 @@ export default function RestaurantWizard({
 
             {/* Dirección */}
             <div className="wizard-field">
-              <label className="wizard-label">Dirección</label>
+              <label className="wizard-label">{t('restaurantWizard.step2.address')}</label>
               <input
                 type="text"
                 className="admin-form-control"
                 value={formData.street}
                 onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                placeholder="Calle y número"
+                placeholder={t('restaurantWizard.step2.addressPlaceholder')}
               />
             </div>
 
             {/* Código postal */}
             <div className="wizard-field">
-              <label className="wizard-label">Código Postal</label>
+              <label className="wizard-label">{t('restaurantWizard.step2.postalCode')}</label>
               <input
                 type="text"
                 className="admin-form-control"
                 value={formData.postalCode}
                 onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                placeholder="Opcional"
+                placeholder={t('restaurantWizard.step2.optional')}
               />
             </div>
           </div>
@@ -663,14 +659,14 @@ export default function RestaurantWizard({
 
         {currentStep === 3 && (
           <div className="wizard-step-content">
-            <h3 className="wizard-step-title">Contacto</h3>
+            <h3 className="wizard-step-title">{t('restaurantWizard.step3.title')}</h3>
             <p className="wizard-step-description wizard-step-description--room-below">
-              Agrega la información de contacto de tu restaurante
+              {t('restaurantWizard.step3.description')}
             </p>
 
             {/* Teléfono */}
             <div className="wizard-field">
-              <label className="wizard-label">Teléfono</label>
+              <label className="wizard-label">{t('restaurantWizard.step3.phone')}</label>
               <input
                 type="text"
                 className="admin-form-control"
@@ -683,7 +679,7 @@ export default function RestaurantWizard({
                     whatsapp: formData.usePhoneForWhatsApp ? newPhone : formData.whatsapp
                   });
                 }}
-                placeholder="+54 11 1234-5678"
+                placeholder={t('restaurantWizard.step3.phonePlaceholder')}
               />
             </div>
 
@@ -703,13 +699,13 @@ export default function RestaurantWizard({
                     });
                   }}
                 />
-                <label htmlFor="usePhoneForWhatsApp">Usar este número para WhatsApp</label>
+                <label htmlFor="usePhoneForWhatsApp">{t('restaurantWizard.step3.usePhoneForWhatsApp')}</label>
               </div>
             </div>
 
             {/* WhatsApp input */}
             <div className="wizard-field">
-              <label className="wizard-label">WhatsApp</label>
+              <label className="wizard-label">{t('restaurantWizard.step3.whatsapp')}</label>
               <input
                 type="text"
                 className="admin-form-control"
@@ -734,30 +730,34 @@ export default function RestaurantWizard({
                   }
                 }}
                 disabled={formData.usePhoneForWhatsApp}
-                placeholder={formData.usePhoneForWhatsApp ? "Se usará el número de teléfono" : "Ej: +54 11 1234-5678 o 1123456789"}
+                placeholder={
+                  formData.usePhoneForWhatsApp
+                    ? t('restaurantWizard.step3.whatsappPlaceholderPhone')
+                    : t('restaurantWizard.step3.whatsappPlaceholderExample')
+                }
               />
               <small className="wizard-help-text">
-                {formData.country 
-                  ? `Se agregará automáticamente el código de país de ${formData.country} si no lo incluyes`
-                  : 'Ingresa el número con código de país (ej: +54 11 1234-5678) o solo el número local'}
+                {formData.country
+                  ? t('restaurantWizard.step3.whatsappHintWithCountry', { country: countryDisplayName })
+                  : t('restaurantWizard.step3.whatsappHintNoCountry')}
               </small>
             </div>
 
             {/* Email */}
             <div className="wizard-field">
-              <label className="wizard-label">Email</label>
+              <label className="wizard-label">{t('restaurantWizard.step3.email')}</label>
               <input
                 type="email"
                 className="admin-form-control"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="contacto@restaurante.com (opcional)"
+                placeholder={t('restaurantWizard.step3.emailPlaceholder')}
               />
             </div>
 
             {/* Sitio web */}
             <div className="wizard-field">
-              <label className="wizard-label">Sitio Web</label>
+              <label className="wizard-label">{t('restaurantWizard.step3.website')}</label>
               <input
                 type="text"
                 className="admin-form-control"
@@ -796,7 +796,7 @@ export default function RestaurantWizard({
                     }
                   }
                 }}
-                placeholder="laparrilla22.com o https://www.restaurante.com (opcional)"
+                placeholder={t('restaurantWizard.step3.websitePlaceholder')}
               />
             </div>
           </div>
@@ -805,40 +805,33 @@ export default function RestaurantWizard({
         {currentStep === 4 && (
           <div className="wizard-step-content wizard-step-centered">
             <div className="wizard-step-header">
-              <h3 className="wizard-step-title">Medios de pago</h3>
-              <p className="wizard-step-description">Configura las monedas de pago para tu restaurante</p>
+              <h3 className="wizard-step-title">{t('restaurantWizard.step4.title')}</h3>
+              <p className="wizard-step-description">{t('restaurantWizard.step4.description')}</p>
             </div>
 
             <div className="wizard-fields-container">
               {/* Moneda por defecto */}
               <div className="wizard-field wizard-field-large">
-                <label className="wizard-label">Moneda de pago por defecto *</label>
+                <label className="wizard-label">{t('restaurantWizard.step4.defaultCurrency')}</label>
                 <select
                   className="admin-form-control wizard-input-large"
                   value={formData.defaultCurrency || 'USD'}
                   onChange={(e) => setFormData({ ...formData, defaultCurrency: e.target.value })}
                   required
                 >
-                  <option value="USD">USD - Dólar estadounidense</option>
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="ARS">ARS - Peso argentino</option>
-                  <option value="MXN">MXN - Peso mexicano</option>
-                  <option value="CLP">CLP - Peso chileno</option>
-                  <option value="COP">COP - Peso colombiano</option>
-                  <option value="PEN">PEN - Sol peruano</option>
-                  <option value="BRL">BRL - Real brasileño</option>
-                  <option value="UYU">UYU - Peso uruguayo</option>
-                  <option value="PYG">PYG - Guaraní paraguayo</option>
-                  <option value="BOB">BOB - Boliviano</option>
-                  <option value="VES">VES - Bolívar venezolano</option>
+                  {CURRENCY_CODES.map((code) => (
+                    <option key={code} value={code}>
+                      {currencyLabel(code)}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               {/* Monedas adicionales */}
               <div className="wizard-field wizard-field-large wizard-desktop-only">
-                <label className="wizard-label">Monedas adicionales (opcional)</label>
+                <label className="wizard-label">{t('restaurantWizard.step4.additionalCurrencies')}</label>
                 <p className="wizard-help-text" style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
-                  Haz clic en las monedas que deseas aceptar además de la moneda por defecto
+                  {t('restaurantWizard.step4.additionalCurrenciesHint')}
                 </p>
                 <div className="wizard-currencies-tags-container">
                   {additionalCurrencies.map((currency) => {
@@ -850,7 +843,7 @@ export default function RestaurantWizard({
                         className={`wizard-currency-tag-selectable ${isSelected ? 'selected' : ''}`}
                         onClick={() => toggleAdditionalCurrency(currency)}
                       >
-                        {currencyLabels[currency] || currency}
+                        {currencyLabel(currency)}
                       </button>
                     );
                   })}
@@ -858,7 +851,7 @@ export default function RestaurantWizard({
               </div>
 
               <div className="wizard-field wizard-field-large wizard-mobile-only">
-                <label className="wizard-label">Monedas adicionales (opcional)</label>
+                <label className="wizard-label">{t('restaurantWizard.step4.additionalCurrencies')}</label>
                 <button
                   type="button"
                   className="wizard-mobile-collapse-btn"
@@ -866,8 +859,8 @@ export default function RestaurantWizard({
                 >
                   <span>
                     {formData.additionalCurrencies?.length
-                      ? `${formData.additionalCurrencies.length} moneda(s) seleccionada(s)`
-                      : 'Seleccionar monedas adicionales'}
+                      ? t('restaurantWizard.step4.selectedCount', { count: formData.additionalCurrencies.length })
+                      : t('restaurantWizard.step4.selectAdditional')}
                   </span>
                   <span aria-hidden="true">▾</span>
                 </button>
@@ -878,14 +871,14 @@ export default function RestaurantWizard({
 
         {currentStep === 5 && (
           <div className="wizard-step-content">
-            <h3 className="wizard-step-title">Imágenes</h3>
-            <p className="wizard-step-description">Agrega el logo y la foto de portada de tu restaurante</p>
+            <h3 className="wizard-step-title">{t('restaurantWizard.step5.title')}</h3>
+            <p className="wizard-step-description">{t('restaurantWizard.step5.description')}</p>
 
             <div className="wizard-media-grid-mobile">
               <div className="wizard-field">
-                <label className="wizard-label">Logo del restaurante</label>
+                <label className="wizard-label">{t('restaurantWizard.step5.logo')}</label>
                 <p className="small text-muted mb-2">
-                  Recomendado: imagen cuadrada de al menos 400×400 px (PNG o JPG).
+                  {t('restaurantWizard.step5.logoHint')}
                 </p>
                 <div
                   className={`wizard-image-upload-zone ${logoPreview ? 'has-image' : ''}`}
@@ -902,7 +895,7 @@ export default function RestaurantWizard({
                   />
                   {logoPreview ? (
                     <div className="wizard-image-preview-wrap">
-                      <img src={logoPreview} alt="Vista previa del logo" className="wizard-preview-image" />
+                      <img src={logoPreview} alt={t('restaurantWizard.step5.logoPreviewAlt')} className="wizard-preview-image" />
                       <button
                         type="button"
                         className="btn btn-danger btn-sm"
@@ -911,7 +904,7 @@ export default function RestaurantWizard({
                           e.stopPropagation();
                           clearLogoSelection();
                         }}
-                        aria-label="Quitar logo"
+                        aria-label={t('restaurantWizard.step5.removeLogo')}
                         style={{
                           position: 'absolute',
                           top: '8px',
@@ -928,20 +921,20 @@ export default function RestaurantWizard({
                         ×
                       </button>
                       <div className="wizard-upload-change-overlay">
-                        <span className="wizard-upload-change-btn">Cambiar imagen</span>
+                        <span className="wizard-upload-change-btn">{t('restaurantWizard.step5.changeImage')}</span>
                       </div>
                     </div>
                   ) : (
                     <div className="wizard-upload-placeholder">
                       <div className="wizard-upload-icon">🖼️</div>
-                      <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
+                      <span className="wizard-upload-text">{t('restaurantWizard.step5.uploadHint')}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="wizard-field">
-                <label className="wizard-label">Foto de portada</label>
+                <label className="wizard-label">{t('restaurantWizard.step5.cover')}</label>
                 <div
                   className={`wizard-image-upload-zone ${coverPreview ? 'has-image' : ''}`}
                   onClick={() => coverInputRef.current?.click()}
@@ -957,7 +950,7 @@ export default function RestaurantWizard({
                   />
                   {coverPreview ? (
                     <div className="wizard-image-preview-wrap">
-                      <img src={coverPreview} alt="Vista previa de portada" className="wizard-preview-image cover" />
+                      <img src={coverPreview} alt={t('restaurantWizard.step5.coverPreviewAlt')} className="wizard-preview-image cover" />
                       <button
                         type="button"
                         className="btn btn-danger btn-sm"
@@ -966,7 +959,7 @@ export default function RestaurantWizard({
                           e.stopPropagation();
                           clearCoverSelection();
                         }}
-                        aria-label="Quitar portada"
+                        aria-label={t('restaurantWizard.step5.removeCover')}
                         style={{
                           position: 'absolute',
                           top: '8px',
@@ -983,13 +976,13 @@ export default function RestaurantWizard({
                         ×
                       </button>
                       <div className="wizard-upload-change-overlay">
-                        <span className="wizard-upload-change-btn">Cambiar imagen</span>
+                        <span className="wizard-upload-change-btn">{t('restaurantWizard.step5.changeImage')}</span>
                       </div>
                     </div>
                   ) : (
                     <div className="wizard-upload-placeholder">
                       <div className="wizard-upload-icon">📷</div>
-                      <span className="wizard-upload-text">Arrastra una imagen o haz clic para seleccionar</span>
+                      <span className="wizard-upload-text">{t('restaurantWizard.step5.uploadHint')}</span>
                     </div>
                   )}
                 </div>
@@ -1000,38 +993,39 @@ export default function RestaurantWizard({
 
         {currentStep === 6 && (
           <div className="wizard-step-content">
-            <h3 className="wizard-step-title">Plantilla y colores</h3>
+            <h3 className="wizard-step-title">{t('restaurantWizard.step6.title')}</h3>
             <p className="wizard-step-description">
-              Elige el diseño de tu menú y los colores de marca. Después continuarás con la creación del menú.
+              {t('restaurantWizard.step6.description')}
             </p>
 
             <div className="wizard-field">
-              <label className="wizard-label">Plantilla de diseño</label>
+              <label className="wizard-label">{t('restaurantWizard.step6.templateLabel')}</label>
               <p className="wizard-help-text" style={{ marginBottom: '14px', fontSize: '0.9rem', color: '#6c757d' }}>
-                Seleccioná una plantilla. Luego podrás cambiarla y ajustar los colores de tu marca.
+                {t('restaurantWizard.step6.templateHelp')}
               </p>
               <div className="wizard-template-selector wizard-template-selector--grid">
-                {WIZARD_TEMPLATES.map((t) => {
-                  const mockup = getPlantillaHeroMockupByApiTemplateId(t.id);
-                  const previewSrc = mockup ?? `${PREVIEW_IMAGE_BASE}/preview-${t.id}.jpg`;
+                {WIZARD_TEMPLATES.map((tpl) => {
+                  const mockup = getPlantillaHeroMockupByApiTemplateId(tpl.id);
+                  const previewSrc = mockup ?? `${PREVIEW_IMAGE_BASE}/preview-${tpl.id}.jpg`;
+                  const name = templateName(tpl.id);
                   return (
                     <div
-                      key={t.id}
-                      className={`wizard-template-option ${formData.template === t.id ? 'active' : ''} ${t.requiresProOrPremium ? 'wizard-template-option-pro' : ''}`}
-                      onClick={() => handleSelectTemplate(t)}
+                      key={tpl.id}
+                      className={`wizard-template-option ${formData.template === tpl.id ? 'active' : ''} ${tpl.requiresProOrPremium ? 'wizard-template-option-pro' : ''}`}
+                      onClick={() => handleSelectTemplate(tpl)}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') handleSelectTemplate(t);
+                        if (e.key === 'Enter' || e.key === ' ') handleSelectTemplate(tpl);
                       }}
                     >
-                      {t.requiresProOrPremium && <span className="wizard-template-pro-badge">PRO</span>}
+                      {tpl.requiresProOrPremium && <span className="wizard-template-pro-badge">PRO</span>}
                       <div
-                        className={`wizard-template-preview ${mockup ? 'wizard-template-preview--mockup' : t.previewClass}`}
+                        className={`wizard-template-preview ${mockup ? 'wizard-template-preview--mockup' : tpl.previewClass}`}
                       >
                         <img
                           src={previewSrc}
-                          alt={`Vista previa ${t.name}`}
+                          alt={t('restaurantWizard.step6.previewAlt', { name })}
                           className="wizard-template-preview-img"
                           loading="lazy"
                           onError={(e) => {
@@ -1042,29 +1036,29 @@ export default function RestaurantWizard({
                           }}
                         />
                       </div>
-                      <div className="wizard-template-name">{t.name}</div>
-                      <div className="wizard-template-desc">{t.desc}</div>
-                      {t.requiresProOrPremium && (
-                        <small className="wizard-template-pro-note">Disponible para plan Pro/Business</small>
+                      <div className="wizard-template-name">{name}</div>
+                      <div className="wizard-template-desc">{templateDesc(tpl.id)}</div>
+                      {tpl.requiresProOrPremium && (
+                        <small className="wizard-template-pro-note">{t('restaurantWizard.step6.proNote')}</small>
                       )}
                     </div>
                   );
                 })}
               </div>
               <small className="wizard-hint">
-                Esta plantilla se aplicará a todos los menús de este restaurante
+                {t('restaurantWizard.step6.templateHint')}
               </small>
             </div>
 
             <div className="wizard-field">
-              <label className="wizard-label">Colores de marca</label>
+              <label className="wizard-label">{t('restaurantWizard.step6.brandColors')}</label>
               <p className="wizard-help-text" style={{ marginBottom: '20px', fontSize: '0.9rem', color: '#6c757d' }}>
-                Personaliza los colores principales de tu restaurante. Estos colores se aplicarán a botones, títulos y elementos destacados.
+                {t('restaurantWizard.step6.brandColorsHelp')}
               </p>
               <div className="row g-5">
                 <div className="col-md-6">
                   <label className="wizard-label" style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
-                    Color primario
+                    {t('restaurantWizard.step6.primaryColor')}
                   </label>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <input
@@ -1089,7 +1083,7 @@ export default function RestaurantWizard({
                 </div>
                 <div className="col-md-6">
                   <label className="wizard-label" style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
-                    Color secundario
+                    {t('restaurantWizard.step6.secondaryColor')}
                   </label>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <input
@@ -1126,7 +1120,7 @@ export default function RestaurantWizard({
               onClick={handleBack}
               disabled={saving}
             >
-              ← Anterior
+              {t('restaurantWizard.footer.back')}
             </button>
           )}
           <div className="wizard-footer-right">
@@ -1137,7 +1131,7 @@ export default function RestaurantWizard({
                 onClick={onCancel}
                 disabled={saving}
               >
-                Cancelar
+                {t('restaurantWizard.footer.cancel')}
               </button>
             )}
             {currentStep < restaurantCreateStep ? (
@@ -1146,7 +1140,7 @@ export default function RestaurantWizard({
                 className="admin-btn"
                 disabled={!canGoToNextStep() || saving}
               >
-                Siguiente →
+                {t('restaurantWizard.footer.next')}
               </button>
             ) : currentStep === restaurantCreateStep ? (
               <button 
@@ -1154,7 +1148,7 @@ export default function RestaurantWizard({
                 className="admin-btn"
                 disabled={!canGoToNextStep() || saving}
               >
-                {saving ? 'Creando…' : 'Crear Restaurante'}
+                {saving ? t('restaurantWizard.footer.creating') : t('restaurantWizard.footer.create')}
               </button>
             ) : (
               <button 
@@ -1162,7 +1156,7 @@ export default function RestaurantWizard({
                 className="admin-btn"
                 disabled={saving}
               >
-                {saving ? 'Guardando…' : 'Continuar al menú →'}
+                {saving ? t('restaurantWizard.footer.saving') : t('restaurantWizard.footer.continueToMenu')}
               </button>
             )}
           </div>
@@ -1174,18 +1168,18 @@ export default function RestaurantWizard({
           className="wizard-mobile-modal-overlay"
           role="dialog"
           aria-modal="true"
-          aria-label="Monedas adicionales"
+          aria-label={t('restaurantWizard.step4.additionalModalTitle')}
           onClick={() => setShowAdditionalCurrenciesModal(false)}
         >
           <div className="wizard-mobile-modal-panel" onClick={(e) => e.stopPropagation()}>
             <div className="wizard-mobile-modal-header">
-              <h4>Monedas adicionales</h4>
+              <h4>{t('restaurantWizard.step4.additionalModalTitle')}</h4>
               <button
                 type="button"
                 className="btn btn-sm btn-outline-secondary"
                 onClick={() => setShowAdditionalCurrenciesModal(false)}
               >
-                Cerrar
+                {t('restaurantWizard.step4.close')}
               </button>
             </div>
             <div className="wizard-currencies-tags-container wizard-currencies-tags-container-mobile">
@@ -1198,7 +1192,7 @@ export default function RestaurantWizard({
                     className={`wizard-currency-tag-selectable wizard-currency-tag-selectable-mobile ${isSelected ? 'selected' : ''}`}
                     onClick={() => toggleAdditionalCurrency(currency)}
                   >
-                    {currencyLabels[currency] || currency}
+                    {currencyLabel(currency)}
                   </button>
                 );
               })}
@@ -1217,23 +1211,25 @@ export default function RestaurantWizard({
         >
           <div className="wizard-mobile-modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
             <div className="wizard-mobile-modal-header">
-              <h4 id="wizard-pro-template-title">Plantilla Pro</h4>
+              <h4 id="wizard-pro-template-title">{t('restaurantWizard.proLock.title')}</h4>
               <button
                 type="button"
                 className="btn btn-sm btn-outline-secondary"
                 onClick={() => setProLockTemplate(null)}
               >
-                Cerrar
+                {t('restaurantWizard.proLock.close')}
               </button>
             </div>
             <div style={{ padding: '8px 4px 16px' }}>
               <p style={{ marginBottom: 12, fontSize: '1rem', lineHeight: 1.45 }}>
-                La plantilla <strong>{proLockTemplate.name}</strong> está disponible solo para usuarios{' '}
-                <strong>Pro</strong> o <strong>Business</strong>.
+                <Trans
+                  i18nKey="restaurantWizard.proLock.body"
+                  values={{ name: templateName(proLockTemplate.id) }}
+                  components={{ strong: <strong /> }}
+                />
               </p>
               <p style={{ marginBottom: 0, color: '#6c757d', fontSize: '0.92rem', lineHeight: 1.45 }}>
-                Podés seguir con una plantilla gratuita (más adelante la vas a poder cambiar) o ver los planes de
-                suscripción. Esta plantilla es solo para usuarios Pro.
+                {t('restaurantWizard.proLock.hint')}
               </p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1242,14 +1238,14 @@ export default function RestaurantWizard({
                 className="admin-btn"
                 onClick={handleContinueWithFreeTemplate}
               >
-                Continuar con plantilla gratuita
+                {t('restaurantWizard.proLock.continueFree')}
               </button>
               <a
                 href="/admin/profile/subscription"
                 className="admin-btn admin-btn-secondary"
                 style={{ textAlign: 'center', textDecoration: 'none' }}
               >
-                Ver planes de suscripción
+                {t('restaurantWizard.proLock.viewPlans')}
               </a>
             </div>
           </div>
@@ -1294,4 +1290,3 @@ export default function RestaurantWizard({
     </div>
   );
 }
-

@@ -20,6 +20,7 @@ import { RenameMenuLocaleDto } from './dto/rename-menu-locale.dto';
 import { SaveMenuLocaleWorkbenchDto } from './dto/save-menu-locale-workbench.dto';
 import { PatchMenuTranslationSettingsDto } from './dto/patch-menu-translation-settings.dto';
 import { PostAutoTranslateDto } from './dto/post-auto-translate.dto';
+import { SetDefaultLocaleDto } from './dto/set-default-locale.dto';
 import { AutoTranslateService } from '../auto-translate/auto-translate.service';
 
 @ApiTags('menu-translations')
@@ -33,7 +34,7 @@ export class MenuTranslationsController {
   ) {}
 
   @Get('menus')
-  @ApiOperation({ summary: 'Listar menús de un restaurante con idiomas detectados (Pro / Pro Team / Super Admin)' })
+  @ApiOperation({ summary: 'Listar menús de un comercio con idiomas detectados (Pro / Pro Team / Super Admin)' })
   @ApiQuery({ name: 'restaurantId', required: true })
   @ApiQuery({ name: 'tenantId', required: false, description: 'Solo SUPER_ADMIN' })
   async listMenus(
@@ -112,6 +113,19 @@ export class MenuTranslationsController {
   ) {
     const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, body.tenantId);
     return this.menuTranslationsService.renameLocale(tenantId, menuId, body);
+  }
+
+  @Post('menus/:menuId/set-default-locale')
+  @ApiOperation({
+    summary: 'Definir idioma por defecto del menú (debe existir previamente como traducción)',
+  })
+  async setDefaultLocale(
+    @Param('menuId') menuId: string,
+    @Body() body: SetDefaultLocaleDto,
+    @Request() req: any,
+  ) {
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, body.tenantId);
+    return this.menuTranslationsService.setDefaultLocale(tenantId, menuId, body.locale);
   }
 
   @Patch('menus/:menuId/settings')

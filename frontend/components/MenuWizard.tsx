@@ -1,17 +1,24 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
+import { Trans, useTranslation } from 'react-i18next';
 import api, { type AxiosErrorWithMessage } from '../lib/axios';
 import { getApiErrorMessage } from '../lib/api-error-message';
+import i18n from '../src/i18n/config';
+import menuWizardEs from '../src/locales/fragments/menuWizard.es.json';
+import menuWizardEn from '../src/locales/fragments/menuWizard.en.json';
 import ProductWizard from './ProductWizard';
+
+i18n.addResourceBundle('es-ES', 'translation', { menuWizard: menuWizardEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { menuWizard: menuWizardEn }, true, true);
 
 interface MenuWizardProps {
   restaurantId: string;
   restaurants: any[];
   onComplete: () => void;
   onCancel?: () => void;
-  /** Tras crear un restaurante: pantalla inicial crear / asignar / CSV */
+  /** Tras crear un comercio: pantalla inicial crear / asignar / CSV */
   fromRestaurantCreation?: boolean;
-  /** Desde admin Menús «Nuevo menú»: misma pantalla inicial sin el texto de restaurante recién creado */
+  /** Desde admin Menús «Nuevo menú»: misma pantalla inicial sin el texto de comercio recién creado */
   showMenuEntryChoice?: boolean;
 }
 
@@ -40,6 +47,7 @@ export default function MenuWizard({
   fromRestaurantCreation = false,
   showMenuEntryChoice = false,
 }: MenuWizardProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const useEntryPickFlow = fromRestaurantCreation || showMenuEntryChoice;
   const [entryPhase, setEntryPhase] = useState<EntryPhase>(
@@ -77,7 +85,7 @@ export default function MenuWizard({
   const [csvMenuName, setCsvMenuName] = useState('');
   const [csvMenuDescription, setCsvMenuDescription] = useState('');
   const csvInputRef = useRef<HTMLInputElement>(null);
-  /** Restaurante destino al asignar menús existentes (admin Menús sin `initialRestaurantId`) */
+  /** Comercio destino al asignar menús existentes (admin Menús sin `initialRestaurantId`) */
   const [assignMenuRestaurantId, setAssignMenuRestaurantId] = useState('');
 
   const clearCsvFile = useCallback(() => {
@@ -93,7 +101,7 @@ export default function MenuWizard({
       setCsvFile(file);
       setCsvError('');
     } else {
-      setCsvError('Elegí un archivo .csv válido.');
+      setCsvError(t('menuWizard.importCsv.invalidCsvPick'));
     }
     e.target.value = '';
   };
@@ -112,7 +120,7 @@ export default function MenuWizard({
       setCsvFile(file);
       setCsvError('');
     } else {
-      setCsvError('Soltá un archivo .csv válido.');
+      setCsvError(t('menuWizard.importCsv.invalidCsvDrop'));
     }
   };
 
@@ -150,7 +158,7 @@ export default function MenuWizard({
       } catch (e: any) {
         if (!cancelled) {
           setAssignableError(
-            e.response?.data?.message || 'No se pudieron cargar los menús asignables',
+            e.response?.data?.message || t('menuWizard.selectMenus.loadError'),
           );
           setAssignableMenus([]);
         }
@@ -161,9 +169,9 @@ export default function MenuWizard({
     return () => {
       cancelled = true;
     };
-  }, [entryPhase, assignFetchRestaurantId, getTenantIdForSuperAdmin]);
+  }, [entryPhase, assignFetchRestaurantId, getTenantIdForSuperAdmin, t]);
 
-  // Si solo hay un restaurante, usar ese automáticamente
+  // Si solo hay un comercio, usar ese automáticamente
   useEffect(() => {
     if (initialRestaurantId) {
       setFormData(prev => ({ ...prev, restaurantId: initialRestaurantId }));
@@ -207,13 +215,13 @@ export default function MenuWizard({
 
   const handleConfirmAssignMenus = async () => {
     if (selectedMenuIds.length === 0) {
-      alert('Seleccioná al menos un menú para asignar a este restaurante.');
+      alert(t('menuWizard.selectMenus.selectAtLeastOne'));
       return;
     }
     const targetRestaurantId =
       initialRestaurantId || assignMenuRestaurantId || formData.restaurantId || '';
     if (!targetRestaurantId.trim()) {
-      alert('Seleccioná el restaurante al que querés vincular los menús.');
+      alert(t('menuWizard.selectMenus.selectTargetBusiness'));
       return;
     }
     setLoading(true);
@@ -229,7 +237,7 @@ export default function MenuWizard({
       );
       onComplete();
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Error al asignar los menús');
+      alert(e.response?.data?.message || t('menuWizard.selectMenus.assignError'));
     } finally {
       setLoading(false);
     }
@@ -237,15 +245,15 @@ export default function MenuWizard({
 
   const handleSubmitCsvImport = async () => {
     if (!csvFile) {
-      alert('Seleccioná un archivo CSV.');
+      alert(t('menuWizard.importCsv.selectFile'));
       return;
     }
     if (!csvTargetRestaurantId.trim()) {
-      alert('Seleccioná el restaurante al que querés importar el menú.');
+      alert(t('menuWizard.importCsv.selectBusinessAlert'));
       return;
     }
     if (!csvMenuName.trim()) {
-      alert('Ingresá el nombre del menú.');
+      alert(t('menuWizard.importCsv.enterMenuName'));
       return;
     }
     setCsvSubmitting(true);
@@ -281,11 +289,9 @@ export default function MenuWizard({
       onComplete();
     } catch (e: any) {
       const m = e.response?.data?.message;
-      const text = Array.isArray(m) ? m.join(', ') : m || 'Error al importar el CSV';
+      const text = Array.isArray(m) ? m.join(', ') : m || t('menuWizard.importCsv.importError');
       setCsvError(text);
-      alert(
-        `No se pudo crear el menú desde el CSV.\n\n${text}\n\nRevisá el archivo y volvé a intentar; seguís en esta pantalla para corregirlo.`,
-      );
+      alert(t('menuWizard.importCsv.importFailedAlert', { detail: text }));
     } finally {
       setCsvSubmitting(false);
     }
@@ -295,7 +301,7 @@ export default function MenuWizard({
     if (currentStep === 1) {
       // Validar que tenga nombre
       if (!formData.name.trim()) {
-        alert('Por favor ingresa un nombre para el menú');
+        alert(t('menuWizard.create.enterMenuName'));
         return;
       }
       setCurrentStep(2);
@@ -330,7 +336,7 @@ export default function MenuWizard({
   // Gestión de secciones
   const handleAddSection = () => {
     if (!sectionFormData.name.trim()) {
-      alert('Por favor ingresa un nombre para la sección');
+      alert(t('menuWizard.sections.enterName'));
       return;
     }
 
@@ -383,7 +389,7 @@ export default function MenuWizard({
   };
 
   const handleDeleteSection = (index: number) => {
-    if (!confirm('¿Estás seguro de eliminar esta sección?')) return;
+    if (!confirm(t('menuWizard.sections.confirmDelete'))) return;
     
     const updated = sections.filter((_, i) => i !== index);
     // Reordenar los índices
@@ -441,9 +447,9 @@ export default function MenuWizard({
       const activeSections = sections.filter(section => section.isActive);
       if (activeSections.length === 0) {
         if (sections.length === 0) {
-          alert('Debes agregar al menos una sección activa antes de crear el menú. Por favor, agrega una sección usando el formulario de arriba.');
+          alert(t('menuWizard.sections.needActiveEmpty'));
         } else {
-          alert('Debes tener al menos una sección activa antes de crear el menú. Tienes secciones creadas pero todas están inactivas. Por favor, edita una sección y márcala como "Activa".');
+          alert(t('menuWizard.sections.needActiveInactive'));
         }
         return;
       }
@@ -492,7 +498,7 @@ export default function MenuWizard({
       } catch (error: any) {
         alert(
           (error as AxiosErrorWithMessage).userMessage ||
-            getApiErrorMessage(error, 'Error creando menú'),
+            getApiErrorMessage(error, t('menuWizard.create.createError')),
         );
       } finally {
         setLoading(false);
@@ -514,7 +520,7 @@ export default function MenuWizard({
     onComplete();
   };
 
-  // Obtener la moneda por defecto del restaurante
+  // Obtener la moneda por defecto del comercio
   const getDefaultCurrency = () => {
     if (formData.restaurantId) {
       const restaurant = restaurants.find(r => r.id === formData.restaurantId);
@@ -541,14 +547,14 @@ export default function MenuWizard({
     );
   }
 
-  // Pantalla inicial: crear / asignar / CSV (tras nuevo restaurante o desde admin Menús)
+  // Pantalla inicial: crear / asignar / CSV (tras nuevo comercio o desde admin Menús)
   if (useEntryPickFlow && entryPhase === 'pick') {
     const pickTitle = fromRestaurantCreation
-      ? '¡Restaurante creado exitosamente!'
-      : 'Nuevo menú';
+      ? t('menuWizard.entry.titleCreated')
+      : t('menuWizard.entry.titleNew');
     const pickSubtitle = fromRestaurantCreation
-      ? 'Ahora creá, asigná o importá un menú para tu restaurante'
-      : 'Elegí si querés crear un menú desde cero, vincular menús que ya existen o importar con un archivo CSV.';
+      ? t('menuWizard.entry.subtitleCreated')
+      : t('menuWizard.entry.subtitleNew');
     return (
       <div className="restaurant-wizard">
         <div className="wizard-header">
@@ -562,9 +568,9 @@ export default function MenuWizard({
             onClick={handleCreateNew}
           >
             <div className="wizard-option-icon">➕</div>
-            <h3 className="wizard-option-title">Crear nuevo menú</h3>
+            <h3 className="wizard-option-title">{t('menuWizard.entry.createTitle')}</h3>
             <p className="wizard-option-description">
-              Crea un menú desde cero con nombre y descripción
+              {t('menuWizard.entry.createDesc')}
             </p>
           </div>
 
@@ -573,9 +579,9 @@ export default function MenuWizard({
             onClick={handleSelectExisting}
           >
             <div className="wizard-option-icon">📋</div>
-            <h3 className="wizard-option-title">Seleccionar menús existentes</h3>
+            <h3 className="wizard-option-title">{t('menuWizard.entry.selectTitle')}</h3>
             <p className="wizard-option-description">
-              Asigná menús que ya creaste (sin local u otro local) a este restaurante
+              {t('menuWizard.entry.selectDesc')}
             </p>
           </div>
 
@@ -584,9 +590,9 @@ export default function MenuWizard({
             onClick={handleImportCsv}
           >
             <div className="wizard-option-icon">📥</div>
-            <h3 className="wizard-option-title">Importar menú con CSV</h3>
+            <h3 className="wizard-option-title">{t('menuWizard.entry.importTitle')}</h3>
             <p className="wizard-option-description">
-              Elegís restaurante y nombre del menú en pantalla; el CSV lleva secciones, orden y productos
+              {t('menuWizard.entry.importDesc')}
             </p>
           </div>
         </div>
@@ -598,7 +604,7 @@ export default function MenuWizard({
               className="admin-btn admin-btn-secondary"
               onClick={onCancel}
             >
-              {fromRestaurantCreation ? 'Omitir por ahora' : 'Cancelar'}
+              {fromRestaurantCreation ? t('menuWizard.entry.skip') : t('menuWizard.entry.cancel')}
             </button>
           </div>
         )}
@@ -608,13 +614,17 @@ export default function MenuWizard({
 
   if (useEntryPickFlow && entryPhase === 'selectMenus') {
     const targetRid = initialRestaurantId || assignMenuRestaurantId || formData.restaurantId || '';
-    const rName = restaurants.find((r) => r.id === targetRid)?.name || 'este restaurante';
+    const rName = restaurants.find((r) => r.id === targetRid)?.name || t('menuWizard.selectMenus.thisBusiness');
     return (
       <div className="restaurant-wizard">
         <div className="wizard-header">
-          <h2 className="wizard-title">Seleccionar menús existentes</h2>
+          <h2 className="wizard-title">{t('menuWizard.selectMenus.title')}</h2>
           <p className="wizard-subtitle">
-            Marcá los menús que querés vincular a <strong>{rName}</strong>. Los menús asignados a otro local pasarán a este.
+            <Trans
+              i18nKey="menuWizard.selectMenus.subtitle"
+              values={{ name: rName }}
+              components={{ strong: <strong /> }}
+            />
           </p>
         </div>
 
@@ -622,7 +632,7 @@ export default function MenuWizard({
           {!initialRestaurantId && restaurants.length > 1 && (
             <div className="wizard-field wizard-field-large" style={{ marginBottom: 20 }}>
               <label className="wizard-label" htmlFor="assign-menu-restaurant">
-                Restaurante destino
+                {t('menuWizard.selectMenus.targetBusiness')}
               </label>
               <select
                 id="assign-menu-restaurant"
@@ -631,7 +641,7 @@ export default function MenuWizard({
                 onChange={(e) => setAssignMenuRestaurantId(e.target.value)}
                 disabled={loadingAssignable}
               >
-                <option value="">Seleccioná un restaurante…</option>
+                <option value="">{t('menuWizard.selectMenus.selectBusiness')}</option>
                 {restaurants.map((rest: { id: string; name: string }) => (
                   <option key={rest.id} value={rest.id}>
                     {rest.name}
@@ -640,13 +650,13 @@ export default function MenuWizard({
               </select>
             </div>
           )}
-          {loadingAssignable && <p>Cargando menús…</p>}
+          {loadingAssignable && <p>{t('menuWizard.selectMenus.loading')}</p>}
           {assignableError && (
             <p style={{ color: '#c0392b' }}>{assignableError}</p>
           )}
           {!loadingAssignable && !assignableError && assignableMenus.length === 0 && (
             <p className="wizard-step-description">
-              No hay menús disponibles para asignar. Podés crear uno nuevo o importar con CSV.
+              {t('menuWizard.selectMenus.empty')}
             </p>
           )}
           {!loadingAssignable && assignableMenus.length > 0 && (
@@ -680,11 +690,12 @@ export default function MenuWizard({
                     ) : null}
                     {m.assignedRestaurantName ? (
                       <div style={{ fontSize: '0.85rem', marginTop: 6 }}>
-                        Actualmente en: <strong>{m.assignedRestaurantName}</strong>
+                        {t('menuWizard.selectMenus.currentlyAt')}{' '}
+                        <strong>{m.assignedRestaurantName}</strong>
                       </div>
                     ) : (
                       <div style={{ fontSize: '0.85rem', marginTop: 6, color: 'var(--admin-text-muted)' }}>
-                        Sin restaurante asignado
+                        {t('menuWizard.selectMenus.unassigned')}
                       </div>
                     )}
                   </div>
@@ -701,7 +712,7 @@ export default function MenuWizard({
             onClick={handleBack}
             disabled={loading}
           >
-            ← Volver
+            {t('menuWizard.footer.back')}
           </button>
           <div className="wizard-footer-right">
             <button
@@ -710,7 +721,9 @@ export default function MenuWizard({
               onClick={handleConfirmAssignMenus}
               disabled={loading || loadingAssignable || selectedMenuIds.length === 0}
             >
-              {loading ? 'Guardando…' : `Asignar menús (${selectedMenuIds.length})`}
+              {loading
+                ? t('menuWizard.selectMenus.saving')
+                : t('menuWizard.selectMenus.assign', { count: selectedMenuIds.length })}
             </button>
           </div>
         </div>
@@ -724,45 +737,60 @@ export default function MenuWizard({
       <div className="restaurant-wizard">
         <div className="wizard-header">
           <h2 className="wizard-title" style={{ marginBottom: '1rem' }}>
-            Importar menú con CSV
+            {t('menuWizard.importCsv.title')}
           </h2>
           <div className="wizard-subtitle" style={{ textAlign: 'left', maxWidth: 640, margin: '0 auto' }}>
             <p className="mb-3" style={{ lineHeight: 1.55 }}>
-              Un archivo CSV = un menú nuevo. Primero elegís el <strong>restaurante</strong> y el <strong>nombre del menú</strong> en esta pantalla.
+              <Trans
+                i18nKey="menuWizard.importCsv.intro1"
+                components={{ strong: <strong /> }}
+              />
             </p>
             <p className="mb-3" style={{ lineHeight: 1.55 }}>
-              En el CSV, el <strong>orden de las secciones</strong> es el orden en que aparecen por primera vez al leer el archivo de arriba abajo. Repetí el mismo <code>nombre_seccion</code> en cada fila de productos que pertenezcan a esa categoría. El orden se puede ajustar después en <strong>Editar menú</strong>. Cada fila incluye el <strong>producto</strong> con precios, destacado y alérgenos.
+              <Trans
+                i18nKey="menuWizard.importCsv.intro2"
+                components={{ strong: <strong />, code: <code /> }}
+              />
             </p>
             <p className="mb-3" style={{ lineHeight: 1.55 }}>
-              Luego de la importación podés <strong>modificar el menú y sus productos de forma manual</strong> desde la administración. Si tu plan permite fotos en productos, podés <strong>cargarlas después</strong> desde la edición del menú. El menú queda en <strong>borrador</strong>: en <strong>Menús</strong> usá el botón <strong>Publicar</strong> para que esté visible online.
+              <Trans
+                i18nKey="menuWizard.importCsv.intro3"
+                components={{ strong: <strong /> }}
+              />
             </p>
             <p className="mb-0" style={{ lineHeight: 1.55 }}>
-              Si querés más información sobre la importación con CSV, visitá la{' '}
-              <a
-                href="/documentacion/importar-menu-csv"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: 'var(--admin-primary)', fontWeight: 600 }}
-              >
-                documentación: importar menú con CSV
-              </a>
-              .
+              <Trans
+                i18nKey="menuWizard.importCsv.intro4"
+                components={{
+                  docs: (
+                    <a
+                      href="/documentacion/importar-menu-csv"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'var(--admin-primary)', fontWeight: 600 }}
+                    />
+                  ),
+                }}
+              />
             </p>
           </div>
         </div>
 
         <div className="wizard-fields-container" style={{ maxWidth: 640, margin: '0 auto' }}>
           <p className="wizard-step-description" style={{ marginBottom: 16 }}>
-            Descargá la plantilla de ejemplo para ver las columnas. El import respeta los límites de menús y productos de tu plan. Si tu CSV incluye la columna <code>nombre_restaurante</code>, debe coincidir con el restaurante elegido abajo; también podés omitir esa columna y usar solo el selector.
+            <Trans
+              i18nKey="menuWizard.importCsv.templateHint"
+              components={{ code: <code /> }}
+            />
           </p>
           <p style={{ marginBottom: 20 }}>
             <a href={templateHref} download className="admin-btn admin-btn-secondary" style={{ display: 'inline-block', textDecoration: 'none' }}>
-              Descargar plantilla de ejemplo (CSV)
+              {t('menuWizard.importCsv.downloadTemplate')}
             </a>
           </p>
           <div className="wizard-field wizard-field-large">
             <label className="wizard-label" htmlFor="csv-restaurant">
-              Seleccioná el restaurante al que pertenece el menú
+              {t('menuWizard.importCsv.businessLabel')}
             </label>
             <select
               id="csv-restaurant"
@@ -771,7 +799,7 @@ export default function MenuWizard({
               onChange={(e) => setCsvTargetRestaurantId(e.target.value)}
               disabled={csvSubmitting}
             >
-              <option value="">Seleccioná un restaurante…</option>
+              <option value="">{t('menuWizard.importCsv.selectBusiness')}</option>
               {restaurants.map((rest: { id: string; name: string }) => (
                 <option key={rest.id} value={rest.id}>
                   {rest.name}
@@ -781,7 +809,7 @@ export default function MenuWizard({
           </div>
           <div className="wizard-field wizard-field-large">
             <label className="wizard-label" htmlFor="csv-menu-name">
-              Nombre del menú
+              {t('menuWizard.importCsv.menuNameLabel')}
             </label>
             <input
               id="csv-menu-name"
@@ -789,13 +817,16 @@ export default function MenuWizard({
               className="admin-form-control"
               value={csvMenuName}
               onChange={(e) => setCsvMenuName(e.target.value)}
-              placeholder="Ej. Menú principal"
+              placeholder={t('menuWizard.importCsv.menuNamePlaceholder')}
               disabled={csvSubmitting}
             />
           </div>
           <div className="wizard-field wizard-field-large">
             <label className="wizard-label" htmlFor="csv-menu-desc">
-              Descripción del menú <span style={{ fontWeight: 400, color: 'var(--admin-text-muted)' }}>(opcional)</span>
+              {t('menuWizard.importCsv.menuDescLabel')}{' '}
+              <span style={{ fontWeight: 400, color: 'var(--admin-text-muted)' }}>
+                {t('menuWizard.importCsv.optional')}
+              </span>
             </label>
             <textarea
               id="csv-menu-desc"
@@ -803,12 +834,12 @@ export default function MenuWizard({
               rows={2}
               value={csvMenuDescription}
               onChange={(e) => setCsvMenuDescription(e.target.value)}
-              placeholder="Texto breve que verán los comensales al elegir el menú"
+              placeholder={t('menuWizard.importCsv.menuDescPlaceholder')}
               disabled={csvSubmitting}
             />
           </div>
           <div className="wizard-field wizard-field-large">
-            <label className="wizard-label">Archivo CSV</label>
+            <label className="wizard-label">{t('menuWizard.importCsv.fileLabel')}</label>
             <div
               className={`wizard-image-upload-zone ${csvFile ? 'wizard-csv-upload-zone--has-file' : ''}`}
               onClick={() => !csvSubmitting && csvInputRef.current?.click()}
@@ -831,7 +862,9 @@ export default function MenuWizard({
                   </div>
                   <span className="wizard-upload-text">{csvFile.name}</span>
                   <span className="wizard-upload-hint">
-                    {(csvFile.size / 1024).toFixed(1)} KB · Hacé clic para cambiar el archivo
+                    {t('menuWizard.importCsv.fileChangeHint', {
+                      size: (csvFile.size / 1024).toFixed(1),
+                    })}
                   </span>
                   <button
                     type="button"
@@ -843,7 +876,7 @@ export default function MenuWizard({
                     }}
                     disabled={csvSubmitting}
                   >
-                    Quitar archivo
+                    {t('menuWizard.importCsv.removeFile')}
                   </button>
                 </div>
               ) : (
@@ -851,8 +884,8 @@ export default function MenuWizard({
                   <div className="wizard-upload-icon" aria-hidden>
                     📄
                   </div>
-                  <span className="wizard-upload-text">Arrastrá un CSV o hacé clic para seleccionar</span>
-                  <span className="wizard-upload-hint">Solo archivos .csv</span>
+                  <span className="wizard-upload-text">{t('menuWizard.importCsv.dropHint')}</span>
+                  <span className="wizard-upload-hint">{t('menuWizard.importCsv.csvOnly')}</span>
                 </div>
               )}
             </div>
@@ -869,7 +902,7 @@ export default function MenuWizard({
             onClick={handleBack}
             disabled={csvSubmitting}
           >
-            ← Volver
+            {t('menuWizard.footer.back')}
           </button>
           <div className="wizard-footer-right">
             <button
@@ -880,7 +913,7 @@ export default function MenuWizard({
                 csvSubmitting || !csvFile || !csvTargetRestaurantId.trim() || !csvMenuName.trim()
               }
             >
-              {csvSubmitting ? 'Importando…' : 'Importar'}
+              {csvSubmitting ? t('menuWizard.importCsv.importing') : t('menuWizard.importCsv.import')}
             </button>
           </div>
         </div>
@@ -893,8 +926,8 @@ export default function MenuWizard({
   return (
     <div className="restaurant-wizard">
       <div className="wizard-header">
-        <h2 className="wizard-title">Crear nuevo menú</h2>
-        <p className="wizard-subtitle">Completa la información del menú paso a paso</p>
+        <h2 className="wizard-title">{t('menuWizard.create.title')}</h2>
+        <p className="wizard-subtitle">{t('menuWizard.create.subtitle')}</p>
       </div>
 
       {/* Progress bar */}
@@ -908,11 +941,11 @@ export default function MenuWizard({
         <div className="wizard-steps">
           <div className={`wizard-step ${currentStep >= 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>
             <div className="wizard-step-number">1</div>
-            <div className="wizard-step-label">Información</div>
+            <div className="wizard-step-label">{t('menuWizard.create.stepInfo')}</div>
           </div>
           <div className={`wizard-step ${currentStep >= 2 ? 'active' : ''}`}>
             <div className="wizard-step-number">2</div>
-            <div className="wizard-step-label">Secciones</div>
+            <div className="wizard-step-label">{t('menuWizard.create.stepSections')}</div>
           </div>
         </div>
       </div>
@@ -921,22 +954,22 @@ export default function MenuWizard({
         {currentStep === 1 && (
           <div className="wizard-step-content wizard-step-centered">
             <div className="wizard-step-header">
-              <h3 className="wizard-step-title">Información básica</h3>
-              <p className="wizard-step-description">Ingresa el nombre y descripción del menú</p>
+              <h3 className="wizard-step-title">{t('menuWizard.create.basicTitle')}</h3>
+              <p className="wizard-step-description">{t('menuWizard.create.basicDesc')}</p>
             </div>
 
             <div className="wizard-fields-container">
-              {/* Selector de restaurante (solo si hay más de uno) */}
+              {/* Selector de comercio (solo si hay más de uno) */}
               {restaurants.length > 1 && (
                 <div className="wizard-field wizard-field-large">
-                  <label className="wizard-label">Restaurante *</label>
+                  <label className="wizard-label">{t('menuWizard.create.businessLabel')}</label>
                   <select
                     className="admin-form-control wizard-input-large"
                     value={formData.restaurantId}
                     onChange={(e) => setFormData({ ...formData, restaurantId: e.target.value })}
                     required
                   >
-                    <option value="">Selecciona un restaurante</option>
+                    <option value="">{t('menuWizard.create.selectBusiness')}</option>
                     {restaurants.map((restaurant) => (
                       <option key={restaurant.id} value={restaurant.id}>
                         {restaurant.name}
@@ -948,25 +981,25 @@ export default function MenuWizard({
 
               {/* Nombre del menú */}
               <div className="wizard-field wizard-field-large">
-                <label className="wizard-label">Nombre del menú *</label>
+                <label className="wizard-label">{t('menuWizard.create.menuNameLabel')}</label>
                 <input
                   type="text"
                   className="admin-form-control wizard-input-large"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ej: Menú del Día, Menú Ejecutivo, etc."
+                  placeholder={t('menuWizard.create.menuNamePlaceholder')}
                   required
                 />
               </div>
 
               {/* Descripción */}
               <div className="wizard-field wizard-field-large">
-                <label className="wizard-label">Descripción (opcional)</label>
+                <label className="wizard-label">{t('menuWizard.create.descriptionLabel')}</label>
                 <textarea
                   className="admin-form-control wizard-textarea-large"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe tu menú..."
+                  placeholder={t('menuWizard.create.descriptionPlaceholder')}
                   rows={4}
                 />
               </div>
@@ -977,9 +1010,12 @@ export default function MenuWizard({
         {currentStep === 2 && (
           <div className="wizard-step-content wizard-step-centered">
             <div className="wizard-step-header">
-              <h3 className="wizard-step-title">Secciones del menú</h3>
+              <h3 className="wizard-step-title">{t('menuWizard.sections.title')}</h3>
               <p className="wizard-step-description">
-                Agrega, edita o elimina secciones. Arrastra para reordenar. <strong>Debes agregar al menos una sección activa para poder crear el menú.</strong>
+                <Trans
+                  i18nKey="menuWizard.sections.description"
+                  components={{ strong: <strong /> }}
+                />
               </p>
             </div>
 
@@ -988,24 +1024,24 @@ export default function MenuWizard({
               <div className="wizard-section-form">
                 <div className="wizard-section-form-row">
                   <div className="wizard-section-form-field">
-                    <label className="wizard-label">Nombre de la sección *</label>
+                    <label className="wizard-label">{t('menuWizard.sections.nameLabel')}</label>
                     <input
                       type="text"
                       className="admin-form-control"
                       value={sectionFormData.name}
                       onChange={(e) => setSectionFormData({ ...sectionFormData, name: e.target.value })}
-                      placeholder="Ej: Entradas, Platos principales, Postres..."
+                      placeholder={t('menuWizard.sections.namePlaceholder')}
                     />
                   </div>
                   <div className="wizard-section-form-field">
-                    <label className="wizard-label">Estado</label>
+                    <label className="wizard-label">{t('menuWizard.sections.statusLabel')}</label>
                     <select
                       className="admin-form-control"
                       value={sectionFormData.isActive ? 'true' : 'false'}
                       onChange={(e) => setSectionFormData({ ...sectionFormData, isActive: e.target.value === 'true' })}
                     >
-                      <option value="true">Activa</option>
-                      <option value="false">Inactiva</option>
+                      <option value="true">{t('menuWizard.sections.active')}</option>
+                      <option value="false">{t('menuWizard.sections.inactive')}</option>
                     </select>
                   </div>
                   <div className="wizard-section-form-actions">
@@ -1016,7 +1052,7 @@ export default function MenuWizard({
                           className="admin-btn"
                           onClick={handleUpdateSection}
                         >
-                          Actualizar
+                          {t('menuWizard.sections.update')}
                         </button>
                         <button
                           type="button"
@@ -1026,7 +1062,7 @@ export default function MenuWizard({
                             setSectionFormData({ name: '', isActive: true });
                           }}
                         >
-                          Cancelar
+                          {t('menuWizard.sections.cancel')}
                         </button>
                       </>
                     ) : (
@@ -1035,7 +1071,7 @@ export default function MenuWizard({
                         className="admin-btn"
                         onClick={handleAddSection}
                       >
-                        + Agregar Sección
+                        {t('menuWizard.sections.add')}
                       </button>
                     )}
                   </div>
@@ -1045,7 +1081,12 @@ export default function MenuWizard({
               {/* Lista de secciones con drag and drop */}
               {sections.length === 0 ? (
                 <div className="wizard-empty-state">
-                  <p><strong>No hay secciones creadas.</strong> Agrega al menos una sección activa usando el formulario de arriba para poder crear el menú.</p>
+                  <p>
+                    <Trans
+                      i18nKey="menuWizard.sections.empty"
+                      components={{ strong: <strong /> }}
+                    />
+                  </p>
                 </div>
               ) : (
                 <div className="wizard-sections-list">
@@ -1072,9 +1113,15 @@ export default function MenuWizard({
                               cursor: 'pointer',
                               userSelect: 'none'
                             }}
-                            title={`Haz clic para ${section.isActive ? 'desactivar' : 'activar'} esta sección`}
+                            title={t('menuWizard.sections.toggleTitle', {
+                              action: section.isActive
+                                ? t('menuWizard.sections.deactivate')
+                                : t('menuWizard.sections.activate'),
+                            })}
                           >
-                            {section.isActive ? 'Activa' : 'Inactiva'}
+                            {section.isActive
+                              ? t('menuWizard.sections.active')
+                              : t('menuWizard.sections.inactive')}
                           </span>
                         </div>
                       </div>
@@ -1084,14 +1131,14 @@ export default function MenuWizard({
                           className="admin-btn admin-btn-sm"
                           onClick={() => handleEditSection(index)}
                         >
-                          Editar
+                          {t('menuWizard.sections.edit')}
                         </button>
                         <button
                           type="button"
                           className="admin-btn admin-btn-sm admin-btn-danger"
                           onClick={() => handleDeleteSection(index)}
                         >
-                          Eliminar
+                          {t('menuWizard.sections.delete')}
                         </button>
                       </div>
                     </div>
@@ -1110,7 +1157,9 @@ export default function MenuWizard({
             onClick={handleBack}
             disabled={loading}
           >
-            {useEntryPickFlow && currentStep === 1 ? '← Volver' : '← Anterior'}
+            {useEntryPickFlow && currentStep === 1
+              ? t('menuWizard.footer.back')
+              : t('menuWizard.footer.previous')}
           </button>
           <div className="wizard-footer-right">
             {onCancel && currentStep === 1 && (
@@ -1120,7 +1169,7 @@ export default function MenuWizard({
                 onClick={onCancel}
                 disabled={loading}
               >
-                Cancelar
+                {t('menuWizard.footer.cancel')}
               </button>
             )}
             {currentStep < totalSteps ? (
@@ -1129,7 +1178,7 @@ export default function MenuWizard({
                 className="admin-btn"
                 disabled={loading || (currentStep === 1 && !formData.name.trim())}
               >
-                Siguiente →
+                {t('menuWizard.footer.next')}
               </button>
             ) : (
               <>
@@ -1137,9 +1186,15 @@ export default function MenuWizard({
                   type="submit" 
                   className="admin-btn"
                   disabled={loading || sections.filter(s => s.isActive).length === 0}
-                  title={sections.filter(s => s.isActive).length === 0 ? 'Debes agregar al menos una sección activa' : ''}
+                  title={
+                    sections.filter(s => s.isActive).length === 0
+                      ? t('menuWizard.sections.needActiveTitle')
+                      : ''
+                  }
                 >
-                  {loading ? 'Guardando...' : 'Crear Menú'}
+                  {loading
+                    ? t('menuWizard.footer.saving')
+                    : t('menuWizard.footer.createMenu')}
                 </button>
                 {sections.filter(s => s.isActive).length === 0 && sections.length > 0 && (
                   <p style={{ 
@@ -1148,7 +1203,7 @@ export default function MenuWizard({
                     marginTop: '8px',
                     marginBottom: 0
                   }}>
-                    ⚠️ Debes tener al menos una sección activa para crear el menú
+                    {t('menuWizard.sections.needActiveWarning')}
                   </p>
                 )}
               </>

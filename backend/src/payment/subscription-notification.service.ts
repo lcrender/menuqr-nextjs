@@ -273,7 +273,7 @@ export class SubscriptionNotificationService {
     const yesNo = (v: boolean) => (v ? 'Sí' : 'No');
     const rows: Array<[string, string]> = [
       ['Plan', row.label],
-      ['Restaurantes', this.formatLimit(row.restaurantLimit)],
+      ['Comercios', this.formatLimit(row.restaurantLimit)],
       ['Menús', this.formatLimit(row.menuLimit)],
       ['Productos', this.formatLimit(row.productLimit)],
       ['Traducciones automáticas / mes', this.formatLimit(row.autoTranslateMonthlyPerUser)],

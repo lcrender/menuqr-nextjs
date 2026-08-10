@@ -95,10 +95,11 @@ export class I18nService {
     }
   }
 
-  private async markNonEsLocalesStaleForMenuEntity(
+  private async markNonSourceLocalesStaleForMenuEntity(
     tenantId: string,
     entityType: string,
     entityId: string,
+    sourceLocale: string,
   ): Promise<void> {
     if (!this.isMenuTranslationEntity(entityType)) return;
     try {
@@ -108,16 +109,17 @@ export class I18nService {
          WHERE tenant_id = $1
            AND entity_type = $2
            AND entity_id = $3
-           AND locale <> 'es-ES'`,
-        [tenantId, entityType, entityId],
+           AND locale <> $4`,
+        [tenantId, entityType, entityId, sourceLocale],
       );
     } catch (e) {
-      this.logger.warn(`markNonEsLocalesStaleForMenuEntity falló: ${e}`);
+      this.logger.warn(`markNonSourceLocalesStaleForMenuEntity falló: ${e}`);
     }
   }
 
   /**
-   * Guarda o actualiza traducciones para una entidad
+   * Guarda o actualiza traducciones para una entidad.
+   * `options.sourceLocale`: idioma base del menú (si coincide con `locale`, marca el resto como stale).
    */
   async saveTranslations(
     tenantId: string,
@@ -125,7 +127,9 @@ export class I18nService {
     entityId: string,
     translations: { [key: string]: string },
     locale: string = 'es-ES',
+    options?: { sourceLocale?: string },
   ): Promise<void> {
+    const sourceLocale = options?.sourceLocale || 'es-ES';
     try {
       for (const [key, value] of Object.entries(translations)) {
         await this.postgres.executeRaw(
@@ -139,8 +143,8 @@ export class I18nService {
           DO UPDATE SET
             value = EXCLUDED.value,
             updated_at = NOW(),
-            stale = CASE WHEN EXCLUDED.locale <> 'es-ES' THEN false ELSE translations.stale END,
-            stale_at = CASE WHEN EXCLUDED.locale <> 'es-ES' THEN NULL ELSE translations.stale_at END`,
+            stale = CASE WHEN EXCLUDED.locale <> $8 THEN false ELSE translations.stale END,
+            stale_at = CASE WHEN EXCLUDED.locale <> $8 THEN NULL ELSE translations.stale_at END`,
           [
             `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`,
             tenantId,
@@ -149,16 +153,16 @@ export class I18nService {
             locale,
             key,
             value,
+            sourceLocale,
           ],
         );
       }
 
-      if (locale === 'es-ES' && this.isMenuTranslationEntity(entityType)) {
-        await this.markNonEsLocalesStaleForMenuEntity(tenantId, entityType, entityId);
+      if (locale === sourceLocale && this.isMenuTranslationEntity(entityType)) {
+        await this.markNonSourceLocalesStaleForMenuEntity(tenantId, entityType, entityId, sourceLocale);
       }
 
-      // Limpiar caché de valores para esta entidad (todas las locales si fue es-ES)
-      if (locale === 'es-ES' && this.isMenuTranslationEntity(entityType)) {
+      if (locale === sourceLocale && this.isMenuTranslationEntity(entityType)) {
         this.clearCache(tenantId, entityType, entityId);
       } else {
         const cacheKey = `${tenantId}:${entityType}:${entityId}:${locale}`;

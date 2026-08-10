@@ -40,7 +40,7 @@ Hay **dos usos distintos** del “país/región”:
 
 ## 3. Uso del país del restaurante
 
-- **Moneda por defecto**: En `admin/restaurants/index.tsx` hay un mapa `countryCurrencies`; al elegir país se sugiere la moneda (ej. Argentina → ARS).
+- **Moneda por defecto**: En `admin/comercios/index.tsx` hay un mapa `countryCurrencies`; al elegir país se sugiere la moneda (ej. Argentina → ARS).
 - **Dirección**: País, provincia y ciudad se usan en el formulario de restaurante y se envían al backend (address, timezone, etc.).
 - **WhatsApp**: En la vista pública del menú y en las plantillas se usa el **país del restaurante** para formatear el link de WhatsApp con el prefijo correcto (`formatWhatsAppForLink(whatsapp, restaurant.country)`).
 
@@ -78,6 +78,6 @@ Detalle de homes y cookie: [`docs/GEO-LANDING.md`](../../docs/GEO-LANDING.md).
 | Backend | `backend/src/payment/payment-provider.service.ts` — MP vs PayPal por país |
 | Frontend | `frontend/components/RestaurantWizard.tsx` — país del restaurante por IP |
 | Frontend | `frontend/middleware.ts` + `frontend/lib/landing-region.ts` — home `/ar`\|`/es` |
-| Frontend | `frontend/pages/admin/restaurants/index.tsx` — país, moneda, timezone, WhatsApp |
+| Frontend | `frontend/pages/admin/comercios/index.tsx` — país, moneda, timezone, WhatsApp |
 | Docs | [`docs/GEO-LANDING.md`](../../docs/GEO-LANDING.md) — marketing geo |
 | Docs | [`docs/SEO-LANDINGS.md`](../../docs/SEO-LANDINGS.md) — SEO landings + homes |

@@ -206,7 +206,7 @@ export class MenusCsvImportService {
       [targetRestaurantId, tenantId],
     );
     if (!restaurant[0]) {
-      throw new BadRequestException('Restaurante no encontrado o no pertenece a la cuenta indicada');
+      throw new BadRequestException('Comercio no encontrado o no pertenece a la cuenta indicada');
     }
 
     const menuName = menuMeta.menuName.trim();
@@ -373,7 +373,7 @@ export class MenusCsvImportService {
       [targetRestaurantId, tenantId],
     );
     if (!restaurant[0]) {
-      throw new BadRequestException('Restaurante no encontrado o no pertenece a tu cuenta');
+      throw new BadRequestException('Comercio no encontrado o no pertenece a tu cuenta');
     }
     const targetNameNorm = restaurant[0].name.trim().toLowerCase();
 
@@ -405,7 +405,7 @@ export class MenusCsvImportService {
         if (row.nombre_restaurante?.trim()) {
           if (row.nombre_restaurante.trim().toLowerCase() !== targetNameNorm) {
             throw new BadRequestException(
-              `nombre_restaurante "${row.nombre_restaurante}" no coincide con el restaurante destino "${restaurant[0].name}". Quitá esa columna del CSV o elegí el restaurante correcto en la pantalla de importación.`,
+              `nombre_restaurante "${row.nombre_restaurante}" no coincide con el comercio destino "${restaurant[0].name}". Quitá esa columna del CSV o elegí el comercio correcto en la pantalla de importación.`,
             );
           }
         }
@@ -426,7 +426,7 @@ export class MenusCsvImportService {
         }
         if (row.nombre_restaurante.trim().toLowerCase() !== targetNameNorm) {
           throw new BadRequestException(
-            `nombre_restaurante "${row.nombre_restaurante}" no coincide con el restaurante destino "${restaurant[0].name}"`,
+            `nombre_restaurante "${row.nombre_restaurante}" no coincide con el comercio destino "${restaurant[0].name}"`,
           );
         }
       }

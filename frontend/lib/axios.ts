@@ -35,8 +35,8 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Silenciar errores 404 para peticiones a restaurantes cuando se espera que puedan no existir
-    // (por ejemplo, cuando un menú no está asignado a ningún restaurante)
+    // Silenciar errores 404 para peticiones a comercios cuando se espera que puedan no existir
+    // (por ejemplo, cuando un menú no está asignado a ningún comercio)
     if (error.response?.status === 404 && originalRequest.url?.includes('/restaurants/')) {
       // Si la petición tiene validateStatus que acepta 404, devolver una respuesta simulada
       // Esto evita que el error se propague y se registre en la consola

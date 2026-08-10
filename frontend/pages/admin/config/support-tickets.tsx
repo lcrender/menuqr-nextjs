@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import AdminLayout from '../../../components/AdminLayout';
 import api from '../../../lib/axios';
+import i18n from '../../../src/i18n/config';
+import adminSupportTicketsEs from '../../../src/locales/fragments/adminSupportTickets.es.json';
+import adminSupportTicketsEn from '../../../src/locales/fragments/adminSupportTickets.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { adminSupportTickets: adminSupportTicketsEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { adminSupportTickets: adminSupportTicketsEn }, true, true);
 
 type TicketRow = {
   id: string;
@@ -15,13 +22,8 @@ type TicketRow = {
   user: { id: string; email: string; firstName: string | null; lastName: string | null; role: string };
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  open: 'Abierto',
-  in_progress: 'En progreso',
-  closed: 'Cerrado',
-};
-
 export default function AdminSupportTicketsPage() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<TicketRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -31,11 +33,18 @@ export default function AdminSupportTicketsPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
+  const statusLabel = (s: string) => {
+    if (s === 'open' || s === 'in_progress' || s === 'closed') {
+      return t(`adminSupportTickets.status.${s}`);
+    }
+    return s;
+  };
+
   const load = async (
     st: string = status,
     em: string = userEmail,
     fr: string = from,
-    t: string = to,
+    tDate: string = to,
   ) => {
     setLoading(true);
     setError('');
@@ -44,13 +53,13 @@ export default function AdminSupportTicketsPage() {
       if (st) params.status = st;
       if (em.trim()) params.userEmail = em.trim();
       if (fr) params.from = fr;
-      if (t) params.to = t;
+      if (tDate) params.to = tDate;
       const res = await api.get('/support-tickets/admin', { params });
       setItems(Array.isArray(res.data?.items) ? res.data.items : []);
       setTotal(typeof res.data?.total === 'number' ? res.data.total : 0);
     } catch (e: any) {
       const msg = e?.response?.data?.message;
-      setError(Array.isArray(msg) ? msg.join(' ') : msg || 'No se pudo cargar los tickets.');
+      setError(Array.isArray(msg) ? msg.join(' ') : msg || t('adminSupportTickets.errors.loadList'));
       setItems([]);
       setTotal(0);
     } finally {
@@ -66,44 +75,41 @@ export default function AdminSupportTicketsPage() {
   return (
     <AdminLayout>
       <div className="container-fluid py-4">
-        <h1 className="h4 mb-3">Tickets de soporte</h1>
-        <p className="text-muted small mb-4">
-          Gestioná reportes de usuarios: abrí un ticket para ver el hilo, datos de cuenta y suscripción, y respondé
-          desde el detalle.
-        </p>
+        <h1 className="h4 mb-3">{t('adminSupportTickets.title')}</h1>
+        <p className="text-muted small mb-4">{t('adminSupportTickets.subtitle')}</p>
 
         <div className="card mb-4">
           <div className="card-body">
             <div className="row g-2 align-items-end">
               <div className="col-md-2">
-                <label className="form-label small mb-1">Estado</label>
+                <label className="form-label small mb-1">{t('adminSupportTickets.filters.status')}</label>
                 <select className="form-select form-select-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
-                  <option value="">Todos</option>
-                  <option value="open">Abierto</option>
-                  <option value="in_progress">En progreso</option>
-                  <option value="closed">Cerrado</option>
+                  <option value="">{t('adminSupportTickets.filters.all')}</option>
+                  <option value="open">{t('adminSupportTickets.status.open')}</option>
+                  <option value="in_progress">{t('adminSupportTickets.status.in_progress')}</option>
+                  <option value="closed">{t('adminSupportTickets.status.closed')}</option>
                 </select>
               </div>
               <div className="col-md-3">
-                <label className="form-label small mb-1">Email usuario</label>
+                <label className="form-label small mb-1">{t('adminSupportTickets.filters.userEmail')}</label>
                 <input
                   className="form-control form-control-sm"
                   value={userEmail}
                   onChange={(e) => setUserEmail(e.target.value)}
-                  placeholder="contiene…"
+                  placeholder={t('adminSupportTickets.filters.userEmailPlaceholder')}
                 />
               </div>
               <div className="col-md-2">
-                <label className="form-label small mb-1">Desde</label>
+                <label className="form-label small mb-1">{t('adminSupportTickets.filters.from')}</label>
                 <input className="form-control form-control-sm" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
               </div>
               <div className="col-md-2">
-                <label className="form-label small mb-1">Hasta</label>
+                <label className="form-label small mb-1">{t('adminSupportTickets.filters.to')}</label>
                 <input className="form-control form-control-sm" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
               </div>
               <div className="col-md-2">
                 <button type="button" className="btn btn-primary btn-sm w-100" onClick={() => void load()}>
-                  Aplicar filtros
+                  {t('adminSupportTickets.filters.apply')}
                 </button>
               </div>
             </div>
@@ -114,42 +120,43 @@ export default function AdminSupportTicketsPage() {
         <div className="card">
           <div className="card-body p-0">
             {loading ? (
-              <div className="p-4 text-center text-muted">Cargando…</div>
+              <div className="p-4 text-center text-muted">{t('adminSupportTickets.loading')}</div>
             ) : items.length === 0 ? (
-              <div className="p-4 text-muted">No hay tickets con estos filtros.</div>
+              <div className="p-4 text-muted">{t('adminSupportTickets.table.empty')}</div>
             ) : (
               <div className="table-responsive">
                 <table className="table table-hover table-sm mb-0">
                   <thead className="table-light">
                     <tr>
-                      <th>#</th>
-                      <th>Usuario</th>
-                      <th>Asunto</th>
-                      <th>Estado</th>
-                      <th>Img</th>
-                      <th>Creado</th>
+                      <th>{t('adminSupportTickets.table.number')}</th>
+                      <th>{t('adminSupportTickets.table.user')}</th>
+                      <th>{t('adminSupportTickets.table.subject')}</th>
+                      <th>{t('adminSupportTickets.table.status')}</th>
+                      <th>{t('adminSupportTickets.table.images')}</th>
+                      <th>{t('adminSupportTickets.table.created')}</th>
                       <th />
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((t) => (
-                      <tr key={t.id}>
-                        <td className="fw-semibold text-nowrap">#{t.ticketNumber}</td>
+                    {items.map((row) => (
+                      <tr key={row.id}>
+                        <td className="fw-semibold text-nowrap">#{row.ticketNumber}</td>
                         <td className="small">
-                          <div>{t.user?.email}</div>
+                          <div>{row.user?.email}</div>
                           <div className="text-muted">
-                            {[t.user?.firstName, t.user?.lastName].filter(Boolean).join(' ') || '—'}
+                            {[row.user?.firstName, row.user?.lastName].filter(Boolean).join(' ') ||
+                              t('adminSupportTickets.emDash')}
                           </div>
                         </td>
-                        <td>{t.subject}</td>
+                        <td>{row.subject}</td>
                         <td>
-                          <span className="badge bg-secondary">{STATUS_LABEL[t.status] ?? t.status}</span>
+                          <span className="badge bg-secondary">{statusLabel(row.status)}</span>
                         </td>
-                        <td className="small text-muted">{t.attachmentCount ?? 0}</td>
-                        <td className="small text-muted text-nowrap">{new Date(t.createdAt).toLocaleString()}</td>
+                        <td className="small text-muted">{row.attachmentCount ?? 0}</td>
+                        <td className="small text-muted text-nowrap">{new Date(row.createdAt).toLocaleString()}</td>
                         <td className="text-end">
-                          <Link href={`/admin/config/support-tickets/${t.id}`} className="btn btn-sm btn-outline-primary">
-                            Abrir
+                          <Link href={`/admin/config/support-tickets/${row.id}`} className="btn btn-sm btn-outline-primary">
+                            {t('adminSupportTickets.table.open')}
                           </Link>
                         </td>
                       </tr>
@@ -159,7 +166,9 @@ export default function AdminSupportTicketsPage() {
               </div>
             )}
             {!loading && total > 0 ? (
-              <div className="p-2 border-top small text-muted">Total: {total} (mostrando {items.length})</div>
+              <div className="p-2 border-top small text-muted">
+                {t('adminSupportTickets.table.total', { total, showing: items.length })}
+              </div>
             ) : null}
           </div>
         </div>

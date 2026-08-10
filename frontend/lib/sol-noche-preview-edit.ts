@@ -3,7 +3,7 @@ export type SolNocheEditHotspot = 'logo' | 'cover' | 'name' | 'description';
 export const SOL_NOCHE_HOTSPOT_LABELS: Record<SolNocheEditHotspot, string> = {
   logo: 'Logo',
   cover: 'Portada',
-  name: 'Nombre del restaurante',
+  name: 'Nombre del comercio',
   description: 'Descripción',
 };
 

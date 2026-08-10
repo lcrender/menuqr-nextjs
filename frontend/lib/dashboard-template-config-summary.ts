@@ -1,25 +1,15 @@
+import type { TFunction } from 'i18next';
 import { TEMPLATE_CONFIG_SCHEMAS, type TemplateConfigOption } from './template-config-schema';
+import {
+  formatTemplateConfigOptionValue,
+  translateTemplateConfigOptionLabel,
+} from './template-config-i18n';
 
 function optionValueEquals(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (typeof a === 'boolean' && typeof b === 'boolean') return a === b;
   if (typeof a === 'number' && typeof b === 'number') return a === b;
   return String(a ?? '') === String(b ?? '');
-}
-
-function formatRawForOption(opt: TemplateConfigOption, raw: unknown): string {
-  if (opt.type === 'boolean') return raw === true ? 'Sí' : 'No';
-  if (opt.type === 'color') {
-    const s = typeof raw === 'string' ? raw.trim() : String(raw ?? '').trim();
-    return s || '—';
-  }
-  if (opt.type === 'select' && opt.options) {
-    const s = String(raw ?? '');
-    const hit = opt.options.find((o) => o.value === s);
-    return (hit?.label ?? s) || '—';
-  }
-  if (raw === undefined || raw === null || raw === '') return '—';
-  return String(raw);
 }
 
 export type TemplateConfigSummaryLine = {
@@ -40,13 +30,14 @@ function schemaKeyForTemplate(templateId: string | null | undefined): string {
 }
 
 /**
- * Líneas listas para mostrar en el dashboard (valores efectivos: columnas del restaurante + template_config).
+ * Líneas listas para mostrar en el dashboard (valores efectivos: columnas del comercio + template_config).
  */
 export function buildTemplateConfigSummaryLines(
   templateId: string | null | undefined,
   templateConfig: Record<string, unknown> | null | undefined,
   restaurantPrimaryColor?: string | null,
   restaurantSecondaryColor?: string | null,
+  t?: TFunction,
 ): TemplateConfigSummaryLine[] {
   const key = schemaKeyForTemplate(templateId);
   const schema: TemplateConfigOption[] =
@@ -64,7 +55,9 @@ export function buildTemplateConfigSummaryLines(
     }
     if (raw === undefined || raw === null || raw === '') raw = opt.default;
 
-    const valueText = formatRawForOption(opt, raw);
+    const valueText = t
+      ? formatTemplateConfigOptionValue(t, opt, raw)
+      : formatRawForOptionFallback(opt, raw);
     const isDefault = optionValueEquals(raw, opt.default);
     const colorSwatch =
       opt.type === 'color' && typeof raw === 'string' && /^#[0-9A-Fa-f]{6}$/i.test(raw.trim())
@@ -73,7 +66,7 @@ export function buildTemplateConfigSummaryLines(
 
     lines.push({
       id: opt.id,
-      label: opt.label,
+      label: t ? translateTemplateConfigOptionLabel(t, opt) : opt.label,
       valueText,
       isDefault,
       ...(colorSwatch !== undefined ? { colorSwatch } : {}),
@@ -81,6 +74,21 @@ export function buildTemplateConfigSummaryLines(
   }
 
   return lines;
+}
+
+function formatRawForOptionFallback(opt: TemplateConfigOption, raw: unknown): string {
+  if (opt.type === 'boolean') return raw === true ? 'Sí' : 'No';
+  if (opt.type === 'color') {
+    const s = typeof raw === 'string' ? raw.trim() : String(raw ?? '').trim();
+    return s || '—';
+  }
+  if (opt.type === 'select' && opt.options) {
+    const s = String(raw ?? '');
+    const hit = opt.options.find((o) => o.value === s);
+    return (hit?.label ?? s) || '—';
+  }
+  if (raw === undefined || raw === null || raw === '') return '—';
+  return String(raw);
 }
 
 /** Opciones «Mostrar…» / visibilidad para columna dedicada en el dashboard (desktop). */

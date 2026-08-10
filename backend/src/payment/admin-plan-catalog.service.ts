@@ -157,7 +157,7 @@ export class AdminPlanCatalogService {
         usdPayPal: 'Resto de países (GLOBAL): precios en USD vía PayPal.',
         yearlyPricing: `Precio anual: columna price_yearly en plan_prices (ofertas). Si falta, anual = mensual × ${YEARLY_PRICE_MONTH_MULTIPLIER}.`,
         tenantLimitsEditable:
-          'Límites de tenant (restaurantes/menús/productos/plantillas) editables en GET/PUT /admin/plan-limits (super admin).',
+          'Límites de tenant (comercios/menús/productos/plantillas) editables en GET/PUT /admin/plan-limits (super admin).',
       },
     };
   }

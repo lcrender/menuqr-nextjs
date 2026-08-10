@@ -126,14 +126,14 @@ export class MediaService {
     };
   }
 
-  /** tenant_id real del restaurante (multipart no trae tenantId en body para SUPER_ADMIN). */
+  /** tenant_id real del comercio (multipart no trae tenantId en body para SUPER_ADMIN). */
   private async getRestaurantTenantIdOrThrow(restaurantId: string): Promise<string> {
     const rows = await this.postgres.queryRaw<{ tenant_id: string }>(
       `SELECT tenant_id FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
       [restaurantId],
     );
     if (!rows?.length) {
-      throw new NotFoundException('Restaurante no encontrado');
+      throw new NotFoundException('Comercio no encontrado');
     }
     return rows[0].tenant_id;
   }
@@ -141,7 +141,7 @@ export class MediaService {
   private assertTenantAccess(user: JwtUserPayload, tenantId: string): void {
     if (user.role === 'ADMIN') {
       if (!user.tenantId || user.tenantId !== tenantId) {
-        throw new ForbiddenException('No tenés permiso para subir archivos a este restaurante');
+        throw new ForbiddenException('No tenés permiso para subir archivos a este comercio');
       }
     }
   }
@@ -191,7 +191,7 @@ export class MediaService {
         [id, tenantId, uploaded.url, uploaded.filename, uploaded.mimeType, uploaded.size]
       );
 
-      // Actualizar restaurante con la foto
+      // Actualizar comercio con la foto
       await this.postgres.executeRaw(
         `UPDATE restaurants 
          SET logo_url = $1, updated_at = NOW() 
@@ -204,7 +204,7 @@ export class MediaService {
       if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error('Error subiendo foto de restaurante:', error);
+      this.logger.error('Error subiendo foto de comercio:', error);
       throw error;
     }
   }
@@ -242,7 +242,7 @@ export class MediaService {
         [id, tenantId, uploaded.url, uploaded.filename, uploaded.mimeType, uploaded.size]
       );
 
-      // Actualizar restaurante con la foto de portada
+      // Actualizar comercio con la foto de portada
       await this.postgres.executeRaw(
         `UPDATE restaurants 
          SET cover_url = $1, updated_at = NOW() 
@@ -255,12 +255,12 @@ export class MediaService {
       if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error('Error subiendo foto de portada de restaurante:', error);
+      this.logger.error('Error subiendo foto de portada de comercio:', error);
       throw error;
     }
   }
 
-  /** Fondo de plantilla (p. ej. Beach Life): solo devuelve URL; se guarda en template_config del restaurante. */
+  /** Fondo de plantilla (p. ej. Beach Life): solo devuelve URL; se guarda en template_config del comercio. */
   async uploadRestaurantTemplateBackground(
     user: JwtUserPayload,
     restaurantId: string,

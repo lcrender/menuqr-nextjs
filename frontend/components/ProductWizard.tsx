@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/router';
+import { Trans, useTranslation } from 'react-i18next';
+import i18n from '../src/i18n/config';
 import api, { type AxiosErrorWithMessage } from '../lib/axios';
 import { getApiErrorMessage } from '../lib/api-error-message';
 import AlertModal from './AlertModal';
@@ -11,6 +13,11 @@ import {
   type TenantPlanLimitsKey,
 } from '../lib/public-plan-limits';
 import ProductPhotoCropModal from './ProductPhotoCropModal';
+import productWizardEs from '../src/locales/fragments/productWizard.es.json';
+import productWizardEn from '../src/locales/fragments/productWizard.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { productWizard: productWizardEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { productWizard: productWizardEn }, true, true);
 
 const getMenuRestaurantId = (m: any) =>
   String(m?.restaurantId ?? m?.restaurant_id ?? '');
@@ -44,9 +51,9 @@ interface ProductWizardProps {
   menus: any[];
   /** Lista de locales para filtrar menús (y preselección si hay uno solo). */
   restaurants?: any[];
-  /** Restaurante inicial (p. ej. filtro super admin o menú en edición). */
+  /** Comercio inicial (p. ej. filtro super admin o menú en edición). */
   initialRestaurantId?: string;
-  defaultCurrency?: string; // Moneda por defecto del restaurante
+  defaultCurrency?: string; // Moneda por defecto del comercio
   onComplete: () => void;
   onCancel?: () => void;
   onPublishMenu?: () => void; // Callback para publicar el menú
@@ -208,6 +215,7 @@ export default function ProductWizard({
   startWithCreate = false,
 }: ProductWizardProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   
   // Determinar la moneda efectiva por defecto
   // Esta función se recalcula cuando cambia el menuId
@@ -217,7 +225,7 @@ export default function ProductWizard({
     if (!menuId || menuId === '') {
       return getDefaultCurrencyForUser();
     }
-    // Si hay menú asignado, usar la moneda del restaurante o la defaultCurrency
+    // Si hay menú asignado, usar la moneda del comercio o la defaultCurrency
     if (defaultCurrency && defaultCurrency !== 'USD') {
       return defaultCurrency;
     }
@@ -294,13 +302,16 @@ export default function ProductWizard({
   const [currentProductCount, setCurrentProductCount] = useState<number>(0);
   const [showAlert, setShowAlert] = useState(false);
   const [alertData, setAlertData] = useState<{ title: string; message: string; variant: 'success' | 'error' | 'warning' | 'info' } | null>(null);
-  const [availableIcons] = useState([
-    { code: 'celiaco', label: 'Sin Gluten' },
-    { code: 'vegetariano', label: 'Vegetariano' },
-    { code: 'vegano', label: 'Vegano' },
-    { code: 'picante', label: 'Picante' },
-    { code: 'sin-lactosa', label: 'Sin Lactosa' },
-  ]);
+  const availableIcons = useMemo(
+    () => [
+      { code: 'celiaco', label: t('productWizard.icons.celiaco') },
+      { code: 'vegetariano', label: t('productWizard.icons.vegetariano') },
+      { code: 'vegano', label: t('productWizard.icons.vegano') },
+      { code: 'picante', label: t('productWizard.icons.picante') },
+      { code: 'sin-lactosa', label: t('productWizard.icons.sinLactosa') },
+    ],
+    [t],
+  );
   const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingSections, setLoadingSections] = useState(false);
@@ -543,7 +554,7 @@ export default function ProductWizard({
     return currentProductCount < limit;
   };
 
-  // Menú (y restaurante) que vienen del padre: edición de menú, menú recién creado, etc.
+  // Menú (y comercio) que vienen del padre: edición de menú, menú recién creado, etc.
   useEffect(() => {
     if (!initialMenuId || !menus?.length) return;
     const m = menus.find((x: any) => x.id === initialMenuId);
@@ -557,7 +568,7 @@ export default function ProductWizard({
     });
   }, [initialMenuId, menus]);
 
-  // Un solo restaurante: usarlo sin que el usuario tenga que elegirlo
+  // Un solo comercio: usarlo sin que el usuario tenga que elegirlo
   useEffect(() => {
     const rs = restaurantsProp ?? [];
     if (rs.length !== 1) return;
@@ -577,7 +588,7 @@ export default function ProductWizard({
     });
   }, [filteredMenus, initialMenuId]);
 
-  // El menú elegido debe seguir perteneciendo al restaurante filtrado
+  // El menú elegido debe seguir perteneciendo al comercio filtrado
   useEffect(() => {
     setFormData((prev) => {
       if (!prev.menuId) return prev;
@@ -587,7 +598,7 @@ export default function ProductWizard({
     });
   }, [filteredMenus]);
 
-  // Actualizar la moneda por defecto cuando cambie la prop o la moneda del restaurante
+  // Actualizar la moneda por defecto cuando cambie la prop o la moneda del comercio
   // Solo si hay un menú asignado (si no hay menú, se maneja en el otro useEffect)
   useEffect(() => {
     const firstPrice = formData.prices[0];
@@ -605,12 +616,12 @@ export default function ProductWizard({
     }
   }, [defaultCurrency, restaurantCurrency, formData.menuId]);
 
-  // Cuando se entra al paso de precios o cambia la moneda del restaurante, asegurar que el primer precio tenga la moneda correcta
+  // Cuando se entra al paso de precios o cambia la moneda del comercio, asegurar que el primer precio tenga la moneda correcta
   useEffect(() => {
     if (currentStep !== 2 || formData.prices.length === 0) return;
     const firstPrice = formData.prices[0];
     if (!firstPrice) return;
-    // Si hay menú asignado, usar la moneda del restaurante o la defaultCurrency
+    // Si hay menú asignado, usar la moneda del comercio o la defaultCurrency
     // Si no hay menú asignado, usar la moneda efectiva por defecto (del usuario/tenant o del navegador)
     const currencyToUse = formData.menuId 
       ? (restaurantCurrency || defaultCurrency)
@@ -627,11 +638,11 @@ export default function ProductWizard({
     }
   }, [currentStep, restaurantCurrency, defaultCurrency, effectiveDefaultCurrency, formData.menuId]);
 
-  // Cargar secciones y moneda del restaurante cuando se selecciona un menú
+  // Cargar secciones y moneda del comercio cuando se selecciona un menú
   useEffect(() => {
     if (formData.menuId) {
       loadSections(formData.menuId);
-      // Cargar el menú para obtener la moneda del restaurante
+      // Cargar el menú para obtener la moneda del comercio
       loadMenuForCurrency(formData.menuId);
     } else {
       setSections([]);
@@ -641,16 +652,16 @@ export default function ProductWizard({
     }
   }, [formData.menuId]);
 
-  // Función para cargar el menú y obtener la moneda del restaurante
+  // Función para cargar el menú y obtener la moneda del comercio
   const loadMenuForCurrency = async (menuId: string) => {
     try {
       const menuRes = await api.get(`/menus/${menuId}`);
       const menu = menuRes.data;
       
-      // Si el menú tiene un restaurante asociado, intentar cargar su moneda por defecto
-      // Si el restaurante no existe (404), simplemente usar la moneda por defecto sin mostrar error
+      // Si el menú tiene un comercio asociado, intentar cargar su moneda por defecto
+      // Si el comercio no existe (404), simplemente usar la moneda por defecto sin mostrar error
       if (menu.restaurantId) {
-        // Intentar cargar el restaurante, pero silenciar el error 404
+        // Intentar cargar el comercio, pero silenciar el error 404
         // Usar una petición silenciosa que no registre errores en la consola
         const loadRestaurantCurrency = async () => {
           try {
@@ -677,9 +688,9 @@ export default function ProductWizard({
               setRestaurantCurrency(defaultCurrency);
             }
           } catch (error: any) {
-            // Solo mostrar error si no es 404 (restaurante no encontrado)
+            // Solo mostrar error si no es 404 (comercio no encontrado)
             if (error.response?.status !== 404) {
-              console.error('Error cargando restaurante:', error);
+              console.error('Error cargando comercio:', error);
             }
             setRestaurantCurrency(defaultCurrency);
           }
@@ -714,10 +725,10 @@ export default function ProductWizard({
       const menu = menuRes.data;
       setMenuData(menu);
       
-      // Si el menú tiene un restaurante asociado, intentar cargar su moneda por defecto
-      // Si el restaurante no existe (404), simplemente usar la moneda por defecto sin mostrar error
+      // Si el menú tiene un comercio asociado, intentar cargar su moneda por defecto
+      // Si el comercio no existe (404), simplemente usar la moneda por defecto sin mostrar error
       if (menu.restaurantId) {
-        // Intentar cargar el restaurante, pero silenciar el error 404
+        // Intentar cargar el comercio, pero silenciar el error 404
         // Usar una petición silenciosa que no registre errores en la consola
         const loadRestaurantCurrency = async () => {
           try {
@@ -733,9 +744,9 @@ export default function ProductWizard({
               setRestaurantCurrency(defaultCurrency);
             }
           } catch (error: any) {
-            // Solo mostrar error si no es 404 (restaurante no encontrado)
+            // Solo mostrar error si no es 404 (comercio no encontrado)
             if (error.response?.status !== 404) {
-              console.error('Error cargando restaurante:', error);
+              console.error('Error cargando comercio:', error);
             }
             setRestaurantCurrency(defaultCurrency);
           }
@@ -779,7 +790,7 @@ export default function ProductWizard({
       // Redirigir a la página de menús
       window.location.href = '/admin/menus';
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error publicando el menú');
+      alert(error.response?.data?.message || t('productWizard.alerts.publishMenuError'));
       setPublishingMenu(false);
     }
   };
@@ -812,7 +823,7 @@ export default function ProductWizard({
         router.push('/admin/menus');
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error despublicando el menú');
+      alert(error.response?.data?.message || t('productWizard.alerts.unpublishMenuError'));
       setUnpublishingMenu(false);
     }
   };
@@ -820,7 +831,7 @@ export default function ProductWizard({
   const handlePreviewMenu = () => {
     const id = menuData?.id || initialMenuId;
     if (!id) {
-      alert('No se puede previsualizar el menú.');
+      alert(t('productWizard.alerts.cannotPreview'));
       return;
     }
     const restaurantId = menuData?.restaurantId || menuData?.restaurant_id || initialRestaurantId;
@@ -1010,12 +1021,12 @@ export default function ProductWizard({
           console.error('Error guardando orden:', error);
           // Solo recargar en caso de error para restaurar el estado
           await loadMenuData();
-          alert(error.response?.data?.message || 'Error guardando el orden de los productos');
+          alert(error.response?.data?.message || t('productWizard.alerts.saveOrderError'));
         }
       } catch (error: any) {
         console.error('Error reordenando productos:', error);
         await loadMenuData();
-        alert(error.response?.data?.message || 'Error reordenando los productos');
+        alert(error.response?.data?.message || t('productWizard.alerts.reorderError'));
       }
     } else {
       // Mover a otra sección
@@ -1023,7 +1034,7 @@ export default function ProductWizard({
         // Obtener el producto actual para mantener los demás campos
         const currentItem = menuItems.find((item: any) => item.id === sourceItemId);
         if (!currentItem) {
-          alert('Producto no encontrado');
+          alert(t('productWizard.alerts.productNotFound'));
           setDraggedItem(null);
           setDragOverItem(null);
           return;
@@ -1042,7 +1053,7 @@ export default function ProductWizard({
         await loadMenuData();
       } catch (error: any) {
         console.error('Error moviendo producto:', error);
-        alert(error.response?.data?.message || 'Error moviendo el producto');
+        alert(error.response?.data?.message || t('productWizard.alerts.moveProductError'));
         await loadMenuData(); // Recargar para restaurar el estado
       }
     }
@@ -1068,12 +1079,12 @@ export default function ProductWizard({
 
   const handleCreateSection = async () => {
     if (!newSectionName.trim()) {
-      alert('Por favor ingresa un nombre para la sección');
+      alert(t('productWizard.alerts.sectionNameRequired'));
       return;
     }
 
     if (!formData.menuId) {
-      alert('Debes seleccionar un menú primero');
+      alert(t('productWizard.alerts.menuRequired'));
       return;
     }
 
@@ -1099,7 +1110,7 @@ export default function ProductWizard({
       setShowCreateSectionModal(false);
       setNewSectionName('');
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error creando la sección');
+      alert(error.response?.data?.message || t('productWizard.alerts.createSectionError'));
     } finally {
       setCreatingSection(false);
     }
@@ -1154,7 +1165,7 @@ export default function ProductWizard({
     try {
       const targetMenuId = initialMenuId;
       if (!targetMenuId) {
-        setLoadExistingError('No se pudo identificar el menú actual.');
+        setLoadExistingError(t('productWizard.alerts.identifyMenuError'));
         return;
       }
 
@@ -1174,7 +1185,7 @@ export default function ProductWizard({
       }
 
       if (!currentRestaurantId) {
-        setLoadExistingError('No se pudo determinar el restaurante de este menú.');
+        setLoadExistingError(t('productWizard.alerts.identifyRestaurantError'));
         return;
       }
 
@@ -1211,7 +1222,7 @@ export default function ProductWizard({
       let pool: any[] = [];
 
       if (isSuperAdmin) {
-        // En super admin, menuId en query no aplica a este branch del backend: pedimos por restaurante
+        // En super admin, menuId en query no aplica a este branch del backend: pedimos por comercio
         // (sin limit por defecto) y filtramos por los otros menús del mismo local.
         const params: Record<string, string> = { restaurantId: rid };
         if (tenantIdForQuery) params.tenantId = String(tenantIdForQuery);
@@ -1242,7 +1253,7 @@ export default function ProductWizard({
 
       setExistingProductsPool(pool);
     } catch (err: any) {
-      setLoadExistingError(err.response?.data?.message || 'Error al cargar productos');
+      setLoadExistingError(err.response?.data?.message || t('productWizard.alerts.loadProductsError'));
     } finally {
       setLoadingExistingProducts(false);
     }
@@ -1275,7 +1286,7 @@ export default function ProductWizard({
       await loadMenuData();
       if (onComplete) onComplete();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Error al copiar algunos productos');
+      alert(err.response?.data?.message || t('productWizard.alerts.copyProductsError'));
     } finally {
       setCopyingExisting(false);
     }
@@ -1285,8 +1296,18 @@ export default function ProductWizard({
     if (currentStep === 1) {
       // Validar que tenga nombre
       if (!formData.name.trim()) {
-        alert('Por favor ingresa un nombre para el producto');
+        alert(t('productWizard.alerts.productNameRequired'));
         return;
+      }
+      if (formData.menuId) {
+        if (sections.length === 0) {
+          alert(t('productWizard.alerts.sectionRequiredCreate'));
+          return;
+        }
+        if (formData.sectionIds.length === 0) {
+          alert(t('productWizard.alerts.sectionRequired'));
+          return;
+        }
       }
       setCurrentStep(2);
     } else if (currentStep === 2) {
@@ -1467,10 +1488,10 @@ export default function ProductWizard({
         setShowLimitModal(true);
       } else {
         setAlertData({
-          title: 'Error',
+          title: t('productWizard.common.error'),
           message:
             (error as AxiosErrorWithMessage).userMessage ||
-            getApiErrorMessage(error, 'Error creando producto'),
+            getApiErrorMessage(error, t('productWizard.alerts.createProductError')),
           variant: 'error',
         });
         setShowAlert(true);
@@ -1593,8 +1614,8 @@ export default function ProductWizard({
       <React.Fragment>
         <div className="restaurant-wizard">
           <div className="wizard-header">
-            <h2 className="wizard-title">{menuData?.name || 'Menú'}</h2>
-          <p className="wizard-subtitle">Gestiona los productos de tu menú</p>
+            <h2 className="wizard-title">{menuData?.name || t('productWizard.common.menu')}</h2>
+          <p className="wizard-subtitle">{t('productWizard.manage.subtitle')}</p>
         </div>
 
         {/* Vista previa del menú */}
@@ -1602,14 +1623,14 @@ export default function ProductWizard({
           {loadingMenu ? (
             <div className="text-center" style={{ padding: '40px' }}>
               <div className="spinner-border" role="status">
-                <span className="visually-hidden">Cargando...</span>
+                <span className="visually-hidden">{t('productWizard.common.loading')}</span>
               </div>
             </div>
           ) : (
             <div className="menu-preview">
               {sections.length === 0 && menuItems.length === 0 ? (
                 <div className="menu-preview-empty">
-                  <p>Tu menú está vacío. Agrega secciones y productos para comenzar.</p>
+                  <p>{t('productWizard.manage.empty')}</p>
                 </div>
               ) : (
                 <>
@@ -1635,7 +1656,7 @@ export default function ProductWizard({
                       >
                         <div className="menu-preview-section-header">
                           <h3 className="menu-preview-section-title">{section.name}</h3>
-                          <span className="menu-preview-section-count">{sectionItems.length} producto{sectionItems.length !== 1 ? 's' : ''}</span>
+                          <span className="menu-preview-section-count">{t('productWizard.manage.productCount', { count: sectionItems.length })}</span>
                         </div>
                         <div className="menu-preview-section-items">
                           {sectionItems.length === 0 ? (
@@ -1651,7 +1672,7 @@ export default function ProductWizard({
                                 textAlign: 'center',
                               }}
                             >
-                              <p>Arrastra productos aquí</p>
+                              <p>{t('productWizard.manage.dropHere')}</p>
                             </div>
                           ) : (
                             sectionItems.map((item: any, _itemIndex: number) => {
@@ -1727,8 +1748,8 @@ export default function ProductWizard({
                       onDrop={(e) => handleDrop(e, 'no-section')}
                     >
                       <div className="menu-preview-section-header">
-                        <h3 className="menu-preview-section-title">Sin sección</h3>
-                        <span className="menu-preview-section-count">{itemsBySection['no-section'].length} producto{itemsBySection['no-section'].length !== 1 ? 's' : ''}</span>
+                        <h3 className="menu-preview-section-title">{t('productWizard.manage.noSection')}</h3>
+                        <span className="menu-preview-section-count">{t('productWizard.manage.productCount', { count: itemsBySection['no-section'].length })}</span>
                       </div>
                       <div className="menu-preview-section-items">
                         {itemsBySection['no-section'].map((item: any) => {
@@ -1807,9 +1828,9 @@ export default function ProductWizard({
               onClick={handleCreateNew}
             >
               <div className="wizard-option-icon">➕</div>
-              <h3 className="wizard-option-title">Crear nuevo producto</h3>
+              <h3 className="wizard-option-title">{t('productWizard.manage.createNewTitle')}</h3>
               <p className="wizard-option-description">
-                Crea un producto desde cero con nombre, descripción, precios e iconos
+                {t('productWizard.manage.createNewDesc')}
               </p>
             </div>
 
@@ -1818,9 +1839,9 @@ export default function ProductWizard({
               onClick={handleSelectExisting}
             >
               <div className="wizard-option-icon">📦</div>
-              <h3 className="wizard-option-title">Cargar productos ya creados</h3>
+              <h3 className="wizard-option-title">{t('productWizard.manage.loadExistingTitle')}</h3>
               <p className="wizard-option-description">
-                Asigna productos que ya has creado a este menú
+                {t('productWizard.manage.loadExistingDesc')}
               </p>
             </div>
           </div>
@@ -1832,7 +1853,7 @@ export default function ProductWizard({
                 className="admin-btn admin-btn-secondary"
                 onClick={handlePreviewMenu}
               >
-                Previsualizar
+                {t('productWizard.manage.preview')}
               </button>
             )}
             {menuData?.status === 'DRAFT' && (
@@ -1842,7 +1863,7 @@ export default function ProductWizard({
                 onClick={handlePublishMenu}
                 disabled={publishingMenu}
               >
-                {publishingMenu ? 'Publicando...' : '📢 Publicar Menú'}
+                {publishingMenu ? t('productWizard.manage.publishing') : t('productWizard.manage.publishMenu')}
               </button>
             )}
             {menuData?.status === 'PUBLISHED' && (
@@ -1857,7 +1878,7 @@ export default function ProductWizard({
                   pointerEvents: 'none',
                   userSelect: 'none'
                 }}>
-                  ✓ Menú publicado
+                  {t('productWizard.manage.menuPublished')}
                 </div>
                 <button 
                   type="button" 
@@ -1865,7 +1886,7 @@ export default function ProductWizard({
                   onClick={() => setShowUnpublishModal(true)}
                   disabled={unpublishingMenu}
                 >
-                  {unpublishingMenu ? 'Despublicando...' : 'Despublicar menú'}
+                  {unpublishingMenu ? t('productWizard.manage.unpublishing') : t('productWizard.manage.unpublishMenu')}
                 </button>
               </>
             )}
@@ -1875,7 +1896,7 @@ export default function ProductWizard({
                 className="admin-btn admin-btn-secondary"
                 onClick={onCancel}
               >
-                Cerrar
+                {t('productWizard.common.close')}
               </button>
             )}
           </div>
@@ -1890,18 +1911,18 @@ export default function ProductWizard({
               <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
                 <h5 className="modal-title" style={{ color: '#856404' }}>
                   <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#ffc107' }}></i>
-                  Despublicar Menú
+                  {t('productWizard.unpublishModal.title')}
                 </h5>
                 <button 
                   type="button" 
                   className="btn-close" 
                   onClick={() => setShowUnpublishModal(false)}
-                  aria-label="Close"
+                  aria-label={t('productWizard.common.closeAria')}
                 ></button>
               </div>
               <div className="modal-body" style={{ padding: '24px' }}>
                 <p style={{ marginBottom: '16px', fontSize: '16px' }}>
-                  ¿Estás seguro de que deseas despublicar este menú?
+                  {t('productWizard.unpublishModal.confirm')}
                 </p>
                 <div className="alert alert-warning mb-0" style={{ 
                   backgroundColor: '#fff3cd', 
@@ -1909,8 +1930,8 @@ export default function ProductWizard({
                   borderRadius: '4px',
                   padding: '12px'
                 }}>
-                  <strong>Importante:</strong><br />
-                  El menú quedará despublicado y no será visible para los clientes hasta que lo vuelvas a publicar.
+                  <strong>{t('productWizard.unpublishModal.important')}</strong><br />
+                  {t('productWizard.unpublishModal.warning')}
                 </div>
               </div>
               <div
@@ -1923,7 +1944,7 @@ export default function ProductWizard({
                   onClick={() => setShowUnpublishModal(false)}
                   disabled={unpublishingMenu}
                 >
-                  Cancelar
+                  {t('productWizard.common.cancel')}
                 </button>
                 <button 
                   type="button" 
@@ -1931,7 +1952,7 @@ export default function ProductWizard({
                   onClick={handleUnpublishMenu}
                   disabled={unpublishingMenu}
                 >
-                  {unpublishingMenu ? 'Despublicando...' : 'Sí, despublicar'}
+                  {unpublishingMenu ? t('productWizard.manage.unpublishing') : t('productWizard.unpublishModal.confirmAction')}
                 </button>
               </div>
             </div>
@@ -1939,38 +1960,38 @@ export default function ProductWizard({
         </div>
       )}
 
-      {/* Modal Cargar productos ya creados (clonar desde otros menús del mismo restaurante) */}
+      {/* Modal Cargar productos ya creados (clonar desde otros menús del mismo comercio) */}
       {showLoadExistingModal && (
         <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => !copyingExisting && setShowLoadExistingModal(false)}>
           <div className="modal-dialog modal-dialog-centered modal-lg" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content">
               <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
-                <h5 className="modal-title">Cargar productos ya creados</h5>
-                <button type="button" className="btn-close" onClick={() => !copyingExisting && setShowLoadExistingModal(false)} aria-label="Cerrar" />
+                <h5 className="modal-title">{t('productWizard.loadExistingModal.title')}</h5>
+                <button type="button" className="btn-close" onClick={() => !copyingExisting && setShowLoadExistingModal(false)} aria-label={t('productWizard.common.closeAria')} />
               </div>
               <div className="modal-body" style={{ padding: '24px' }}>
                 <p className="text-muted small mb-3">
-                  Elige productos de otros menús del mismo restaurante para copiarlos a este menú (se clonan con precios e iconos).
+                  {t('productWizard.loadExistingModal.intro')}
                 </p>
                 {loadingExistingProducts ? (
                   <div className="text-center py-4">
-                    <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Cargando...</span></div>
+                    <div className="spinner-border text-primary" role="status"><span className="visually-hidden">{t('productWizard.common.loading')}</span></div>
                   </div>
                 ) : loadExistingError ? (
                   <div className="alert alert-danger mb-0">{loadExistingError}</div>
                 ) : existingProductsPool.length === 0 ? (
                   <div className="alert alert-info mb-0">
-                    No hay productos en otros menús del mismo restaurante. Crea productos en otro menú y vuelve a intentar, o crea uno nuevo aquí.
+                    {t('productWizard.loadExistingModal.empty')}
                   </div>
                 ) : (
                   <>
                     {sections.length === 0 ? (
                       <div className="alert alert-warning mb-3">
-                        Crea al menos una sección en este menú para poder copiar productos aquí.
+                        {t('productWizard.loadExistingModal.needSection')}
                       </div>
                     ) : (
                       <div className="mb-3">
-                        <label className="form-label fw-semibold">Añadir a la sección</label>
+                        <label className="form-label fw-semibold">{t('productWizard.loadExistingModal.addToSection')}</label>
                         <select
                           className="form-select"
                           value={loadExistingSectionId}
@@ -1982,7 +2003,7 @@ export default function ProductWizard({
                         </select>
                       </div>
                     )}
-                    <div className="mb-2 fw-semibold">Selecciona los productos a copiar:</div>
+                    <div className="mb-2 fw-semibold">{t('productWizard.loadExistingModal.selectProducts')}</div>
                     <div style={{ maxHeight: '280px', overflowY: 'auto', border: '1px solid #dee2e6', borderRadius: '6px', padding: '8px' }}>
                       {existingProductsPool.map((p: any) => (
                         <label key={p.id} className="d-flex align-items-center gap-2 py-2 px-2 rounded" style={{ cursor: 'pointer' }}>
@@ -2005,7 +2026,7 @@ export default function ProductWizard({
               {!loadingExistingProducts && !loadExistingError && existingProductsPool.length > 0 && sections.length > 0 && (
                 <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
                   <button type="button" className="btn btn-secondary" onClick={() => setShowLoadExistingModal(false)} disabled={copyingExisting}>
-                    Cancelar
+                    {t('productWizard.common.cancel')}
                   </button>
                   <button
                     type="button"
@@ -2013,7 +2034,9 @@ export default function ProductWizard({
                     onClick={handleCopyExistingToMenu}
                     disabled={copyingExisting || selectedExistingIds.size === 0 || !loadExistingSectionId}
                   >
-                    {copyingExisting ? 'Copiando…' : `Copiar ${selectedExistingIds.size} producto(s) al menú`}
+                    {copyingExisting
+                      ? t('productWizard.loadExistingModal.copying')
+                      : t('productWizard.loadExistingModal.copyProducts', { count: selectedExistingIds.size })}
                   </button>
                 </div>
               )}
@@ -2037,7 +2060,7 @@ export default function ProductWizard({
               <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
                 <h5 className="modal-title" style={{ color: '#856404' }}>
                   <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#ffc107' }}></i>
-                  Límite de Productos Alcanzado
+                  {t('productWizard.limitModal.title')}
                 </h5>
                 <button 
                   type="button" 
@@ -2048,15 +2071,23 @@ export default function ProductWizard({
                       onCancel();
                     }
                   }}
-                  aria-label="Close"
+                  aria-label={t('productWizard.common.closeAria')}
                 ></button>
               </div>
               <div className="modal-body" style={{ padding: '24px' }}>
                 <p style={{ marginBottom: '16px', fontSize: '16px' }}>
-                  Has alcanzado el límite de <strong>{getProductLimit()}</strong> producto(s) para tu plan <strong>{tenantPlan || 'gratuito'}</strong>.
+                  <Trans
+                    i18nKey="productWizard.limitModal.reached"
+                    values={{ limit: getProductLimit(), plan: tenantPlan || t('productWizard.common.freePlan') }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <p style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
-                  Actualmente tienes <strong>{currentProductCount}</strong> producto(s) creado(s).
+                  <Trans
+                    i18nKey="productWizard.limitModal.current"
+                    values={{ count: currentProductCount }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <div
                   style={{
@@ -2086,10 +2117,10 @@ export default function ProductWizard({
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#854d0e', marginBottom: 2 }}>
-                      Para crear más productos
+                      {t('productWizard.limitModal.toCreateMore')}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
-                      Amplía tu suscripción para aumentar el límite de productos disponibles.
+                      {t('productWizard.limitModal.upgradeHint')}
                     </div>
                   </div>
                 </div>
@@ -2110,7 +2141,7 @@ export default function ProductWizard({
                     await loadProductCount();
                   }}
                 >
-                  Ver planes y suscripción
+                  {t('productWizard.limitModal.viewPlans')}
                 </a>
                 <button 
                   type="button" 
@@ -2123,7 +2154,7 @@ export default function ProductWizard({
                     }
                   }}
                 >
-                  Por el momento no me interesa
+                  {t('productWizard.limitModal.notInterested')}
                 </button>
               </div>
             </div>
@@ -2139,8 +2170,8 @@ export default function ProductWizard({
   return (
     <div className="restaurant-wizard">
       <div className="wizard-header">
-        <h2 className="wizard-title">Crear nuevo producto</h2>
-        <p className="wizard-subtitle">Completa la información del producto paso a paso</p>
+        <h2 className="wizard-title">{t('productWizard.create.title')}</h2>
+        <p className="wizard-subtitle">{t('productWizard.create.subtitle')}</p>
       </div>
 
       {/* Progress bar */}
@@ -2154,15 +2185,15 @@ export default function ProductWizard({
         <div className="wizard-steps">
           <div className={`wizard-step ${currentStep >= 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>
             <div className="wizard-step-number">1</div>
-            <div className="wizard-step-label">Información</div>
+            <div className="wizard-step-label">{t('productWizard.steps.info')}</div>
           </div>
           <div className={`wizard-step ${currentStep >= 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>
             <div className="wizard-step-number">2</div>
-            <div className="wizard-step-label">Precios</div>
+            <div className="wizard-step-label">{t('productWizard.steps.prices')}</div>
           </div>
           <div className={`wizard-step ${currentStep >= 3 ? 'active' : ''}`}>
             <div className="wizard-step-number">3</div>
-            <div className="wizard-step-label">Otros</div>
+            <div className="wizard-step-label">{t('productWizard.steps.others')}</div>
           </div>
         </div>
       </div>
@@ -2171,12 +2202,12 @@ export default function ProductWizard({
         {currentStep === 1 && (
           <div className="wizard-step-content wizard-step-centered">
             <div className="wizard-step-header">
-              <h3 className="wizard-step-title">Información básica</h3>
-              <p className="wizard-step-description">Ingresa el nombre y descripción del producto</p>
+              <h3 className="wizard-step-title">{t('productWizard.form.basicTitle')}</h3>
+              <p className="wizard-step-description">{t('productWizard.form.basicDesc')}</p>
             </div>
 
             <div className="wizard-fields-container">
-              {/* Restaurante + menú (filtrado); con un solo local el restaurante no se muestra */}
+              {/* Comercio + menú (filtrado); con un solo local el comercio no se muestra */}
               {(menus.length > 0 || showRestaurantPicker) && (
                 <div className="wizard-field wizard-field-large">
                   <div
@@ -2189,7 +2220,7 @@ export default function ProductWizard({
                   >
                     {showRestaurantPicker && (
                       <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-                        <label className="wizard-label">Restaurante</label>
+                        <label className="wizard-label">{t('productWizard.form.restaurant')}</label>
                         <select
                           className="admin-form-control wizard-input-large"
                           value={wizardRestaurantId}
@@ -2199,7 +2230,7 @@ export default function ProductWizard({
                             setFormData((fd) => ({ ...fd, menuId: '', sectionIds: [] }));
                           }}
                         >
-                          <option value="">Elegí un restaurante</option>
+                          <option value="">{t('productWizard.form.chooseRestaurant')}</option>
                           {(restaurantsProp ?? []).map((r: any) => (
                             <option key={r.id} value={r.id}>
                               {r.name}
@@ -2210,7 +2241,7 @@ export default function ProductWizard({
                     )}
                     {menus.length > 0 && (
                       <div style={{ flex: '1 1 220px', minWidth: 0 }}>
-                        <label className="wizard-label">Menú (opcional)</label>
+                        <label className="wizard-label">{t('productWizard.form.menuOptional')}</label>
                         <select
                           className="admin-form-control wizard-input-large"
                           value={formData.menuId}
@@ -2225,8 +2256,8 @@ export default function ProductWizard({
                         >
                           <option value="">
                             {showRestaurantPicker && !wizardRestaurantId
-                              ? 'Elegí un restaurante primero'
-                              : 'Sin asignar (producto independiente)'}
+                              ? t('productWizard.form.chooseRestaurantFirst')
+                              : t('productWizard.form.unassigned')}
                           </option>
                           {filteredMenus.map((menu: any) => (
                             <option key={menu.id} value={menu.id}>
@@ -2238,7 +2269,7 @@ export default function ProductWizard({
                     )}
                   </div>
                   <small className="wizard-help-text">
-                    Podés crear el producto sin menú y asignarlo después. Los menús se filtran por el local elegido.
+                    {t('productWizard.form.menuHelp')}
                   </small>
                 </div>
               )}
@@ -2247,12 +2278,12 @@ export default function ProductWizard({
               {formData.menuId && (
                 <div className="wizard-field wizard-field-large">
                   <label className="wizard-label">
-                    Secciones del menú {loadingSections && '(cargando...)'} *
+                    {t('productWizard.form.menuSections')} {loadingSections && t('productWizard.form.loadingSections')} *
                   </label>
                   {sections.length === 0 && !loadingSections ? (
                     <div className="wizard-warning-box">
                       <p className="wizard-warning-text">
-                        ⚠️ Este menú no tiene secciones. El producto se guardará pero no se mostrará hasta que agregues secciones al menú y lo asignes.
+                        {t('productWizard.form.noSectionsWarning')}
                       </p>
                     </div>
                   ) : (
@@ -2300,19 +2331,22 @@ export default function ProductWizard({
                           onClick={() => setShowCreateSectionModal(true)}
                           disabled={loadingSections}
                         >
-                          + Crear nueva sección
+                          {t('productWizard.form.createNewSection')}
                         </button>
                       </div>
                       {formData.sectionIds.length === 0 && (
                         <div className="wizard-warning-box">
                           <p className="wizard-warning-text">
-                            ⚠️ No has seleccionado ninguna sección. El producto se guardará pero <strong>no se mostrará en el menú</strong> hasta que lo asignes a al menos una sección.
+                            <Trans
+                              i18nKey="productWizard.form.noSectionSelected"
+                              components={{ strong: <strong /> }}
+                            />
                           </p>
                         </div>
                       )}
                       {formData.sectionIds.length > 0 && (
                         <small className="wizard-help-text" style={{ color: '#10b981', marginTop: '8px', display: 'block' }}>
-                          ✓ {formData.sectionIds.length} sección{formData.sectionIds.length > 1 ? 'es' : ''} seleccionada{formData.sectionIds.length > 1 ? 's' : ''}
+                          {t('productWizard.form.sectionsSelected', { count: formData.sectionIds.length })}
                         </small>
                       )}
                     </>
@@ -2322,25 +2356,25 @@ export default function ProductWizard({
 
               {/* Nombre del producto */}
               <div className="wizard-field wizard-field-large">
-                <label className="wizard-label">Nombre del producto *</label>
+                <label className="wizard-label">{t('productWizard.form.productName')}</label>
                 <input
                   type="text"
                   className="admin-form-control wizard-input-large"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ej: Pizza Margherita, Hamburguesa Clásica, etc."
+                  placeholder={t('productWizard.form.productNamePlaceholder')}
                   required
                 />
               </div>
 
               {/* Descripción */}
               <div className="wizard-field wizard-field-large">
-                <label className="wizard-label">Descripción (opcional)</label>
+                <label className="wizard-label">{t('productWizard.form.descriptionOptional')}</label>
                 <textarea
                   className="admin-form-control wizard-textarea-large"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe tu producto..."
+                  placeholder={t('productWizard.form.descriptionPlaceholder')}
                   rows={4}
                 />
               </div>
@@ -2351,10 +2385,10 @@ export default function ProductWizard({
         {currentStep === 2 && (
           <div className="wizard-step-content wizard-step-centered">
             <div className="wizard-step-header">
-              <h3 className="wizard-step-title">Precios</h3>
+              <h3 className="wizard-step-title">{t('productWizard.prices.title')}</h3>
               <p className="wizard-step-description">
-                Agrega uno o más precios para tu producto
-                {formData.prices.length > 1 ? ' · Arrastrá cada fila desde ☰ para ordenar cómo se muestran.' : ''}
+                {t('productWizard.prices.description')}
+                {formData.prices.length > 1 ? t('productWizard.prices.reorderHint') : ''}
               </p>
             </div>
 
@@ -2379,7 +2413,7 @@ export default function ProductWizard({
                   {formData.prices.length > 1 ? (
                     <div
                       className="wizard-price-drag"
-                      title="Arrastrar para reordenar"
+                      title={t('productWizard.prices.dragTitle')}
                       style={{
                         alignSelf: 'center',
                         fontSize: '1.1rem',
@@ -2394,7 +2428,7 @@ export default function ProductWizard({
                     </div>
                   ) : null}
                   <div className="wizard-price-field">
-                    <label className="wizard-label">Moneda</label>
+                    <label className="wizard-label">{t('productWizard.prices.currency')}</label>
                     <select
                       className="admin-form-control"
                       value={price.currency}
@@ -2415,17 +2449,17 @@ export default function ProductWizard({
                     </select>
                   </div>
                   <div className="wizard-price-field">
-                    <label className="wizard-label">Etiqueta (opcional)</label>
+                    <label className="wizard-label">{t('productWizard.prices.labelOptional')}</label>
                     <input
                       type="text"
                       className="admin-form-control"
                       value={price.label}
                       onChange={(e) => updatePrice(index, 'label', e.target.value)}
-                      placeholder="Ej: Regular, Grande, etc."
+                      placeholder={t('productWizard.prices.labelPlaceholder')}
                     />
                   </div>
                   <div className="wizard-price-field">
-                    <label className="wizard-label">Precio *</label>
+                    <label className="wizard-label">{t('productWizard.prices.price')}</label>
                     <input
                       type="number"
                       className="admin-form-control"
@@ -2446,7 +2480,7 @@ export default function ProductWizard({
                           requestAnimationFrame(() => e.target.select());
                         }
                       }}
-                      placeholder="Ej.: 12,50"
+                      placeholder={t('productWizard.prices.amountPlaceholder')}
                       step="0.01"
                     />
                   </div>
@@ -2468,7 +2502,7 @@ export default function ProductWizard({
                 onClick={addPrice}
                 style={{ marginTop: '16px' }}
               >
-                + Agregar otro precio
+                {t('productWizard.prices.addAnother')}
               </button>
             </div>
           </div>
@@ -2477,14 +2511,14 @@ export default function ProductWizard({
         {currentStep === 3 && (
           <div className="wizard-step-content">
             <div className="wizard-step-header">
-              <h3 className="wizard-step-title">Otros</h3>
-              <p className="wizard-step-description">Selecciona iconos y agrega imágenes para tu producto (opcional)</p>
+              <h3 className="wizard-step-title">{t('productWizard.others.title')}</h3>
+              <p className="wizard-step-description">{t('productWizard.others.description')}</p>
             </div>
 
             <div className="wizard-fields-container">
               {canHighlightProducts && (
                 <div style={{ marginBottom: '32px', overflowX: 'hidden' }}>
-                  <h4 style={{ marginBottom: '12px', fontSize: '18px', fontWeight: 600 }}>Destacar producto</h4>
+                  <h4 style={{ marginBottom: '12px', fontSize: '18px', fontWeight: 600 }}>{t('productWizard.others.highlightTitle')}</h4>
                   <div className="form-check" style={{ paddingLeft: '0px', display: 'flex', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
                     <input
                       className="form-check-input"
@@ -2495,7 +2529,7 @@ export default function ProductWizard({
                       style={{ marginLeft: 0, marginTop: '0.2rem', position: 'static', flexShrink: 0 }}
                     />
                     <label className="form-check-label" htmlFor="highlighted-product-wizard" style={{ marginBottom: 0, flex: '1 1 240px', minWidth: 0 }}>
-                      Mostrar este producto como destacado en las plantillas
+                      {t('productWizard.others.highlightLabel')}
                     </label>
                   </div>
                 </div>
@@ -2503,7 +2537,7 @@ export default function ProductWizard({
 
               {/* Sección de Iconos */}
               <div style={{ marginBottom: '32px' }}>
-                <h4 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>Iconos</h4>
+                <h4 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>{t('productWizard.others.iconsTitle')}</h4>
                 <div className="wizard-icons-grid">
                   {availableIcons.map((icon) => (
                     <button
@@ -2529,7 +2563,7 @@ export default function ProductWizard({
                   fontWeight: 600,
                   color: (tenantPlan !== 'pro' && tenantPlan !== 'pro_team' && tenantPlan !== 'premium') ? '#999' : 'inherit'
                 }}>
-                  Imágenes del Producto
+                  {t('productWizard.others.imagesTitle')}
                 </h4>
                 
                 {(tenantPlan !== 'pro' && tenantPlan !== 'pro_team' && tenantPlan !== 'premium') ? (
@@ -2547,10 +2581,10 @@ export default function ProductWizard({
                   >
                     <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}>📷</div>
                     <p style={{ margin: 0, color: '#999', fontSize: '16px', marginBottom: '8px' }}>
-                      Arrastra imágenes aquí o haz clic para seleccionar
+                      {t('productWizard.others.dropImagesLocked')}
                     </p>
                     <p style={{ margin: 0, color: '#bbb', fontSize: '14px', marginBottom: '16px' }}>
-                      Formatos: JPG, PNG, GIF (máx. 5MB por imagen)
+                      {t('productWizard.others.formatsLocked')}
                     </p>
                     <div
                       style={{
@@ -2567,10 +2601,10 @@ export default function ProductWizard({
                       }}
                     >
                       <p style={{ margin: 0, color: '#856404', fontSize: '13px', fontWeight: 500 }}>
-                        <strong>⚠️ Imágenes disponibles solo en planes Pro, Pro Team y Premium</strong>
+                        <strong>{t('productWizard.others.imagesProOnly')}</strong>
                         <br />
                         <span style={{ fontSize: '12px' }}>
-                          Amplía tu suscripción a Pro o Premium para poder agregar imágenes a tus productos.
+                          {t('productWizard.others.imagesUpgradeHint')}
                         </span>
                       </p>
                       <a
@@ -2589,7 +2623,7 @@ export default function ProductWizard({
                           fontWeight: 600,
                         }}
                       >
-                        Ver planes y suscripciones
+                        {t('productWizard.others.viewPlans')}
                       </a>
                     </div>
                   </div>
@@ -2634,10 +2668,10 @@ export default function ProductWizard({
                       <>
                         <div style={{ fontSize: '48px', marginBottom: '16px' }}>📷</div>
                         <p style={{ margin: 0, color: '#666', fontSize: '16px', marginBottom: '8px' }}>
-                          Arrastra una imagen aquí o haz clic para seleccionar
+                          {t('productWizard.others.dropImage')}
                         </p>
                         <p style={{ margin: 0, color: '#999', fontSize: '14px' }}>
-                          Formatos: JPG, PNG, GIF (máx. 5MB)
+                          {t('productWizard.others.formats')}
                         </p>
                       </>
                     ) : (
@@ -2645,7 +2679,7 @@ export default function ProductWizard({
                         <div style={{ position: 'relative', width: '150px', height: '150px' }}>
                           <img
                             src={imagePreviews[0]}
-                            alt="Preview producto"
+                            alt={t('productWizard.others.previewAlt')}
                             style={{
                               width: '100%',
                               height: '100%',
@@ -2697,7 +2731,7 @@ export default function ProductWizard({
                             input.click();
                           }}
                         >
-                          Reemplazar foto
+                          {t('productWizard.others.replacePhoto')}
                         </button>
                       </div>
                     )}
@@ -2717,7 +2751,7 @@ export default function ProductWizard({
               onClick={handleBack}
               disabled={loading}
             >
-              ← Anterior
+              {t('productWizard.common.previous')}
             </button>
           )}
           <div className="wizard-footer-right">
@@ -2728,16 +2762,22 @@ export default function ProductWizard({
                 onClick={onCancel}
                 disabled={loading}
               >
-                Cancelar
+                {t('productWizard.common.cancel')}
               </button>
             )}
             {currentStep < totalSteps ? (
               <button 
                 type="submit" 
                 className="admin-btn"
-                disabled={loading || (currentStep === 1 && !formData.name.trim())}
+                disabled={
+                  loading ||
+                  (currentStep === 1 &&
+                    (!formData.name.trim() ||
+                      (Boolean(formData.menuId) &&
+                        (sections.length === 0 || formData.sectionIds.length === 0))))
+                }
               >
-                Siguiente →
+                {t('productWizard.common.next')}
               </button>
             ) : (
               <button 
@@ -2745,7 +2785,7 @@ export default function ProductWizard({
                 className="admin-btn"
                 disabled={loading}
               >
-                {loading ? 'Guardando...' : 'Crear Producto'}
+                {loading ? t('productWizard.common.saving') : t('productWizard.create.submit')}
               </button>
             )}
           </div>
@@ -2758,25 +2798,29 @@ export default function ProductWizard({
           <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content">
               <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
-                <h5 className="modal-title">Seleccionar Sección</h5>
+                <h5 className="modal-title">{t('productWizard.sectionModal.title')}</h5>
                 <button 
                   type="button" 
                   className="btn-close" 
                   onClick={() => setShowSectionModal(false)}
-                  aria-label="Close"
+                  aria-label={t('productWizard.common.closeAria')}
                 ></button>
               </div>
               <div className="modal-body" style={{ padding: '24px' }}>
                 <p style={{ marginBottom: '20px', fontSize: '16px' }}>
-                  Has seleccionado el menú <strong>{selectedMenuForModal?.name || 'Sin nombre'}</strong> pero no has elegido una sección.
+                  <Trans
+                    i18nKey="productWizard.sectionModal.selectedMenuNoSection"
+                    values={{ name: selectedMenuForModal?.name || t('productWizard.common.untitled') }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <p style={{ marginBottom: '20px', fontSize: '14px', color: '#666' }}>
-                  Selecciona una sección donde mostrar el producto o guárdalo sin sección (no se mostrará en el menú hasta que asignes una sección).
+                  {t('productWizard.sectionModal.chooseOrSave')}
                 </p>
                 
                 {menuSectionsForModal.length > 0 ? (
                   <div style={{ marginBottom: '20px' }}>
-                    <h6 style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 600 }}>Secciones disponibles:</h6>
+                    <h6 style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 600 }}>{t('productWizard.sectionModal.availableSections')}</h6>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
                       {menuSectionsForModal.map((section: any) => (
                         <button
@@ -2817,7 +2861,7 @@ export default function ProductWizard({
                     textAlign: 'center',
                     color: '#666'
                   }}>
-                    <p style={{ margin: 0 }}>Este menú no tiene secciones creadas aún.</p>
+                    <p style={{ margin: 0 }}>{t('productWizard.sectionModal.noSectionsYet')}</p>
                   </div>
                 )}
 
@@ -2828,7 +2872,10 @@ export default function ProductWizard({
                   padding: '12px',
                   fontSize: '13px'
                 }}>
-                  <strong>⚠️ Advertencia:</strong> Si guardas el producto sin sección, no se mostrará en el menú hasta que asignes una sección.
+                  <Trans
+                    i18nKey="productWizard.sectionModal.warning"
+                    components={{ strong: <strong /> }}
+                  />
                 </div>
               </div>
               <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
@@ -2837,14 +2884,14 @@ export default function ProductWizard({
                   className="btn btn-secondary" 
                   onClick={() => setShowSectionModal(false)}
                 >
-                  Cancelar
+                  {t('productWizard.common.cancel')}
                 </button>
                 <button 
                   type="button" 
                   className="btn btn-warning" 
                   onClick={handleSaveWithoutSection}
                 >
-                  Guardar sin sección
+                  {t('productWizard.sectionModal.saveWithoutSection')}
                 </button>
               </div>
             </div>
@@ -2879,7 +2926,7 @@ export default function ProductWizard({
           <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content">
               <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
-                <h5 className="modal-title">Crear Nueva Sección</h5>
+                <h5 className="modal-title">{t('productWizard.createSectionModal.title')}</h5>
                 <button 
                   type="button" 
                   className="btn-close" 
@@ -2887,20 +2934,20 @@ export default function ProductWizard({
                     setShowCreateSectionModal(false);
                     setNewSectionName('');
                   }}
-                  aria-label="Close"
+                  aria-label={t('productWizard.common.closeAria')}
                 ></button>
               </div>
               <div className="modal-body" style={{ padding: '24px' }}>
                 <div className="mb-3">
                   <label className="form-label" style={{ fontWeight: 500, marginBottom: '8px' }}>
-                    Nombre de la sección *
+                    {t('productWizard.createSectionModal.nameLabel')}
                   </label>
                   <input
                     type="text"
                     className="form-control"
                     value={newSectionName}
                     onChange={(e) => setNewSectionName(e.target.value)}
-                    placeholder="Ej: Entradas, Platos principales, Postres..."
+                    placeholder={t('productWizard.createSectionModal.namePlaceholder')}
                     autoFocus
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && !creatingSection) {
@@ -2909,7 +2956,7 @@ export default function ProductWizard({
                     }}
                   />
                   <small className="form-text text-muted" style={{ marginTop: '4px', display: 'block' }}>
-                    La sección se creará para el menú seleccionado y se seleccionará automáticamente.
+                    {t('productWizard.createSectionModal.help')}
                   </small>
                 </div>
               </div>
@@ -2923,7 +2970,7 @@ export default function ProductWizard({
                   }}
                   disabled={creatingSection}
                 >
-                  Cancelar
+                  {t('productWizard.common.cancel')}
                 </button>
                 <button 
                   type="button" 
@@ -2931,7 +2978,7 @@ export default function ProductWizard({
                   onClick={handleCreateSection}
                   disabled={creatingSection || !newSectionName.trim()}
                 >
-                  {creatingSection ? 'Creando...' : 'Crear sección'}
+                  {creatingSection ? t('productWizard.common.creating') : t('productWizard.createSectionModal.submit')}
                 </button>
               </div>
             </div>
@@ -2954,7 +3001,7 @@ export default function ProductWizard({
               <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
                 <h5 className="modal-title" style={{ color: '#856404' }}>
                   <i className="bi bi-exclamation-triangle-fill me-2" style={{ color: '#ffc107' }}></i>
-                  Límite de Productos Alcanzado
+                  {t('productWizard.limitModal.title')}
                 </h5>
                 <button 
                   type="button" 
@@ -2965,15 +3012,23 @@ export default function ProductWizard({
                       onCancel();
                     }
                   }}
-                  aria-label="Close"
+                  aria-label={t('productWizard.common.closeAria')}
                 ></button>
               </div>
               <div className="modal-body" style={{ padding: '24px' }}>
                 <p style={{ marginBottom: '16px', fontSize: '16px' }}>
-                  Has alcanzado el límite de <strong>{getProductLimit()}</strong> producto(s) para tu plan <strong>{tenantPlan || 'gratuito'}</strong>.
+                  <Trans
+                    i18nKey="productWizard.limitModal.reached"
+                    values={{ limit: getProductLimit(), plan: tenantPlan || t('productWizard.common.freePlan') }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <p style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
-                  Actualmente tienes <strong>{currentProductCount}</strong> producto(s) creado(s).
+                  <Trans
+                    i18nKey="productWizard.limitModal.current"
+                    values={{ count: currentProductCount }}
+                    components={{ strong: <strong /> }}
+                  />
                 </p>
                 <div
                   style={{
@@ -3003,10 +3058,10 @@ export default function ProductWizard({
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#854d0e', marginBottom: 2 }}>
-                      Para crear más productos
+                      {t('productWizard.limitModal.toCreateMore')}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
-                      Amplía tu suscripción para aumentar el límite de productos disponibles.
+                      {t('productWizard.limitModal.upgradeHint')}
                     </div>
                   </div>
                 </div>
@@ -3023,7 +3078,7 @@ export default function ProductWizard({
                     }
                   }}
                 >
-                  Por el momento no me interesa
+                  {t('productWizard.limitModal.notInterested')}
                 </button>
                 <a
                   href="/admin/profile/subscription"
@@ -3036,7 +3091,7 @@ export default function ProductWizard({
                     await loadProductCount();
                   }}
                 >
-                  Ver planes y suscripción
+                  {t('productWizard.limitModal.viewPlans')}
                 </a>
               </div>
             </div>

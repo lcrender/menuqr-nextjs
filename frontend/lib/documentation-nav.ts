@@ -1,5 +1,8 @@
+import type { TFunction } from 'i18next';
+
 /**
  * Manifiesto de la documentación multipágina (orden = navegación y siguiente/anterior).
+ * Los strings en español son fallback SSR; la UI localiza vía `documentation.sections.*`.
  */
 export type DocSection = {
   slug: string;
@@ -18,6 +21,27 @@ export type DocSection = {
   searchText: string;
 };
 
+function resolveDocKey(t: TFunction, key: string, fallback: string): string {
+  const translated = t(key);
+  return translated === key ? fallback : translated;
+}
+
+/** Campos localizables de una sección (title, metas, búsqueda, etc.). */
+export function translateDocSection(section: DocSection, t: TFunction): DocSection {
+  const p = `documentation.sections.${section.slug}`;
+  return {
+    ...section,
+    title: resolveDocKey(t, `${p}.title`, section.title),
+    shortTitle: resolveDocKey(t, `${p}.shortTitle`, section.shortTitle),
+    group: resolveDocKey(t, `${p}.group`, section.group),
+    metaTitlePublic: resolveDocKey(t, `${p}.metaTitlePublic`, section.metaTitlePublic),
+    metaTitleAdmin: resolveDocKey(t, `${p}.metaTitleAdmin`, section.metaTitleAdmin),
+    metaDescription: resolveDocKey(t, `${p}.metaDescription`, section.metaDescription),
+    keywords: resolveDocKey(t, `${p}.keywords`, section.keywords),
+    searchText: resolveDocKey(t, `${p}.searchText`, section.searchText),
+  };
+}
+
 export const DOCUMENTATION_SECTIONS: DocSection[] = [
   {
     slug: 'intro',
@@ -26,22 +50,22 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Documentación | AppMenuQR',
     metaTitleAdmin: 'Documentación | Ayuda',
     metaDescription:
-      'Guía AppMenuQR: registro, restaurante, menús, CSV, plantillas, publicación, programación, QR, impresión en papel, administración del negocio, traducciones, suscripciones y pagos.',
+      'Guía AppMenuQR: registro, comercio, menús, CSV, plantillas, publicación, programación, QR, impresión en papel, administración del negocio, traducciones, suscripciones y pagos.',
     group: 'Introducción',
     keywords: 'inicio guía flujo resumen pasos registro sesión',
-    searchText: 'resumen flujo completo crear restaurante menú csv secciones productos qr verificar email',
+    searchText: 'resumen flujo completo crear comercio menú csv secciones productos qr verificar email',
   },
   {
     slug: 'crear-restaurante',
-    title: 'Crear un restaurante',
-    shortTitle: 'Restaurante',
-    metaTitlePublic: 'Crear un restaurante | Documentación AppMenuQR',
-    metaTitleAdmin: 'Crear un restaurante | Ayuda',
+    title: 'Crear un comercio',
+    shortTitle: 'Comercio',
+    metaTitlePublic: 'Crear un comercio | Documentación AppMenuQR',
+    metaTitleAdmin: 'Crear un comercio | Ayuda',
     metaDescription:
-      'Alta del primer restaurante en AppMenuQR: datos, dirección en mapa, teléfono, WhatsApp, logo, plantilla por defecto y moneda principal.',
+      'Alta del primer comercio en AppMenuQR: datos, dirección en mapa, teléfono, WhatsApp, logo, plantilla por defecto y moneda principal.',
     group: 'Primeros pasos',
-    keywords: 'restaurante crear logo portada moneda plantilla dirección whatsapp maps video tutorial youtube',
-    searchText: 'restaurantes menú lateral crear guardar primera vez asistente video tutorial primeros pasos',
+    keywords: 'comercio crear logo portada moneda plantilla dirección whatsapp maps video tutorial youtube',
+    searchText: 'comercios menú lateral crear guardar primera vez asistente video tutorial primeros pasos',
   },
   {
     slug: 'crear-menu',
@@ -50,9 +74,9 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Crear un menú | Documentación AppMenuQR',
     metaTitleAdmin: 'Crear un menú | Ayuda',
     metaDescription:
-      'Cómo crear menús por restaurante: nombre visible para clientes, descripción opcional y secciones dentro del menú.',
+      'Cómo crear menús por comercio: nombre visible para clientes, descripción opcional y secciones dentro del menú.',
     group: 'Primeros pasos',
-    keywords: 'menú crear borrador restaurante nombre botón secciones video tutorial youtube',
+    keywords: 'menú crear borrador comercio nombre botón secciones video tutorial youtube',
     searchText: 'menús nuevo guardar almuerzo cena entradas principales video tutorial primeros pasos',
   },
   {
@@ -74,10 +98,10 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Crear productos | Documentación AppMenuQR',
     metaTitleAdmin: 'Crear productos | Ayuda',
     metaDescription:
-      'Alta de productos con precios en la moneda del restaurante, iconos y asignación a secciones.',
+      'Alta de productos con precios en la moneda del comercio, iconos y asignación a secciones.',
     group: 'Menú',
     keywords: 'productos precios iconos moneda destacado',
-    searchText: 'productos del menú crear precio moneda principal restaurante',
+    searchText: 'productos del menú crear precio moneda principal comercio',
   },
   {
     slug: 'reordenar-productos',
@@ -110,10 +134,10 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Plantillas de diseño | Documentación AppMenuQR',
     metaTitleAdmin: 'Plantillas de diseño | Ayuda',
     metaDescription:
-      'Plantilla por defecto al crear el restaurante, Menú plantillas para previsualizar, colores y opciones del negocio.',
+      'Plantilla por defecto al crear el comercio, Menú plantillas para previsualizar, colores y opciones del negocio.',
     group: 'Diseño',
     keywords: 'plantilla diseño preview colores logo nombre classic foodie',
-    searchText: 'plantilla restaurante editar activar desactivar primarios secundarios',
+    searchText: 'plantilla comercio editar activar desactivar primarios secundarios',
   },
   {
     slug: 'publicar-menu',
@@ -122,7 +146,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Publicar el menú | Documentación AppMenuQR',
     metaTitleAdmin: 'Publicar el menú | Ayuda',
     metaDescription:
-      'Estado borrador o publicado, botones publicar y despublicar; enlace del restaurante con menús ocultos hasta publicar.',
+      'Estado borrador o publicado, botones publicar y despublicar; enlace del comercio con menús ocultos hasta publicar.',
     group: 'Publicación',
     keywords: 'publicar borrador despublicar estado acciones lista menús',
     searchText: 'columna estado qr visible oculto',
@@ -134,7 +158,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Programar visibilidad del menú | Documentación AppMenuQR',
     metaTitleAdmin: 'Programar visibilidad del menú | Ayuda',
     metaDescription:
-      'Programación semanal de menús en planes Pro y Premium: días, horarios, fechas y huso horario del restaurante.',
+      'Programación semanal de menús en planes Pro y Premium: días, horarios, fechas y huso horario del comercio.',
     group: 'Publicación',
     keywords: 'programar horario días semana visibilidad pro premium timezone',
     searchText: 'lunes martes horario desde hasta fechas guardar programación menús',
@@ -143,12 +167,12 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     slug: 'descargar-qr',
     title: 'Descargar código QR',
     shortTitle: 'Código QR',
-    metaTitlePublic: 'Código QR del restaurante | Documentación AppMenuQR',
-    metaTitleAdmin: 'Código QR del restaurante | Ayuda',
+    metaTitlePublic: 'Código QR del comercio | Documentación AppMenuQR',
+    metaTitleAdmin: 'Código QR del comercio | Ayuda',
     metaDescription:
-      'QR del restaurante en el dashboard: todos los menús publicados, descarga, impresión y aviso si cambias el nombre.',
+      'QR del comercio en el dashboard: todos los menús publicados, descarga, impresión y aviso si cambias el nombre.',
     group: 'Publicación',
-    keywords: 'qr código descargar dashboard restaurante menús nombre enlace',
+    keywords: 'qr código descargar dashboard comercio menús nombre enlace',
     searchText: 'imprimir escanear google maps cambiar nombre nuevo qr',
   },
   {
@@ -161,30 +185,30 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
       'Imprimí tu menú en papel desde el panel: plantillas, logo, secciones, idioma y menús a incluir.',
     group: 'Publicación',
     keywords: 'imprimir papel carta plantilla pdf logo secciones idioma menús',
-    searchText: 'imprimir carta restaurante clásica elegante moderna bistro vista previa',
+    searchText: 'imprimir carta comercio clásica elegante moderna bistro vista previa',
   },
   {
     slug: 'desactivar-restaurante',
-    title: 'Desactivar el restaurante',
+    title: 'Desactivar el comercio',
     shortTitle: 'Desactivar local',
-    metaTitlePublic: 'Desactivar restaurante | Documentación AppMenuQR',
-    metaTitleAdmin: 'Desactivar restaurante | Ayuda',
+    metaTitlePublic: 'Desactivar comercio | Documentación AppMenuQR',
+    metaTitleAdmin: 'Desactivar comercio | Ayuda',
     metaDescription:
-      'Qué ocurre si desactivás el restaurante: la página pública y el QR no se muestran hasta reactivarlo.',
+      'Qué ocurre si desactivás el comercio: la página pública y el QR no se muestran hasta reactivarlo.',
     group: 'Administración del negocio',
-    keywords: 'desactivar restaurante ocultar pausa cerrar página pública qr',
-    searchText: 'restaurante inactivo volver activar cartel online',
+    keywords: 'desactivar comercio ocultar pausa cerrar página pública qr',
+    searchText: 'comercio inactivo volver activar cartel online',
   },
   {
     slug: 'eliminar-restaurante',
-    title: 'Eliminar el restaurante',
+    title: 'Eliminar el comercio',
     shortTitle: 'Eliminar local',
-    metaTitlePublic: 'Eliminar restaurante | Documentación AppMenuQR',
-    metaTitleAdmin: 'Eliminar restaurante | Ayuda',
+    metaTitlePublic: 'Eliminar comercio | Documentación AppMenuQR',
+    metaTitleAdmin: 'Eliminar comercio | Ayuda',
     metaDescription:
-      'Eliminar un restaurante borra todos los datos asociados de forma irreversible.',
+      'Eliminar un comercio borra todos los datos asociados de forma irreversible.',
     group: 'Administración del negocio',
-    keywords: 'eliminar restaurante borrar datos permanentemente peligro',
+    keywords: 'eliminar comercio borrar datos permanentemente peligro',
     searchText: 'borrar negocio irreversible menús productos',
   },
   {
@@ -218,10 +242,10 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Edición masiva de productos | Documentación AppMenuQR',
     metaTitleAdmin: 'Edición masiva de productos | Ayuda',
     metaDescription:
-      'Acciones masivas sobre productos: borrar, mover entre menús y restaurantes, duplicados y límites del plan.',
+      'Acciones masivas sobre productos: borrar, mover entre menús y comercios, duplicados y límites del plan.',
     group: 'Productos avanzado',
     keywords: 'masivo borrar mover duplicar plan límite productos',
-    searchText: 'trasladar otro restaurante copiar cantidad',
+    searchText: 'trasladar otro comercio copiar cantidad',
   },
   {
     slug: 'editar-productos-detalle',
@@ -295,9 +319,25 @@ export function getAdjacentSections(slug: string): { prev: DocSection | null; ne
   };
 }
 
-export function matchesDocSearch(section: DocSection, query: string): boolean {
+export function matchesDocSearch(section: DocSection, query: string, t?: TFunction): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  const hay = `${section.title} ${section.shortTitle} ${section.keywords} ${section.searchText} ${section.metaDescription}`.toLowerCase();
+  const localized = t ? translateDocSection(section, t) : section;
+  const hay = [
+    localized.title,
+    localized.shortTitle,
+    localized.group,
+    localized.keywords,
+    localized.searchText,
+    localized.metaDescription,
+    section.title,
+    section.shortTitle,
+    section.group,
+    section.keywords,
+    section.searchText,
+    section.metaDescription,
+  ]
+    .join(' ')
+    .toLowerCase();
   return hay.includes(q);
 }

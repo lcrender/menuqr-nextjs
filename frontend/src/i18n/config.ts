@@ -63,9 +63,11 @@ i18n
     defaultNS: 'translation',
     ns: ['translation'],
 
-    // Configuración de carga
-    load: 'languageOnly',
+    // Mantener códigos regionales (es-ES / en-US); no reducir a languageOnly.
+    load: 'currentOnly',
     preload: ['es-ES', 'en-US'],
+    supportedLngs: ['es-ES', 'en-US'],
+    nonExplicitSupportedLngs: false,
 
     // Configuración de react
     react: {
@@ -77,13 +79,30 @@ i18n
 // FUNCIONES DE UTILIDAD
 // ========================================
 
+/** Evento para sincronizar preferredLanguage del usuario en el panel (AdminLayout, etc.). */
+export const PREFERRED_LANGUAGE_EVENT = 'menuqr:preferred-language';
+
+export type PreferredLanguageCode = 'es' | 'en';
+
+export function preferredLanguageToUiLocale(lang?: string | null): 'es-ES' | 'en-US' {
+  return String(lang || 'es').trim().toLowerCase() === 'en' ? 'en-US' : 'es-ES';
+}
+
+/** Notifica al shell del admin que cambió la preferencia de idioma (sin recargar). */
+export function notifyPreferredLanguageChanged(lang: PreferredLanguageCode): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent(PREFERRED_LANGUAGE_EVENT, { detail: { preferredLanguage: lang } }),
+  );
+}
+
 /**
  * Cambia el idioma de la aplicación
  */
 export const changeLanguage = async (locale: string): Promise<void> => {
   try {
     await i18n.changeLanguage(locale);
-    
+
     // Solo usar localStorage en el cliente (navegador)
     if (typeof window !== 'undefined') {
       localStorage.setItem('menuqr-locale', locale);

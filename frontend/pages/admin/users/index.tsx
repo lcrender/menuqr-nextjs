@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
@@ -215,8 +216,13 @@ export default function Users() {
 
   return (
     <AdminLayout>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="admin-title">Usuarios</h1>
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h1 className="admin-title mb-0">Usuarios</h1>
+        {currentUser?.role === 'SUPER_ADMIN' && (
+          <Link href="/admin/users/novedades" className="btn btn-outline-primary btn-sm">
+            Suscriptores de novedades
+          </Link>
+        )}
       </div>
 
       <div className="mb-3">
@@ -262,7 +268,7 @@ export default function Users() {
                 <th>Suscripción</th>
                 {currentUser?.role === 'SUPER_ADMIN' && <th>Región</th>}
                 <th>Estado</th>
-                <th>Restaurantes</th>
+                <th>Comercios</th>
                 <th>Menús</th>
                 <th>PA</th>
                 <th>PI</th>
@@ -499,13 +505,22 @@ export default function Users() {
                         {userDetails.user?.tenantId || selectedUser.tenantId ? (
                           <>
                             <dt className="col-sm-3 col-md-2 text-muted">Tenant ID</dt>
-                            <dd className="col-sm-9 col-md-10 mb-0">
+                            <dd className="col-sm-9 col-md-10">
                               <code className="user-select-all">
                                 {userDetails.user?.tenantId || selectedUser.tenantId}
                               </code>
                             </dd>
                           </>
                         ) : null}
+                        <dt className="col-sm-3 col-md-2 text-muted">Última conexión</dt>
+                        <dd className="col-sm-9 col-md-10 mb-0">
+                          {userDetails.user?.lastLoginAt
+                            ? new Date(userDetails.user.lastLoginAt).toLocaleString('es-AR', {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })
+                            : 'Sin conexiones registradas'}
+                        </dd>
                       </dl>
                     </div>
                     {currentUser?.role === 'SUPER_ADMIN' && (
@@ -537,9 +552,9 @@ export default function Users() {
                         </select>
                       </div>
                     )}
-                    {/* Restaurantes */}
+                    {/* Comercios */}
                     <div className="mb-4">
-                      <h6 className="mb-3">Restaurantes ({userDetails.restaurants.length})</h6>
+                      <h6 className="mb-3">Comercios ({userDetails.restaurants.length})</h6>
                       {userDetails.restaurants.length > 0 ? (
                         <div className="table-responsive">
                           <table className="table table-sm">
@@ -572,7 +587,7 @@ export default function Users() {
                           </table>
                         </div>
                       ) : (
-                        <p className="text-muted">No hay restaurantes</p>
+                        <p className="text-muted">No hay comercios</p>
                       )}
                     </div>
 
@@ -585,7 +600,7 @@ export default function Users() {
                             <thead>
                               <tr>
                                 <th>Nombre</th>
-                                <th>Restaurante</th>
+                                <th>Comercio</th>
                                 <th>Plantilla</th>
                                 <th>Estado</th>
                               </tr>
@@ -628,7 +643,7 @@ export default function Users() {
                               <tr>
                                 <th>Nombre</th>
                                 <th>Menú</th>
-                                <th>Restaurante</th>
+                                <th>Comercio</th>
                                 <th>Plantilla</th>
                                 <th>Estado</th>
                               </tr>

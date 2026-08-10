@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { Trans, useTranslation } from 'react-i18next';
 import api from '../../../lib/axios';
 import { MenuLocaleFlagGlyph } from '../../../lib/menu-locale-flag';
 import AdminLayout from '../../../components/AdminLayout';
 import AlertModal from '../../../components/AlertModal';
 import ConfirmModal from '../../../components/ConfirmModal';
+import i18n from '../../../src/i18n/config';
+import adminTranslationsEs from '../../../src/locales/fragments/adminTranslations.es.json';
+import adminTranslationsEn from '../../../src/locales/fragments/adminTranslations.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { adminTranslations: adminTranslationsEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { adminTranslations: adminTranslationsEn }, true, true);
 
 type ManifestEntry = { locale: string; label?: string; flagCode?: string; enabledPublic?: boolean };
 
@@ -14,6 +21,8 @@ type MenuRow = {
   name: string;
   slug?: string;
   status?: string;
+  /** Idioma base del menú (BCP-47), p.ej. es-ES | en-US */
+  sourceLocale?: string;
   translationManifest: ManifestEntry[] | null;
   locales: string[];
   /** Ya se ejecutó traducción automática (beta) al menos una vez */
@@ -67,9 +76,9 @@ const MENU_FLAG_CODE_RE = /^[A-Z0-9]{2,10}$/;
 const ADD_LOCALE_CUSTOM = '__custom__';
 
 function normalizeMenuLocaleInput(raw: string): string {
-  const t = raw.trim().replace(/_/g, '-');
-  if (!t) return '';
-  const parts = t.split('-').filter(Boolean);
+  const trimmed = raw.trim().replace(/_/g, '-');
+  if (!trimmed) return '';
+  const parts = trimmed.split('-').filter(Boolean);
   if (parts.length === 0) return '';
   const lang = parts[0]!.toLowerCase();
   const rest = parts.slice(1).map((p) => {
@@ -81,131 +90,127 @@ function normalizeMenuLocaleInput(raw: string): string {
 }
 
 /** Presets agrupados para el selector «Agregar idioma» (BCP-47). */
-const LOCALE_PRESET_GROUPS: { label: string; items: { locale: string; title: string }[] }[] = [
+const LOCALE_PRESET_GROUP_DEFS: { groupKey: string; locales: string[] }[] = [
   {
-    label: 'Inglés y germánicos',
-    items: [
-      { locale: 'en-US', title: 'Inglés (EE.UU.)' },
-      { locale: 'en-GB', title: 'Inglés (Reino Unido)' },
-      { locale: 'en-CA', title: 'Inglés (Canadá)' },
-      { locale: 'en-AU', title: 'Inglés (Australia)' },
-      { locale: 'en-NZ', title: 'Inglés (Nueva Zelanda)' },
-      { locale: 'en-IE', title: 'Inglés (Irlanda)' },
-      { locale: 'de-DE', title: 'Alemán (Alemania)' },
-      { locale: 'de-AT', title: 'Alemán (Austria)' },
-      { locale: 'de-CH', title: 'Alemán (Suiza)' },
-      { locale: 'nl-NL', title: 'Neerlandés (Países Bajos)' },
-      { locale: 'nl-BE', title: 'Neerlandés (Bélgica)' },
-      { locale: 'sv-SE', title: 'Sueco' },
-      { locale: 'da-DK', title: 'Danés' },
-      { locale: 'fi-FI', title: 'Finlandés' },
-      { locale: 'is-IS', title: 'Islandés' },
-      { locale: 'nb-NO', title: 'Noruego (bokmål)' },
-      { locale: 'nn-NO', title: 'Noruego (nynorsk)' },
+    groupKey: 'englishGermanic',
+    locales: [
+      'en-US',
+      'en-GB',
+      'en-CA',
+      'en-AU',
+      'en-NZ',
+      'en-IE',
+      'de-DE',
+      'de-AT',
+      'de-CH',
+      'nl-NL',
+      'nl-BE',
+      'sv-SE',
+      'da-DK',
+      'fi-FI',
+      'is-IS',
+      'nb-NO',
+      'nn-NO',
     ],
   },
   {
-    label: 'Romances',
-    items: [
-      { locale: 'fr-FR', title: 'Francés (Francia)' },
-      { locale: 'fr-CA', title: 'Francés (Canadá)' },
-      { locale: 'fr-BE', title: 'Francés (Bélgica)' },
-      { locale: 'fr-CH', title: 'Francés (Suiza)' },
-      { locale: 'it-IT', title: 'Italiano (Italia)' },
-      { locale: 'it-CH', title: 'Italiano (Suiza)' },
-      { locale: 'pt-BR', title: 'Portugués (Brasil)' },
-      { locale: 'pt-PT', title: 'Portugués (Portugal)' },
-      { locale: 'ro-RO', title: 'Rumano' },
-      { locale: 'ca-ES', title: 'Catalán' },
-      { locale: 'gl-ES', title: 'Gallego' },
-      { locale: 'eu-ES', title: 'Euskera' },
+    groupKey: 'romance',
+    locales: [
+      'fr-FR',
+      'fr-CA',
+      'fr-BE',
+      'fr-CH',
+      'it-IT',
+      'it-CH',
+      'pt-BR',
+      'pt-PT',
+      'ro-RO',
+      'ca-ES',
+      'gl-ES',
+      'eu-ES',
     ],
   },
   {
-    label: 'Español regional',
-    items: [
-      { locale: 'es-MX', title: 'Español (México)' },
-      { locale: 'es-AR', title: 'Español (Argentina)' },
-      { locale: 'es-CO', title: 'Español (Colombia)' },
-      { locale: 'es-CL', title: 'Español (Chile)' },
-      { locale: 'es-PE', title: 'Español (Perú)' },
-      { locale: 'es-VE', title: 'Español (Venezuela)' },
-      { locale: 'es-EC', title: 'Español (Ecuador)' },
-      { locale: 'es-GT', title: 'Español (Guatemala)' },
-      { locale: 'es-CR', title: 'Español (Costa Rica)' },
-      { locale: 'es-PA', title: 'Español (Panamá)' },
-      { locale: 'es-DO', title: 'Español (Rep. Dominicana)' },
-      { locale: 'es-UY', title: 'Español (Uruguay)' },
-      { locale: 'es-PY', title: 'Español (Paraguay)' },
-      { locale: 'es-BO', title: 'Español (Bolivia)' },
-      { locale: 'es-419', title: 'Español (Latinoamérica, genérico)' },
+    groupKey: 'spanishRegional',
+    locales: [
+      'es-MX',
+      'es-AR',
+      'es-CO',
+      'es-CL',
+      'es-PE',
+      'es-VE',
+      'es-EC',
+      'es-GT',
+      'es-CR',
+      'es-PA',
+      'es-DO',
+      'es-UY',
+      'es-PY',
+      'es-BO',
+      'es-419',
     ],
   },
   {
-    label: 'Europa central y oriental',
-    items: [
-      { locale: 'pl-PL', title: 'Polaco' },
-      { locale: 'cs-CZ', title: 'Checo' },
-      { locale: 'sk-SK', title: 'Eslovaco' },
-      { locale: 'hu-HU', title: 'Húngaro' },
-      { locale: 'bg-BG', title: 'Búlgaro' },
-      { locale: 'hr-HR', title: 'Croata' },
-      { locale: 'sl-SI', title: 'Esloveno' },
-      { locale: 'sr-RS', title: 'Serbio (Serbia)' },
-      { locale: 'bs-BA', title: 'Bosnio' },
-      { locale: 'mk-MK', title: 'Macedonio' },
-      { locale: 'sq-AL', title: 'Albanés' },
-      { locale: 'el-GR', title: 'Griego' },
-      { locale: 'uk-UA', title: 'Ucraniano' },
-      { locale: 'ru-RU', title: 'Ruso' },
-      { locale: 'be-BY', title: 'Bielorruso' },
-      { locale: 'lt-LT', title: 'Lituano' },
-      { locale: 'lv-LV', title: 'Letón' },
-      { locale: 'et-EE', title: 'Estonio' },
+    groupKey: 'centralEasternEurope',
+    locales: [
+      'pl-PL',
+      'cs-CZ',
+      'sk-SK',
+      'hu-HU',
+      'bg-BG',
+      'hr-HR',
+      'sl-SI',
+      'sr-RS',
+      'bs-BA',
+      'mk-MK',
+      'sq-AL',
+      'el-GR',
+      'uk-UA',
+      'ru-RU',
+      'be-BY',
+      'lt-LT',
+      'lv-LV',
+      'et-EE',
     ],
   },
   {
-    label: 'Asia y Pacífico',
-    items: [
-      { locale: 'zh-CN', title: 'Chino (simplificado, China)' },
-      { locale: 'zh-TW', title: 'Chino (tradicional, Taiwán)' },
-      { locale: 'zh-HK', title: 'Chino (Hong Kong)' },
-      { locale: 'ja-JP', title: 'Japonés' },
-      { locale: 'ko-KR', title: 'Coreano' },
-      { locale: 'hi-IN', title: 'Hindi (India)' },
-      { locale: 'bn-IN', title: 'Bengalí (India)' },
-      { locale: 'ta-IN', title: 'Tamil (India)' },
-      { locale: 'ur-PK', title: 'Urdu (Pakistán)' },
-      { locale: 'th-TH', title: 'Tailandés' },
-      { locale: 'vi-VN', title: 'Vietnamita' },
-      { locale: 'id-ID', title: 'Indonesio' },
-      { locale: 'ms-MY', title: 'Malayo' },
-      { locale: 'fil-PH', title: 'Filipino' },
-      { locale: 'km-KH', title: 'Jemer' },
-      { locale: 'my-MM', title: 'Birmano' },
+    groupKey: 'asiaPacific',
+    locales: [
+      'zh-CN',
+      'zh-TW',
+      'zh-HK',
+      'ja-JP',
+      'ko-KR',
+      'hi-IN',
+      'bn-IN',
+      'ta-IN',
+      'ur-PK',
+      'th-TH',
+      'vi-VN',
+      'id-ID',
+      'ms-MY',
+      'fil-PH',
+      'km-KH',
+      'my-MM',
     ],
   },
   {
-    label: 'Oriente Medio y África',
-    items: [
-      { locale: 'ar-SA', title: 'Árabe (Arabia Saudita)' },
-      { locale: 'ar-AE', title: 'Árabe (Emiratos)' },
-      { locale: 'ar-EG', title: 'Árabe (Egipto)' },
-      { locale: 'ar-MA', title: 'Árabe (Marruecos)' },
-      { locale: 'ar-DZ', title: 'Árabe (Argelia)' },
-      { locale: 'fa-IR', title: 'Persa (Irán)' },
-      { locale: 'he-IL', title: 'Hebreo' },
-      { locale: 'tr-TR', title: 'Turco' },
-      { locale: 'sw-KE', title: 'Suajili (Kenia)' },
-      { locale: 'af-ZA', title: 'Afrikáans' },
-      { locale: 'am-ET', title: 'Amárico' },
+    groupKey: 'middleEastAfrica',
+    locales: [
+      'ar-SA',
+      'ar-AE',
+      'ar-EG',
+      'ar-MA',
+      'ar-DZ',
+      'fa-IR',
+      'he-IL',
+      'tr-TR',
+      'sw-KE',
+      'af-ZA',
+      'am-ET',
     ],
   },
 ];
-
-const FLAT_LOCALE_PRESETS: { locale: string; title: string; group: string }[] = LOCALE_PRESET_GROUPS.flatMap((g) =>
-  g.items.map((it) => ({ ...it, group: g.label })),
-);
 
 function manifestMap(manifest: ManifestEntry[] | null | undefined): Record<string, ManifestEntry> {
   const m: Record<string, ManifestEntry> = {};
@@ -216,14 +221,34 @@ function manifestMap(manifest: ManifestEntry[] | null | undefined): Record<strin
   return m;
 }
 
-/** Etiqueta por defecto del idioma base en panel público y admin. */
-const DEFAULT_ES_MANIFEST_LABEL = 'Español';
+function menuSourceLocale(m: Pick<MenuRow, 'sourceLocale'> | null | undefined): string {
+  return (m?.sourceLocale || 'es-ES').trim() || 'es-ES';
+}
+
+function defaultLocaleLabel(locale: string): string {
+  if (locale === 'es-ES') return i18n.t('adminTranslations.localeLabels.es-ES');
+  if (locale === 'en-US') return i18n.t('adminTranslations.localeLabels.en-US');
+  return locale;
+}
 
 function defaultManifestDisplayLabel(locale: string, manifestLabel?: string | null): string {
-  const t = (manifestLabel ?? '').trim();
-  if (t) return t;
-  if (locale === 'es-ES') return DEFAULT_ES_MANIFEST_LABEL;
-  return locale;
+  const label = (manifestLabel ?? '').trim();
+  if (label) return label;
+  return defaultLocaleLabel(locale);
+}
+
+function sortLocalesWithBaseFirst(locales: string[], sourceLocale: string): string[] {
+  return [...locales].sort((a, b) => {
+    if (a === sourceLocale) return -1;
+    if (b === sourceLocale) return 1;
+    return a.localeCompare(b);
+  });
+}
+
+function defaultFlagForLocale(locale: string): string {
+  if (locale === 'es-ES') return 'ES';
+  if (locale === 'en-US') return 'US';
+  return regionFromLocale(locale) || '';
 }
 
 /** Manifest completo para PATCH `/menu-translations/menus/:id/settings` (reemplaza el JSON en BD). */
@@ -232,20 +257,17 @@ function buildTranslationManifestPayload(
   localePatch?: { locale: string; enabledPublic: boolean },
 ): Array<{ locale: string; label?: string; flagCode?: string; enabledPublic?: false }> {
   const mm = manifestMap(m.translationManifest);
-  const sortedLocales = [...(m.locales || [])].sort((a, b) => {
-    if (a === 'es-ES') return -1;
-    if (b === 'es-ES') return 1;
-    return a.localeCompare(b);
-  });
+  const source = menuSourceLocale(m);
+  const sortedLocales = sortLocalesWithBaseFirst(m.locales || [], source);
   return sortedLocales.map((locale) => {
     const loc = locale.trim();
-    const rawLabel =
-      locale === 'es-ES'
-        ? (mm[locale]?.label?.trim() || DEFAULT_ES_MANIFEST_LABEL)
-        : (mm[locale]?.label || '').trim();
-    const label = loc === 'es-ES' ? rawLabel || DEFAULT_ES_MANIFEST_LABEL : rawLabel || undefined;
+    const isBase = locale === source;
+    const rawLabel = isBase
+      ? (mm[locale]?.label?.trim() || defaultLocaleLabel(locale))
+      : (mm[locale]?.label || '').trim();
+    const label = isBase ? rawLabel || defaultLocaleLabel(locale) : rawLabel || undefined;
     let fc = ((mm[locale]?.flagCode ?? '') as string).trim().toUpperCase();
-    if (locale === 'es-ES' && (!fc || !MENU_FLAG_CODE_RE.test(fc))) fc = 'ES';
+    if (isBase && (!fc || !MENU_FLAG_CODE_RE.test(fc))) fc = defaultFlagForLocale(locale);
     let enabledPublic = mm[locale]?.enabledPublic !== false;
     if (localePatch && localePatch.locale === locale) {
       enabledPublic = localePatch.enabledPublic;
@@ -262,6 +284,7 @@ function buildTranslationManifestPayload(
 
 export default function AdminTranslationsPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
   const [restaurants, setRestaurants] = useState<any[]>([]);
@@ -288,6 +311,7 @@ export default function AdminTranslationsPage() {
   const [addVisiblePublic, setAddVisiblePublic] = useState(true);
   const [addLocaleSearch, setAddLocaleSearch] = useState('');
   const [deleteLocaleBusy, setDeleteLocaleBusy] = useState<{ menuId: string; locale: string } | null>(null);
+  const [setDefaultBusyKey, setSetDefaultBusyKey] = useState<string | null>(null);
   const [confirmDeleteLocale, setConfirmDeleteLocale] = useState<{ menu: MenuRow; locale: string } | null>(null);
   const [confirmAutoTranslate, setConfirmAutoTranslate] = useState<{
     menu: MenuRow;
@@ -325,6 +349,17 @@ export default function AdminTranslationsPage() {
   const [benchItems, setBenchItems] = useState<WorkbenchItem[]>([]);
   const [benchLoading, setBenchLoading] = useState(false);
   const [benchSaving, setBenchSaving] = useState(false);
+
+  const flatLocalePresets = useMemo(() => {
+    return LOCALE_PRESET_GROUP_DEFS.flatMap((g) => {
+      const group = t(`adminTranslations.localePresets.groups.${g.groupKey}`);
+      return g.locales.map((locale) => ({
+        locale,
+        title: t(`adminTranslations.localePresets.items.${locale}`),
+        group,
+      }));
+    });
+  }, [t]);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -383,14 +418,14 @@ export default function AdminTranslationsPage() {
 
   const filteredLocalePresets = useMemo(() => {
     const q = addLocaleSearch.trim().toLowerCase();
-    if (!q) return FLAT_LOCALE_PRESETS;
-    return FLAT_LOCALE_PRESETS.filter(
+    if (!q) return flatLocalePresets;
+    return flatLocalePresets.filter(
       (it) =>
         it.title.toLowerCase().includes(q) ||
         it.locale.toLowerCase().includes(q) ||
         it.group.toLowerCase().includes(q),
     );
-  }, [addLocaleSearch]);
+  }, [addLocaleSearch, flatLocalePresets]);
 
   const loadRestaurants = useCallback(
     async (searchName?: string) => {
@@ -409,11 +444,11 @@ export default function AdminTranslationsPage() {
         setRestaurants(Array.isArray(list) ? list : []);
       } catch (e: any) {
         console.error(e);
-        showAlertMsg('Error', 'No se pudieron cargar los restaurantes.', 'error');
+        showAlertMsg(t('adminTranslations.common.error'), t('adminTranslations.alerts.loadRestaurantsError'), 'error');
         setRestaurants([]);
       }
     },
-    [isSuperAdmin, showAlertMsg],
+    [isSuperAdmin, showAlertMsg, t],
   );
 
   useEffect(() => {
@@ -435,7 +470,11 @@ export default function AdminTranslationsPage() {
     }
     if (isSuperAdmin && !tenantIdForApi) {
       setMenus([]);
-      showAlertMsg('Tenant no disponible', 'Elegí un restaurante válido (con cuenta asociada).', 'warning');
+      showAlertMsg(
+        t('adminTranslations.alerts.tenantUnavailableTitle'),
+        t('adminTranslations.alerts.tenantUnavailable'),
+        'warning',
+      );
       return;
     }
     setLoadingMenus(true);
@@ -445,13 +484,13 @@ export default function AdminTranslationsPage() {
       const res = await api.get('/menu-translations/menus', { params });
       setMenus(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || 'Error al cargar menús';
-      showAlertMsg('Traducciones', String(msg), 'error');
+      const msg = e?.response?.data?.message || e?.message || t('adminTranslations.alerts.loadMenusError');
+      showAlertMsg(t('adminTranslations.alerts.translationsTitle'), String(msg), 'error');
       setMenus([]);
     } finally {
       setLoadingMenus(false);
     }
-  }, [selectedRestaurantId, canAccessPage, isSuperAdmin, tenantIdForApi, showAlertMsg]);
+  }, [selectedRestaurantId, canAccessPage, isSuperAdmin, tenantIdForApi, showAlertMsg, t]);
 
   useEffect(() => {
     void loadMenus();
@@ -470,7 +509,7 @@ export default function AdminTranslationsPage() {
   };
 
   const requestDeleteMenuLocale = useCallback((m: MenuRow, locale: string) => {
-    if (locale === 'es-ES') return;
+    if (locale === menuSourceLocale(m)) return;
     setConfirmDeleteLocale({ menu: m, locale });
   }, []);
 
@@ -483,18 +522,50 @@ export default function AdminTranslationsPage() {
       const params: Record<string, string> = { locale };
       if (isSuperAdmin && tenantIdForApi) params.tenantId = tenantIdForApi;
       await api.delete(`/menu-translations/menus/${m.id}/locales`, { params });
-      showAlertMsg('Idioma eliminado', `Se quitó ${locale} del menú.`, 'success');
+      showAlertMsg(
+        t('adminTranslations.alerts.localeDeletedTitle'),
+        t('adminTranslations.alerts.localeDeleted', { locale }),
+        'success',
+      );
       await loadMenus();
     } catch (e: unknown) {
       const msg =
         (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
         (e as Error)?.message ||
-        'Error';
-      showAlertMsg('Eliminar idioma', String(msg), 'error');
+        t('adminTranslations.common.error');
+      showAlertMsg(t('adminTranslations.alerts.deleteLocaleTitle'), String(msg), 'error');
     } finally {
       setDeleteLocaleBusy(null);
     }
-  }, [confirmDeleteLocale, isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg]);
+  }, [confirmDeleteLocale, isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg, t]);
+
+  const setMenuDefaultLocale = useCallback(
+    async (m: MenuRow, locale: string) => {
+      const source = menuSourceLocale(m);
+      if (locale === source) return;
+      setSetDefaultBusyKey(`${m.id}:${locale}`);
+      try {
+        const body: Record<string, string> = { locale };
+        if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
+        await api.post(`/menu-translations/menus/${m.id}/set-default-locale`, body);
+        showAlertMsg(
+          t('adminTranslations.alerts.defaultLocaleTitle'),
+          t('adminTranslations.alerts.defaultLocaleSuccess', { locale, previous: source }),
+          'success',
+        );
+        await loadMenus();
+      } catch (e: unknown) {
+        const msg =
+          (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          (e as Error)?.message ||
+          t('adminTranslations.common.error');
+        showAlertMsg(t('adminTranslations.alerts.defaultLocaleTitle'), String(msg), 'error');
+      } finally {
+        setSetDefaultBusyKey(null);
+      }
+    },
+    [isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg, t],
+  );
 
   const submitAddLocale = async () => {
     if (!addMenuId) return;
@@ -502,26 +573,31 @@ export default function AdminTranslationsPage() {
       addLocalePreset === ADD_LOCALE_CUSTOM ? addLocaleCustom : addLocalePreset;
     const locale = normalizeMenuLocaleInput(rawLocale);
     if (!locale) {
-      showAlertMsg('Idioma', 'Elegí un idioma de la lista o escribí un código BCP-47.', 'warning');
+      showAlertMsg(t('adminTranslations.alerts.localeTitle'), t('adminTranslations.addLocale.needLocale'), 'warning');
       return;
     }
     if (!MENU_LOCALE_BCP47_RE.test(locale)) {
       showAlertMsg(
-        'Idioma',
-        'Código no válido. Usá al menos idioma + región u otro subtag (ej. en-US, es-MX, zh-CN, fil-PH).',
+        t('adminTranslations.alerts.localeTitle'),
+        t('adminTranslations.addLocale.invalidLocale'),
         'warning',
       );
       return;
     }
-    if (locale === 'es-ES') {
-      showAlertMsg('Idioma', 'es-ES ya es el idioma base del menú.', 'warning');
+    const addBase = menuSourceLocale(menus.find((x) => x.id === addMenuId) || { sourceLocale: 'es-ES' });
+    if (locale === addBase) {
+      showAlertMsg(
+        t('adminTranslations.alerts.localeTitle'),
+        t('adminTranslations.addLocale.alreadyBase', { locale }),
+        'warning',
+      );
       return;
     }
     const fc = addFlag.trim().toUpperCase();
     if (fc && !MENU_FLAG_CODE_RE.test(fc)) {
       showAlertMsg(
-        'Bandera / etiqueta',
-        'Usá 2–10 letras o números (ej. ES, US, CAT). Para emoji de país usá el código ISO de 2 letras.',
+        t('adminTranslations.alerts.flagTitle'),
+        t('adminTranslations.addLocale.invalidFlag'),
         'warning',
       );
       return;
@@ -537,11 +613,11 @@ export default function AdminTranslationsPage() {
       if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
       await api.post(`/menu-translations/menus/${addMenuId}/locales`, body);
       setAddOpen(false);
-      showAlertMsg('Listo', 'Idioma agregado. Podés abrir el editor para afinar las traducciones.', 'success');
+      showAlertMsg(t('adminTranslations.alerts.doneTitle'), t('adminTranslations.addLocale.success'), 'success');
       await loadMenus();
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || 'Error';
-      showAlertMsg('Agregar idioma', String(msg), 'error');
+      const msg = e?.response?.data?.message || e?.message || t('adminTranslations.common.error');
+      showAlertMsg(t('adminTranslations.alerts.addLocaleTitle'), String(msg), 'error');
     } finally {
       setAddSaving(false);
     }
@@ -551,26 +627,23 @@ export default function AdminTranslationsPage() {
     setSettingsMenu(m);
     setSettingsName(m.name || '');
     const mm = manifestMap(m.translationManifest);
-    const sortedLocales = [...(m.locales || [])].sort((a, b) => {
-      if (a === 'es-ES') return -1;
-      if (b === 'es-ES') return 1;
-      return a.localeCompare(b);
-    });
+    const source = menuSourceLocale(m);
+    const sortedLocales = sortLocalesWithBaseFirst(m.locales || [], source);
     setSettingsManifestRows(
       sortedLocales.map((locale) => ({
         locale,
         label:
-          locale === 'es-ES'
-            ? (mm[locale]?.label?.trim() || DEFAULT_ES_MANIFEST_LABEL)
+          locale === source
+            ? (mm[locale]?.label?.trim() || defaultLocaleLabel(locale))
             : mm[locale]?.label || '',
         flagCode:
-          locale === 'es-ES'
-            ? (mm[locale]?.flagCode || 'ES')
+          locale === source
+            ? (mm[locale]?.flagCode || defaultFlagForLocale(locale))
             : mm[locale]?.flagCode || regionFromLocale(locale) || '',
         enabledPublic: mm[locale]?.enabledPublic !== false,
       })),
     );
-    const renameCandidates = sortedLocales.filter((l) => l !== 'es-ES');
+    const renameCandidates = sortedLocales.filter((l) => l !== source);
     setRenameFrom(renameCandidates[0] || '');
     setRenameTo('');
     setRenameLabel('');
@@ -584,8 +657,8 @@ export default function AdminTranslationsPage() {
       const fc = (r.flagCode || '').trim().toUpperCase();
       if (fc && !MENU_FLAG_CODE_RE.test(fc)) {
         showAlertMsg(
-          'Bandera / etiqueta',
-          `Código inválido para ${r.locale}: 2–10 caracteres alfanuméricos (ej. ES, CAT).`,
+          t('adminTranslations.alerts.flagTitle'),
+          t('adminTranslations.settings.invalidFlagForLocale', { locale: r.locale }),
           'warning',
         );
         return;
@@ -594,14 +667,16 @@ export default function AdminTranslationsPage() {
     setSettingsSaving(true);
     try {
       const body: any = { name: settingsName.trim() };
+      const settingsSource = menuSourceLocale(settingsMenu);
       const manifest = settingsManifestRows
         .filter((r) => r.locale && r.locale.trim())
         .map((r) => {
           const loc = r.locale.trim();
           const rawLabel = (r.label || '').trim();
-          const label = loc === 'es-ES' ? rawLabel || DEFAULT_ES_MANIFEST_LABEL : rawLabel || undefined;
+          const isBase = loc === settingsSource;
+          const label = isBase ? rawLabel || defaultLocaleLabel(loc) : rawLabel || undefined;
           let fc = (r.flagCode || '').trim().toUpperCase();
-          if (loc === 'es-ES' && (!fc || !MENU_FLAG_CODE_RE.test(fc))) fc = 'ES';
+          if (isBase && (!fc || !MENU_FLAG_CODE_RE.test(fc))) fc = defaultFlagForLocale(loc);
           return {
             locale: loc,
             label,
@@ -617,8 +692,8 @@ export default function AdminTranslationsPage() {
         const to = normalizeMenuLocaleInput(renameTo);
         if (!MENU_LOCALE_BCP47_RE.test(to)) {
           showAlertMsg(
-            'Código de idioma',
-            'El nuevo código debe ser BCP-47 válido (ej. en-US, es-MX, zh-CN).',
+            t('adminTranslations.alerts.localeCodeTitle'),
+            t('adminTranslations.settings.invalidRenameCode'),
             'warning',
           );
           setSettingsSaving(false);
@@ -636,11 +711,11 @@ export default function AdminTranslationsPage() {
       }
 
       setSettingsOpen(false);
-      showAlertMsg('Guardado', 'Ajustes del menú actualizados.', 'success');
+      showAlertMsg(t('adminTranslations.alerts.savedTitle'), t('adminTranslations.settings.saved'), 'success');
       await loadMenus();
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || 'Error';
-      showAlertMsg('Ajustes', String(msg), 'error');
+      const msg = e?.response?.data?.message || e?.message || t('adminTranslations.common.error');
+      showAlertMsg(t('adminTranslations.alerts.settingsTitle'), String(msg), 'error');
     } finally {
       setSettingsSaving(false);
     }
@@ -660,13 +735,13 @@ export default function AdminTranslationsPage() {
         const msg =
           (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
           (e as Error)?.message ||
-          'Error';
-        showAlertMsg('Menú público', String(msg), 'error');
+          t('adminTranslations.common.error');
+        showAlertMsg(t('adminTranslations.alerts.publicMenuTitle'), String(msg), 'error');
       } finally {
         setLocaleToggleKey(null);
       }
     },
-    [isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg],
+    [isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg, t],
   );
 
   useEffect(() => {
@@ -674,7 +749,8 @@ export default function AdminTranslationsPage() {
       const next = { ...prev };
       for (const m of menus) {
         if (!next[m.id]) {
-          const f = (m.locales || []).find((l) => l !== 'es-ES');
+          const source = menuSourceLocale(m);
+          const f = (m.locales || []).find((l) => l !== source);
           if (f) next[m.id] = f;
         }
       }
@@ -684,10 +760,15 @@ export default function AdminTranslationsPage() {
 
   const requestMenuAutoTranslate = useCallback(
     async (m: MenuRow) => {
+      const source = menuSourceLocale(m);
       const loc =
-        autoLocalePick[m.id] || (m.locales || []).find((l) => l !== 'es-ES');
+        autoLocalePick[m.id] || (m.locales || []).find((l) => l !== source);
       if (!loc) {
-        showAlertMsg('Traducción automática', 'Agregá al menos un idioma distinto de es-ES.', 'warning');
+        showAlertMsg(
+          t('adminTranslations.alerts.autoTranslateTitle'),
+          t('adminTranslations.autoTranslate.needLocale', { source }),
+          'warning',
+        );
         return;
       }
       const force = !!autoForce[m.id];
@@ -703,27 +784,42 @@ export default function AdminTranslationsPage() {
           monthlyLimit?: number;
         };
         if (!st.canRun) {
-          showAlertMsg('Traducción automática', st.reason || 'No se puede ejecutar.', 'warning');
+          showAlertMsg(
+            t('adminTranslations.alerts.autoTranslateTitle'),
+            st.reason || t('adminTranslations.autoTranslate.cannotRun'),
+            'warning',
+          );
           return;
         }
-        const extra = st.monthlyLimit != null ? ` Usos este mes: ${st.monthlyUsed}/${st.monthlyLimit}.` : '';
+        const extra =
+          st.monthlyLimit != null
+            ? t('adminTranslations.autoTranslate.monthlyUsage', {
+                used: st.monthlyUsed,
+                limit: st.monthlyLimit,
+              })
+            : '';
         setConfirmAutoTranslate({
           menu: m,
           locale: loc,
           force,
-          message: `Se traducirá el menú desde español a ${loc}.${force ? ' Modo forzar: consume un uso aunque el menú ya tenga traducción automática previa.' : ''}${extra} ¿Continuar?`,
+          message: t('adminTranslations.autoTranslate.confirmMessage', {
+            source,
+            locale: loc,
+            forceNote: force ? t('adminTranslations.autoTranslate.forceNote') : '',
+            extra,
+          }),
         });
       } catch (e: unknown) {
         const msg =
           (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
           (e as Error)?.message ||
-          'Error';
-        showAlertMsg('Traducción automática', String(msg), 'error');
+          t('adminTranslations.common.error');
+        showAlertMsg(t('adminTranslations.alerts.autoTranslateTitle'), String(msg), 'error');
       } finally {
         setAutoBusyMenuId(null);
       }
     },
-    [autoLocalePick, autoForce, isSuperAdmin, tenantIdForApi, showAlertMsg],
+    [autoLocalePick, autoForce, isSuperAdmin, tenantIdForApi, showAlertMsg, t],
   );
 
   const executeMenuAutoTranslate = useCallback(async () => {
@@ -737,8 +833,12 @@ export default function AdminTranslationsPage() {
       const res = await api.post(`/menu-translations/menus/${m.id}/auto-translate`, body);
       const d = res.data as { segmentCount?: number; apiUnits?: number; cacheHits?: number };
       showAlertMsg(
-        'Traducción automática',
-        `Listo: ${d.segmentCount ?? 0} segmentos. Llamadas nuevas a la API: ${d.apiUnits ?? 0}. Reutilizados desde caché: ${d.cacheHits ?? 0}.`,
+        t('adminTranslations.alerts.autoTranslateTitle'),
+        t('adminTranslations.autoTranslate.success', {
+          segments: d.segmentCount ?? 0,
+          apiUnits: d.apiUnits ?? 0,
+          cacheHits: d.cacheHits ?? 0,
+        }),
         'success',
       );
       await loadMenus();
@@ -746,18 +846,20 @@ export default function AdminTranslationsPage() {
       const msg =
         (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
         (e as Error)?.message ||
-        'Error';
-      showAlertMsg('Traducción automática', String(msg), 'error');
+        t('adminTranslations.common.error');
+      showAlertMsg(t('adminTranslations.alerts.autoTranslateTitle'), String(msg), 'error');
     } finally {
       setAutoBusyMenuId(null);
     }
-  }, [confirmAutoTranslate, isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg]);
+  }, [confirmAutoTranslate, isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg, t]);
 
   const openWorkbench = async (menuId: string, locale: string) => {
-    if (locale === 'es-ES') {
+    const menuRow = menus.find((x) => x.id === menuId);
+    const source = menuSourceLocale(menuRow);
+    if (locale === source) {
       showAlertMsg(
-        'Idioma base',
-        'El español (es-ES) se edita desde la sección Menús. Acá solo se traduce a otros idiomas.',
+        t('adminTranslations.workbench.baseInfoTitle'),
+        t('adminTranslations.workbench.baseInfo', { source }),
         'info',
       );
       return;
@@ -780,8 +882,8 @@ export default function AdminTranslationsPage() {
       setBenchSections(Array.isArray(d.sections) ? d.sections : []);
       setBenchItems(Array.isArray(d.items) ? d.items : []);
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || 'Error';
-      showAlertMsg('Editor', String(msg), 'error');
+      const msg = e?.response?.data?.message || e?.message || t('adminTranslations.common.error');
+      showAlertMsg(t('adminTranslations.alerts.editorTitle'), String(msg), 'error');
       setBenchOpen(false);
     } finally {
       setBenchLoading(false);
@@ -805,12 +907,12 @@ export default function AdminTranslationsPage() {
       await api.put(`/menu-translations/menus/${benchMenuId}/workbench`, body, {
         params: { locale: benchLocale },
       });
-      showAlertMsg('Guardado', 'Traducciones guardadas.', 'success');
+      showAlertMsg(t('adminTranslations.alerts.savedTitle'), t('adminTranslations.workbench.saved'), 'success');
       setBenchOpen(false);
       await loadMenus();
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || 'Error';
-      showAlertMsg('Guardar', String(msg), 'error');
+      const msg = e?.response?.data?.message || e?.message || t('adminTranslations.common.error');
+      showAlertMsg(t('adminTranslations.alerts.saveTitle'), String(msg), 'error');
     } finally {
       setBenchSaving(false);
     }
@@ -841,11 +943,13 @@ export default function AdminTranslationsPage() {
     return false;
   }, [benchMenuStale, benchSections, benchItems]);
 
+  const addMenuSource = menuSourceLocale(menus.find((x) => x.id === addMenuId) || { sourceLocale: 'es-ES' });
+
   if (loadingPage || !user) {
     return (
       <div className="container mt-5 text-center">
         <div className="spinner-border" role="status">
-          <span className="visually-hidden">Cargando...</span>
+          <span className="visually-hidden">{t('adminTranslations.loading')}</span>
         </div>
       </div>
     );
@@ -855,22 +959,21 @@ export default function AdminTranslationsPage() {
     return (
       <AdminLayout>
         <div className="py-4 px-2 px-md-0">
-          <h1 className="h3 mb-3">Traducciones</h1>
+          <h1 className="h3 mb-3">{t('adminTranslations.title')}</h1>
           <p className="lead text-muted mb-2" style={{ fontSize: '1.05rem' }}>
-            Podés traducir tu menú a <strong>varios idiomas</strong> para que tus clientes elijan la carta en su lengua.
+            <Trans i18nKey="adminTranslations.upgrade.lead" components={{ strong: <strong /> }} />
           </p>
           <p className="text-muted mb-4">
-            Es una opción pensada para cartas multilingües.{' '}
-            <strong>Está disponible para planes Pro y Premium</strong> (editor por idioma, límites según tu suscripción y traducción automática en beta).
+            <Trans i18nKey="adminTranslations.upgrade.body" components={{ strong: <strong /> }} />
           </p>
 
           <div className="row g-4 align-items-stretch">
             <div className="col-12 col-md-4">
               <div className="card h-100 border-secondary shadow-sm" style={{ opacity: 0.92 }}>
                 <div className="card-body d-flex flex-column">
-                  <h2 className="h5 mb-2">Traducciones</h2>
+                  <h2 className="h5 mb-2">{t('adminTranslations.upgrade.cardTranslationsTitle')}</h2>
                   <p className="small text-muted flex-grow-1 mb-3">
-                    Gestioná idiomas por menú, banderas en la carta y editá textos para cada idioma.
+                    {t('adminTranslations.upgrade.cardTranslationsDesc')}
                   </p>
                   <button
                     type="button"
@@ -879,7 +982,7 @@ export default function AdminTranslationsPage() {
                     tabIndex={-1}
                     style={{ pointerEvents: 'none' }}
                   >
-                    Disponible en Pro y Premium
+                    {t('adminTranslations.upgrade.availableOnPlans')}
                   </button>
                 </div>
               </div>
@@ -889,10 +992,11 @@ export default function AdminTranslationsPage() {
               <div className="card h-100 border-secondary shadow-sm" style={{ opacity: 0.92 }}>
                 <div className="card-body d-flex flex-column">
                   <h2 className="h5 mb-2">
-                    Traducción automática <span className="badge bg-info text-dark">beta</span>
+                    {t('adminTranslations.upgrade.cardAutoTitle')}{' '}
+                    <span className="badge bg-info text-dark">{t('adminTranslations.common.beta')}</span>
                   </h2>
                   <p className="small text-muted flex-grow-1 mb-3">
-                    Generá borradores automáticos para ahorrar tiempo; revisá y publicá cuando esté listo.
+                    {t('adminTranslations.upgrade.cardAutoDesc')}
                   </p>
                   <button
                     type="button"
@@ -901,7 +1005,7 @@ export default function AdminTranslationsPage() {
                     tabIndex={-1}
                     style={{ pointerEvents: 'none' }}
                   >
-                    Disponible en Pro y Premium
+                    {t('adminTranslations.upgrade.availableOnPlans')}
                   </button>
                 </div>
               </div>
@@ -917,17 +1021,17 @@ export default function AdminTranslationsPage() {
                 }}
               >
                 <p className="admin-stat-title mb-2" style={{ fontSize: '1rem' }}>
-                  Pasá a Pro o Premium y probá traducciones y muchas funciones más
+                  {t('adminTranslations.upgrade.promoTitle')}
                 </p>
                 <p className="small text-muted mb-3" style={{ lineHeight: 1.4 }}>
-                  Los planes superiores desbloquean cartas multilingües, más capacidad y herramientas extra; compará opciones y elegí la que mejor encaje en tu negocio.
+                  {t('adminTranslations.upgrade.promoBody')}
                 </p>
                 <Link
                   href="/admin/profile/subscription"
                   className="btn btn-primary btn-sm align-self-start"
                   style={{ textDecoration: 'none', fontWeight: 600 }}
                 >
-                  Gestionar suscripción
+                  {t('adminTranslations.upgrade.manageSubscription')}
                 </Link>
               </div>
             </div>
@@ -940,21 +1044,20 @@ export default function AdminTranslationsPage() {
   return (
     <AdminLayout>
       <div className="py-3">
-        <h1 className="h3 mb-2">Traducciones</h1>
+        <h1 className="h3 mb-2">{t('adminTranslations.title')}</h1>
         {(restaurants.length > 0 || isSuperAdmin) && (
           <p className="text-muted small mb-4">
-            Usá el interruptor <strong>Menú público</strong> en cada idioma para mostrarlo u ocultarlo en la carta QR
-            (sigue disponible en el editor aunque esté oculto).
+            <Trans i18nKey="adminTranslations.page.publicToggleHint" components={{ strong: <strong /> }} />
           </p>
         )}
 
         {!isSuperAdmin && restaurants.length === 0 && (
           <div className="admin-card mb-4" style={{ textAlign: 'center', padding: '2rem' }}>
             <p className="mb-3" style={{ fontSize: '1.1rem', color: 'var(--admin-text-secondary)' }}>
-              Para crear una traducción de menú primero necesitas tener al menos un restaurante y un menú.
+              {t('adminTranslations.page.needBusiness')}
             </p>
-            <a href="/admin/restaurants?wizard=true" className="admin-btn">
-              Crear mi primer restaurante
+            <a href="/admin/comercios?wizard=true" className="admin-btn">
+              {t('adminTranslations.page.createFirstBusiness')}
             </a>
           </div>
         )}
@@ -963,12 +1066,12 @@ export default function AdminTranslationsPage() {
           <>
         <div className="row g-3 mb-4">
           <div className="col-md-6">
-            <label className="form-label">Restaurante</label>
+            <label className="form-label">{t('adminTranslations.page.businessLabel')}</label>
             {isSuperAdmin && (
               <div className="input-group mb-2">
                 <input
                   className="form-control"
-                  placeholder="Buscar por nombre…"
+                  placeholder={t('adminTranslations.page.searchPlaceholder')}
                   value={restaurantSearch}
                   onChange={(e) => setRestaurantSearch(e.target.value)}
                 />
@@ -977,7 +1080,7 @@ export default function AdminTranslationsPage() {
                   className="btn btn-outline-secondary"
                   onClick={() => void loadRestaurants(restaurantSearch)}
                 >
-                  Buscar
+                  {t('adminTranslations.page.search')}
                 </button>
               </div>
             )}
@@ -986,7 +1089,7 @@ export default function AdminTranslationsPage() {
               value={selectedRestaurantId}
               onChange={(e) => setSelectedRestaurantId(e.target.value)}
             >
-              <option value="">Elegí un restaurante…</option>
+              <option value="">{t('adminTranslations.page.selectBusiness')}</option>
               {restaurants.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
@@ -998,13 +1101,13 @@ export default function AdminTranslationsPage() {
         </div>
 
         {!selectedRestaurantId ? (
-          <p className="text-muted">Seleccioná un restaurante para ver sus menús.</p>
+          <p className="text-muted">{t('adminTranslations.page.selectBusinessHint')}</p>
         ) : loadingMenus ? (
           <div className="text-center py-5">
             <div className="spinner-border spinner-border-sm" />
           </div>
         ) : menus.length === 0 ? (
-          <p className="text-muted">No hay menús en este restaurante.</p>
+          <p className="text-muted">{t('adminTranslations.page.noMenus')}</p>
         ) : (
           <div className="row g-3">
             {menus.map((m) => {
@@ -1022,19 +1125,22 @@ export default function AdminTranslationsPage() {
                         </div>
                         <div className="d-flex flex-wrap gap-1">
                           <button type="button" className="btn btn-sm btn-primary" onClick={() => openAddLocale(m.id)}>
-                            Agregar idioma
+                            {t('adminTranslations.menuCard.addLocale')}
                           </button>
                           <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => openSettings(m)}>
-                            Nombre e idiomas
+                            {t('adminTranslations.menuCard.nameAndLocales')}
                           </button>
                         </div>
                       </div>
                       <div className="d-flex flex-wrap align-items-stretch gap-2 mt-3">
                         {(m.locales || []).map((loc) => {
                           const meta = mm[loc];
-                          const isBase = loc === 'es-ES';
+                          const source = menuSourceLocale(m);
+                          const isBase = loc === source;
                           const visiblePublic = meta?.enabledPublic !== false;
                           const toggleBusy = localeToggleKey === `${m.id}:${loc}`;
+                          const setDefaultBusy =
+                            setDefaultBusyKey === `${m.id}:${loc}`;
                           return (
                             <div
                               key={loc}
@@ -1046,9 +1152,20 @@ export default function AdminTranslationsPage() {
                                   <MenuLocaleFlagGlyph flagCode={meta?.flagCode} locale={loc} />
                                 </span>
                                 <span className="text-muted">{defaultManifestDisplayLabel(loc, meta?.label)}</span>
+                                {isBase && (
+                                  <span
+                                    className="badge bg-primary ms-1"
+                                    title={t('adminTranslations.menuCard.defaultBadgeTitle')}
+                                  >
+                                    {t('adminTranslations.menuCard.defaultBadge')}
+                                  </span>
+                                )}
                                 {!isBase && (m.autoTranslatedLocales || []).includes(loc) && (
-                                  <span className="badge bg-info text-dark ms-1" title="Traducción automática ya ejecutada para este idioma">
-                                    Auto
+                                  <span
+                                    className="badge bg-info text-dark ms-1"
+                                    title={t('adminTranslations.menuCard.autoBadgeTitle')}
+                                  >
+                                    {t('adminTranslations.menuCard.autoBadge')}
                                   </span>
                                 )}
                               </div>
@@ -1060,11 +1177,11 @@ export default function AdminTranslationsPage() {
                                   id={`public-${m.id}-${loc}`}
                                   checked={visiblePublic}
                                   disabled={toggleBusy}
-                                  title="Si está apagado, el idioma no aparece en la carta pública (sí en el editor)"
+                                  title={t('adminTranslations.menuCard.publicToggleTitle')}
                                   onChange={(e) => void toggleLocaleVisibleOnPublicMenu(m, loc, e.target.checked)}
                                 />
                                 <label className="form-check-label small" htmlFor={`public-${m.id}-${loc}`}>
-                                  Menú público
+                                  {t('adminTranslations.menuCard.publicMenu')}
                                 </label>
                               </div>
                               <div className="mt-auto d-flex flex-wrap gap-2 align-items-center">
@@ -1075,7 +1192,18 @@ export default function AdminTranslationsPage() {
                                       className="btn btn-link btn-sm p-0"
                                       onClick={() => void openWorkbench(m.id, loc)}
                                     >
-                                      Traducir
+                                      {t('adminTranslations.menuCard.translate')}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-link btn-sm p-0"
+                                      disabled={setDefaultBusy}
+                                      onClick={() => void setMenuDefaultLocale(m, loc)}
+                                      title={t('adminTranslations.menuCard.useAsDefaultTitle')}
+                                    >
+                                      {setDefaultBusy
+                                        ? t('adminTranslations.menuCard.changing')
+                                        : t('adminTranslations.menuCard.useAsDefault')}
                                     </button>
                                     <button
                                       type="button"
@@ -1088,13 +1216,13 @@ export default function AdminTranslationsPage() {
                                       onClick={() => requestDeleteMenuLocale(m, loc)}
                                     >
                                       {deleteLocaleBusy?.menuId === m.id && deleteLocaleBusy?.locale === loc
-                                        ? 'Borrando…'
-                                        : 'Borrar idioma'}
+                                        ? t('adminTranslations.menuCard.deleting')
+                                        : t('adminTranslations.menuCard.deleteLocale')}
                                     </button>
                                   </>
                                 ) : (
                                   <Link href="/admin/menus" className="btn btn-link btn-sm p-0">
-                                    Editar base
+                                    {t('adminTranslations.menuCard.editBase')}
                                   </Link>
                                 )}
                               </div>
@@ -1102,27 +1230,32 @@ export default function AdminTranslationsPage() {
                           );
                         })}
                       </div>
-                      {canAccessPage && (m.locales || []).some((l) => l !== 'es-ES') && (
+                      {canAccessPage && (m.locales || []).some((l) => l !== menuSourceLocale(m)) && (
                         <div className="mt-3 pt-3 border-top">
                           <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-                            <h3 className="h6 text-muted mb-0">Traducción automática (beta)</h3>
+                            <h3 className="h6 text-muted mb-0">{t('adminTranslations.autoTranslate.title')}</h3>
                           </div>
                           <p className="small text-muted mb-2">
-                            Traduce todos los textos desde <strong>es-ES</strong> al idioma elegido. El consumo mensual
-                            depende de tu plan. Podés editar después a mano en «Traducir».
+                            <Trans
+                              i18nKey="adminTranslations.autoTranslate.help"
+                              values={{ source: menuSourceLocale(m) }}
+                              components={{ strong: <strong /> }}
+                            />
                           </p>
                           <div className="row g-2 align-items-end">
                             <div className="col-md-4">
-                              <label className="form-label small mb-0">Idioma destino</label>
+                              <label className="form-label small mb-0">
+                                {t('adminTranslations.autoTranslate.targetLocale')}
+                              </label>
                               <select
                                 className="form-select form-select-sm"
-                                value={autoLocalePick[m.id] || (m.locales || []).find((l) => l !== 'es-ES') || ''}
+                                value={autoLocalePick[m.id] || (m.locales || []).find((l) => l !== menuSourceLocale(m)) || ''}
                                 onChange={(e) =>
                                   setAutoLocalePick((prev) => ({ ...prev, [m.id]: e.target.value }))
                                 }
                               >
                                 {(m.locales || [])
-                                  .filter((l) => l !== 'es-ES')
+                                  .filter((l) => l !== menuSourceLocale(m))
                                   .map((l) => (
                                     <option key={l} value={l}>
                                       {defaultManifestDisplayLabel(l, mm[l]?.label)} ({l})
@@ -1142,7 +1275,7 @@ export default function AdminTranslationsPage() {
                                   }
                                 />
                                 <label className="form-check-label small" htmlFor={`auto-force-${m.id}`}>
-                                  Forzar retraducción (consume un uso aunque ya se haya traducido)
+                                  {t('adminTranslations.autoTranslate.force')}
                                 </label>
                               </div>
                             </div>
@@ -1153,7 +1286,9 @@ export default function AdminTranslationsPage() {
                                 disabled={autoBusyMenuId === m.id}
                                 onClick={() => void requestMenuAutoTranslate(m)}
                               >
-                                {autoBusyMenuId === m.id ? 'Procesando…' : 'Traducir automáticamente'}
+                                {autoBusyMenuId === m.id
+                                  ? t('adminTranslations.autoTranslate.processing')
+                                  : t('adminTranslations.autoTranslate.run')}
                               </button>
                             </div>
                           </div>
@@ -1175,20 +1310,24 @@ export default function AdminTranslationsPage() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Agregar idioma</h5>
-                <button type="button" className="btn-close" aria-label="Cerrar" onClick={() => setAddOpen(false)} />
+                <h5 className="modal-title">{t('adminTranslations.addLocale.title')}</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label={t('adminTranslations.common.close')}
+                  onClick={() => setAddOpen(false)}
+                />
               </div>
               <div className="modal-body">
                 <p className="small text-muted">
-                  Se copiarán los textos actuales en español como punto de partida. Después podés refinarlas en el
-                  editor.
+                  {t('adminTranslations.addLocale.intro', { source: addMenuSource })}
                 </p>
                 <div className="mb-3">
-                  <label className="form-label">Idioma (BCP-47)</label>
+                  <label className="form-label">{t('adminTranslations.addLocale.localeLabel')}</label>
                   <input
                     type="search"
                     className="form-control form-control-sm mb-2"
-                    placeholder="Buscar por nombre o código (ej. catal, ca-ES)…"
+                    placeholder={t('adminTranslations.addLocale.searchPlaceholder')}
                     value={addLocaleSearch}
                     onChange={(e) => setAddLocaleSearch(e.target.value)}
                     autoComplete="off"
@@ -1215,7 +1354,7 @@ export default function AdminTranslationsPage() {
                         </button>
                       ))}
                       {filteredLocalePresets.length === 0 && (
-                        <div className="p-3 small text-muted">Sin coincidencias. Usá «Otro» abajo.</div>
+                        <div className="p-3 small text-muted">{t('adminTranslations.addLocale.noMatches')}</div>
                       )}
                     </div>
                     <div className="border-top p-2 bg-light">
@@ -1229,19 +1368,23 @@ export default function AdminTranslationsPage() {
                           setAddFlag('');
                         }}
                       >
-                        Otro… (código BCP-47 manual)
+                        {t('adminTranslations.addLocale.customOption')}
                       </button>
                     </div>
                   </div>
                   {addLocalePreset !== ADD_LOCALE_CUSTOM && (
                     <p className="form-text small text-muted mb-0 mt-1">
-                      Seleccionado: <strong>{addLocalePreset}</strong>
+                      <Trans
+                        i18nKey="adminTranslations.addLocale.selected"
+                        values={{ locale: addLocalePreset }}
+                        components={{ strong: <strong /> }}
+                      />
                     </p>
                   )}
                 </div>
                 {addLocalePreset === ADD_LOCALE_CUSTOM && (
                   <div className="mb-3">
-                    <label className="form-label">Código BCP-47 manual</label>
+                    <label className="form-label">{t('adminTranslations.addLocale.customCodeLabel')}</label>
                     <input
                       className="form-control font-monospace"
                       value={addLocaleCustom}
@@ -1251,36 +1394,33 @@ export default function AdminTranslationsPage() {
                         const n = normalizeMenuLocaleInput(v);
                         if (n) setAddFlag(suggestedFlagCodeFromLocale(n));
                       }}
-                      placeholder="ej. sr-Latn-RS, zh-Hans-CN, lb-LU"
+                      placeholder={t('adminTranslations.addLocale.customCodePlaceholder')}
                     />
                     <p className="form-text small text-muted mb-0">
-                      Idioma en minúsculas y subtags separados por guiones. Si no está en la lista, podés pegar el
-                      código exacto que necesites (respetando el límite de caracteres del servidor).
+                      {t('adminTranslations.addLocale.customCodeHelp')}
                     </p>
                   </div>
                 )}
                 <div className="mb-3">
-                  <label className="form-label">Etiqueta en panel (opcional)</label>
+                  <label className="form-label">{t('adminTranslations.addLocale.panelLabel')}</label>
                   <input
                     className="form-control"
                     value={addLabel}
                     onChange={(e) => setAddLabel(e.target.value)}
-                    placeholder="Ej. English"
+                    placeholder={t('adminTranslations.addLocale.panelLabelPlaceholder')}
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Código país para bandera (opcional, ISO 3166-1, 2 letras)</label>
+                  <label className="form-label">{t('adminTranslations.addLocale.flagLabel')}</label>
                   <input
                     className="form-control"
                     maxLength={10}
                     value={addFlag}
                     onChange={(e) => setAddFlag(e.target.value.toUpperCase())}
-                    placeholder="ES, US o CAT…"
+                    placeholder={t('adminTranslations.addLocale.flagPlaceholder')}
                   />
                   <p className="form-text small text-muted mb-0">
-                    <strong>2 letras ISO</strong> (ej. ES) = emoji de bandera. <strong>Más caracteres</strong> (ej. CAT)
-                    = insignia de texto en el panel y carta. Podés dejar vacío y se usará la región del BCP-47 si
-                    aplica.
+                    <Trans i18nKey="adminTranslations.addLocale.flagHelp" components={{ strong: <strong /> }} />
                   </p>
                 </div>
                 <div className="form-check form-switch mb-0">
@@ -1293,16 +1433,16 @@ export default function AdminTranslationsPage() {
                     onChange={(e) => setAddVisiblePublic(e.target.checked)}
                   />
                   <label className="form-check-label" htmlFor="add-locale-visible-public">
-                    Mostrar este idioma en el menú público (carta QR)
+                    {t('adminTranslations.addLocale.showPublic')}
                   </label>
                 </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline-secondary" onClick={() => setAddOpen(false)}>
-                  Cancelar
+                  {t('adminTranslations.common.cancel')}
                 </button>
                 <button type="button" className="btn btn-primary" disabled={addSaving} onClick={() => void submitAddLocale()}>
-                  {addSaving ? 'Guardando…' : 'Agregar'}
+                  {addSaving ? t('adminTranslations.common.saving') : t('adminTranslations.addLocale.submit')}
                 </button>
               </div>
             </div>
@@ -1315,21 +1455,33 @@ export default function AdminTranslationsPage() {
           <div className="modal-dialog modal-lg modal-dialog-scrollable">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Nombre del menú e idiomas</h5>
-                <button type="button" className="btn-close" aria-label="Cerrar" onClick={() => setSettingsOpen(false)} />
+                <h5 className="modal-title">{t('adminTranslations.settings.title')}</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label={t('adminTranslations.common.close')}
+                  onClick={() => setSettingsOpen(false)}
+                />
               </div>
               <div className="modal-body">
                 <div className="mb-3">
-                  <label className="form-label">Nombre del menú (canónico / español base)</label>
+                  <label className="form-label">
+                    {t('adminTranslations.settings.menuNameLabel', {
+                      sourceSuffix: settingsMenu ? ` ${menuSourceLocale(settingsMenu)}` : '',
+                    })}
+                  </label>
                   <input className="form-control" value={settingsName} onChange={(e) => setSettingsName(e.target.value)} />
                 </div>
                 <hr />
-                <h6 className="text-muted">Etiqueta y bandera por idioma</h6>
+                <h6 className="text-muted">{t('adminTranslations.settings.labelsHeading')}</h6>
                 <p className="small text-muted">
-                  Ajustá cómo se muestra cada idioma en el panel y en el menú público. Incluye el idioma base (es-ES);
-                  por defecto se muestra como «{DEFAULT_ES_MANIFEST_LABEL}». El código de país debe ser ISO de 2 letras
-                  (US, ES, IT…).                   Para <code>ca-ES</code> podés usar <strong>ES</strong> (bandera) o una etiqueta como <strong>CAT</strong>.
-                  Desmarcá «Visible en menú público» para ocultar un idioma en la carta (sigue disponible en el editor).
+                  <Trans
+                    i18nKey="adminTranslations.settings.labelsHelp"
+                    values={{
+                      sourceParen: settingsMenu ? ` (${menuSourceLocale(settingsMenu)})` : '',
+                    }}
+                    components={{ code: <code />, strong: <strong /> }}
+                  />
                 </p>
                 {settingsManifestRows.map((row, idx) => (
                   <div key={row.locale} className="row g-2 align-items-end mb-2">
@@ -1340,7 +1492,7 @@ export default function AdminTranslationsPage() {
                       </div>
                     </div>
                     <div className="col-md-4">
-                      <label className="form-label small">Etiqueta</label>
+                      <label className="form-label small">{t('adminTranslations.settings.label')}</label>
                       <input
                         className="form-control form-control-sm"
                         value={row.label || ''}
@@ -1353,7 +1505,7 @@ export default function AdminTranslationsPage() {
                       />
                     </div>
                     <div className="col-md-3">
-                      <label className="form-label small">Código país (bandera)</label>
+                      <label className="form-label small">{t('adminTranslations.settings.countryCode')}</label>
                       <input
                         className="form-control form-control-sm"
                         maxLength={10}
@@ -1381,21 +1533,26 @@ export default function AdminTranslationsPage() {
                           }}
                         />
                         <label className="form-check-label small" htmlFor={`enabled-public-${row.locale}`}>
-                          Visible en menú público
+                          {t('adminTranslations.settings.visiblePublic')}
                         </label>
                       </div>
                     </div>
                   </div>
                 ))}
                 <hr />
-                <h6 className="text-muted">Corregir código de idioma (BCP-47)</h6>
+                <h6 className="text-muted">{t('adminTranslations.settings.renameHeading')}</h6>
                 <p className="small text-muted">
-                  Si creaste por error <code>it-IT</code> pero el contenido es inglés, renombrá a <code>en-US</code>.
-                  No afecta al idioma base <code>es-ES</code>.
+                  <Trans
+                    i18nKey="adminTranslations.settings.renameHelp"
+                    values={{
+                      sourceCode: settingsMenu ? ` (${menuSourceLocale(settingsMenu)})` : '',
+                    }}
+                    components={{ code: <code /> }}
+                  />
                 </p>
                 <div className="row g-2">
                   <div className="col-md-4">
-                    <label className="form-label small">Idioma actual</label>
+                    <label className="form-label small">{t('adminTranslations.settings.currentLocale')}</label>
                     <select
                       className="form-select form-select-sm"
                       value={renameFrom}
@@ -1403,7 +1560,7 @@ export default function AdminTranslationsPage() {
                     >
                       <option value="">—</option>
                       {settingsManifestRows
-                        .filter((r) => r.locale !== 'es-ES')
+                        .filter((r) => r.locale !== menuSourceLocale(settingsMenu))
                         .map((r) => (
                           <option key={r.locale} value={r.locale}>
                             {r.locale}
@@ -1412,7 +1569,7 @@ export default function AdminTranslationsPage() {
                     </select>
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label small">Nuevo código</label>
+                    <label className="form-label small">{t('adminTranslations.settings.newCode')}</label>
                     <input
                       className="form-control form-control-sm"
                       placeholder="en-US"
@@ -1421,7 +1578,7 @@ export default function AdminTranslationsPage() {
                     />
                   </div>
                   <div className="col-md-2">
-                    <label className="form-label small">Etiqueta</label>
+                    <label className="form-label small">{t('adminTranslations.settings.label')}</label>
                     <input
                       className="form-control form-control-sm"
                       value={renameLabel}
@@ -1429,23 +1586,23 @@ export default function AdminTranslationsPage() {
                     />
                   </div>
                   <div className="col-md-2">
-                    <label className="form-label small">País</label>
+                    <label className="form-label small">{t('adminTranslations.settings.country')}</label>
                     <input
                       className="form-control form-control-sm"
                       maxLength={10}
                       value={renameFlag}
                       onChange={(e) => setRenameFlag(e.target.value.toUpperCase())}
-                      placeholder="ES o CAT"
+                      placeholder={t('adminTranslations.settings.countryPlaceholder')}
                     />
                   </div>
                 </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline-secondary" onClick={() => setSettingsOpen(false)}>
-                  Cancelar
+                  {t('adminTranslations.common.cancel')}
                 </button>
                 <button type="button" className="btn btn-primary" disabled={settingsSaving} onClick={() => void saveSettings()}>
-                  {settingsSaving ? 'Guardando…' : 'Guardar'}
+                  {settingsSaving ? t('adminTranslations.common.saving') : t('adminTranslations.common.save')}
                 </button>
               </div>
             </div>
@@ -1459,12 +1616,16 @@ export default function AdminTranslationsPage() {
             <div className="modal-content" style={{ maxHeight: '92vh' }}>
               <div className="modal-header">
                 <h5 className="modal-title">
-                  Traducir — <span className="text-muted">{benchLocale}</span>
+                  <Trans
+                    i18nKey="adminTranslations.workbench.title"
+                    values={{ locale: benchLocale }}
+                    components={{ muted: <span className="text-muted" /> }}
+                  />
                 </h5>
                 <button
                   type="button"
                   className="btn-close"
-                  aria-label="Cerrar"
+                  aria-label={t('adminTranslations.common.close')}
                   onClick={() => setBenchOpen(false)}
                 />
               </div>
@@ -1477,27 +1638,29 @@ export default function AdminTranslationsPage() {
                   <>
                     {benchHasStaleTranslations && (
                       <div className="alert alert-warning py-2 small mb-3" role="status">
-                        Hay textos marcados como <strong>desactualizados</strong>: cambió el contenido en español
-                        (base) después de la última traducción. Revisalos y guardá para confirmar que siguen siendo
-                        correctos en {benchLocale}.
+                        <Trans
+                          i18nKey="adminTranslations.workbench.staleAlert"
+                          values={{ locale: benchLocale }}
+                          components={{ strong: <strong /> }}
+                        />
                       </div>
                     )}
                     <div className="mb-4 p-3 border rounded bg-light">
-                      <h6 className="text-muted small text-uppercase">Menú</h6>
+                      <h6 className="text-muted small text-uppercase">{t('adminTranslations.workbench.menuHeading')}</h6>
                       <div className="mb-2">
                         <label className="form-label small d-flex align-items-center gap-2 flex-wrap">
-                          Nombre
+                          {t('adminTranslations.workbench.name')}
                           {benchMenuStale.name && (
-                            <span className="badge bg-warning text-dark">Desactualizado</span>
+                            <span className="badge bg-warning text-dark">{t('adminTranslations.workbench.stale')}</span>
                           )}
                         </label>
                         <input className="form-control" value={benchMenuName} onChange={(e) => setBenchMenuName(e.target.value)} />
                       </div>
                       <div>
                         <label className="form-label small d-flex align-items-center gap-2 flex-wrap">
-                          Descripción
+                          {t('adminTranslations.workbench.description')}
                           {benchMenuStale.description && (
-                            <span className="badge bg-warning text-dark">Desactualizado</span>
+                            <span className="badge bg-warning text-dark">{t('adminTranslations.workbench.stale')}</span>
                           )}
                         </label>
                         <textarea
@@ -1511,10 +1674,14 @@ export default function AdminTranslationsPage() {
                     {benchSections.map((sec) => (
                       <div key={sec.id} className="mb-4">
                         <div className="d-flex align-items-baseline gap-2 mb-2">
-                          <h6 className="mb-0">Sección</h6>
-                          <span className="small text-muted">(referencia: {sec.baseName})</span>
+                          <h6 className="mb-0">{t('adminTranslations.workbench.section')}</h6>
+                          <span className="small text-muted">
+                            {t('adminTranslations.workbench.reference', { name: sec.baseName })}
+                          </span>
                           {sec.nameStale && (
-                            <span className="badge bg-warning text-dark small">Nombre desactualizado</span>
+                            <span className="badge bg-warning text-dark small">
+                              {t('adminTranslations.workbench.staleName')}
+                            </span>
                           )}
                         </div>
                         <input
@@ -1526,13 +1693,13 @@ export default function AdminTranslationsPage() {
                           <div key={it.id} className="card mb-2">
                             <div className="card-body py-2">
                               <div className="small text-muted mb-1">
-                                Ref: {it.baseName}
+                                {t('adminTranslations.workbench.ref', { name: it.baseName })}
                                 {it.baseDescription ? ` — ${it.baseDescription.slice(0, 80)}${it.baseDescription.length > 80 ? '…' : ''}` : ''}
                               </div>
                               <label className="form-label small mb-0 d-flex align-items-center gap-2 flex-wrap">
-                                Nombre
+                                {t('adminTranslations.workbench.name')}
                                 {it.nameStale && (
-                                  <span className="badge bg-warning text-dark">Desactualizado</span>
+                                  <span className="badge bg-warning text-dark">{t('adminTranslations.workbench.stale')}</span>
                                 )}
                               </label>
                               <input
@@ -1541,9 +1708,9 @@ export default function AdminTranslationsPage() {
                                 onChange={(e) => updateItem(it.id, { name: e.target.value })}
                               />
                               <label className="form-label small mb-0 d-flex align-items-center gap-2 flex-wrap">
-                                Descripción
+                                {t('adminTranslations.workbench.description')}
                                 {it.descriptionStale && (
-                                  <span className="badge bg-warning text-dark">Desactualizado</span>
+                                  <span className="badge bg-warning text-dark">{t('adminTranslations.workbench.stale')}</span>
                                 )}
                               </label>
                               <textarea
@@ -1562,7 +1729,7 @@ export default function AdminTranslationsPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline-secondary" onClick={() => setBenchOpen(false)}>
-                  Cerrar
+                  {t('adminTranslations.common.close')}
                 </button>
                 <button
                   type="button"
@@ -1570,7 +1737,7 @@ export default function AdminTranslationsPage() {
                   disabled={benchLoading || benchSaving}
                   onClick={() => void saveWorkbench()}
                 >
-                  {benchSaving ? 'Guardando…' : 'Guardar traducciones'}
+                  {benchSaving ? t('adminTranslations.common.saving') : t('adminTranslations.workbench.save')}
                 </button>
               </div>
             </div>
@@ -1580,14 +1747,14 @@ export default function AdminTranslationsPage() {
 
       <ConfirmModal
         show={!!confirmDeleteLocale}
-        title="Eliminar idioma"
+        title={t('adminTranslations.confirm.deleteLocaleTitle')}
         message={
           confirmDeleteLocale
-            ? `¿Eliminar el idioma «${confirmDeleteLocale.locale}» y todas sus traducciones de este menú? Esta acción no se puede deshacer.`
+            ? t('adminTranslations.confirm.deleteLocaleMessage', { locale: confirmDeleteLocale.locale })
             : ''
         }
-        confirmText="Eliminar"
-        cancelText="Cancelar"
+        confirmText={t('adminTranslations.confirm.delete')}
+        cancelText={t('adminTranslations.common.cancel')}
         variant="danger"
         onConfirm={() => void executeDeleteMenuLocale()}
         onCancel={() => setConfirmDeleteLocale(null)}
@@ -1595,10 +1762,10 @@ export default function AdminTranslationsPage() {
 
       <ConfirmModal
         show={!!confirmAutoTranslate}
-        title="Traducción automática"
+        title={t('adminTranslations.autoTranslate.confirmTitle')}
         message={confirmAutoTranslate?.message || ''}
-        confirmText="Traducir"
-        cancelText="Cancelar"
+        confirmText={t('adminTranslations.autoTranslate.confirmTranslate')}
+        cancelText={t('adminTranslations.common.cancel')}
         variant="primary"
         onConfirm={() => void executeMenuAutoTranslate()}
         onCancel={() => setConfirmAutoTranslate(null)}

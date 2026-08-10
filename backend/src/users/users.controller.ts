@@ -26,6 +26,23 @@ export class UsersController {
     return this.usersService.findAllWithStats(email, limitNum, offsetNum);
   }
 
+  @Get('marketing-opt-in')
+  @ApiOperation({ summary: 'Listar usuarios que aceptaron recibir novedades' })
+  @ApiResponse({ status: 200, description: 'Lista de suscriptores de novedades' })
+  async listMarketingOptIn(
+    @Query('email') email?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    const offsetNum = offset ? parseInt(offset, 10) : undefined;
+    return this.usersService.listMarketingOptInUsers({
+      email,
+      limit: Number.isFinite(limitNum) ? limitNum : undefined,
+      offset: Number.isFinite(offsetNum) ? offsetNum : undefined,
+    });
+  }
+
   @Delete('remove/:id')
   @ApiOperation({ summary: 'Eliminar usuario (borrado lógico)' })
   @ApiResponse({ status: 200, description: 'Usuario eliminado' })
@@ -54,7 +71,7 @@ export class UsersController {
 
   @Get(':id/details')
   @ApiOperation({ summary: 'Obtener detalles completos de un usuario' })
-  @ApiResponse({ status: 200, description: 'Detalles del usuario con restaurantes, menús y productos' })
+  @ApiResponse({ status: 200, description: 'Detalles del usuario con comercios, menús y productos' })
   async getUserDetails(@Param('id') id: string) {
     return this.usersService.getUserDetails(id);
   }

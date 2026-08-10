@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Body, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 import { AuthService } from './auth.service';
 import { GeoService } from '../geo/geo.service';
@@ -13,9 +13,12 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Public } from '../common/decorators/public.decorator';
 
+/** Rate limit estricto solo para endpoints públicos sensibles (no para /auth/me). */
+const AuthAbuseThrottle = () =>
+  Throttle({ default: { limit: 20, ttl: 60000 } });
+
 @ApiTags('auth')
 @Controller('auth')
-@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -26,6 +29,8 @@ export class AuthController {
 
   @Post('login')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @AuthAbuseThrottle()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Iniciar sesión' })
   @ApiBody({ type: LoginDto })
@@ -37,6 +42,8 @@ export class AuthController {
 
   @Post('register')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @AuthAbuseThrottle()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Registrar nuevo usuario' })
   @ApiBody({ type: RegisterDto })
@@ -50,11 +57,16 @@ export class AuthController {
     }
     const clientIp = this.geoService.resolveClientIp(headers, req.ip || req.socket?.remoteAddress);
     const registrationCountry = await this.geoService.getCountryFromRequest(clientIp, headers);
-    return this.authService.register(registerDto, registrationCountry ?? undefined, clientIp);
+    return this.authService.register(registerDto, registrationCountry ?? undefined, clientIp, {
+      userAgent: headers['user-agent'],
+      acceptLanguage: headers['accept-language'],
+    });
   }
 
   @Post('refresh')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @AuthAbuseThrottle()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refrescar token de acceso' })
   @ApiBody({ type: RefreshTokenDto })
@@ -66,6 +78,8 @@ export class AuthController {
 
   @Post('forgot-password')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @AuthAbuseThrottle()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Solicitar recuperación de contraseña' })
   @ApiBody({ type: ForgotPasswordDto })
@@ -76,6 +90,8 @@ export class AuthController {
 
   @Post('reset-password')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @AuthAbuseThrottle()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Restablecer contraseña' })
   @ApiBody({ type: ResetPasswordDto })
@@ -87,6 +103,8 @@ export class AuthController {
 
   @Post('verify-email')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @AuthAbuseThrottle()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verificar email con token' })
   @ApiBody({
@@ -106,6 +124,8 @@ export class AuthController {
 
   @Post('confirm-email-change')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @AuthAbuseThrottle()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Confirmar cambio de email con token del enlace' })
   @ApiBody({
@@ -145,6 +165,7 @@ export class AuthController {
       tenantId: user.tenantId,
       registrationCountry: user.registrationCountry,
       declaredCountry: user.declaredCountry,
+      preferredLanguage: (user as any).preferredLanguage === 'en' ? 'en' : 'es',
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       tenant: tenant ? { id: tenant.id, name: tenant.name, plan: tenant.plan } : null,
@@ -222,15 +243,25 @@ export class AuthController {
         firstName: { type: 'string' },
         lastName: { type: 'string' },
         declaredCountry: { type: 'string', nullable: true },
+        preferredLanguage: { type: 'string', enum: ['es', 'en'] },
       },
     },
   })
   @ApiResponse({ status: 200, description: 'Perfil actualizado' })
-  async updateMe(@Request() req: any, @Body() body: { firstName?: string; lastName?: string; declaredCountry?: string | null }) {
+  async updateMe(
+    @Request() req: any,
+    @Body() body: {
+      firstName?: string;
+      lastName?: string;
+      declaredCountry?: string | null;
+      preferredLanguage?: string | null;
+    },
+  ) {
     const user = await this.usersService.updateProfile(req.user.id, {
       firstName: body.firstName,
       lastName: body.lastName,
       declaredCountry: body.declaredCountry,
+      preferredLanguage: body.preferredLanguage,
     });
     const tenant = user.tenantId ? await this.tenantsService.findById(user.tenantId) : null;
     return {
@@ -242,6 +273,7 @@ export class AuthController {
       tenantId: user.tenantId,
       registrationCountry: user.registrationCountry,
       declaredCountry: user.declaredCountry,
+      preferredLanguage: (user as any).preferredLanguage === 'en' ? 'en' : 'es',
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       tenant: tenant ? { id: tenant.id, name: tenant.name, plan: tenant.plan } : null,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { GetServerSidePropsContext, InferGetServerSidePropsType } from 'next';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -66,6 +66,9 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
   const [pendingPlan, setPendingPlan] = useState<'starter' | 'pro' | 'premium' | null>(null);
   const [pendingBillingCycle, setPendingBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [templateIntentHint, setTemplateIntentHint] = useState<string | null>(null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const acceptTermsRef = useRef<HTMLInputElement>(null);
 
   /** Persistir plantilla desde URL (/login?template=gourmet&plan=pro). */
   useEffect(() => {
@@ -249,11 +252,22 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
       } else if (password !== confirmPassword) {
         nextFieldErrors.confirmPassword = 'Las contraseñas no son iguales';
       }
+
+      if (!acceptTerms) {
+        nextFieldErrors.acceptTerms =
+          'Es obligatorio aceptar los Términos y Condiciones y la Política de Privacidad.';
+      }
     }
 
     if (Object.keys(nextFieldErrors).length > 0) {
       setFieldErrors(nextFieldErrors);
       setLoading(false);
+      if (nextFieldErrors.acceptTerms) {
+        requestAnimationFrame(() => {
+          acceptTermsRef.current?.focus({ preventScroll: true });
+          acceptTermsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      }
       return;
     }
 
@@ -292,8 +306,14 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
           password,
           firstName: trimmedFirstName,
           lastName: trimmedLastName,
+          acceptTerms: true,
+          marketingOptIn,
           pendingPlan: pendingPlan ?? undefined,
           pendingBillingCycle: pendingPlan ? pendingBillingCycle : undefined,
+          timezone:
+            typeof Intl !== 'undefined'
+              ? Intl.DateTimeFormat().resolvedOptions().timeZone
+              : undefined,
           ...(recaptchaToken ? { recaptchaToken } : {}),
         });
 
@@ -349,8 +369,18 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
         const lower = msg.toLowerCase();
         if (lower.includes('email')) backendFieldErrors.email = msg;
         if (lower.includes('contraseña')) backendFieldErrors.password = msg;
-        if (lower.includes('nombre')) backendFieldErrors.firstName = msg;
+        if (lower.includes('nombre') && !lower.includes('términos') && !lower.includes('terminos')) {
+          backendFieldErrors.firstName = msg;
+        }
         if (lower.includes('apellido')) backendFieldErrors.lastName = msg;
+        if (
+          lower.includes('términos') ||
+          lower.includes('terminos') ||
+          lower.includes('privacidad') ||
+          lower.includes('acept')
+        ) {
+          backendFieldErrors.acceptTerms = msg;
+        }
       });
 
       if (registerFromUrl && normalizedMessage.includes('ya hay una cuenta con ese email')) {
@@ -605,6 +635,61 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                         </button>
                       </div>
                       {fieldErrors.confirmPassword && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.confirmPassword}</small>}
+                    </div>
+                  )}
+
+                  {registerFromUrl && (
+                    <div className="landing-auth-checks">
+                      <label
+                        className={`landing-auth-check${fieldErrors.acceptTerms ? ' landing-auth-check--error' : ''}`}
+                      >
+                        <input
+                          ref={acceptTermsRef}
+                          type="checkbox"
+                          checked={acceptTerms}
+                          onChange={(e) => {
+                            setAcceptTerms(e.target.checked);
+                            if (e.target.checked) {
+                              setFieldErrors((prev) => {
+                                if (!prev.acceptTerms) return prev;
+                                const next = { ...prev };
+                                delete next.acceptTerms;
+                                return next;
+                              });
+                            }
+                          }}
+                          disabled={loading}
+                          aria-invalid={Boolean(fieldErrors.acceptTerms)}
+                          aria-describedby={fieldErrors.acceptTerms ? 'accept-terms-error' : undefined}
+                        />
+                        <span>
+                          Acepto los{' '}
+                          <Link href="/legal/terminos-y-condiciones" target="_blank" rel="noopener noreferrer">
+                            Términos y Condiciones
+                          </Link>{' '}
+                          y la{' '}
+                          <Link href="/legal/politica-de-privacidad" target="_blank" rel="noopener noreferrer">
+                            Política de Privacidad
+                          </Link>
+                          .
+                        </span>
+                      </label>
+                      {fieldErrors.acceptTerms && (
+                        <small id="accept-terms-error" className="landing-auth-hint landing-auth-hint--error" role="alert">
+                          {fieldErrors.acceptTerms}
+                        </small>
+                      )}
+                      <label className="landing-auth-check">
+                        <input
+                          type="checkbox"
+                          checked={marketingOptIn}
+                          onChange={(e) => setMarketingOptIn(e.target.checked)}
+                          disabled={loading}
+                        />
+                        <span>
+                          Sí, quiero descubrir nuevas funciones, consejos y beneficios para aprovechar mejor MenuQR
+                        </span>
+                      </label>
                     </div>
                   )}
 

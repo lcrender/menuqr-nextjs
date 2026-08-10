@@ -1,13 +1,15 @@
 import Head from 'next/head';
+import { useTranslation } from 'react-i18next';
 import AdminLayout from '../../../../components/AdminLayout';
 import { DocumentationShell } from '../../../../components/documentation/DocumentationShell';
 import { DOC_BODY_BY_SLUG } from '../../../../components/documentation/DocumentationBodies';
-import { getDocBySlug } from '../../../../lib/documentation-nav';
+import { getDocBySlug, translateDocSection } from '../../../../lib/documentation-nav';
 
 const BASE = '/admin/help/documentation';
 
 export default function AdminDocumentationIndexPage() {
-  const meta = getDocBySlug('intro')!;
+  const { t } = useTranslation();
+  const meta = translateDocSection(getDocBySlug('intro')!, t);
   return (
     <AdminLayout>
       <Head>

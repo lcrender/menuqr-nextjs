@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import AdminLayout from '../../../../components/AdminLayout';
 import api from '../../../../lib/axios';
+import i18n from '../../../../src/i18n/config';
+import adminSupportEs from '../../../../src/locales/fragments/adminSupport.es.json';
+import adminSupportEn from '../../../../src/locales/fragments/adminSupport.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { adminSupport: adminSupportEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { adminSupport: adminSupportEn }, true, true);
 
 type MessageRow = {
   id: string;
@@ -27,13 +34,8 @@ type TicketDetail = {
   messages: MessageRow[];
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  open: 'Abierto',
-  in_progress: 'En progreso',
-  closed: 'Cerrado',
-};
-
 export default function SupportTicketDetailPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { id } = router.query;
   const ticketId = typeof id === 'string' ? id : '';
@@ -54,12 +56,12 @@ export default function SupportTicketDetailPage() {
       setTicket(res.data as TicketDetail);
     } catch (e: any) {
       const msg = e?.response?.data?.message;
-      setError(Array.isArray(msg) ? msg.join(' ') : msg || 'No se pudo cargar el ticket.');
+      setError(Array.isArray(msg) ? msg.join(' ') : msg || t('adminSupport.alerts.ticketLoadError'));
       setTicket(null);
     } finally {
       setLoading(false);
     }
-  }, [ticketId]);
+  }, [ticketId, t]);
 
   useEffect(() => {
     if (ticketId) void load();
@@ -76,7 +78,7 @@ export default function SupportTicketDetailPage() {
       await load();
     } catch (err: any) {
       const msg = err?.response?.data?.message;
-      setReplyError(Array.isArray(msg) ? msg.join(' ') : msg || 'No se pudo enviar la respuesta.');
+      setReplyError(Array.isArray(msg) ? msg.join(' ') : msg || t('adminSupport.alerts.replyError'));
     } finally {
       setSending(false);
     }
@@ -88,16 +90,18 @@ export default function SupportTicketDetailPage() {
         <nav aria-label="breadcrumb" className="mb-3">
           <ol className="breadcrumb mb-0">
             <li className="breadcrumb-item">
-              <Link href="/admin/help/support">Soporte</Link>
+              <Link href="/admin/help/support">{t('adminSupport.detail.breadcrumbSupport')}</Link>
             </li>
             <li className="breadcrumb-item active" aria-current="page">
-              Ticket #{ticket?.ticketNumber ?? '…'}
+              {ticket?.ticketNumber != null
+                ? t('adminSupport.detail.breadcrumbTicket', { number: ticket.ticketNumber })
+                : t('adminSupport.detail.breadcrumbTicketLoading')}
             </li>
           </ol>
         </nav>
 
         {loading ? (
-          <p className="text-muted">Cargando…</p>
+          <p className="text-muted">{t('adminSupport.detail.loading')}</p>
         ) : error ? (
           <div className="alert alert-danger">{error}</div>
         ) : ticket ? (
@@ -108,15 +112,19 @@ export default function SupportTicketDetailPage() {
                   #{ticket.ticketNumber} — {ticket.subject}
                 </h1>
                 <p className="text-muted small mb-0">
-                  Creado {new Date(ticket.createdAt).toLocaleString()} · Estado:{' '}
-                  <span className="badge bg-secondary">{STATUS_LABEL[ticket.status] ?? ticket.status}</span>
+                  {t('adminSupport.detail.createdStatus', {
+                    date: new Date(ticket.createdAt).toLocaleString(),
+                  })}{' '}
+                  <span className="badge bg-secondary">
+                    {t(`adminSupport.status.${ticket.status}`)}
+                  </span>
                 </p>
               </div>
             </div>
 
             {ticket.attachmentUrls && ticket.attachmentUrls.length > 0 ? (
               <div className="card mb-4">
-                <div className="card-header">Imágenes adjuntas</div>
+                <div className="card-header">{t('adminSupport.detail.attachmentsTitle')}</div>
                 <div className="card-body d-flex flex-wrap gap-3">
                   {ticket.attachmentUrls.map((u) => (
                     <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="d-block">
@@ -128,7 +136,7 @@ export default function SupportTicketDetailPage() {
             ) : null}
 
             <div className="card mb-4">
-              <div className="card-header">Historial</div>
+              <div className="card-header">{t('adminSupport.detail.historyTitle')}</div>
               <ul className="list-group list-group-flush">
                 {ticket.messages.map((m) => (
                   <li key={m.id} className="list-group-item">
@@ -145,10 +153,10 @@ export default function SupportTicketDetailPage() {
             </div>
 
             {ticket.status === 'closed' ? (
-              <div className="alert alert-secondary">Este ticket está cerrado. No se pueden enviar más mensajes.</div>
+              <div className="alert alert-secondary">{t('adminSupport.detail.closedMessage')}</div>
             ) : (
               <div className="card mb-4">
-                <div className="card-header">Tu respuesta</div>
+                <div className="card-header">{t('adminSupport.detail.replyTitle')}</div>
                 <div className="card-body">
                   <form onSubmit={(ev) => void sendReply(ev)}>
                     <textarea
@@ -158,11 +166,11 @@ export default function SupportTicketDetailPage() {
                       onChange={(e) => setReply(e.target.value)}
                       maxLength={8000}
                       required
-                      placeholder="Escribí tu mensaje…"
+                      placeholder={t('adminSupport.detail.replyPlaceholder')}
                     />
                     {replyError ? <div className="alert alert-danger py-2">{replyError}</div> : null}
                     <button type="submit" className="btn btn-primary" disabled={sending}>
-                      {sending ? 'Enviando…' : 'Enviar respuesta'}
+                      {sending ? t('adminSupport.detail.replySubmitting') : t('adminSupport.detail.replySubmit')}
                     </button>
                   </form>
                 </div>

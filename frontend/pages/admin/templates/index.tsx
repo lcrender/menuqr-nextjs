@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
 import AdminTemplateCard from '../../../components/admin/AdminTemplateCard';
@@ -15,7 +16,7 @@ import {
   sortTemplatesByCatalogOrder,
 } from '../../../lib/menu-templates-catalog';
 import { apiTemplateIdToCatalogSlug } from '../../../lib/template-selection-intent';
-import { TEMPLATE_NAMES } from '../../../lib/template-config-schema';
+import { translateTemplateName } from '../../../lib/template-config-i18n';
 import { TEMPLATES_CATALOG as templates, type TemplateCatalogItem } from '../../../lib/templates-catalog';
 import { DEFAULT_BEACH_BAR_BACKGROUND_IMAGE } from '../../../lib/beach-bar-template';
 import type { TemplateListFilters } from '../../../types/menu-template-catalog';
@@ -31,6 +32,7 @@ type AdminGridItem =
   | { type: 'premium' };
 
 export default function Templates() {
+  const { t } = useTranslation();
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRestaurant, setSelectedRestaurant] = useState<string | null>(null);
@@ -105,7 +107,7 @@ export default function Templates() {
       }
       setRestaurants(Array.isArray(restaurantsData) ? restaurantsData : []);
     } catch (error) {
-      console.error('Error cargando restaurantes:', error);
+      console.error('Error cargando comercios:', error);
     } finally {
       setLoading(false);
     }
@@ -121,11 +123,11 @@ export default function Templates() {
     setSelectedTemplate(templateId);
     setSelectedRestaurant(restaurantId);
     
-    // Cargar los datos actualizados del restaurante desde el backend
+    // Cargar los datos actualizados del comercio desde el backend
     try {
       const res = await api.get(`/restaurants/${restaurantId}`);
       const restaurant = res.data;
-      console.log('Restaurante cargado:', restaurant);
+      console.log('Comercio cargado:', restaurant);
       if (restaurant) {
         const newPrimaryColor = restaurant.primaryColor || '#007bff';
         const newSecondaryColor = restaurant.secondaryColor || '#0056b3';
@@ -134,7 +136,7 @@ export default function Templates() {
         setSecondaryColor(newSecondaryColor);
       }
     } catch (error) {
-      console.error('Error cargando datos del restaurante:', error);
+      console.error('Error cargando datos del comercio:', error);
       // Si falla, usar los datos de la lista local
       const restaurant = restaurants.find(r => r.id === restaurantId);
       if (restaurant) {
@@ -224,13 +226,13 @@ export default function Templates() {
       // Esperar un momento para que el backend procese
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Recargar restaurantes para actualizar el template y los colores
+      // Recargar comercios para actualizar el template y los colores
       await loadRestaurants();
       
-      // Recargar los datos del restaurante seleccionado para actualizar los colores en el estado
+      // Recargar los datos del comercio seleccionado para actualizar los colores en el estado
       const res = await api.get(`/restaurants/${restaurantId}`);
       const restaurant = res.data;
-      console.log('Restaurante después de guardar:', restaurant);
+      console.log('Comercio después de guardar:', restaurant);
       
       if (restaurant) {
         const savedPrimaryColor = restaurant.primaryColor || '#007bff';
@@ -241,8 +243,8 @@ export default function Templates() {
       }
       
       setAlertModal({
-        title: 'Plantilla aplicada',
-        message: 'Entra a configurar la plantilla para ajustar colores y opciones.',
+        title: t('adminTemplates.alert.appliedTitle'),
+        message: t('adminTemplates.alert.appliedMessage'),
         variant: 'success',
         restaurantId,
       });
@@ -251,8 +253,8 @@ export default function Templates() {
       console.error('Error aplicando plantilla:', error);
       console.error('Detalles del error:', error.response?.data);
       setAlertModal({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error aplicando plantilla.',
+        title: t('adminTemplates.alert.errorTitle'),
+        message: error.response?.data?.message || t('adminTemplates.alert.applyError'),
         variant: 'error',
       });
     } finally {
@@ -270,9 +272,9 @@ export default function Templates() {
       <div className="admin-main admin-page-templates">
         <div className="admin-templates-page-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
           <div className="admin-templates-page-intro">
-            <h1 className="admin-title">Plantillas</h1>
+            <h1 className="admin-title">{t('adminTemplates.title')}</h1>
             <p className="text-muted admin-templates-page-subtitle">
-              Selecciona una plantilla para aplicar a tus restaurantes
+              {t('adminTemplates.subtitle')}
             </p>
           </div>
         </div>
@@ -280,20 +282,20 @@ export default function Templates() {
         {loading ? (
           <div className="text-center admin-templates-loading">
             <div className="spinner-border" role="status">
-              <span className="visually-hidden">Cargando...</span>
+              <span className="visually-hidden">{t('adminTemplates.loading')}</span>
             </div>
           </div>
         ) : (
           <div className="admin-templates-layout">
             <div className="admin-templates-main">
-            {/* Restaurantes por plantilla */}
+            {/* Comercios por plantilla */}
             <section className="admin-templates-restaurants-section">
               <h2 className="admin-templates-section-title">
-                Tus restaurantes por plantilla
+                {t('adminTemplates.restaurantsByTemplate')}
               </h2>
               {restaurants.length === 0 ? (
                 <p className="admin-templates-empty-msg">
-                  Aún no tienes restaurantes. Crea uno en Restaurantes y asígnale una plantilla aquí.
+                  {t('adminTemplates.emptyRestaurants')}
                 </p>
               ) : (
                 <>
@@ -302,9 +304,9 @@ export default function Templates() {
                     <table className="table admin-templates-restaurants-table mb-0">
                       <thead>
                         <tr>
-                          <th>Restaurante</th>
-                          <th>Plantilla</th>
-                          <th className="text-end">Acción</th>
+                          <th>{t('adminTemplates.table.business')}</th>
+                          <th>{t('adminTemplates.table.template')}</th>
+                          <th className="text-end">{t('adminTemplates.table.action')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -313,7 +315,7 @@ export default function Templates() {
                             <td>{r.name}</td>
                             <td>
                               <span className="badge bg-primary" style={{ fontSize: '0.8125rem' }}>
-                                {TEMPLATE_NAMES[r.template] || r.template || 'Clásica'}
+                                {translateTemplateName(t, r.template) || t('adminTemplates.classicFallback')}
                               </span>
                             </td>
                             <td className="text-end">
@@ -321,7 +323,7 @@ export default function Templates() {
                                 href={`/admin/templates/configure/${r.id}`}
                                 className="admin-btn admin-templates-config-link"
                               >
-                                Configurar plantilla
+                                {t('adminTemplates.configureTemplate')}
                               </Link>
                             </td>
                           </tr>
@@ -336,14 +338,14 @@ export default function Templates() {
                       <div className="admin-templates-restaurant-mobile-name">{r.name}</div>
                       <div className="admin-templates-restaurant-mobile-template">
                         <span className="badge bg-primary" style={{ fontSize: '0.8125rem' }}>
-                          {TEMPLATE_NAMES[r.template] || r.template || 'Clásica'}
+                          {translateTemplateName(t, r.template) || t('adminTemplates.classicFallback')}
                         </span>
                       </div>
                       <Link
                         href={`/admin/templates/configure/${r.id}`}
                         className="admin-btn admin-templates-config-link-mobile"
                       >
-                        Configurar plantilla
+                        {t('adminTemplates.configureTemplate')}
                       </Link>
                     </div>
                   ))}
@@ -353,7 +355,7 @@ export default function Templates() {
             </section>
 
             <section className="admin-templates-catalog-section">
-              <h2 className="admin-templates-section-title">Catálogo de plantillas</h2>
+              <h2 className="admin-templates-section-title">{t('adminTemplates.catalogTitle')}</h2>
 
               <FiltersBar
                 options={filterOptions}
@@ -364,13 +366,16 @@ export default function Templates() {
 
               <p className={plantillasStyles.resultsHint} aria-live="polite">
                 {filteredTemplates.length === templates.length
-                  ? `Mostrando las ${templates.length} plantillas`
-                  : `Mostrando ${filteredTemplates.length} de ${templates.length} plantillas`}
+                  ? t('adminTemplates.showingAll', { count: templates.length })
+                  : t('adminTemplates.showingFiltered', {
+                      filtered: filteredTemplates.length,
+                      total: templates.length,
+                    })}
               </p>
 
               {filteredTemplates.length === 0 ? (
                 <p className={plantillasStyles.emptyState}>
-                  No hay plantillas con esta combinación de filtros. Probá con &quot;Todos&quot; en algún criterio.
+                  {t('adminTemplates.emptyFilters')}
                 </p>
               ) : null}
 
@@ -410,7 +415,7 @@ export default function Templates() {
           {...(alertModal.variant === 'success' && alertModal.restaurantId
             ? {
                 actionButton: {
-                  label: 'Configurar plantilla',
+                  label: t('adminTemplates.configureTemplate'),
                   href: `/admin/templates/configure/${alertModal.restaurantId}`,
                 },
               }
@@ -421,4 +426,3 @@ export default function Templates() {
     </AdminLayout>
   );
 }
-

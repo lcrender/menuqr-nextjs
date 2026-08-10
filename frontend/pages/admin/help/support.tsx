@@ -1,7 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { Trans, useTranslation } from 'react-i18next';
 import AdminLayout from '../../../components/AdminLayout';
 import api from '../../../lib/axios';
+import i18n from '../../../src/i18n/config';
+import adminSupportEs from '../../../src/locales/fragments/adminSupport.es.json';
+import adminSupportEn from '../../../src/locales/fragments/adminSupport.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { adminSupport: adminSupportEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { adminSupport: adminSupportEn }, true, true);
 
 type TicketItem = {
   id: string;
@@ -12,12 +19,6 @@ type TicketItem = {
   updatedAt: string;
   lastReplyAt: string | null;
   attachmentUrls?: string[];
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  open: 'Abierto',
-  in_progress: 'En progreso',
-  closed: 'Cerrado',
 };
 
 const ACCEPT_IMAGES = 'image/jpeg,image/jpg,image/png,.jpg,.jpeg,.png';
@@ -31,6 +32,7 @@ function apiErrorMessage(e: unknown, fallback: string): string {
 }
 
 export default function SupportPage() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<TicketItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,7 @@ export default function SupportPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,13 +52,13 @@ export default function SupportPage() {
       setItems(Array.isArray(res.data?.items) ? res.data.items : []);
       setTotal(typeof res.data?.total === 'number' ? res.data.total : 0);
     } catch (e: unknown) {
-      setListError(apiErrorMessage(e, 'No se pudo cargar el listado de tickets.'));
+      setListError(apiErrorMessage(e, t('adminSupport.alerts.listLoadError')));
       setItems([]);
       setTotal(0);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -74,14 +77,14 @@ export default function SupportPage() {
     setSubmitting(true);
     try {
       for (const f of files) {
-        const t = (f.type || '').toLowerCase();
-        const okMime = t === 'image/jpeg' || t === 'image/png' || t === 'image/pjpeg';
+        const mime = (f.type || '').toLowerCase();
+        const okMime = mime === 'image/jpeg' || mime === 'image/png' || mime === 'image/pjpeg';
         if (!okMime) {
-          setFormError('Solo se permiten imágenes JPG, JPEG o PNG.');
+          setFormError(t('adminSupport.alerts.invalidImageType'));
           return;
         }
         if (f.size > 5 * 1024 * 1024) {
-          setFormError('Cada imagen debe pesar como máximo 5 MB.');
+          setFormError(t('adminSupport.alerts.imageTooLarge'));
           return;
         }
       }
@@ -103,7 +106,7 @@ export default function SupportPage() {
       setFiles([]);
       await load();
     } catch (err: unknown) {
-      setFormError(apiErrorMessage(err, 'No se pudo crear el ticket.'));
+      setFormError(apiErrorMessage(err, t('adminSupport.alerts.createError')));
     } finally {
       setSubmitting(false);
     }
@@ -114,47 +117,49 @@ export default function SupportPage() {
       <div className="container-fluid py-4">
         <div className="row">
           <div className="col-12 col-xl-10">
-            <h1 className="mb-3">Soporte técnico</h1>
-            <p className="lead text-muted mb-4">
-              Abrí un ticket para reportar problemas o pedir ayuda. El equipo recibirá una notificación y podrás hacer
-              seguimiento desde esta misma sección.
-            </p>
+            <h1 className="mb-3">{t('adminSupport.title')}</h1>
+            <p className="lead text-muted mb-4">{t('adminSupport.lead')}</p>
 
             <div className="card mb-4 border-info">
               <div className="card-header bg-info bg-opacity-10">
-                <h2 className="h5 mb-0">Documentación</h2>
+                <h2 className="h5 mb-0">{t('adminSupport.docsCard.title')}</h2>
               </div>
               <div className="card-body">
                 <p className="mb-0">
-                  Para uso de la app, revisá la <Link href="/admin/help/documentation">documentación del panel</Link>.
+                  <Trans
+                    i18nKey="adminSupport.docsCard.body"
+                    components={{
+                      docsLink: <Link href="/admin/help/documentation" />,
+                    }}
+                  />
                 </p>
               </div>
             </div>
 
             <div className="card mb-4 border-warning">
               <div className="card-header bg-warning text-dark">
-                <h2 className="h5 mb-0">Consejos para un buen reporte</h2>
+                <h2 className="h5 mb-0">{t('adminSupport.tips.title')}</h2>
               </div>
               <div className="card-body">
                 <ul className="mb-0">
-                  <li>Describí qué esperabas y qué ocurrió en su lugar.</li>
-                  <li>Pasos concretos para reproducir el problema.</li>
-                  <li>Navegador, sistema operativo y si es en móvil o escritorio.</li>
-                  <li>Texto de mensajes de error o lo que veas en consola (F12).</li>
-                  <li>Podés adjuntar capturas en JPG o PNG (hasta 5 imágenes, 5 MB cada una).</li>
+                  <li>{t('adminSupport.tips.expectedVsActual')}</li>
+                  <li>{t('adminSupport.tips.reproSteps')}</li>
+                  <li>{t('adminSupport.tips.environment')}</li>
+                  <li>{t('adminSupport.tips.errors')}</li>
+                  <li>{t('adminSupport.tips.attachments')}</li>
                 </ul>
               </div>
             </div>
 
             <div className="card mb-4 border-primary">
               <div className="card-header bg-primary text-white">
-                <h2 className="h5 mb-0">Crear ticket</h2>
+                <h2 className="h5 mb-0">{t('adminSupport.form.title')}</h2>
               </div>
               <div className="card-body">
                 <form onSubmit={(ev) => void onCreate(ev)}>
                   <div className="mb-3">
                     <label className="form-label" htmlFor="ticket-subject">
-                      Asunto
+                      {t('adminSupport.form.subject')}
                     </label>
                     <input
                       id="ticket-subject"
@@ -162,13 +167,13 @@ export default function SupportPage() {
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                       maxLength={200}
-                      placeholder="Resumen breve del problema"
+                      placeholder={t('adminSupport.form.subjectPlaceholder')}
                       required
                     />
                   </div>
                   <div className="mb-3">
                     <label className="form-label" htmlFor="ticket-message">
-                      Descripción
+                      {t('adminSupport.form.description')}
                     </label>
                     <textarea
                       id="ticket-message"
@@ -177,23 +182,38 @@ export default function SupportPage() {
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       maxLength={8000}
-                      placeholder="Incluí pasos para reproducir, navegador, mensajes de error…"
+                      placeholder={t('adminSupport.form.descriptionPlaceholder')}
                       required
                     />
                   </div>
                   <div className="mb-3">
                     <label className="form-label" htmlFor="ticket-files">
-                      Imágenes adjuntas (opcional)
+                      {t('adminSupport.form.attachments')}
                     </label>
                     <input
+                      ref={fileInputRef}
                       id="ticket-files"
                       type="file"
-                      className="form-control"
+                      className="d-none"
                       accept={ACCEPT_IMAGES}
                       multiple
                       onChange={onFilesChange}
                     />
-                    <small className="text-muted d-block mt-1">JPG, JPEG o PNG. Máximo 5 archivos, 5 MB c/u.</small>
+                    <div className="d-flex flex-wrap align-items-center gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {t('adminSupport.form.chooseFiles')}
+                      </button>
+                      <span className="text-muted small">
+                        {files.length === 0
+                          ? t('adminSupport.form.noFilesSelected')
+                          : t('adminSupport.form.filesSelected', { count: files.length })}
+                      </span>
+                    </div>
+                    <small className="text-muted d-block mt-1">{t('adminSupport.form.attachmentsHint')}</small>
                     {files.length > 0 ? (
                       <ul className="small mb-0 mt-2">
                         {files.map((f) => (
@@ -204,7 +224,7 @@ export default function SupportPage() {
                   </div>
                   {formError ? <div className="alert alert-danger py-2">{formError}</div> : null}
                   <button type="submit" className="btn btn-primary" disabled={submitting}>
-                    {submitting ? 'Enviando…' : 'Enviar ticket'}
+                    {submitting ? t('adminSupport.form.submitting') : t('adminSupport.form.submit')}
                   </button>
                 </form>
               </div>
@@ -212,43 +232,45 @@ export default function SupportPage() {
 
             <div className="card mb-4">
               <div className="card-header d-flex justify-content-between align-items-center">
-                <h2 className="h5 mb-0">Mis tickets</h2>
+                <h2 className="h5 mb-0">{t('adminSupport.list.title')}</h2>
                 <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => void load()} disabled={loading}>
-                  Actualizar
+                  {t('adminSupport.list.refresh')}
                 </button>
               </div>
               <div className="card-body p-0">
                 {listError ? <div className="alert alert-danger m-3 mb-0">{listError}</div> : null}
                 {loading ? (
-                  <div className="p-4 text-center text-muted">Cargando…</div>
+                  <div className="p-4 text-center text-muted">{t('adminSupport.list.loading')}</div>
                 ) : items.length === 0 ? (
-                  <div className="p-4 text-muted">Todavía no tenés tickets. Usá el formulario de arriba para crear uno.</div>
+                  <div className="p-4 text-muted">{t('adminSupport.list.empty')}</div>
                 ) : (
                   <div className="table-responsive">
                     <table className="table table-hover mb-0">
                       <thead className="table-light">
                         <tr>
-                          <th>#</th>
-                          <th>Asunto</th>
-                          <th>Estado</th>
-                          <th>Adj.</th>
-                          <th>Actualizado</th>
+                          <th>{t('adminSupport.list.colNumber')}</th>
+                          <th>{t('adminSupport.list.colSubject')}</th>
+                          <th>{t('adminSupport.list.colStatus')}</th>
+                          <th>{t('adminSupport.list.colAttachments')}</th>
+                          <th>{t('adminSupport.list.colUpdated')}</th>
                           <th />
                         </tr>
                       </thead>
                       <tbody>
-                        {items.map((t) => (
-                          <tr key={t.id}>
-                            <td className="text-nowrap fw-semibold">#{t.ticketNumber}</td>
-                            <td>{t.subject}</td>
+                        {items.map((ticket) => (
+                          <tr key={ticket.id}>
+                            <td className="text-nowrap fw-semibold">#{ticket.ticketNumber}</td>
+                            <td>{ticket.subject}</td>
                             <td>
-                              <span className="badge bg-secondary">{STATUS_LABEL[t.status] ?? t.status}</span>
+                              <span className="badge bg-secondary">
+                                {t(`adminSupport.status.${ticket.status}`)}
+                              </span>
                             </td>
-                            <td className="small text-muted">{t.attachmentUrls?.length ?? 0}</td>
-                            <td className="small text-muted">{new Date(t.updatedAt).toLocaleString()}</td>
+                            <td className="small text-muted">{ticket.attachmentUrls?.length ?? 0}</td>
+                            <td className="small text-muted">{new Date(ticket.updatedAt).toLocaleString()}</td>
                             <td className="text-end">
-                              <Link href={`/admin/help/support/${t.id}`} className="btn btn-sm btn-outline-primary">
-                                Ver
+                              <Link href={`/admin/help/support/${ticket.id}`} className="btn btn-sm btn-outline-primary">
+                                {t('adminSupport.list.view')}
                               </Link>
                             </td>
                           </tr>
@@ -258,7 +280,9 @@ export default function SupportPage() {
                   </div>
                 )}
                 {!loading && total > items.length ? (
-                  <div className="p-2 text-muted small border-top">Mostrando {items.length} de {total} tickets.</div>
+                  <div className="p-2 text-muted small border-top">
+                    {t('adminSupport.list.showing', { shown: items.length, total })}
+                  </div>
                 ) : null}
               </div>
             </div>

@@ -61,7 +61,7 @@ export class MenusService {
     return menus.map((m: any) => ({
       ...m,
       restaurantId: m.restaurant_id,
-      restaurantName: m.restaurantName || 'Sin restaurante',
+      restaurantName: m.restaurantName || 'Sin comercio',
       restaurantSlug: m.restaurantSlug,
       restaurantTemplate: m.restaurantTemplate || 'classic',
       tenantName: m.tenantName || null,
@@ -170,7 +170,7 @@ export class MenusService {
     const mappedMenus = menus.map((m: any) => ({
       ...m,
       restaurantId: m.restaurant_id,
-      restaurantName: m.restaurantName || 'Sin restaurante',
+      restaurantName: m.restaurantName || 'Sin comercio',
       restaurantSlug: m.restaurantSlug,
       restaurantTemplate: m.restaurantTemplate || 'classic',
       tenantName: m.tenantName || null,
@@ -261,11 +261,13 @@ export class MenusService {
     description?: string;
     validFrom?: Date;
     validTo?: Date;
+    /** Locale BCP-47 del contenido base (es-ES | en-US). */
+    sourceLocale?: string;
   }) {
     // Validar límite de menús según el plan
     await this.validateMenuLimit(tenantId);
 
-    // Verificar que el restaurante pertenece al tenant (solo si restaurantId no es null)
+    // Verificar que el comercio pertenece al tenant (solo si restaurantId no es null)
     if (data.restaurantId !== null && data.restaurantId !== undefined && data.restaurantId !== '') {
       const restaurant = await this.postgres.queryRaw<any>(
         `SELECT id FROM restaurants 
@@ -275,11 +277,11 @@ export class MenusService {
       );
 
       if (!restaurant[0]) {
-        throw new NotFoundException('Restaurante no encontrado o no pertenece al tenant');
+        throw new NotFoundException('Comercio no encontrado o no pertenece al tenant');
       }
     }
 
-    // Generar slug único por restaurante (o null si no hay restaurante)
+    // Generar slug único por comercio (o null si no hay comercio)
     const baseSlug = this.generateSlug(data.name);
     let slug = baseSlug;
     let counter = 1;
@@ -300,13 +302,15 @@ export class MenusService {
     const nextSort = (maxSortResult[0]?.max_sort ?? -1) + 1;
 
     const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
-    
+    const sourceLocale =
+      data.sourceLocale === 'en-US' || data.sourceLocale === 'en' ? 'en-US' : 'es-ES';
+
     await this.postgres.executeRaw(
       `INSERT INTO menus (
         id, tenant_id, restaurant_id, name, slug, description, 
-        status, valid_from, valid_to, sort, is_active,
+        status, valid_from, valid_to, sort, is_active, source_locale,
         created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, 'DRAFT', $7, $8, $9, true, NOW(), NOW())`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'DRAFT', $7, $8, $9, true, $10, NOW(), NOW())`,
       [
         id,
         tenantId,
@@ -317,18 +321,20 @@ export class MenusService {
         data.validFrom || null,
         data.validTo || null,
         nextSort,
+        sourceLocale,
       ]
     );
 
-    // Mantener compatibilidad/compatibilizar con i18n:
-    // persistimos los campos traducibles en `translations` (fallback: es-ES).
+    // Persistimos los campos traducibles en el locale base del menú.
     const translations: { [key: string]: string } = {
       name: data.name,
     };
     if (data.description !== undefined) {
       translations.description = data.description || '';
     }
-    await this.i18nService.saveTranslations(tenantId, 'menu', id, translations, 'es-ES');
+    await this.i18nService.saveTranslations(tenantId, 'menu', id, translations, sourceLocale, {
+      sourceLocale,
+    });
 
     return this.findById(id, tenantId);
   }
@@ -368,20 +374,20 @@ export class MenusService {
     const params: any[] = [];
     let paramIndex = 1;
 
-    // Si se cambia el restaurante (incluyendo establecerlo en null), actualizar restaurantId y regenerar slug si es necesario
+    // Si se cambia el comercio (incluyendo establecerlo en null), actualizar restaurantId y regenerar slug si es necesario
     const currentRestaurantId = menu.restaurantId || menu.restaurant_id;
     const newRestaurantId = data.restaurantId === '' ? null : data.restaurantId;
     
     if (data.restaurantId !== undefined && newRestaurantId !== currentRestaurantId) {
       if (newRestaurantId !== null) {
-        // Verificar que el restaurante pertenezca al mismo tenant
+        // Verificar que el comercio pertenezca al mismo tenant
         const restaurantCheck = await this.postgres.queryRaw<any>(
           `SELECT id FROM restaurants WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
           [newRestaurantId, tenantId]
         );
         
         if (restaurantCheck.length === 0) {
-          throw new BadRequestException(`El restaurante con ID ${newRestaurantId} no existe o no pertenece a este tenant`);
+          throw new BadRequestException(`El comercio con ID ${newRestaurantId} no existe o no pertenece a este tenant`);
         }
       }
 
@@ -389,9 +395,9 @@ export class MenusService {
       params.push(newRestaurantId);
 
       // Si también cambió el nombre, regenerar slug con el nuevo restaurantId
-      // Si no cambió el nombre, verificar que el slug actual sea único en el nuevo restaurante (o null)
+      // Si no cambió el nombre, verificar que el slug actual sea único en el nuevo comercio (o null)
       if (data.name === undefined) {
-        // Verificar que el slug actual sea único en el nuevo restaurante (o null)
+        // Verificar que el slug actual sea único en el nuevo comercio (o null)
         const currentSlug = menu.slug;
         if (await this.slugExists(currentSlug, newRestaurantId || null, id)) {
           // Si el slug ya existe, generar uno nuevo
@@ -525,7 +531,19 @@ export class MenusService {
       hasAny = true;
     }
     if (hasAny) {
-      await this.i18nService.saveTranslations(tenantId, 'menu', id, translations, 'es-ES');
+      let sourceLocale = 'es-ES';
+      try {
+        const rows = await this.postgres.queryRaw<{ source_locale: string | null }>(
+          `SELECT source_locale FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+          [id, tenantId],
+        );
+        sourceLocale = String(rows[0]?.source_locale || 'es-ES') || 'es-ES';
+      } catch {
+        sourceLocale = 'es-ES';
+      }
+      await this.i18nService.saveTranslations(tenantId, 'menu', id, translations, sourceLocale, {
+        sourceLocale,
+      });
     }
 
     return this.findById(id, tenantId);
@@ -579,21 +597,21 @@ export class MenusService {
   }
 
   /**
-   * Verifica si un slug existe para un restaurante (o null si restaurantId es null)
+   * Verifica si un slug existe para un comercio (o null si restaurantId es null)
    */
   private async slugExists(slug: string, restaurantId: string | null, excludeId?: string): Promise<boolean> {
     let query: string;
     const params: any[] = [slug];
 
     if (restaurantId === null) {
-      // Si restaurantId es null, verificar que el slug sea único globalmente (sin restaurante)
+      // Si restaurantId es null, verificar que el slug sea único globalmente (sin comercio)
       query = `
         SELECT COUNT(*) as count 
         FROM menus 
         WHERE slug = $1 AND restaurant_id IS NULL AND deleted_at IS NULL
       `;
     } else {
-      // Si restaurantId tiene valor, verificar que el slug sea único para ese restaurante
+      // Si restaurantId tiene valor, verificar que el slug sea único para ese comercio
       query = `
         SELECT COUNT(*) as count 
         FROM menus 
@@ -613,7 +631,7 @@ export class MenusService {
   }
 
   /**
-   * Busca un menú por slug y restaurante
+   * Busca un menú por slug y comercio
    */
   async findBySlug(slug: string, restaurantId: string): Promise<any> {
     const result = await this.postgres.queryRaw<any>(
@@ -631,7 +649,7 @@ export class MenusService {
     );
 
     if (!result[0]) {
-      throw new NotFoundException(`Menú con slug "${slug}" no encontrado en el restaurante`);
+      throw new NotFoundException(`Menú con slug "${slug}" no encontrado en el comercio`);
     }
 
     const menu = result[0];
@@ -737,7 +755,7 @@ export class MenusService {
   }
 
   /**
-   * Menús del tenant que se pueden asignar a un restaurante (sin asignar u asignados a otro local).
+   * Menús del tenant que se pueden asignar a un comercio (sin asignar u asignados a otro local).
    */
   async findAssignableMenus(tenantId: string, targetRestaurantId: string): Promise<any[]> {
     const r = await this.postgres.queryRaw<any>(
@@ -745,7 +763,7 @@ export class MenusService {
       [targetRestaurantId, tenantId],
     );
     if (!r[0]) {
-      throw new NotFoundException('Restaurante no encontrado o no pertenece al tenant');
+      throw new NotFoundException('Comercio no encontrado o no pertenece al tenant');
     }
     const rows = await this.postgres.queryRaw<any>(
       `SELECT m.id, m.name, m.description, m.slug, m.status, m.restaurant_id as "restaurantId",

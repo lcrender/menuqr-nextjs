@@ -1,4 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../src/i18n/config';
+import locationEs from '../src/locales/fragments/location.es.json';
+import locationEn from '../src/locales/fragments/location.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { location: locationEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { location: locationEn }, true, true);
 
 interface ProvinceSelectorProps {
   country: string;
@@ -169,6 +176,7 @@ const PROVINCES_BY_COUNTRY: Record<string, string[]> = {
 };
 
 export default function ProvinceSelector({ country, value, onChange, className = '' }: ProvinceSelectorProps) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
 
@@ -197,7 +205,7 @@ export default function ProvinceSelector({ country, value, onChange, className =
         className={`form-control ${className}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Selecciona un país primero"
+        placeholder={t('location.selectCountryFirst')}
         disabled
       />
     );
@@ -211,7 +219,7 @@ export default function ProvinceSelector({ country, value, onChange, className =
         className={`form-control ${className}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Ingresa la provincia/región"
+        placeholder={t('location.provincePlaceholder')}
       />
     );
   }
@@ -227,11 +235,11 @@ export default function ProvinceSelector({ country, value, onChange, className =
           setIsOpen(true);
         }}
         onFocus={() => setIsOpen(true)}
-        placeholder="Buscar provincia/región..."
+        placeholder={t('location.searchProvince')}
         autoComplete="off"
       />
       {isOpen && filteredProvinces.length > 0 && (
-        <div className="admin-select-dropdown w-100" role="listbox" aria-label="Lista de provincias o regiones">
+        <div className="admin-select-dropdown w-100" role="listbox" aria-label={t('location.searchProvince')}>
           {filteredProvinces.map((province) => (
             <div
               key={province}

@@ -12,7 +12,7 @@ import {
   TENANT_PLAN_KEYS,
 } from './plan-limits.constants';
 
-/** Plantillas reconocidas en API (crear/editar restaurante). */
+/** Plantillas reconocidas en API (crear/editar comercio). */
 export const RESTAURANT_TEMPLATE_IDS = [
   ...STANDARD_TEMPLATE_IDS,
   GOURMET_TEMPLATE_ID,
@@ -71,7 +71,7 @@ export class PlanLimitsService {
     return 'free';
   }
 
-  /** Conjunto de IDs de plantilla que el plan puede usar en restaurantes. */
+  /** Conjunto de IDs de plantilla que el plan puede usar en comercios. */
   allowedTemplateIds(row: TenantPlanLimitsRow): Set<string> {
     const s = new Set<string>([...STANDARD_TEMPLATE_IDS]);
     if (row.gourmetTemplate) {
@@ -188,7 +188,7 @@ export class PlanLimitsService {
   }
 
   /**
-   * Tras bajar a free/starter: restaurantes con plantilla no permitida en el plan destino pasan a classic.
+   * Tras bajar a free/starter: comercios con plantilla no permitida en el plan destino pasan a classic.
    */
   async resetTemplatesIncompatibleWithPlan(tenantId: string, targetPlanKey: string): Promise<void> {
     const row = await this.getEffectiveRow(targetPlanKey);

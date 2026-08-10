@@ -18,6 +18,7 @@ import { EmailService } from '../common/email/email.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { AdminMessagesService } from '../admin-messages/admin-messages.service';
 import { RecaptchaService } from '../common/recaptcha/recaptcha.service';
+import { parseAcceptLanguage, parseUserAgent } from '../common/client-info/parse-user-agent';
 
 // Entidades
 import { User, UserRole } from '@prisma/client';
@@ -124,6 +125,7 @@ export class AuthService {
           tenantId: user.tenantId,
           registrationCountry: user.registrationCountry ?? null,
           declaredCountry: user.declaredCountry ?? null,
+          preferredLanguage: (user as any).preferredLanguage === 'en' ? 'en' : 'es',
           tenant: tenant ? {
             id: tenant.id,
             name: tenant.name,
@@ -142,11 +144,31 @@ export class AuthService {
    * Registro de nuevo usuario.
    * registrationCountry: detectado por IP al registrarse (opcional).
    */
-  async register(registerDto: RegisterDto, registrationCountry?: string, clientIp?: string) {
+  async register(
+    registerDto: RegisterDto,
+    registrationCountry?: string,
+    clientIp?: string,
+    clientHeaders?: { userAgent?: string; acceptLanguage?: string },
+  ) {
     try {
-      const { email, password, firstName, lastName, tenantName, pendingPlan, pendingBillingCycle, recaptchaToken } =
-        registerDto;
+      const {
+        email,
+        password,
+        firstName,
+        lastName,
+        tenantName,
+        pendingPlan,
+        pendingBillingCycle,
+        recaptchaToken,
+        acceptTerms,
+        marketingOptIn,
+        timezone,
+      } = registerDto;
       const normalizedEmail = (email || '').trim().toLowerCase();
+
+      if (acceptTerms !== true) {
+        throw new BadRequestException('Debés aceptar los Términos y Condiciones y la Política de Privacidad.');
+      }
 
       await this.recaptchaService.verifyOptionalForRegister(recaptchaToken, clientIp, {
         expectedAction: 'register_submit',
@@ -184,6 +206,9 @@ export class AuthService {
       const isDev = this.configService.get('NODE_ENV') === 'development';
       const emailVerificationToken = isDev ? null : crypto.randomBytes(32).toString('hex');
 
+      const wantsMarketing = marketingOptIn === true;
+      const now = new Date();
+
       // En desarrollo crear usuario ya verificado y devolver tokens; en producción exige verificación por email
       const user = await this.usersService.create({
         email: normalizedEmail,
@@ -198,6 +223,9 @@ export class AuthService {
         pendingPlan: pendingPlan ?? null,
         pendingBillingCycle: pendingBillingCycle ?? null,
         registrationCountry: registrationCountry ?? null,
+        acceptedTermsAt: now,
+        marketingOptIn: wantsMarketing,
+        marketingOptInAt: wantsMarketing ? now : null,
       });
 
       // Crear suscripción free por defecto (plan interno, sin proveedor de pago)
@@ -215,6 +243,11 @@ export class AuthService {
 
       // Notificar a SUPER_ADMIN (best-effort) si está habilitado.
       try {
+        const device = parseUserAgent(clientHeaders?.userAgent);
+        const language = parseAcceptLanguage(clientHeaders?.acceptLanguage);
+        const clientTimezone =
+          typeof timezone === 'string' && timezone.trim() ? timezone.trim().slice(0, 64) : null;
+
         await this.adminMessages.notifyIfEnabled(
           'user_created',
           {
@@ -230,6 +263,12 @@ export class AuthService {
             pendingBillingCycle: pendingBillingCycle ?? null,
             registrationCountry: registrationCountry ?? user.registrationCountry ?? null,
             declaredCountry: user.declaredCountry ?? null,
+            marketingOptIn: wantsMarketing,
+            deviceType: device.deviceType,
+            browser: device.browser,
+            os: device.os,
+            language: language,
+            timezone: clientTimezone,
           },
         );
       } catch (e) {
@@ -267,6 +306,7 @@ export class AuthService {
       }
 
       this.logger.log(`Usuario ${normalizedEmail} registrado en desarrollo (sin verificación de email).`);
+      await this.usersService.updateLastLogin(user.id);
       const tokens = await this.generateTokens(user);
       let tenantInfo = null;
       if (user.tenantId) {
@@ -325,6 +365,8 @@ export class AuthService {
     try {
       const user = await this.usersService.verifyEmail(token);
       const pending = await this.usersService.getPendingPlan(user.id);
+
+      await this.usersService.updateLastLogin(user.id);
 
       // Generar tokens después de verificar el email
       const tokens = await this.generateTokens(user);
@@ -403,6 +445,7 @@ export class AuthService {
       }
 
       // Generar nuevos tokens
+      await this.usersService.updateLastLogin(user.id);
       const tokens = await this.generateTokens(user);
 
       this.logger.log(`Token refrescado para usuario ${user.email}`);

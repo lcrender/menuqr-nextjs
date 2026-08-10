@@ -158,12 +158,12 @@ async function bootstrap() {
       const config = new DocumentBuilder()
         .setTitle('AppMenuQR API')
         .setDescription(
-          `API REST moderna para gestión de menús de restaurantes multi-tenant.
+          `API REST moderna para gestión de menús de comercios multi-tenant.
 
 **Características principales:**
 • Autenticación JWT con refresh tokens
 • Multi-tenant con Row Level Security
-• Gestión completa de restaurantes y menús
+• Gestión completa de comercios y menús
 • Almacenamiento de archivos con MinIO
 • Generación automática de códigos QR
 • Soporte multi-idioma (i18n)
@@ -188,7 +188,7 @@ async function bootstrap() {
         )
         .addTag('auth', 'Autenticación y autorización')
         .addTag('tenants', 'Gestión de tenants')
-        .addTag('restaurants', 'Gestión de restaurantes')
+        .addTag('restaurants', 'Gestión de comercios')
         .addTag('menus', 'Gestión de menús')
         .addTag('menu-sections', 'Secciones de menú')
         .addTag('menu-items', 'Productos del menú')
