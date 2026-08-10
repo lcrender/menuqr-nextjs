@@ -2,8 +2,42 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+
 import {
-  MENU_QR_DINAMICO_BENEFITS,
+  buildFuncionesHreflangLinks,
+  funcionesHref,
+  funcionesPath,
+} from '../../lib/funciones-nav';
+import {
+  getMenuQrDinamicoContent,
+  type FuncionesUiLocale,
+} from '../../lib/funciones/get-funciones-content';
+import { buildFuncionesFeatureJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
+import {
+  rememberSpanishLandingRegion,
+  readLandingRegionCookie,
+  setLandingRegionCookie,
+  useLandingHomeHref,
+} from '../../lib/landing-region';
+import { changeLanguage, normalizeUiLocale } from '../../src/i18n/config';
+import i18n from '../../src/i18n/config';
+import LandingNav from '../LandingNav';
+import LandingFooter from '../LandingFooter';
+import FxIcon from './media/FxIcon';
+import FxLazyYouTube from './media/FxLazyYouTube';
+import FxMediaSlot, { nextGenImageSources } from './media/FxMediaSlot';
+
+type Props = { locale?: FuncionesUiLocale };
+
+export default function MenuQrDinamicoLanding({ locale = 'es' }: Props) {
+  const router = useRouter();
+  const homeHref = useLandingHomeHref(locale === 'en' ? '/en' : undefined);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [showFloatCta, setShowFloatCta] = useState(false);
+
+  const {
+    MENU_QR_DINAMICO_BENEFITS,
   MENU_QR_DINAMICO_EDIT_POINTS,
   MENU_QR_DINAMICO_EXAMPLES,
   MENU_QR_DINAMICO_FAQ,
@@ -18,34 +52,82 @@ import {
   MENU_QR_DINAMICO_STEPS,
   MENU_QR_DINAMICO_UPDATE_ACTIONS,
   MENU_QR_DINAMICO_UPDATE_CARDS,
-} from '../../lib/funciones/menu-qr-dinamico-content';
-import { FUNCIONES_PATH, funcionesHref } from '../../lib/funciones-nav';
-import { buildFuncionesFeatureJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
-import { useLandingHomeHref } from '../../lib/landing-region';
-import LandingNav from '../LandingNav';
-import LandingFooter from '../LandingFooter';
-import FxIcon from './media/FxIcon';
-import FxLazyYouTube from './media/FxLazyYouTube';
-import FxMediaSlot, { nextGenImageSources } from './media/FxMediaSlot';
+  } = getMenuQrDinamicoContent(locale);
 
-export default function MenuQrDinamicoLanding() {
-  const router = useRouter();
-  const homeHref = useLandingHomeHref();
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [lightbox, setLightbox] = useState<string | null>(null);
-  const [showFloatCta, setShowFloatCta] = useState(false);
+  const ui = locale === 'en'
+    ? {
+      home: 'Home',
+      features: 'Features',
+      breadcrumbCurrent: 'Dynamic QR menu',
+      ctaPrimary: 'Create my QR menu',
+      ctaSteps: 'Create my digital menu',
+      seeHow: 'See how it works',
+      heroNote: 'Start free and publish your digital menu in a few minutes.',
+      faqTitle: 'Frequently asked questions about dynamic QR menus',
+      relatedTitle: 'You may also like',
+      relatedAria: 'Related links',
+      expandPhone: 'Enlarge digital menu view on mobile',
+      lightboxAria: 'Enlarged screenshot view',
+      lightboxClose: 'Close',
+      lightboxAlt: 'Enlarged view of the digital menu on mobile',
+      ctaFinalNote: 'Start free and set up your digital menu in a few minutes.',
+      manageProductsLink: 'See how to manage products',
+      h1: 'Create a dynamic QR menu and update it in real time',
+      h2SameQr: 'The same QR code, a menu always up to date',
+      h2WhatIs: 'What is a dynamic QR menu?',
+      h2UpdateAll: 'Update all the information on your digital menu',
+      h2EditProducts: 'Edit products and prices in a few steps',
+      h2ChangePrices: 'Change prices without reprinting the menu',
+      h2Steps: 'Create your QR menu step by step',
+      h2Daily: 'A menu ready for daily changes',
+      h3SoldOut: 'Did a product sell out during service?',
+      h2Benefits: 'Benefits of using a dynamic QR menu',
+      h2Share: 'Share your digital menu inside and outside the restaurant',
+      h2MoreThan: 'Much more than a QR code generator',
+      h2CtaFinal: 'Create your restaurant’s dynamic QR menu today',
+    }
+    : {
+      home: 'Inicio',
+      features: 'Funciones',
+      breadcrumbCurrent: 'Menú QR dinámico',
+      ctaPrimary: 'Crear mi menú QR',
+      ctaSteps: 'Crear mi carta digital',
+      seeHow: 'Ver cómo funciona',
+      heroNote: 'Empieza gratis y publica tu carta digital en pocos minutos.',
+      faqTitle: 'Preguntas frecuentes sobre los menús QR dinámicos',
+      relatedTitle: 'También te puede interesar',
+      relatedAria: 'Enlaces relacionados',
+      expandPhone: 'Ampliar vista del menú digital en el móvil',
+      lightboxAria: 'Vista ampliada de la captura',
+      lightboxClose: 'Cerrar',
+      lightboxAlt: 'Vista ampliada del menú digital en el móvil',
+      ctaFinalNote: 'Empieza gratis y configura tu carta digital en pocos minutos.',
+      manageProductsLink: 'Descubre cómo gestionar productos',
+      h1: 'Crea un menú QR dinámico y actualízalo en tiempo real',
+      h2SameQr: 'El mismo código QR, una carta siempre actualizada',
+      h2WhatIs: '¿Qué es un menú QR dinámico?',
+      h2UpdateAll: 'Actualiza toda la información de tu carta digital',
+      h2EditProducts: 'Edita productos y precios en pocos pasos',
+      h2ChangePrices: 'Cambia los precios sin volver a imprimir la carta',
+      h2Steps: 'Crea tu menú QR paso a paso',
+      h2Daily: 'Un menú preparado para los cambios diarios',
+      h3SoldOut: '¿Un producto se agotó durante el servicio?',
+      h2Benefits: 'Ventajas de utilizar un menú QR dinámico',
+      h2Share: 'Comparte tu carta digital dentro y fuera del restaurante',
+      h2MoreThan: 'Mucho más que un generador de códigos QR',
+      h2CtaFinal: 'Crea hoy el menú QR dinámico de tu restaurante',
+    };
 
-  const ctaPrimary = 'Crear mi menú QR';
-  const ctaSteps = 'Crear mi carta digital';
+  const featuresBase = funcionesPath(locale);
+
   const phonePreview = MENU_QR_DINAMICO_MEDIA.phonePreview;
   const panelPreview = MENU_QR_DINAMICO_MEDIA.panelPreview;
   const panelSources = nextGenImageSources(panelPreview);
 
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
-  const canonicalUrl =
-    canonicalBase && /^https?:\/\//i.test(canonicalBase)
-      ? `${canonicalBase}${MENU_QR_DINAMICO_PATH}`
-      : null;
+  const hasBase = Boolean(canonicalBase && /^https?:\/\//i.test(canonicalBase));
+  const canonicalUrl = hasBase ? `${canonicalBase}${MENU_QR_DINAMICO_PATH}` : null;
+  const hreflangLinks = hasBase ? buildFuncionesHreflangLinks(canonicalBase, 'menu-qr-dinamico') : [];
 
   const jsonLd = (() => {
     const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
@@ -54,7 +136,7 @@ export default function MenuQrDinamicoLanding() {
       path: MENU_QR_DINAMICO_PATH,
       title: MENU_QR_DINAMICO_SEO.title,
       description: MENU_QR_DINAMICO_SEO.description,
-      breadcrumbName: 'Menú QR dinámico',
+      breadcrumbName: ui.breadcrumbCurrent,
       faq: MENU_QR_DINAMICO_FAQ,
       includeSoftwareApplication: true,
     });
@@ -86,13 +168,30 @@ export default function MenuQrDinamicoLanding() {
     };
   }, [lightbox]);
 
+  useEffect(() => {
+    if (locale !== 'en') return;
+    const cookie = readLandingRegionCookie();
+    if (cookie === 'AR' || cookie === 'ES') rememberSpanishLandingRegion(cookie);
+    setLandingRegionCookie('EN');
+    if (normalizeUiLocale(i18n.language) !== 'en-US') {
+      void changeLanguage('en-US');
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = 'en';
+    }
+  }, [locale]);
+
   return (
     <>
       <Head>
         <title>{MENU_QR_DINAMICO_SEO.title}</title>
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        {hreflangLinks.map((alt) => (
+          <link key={alt.hreflang} rel="alternate" hrefLang={alt.hreflang} href={alt.href} />
+        ))}
         <meta name="description" content={MENU_QR_DINAMICO_SEO.description} />
         <meta name="robots" content="index, follow" />
+        <meta httpEquiv="content-language" content={locale === 'en' ? 'en' : 'es'} />
         <meta property="og:type" content="website" />
         {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
         <meta property="og:title" content={MENU_QR_DINAMICO_SEO.title} />
@@ -111,15 +210,15 @@ export default function MenuQrDinamicoLanding() {
         <section className="fx-hero">
           <div className="container">
             <p className="fx-breadcrumb">
-              <Link href={homeHref}>Inicio</Link>
+              <Link href={homeHref}>{ui.home}</Link>
               <span aria-hidden="true"> · </span>
-              <Link href={FUNCIONES_PATH}>Funciones</Link>
+              <Link href={featuresBase}>{ui.features}</Link>
               <span aria-hidden="true"> · </span>
-              <span>Menú QR dinámico</span>
+              <span>{ui.breadcrumbCurrent}</span>
             </p>
             <div className="fx-hero-grid">
               <div className="fx-hero-copy">
-                <h1 className="fx-h1">Crea un menú QR dinámico y actualízalo en tiempo real</h1>
+                <h1 className="fx-h1">{ui.h1}</h1>
                 <p className="fx-lead">
                   Crea la carta digital de tu restaurante, compártela mediante un código QR y modifica
                   su contenido siempre que lo necesites.
@@ -131,13 +230,13 @@ export default function MenuQrDinamicoLanding() {
                 </p>
                 <div className="fx-hero-cta">
                   <button type="button" className="fx-btn fx-btn-primary" onClick={handleCta}>
-                    {ctaPrimary}
+                    {ui.ctaPrimary}
                   </button>
                   <a href="#como-funciona" className="fx-btn fx-btn-secondary">
-                    Ver cómo funciona
+                    {ui.seeHow}
                   </a>
                 </div>
-                <p className="fx-hero-note">Empieza gratis y publica tu carta digital en pocos minutos.</p>
+                <p className="fx-hero-note">{ui.heroNote}</p>
               </div>
               <div className="fx-hero-media">
                 <FxLazyYouTube
@@ -153,7 +252,7 @@ export default function MenuQrDinamicoLanding() {
         {/* 2 — Propuesta principal */}
         <section id="como-funciona" className="fx-section">
           <div className="container fx-narrow">
-            <h2 className="fx-h2">El mismo código QR, una carta siempre actualizada</h2>
+            <h2 className="fx-h2">{ui.h2SameQr}</h2>
             <p>
               El código QR de tu restaurante dirige a una carta digital que puedes modificar desde tu
               cuenta.
@@ -188,7 +287,7 @@ export default function MenuQrDinamicoLanding() {
         <section className="fx-section fx-section--muted">
           <div className="container">
             <div className="fx-narrow">
-              <h2 className="fx-h2">¿Qué es un menú QR dinámico?</h2>
+              <h2 className="fx-h2">{ui.h2WhatIs}</h2>
               <p>
                 Un menú QR dinámico es una carta digital que puede modificarse desde un panel de
                 administración sin tener que generar un nuevo código QR.
@@ -216,7 +315,7 @@ export default function MenuQrDinamicoLanding() {
         {/* 4 — Qué puedes actualizar */}
         <section className="fx-section">
           <div className="container">
-            <h2 className="fx-h2">Actualiza toda la información de tu carta digital</h2>
+            <h2 className="fx-h2">{ui.h2UpdateAll}</h2>
             <p className="fx-section-intro">
               Gestiona el contenido de tu menú desde un único lugar. Puedes realizar cambios durante
               todo el año sin modificar el código QR.
@@ -251,7 +350,7 @@ export default function MenuQrDinamicoLanding() {
                   type="button"
                   className="fx-phone-shot"
                   onClick={() => setLightbox(panelSources.avif || panelPreview)}
-                  aria-label="Ampliar vista del menú digital en el móvil"
+                  aria-label={ui.expandPhone}
                 >
                   <picture>
                     {panelSources.avif ? <source srcSet={panelSources.avif} type="image/avif" /> : null}
@@ -270,7 +369,7 @@ export default function MenuQrDinamicoLanding() {
                 </p>
               </div>
               <div>
-                <h2 className="fx-h2">Edita productos y precios en pocos pasos</h2>
+                <h2 className="fx-h2">{ui.h2EditProducts}</h2>
                 <p>Los cambios de una carta no deberían convertirse en una tarea complicada.</p>
                 <p>
                   Desde el panel puedes seleccionar un producto, modificar su nombre, descripción,
@@ -291,7 +390,7 @@ export default function MenuQrDinamicoLanding() {
         {/* 6 — Cambiar precios */}
         <section className="fx-section fx-section--soft">
           <div className="container fx-narrow fx-center">
-            <h2 className="fx-h2">Cambia los precios sin volver a imprimir la carta</h2>
+            <h2 className="fx-h2">{ui.h2ChangePrices}</h2>
             <p>
               Una modificación de precios no debería obligarte a rediseñar, imprimir y reemplazar todas
               las cartas del restaurante.
@@ -318,7 +417,7 @@ export default function MenuQrDinamicoLanding() {
         {/* 7 — Paso a paso */}
         <section className="fx-section">
           <div className="container">
-            <h2 className="fx-h2">Crea tu menú QR paso a paso</h2>
+            <h2 className="fx-h2">{ui.h2Steps}</h2>
             <ol className="fx-steps">
               {MENU_QR_DINAMICO_STEPS.map((step, index) => (
                 <li key={step.title} className="fx-step">
@@ -341,7 +440,7 @@ export default function MenuQrDinamicoLanding() {
             </ol>
             <div className="fx-center mt-4">
               <button type="button" className="fx-btn fx-btn-primary" onClick={handleCta}>
-                {ctaSteps}
+                {ui.ctaSteps}
               </button>
             </div>
           </div>
@@ -350,7 +449,7 @@ export default function MenuQrDinamicoLanding() {
         {/* 8 — Ejemplos */}
         <section className="fx-section fx-section--muted">
           <div className="container">
-            <h2 className="fx-h2">Un menú preparado para los cambios diarios</h2>
+            <h2 className="fx-h2">{ui.h2Daily}</h2>
             <p className="fx-section-intro">
               La oferta de un restaurante puede cambiar durante el servicio, según la temporada o de
               acuerdo con la disponibilidad de los productos.
@@ -367,10 +466,10 @@ export default function MenuQrDinamicoLanding() {
               ))}
             </div>
             <aside className="fx-callout">
-              <h3 className="fx-h3">¿Un producto se agotó durante el servicio?</h3>
+              <h3 className="fx-h3">{ui.h3SoldOut}</h3>
               <p>Desactívalo temporalmente desde el panel y evita que siga apareciendo en la carta.</p>
-              <Link href={funcionesHref('gestionar-productos-menu')} className="fx-text-link">
-                Descubre cómo gestionar productos
+              <Link href={funcionesHref('gestionar-productos-menu', locale)} className="fx-text-link">
+                {ui.manageProductsLink}
               </Link>
             </aside>
           </div>
@@ -379,7 +478,7 @@ export default function MenuQrDinamicoLanding() {
         {/* 9 — Beneficios */}
         <section className="fx-section">
           <div className="container">
-            <h2 className="fx-h2">Ventajas de utilizar un menú QR dinámico</h2>
+            <h2 className="fx-h2">{ui.h2Benefits}</h2>
             <div className="fx-benefits">
               <div className="fx-benefits-list">
                 {MENU_QR_DINAMICO_BENEFITS.map((b) => (
@@ -405,7 +504,7 @@ export default function MenuQrDinamicoLanding() {
         {/* 10 — Dónde compartir */}
         <section className="fx-section fx-section--muted">
           <div className="container">
-            <h2 className="fx-h2">Comparte tu carta digital dentro y fuera del restaurante</h2>
+            <h2 className="fx-h2">{ui.h2Share}</h2>
             <p className="fx-section-intro">
               El mismo código QR puede utilizarse en diferentes soportes y canales. Todos los accesos
               dirigirán a la versión actualizada del menú.
@@ -433,7 +532,7 @@ export default function MenuQrDinamicoLanding() {
         {/* 11 — Otras funciones */}
         <section className="fx-section">
           <div className="container">
-            <h2 className="fx-h2">Mucho más que un generador de códigos QR</h2>
+            <h2 className="fx-h2">{ui.h2MoreThan}</h2>
             <p className="fx-section-intro">
               La plataforma no se limita a crear una imagen QR. El código conecta a tus clientes con una
               carta digital que puedes administrar desde tu cuenta.
@@ -443,14 +542,14 @@ export default function MenuQrDinamicoLanding() {
                 <article key={item.slug} className="fx-related-card">
                   <h3 className="fx-h3">{item.title}</h3>
                   <p>{item.body}</p>
-                  <Link href={funcionesHref(item.slug)} className="fx-text-link">
+                  <Link href={funcionesHref(item.slug, locale)} className="fx-text-link">
                     {item.linkLabel}
                   </Link>
                 </article>
               ))}
             </div>
-            <nav className="fx-internal-links" aria-label="Enlaces relacionados">
-              <h3 className="fx-h3">También te puede interesar</h3>
+            <nav className="fx-internal-links" aria-label={ui.relatedAria}>
+              <h3 className="fx-h3">{ui.relatedTitle}</h3>
               <ul>
                 {MENU_QR_DINAMICO_INTERNAL_LINKS.map((link) => (
                   <li key={link.href}>
@@ -465,7 +564,7 @@ export default function MenuQrDinamicoLanding() {
         {/* 12 — FAQ */}
         <section id="faq" className="fx-section fx-section--muted">
           <div className="container fx-narrow">
-            <h2 className="fx-h2">Preguntas frecuentes sobre los menús QR dinámicos</h2>
+            <h2 className="fx-h2">{ui.faqTitle}</h2>
             <div className="landing-faq-block landing-faq-accordion">
               {MENU_QR_DINAMICO_FAQ.map((item, index) => {
                 const isOpen = openFaq === index;
@@ -507,16 +606,16 @@ export default function MenuQrDinamicoLanding() {
         <section className="fx-cta-final">
           <div className="container fx-center">
             <div className="fx-narrow" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
-              <h2 className="fx-h2">Crea hoy el menú QR dinámico de tu restaurante</h2>
+              <h2 className="fx-h2">{ui.h2CtaFinal}</h2>
               <p>
                 Organiza tu carta, añade productos y compártela mediante un código QR. Actualiza precios,
                 imágenes y disponibilidad siempre que lo necesites, sin volver a imprimir el código.
               </p>
               <button type="button" className="fx-btn fx-btn-on-brand" onClick={handleCta}>
-                {ctaPrimary}
+                {ui.ctaPrimary}
               </button>
               <p className="fx-hero-note fx-hero-note--on-brand">
-                Empieza gratis y configura tu carta digital en pocos minutos.
+                {ui.ctaFinalNote}
               </p>
             </div>
             <div className="fx-cta-final-media">
@@ -536,7 +635,7 @@ export default function MenuQrDinamicoLanding() {
         {showFloatCta ? (
           <div className="fx-float-cta d-md-none">
             <button type="button" className="fx-btn fx-btn-primary" onClick={handleCta}>
-              {ctaPrimary}
+              {ui.ctaPrimary}
             </button>
           </div>
         ) : null}
@@ -546,14 +645,14 @@ export default function MenuQrDinamicoLanding() {
             className="fx-lightbox"
             role="dialog"
             aria-modal="true"
-            aria-label="Vista ampliada de la captura"
+            aria-label={ui.lightboxAria}
             onClick={() => setLightbox(null)}
           >
             <button type="button" className="fx-lightbox-close" onClick={() => setLightbox(null)}>
-              Cerrar
+              {ui.lightboxClose}
             </button>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={lightbox} alt="Vista ampliada del menú digital en el móvil" />
+            <img src={lightbox} alt={ui.lightboxAlt} />
           </div>
         ) : null}
       </div>

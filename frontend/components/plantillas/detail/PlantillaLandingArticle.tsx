@@ -7,7 +7,8 @@ import PlantillaLandingCtaBandClient from './PlantillaLandingCtaBandClient';
 import PlantillaLandingHeroAside from './PlantillaLandingHeroAside';
 import PlantillaPreviewPhoneMockup from './PlantillaPreviewPhoneMockup';
 import styles from './plantilla-detail.module.css';
-import { PLANTILLAS_CATALOG_PATH } from '../../../lib/plantillas-catalog-url';
+import { plantillasCatalogPathForRegion } from '../../../lib/plantillas-catalog-url';
+import { useLandingRegion } from '../../../lib/landing-region';
 
 /** Línea tipo stack CSS (Inter, Poppins, etc.) o familia genérica al final (cursive, serif, …) */
 function isFontStackLine(text: string): boolean {
@@ -58,6 +59,8 @@ export default function PlantillaLandingArticle({
   idPrefix,
   variant = 'default',
 }: PlantillaLandingArticleProps) {
+  const region = useLandingRegion();
+  const plantillasHref = plantillasCatalogPathForRegion(region);
   const articleClass = [
     styles.article,
     variant === 'minimal' ? styles.articleMinimal : '',
@@ -79,7 +82,7 @@ export default function PlantillaLandingArticle({
     <article className={articleClass}>
       <div className={styles.heroIntro}>
         <nav className={styles.breadcrumb} aria-label="Migas de pan">
-          <Link href={PLANTILLAS_CATALOG_PATH}>← Plantillas</Link>
+          <Link href={plantillasHref}>← Plantillas</Link>
         </nav>
         <header>
           <h1 className={styles.heroTitle}>{heroTitle}</h1>

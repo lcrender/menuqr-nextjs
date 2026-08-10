@@ -2,8 +2,41 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+
 import {
-  GESTIONAR_PRODUCTOS_AVAILABILITY_BENEFITS,
+  buildFuncionesHreflangLinks,
+  funcionesHref,
+  funcionesPath,
+} from '../../lib/funciones-nav';
+import {
+  getGestionarProductosContent,
+  type FuncionesUiLocale,
+} from '../../lib/funciones/get-funciones-content';
+import { buildFuncionesFeatureJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
+import {
+  rememberSpanishLandingRegion,
+  readLandingRegionCookie,
+  setLandingRegionCookie,
+  useLandingHomeHref,
+} from '../../lib/landing-region';
+import { changeLanguage, normalizeUiLocale } from '../../src/i18n/config';
+import i18n from '../../src/i18n/config';
+import LandingNav from '../LandingNav';
+import LandingFooter from '../LandingFooter';
+import FxIcon from './media/FxIcon';
+import FxLazyYouTube from './media/FxLazyYouTube';
+import FxMediaSlot from './media/FxMediaSlot';
+
+type Props = { locale?: FuncionesUiLocale };
+
+export default function GestionarProductosLanding({ locale = 'es' }: Props) {
+  const router = useRouter();
+  const homeHref = useLandingHomeHref(locale === 'en' ? '/en' : undefined);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [showFloatCta, setShowFloatCta] = useState(false);
+
+  const {
+    GESTIONAR_PRODUCTOS_AVAILABILITY_BENEFITS,
   GESTIONAR_PRODUCTOS_BENEFITS,
   GESTIONAR_PRODUCTOS_EDIT_FIELDS,
   GESTIONAR_PRODUCTOS_EXAMPLES,
@@ -14,30 +47,63 @@ import {
   GESTIONAR_PRODUCTOS_RELATED,
   GESTIONAR_PRODUCTOS_SEO,
   GESTIONAR_PRODUCTOS_STEPS,
-} from '../../lib/funciones/gestionar-productos-content';
-import { FUNCIONES_PATH, funcionesHref } from '../../lib/funciones-nav';
-import { buildFuncionesFeatureJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
-import { useLandingHomeHref } from '../../lib/landing-region';
-import LandingNav from '../LandingNav';
-import LandingFooter from '../LandingFooter';
-import FxIcon from './media/FxIcon';
-import FxLazyYouTube from './media/FxLazyYouTube';
-import FxMediaSlot from './media/FxMediaSlot';
+  } = getGestionarProductosContent(locale);
 
-export default function GestionarProductosLanding() {
-  const router = useRouter();
-  const homeHref = useLandingHomeHref();
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [showFloatCta, setShowFloatCta] = useState(false);
+  const ui = locale === 'en'
+    ? {
+      home: 'Home',
+      features: 'Features',
+      breadcrumbCurrent: 'Manage products',
+      ctaPrimary: 'Manage my products',
+      ctaSteps: 'Manage my digital menu',
+      seeHow: 'See how it works',
+      heroNote: 'Keep your offer updated throughout service.',
+      faqTitle: 'Frequently asked questions about product management',
+      relatedTitle: 'You may also like',
+      relatedAria: 'Related links',
+      ctaFinalNote: 'Organize your restaurant offer quickly and easily.',
+      h1: 'Control which products appear on your digital menu',
+      h2Disable: 'Disable sold-out products without deleting them',
+      h2Highlight: 'Feature the dishes you want to promote',
+      h3Help: 'Help guests decide',
+      h2Update: 'Update each product’s information',
+      h2Steps: 'Manage your products in a few steps',
+      h2Adapt: 'Adapt the menu during service',
+      h2Control: 'More control over the restaurant offer',
+      h2Combine: 'Combine product management with other features',
+      h2CtaFinal: 'Keep your menu updated throughout service',
+    }
+    : {
+      home: 'Inicio',
+      features: 'Funciones',
+      breadcrumbCurrent: 'Gestionar productos',
+      ctaPrimary: 'Gestionar mis productos',
+      ctaSteps: 'Gestionar mi carta digital',
+      seeHow: 'Ver cómo funciona',
+      heroNote: 'Mantén tu oferta actualizada durante todo el servicio.',
+      faqTitle: 'Preguntas frecuentes sobre la gestión de productos',
+      relatedTitle: 'También te puede interesar',
+      relatedAria: 'Enlaces relacionados',
+      ctaFinalNote: 'Organiza la oferta de tu restaurante de forma rápida y sencilla.',
+      h1: 'Controla qué productos se muestran en tu menú digital',
+      h2Disable: 'Desactiva productos agotados sin eliminarlos',
+      h2Highlight: 'Destaca los platos que quieres impulsar',
+      h3Help: 'Ayuda al cliente a decidir',
+      h2Update: 'Actualiza la información de cada producto',
+      h2Steps: 'Gestiona tus productos en pocos pasos',
+      h2Adapt: 'Adapta la carta durante el servicio',
+      h2Control: 'Más control sobre la oferta del restaurante',
+      h2Combine: 'Combina la gestión de productos con otras funciones',
+      h2CtaFinal: 'Mantén tu carta actualizada durante todo el servicio',
+    };
 
-  const ctaPrimary = 'Gestionar mis productos';
-  const ctaSteps = 'Gestionar mi carta digital';
+  const featuresBase = funcionesPath(locale);
+
 
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
-  const canonicalUrl =
-    canonicalBase && /^https?:\/\//i.test(canonicalBase)
-      ? `${canonicalBase}${GESTIONAR_PRODUCTOS_PATH}`
-      : null;
+  const hasBase = Boolean(canonicalBase && /^https?:\/\//i.test(canonicalBase));
+  const canonicalUrl = hasBase ? `${canonicalBase}${GESTIONAR_PRODUCTOS_PATH}` : null;
+  const hreflangLinks = hasBase ? buildFuncionesHreflangLinks(canonicalBase, 'gestionar-productos-menu') : [];
 
   const jsonLd = (() => {
     const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
@@ -46,7 +112,7 @@ export default function GestionarProductosLanding() {
       path: GESTIONAR_PRODUCTOS_PATH,
       title: GESTIONAR_PRODUCTOS_SEO.title,
       description: GESTIONAR_PRODUCTOS_SEO.description,
-      breadcrumbName: 'Gestionar productos',
+      breadcrumbName: ui.breadcrumbCurrent,
       faq: GESTIONAR_PRODUCTOS_FAQ,
       includeSoftwareApplication: true,
     });
@@ -63,13 +129,30 @@ export default function GestionarProductosLanding() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    if (locale !== 'en') return;
+    const cookie = readLandingRegionCookie();
+    if (cookie === 'AR' || cookie === 'ES') rememberSpanishLandingRegion(cookie);
+    setLandingRegionCookie('EN');
+    if (normalizeUiLocale(i18n.language) !== 'en-US') {
+      void changeLanguage('en-US');
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = 'en';
+    }
+  }, [locale]);
+
   return (
     <>
       <Head>
         <title>{GESTIONAR_PRODUCTOS_SEO.title}</title>
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        {hreflangLinks.map((alt) => (
+          <link key={alt.hreflang} rel="alternate" hrefLang={alt.hreflang} href={alt.href} />
+        ))}
         <meta name="description" content={GESTIONAR_PRODUCTOS_SEO.description} />
         <meta name="robots" content="index, follow" />
+        <meta httpEquiv="content-language" content={locale === 'en' ? 'en' : 'es'} />
         <meta property="og:type" content="website" />
         {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
         <meta property="og:title" content={GESTIONAR_PRODUCTOS_SEO.title} />
@@ -88,15 +171,15 @@ export default function GestionarProductosLanding() {
         <section className="fx-hero">
           <div className="container">
             <p className="fx-breadcrumb">
-              <Link href={homeHref}>Inicio</Link>
+              <Link href={homeHref}>{ui.home}</Link>
               <span aria-hidden="true"> · </span>
-              <Link href={FUNCIONES_PATH}>Funciones</Link>
+              <Link href={featuresBase}>{ui.features}</Link>
               <span aria-hidden="true"> · </span>
-              <span>Gestionar productos</span>
+              <span>{ui.breadcrumbCurrent}</span>
             </p>
             <div className="fx-hero-grid">
               <div className="fx-hero-copy">
-                <h1 className="fx-h1">Controla qué productos se muestran en tu menú digital</h1>
+                <h1 className="fx-h1">{ui.h1}</h1>
                 <p className="fx-lead">Gestiona los productos de tu carta desde un único panel.</p>
                 <p className="fx-lead fx-lead--secondary">
                   Desactiva temporalmente platos agotados, vuelve a mostrarlos cuando estén
@@ -106,13 +189,13 @@ export default function GestionarProductosLanding() {
                 </p>
                 <div className="fx-hero-cta">
                   <button type="button" className="fx-btn fx-btn-primary" onClick={handleCta}>
-                    {ctaPrimary}
+                    {ui.ctaPrimary}
                   </button>
                   <a href="#como-funciona" className="fx-btn fx-btn-secondary">
-                    Ver cómo funciona
+                    {ui.seeHow}
                   </a>
                 </div>
-                <p className="fx-hero-note">Mantén tu oferta actualizada durante todo el servicio.</p>
+                <p className="fx-hero-note">{ui.heroNote}</p>
               </div>
               <div className="fx-hero-media">
                 {GESTIONAR_PRODUCTOS_MEDIA.heroYoutubeId ? (
@@ -142,7 +225,7 @@ export default function GestionarProductosLanding() {
           <div className="container">
             <div className="fx-split fx-split--vcenter">
               <div>
-                <h2 className="fx-h2">Desactiva productos agotados sin eliminarlos</h2>
+                <h2 className="fx-h2">{ui.h2Disable}</h2>
                 <p>
                   Cuando un plato deja de estar disponible, no necesitas borrarlo ni modificar toda
                   la carta.
@@ -190,7 +273,7 @@ export default function GestionarProductosLanding() {
                 alt="Menú digital Sol & Noche con producto recomendado Nachos del sol"
               />
               <div>
-                <h2 className="fx-h2">Destaca los platos que quieres impulsar</h2>
+                <h2 className="fx-h2">{ui.h2Highlight}</h2>
                 <p>
                   Selecciona productos para darles mayor visibilidad dentro de la carta digital.
                 </p>
@@ -203,7 +286,7 @@ export default function GestionarProductosLanding() {
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
-                <h3 className="fx-h3">Ayuda al cliente a decidir</h3>
+                <h3 className="fx-h3">{ui.h3Help}</h3>
                 <p>
                   Un producto destacado resulta más fácil de identificar y puede orientar al cliente
                   cuando revisa una carta con muchas opciones.
@@ -218,7 +301,7 @@ export default function GestionarProductosLanding() {
           <div className="container">
             <div className="fx-split fx-split--vcenter">
               <div>
-                <h2 className="fx-h2">Actualiza la información de cada producto</h2>
+                <h2 className="fx-h2">{ui.h2Update}</h2>
                 <p>
                   Desde el mismo panel puedes modificar la información de los platos y bebidas.
                 </p>
@@ -247,7 +330,7 @@ export default function GestionarProductosLanding() {
         {/* Cómo funciona */}
         <section className="fx-section fx-section--soft">
           <div className="container">
-            <h2 className="fx-h2">Gestiona tus productos en pocos pasos</h2>
+            <h2 className="fx-h2">{ui.h2Steps}</h2>
             <ol className="fx-steps fx-steps--roomy">
               {GESTIONAR_PRODUCTOS_STEPS.map((step, index) => (
                 <li key={step.title} className="fx-step">
@@ -270,7 +353,7 @@ export default function GestionarProductosLanding() {
             </ol>
             <div className="fx-center mt-4">
               <button type="button" className="fx-btn fx-btn-primary" onClick={handleCta}>
-                {ctaSteps}
+                {ui.ctaSteps}
               </button>
             </div>
           </div>
@@ -279,7 +362,7 @@ export default function GestionarProductosLanding() {
         {/* Ejemplos */}
         <section className="fx-section fx-section--muted">
           <div className="container">
-            <h2 className="fx-h2">Adapta la carta durante el servicio</h2>
+            <h2 className="fx-h2">{ui.h2Adapt}</h2>
             <div className="fx-cards-grid fx-cards-grid--org mt-4">
               {GESTIONAR_PRODUCTOS_EXAMPLES.map((example) => (
                 <article key={example.title} className="fx-card">
@@ -294,7 +377,7 @@ export default function GestionarProductosLanding() {
         {/* Beneficios */}
         <section className="fx-section">
           <div className="container">
-            <h2 className="fx-h2">Más control sobre la oferta del restaurante</h2>
+            <h2 className="fx-h2">{ui.h2Control}</h2>
             <div className="fx-benefits">
               <div className="fx-benefits-list">
                 {GESTIONAR_PRODUCTOS_BENEFITS.map((b) => (
@@ -320,13 +403,13 @@ export default function GestionarProductosLanding() {
         {/* Otras funciones */}
         <section className="fx-section fx-section--muted">
           <div className="container">
-            <h2 className="fx-h2">Combina la gestión de productos con otras funciones</h2>
+            <h2 className="fx-h2">{ui.h2Combine}</h2>
             <div className="fx-related-grid">
               {GESTIONAR_PRODUCTOS_RELATED.map((item) => (
                 <article key={item.slug} className="fx-related-card">
                   <h3 className="fx-h3">{item.title}</h3>
                   <p>{item.body}</p>
-                  <Link href={funcionesHref(item.slug)} className="fx-text-link">
+                  <Link href={funcionesHref(item.slug, locale)} className="fx-text-link">
                     {item.linkLabel}
                   </Link>
                 </article>
@@ -338,7 +421,7 @@ export default function GestionarProductosLanding() {
         {/* FAQ */}
         <section id="faq" className="fx-section">
           <div className="container fx-narrow">
-            <h2 className="fx-h2">Preguntas frecuentes sobre la gestión de productos</h2>
+            <h2 className="fx-h2">{ui.faqTitle}</h2>
             <div className="landing-faq-block landing-faq-accordion">
               {GESTIONAR_PRODUCTOS_FAQ.map((item, index) => {
                 const isOpen = openFaq === index;
@@ -382,18 +465,16 @@ export default function GestionarProductosLanding() {
         <section className="fx-cta-final">
           <div className="container fx-center">
             <div className="fx-narrow" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
-              <h2 className="fx-h2">Mantén tu carta actualizada durante todo el servicio</h2>
+              <h2 className="fx-h2">{ui.h2CtaFinal}</h2>
               <p>Activa, desactiva, edita y destaca productos desde un único lugar.</p>
               <p>
                 Controla qué opciones ven tus clientes y actualiza la disponibilidad sin volver a
                 imprimir el código QR.
               </p>
               <button type="button" className="fx-btn fx-btn-on-brand" onClick={handleCta}>
-                {ctaPrimary}
+                {ui.ctaPrimary}
               </button>
-              <p className="fx-hero-note fx-hero-note--on-brand">
-                Organiza la oferta de tu restaurante de forma rápida y sencilla.
-              </p>
+              <p className="fx-hero-note fx-hero-note--on-brand">{ui.ctaFinalNote}</p>
             </div>
             <div className="fx-cta-final-media">
               <FxMediaSlot
@@ -412,7 +493,7 @@ export default function GestionarProductosLanding() {
         {showFloatCta ? (
           <div className="fx-float-cta d-md-none">
             <button type="button" className="fx-btn fx-btn-primary" onClick={handleCta}>
-              {ctaPrimary}
+              {ui.ctaPrimary}
             </button>
           </div>
         ) : null}

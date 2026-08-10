@@ -1,4 +1,13 @@
 {
+  "page": {
+    "metaTitle": "QR Digital Menu Templates for Restaurants and Bars | AppMenuQR",
+    "metaDescription": "Choose a template for your digital menu and customize it with your brand colors and logo. Filter by category, style, and plan.",
+    "h1": "QR Digital Menu Templates for Restaurants and Bars",
+    "intro": "Choose a template for your digital menu and customize it with your brand colors and logo. Every design is editable—filter by category, style, and plan to find the right fit for your restaurant, bar, or food business.",
+    "showingAll": "Showing all {{count}} templates",
+    "showingFiltered": "Showing {{filtered}} of {{total}} templates",
+    "empty": "No templates match these filters. Try \"All\" on one of the criteria."
+  },
   "filters": {
     "ariaLabel": "Filter templates",
     "categoria": "Category",

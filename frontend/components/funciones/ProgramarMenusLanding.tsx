@@ -2,8 +2,42 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+
 import {
-  PROGRAMAR_MENUS_BEST_PRACTICES,
+  buildFuncionesHreflangLinks,
+  funcionesHref,
+  funcionesPath,
+} from '../../lib/funciones-nav';
+import {
+  getProgramarMenusContent,
+  type FuncionesUiLocale,
+} from '../../lib/funciones/get-funciones-content';
+import { buildFuncionesFeatureJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
+import {
+  rememberSpanishLandingRegion,
+  readLandingRegionCookie,
+  setLandingRegionCookie,
+  useLandingHomeHref,
+} from '../../lib/landing-region';
+import { changeLanguage, normalizeUiLocale } from '../../src/i18n/config';
+import i18n from '../../src/i18n/config';
+import LandingNav from '../LandingNav';
+import LandingFooter from '../LandingFooter';
+import FxIcon from './media/FxIcon';
+import FxLazyYouTube from './media/FxLazyYouTube';
+import FxMediaSlot, { nextGenImageSources } from './media/FxMediaSlot';
+
+type Props = { locale?: FuncionesUiLocale };
+
+export default function ProgramarMenusLanding({ locale = 'es' }: Props) {
+  const router = useRouter();
+  const homeHref = useLandingHomeHref(locale === 'en' ? '/en' : undefined);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [showFloatCta, setShowFloatCta] = useState(false);
+
+  const {
+    PROGRAMAR_MENUS_BEST_PRACTICES,
   PROGRAMAR_MENUS_BENEFITS,
   PROGRAMAR_MENUS_COMPARE_MANUAL,
   PROGRAMAR_MENUS_COMPARE_SCHEDULED,
@@ -22,33 +56,93 @@ import {
   PROGRAMAR_MENUS_STEPS,
   PROGRAMAR_MENUS_USE_CASES,
   PROGRAMAR_MENUS_WEEK_EXAMPLES,
-} from '../../lib/funciones/programar-menus-content';
-import { FUNCIONES_PATH, funcionesHref } from '../../lib/funciones-nav';
-import { buildFuncionesFeatureJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
-import { useLandingHomeHref } from '../../lib/landing-region';
-import LandingNav from '../LandingNav';
-import LandingFooter from '../LandingFooter';
-import FxIcon from './media/FxIcon';
-import FxLazyYouTube from './media/FxLazyYouTube';
-import FxMediaSlot, { nextGenImageSources } from './media/FxMediaSlot';
+  } = getProgramarMenusContent(locale);
 
-export default function ProgramarMenusLanding() {
-  const router = useRouter();
-  const homeHref = useLandingHomeHref();
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [lightbox, setLightbox] = useState<string | null>(null);
-  const [showFloatCta, setShowFloatCta] = useState(false);
+  const ui = locale === 'en'
+    ? {
+      home: 'Home',
+      features: 'Features',
+      breadcrumbCurrent: 'Schedule menus',
+      ctaPrimary: 'Schedule my menu',
+      ctaSteps: 'Schedule my digital menu',
+      seeHow: 'See how it works',
+      faqTitle: 'Frequently asked questions about menu scheduling',
+      relatedTitle: 'You may also like',
+      relatedAria: 'Related links',
+      expandPhone: 'Enlarge scheduling panel screenshot',
+      lightboxAria: 'Enlarged view',
+      lightboxClose: 'Close',
+      lightboxAlt: 'Enlarged screenshot',
+      h1: 'Schedule your menus by days and hours',
+      h2RightMenu: 'Show the right menu by day and time',
+      h2WhatIs: 'What is a scheduled menu?',
+      h3Manual: 'Manual menu management',
+      h3Scheduled: 'Scheduled menus',
+      h2Choose: 'Choose how you want to schedule each menu',
+      h3EveryDay: 'Every day at a set time',
+      h3SomeDays: 'Certain days at a set time',
+      h2Select: 'Select a menu and define its availability',
+      h2OneQr: 'One QR code for all your schedules',
+      h2Organize: 'Organize menus for the whole day',
+      h2Special: 'Create special offers for specific days',
+      h2How: 'How to schedule a digital menu',
+      h2Useful: 'A useful feature for different types of restaurants',
+      h3Lunch: 'Business lunch menu available only at midday',
+      h2Benefits: 'Benefits of scheduling your restaurant menus',
+      h2Modify: 'Change schedules when your service changes',
+      h2Practices: 'Best practices for organizing scheduled menus',
+      h2Combine: 'Combine scheduling with other digital menu features',
+      h2CtaFinal: 'Automate your digital menu schedules',
+      heroNote: 'Set schedules once and stop turning menus on or off by hand every day.',
+      ctaFinalNote: 'Organize breakfasts, lunches, dinners, and promotions from one panel.',
+    }
+    : {
+      home: 'Inicio',
+      features: 'Funciones',
+      breadcrumbCurrent: 'Programar menús',
+      ctaPrimary: 'Programar mi menú',
+      ctaSteps: 'Programar mi carta digital',
+      seeHow: 'Ver cómo funciona',
+      faqTitle: 'Preguntas frecuentes sobre la programación de menús',
+      relatedTitle: 'También te puede interesar',
+      relatedAria: 'Enlaces relacionados',
+      expandPhone: 'Ampliar captura del panel de programación',
+      lightboxAria: 'Vista ampliada',
+      lightboxClose: 'Cerrar',
+      lightboxAlt: 'Vista ampliada',
+      h1: 'Programa tus menús por días y horarios',
+      h2RightMenu: 'Muestra el menú adecuado según el día y la hora',
+      h2WhatIs: '¿Qué es un menú programado?',
+      h3Manual: 'Gestión manual de menús',
+      h3Scheduled: 'Menús programados',
+      h2Choose: 'Elige cómo quieres programar cada menú',
+      h3EveryDay: 'Todos los días en un horario determinado',
+      h3SomeDays: 'Ciertos días en un horario determinado',
+      h2Select: 'Selecciona un menú y define su disponibilidad',
+      h2OneQr: 'Un solo código QR para todos tus horarios',
+      h2Organize: 'Organiza los menús de todo el día',
+      h2Special: 'Crea propuestas especiales para determinados días',
+      h2How: 'Cómo programar un menú digital',
+      h2Useful: 'Una función útil para diferentes tipos de restaurantes',
+      h3Lunch: 'Menú ejecutivo disponible solamente al mediodía',
+      h2Benefits: 'Ventajas de programar los menús de tu restaurante',
+      h2Modify: 'Modifica los horarios cuando cambie tu servicio',
+      h2Practices: 'Buenas prácticas para organizar tus menús programados',
+      h2Combine: 'Combina la programación con otras funciones de tu carta digital',
+      h2CtaFinal: 'Automatiza los horarios de tu carta digital',
+      heroNote: 'Configura una vez los horarios y evita activar o desactivar cartas manualmente cada día.',
+      ctaFinalNote: 'Organiza desayunos, almuerzos, cenas y promociones desde un único panel.',
+    };
 
-  const ctaPrimary = 'Programar mi menú';
-  const ctaSteps = 'Programar mi carta digital';
+  const featuresBase = funcionesPath(locale);
+
   const panelSrc = PROGRAMAR_MENUS_MEDIA.panelManage;
   const panelSources = panelSrc ? nextGenImageSources(panelSrc) : null;
 
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
-  const canonicalUrl =
-    canonicalBase && /^https?:\/\//i.test(canonicalBase)
-      ? `${canonicalBase}${PROGRAMAR_MENUS_PATH}`
-      : null;
+  const hasBase = Boolean(canonicalBase && /^https?:\/\//i.test(canonicalBase));
+  const canonicalUrl = hasBase ? `${canonicalBase}${PROGRAMAR_MENUS_PATH}` : null;
+  const hreflangLinks = hasBase ? buildFuncionesHreflangLinks(canonicalBase, 'programar-menus') : [];
 
   const jsonLd = (() => {
     const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
@@ -57,7 +151,7 @@ export default function ProgramarMenusLanding() {
       path: PROGRAMAR_MENUS_PATH,
       title: PROGRAMAR_MENUS_SEO.title,
       description: PROGRAMAR_MENUS_SEO.description,
-      breadcrumbName: 'Programar menús',
+      breadcrumbName: ui.breadcrumbCurrent,
       faq: PROGRAMAR_MENUS_FAQ,
       includeSoftwareApplication: true,
     });
@@ -87,13 +181,30 @@ export default function ProgramarMenusLanding() {
     };
   }, [lightbox]);
 
+  useEffect(() => {
+    if (locale !== 'en') return;
+    const cookie = readLandingRegionCookie();
+    if (cookie === 'AR' || cookie === 'ES') rememberSpanishLandingRegion(cookie);
+    setLandingRegionCookie('EN');
+    if (normalizeUiLocale(i18n.language) !== 'en-US') {
+      void changeLanguage('en-US');
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = 'en';
+    }
+  }, [locale]);
+
   return (
     <>
       <Head>
         <title>{PROGRAMAR_MENUS_SEO.title}</title>
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        {hreflangLinks.map((alt) => (
+          <link key={alt.hreflang} rel="alternate" hrefLang={alt.hreflang} href={alt.href} />
+        ))}
         <meta name="description" content={PROGRAMAR_MENUS_SEO.description} />
         <meta name="robots" content="index, follow" />
+        <meta httpEquiv="content-language" content={locale === 'en' ? 'en' : 'es'} />
         <meta property="og:type" content="website" />
         {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
         <meta property="og:title" content={PROGRAMAR_MENUS_SEO.title} />
@@ -112,15 +223,15 @@ export default function ProgramarMenusLanding() {
         <section className="fx-hero">
           <div className="container">
             <p className="fx-breadcrumb">
-              <Link href={homeHref}>Inicio</Link>
+              <Link href={homeHref}>{ui.home}</Link>
               <span aria-hidden="true"> · </span>
-              <Link href={FUNCIONES_PATH}>Funciones</Link>
+              <Link href={featuresBase}>{ui.features}</Link>
               <span aria-hidden="true"> · </span>
-              <span>Programar menús</span>
+              <span>{ui.breadcrumbCurrent}</span>
             </p>
             <div className="fx-hero-grid">
               <div className="fx-hero-copy">
-                <h1 className="fx-h1">Programa tus menús por días y horarios</h1>
+                <h1 className="fx-h1">{ui.h1}</h1>
                 <p className="fx-lead">
                   Selecciona uno de los menús de tu restaurante, define los días y horarios en los
                   que debe estar disponible y deja que la carta digital se actualice
@@ -133,16 +244,13 @@ export default function ProgramarMenusLanding() {
                 </p>
                 <div className="fx-hero-cta">
                   <button type="button" className="fx-btn fx-btn-primary" onClick={handleCta}>
-                    {ctaPrimary}
+                    {ui.ctaPrimary}
                   </button>
                   <a href="#como-funciona" className="fx-btn fx-btn-secondary">
-                    Ver cómo funciona
+                    {ui.seeHow}
                   </a>
                 </div>
-                <p className="fx-hero-note">
-                  Configura una vez los horarios y evita activar o desactivar cartas manualmente
-                  cada día.
-                </p>
+                <p className="fx-hero-note">{ui.heroNote}</p>
               </div>
               <div className="fx-hero-media">
                 {PROGRAMAR_MENUS_MEDIA.heroYoutubeId ? (
@@ -170,7 +278,7 @@ export default function ProgramarMenusLanding() {
         {/* El menú correcto en cada momento */}
         <section id="como-funciona" className="fx-section">
           <div className="container">
-            <h2 className="fx-h2">Muestra el menú adecuado según el día y la hora</h2>
+            <h2 className="fx-h2">{ui.h2RightMenu}</h2>
             <p>
               La oferta de un restaurante no siempre es la misma durante toda la jornada.
             </p>
@@ -204,7 +312,7 @@ export default function ProgramarMenusLanding() {
         {/* Qué es un menú programado */}
         <section className="fx-section fx-section--muted">
           <div className="container">
-            <h2 className="fx-h2">¿Qué es un menú programado?</h2>
+            <h2 className="fx-h2">{ui.h2WhatIs}</h2>
             <p>
               Un menú programado es una carta digital cuya disponibilidad se configura previamente
               según determinados días y horarios.
@@ -224,7 +332,7 @@ export default function ProgramarMenusLanding() {
             </p>
             <div className="fx-compare mt-4">
               <div className="fx-compare-card">
-                <h3 className="fx-h3">Gestión manual de menús</h3>
+                <h3 className="fx-h3">{ui.h3Manual}</h3>
                 <ul>
                   {PROGRAMAR_MENUS_COMPARE_MANUAL.map((item) => (
                     <li key={item}>{item}</li>
@@ -232,7 +340,7 @@ export default function ProgramarMenusLanding() {
                 </ul>
               </div>
               <div className="fx-compare-card fx-compare-card--accent">
-                <h3 className="fx-h3">Menús programados</h3>
+                <h3 className="fx-h3">{ui.h3Scheduled}</h3>
                 <ul>
                   {PROGRAMAR_MENUS_COMPARE_SCHEDULED.map((item) => (
                     <li key={item}>{item}</li>
@@ -252,7 +360,7 @@ export default function ProgramarMenusLanding() {
         {/* Dos formas de programar */}
         <section className="fx-section">
           <div className="container">
-            <h2 className="fx-h2">Elige cómo quieres programar cada menú</h2>
+            <h2 className="fx-h2">{ui.h2Choose}</h2>
             <p>
               La programación puede adaptarse a diferentes rutinas de funcionamiento.
             </p>
@@ -262,7 +370,7 @@ export default function ProgramarMenusLanding() {
             </p>
             <div className="fx-cards-grid fx-cards-grid--org mt-4">
               <article className="fx-card">
-                <h3 className="fx-h3">Todos los días en un horario determinado</h3>
+                <h3 className="fx-h3">{ui.h3EveryDay}</h3>
                 <p>
                   Utiliza esta opción cuando el menú se repite diariamente dentro de la misma
                   franja horaria.
@@ -274,7 +382,7 @@ export default function ProgramarMenusLanding() {
                 </ul>
               </article>
               <article className="fx-card">
-                <h3 className="fx-h3">Ciertos días en un horario determinado</h3>
+                <h3 className="fx-h3">{ui.h3SomeDays}</h3>
                 <p>
                   Utiliza esta opción cuando la carta solamente debe mostrarse algunos días de la
                   semana.
@@ -299,7 +407,7 @@ export default function ProgramarMenusLanding() {
                     type="button"
                     className="fx-panel-shot"
                     onClick={() => setLightbox(panelSources.avif || panelSrc || null)}
-                    aria-label="Ampliar captura del panel de programación"
+                    aria-label={ui.expandPhone}
                   >
                     <picture>
                       {panelSources.avif ? (
@@ -331,7 +439,7 @@ export default function ProgramarMenusLanding() {
                 </p>
               </div>
               <div>
-                <h2 className="fx-h2">Selecciona un menú y define su disponibilidad</h2>
+                <h2 className="fx-h2">{ui.h2Select}</h2>
                 <p>
                   La programación se realiza desde el panel de administración.
                 </p>
@@ -355,7 +463,7 @@ export default function ProgramarMenusLanding() {
           <div className="container">
             <div className="fx-split">
               <div>
-                <h2 className="fx-h2">Un solo código QR para todos tus horarios</h2>
+                <h2 className="fx-h2">{ui.h2OneQr}</h2>
                 <p>
                   No necesitas imprimir un QR para desayunos, otro para almuerzos y otro para
                   cenas.
@@ -391,7 +499,7 @@ export default function ProgramarMenusLanding() {
         {/* Ejemplo de programación diaria */}
         <section className="fx-section fx-section--muted">
           <div className="container">
-            <h2 className="fx-h2">Organiza los menús de todo el día</h2>
+            <h2 className="fx-h2">{ui.h2Organize}</h2>
             <p>
               Puedes preparar diferentes cartas para cada momento de la jornada y programarlas con
               anticipación.
@@ -417,7 +525,7 @@ export default function ProgramarMenusLanding() {
         {/* Ejemplo por días de la semana */}
         <section className="fx-section">
           <div className="container">
-            <h2 className="fx-h2">Crea propuestas especiales para determinados días</h2>
+            <h2 className="fx-h2">{ui.h2Special}</h2>
             <p>
               No todas las cartas deben estar disponibles durante toda la semana.
             </p>
@@ -439,7 +547,7 @@ export default function ProgramarMenusLanding() {
         {/* Paso a paso */}
         <section className="fx-section fx-section--soft">
           <div className="container">
-            <h2 className="fx-h2">Cómo programar un menú digital</h2>
+            <h2 className="fx-h2">{ui.h2How}</h2>
             <ol className="fx-steps fx-steps--roomy">
               {PROGRAMAR_MENUS_STEPS.map((step, index) => (
                 <li key={step.title} className="fx-step">
@@ -462,7 +570,7 @@ export default function ProgramarMenusLanding() {
             </ol>
             <div className="fx-center mt-4">
               <button type="button" className="fx-btn fx-btn-primary" onClick={handleCta}>
-                {ctaSteps}
+                {ui.ctaSteps}
               </button>
             </div>
           </div>
@@ -471,7 +579,7 @@ export default function ProgramarMenusLanding() {
         {/* Casos de uso */}
         <section className="fx-section fx-section--muted">
           <div className="container">
-            <h2 className="fx-h2">Una función útil para diferentes tipos de restaurantes</h2>
+            <h2 className="fx-h2">{ui.h2Useful}</h2>
             <p>
               La programación de menús puede adaptarse a negocios con diferentes horarios,
               servicios y propuestas gastronómicas.
@@ -482,7 +590,7 @@ export default function ProgramarMenusLanding() {
               ))}
             </ul>
             <aside className="fx-callout">
-              <h3 className="fx-h3">Menú ejecutivo disponible solamente al mediodía</h3>
+              <h3 className="fx-h3">{ui.h3Lunch}</h3>
               <p>
                 El restaurante selecciona su menú ejecutivo, lo programa de lunes a viernes entre
                 las 12:00 y las 16:00 y mantiene el mismo QR en todas las mesas.
@@ -498,7 +606,7 @@ export default function ProgramarMenusLanding() {
         {/* Beneficios */}
         <section className="fx-section">
           <div className="container">
-            <h2 className="fx-h2">Ventajas de programar los menús de tu restaurante</h2>
+            <h2 className="fx-h2">{ui.h2Benefits}</h2>
             <div className="fx-benefits">
               <div className="fx-benefits-list">
                 {PROGRAMAR_MENUS_BENEFITS.map((b) => (
@@ -526,7 +634,7 @@ export default function ProgramarMenusLanding() {
           <div className="container">
             <div className="fx-split fx-split--vcenter">
               <div>
-                <h2 className="fx-h2">Modifica los horarios cuando cambie tu servicio</h2>
+                <h2 className="fx-h2">{ui.h2Modify}</h2>
                 <p>
                   Los horarios de un restaurante pueden variar según la temporada, el día de la
                   semana o las necesidades del negocio.
@@ -569,7 +677,7 @@ export default function ProgramarMenusLanding() {
         {/* Recomendaciones */}
         <section className="fx-section">
           <div className="container">
-            <h2 className="fx-h2">Buenas prácticas para organizar tus menús programados</h2>
+            <h2 className="fx-h2">{ui.h2Practices}</h2>
             <ul className="fx-icon-list">
               {PROGRAMAR_MENUS_BEST_PRACTICES.map((item) => (
                 <li key={item}>
@@ -590,13 +698,13 @@ export default function ProgramarMenusLanding() {
         {/* Otras funciones */}
         <section className="fx-section fx-section--muted">
           <div className="container">
-            <h2 className="fx-h2">Combina la programación con otras funciones de tu carta digital</h2>
+            <h2 className="fx-h2">{ui.h2Combine}</h2>
             <div className="fx-related-grid">
               {PROGRAMAR_MENUS_RELATED.map((item) => (
                 <article key={item.slug} className="fx-related-card">
                   <h3 className="fx-h3">{item.title}</h3>
                   <p>{item.body}</p>
-                  <Link href={funcionesHref(item.slug)} className="fx-text-link">
+                  <Link href={funcionesHref(item.slug, locale)} className="fx-text-link">
                     {item.linkLabel}
                   </Link>
                 </article>
@@ -608,7 +716,7 @@ export default function ProgramarMenusLanding() {
         {/* FAQ */}
         <section id="faq" className="fx-section">
           <div className="container fx-narrow">
-            <h2 className="fx-h2">Preguntas frecuentes sobre la programación de menús</h2>
+            <h2 className="fx-h2">{ui.faqTitle}</h2>
             <div className="landing-faq-block landing-faq-accordion">
               {PROGRAMAR_MENUS_FAQ.map((item, index) => {
                 const isOpen = openFaq === index;
@@ -652,7 +760,7 @@ export default function ProgramarMenusLanding() {
         <section className="fx-cta-final">
           <div className="container fx-center">
             <div className="fx-narrow" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
-              <h2 className="fx-h2">Automatiza los horarios de tu carta digital</h2>
+              <h2 className="fx-h2">{ui.h2CtaFinal}</h2>
               <p>
                 Selecciona tus menús, define los días y horarios de disponibilidad y permite que
                 cada cliente encuentre la carta adecuada al escanear el código QR.
@@ -661,11 +769,9 @@ export default function ProgramarMenusLanding() {
                 Configura una vez la programación y reduce los cambios manuales durante la jornada.
               </p>
               <button type="button" className="fx-btn fx-btn-on-brand" onClick={handleCta}>
-                {ctaPrimary}
+                {ui.ctaPrimary}
               </button>
-              <p className="fx-hero-note fx-hero-note--on-brand">
-                Organiza desayunos, almuerzos, cenas y promociones desde un único panel.
-              </p>
+              <p className="fx-hero-note fx-hero-note--on-brand">{ui.ctaFinalNote}</p>
             </div>
             <div className="fx-cta-final-media">
               <FxMediaSlot
@@ -684,7 +790,7 @@ export default function ProgramarMenusLanding() {
         {showFloatCta ? (
           <div className="fx-float-cta d-md-none">
             <button type="button" className="fx-btn fx-btn-primary" onClick={handleCta}>
-              {ctaPrimary}
+              {ui.ctaPrimary}
             </button>
           </div>
         ) : null}
@@ -694,13 +800,13 @@ export default function ProgramarMenusLanding() {
             className="fx-lightbox"
             role="dialog"
             aria-modal="true"
-            aria-label="Vista ampliada"
+            aria-label={ui.lightboxAria}
             onClick={() => setLightbox(null)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={lightbox} alt="" onClick={(e) => e.stopPropagation()} />
+            <img src={lightbox} alt={ui.lightboxAlt} onClick={(e) => e.stopPropagation()} />
             <button type="button" className="fx-lightbox-close" onClick={() => setLightbox(null)}>
-              Cerrar
+              {ui.lightboxClose}
             </button>
           </div>
         ) : null}

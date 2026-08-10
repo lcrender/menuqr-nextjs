@@ -10,7 +10,8 @@ import { buildPlantillaDetalleJsonLd, siteJsonLdBaseUrl } from '../../lib/json-l
 import { buildPlantillaCatalogSeo } from '../../lib/plantilla-catalog-seo';
 import { PLANTILLA_STATIC_DETAIL_SLUGS } from '../../lib/plantilla-static-detail-slugs';
 import { catalogSlugToPreviewTemplateId } from '../../lib/menu-template-preview-route';
-import { PLANTILLAS_CATALOG_PATH } from '../../lib/plantillas-catalog-url';
+import { plantillasCatalogPathForRegion } from '../../lib/plantillas-catalog-url';
+import { useLandingRegion } from '../../lib/landing-region';
 import type { MenuTemplateCatalogItem } from '../../types/menu-template-catalog';
 
 interface PlantillaDetalleProps {
@@ -18,6 +19,8 @@ interface PlantillaDetalleProps {
 }
 
 export default function PlantillaDetallePage({ template }: PlantillaDetalleProps) {
+  const region = useLandingRegion();
+  const plantillasHref = plantillasCatalogPathForRegion(region);
   const previewId = catalogSlugToPreviewTemplateId(template.slug);
   const previewHref = `/preview/${encodeURIComponent(previewId)}`;
 
@@ -42,7 +45,7 @@ export default function PlantillaDetallePage({ template }: PlantillaDetalleProps
           <section className={styles.section}>
             <div className="container">
               <nav aria-label="Migas de pan" style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>
-                <Link href={PLANTILLAS_CATALOG_PATH} style={{ color: '#2563eb', textDecoration: 'none' }}>
+                <Link href={plantillasHref} style={{ color: '#2563eb', textDecoration: 'none' }}>
                   ← Plantillas
                 </Link>
               </nav>
@@ -92,7 +95,7 @@ export default function PlantillaDetallePage({ template }: PlantillaDetalleProps
                   <Link href={previewHref} className={styles.ctaButton} style={{ width: 'auto', paddingLeft: '1.25rem', paddingRight: '1.25rem' }}>
                     Vista previa
                   </Link>
-                  <Link href={PLANTILLAS_CATALOG_PATH} className={styles.btnSecondary}>
+                  <Link href={plantillasHref} className={styles.btnSecondary}>
                     Volver al catálogo
                   </Link>
                 </div>

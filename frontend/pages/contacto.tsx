@@ -6,8 +6,15 @@ import LandingFooter from '../components/LandingFooter';
 import { useMemo, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import { getApiBaseUrl } from '../lib/config';
 import type { GetServerSideProps } from 'next';
+import i18n from '../src/i18n/config';
+import systemPagesEs from '../src/locales/fragments/systemPages.es.json';
+import systemPagesEn from '../src/locales/fragments/systemPages.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { systemPages: systemPagesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { systemPages: systemPagesEn }, true, true);
 
 const SOURCE_PATHS: Record<string, string> = {
   privacidad: '/legal/politica-de-privacidad',
@@ -16,6 +23,7 @@ const SOURCE_PATHS: Record<string, string> = {
 };
 
 export default function ContactoLegalPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const siteKey = (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '').trim();
 
@@ -43,23 +51,23 @@ export default function ContactoLegalPage() {
     setOk(false);
 
     if (!allowed) {
-      setError('Acceso inválido al formulario de contacto.');
+      setError(t('systemPages.contactForm.errorInvalidAccess'));
       return;
     }
     if (!siteKey) {
-      setError('El formulario no está configurado (falta reCAPTCHA site key).');
+      setError(t('systemPages.contactForm.errorRecaptchaMissing'));
       return;
     }
 
     try {
       setSubmitting(true);
       if (typeof window === 'undefined' || !window.grecaptcha) {
-        setError('No se pudo inicializar reCAPTCHA.');
+        setError(t('systemPages.contactForm.errorRecaptchaInit'));
         return;
       }
       const token = await window.grecaptcha.execute(siteKey, { action: 'contact_form_submit' });
       if (!token) {
-        setError('No se pudo validar reCAPTCHA.');
+        setError(t('systemPages.contactForm.errorRecaptchaValidate'));
         return;
       }
       await axios.post(`${getApiBaseUrl()}/public/contact`, {
@@ -69,10 +77,11 @@ export default function ContactoLegalPage() {
       });
       setOk(true);
       setForm({ fullName: '', phone: '', email: '', message: '' });
-    } catch (err: any) {
-      const raw = err?.response?.data?.message;
+    } catch (err: unknown) {
+      const raw = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data
+        ?.message;
       const msg = Array.isArray(raw) ? raw.join(' ') : raw;
-      setError(msg || 'No se pudo enviar el mensaje. Intentá nuevamente.');
+      setError(msg || t('systemPages.contactForm.errorSubmit'));
     } finally {
       setSubmitting(false);
     }
@@ -81,11 +90,8 @@ export default function ContactoLegalPage() {
   return (
     <>
       <Head>
-        <title>Contacto legal | AppMenuQR</title>
-        <meta
-          name="description"
-          content="Formulario de contacto para consultas relacionadas con privacidad, cookies y términos de AppMenuQR."
-        />
+        <title>{t('systemPages.contactForm.metaTitle')}</title>
+        <meta name="description" content={t('systemPages.contactForm.metaDescription')} />
         <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
       </Head>
       {siteKey ? (
@@ -103,28 +109,22 @@ export default function ContactoLegalPage() {
             <div className="landing-auth-container">
               <div className="landing-auth-card" style={{ maxWidth: 720, margin: '0 auto' }}>
                 <div className="landing-auth-header">
-                  <h1 className="landing-auth-title">Formulario de contacto</h1>
-                  <p className="landing-auth-subtitle">
-                    Consultas legales: privacidad, cookies y términos.
-                  </p>
+                  <h1 className="landing-auth-title">{t('systemPages.contactForm.title')}</h1>
+                  <p className="landing-auth-subtitle">{t('systemPages.contactForm.subtitle')}</p>
                 </div>
                 <div className="landing-auth-body">
                   {!allowed ? (
-                    <div className="alert alert-warning">
-                      Acceso restringido. Este formulario sólo se habilita desde las páginas legales.
-                    </div>
+                    <div className="alert alert-warning">{t('systemPages.contactForm.restricted')}</div>
                   ) : null}
 
                   {ok ? (
-                    <div className="alert alert-success">
-                      Mensaje enviado correctamente. Te responderemos a la brevedad.
-                    </div>
+                    <div className="alert alert-success">{t('systemPages.contactForm.success')}</div>
                   ) : null}
                   {error ? <div className="alert alert-danger">{error}</div> : null}
 
                   <form onSubmit={submit}>
                     <div className="mb-3">
-                      <label className="form-label">Nombre completo</label>
+                      <label className="form-label">{t('systemPages.contactForm.fullName')}</label>
                       <input
                         className="form-control"
                         value={form.fullName}
@@ -134,7 +134,7 @@ export default function ContactoLegalPage() {
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Teléfono</label>
+                      <label className="form-label">{t('systemPages.contactForm.phone')}</label>
                       <input
                         className="form-control"
                         value={form.phone}
@@ -144,7 +144,7 @@ export default function ContactoLegalPage() {
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Email</label>
+                      <label className="form-label">{t('systemPages.contactForm.email')}</label>
                       <input
                         type="email"
                         className="form-control"
@@ -154,7 +154,7 @@ export default function ContactoLegalPage() {
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Mensaje</label>
+                      <label className="form-label">{t('systemPages.contactForm.message')}</label>
                       <textarea
                         className="form-control"
                         rows={6}
@@ -167,10 +167,12 @@ export default function ContactoLegalPage() {
 
                     <div className="d-flex gap-2">
                       <button type="submit" className="landing-btn-primary" disabled={!allowed || submitting}>
-                        {submitting ? 'Enviando...' : 'Enviar mensaje'}
+                        {submitting
+                          ? t('systemPages.contactForm.submitting')
+                          : t('systemPages.contactForm.submit')}
                       </button>
                       <Link href={fromHref || '/'} className="landing-btn-secondary">
-                        Volver
+                        {t('systemPages.contactForm.back')}
                       </Link>
                     </div>
                   </form>

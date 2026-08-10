@@ -1,10 +1,27 @@
 import { getAllTemplateSlugs } from './menu-templates-catalog';
-import { PLANTILLAS_CATALOG_PATH, plantillaCaracteristicasHref } from './plantillas-catalog-url';
+import {
+  PLANTILLAS_CATALOG_PATH_EN,
+  PLANTILLAS_CATALOG_PATH_ES,
+  buildPlantillasCatalogHreflangLinks,
+  plantillaCaracteristicasHref,
+} from './plantillas-catalog-url';
 import { DOCUMENTATION_SLUGS_STATIC } from './documentation-nav';
 import { SEO_LANDING_SLUGS, SEO_LANDINGS } from './seo-landings-config';
 import { buildLandingHreflangLinks } from './landing-region';
-import { FUNCIONES_SLUGS } from './funciones-nav';
-import { BLOG_SLUGS } from './blog-nav';
+import {
+  FUNCIONES_SLUGS,
+  FUNCIONES_PATH_EN,
+  FUNCIONES_PATH_ES,
+  buildFuncionesHreflangLinks,
+  getFuncionesSection,
+} from './funciones-nav';
+import {
+  BLOG_ARTICLES,
+  BLOG_PATH_EN,
+  BLOG_PATH_ES,
+  BLOG_SLUGS,
+  buildBlogHreflangLinks,
+} from './blog-nav';
 
 export type SitemapEntry = {
   path: string;
@@ -48,12 +65,62 @@ export function buildSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
       lastmod: today,
       ...(homeAlternates ? { alternates: homeAlternates } : {}),
     },
-    { path: PLANTILLAS_CATALOG_PATH, changefreq: 'weekly', priority: '0.9', lastmod: today },
+    {
+      path: '/en',
+      changefreq: 'weekly',
+      priority: '1.0',
+      lastmod: today,
+      ...(homeAlternates ? { alternates: homeAlternates } : {}),
+    },
+    {
+      path: PLANTILLAS_CATALOG_PATH_ES,
+      changefreq: 'weekly',
+      priority: '0.9',
+      lastmod: today,
+      ...(base
+        ? { alternates: buildPlantillasCatalogHreflangLinks(base) }
+        : {}),
+    },
+    {
+      path: PLANTILLAS_CATALOG_PATH_EN,
+      changefreq: 'weekly',
+      priority: '0.9',
+      lastmod: today,
+      ...(base
+        ? { alternates: buildPlantillasCatalogHreflangLinks(base) }
+        : {}),
+    },
     { path: '/precios', changefreq: 'weekly', priority: '0.9', lastmod: today },
     { path: '/soporte', changefreq: 'weekly', priority: '0.7', lastmod: today },
     { path: '/documentacion', changefreq: 'weekly', priority: '0.8', lastmod: today },
-    { path: '/funciones', changefreq: 'weekly', priority: '0.85', lastmod: today },
-    { path: '/blog', changefreq: 'weekly', priority: '0.8', lastmod: today },
+    {
+      path: FUNCIONES_PATH_ES,
+      changefreq: 'weekly',
+      priority: '0.85',
+      lastmod: today,
+      ...(base ? { alternates: buildFuncionesHreflangLinks(base) } : {}),
+    },
+    {
+      path: FUNCIONES_PATH_EN,
+      changefreq: 'weekly',
+      priority: '0.85',
+      lastmod: today,
+      ...(base ? { alternates: buildFuncionesHreflangLinks(base) } : {}),
+    },
+    {
+      path: BLOG_PATH_ES,
+      changefreq: 'weekly',
+      priority: '0.8',
+      lastmod: today,
+      ...(base ? { alternates: buildBlogHreflangLinks(base) } : {}),
+    },
+    {
+      path: BLOG_PATH_EN,
+      changefreq: 'weekly',
+      priority: '0.8',
+      lastmod: today,
+      ...(base ? { alternates: buildBlogHreflangLinks(base) } : {}),
+    },
     ...SEO_LANDING_SLUGS.filter((slug) => !SEO_LANDINGS[slug].noIndex).map((slug) => ({
       path: `/${slug}`,
       changefreq: 'monthly' as const,
@@ -84,21 +151,43 @@ export function buildSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
   }
 
   for (const slug of FUNCIONES_SLUGS) {
+    const enSlug = getFuncionesSection(slug)?.enSlug;
     out.push({
       path: `/funciones/${slug}`,
       changefreq: 'monthly',
       priority: '0.8',
       lastmod: today,
+      ...(base ? { alternates: buildFuncionesHreflangLinks(base, slug) } : {}),
     });
+    if (enSlug) {
+      out.push({
+        path: `${FUNCIONES_PATH_EN}/${enSlug}`,
+        changefreq: 'monthly',
+        priority: '0.8',
+        lastmod: today,
+        ...(base ? { alternates: buildFuncionesHreflangLinks(base, slug) } : {}),
+      });
+    }
   }
 
   for (const slug of BLOG_SLUGS) {
+    const enSlug = BLOG_ARTICLES.find((a) => a.slug === slug)?.enSlug;
     out.push({
       path: `/blog/${encodeURIComponent(slug)}`,
       changefreq: 'monthly',
       priority: '0.75',
       lastmod: today,
+      ...(base ? { alternates: buildBlogHreflangLinks(base, slug) } : {}),
     });
+    if (enSlug) {
+      out.push({
+        path: `${BLOG_PATH_EN}/${encodeURIComponent(enSlug)}`,
+        changefreq: 'monthly',
+        priority: '0.75',
+        lastmod: today,
+        ...(base ? { alternates: buildBlogHreflangLinks(base, slug) } : {}),
+      });
+    }
   }
 
   return out;

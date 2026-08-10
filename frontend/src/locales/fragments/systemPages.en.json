@@ -19,6 +19,26 @@
     "errorRecaptchaValidate": "Could not validate reCAPTCHA.",
     "errorSubmit": "Could not send the inquiry. Please try again."
   },
+  "contactForm": {
+    "metaTitle": "Legal contact | AppMenuQR",
+    "metaDescription": "Contact form for privacy, cookies, and terms inquiries about AppMenuQR.",
+    "title": "Contact form",
+    "subtitle": "Legal inquiries: privacy, cookies, and terms.",
+    "restricted": "Restricted access. This form is only available from the legal pages.",
+    "success": "Message sent successfully. We’ll get back to you shortly.",
+    "fullName": "Full name",
+    "phone": "Phone",
+    "email": "Email",
+    "message": "Message",
+    "submit": "Send message",
+    "submitting": "Sending...",
+    "back": "Back",
+    "errorInvalidAccess": "Invalid access to the contact form.",
+    "errorRecaptchaMissing": "The form is not configured (missing reCAPTCHA site key).",
+    "errorRecaptchaInit": "Could not initialize reCAPTCHA.",
+    "errorRecaptchaValidate": "Could not validate reCAPTCHA.",
+    "errorSubmit": "Could not send the message. Please try again."
+  },
   "preview": {
     "notFound": "Template \"{{slug}}\" not found. Use: {{validIds}}",
     "specifyTemplate": "Specify a template in the URL: /preview/classic, /preview/minimalista, etc.",

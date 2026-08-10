@@ -4,12 +4,17 @@ import plantillaStyles from './plantillas/detail/plantilla-detail.module.css';
 import LandingHeroPlantillasQr from './LandingHeroPlantillasQr';
 
 type Props = {
-  config: Pick<SeoLandingConfig, 'h1' | 'h1Highlight' | 'heroLead' | 'ctaLabel' | 'heroMockupImage'>;
+  config: Pick<SeoLandingConfig, 'h1' | 'h1Highlight' | 'heroLead' | 'ctaLabel' | 'heroMockupImage'> & {
+    bullets?: string[];
+    plantillasQrCaption?: string;
+    plantillasQrAria?: string;
+  };
   onCta: () => void;
 };
 
 export default function SeoLandingHeroSplit({ config, onCta }: Props) {
   const mockupSrc = config.heroMockupImage;
+  const bullets = config.bullets?.length ? config.bullets : [...SEO_LANDING_HERO_BULLETS];
 
   return (
     <section className="landing-hero landing-hero--split" aria-labelledby="seo-landing-hero-title">
@@ -48,7 +53,7 @@ export default function SeoLandingHeroSplit({ config, onCta }: Props) {
                       </button>
                     </div>
                     <p className="landing-hero-note landing-hero-note--split">
-                      {SEO_LANDING_HERO_BULLETS.map((item) => (
+                      {bullets.map((item) => (
                         <span key={item}>
                           ✓ {item}
                           <br />
@@ -57,7 +62,13 @@ export default function SeoLandingHeroSplit({ config, onCta }: Props) {
                     </p>
                   </div>
                   <aside className="landing-hero-split-aside" aria-label="Catálogo de plantillas">
-                    <LandingHeroPlantillasQr size={120} />
+                    <LandingHeroPlantillasQr
+                      size={120}
+                      {...(config.plantillasQrCaption
+                        ? { caption: config.plantillasQrCaption }
+                        : {})}
+                      {...(config.plantillasQrAria ? { ariaLabel: config.plantillasQrAria } : {})}
+                    />
                   </aside>
                 </div>
               </div>

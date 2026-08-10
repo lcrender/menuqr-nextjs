@@ -19,6 +19,26 @@
     "errorRecaptchaValidate": "No se pudo validar reCAPTCHA.",
     "errorSubmit": "No se pudo enviar la consulta. Intentá nuevamente."
   },
+  "contactForm": {
+    "metaTitle": "Contacto legal | AppMenuQR",
+    "metaDescription": "Formulario de contacto para consultas relacionadas con privacidad, cookies y términos de AppMenuQR.",
+    "title": "Formulario de contacto",
+    "subtitle": "Consultas legales: privacidad, cookies y términos.",
+    "restricted": "Acceso restringido. Este formulario sólo se habilita desde las páginas legales.",
+    "success": "Mensaje enviado correctamente. Te responderemos a la brevedad.",
+    "fullName": "Nombre completo",
+    "phone": "Teléfono",
+    "email": "Email",
+    "message": "Mensaje",
+    "submit": "Enviar mensaje",
+    "submitting": "Enviando...",
+    "back": "Volver",
+    "errorInvalidAccess": "Acceso inválido al formulario de contacto.",
+    "errorRecaptchaMissing": "El formulario no está configurado (falta reCAPTCHA site key).",
+    "errorRecaptchaInit": "No se pudo inicializar reCAPTCHA.",
+    "errorRecaptchaValidate": "No se pudo validar reCAPTCHA.",
+    "errorSubmit": "No se pudo enviar el mensaje. Intentá nuevamente."
+  },
   "preview": {
     "notFound": "Plantilla \"{{slug}}\" no encontrada. Usa: {{validIds}}",
     "specifyTemplate": "Especifica una plantilla en la URL: /preview/classic, /preview/minimalista, etc.",

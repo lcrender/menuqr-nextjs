@@ -36,13 +36,15 @@ function detectRegionClient(): LandingRegion {
 
   const langs = typeof navigator !== 'undefined' ? navigator.languages || [navigator.language] : [];
   if (langs.some((l) => /^es-AR/i.test(String(l || '')))) return 'AR';
+  const primary = String(langs[0] || '').toLowerCase();
+  if (primary === 'en' || primary.startsWith('en-')) return 'EN';
 
   return 'ES';
 }
 
 /**
- * La raíz redirige a /ar o /es (middleware + fallback cliente).
- * Preferencia: ubicación del usuario → cookie → idioma del navegador → ES.
+ * La raíz redirige a /ar, /es o /en (middleware + fallback cliente).
+ * Preferencia: usuario AR → cookie → idioma del navegador → ES.
  */
 export default function HomeRedirect() {
   const router = useRouter();
@@ -62,7 +64,7 @@ export default function HomeRedirect() {
       </Head>
       <div className="d-flex align-items-center justify-content-center min-vh-100">
         <div className="spinner-border text-secondary" role="status">
-          <span className="visually-hidden">Cargando…</span>
+          <span className="visually-hidden">Loading…</span>
         </div>
       </div>
     </>

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import {
   changeLanguage,
@@ -7,28 +8,192 @@ import {
   normalizeUiLocale,
   type UiLocaleCode,
 } from '../src/i18n/config';
+import {
+  landingHomeHrefFromPath,
+  landingHomePath,
+  readLandingRegionCookie,
+  rememberSpanishLandingRegion,
+  resolvePreferredSpanishRegion,
+  setLandingRegionCookie,
+} from '../lib/landing-region';
+import {
+  plantillasCatalogLocaleFromPath,
+  plantillasCatalogPath,
+} from '../lib/plantillas-catalog-url';
+import {
+  funcionesAlternatePath,
+  funcionesLocaleFromPath,
+} from '../lib/funciones-nav';
+import {
+  blogAlternatePath,
+  blogLocaleFromPath,
+} from '../lib/blog-nav';
+
+/** En homes regionales, el idioma visible = idioma de la página (no solo localStorage). */
+function localeFromMarketingHome(pathname: string | undefined): UiLocaleCode | null {
+  const home = landingHomeHrefFromPath(pathname);
+  if (!home) return null;
+  return home === '/en' ? 'en-US' : 'es-ES';
+}
+
+function localeFromPlantillasCatalog(pathname: string | undefined): UiLocaleCode | null {
+  const catalog = plantillasCatalogLocaleFromPath(pathname);
+  if (!catalog) return null;
+  return catalog === 'en' ? 'en-US' : 'es-ES';
+}
+
+function localeFromFunciones(pathname: string | undefined): UiLocaleCode | null {
+  const fx = funcionesLocaleFromPath(pathname);
+  if (!fx) return null;
+  return fx === 'en' ? 'en-US' : 'es-ES';
+}
+
+function localeFromBlog(pathname: string | undefined): UiLocaleCode | null {
+  const blog = blogLocaleFromPath(pathname);
+  if (!blog) return null;
+  return blog === 'en' ? 'en-US' : 'es-ES';
+}
 
 /**
  * Selector de idioma de UI (footer / páginas públicas).
  * Lista idiomas desde `availableLocales` — al agregar uno allí, aparece solo.
+ * En homes regionales (/ar|/es|/en) y catálogo de plantillas refleja la URL y navega al cambiar.
  */
 export default function AuthLanguageSwitcher() {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
   const languages = getAvailableLanguages();
-  const active = normalizeUiLocale(i18n.language || getCurrentLanguage());
+  const active = useMemo(() => {
+    const fromBlog = localeFromBlog(router.pathname);
+    if (fromBlog) return fromBlog;
+    const fromFunciones = localeFromFunciones(router.pathname);
+    if (fromFunciones) return fromFunciones;
+    const fromCatalog = localeFromPlantillasCatalog(router.pathname);
+    if (fromCatalog) return fromCatalog;
+    const fromPage = localeFromMarketingHome(router.pathname);
+    if (fromPage) return fromPage;
+    return normalizeUiLocale(i18n.language || getCurrentLanguage());
+  }, [router.pathname, i18n.language]);
   const activeMeta = languages.find((l) => l.code === active) ?? languages[0];
 
   const select = useCallback(
     (locale: UiLocaleCode) => {
       setOpen(false);
       if (locale === active) return;
+
+      const blogLocale = blogLocaleFromPath(router.pathname);
+      if (blogLocale) {
+        if (locale === 'en-US' && blogLocale !== 'en') {
+          const cookie = readLandingRegionCookie();
+          if (cookie === 'AR' || cookie === 'ES') rememberSpanishLandingRegion(cookie);
+          else rememberSpanishLandingRegion(resolvePreferredSpanishRegion());
+          setLandingRegionCookie('EN');
+          void changeLanguage('en-US');
+          void router.push(blogAlternatePath(router.pathname, 'en'));
+          return;
+        }
+        if (locale === 'es-ES' && blogLocale !== 'es') {
+          const spanishRegion = resolvePreferredSpanishRegion();
+          setLandingRegionCookie(spanishRegion);
+          void changeLanguage('es-ES');
+          void router.push(blogAlternatePath(router.pathname, 'es'));
+          return;
+        }
+        void changeLanguage(locale);
+        return;
+      }
+
+      const funcionesLocale = funcionesLocaleFromPath(router.pathname);
+      if (funcionesLocale) {
+        if (locale === 'en-US' && funcionesLocale !== 'en') {
+          const cookie = readLandingRegionCookie();
+          if (cookie === 'AR' || cookie === 'ES') rememberSpanishLandingRegion(cookie);
+          else rememberSpanishLandingRegion(resolvePreferredSpanishRegion());
+          setLandingRegionCookie('EN');
+          void changeLanguage('en-US');
+          void router.push(funcionesAlternatePath(router.pathname, 'en'));
+          return;
+        }
+        if (locale === 'es-ES' && funcionesLocale !== 'es') {
+          const spanishRegion = resolvePreferredSpanishRegion();
+          setLandingRegionCookie(spanishRegion);
+          void changeLanguage('es-ES');
+          void router.push(funcionesAlternatePath(router.pathname, 'es'));
+          return;
+        }
+        void changeLanguage(locale);
+        return;
+      }
+
+      const catalogLocale = plantillasCatalogLocaleFromPath(router.pathname);
+      if (catalogLocale) {
+        if (locale === 'en-US' && catalogLocale !== 'en') {
+          const cookie = readLandingRegionCookie();
+          if (cookie === 'AR' || cookie === 'ES') rememberSpanishLandingRegion(cookie);
+          else rememberSpanishLandingRegion(resolvePreferredSpanishRegion());
+          setLandingRegionCookie('EN');
+          void changeLanguage('en-US');
+          void router.push(plantillasCatalogPath('en'));
+          return;
+        }
+        if (locale === 'es-ES' && catalogLocale !== 'es') {
+          const spanishRegion = resolvePreferredSpanishRegion();
+          setLandingRegionCookie(spanishRegion);
+          void changeLanguage('es-ES');
+          void router.push(plantillasCatalogPath('es'));
+          return;
+        }
+        void changeLanguage(locale);
+        return;
+      }
+
+      const home = landingHomeHrefFromPath(router.pathname);
+      if (home) {
+        if (locale === 'en-US' && home !== '/en') {
+          if (home === '/ar') rememberSpanishLandingRegion('AR');
+          if (home === '/es') rememberSpanishLandingRegion('ES');
+          setLandingRegionCookie('EN');
+          void changeLanguage('en-US');
+          void router.push('/en');
+          return;
+        }
+        if (locale === 'es-ES' && home === '/en') {
+          const spanishRegion = resolvePreferredSpanishRegion();
+          setLandingRegionCookie(spanishRegion);
+          void changeLanguage('es-ES');
+          void router.push(landingHomePath(spanishRegion));
+          return;
+        }
+        // Misma familia de idioma (p. ej. Español en /ar o /es): solo UI.
+        void changeLanguage(locale);
+        return;
+      }
+
+      // Otras páginas públicas: idioma + región; si hay par ES/EN de plantillas no aplica.
+      if (locale === 'en-US') {
+        const cookie = readLandingRegionCookie();
+        if (cookie === 'AR' || cookie === 'ES') {
+          rememberSpanishLandingRegion(cookie);
+        } else {
+          rememberSpanishLandingRegion(resolvePreferredSpanishRegion());
+        }
+        setLandingRegionCookie('EN');
+        void changeLanguage('en-US');
+        return;
+      }
+      if (locale === 'es-ES') {
+        const spanishRegion = resolvePreferredSpanishRegion();
+        setLandingRegionCookie(spanishRegion);
+        void changeLanguage('es-ES');
+        return;
+      }
       void changeLanguage(locale);
     },
-    [active],
+    [active, router],
   );
 
   useEffect(() => {

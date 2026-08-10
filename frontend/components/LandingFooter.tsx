@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { usePublicAccountNav } from '../hooks/usePublicSession';
-import { landingSectionHref, useLandingHomeHref } from '../lib/landing-region';
-import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
+import { landingSectionHref, useLandingHomeHref, useLandingRegion } from '../lib/landing-region';
+import { plantillasCatalogPathForRegion } from '../lib/plantillas-catalog-url';
+import { funcionesPathForRegion } from '../lib/funciones-nav';
+import { blogPathForRegion } from '../lib/blog-nav';
 import LandingBrandMark from './LandingBrandMark';
 import AuthLanguageSwitcher from './AuthLanguageSwitcher';
 import i18n from '../src/i18n/config';
@@ -20,7 +22,11 @@ export default function LandingFooter() {
   const { t } = useTranslation();
   const accountNav = usePublicAccountNav();
   const homeHref = useLandingHomeHref();
+  const region = useLandingRegion();
   const preciosHref = landingSectionHref(homeHref, 'precios');
+  const plantillasHref = plantillasCatalogPathForRegion(region);
+  const funcionesHref = funcionesPathForRegion(region);
+  const blogHref = blogPathForRegion(region);
   const year = new Date().getFullYear();
 
   return (
@@ -45,12 +51,12 @@ export default function LandingFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/funciones" className="landing-footer-link">
+                <Link href={funcionesHref} className="landing-footer-link">
                   {t('systemPages.footer.features')}
                 </Link>
               </li>
               <li>
-                <Link href={PLANTILLAS_CATALOG_PATH} className="landing-footer-link">
+                <Link href={plantillasHref} className="landing-footer-link">
                   {t('systemPages.footer.templates')}
                 </Link>
               </li>
@@ -71,7 +77,7 @@ export default function LandingFooter() {
             <h3 className="landing-footer-heading">{t('systemPages.footer.resources')}</h3>
             <ul className="landing-footer-list">
               <li>
-                <Link href="/blog" className="landing-footer-link">
+                <Link href={blogHref} className="landing-footer-link">
                   {t('systemPages.footer.blog')}
                 </Link>
               </li>

@@ -5,14 +5,16 @@ import { formatCurrency } from '../lib/format-currency';
 import {
   DEFAULT_PUBLIC_PLAN_LIMITS,
   fetchPublicPlanLimits,
-  formatMenusLine,
-  formatProductsLine,
-  formatRestaurantsLine,
 } from '../lib/public-plan-limits';
 import { appendPromoToCheckoutUrl } from '../lib/promo-query';
 import { buildPremiumInquiryUrl } from '../lib/premium-inquiry-url';
 import { resolveLandingHomeHref } from '../lib/landing-region';
 import { buildSubscriptionCheckoutHref, normalizePricingCountryParam } from '../lib/subscription-checkout-url';
+import {
+  getPricingPlansUiCopy,
+  type PricingPlansUiCopy,
+  type PricingUiLocale,
+} from '../lib/pricing-plans-copy';
 
 type PlanSlug = 'free' | 'starter' | 'pro' | 'premium';
 
@@ -39,13 +41,13 @@ function yearlyAmount(plan: { price: number; priceYearly?: number }): number {
 }
 
 /** Fila “Destacar productos”: ✓ destacado o ✗ en gris, según límites públicos del plan. */
-function renderDestacarProductosFeatureRow(allowed: boolean) {
+function renderDestacarProductosFeatureRow(allowed: boolean, label: string) {
   if (allowed) {
     return (
       <li className="landing-pricing-feature landing-pricing-feature-highlight">
         <span className="landing-pricing-check">✓</span>
         <span>
-          <strong>Destacar productos</strong>
+          <strong>{label}</strong>
         </span>
       </li>
     );
@@ -53,19 +55,19 @@ function renderDestacarProductosFeatureRow(allowed: boolean) {
   return (
     <li className="landing-pricing-feature landing-pricing-muted">
       <span>✗</span>
-      <span>Destacar productos</span>
+      <span>{label}</span>
     </li>
   );
 }
 
 /** Fila “Programar menú”: Pro+ con tilde; Free/Starter en gris con cruz. */
-function renderProgramarMenuFeatureRow(allowed: boolean) {
+function renderProgramarMenuFeatureRow(allowed: boolean, label: string) {
   if (allowed) {
     return (
       <li className="landing-pricing-feature landing-pricing-feature-highlight">
         <span className="landing-pricing-check">✓</span>
         <span>
-          <strong>Programar menú</strong>
+          <strong>{label}</strong>
         </span>
       </li>
     );
@@ -73,8 +75,71 @@ function renderProgramarMenuFeatureRow(allowed: boolean) {
   return (
     <li className="landing-pricing-feature landing-pricing-muted">
       <span>✗</span>
-      <span>Programar menú</span>
+      <span>{label}</span>
     </li>
+  );
+}
+
+function FreeFeaturesList({
+  lim,
+  ui,
+}: {
+  lim: (typeof DEFAULT_PUBLIC_PLAN_LIMITS)['free'];
+  ui: PricingPlansUiCopy;
+}) {
+  return (
+    <ul className="landing-pricing-features">
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.restaurants(lim.restaurantLimit)}</span>
+      </li>
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.menus(lim.menuLimit)}</span>
+      </li>
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.products(lim.productLimit)}</span>
+      </li>
+      <li className="landing-pricing-feature landing-pricing-muted">
+        <span>✗</span>
+        <span>{ui.noProductPhotos}</span>
+      </li>
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.allergens}</span>
+      </li>
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.disableProducts}</span>
+      </li>
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.reorderProducts}</span>
+      </li>
+      {renderDestacarProductosFeatureRow(lim.productHighlightAllowed, ui.highlightProducts)}
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.basicTemplates}</span>
+      </li>
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.printMenu}</span>
+      </li>
+      {renderProgramarMenuFeatureRow(false, ui.scheduleMenu)}
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.oneLanguage}</span>
+      </li>
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.support}</span>
+      </li>
+      <li className="landing-pricing-feature">
+        <span className="landing-pricing-check">✓</span>
+        <span>{ui.downloadableQr}</span>
+      </li>
+    </ul>
   );
 }
 
@@ -91,6 +156,8 @@ interface PricingPlansGridProps {
   promoCode?: string;
   /** Textos de presentación bajo el nombre de cada plan (solo homepage / marketing). */
   landingPlanTaglines?: boolean;
+  /** Idioma de la UI de la grilla (precios USD/PayPal en `en`). */
+  locale?: PricingUiLocale;
 }
 
 export default function PricingPlansGrid({
@@ -100,8 +167,10 @@ export default function PricingPlansGrid({
   pricingData = null,
   promoCode,
   landingPlanTaglines = false,
+  locale = 'es',
 }: PricingPlansGridProps) {
   const router = useRouter();
+  const ui = getPricingPlansUiCopy(locale);
   const isLanding = variant === 'landing';
   const isSubscription = variant === 'subscription' && onSelectPlan;
   const showBillingToggle = variant === 'landing' || isSubscription;
@@ -209,24 +278,30 @@ export default function PricingPlansGrid({
     const annualOffer = (
       <p className="landing-pricing-annual-offer text-muted small mb-0">
         <span className="landing-pricing-offer-strike">
-          {formatCurrency(monthly12, currency)}/año
+          {formatCurrency(monthly12, currency)}
+          {ui.perYear}
         </span>
         {discountPct > 0 ? (
-          <span className="landing-pricing-discount-offer-badge">{discountPct}% descuento</span>
+          <span className="landing-pricing-discount-offer-badge">
+            {discountPct}% {ui.discount}
+          </span>
         ) : null}
-        <span className="landing-pricing-offer-final">{formatCurrency(yearly, currency)}/año</span>
+        <span className="landing-pricing-offer-final">
+          {formatCurrency(yearly, currency)}
+          {ui.perYear}
+        </span>
       </p>
     );
 
     const trialDays = pricingData?.mercadopagoFreeTrialDays;
     const trialNote =
       typeof trialDays === 'number' && trialDays > 0 ? (
-        <p className="text-muted small mb-0 mt-1">{trialDays} días gratis, después se cobra el plan</p>
+        <p className="text-muted small mb-0 mt-1">{ui.trialNote(trialDays)}</p>
       ) : null;
 
     if (showBillingToggle) {
       const main = billingCycle === 'yearly' ? yearly : monthly;
-      const period = billingCycle === 'yearly' ? '/año' : '/mes';
+      const period = billingCycle === 'yearly' ? ui.perYear : ui.perMonth;
       return (
         <>
           <div className="landing-pricing-price">
@@ -245,7 +320,7 @@ export default function PricingPlansGrid({
           <span className="landing-pricing-amount">
             {plan ? formatCurrency(plan.price, plan.currency) : fallbackDisplay}
           </span>
-          <span className="landing-pricing-period">/mes</span>
+          <span className="landing-pricing-period">{ui.perMonth}</span>
         </div>
         {trialNote}
         {annualOffer}
@@ -254,20 +329,21 @@ export default function PricingPlansGrid({
   };
 
   const freeCurrency = planFree?.currency ?? pricingData?.currency ?? 'USD';
+  const freeNoteShortLines = ui.freeNoteShort.split('\n');
   const BillingToggle = (
     <div
       className="d-flex flex-wrap justify-content-start align-items-center gap-2"
       style={{ gridColumn: '1 / -1', marginTop: isLanding ? '12px' : '0', marginBottom: '18px' }}
     >
-      <span className="small text-muted me-1">Facturación:</span>
-      <div className="btn-group btn-group-sm" role="group" aria-label="Ciclo de facturación">
+      <span className="small text-muted me-1">{ui.billingLabel}</span>
+      <div className="btn-group btn-group-sm" role="group" aria-label={ui.billingAria}>
         <button
           type="button"
           className={`btn ${billingCycle === 'monthly' ? 'btn-primary' : 'btn-outline-primary'}`}
           onClick={() => setBillingCycle('monthly')}
           disabled={loadingPlan !== null}
         >
-          Mensual
+          {ui.monthly}
         </button>
         <button
           type="button"
@@ -275,7 +351,7 @@ export default function PricingPlansGrid({
           onClick={() => setBillingCycle('yearly')}
           disabled={loadingPlan !== null}
         >
-          Anual
+          {ui.yearly}
         </button>
       </div>
     </div>
@@ -294,23 +370,21 @@ export default function PricingPlansGrid({
             <h3 className="landing-pricing-name">Free</h3>
             <div className="landing-pricing-price">
               <span className="landing-pricing-amount">{formatCurrency(0, freeCurrency)}</span>
-              <span className="landing-pricing-period">/mes</span>
+              <span className="landing-pricing-period">{ui.perMonth}</span>
             </div>
             {landingPlanTaglines && (isLanding || isSubscription) ? (
               <>
                 <p className="landing-pricing-plan-lead mb-1">
-                  <strong>Para probar tu carta digital</strong>
+                  <strong>{ui.freeLead}</strong>
                 </p>
-                <p className="landing-pricing-free-note mb-0">
-                  Ideal para configurar tu menú digital y código QR sin compromiso inicial.
-                </p>
+                <p className="landing-pricing-free-note mb-0">{ui.freeNoteTagline}</p>
               </>
             ) : null}
             {(isLanding || isSubscription) && !landingPlanTaglines && (
               <p className="landing-pricing-free-note mb-0">
-                Empeza gratis,
+                {freeNoteShortLines[0]}
                 <br />
-                mejora cuando quieras.
+                {freeNoteShortLines[1]}
               </p>
             )}
             <div
@@ -318,75 +392,24 @@ export default function PricingPlansGrid({
               aria-hidden="true"
             >
               <span className="landing-pricing-offer-strike">000</span>
-              <span className="landing-pricing-discount-offer-badge">00% descuento</span>
+              <span className="landing-pricing-discount-offer-badge">00% {ui.discount}</span>
               <span className="landing-pricing-offer-final">000</span>
             </div>
           </div>
-          <ul className="landing-pricing-features">
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>{formatRestaurantsLine(F.restaurantLimit)}</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>{formatMenusLine(F.menuLimit)}</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>{formatProductsLine(F.productLimit)}</span>
-            </li>
-            <li className="landing-pricing-feature landing-pricing-muted">
-              <span>✗</span>
-              <span>Sin fotos de productos</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Alérgenos</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Desactivar productos</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Reordenar productos</span>
-            </li>
-            {renderDestacarProductosFeatureRow(F.productHighlightAllowed)}
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Plantillas básicas</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Imprimir carta en papel</span>
-            </li>
-            {renderProgramarMenuFeatureRow(false)}
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>1 idioma</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Soporte</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>QR descargable</span>
-            </li>
-          </ul>
+          <FreeFeaturesList lim={F} ui={ui} />
           <button
             type="button"
             onClick={() => handleCta('free')}
             className="landing-btn-secondary landing-btn-full"
             disabled={loadingPlan !== null}
           >
-          {loadingPlan === 'free' ? '…' : 'Empezar con Free'}
+            {loadingPlan === 'free' ? '…' : ui.startFree}
           </button>
         </div>
       )}
 
       {isLanding && showBillingToggle ? (
-        <h3 className="landing-pricing-grid-subheading">Más capacidad para tu carta digital</h3>
+        <h3 className="landing-pricing-grid-subheading">{ui.paidSubheading}</h3>
       ) : null}
 
       {showBillingToggle && isLanding && BillingToggle}
@@ -396,56 +419,85 @@ export default function PricingPlansGrid({
         <div className="landing-pricing-header">
           <h3 className="landing-pricing-name">Starter</h3>
           {landingPlanTaglines ? (
-            <p className="landing-pricing-plan-tagline small text-muted mb-2">
-              Más productos y control para tu carta digital en crecimiento.
-            </p>
+            <p className="landing-pricing-plan-tagline small text-muted mb-2">{ui.starterTagline}</p>
           ) : null}
           {renderPaidPriceBlock(planStarter, 'USD 3.49', 'USD', 3.49)}
         </div>
         <ul className="landing-pricing-features">
           <li className="landing-pricing-feature">
             <span className="landing-pricing-check">✓</span>
-            <span>{formatRestaurantsLine(S.restaurantLimit)}</span>
+            <span>{ui.restaurants(S.restaurantLimit)}</span>
           </li>
           <li className="landing-pricing-feature">
             <span className="landing-pricing-check">✓</span>
-            <span>{formatMenusLine(S.menuLimit)}</span>
+            <span>{ui.menus(S.menuLimit)}</span>
           </li>
           <li
             className={`landing-pricing-feature${starterMoreProducts ? ' landing-pricing-feature-highlight' : ''}`}
           >
             <span className="landing-pricing-check">✓</span>
-            <span>{formatProductsLine(S.productLimit)}</span>
+            <span>{ui.products(S.productLimit)}</span>
           </li>
-          <li className="landing-pricing-feature landing-pricing-muted"><span>✗</span><span>Sin fotos de productos</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Alérgenos</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Desactivar productos</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Reordenar productos</span></li>
-          {renderDestacarProductosFeatureRow(S.productHighlightAllowed)}
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Plantillas básicas</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Imprimir carta en papel</span></li>
-          {renderProgramarMenuFeatureRow(false)}
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>1 idioma</span></li>
+          <li className="landing-pricing-feature landing-pricing-muted">
+            <span>✗</span>
+            <span>{ui.noProductPhotos}</span>
+          </li>
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.allergens}</span>
+          </li>
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.disableProducts}</span>
+          </li>
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.reorderProducts}</span>
+          </li>
+          {renderDestacarProductosFeatureRow(S.productHighlightAllowed, ui.highlightProducts)}
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.basicTemplates}</span>
+          </li>
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.printMenu}</span>
+          </li>
+          {renderProgramarMenuFeatureRow(false, ui.scheduleMenu)}
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.oneLanguage}</span>
+          </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Soporte email</span>
+            <span>{ui.emailSupport}</span>
           </li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR descargable</span></li>
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.downloadableQr}</span>
+          </li>
         </ul>
-        <button type="button" onClick={() => handleCta('starter')} className="landing-btn-secondary landing-btn-full" disabled={loadingPlan !== null}>
-          {isSubscription && loadingPlan === 'starter' ? '…' : isSubscription && billingCycle === 'yearly' ? 'Elegir Starter (anual)' : 'Elegir Starter'}
+        <button
+          type="button"
+          onClick={() => handleCta('starter')}
+          className="landing-btn-secondary landing-btn-full"
+          disabled={loadingPlan !== null}
+        >
+          {isSubscription && loadingPlan === 'starter'
+            ? '…'
+            : isSubscription && billingCycle === 'yearly'
+              ? ui.chooseStarterYearly
+              : ui.chooseStarter}
         </button>
       </div>
 
       {/* Plan Pro */}
       <div className="landing-pricing-card landing-pricing-card-featured">
-        <div className="landing-pricing-badge">Más Popular</div>
+        <div className="landing-pricing-badge">{ui.mostPopular}</div>
         <div className="landing-pricing-header">
           <h3 className="landing-pricing-name">Pro</h3>
           {landingPlanTaglines ? (
-            <p className="landing-pricing-plan-tagline small text-muted mb-2">
-              Fotos, idiomas y plantillas Pro para un menú digital más completo.
-            </p>
+            <p className="landing-pricing-plan-tagline small text-muted mb-2">{ui.proTagline}</p>
           ) : null}
           {renderPaidPriceBlock(planPro, 'USD 7.99', 'USD', 7.99)}
         </div>
@@ -454,119 +506,149 @@ export default function PricingPlansGrid({
             className={`landing-pricing-feature${proMoreRestaurants ? ' landing-pricing-feature-highlight' : ''}`}
           >
             <span className="landing-pricing-check">✓</span>
-            <span>{formatRestaurantsLine(P.restaurantLimit)}</span>
+            <span>{ui.restaurants(P.restaurantLimit)}</span>
           </li>
           <li className={`landing-pricing-feature${proMoreMenus ? ' landing-pricing-feature-highlight' : ''}`}>
             <span className="landing-pricing-check">✓</span>
-            <span>{formatMenusLine(P.menuLimit)}</span>
+            <span>{ui.menus(P.menuLimit)}</span>
           </li>
           <li
             className={`landing-pricing-feature${proMoreProducts ? ' landing-pricing-feature-highlight' : ''}`}
           >
             <span className="landing-pricing-check">✓</span>
-            <span>{formatProductsLine(P.productLimit)}</span>
+            <span>{ui.products(P.productLimit)}</span>
           </li>
           <li
             className={`landing-pricing-feature${P.productPhotosAllowed ? ' landing-pricing-feature-highlight' : ''}`}
           >
             <span className="landing-pricing-check">✓</span>
-            <span>Fotos de productos</span>
+            <span>{ui.productPhotos}</span>
           </li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Alérgenos</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Desactivar productos</span></li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Reordenar productos</span></li>
-          {renderDestacarProductosFeatureRow(P.productHighlightAllowed)}
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.allergens}</span>
+          </li>
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.disableProducts}</span>
+          </li>
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.reorderProducts}</span>
+          </li>
+          {renderDestacarProductosFeatureRow(P.productHighlightAllowed, ui.highlightProducts)}
           <li
             className={`landing-pricing-feature${P.gourmetTemplate ? ' landing-pricing-feature-highlight' : ''}`}
           >
             <span className="landing-pricing-check">✓</span>
             <span>
-              Plantillas <strong>Pro</strong>
+              {locale === 'en' ? (
+                <>
+                  <strong>Pro</strong> templates
+                </>
+              ) : (
+                <>
+                  Plantillas <strong>Pro</strong>
+                </>
+              )}
             </span>
           </li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>Imprimir carta en papel</span></li>
-          {renderProgramarMenuFeatureRow(true)}
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.printMenu}</span>
+          </li>
+          {renderProgramarMenuFeatureRow(true, ui.scheduleMenu)}
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>3 idiomas</span>
+            <span>{ui.threeLanguages}</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Soporte prioritario</span>
+            <span>{ui.prioritySupport}</span>
           </li>
-          <li className="landing-pricing-feature"><span className="landing-pricing-check">✓</span><span>QR descargable</span></li>
+          <li className="landing-pricing-feature">
+            <span className="landing-pricing-check">✓</span>
+            <span>{ui.downloadableQr}</span>
+          </li>
         </ul>
-        <button type="button" onClick={() => handleCta('pro')} className="landing-btn-primary landing-btn-full" disabled={loadingPlan !== null}>
-          {isSubscription && loadingPlan === 'pro' ? '…' : isSubscription && billingCycle === 'yearly' ? 'Elegir Pro (anual)' : 'Elegir Pro'}
+        <button
+          type="button"
+          onClick={() => handleCta('pro')}
+          className="landing-btn-primary landing-btn-full"
+          disabled={loadingPlan !== null}
+        >
+          {isSubscription && loadingPlan === 'pro'
+            ? '…'
+            : isSubscription && billingCycle === 'yearly'
+              ? ui.chooseProYearly
+              : ui.choosePro}
         </button>
       </div>
 
       {/* Plan Premium — propuesta a medida (sin checkout) */}
       <div className="landing-pricing-card landing-pricing-card-premium">
-        <div className="landing-pricing-badge landing-pricing-badge-premium">A Medida</div>
+        <div className="landing-pricing-badge landing-pricing-badge-premium">{ui.customBadge}</div>
         <div className="landing-pricing-header">
-          <h3 className="landing-pricing-name">Plan Premium</h3>
-          <p className="landing-pricing-premium-lead">
-            Diseño y configuración personalizada para adaptar tu carta digital a las necesidades de tu negocio.
-          </p>
-          <p className="landing-pricing-premium-callout">Contanos qué necesitás</p>
+          <h3 className="landing-pricing-name">{ui.premiumName}</h3>
+          <p className="landing-pricing-premium-lead">{ui.premiumLead}</p>
+          <p className="landing-pricing-premium-callout">{ui.premiumCallout}</p>
         </div>
         <ul className="landing-pricing-features">
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Diseño personalizado de la carta digital</span>
+            <span>{ui.premiumDesign}</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Selección de tipografía web</span>
+            <span>{ui.premiumTypography}</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Configuración inicial del menú</span>
+            <span>{ui.premiumInitialSetup}</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Carga completa de productos de la carta</span>
+            <span>{ui.premiumFullLoad}</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Adaptaciones según necesidad</span>
+            <span>{ui.premiumAdaptations}</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Asistencia en la puesta en marcha</span>
+            <span>{ui.premiumLaunchHelp}</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Soporte personalizado</span>
+            <span>{ui.premiumCustomSupport}</span>
           </li>
           <li className="landing-pricing-feature landing-pricing-feature-highlight">
             <span className="landing-pricing-check">✓</span>
-            <span>Propuesta a medida</span>
+            <span>{ui.premiumCustomProposal}</span>
           </li>
         </ul>
         <div className="landing-pricing-premium-footer">
-          <p className="landing-pricing-premium-footer-text">
-            Ideal para proyectos que necesitan una carta digital más personalizada.
-          </p>
+          <p className="landing-pricing-premium-footer-text">{ui.premiumFooter}</p>
         </div>
         <Link
           href={buildPremiumInquiryUrl('precios')}
           className="landing-btn-secondary landing-btn-full landing-pricing-premium-cta"
         >
-          Consultar plan
+          {ui.consultPlan}
         </Link>
       </div>
 
-      {isSubscription && pricingData && (isMercadoPago ? (
-        <p className="text-muted small mt-3 w-100" style={{ gridColumn: '1 / -1' }}>
-          Pagos seguros con <strong>MercadoPago</strong>
-        </p>
-      ) : (
-        <p className="text-muted small mt-3 w-100" style={{ gridColumn: '1 / -1' }}>
-          Pagos seguros con <strong>PayPal</strong>
-        </p>
-      ))}
+      {(isSubscription || isLanding) && pricingData ? (
+        isMercadoPago ? (
+          <p className="text-muted small mt-3 w-100" style={{ gridColumn: '1 / -1' }}>
+            {ui.securePaymentsMp} <strong>MercadoPago</strong>
+          </p>
+        ) : (
+          <p className="text-muted small mt-3 w-100" style={{ gridColumn: '1 / -1' }}>
+            {ui.securePaymentsPaypal} <strong>PayPal</strong>
+          </p>
+        )
+      ) : null}
 
       {/* Plan Free (ultima fila en Desktop para la pagina de gestión) */}
       {isSubscription && (
@@ -575,81 +657,30 @@ export default function PricingPlansGrid({
             <h3 className="landing-pricing-name">Free</h3>
             <div className="landing-pricing-price">
               <span className="landing-pricing-amount">{formatCurrency(0, freeCurrency)}</span>
-              <span className="landing-pricing-period">/mes</span>
+              <span className="landing-pricing-period">{ui.perMonth}</span>
             </div>
             <p className="landing-pricing-free-note mb-0">
-              Empeza gratis,
+              {freeNoteShortLines[0]}
               <br />
-              mejora cuando quieras.
+              {freeNoteShortLines[1]}
             </p>
             <div
               className="landing-pricing-annual-offer landing-pricing-annual-offer-placeholder"
               aria-hidden="true"
             >
               <span className="landing-pricing-offer-strike">000</span>
-              <span className="landing-pricing-discount-offer-badge">00% descuento</span>
+              <span className="landing-pricing-discount-offer-badge">00% {ui.discount}</span>
               <span className="landing-pricing-offer-final">000</span>
             </div>
           </div>
-          <ul className="landing-pricing-features">
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>{formatRestaurantsLine(F.restaurantLimit)}</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>{formatMenusLine(F.menuLimit)}</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>{formatProductsLine(F.productLimit)}</span>
-            </li>
-            <li className="landing-pricing-feature landing-pricing-muted">
-              <span>✗</span>
-              <span>Sin fotos de productos</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Alérgenos</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Desactivar productos</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Reordenar productos</span>
-            </li>
-            {renderDestacarProductosFeatureRow(F.productHighlightAllowed)}
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Plantillas básicas</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Imprimir carta en papel</span>
-            </li>
-            {renderProgramarMenuFeatureRow(false)}
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>1 idioma</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>Soporte</span>
-            </li>
-            <li className="landing-pricing-feature">
-              <span className="landing-pricing-check">✓</span>
-              <span>QR descargable</span>
-            </li>
-          </ul>
+          <FreeFeaturesList lim={F} ui={ui} />
           <button
             type="button"
             onClick={() => handleCta('free')}
             className="landing-btn-secondary landing-btn-full"
             disabled={loadingPlan !== null}
           >
-            {loadingPlan === 'free' ? '…' : 'Empezar con Free'}
+            {loadingPlan === 'free' ? '…' : ui.startFree}
           </button>
         </div>
       )}

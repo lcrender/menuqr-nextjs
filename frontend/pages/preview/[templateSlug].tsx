@@ -32,7 +32,8 @@ import {
   TEMPLATE_NAMES,
 } from '../../lib/template-config-schema';
 import type { SolNocheEditHotspot } from '../../lib/sol-noche-preview-edit';
-import { PLANTILLAS_CATALOG_PATH } from '../../lib/plantillas-catalog-url';
+import { plantillasCatalogPathForRegion } from '../../lib/plantillas-catalog-url';
+import { useLandingRegion } from '../../lib/landing-region';
 import { iconLabelsForLocale } from '../../lib/allergen-icon-labels';
 import i18n from '../../src/i18n/config';
 import systemPagesEs from '../../src/locales/fragments/systemPages.es.json';
@@ -134,6 +135,8 @@ function smartFoodPreviewMenuSlug(locale: string, menuKey: string): string {
 export default function PreviewPage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const region = useLandingRegion();
+  const plantillasHref = plantillasCatalogPathForRegion(region);
   const { templateSlug } = router.query;
   const slug = typeof templateSlug === 'string' ? templateSlug : '';
   const embed = typeof router.query.embed === 'string' && (router.query.embed === '1' || router.query.embed === 'true');
@@ -151,7 +154,7 @@ export default function PreviewPage() {
             : t('systemPages.preview.specifyTemplate')}
         </div>
         <p className="mt-3 d-flex flex-wrap gap-2">
-          <Link href={PLANTILLAS_CATALOG_PATH} className="btn btn-outline-primary">
+          <Link href={plantillasHref} className="btn btn-outline-primary">
             {t('systemPages.preview.catalog')}
           </Link>
           <Link href="/admin/templates" className="btn btn-primary">
@@ -265,7 +268,7 @@ export default function PreviewPage() {
       <div className="container mt-5 py-5">
         <div className="alert alert-warning" role="alert">{t('systemPages.preview.noMenu')}</div>
         <div className="d-flex flex-wrap gap-2 mt-2">
-          <Link href={PLANTILLAS_CATALOG_PATH} className="btn btn-outline-primary">
+          <Link href={plantillasHref} className="btn btn-outline-primary">
             {t('systemPages.preview.catalog')}
           </Link>
           <Link href="/admin/templates" className="btn btn-primary">
@@ -549,7 +552,7 @@ export default function PreviewPage() {
       </Head>
       <nav className="preview-nav-land" aria-label={t('systemPages.preview.exitAria')}>
         <div className="preview-nav-land-inner">
-          <Link href={PLANTILLAS_CATALOG_PATH} className="preview-nav-land-link">
+          <Link href={plantillasHref} className="preview-nav-land-link">
             {t('systemPages.preview.catalog')}
           </Link>
         </div>

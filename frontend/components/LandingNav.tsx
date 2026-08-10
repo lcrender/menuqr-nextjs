@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { usePublicAccountNav } from '../hooks/usePublicSession';
-import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
+import { plantillasCatalogPathForRegion } from '../lib/plantillas-catalog-url';
 import {
-  FUNCIONES_PATH,
   FUNCIONES_SECTIONS,
   funcionesCopyForRegion,
-  funcionesHref,
+  funcionesHrefForRegion,
+  funcionesPathForRegion,
 } from '../lib/funciones-nav';
 import {
   landingSectionHref,
@@ -17,12 +17,14 @@ import {
 import LandingBrandMark from './LandingBrandMark';
 
 type LandingNavProps = {
-  /** Home regional (/ar o /es). Si no se pasa, se infiere de la ruta/cookie. */
+  /** Home regional (/ar, /es o /en). Si no se pasa, se infiere de la ruta/cookie. */
   homeHref?: string;
 };
 
 function regionFromHomeHref(homeHref: string): LandingRegion {
-  return homeHref === '/ar' ? 'AR' : 'ES';
+  if (homeHref === '/ar') return 'AR';
+  if (homeHref === '/en') return 'EN';
+  return 'ES';
 }
 
 export default function LandingNav({ homeHref }: LandingNavProps) {
@@ -115,7 +117,39 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
   const preciosHref = landingSectionHref(logoHref, 'precios');
   const comoFuncionaHref = landingSectionHref(logoHref, 'como-funciona');
   const faqHref = landingSectionHref(logoHref, 'faq');
-  const tryFreeLabel = region === 'AR' ? 'Crear mi menú QR' : 'Crear mi carta digital';
+  const tryFreeLabel =
+    region === 'AR'
+      ? 'Crear mi menú QR'
+      : region === 'EN'
+        ? 'Create my QR menu'
+        : 'Crear mi carta digital';
+
+  const navCopy =
+    region === 'EN'
+      ? {
+          features: 'Features',
+          viewAll: 'View all',
+          templates: 'Templates',
+          benefits: 'Benefits',
+          pricing: 'Pricing',
+          howItWorks: 'How it works',
+          faq: 'FAQ',
+          menu: 'Menu',
+          openMenu: 'Open menu',
+          closeMenu: 'Close menu',
+        }
+      : {
+          features: 'Funciones',
+          viewAll: 'Ver todas',
+          templates: 'Plantillas',
+          benefits: 'Beneficios',
+          pricing: 'Precios',
+          howItWorks: 'Cómo funciona',
+          faq: 'Preguntas frecuentes',
+          menu: 'Menú',
+          openMenu: 'Abrir menú',
+          closeMenu: 'Cerrar menú',
+        };
 
   return (
     <>
@@ -128,7 +162,7 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
             <button
               type="button"
               className="landing-nav-burger d-flex d-md-none align-items-center justify-content-center"
-              aria-label={mobileNavOpen ? 'Cerrar menú' : 'Abrir menú'}
+              aria-label={mobileNavOpen ? navCopy.closeMenu : navCopy.openMenu}
               aria-expanded={mobileNavOpen}
               aria-controls="landing-mobile-nav"
               onClick={() => setMobileNavOpen((o) => !o)}
@@ -148,7 +182,7 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
                   aria-haspopup="true"
                   onClick={() => setFuncionesOpen((o) => !o)}
                 >
-                  Funciones
+                  {navCopy.features}
                   <span className="landing-nav-dropdown-caret" aria-hidden>
                     ▾
                   </span>
@@ -156,17 +190,17 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
                 {funcionesOpen ? (
                   <div className="landing-nav-dropdown-menu" role="menu">
                     <Link
-                      href={FUNCIONES_PATH}
+                      href={funcionesPathForRegion(region)}
                       className="landing-nav-dropdown-item"
                       role="menuitem"
                       onClick={() => setFuncionesOpen(false)}
                     >
-                      Ver todas
+                      {navCopy.viewAll}
                     </Link>
                     {FUNCIONES_SECTIONS.map((s) => (
                       <Link
                         key={s.slug}
-                        href={funcionesHref(s.slug)}
+                        href={funcionesHrefForRegion(s.slug, region)}
                         className="landing-nav-dropdown-item"
                         role="menuitem"
                         onClick={() => setFuncionesOpen(false)}
@@ -177,20 +211,20 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
                   </div>
                 ) : null}
               </div>
-              <Link href={PLANTILLAS_CATALOG_PATH} className="landing-nav-text-link">
-                Plantillas
+              <Link href={plantillasCatalogPathForRegion(region)} className="landing-nav-text-link">
+                {navCopy.templates}
               </Link>
               <Link href={beneficiosHref} className="landing-nav-text-link">
-                Beneficios
+                {navCopy.benefits}
               </Link>
               <Link href={preciosHref} className="landing-nav-text-link">
-                Precios
+                {navCopy.pricing}
               </Link>
               <Link href={comoFuncionaHref} className="landing-nav-text-link">
-                Cómo funciona
+                {navCopy.howItWorks}
               </Link>
               <Link href={faqHref} className="landing-nav-text-link">
-                Preguntas frecuentes
+                {navCopy.faq}
               </Link>
               <Link href={accountNav.href} className="landing-btn-secondary landing-nav-login-btn">
                 {accountNav.label}
@@ -204,7 +238,7 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
         <button
           type="button"
           className="landing-nav-mobile-backdrop d-md-none"
-          aria-label="Cerrar menú"
+          aria-label={navCopy.closeMenu}
           onClick={closeMobileNav}
         />
       ) : null}
@@ -214,8 +248,8 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
         aria-hidden={!mobileNavOpen}
       >
         <div className="landing-nav-mobile-header">
-          <span className="landing-nav-mobile-title">Menú</span>
-          <button type="button" className="landing-nav-mobile-close" aria-label="Cerrar menú" onClick={closeMobileNav}>
+          <span className="landing-nav-mobile-title">{navCopy.menu}</span>
+          <button type="button" className="landing-nav-mobile-close" aria-label={navCopy.closeMenu} onClick={closeMobileNav}>
             ×
           </button>
         </div>
@@ -226,18 +260,18 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
             aria-expanded={mobileFuncionesOpen}
             onClick={() => setMobileFuncionesOpen((o) => !o)}
           >
-            Funciones
+            {navCopy.features}
             <span aria-hidden>{mobileFuncionesOpen ? '▴' : '▾'}</span>
           </button>
           {mobileFuncionesOpen ? (
             <div className="landing-nav-mobile-sublinks">
-              <Link href={FUNCIONES_PATH} className="landing-nav-mobile-sublink" onClick={closeMobileNav}>
-                Ver todas
+              <Link href={funcionesPathForRegion(region)} className="landing-nav-mobile-sublink" onClick={closeMobileNav}>
+                {navCopy.viewAll}
               </Link>
               {FUNCIONES_SECTIONS.map((s) => (
                 <Link
                   key={s.slug}
-                  href={funcionesHref(s.slug)}
+                  href={funcionesHrefForRegion(s.slug, region)}
                   className="landing-nav-mobile-sublink"
                   onClick={closeMobileNav}
                 >
@@ -246,20 +280,20 @@ export default function LandingNav({ homeHref }: LandingNavProps) {
               ))}
             </div>
           ) : null}
-          <Link href={PLANTILLAS_CATALOG_PATH} className="landing-nav-mobile-link" onClick={closeMobileNav}>
-            Plantillas
+          <Link href={plantillasCatalogPathForRegion(region)} className="landing-nav-mobile-link" onClick={closeMobileNav}>
+            {navCopy.templates}
           </Link>
           <Link href={beneficiosHref} className="landing-nav-mobile-link" onClick={closeMobileNav}>
-            Beneficios
+            {navCopy.benefits}
           </Link>
           <Link href={preciosHref} className="landing-nav-mobile-link" onClick={closeMobileNav}>
-            Precios
+            {navCopy.pricing}
           </Link>
           <Link href={comoFuncionaHref} className="landing-nav-mobile-link" onClick={closeMobileNav}>
-            Cómo funciona
+            {navCopy.howItWorks}
           </Link>
           <Link href={faqHref} className="landing-nav-mobile-link" onClick={closeMobileNav}>
-            Preguntas frecuentes
+            {navCopy.faq}
           </Link>
           <button type="button" className="landing-btn-primary landing-nav-mobile-cta" onClick={handleTryFree}>
             {tryFreeLabel}

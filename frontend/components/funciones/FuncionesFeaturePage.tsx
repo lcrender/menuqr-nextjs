@@ -1,45 +1,93 @@
+import { useEffect, type ReactNode } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import type { ReactNode } from 'react';
 import {
-  FUNCIONES_INDEX,
-  FUNCIONES_PATH,
   FUNCIONES_SECTIONS,
+  buildFuncionesHreflangLinks,
   funcionesCopyForRegion,
   funcionesHref,
+  funcionesIndexCopy,
+  funcionesPath,
   type FuncionesSection,
+  type FuncionesUiLocale,
 } from '../../lib/funciones-nav';
 import {
+  rememberSpanishLandingRegion,
+  readLandingRegionCookie,
+  setLandingRegionCookie,
   useLandingHomeHref,
   useLandingRegion,
   type LandingRegion,
 } from '../../lib/landing-region';
+import { changeLanguage, normalizeUiLocale } from '../../src/i18n/config';
+import i18n from '../../src/i18n/config';
 import LandingNav from '../LandingNav';
 import LandingFooter from '../LandingFooter';
 
 type Props = {
   section?: FuncionesSection;
   region?: LandingRegion;
+  locale?: FuncionesUiLocale;
 };
 
-export default function FuncionesFeaturePage({ section, region: regionProp }: Props): ReactNode {
+export default function FuncionesFeaturePage({
+  section,
+  region: regionProp,
+  locale = 'es',
+}: Props): ReactNode {
   const router = useRouter();
-  const homeHref = useLandingHomeHref();
-  const region = useLandingRegion(regionProp);
+  const homeHref = useLandingHomeHref(locale === 'en' ? '/en' : undefined);
+  const regionFromHook = useLandingRegion(regionProp);
+  const region: LandingRegion = locale === 'en' ? 'EN' : regionFromHook;
   const isIndex = !section;
+  const indexCopy = funcionesIndexCopy(locale);
+  const featuresBase = funcionesPath(locale);
 
-  const pageTitle = isIndex ? FUNCIONES_INDEX.metaTitle : funcionesCopyForRegion(section!.metaTitle, region);
+  const ui =
+    locale === 'en'
+      ? {
+          home: 'Home',
+          features: 'Features',
+          allFeatures: 'All features',
+          docs: 'View documentation',
+          cta: 'Create my QR menu',
+        }
+      : {
+          home: 'Inicio',
+          features: 'Funciones',
+          allFeatures: 'Todas las funciones',
+          docs: 'Ver documentación',
+          cta: region === 'AR' ? 'Crear mi menú QR' : 'Crear mi carta digital',
+        };
+
+  const pageTitle = isIndex ? indexCopy.metaTitle : funcionesCopyForRegion(section!.metaTitle, region);
   const pageDescription = isIndex
-    ? FUNCIONES_INDEX.metaDescription
+    ? indexCopy.metaDescription
     : funcionesCopyForRegion(section!.metaDescription, region);
-  const h1 = isIndex ? FUNCIONES_INDEX.h1 : funcionesCopyForRegion(section!.title, region);
-  const lead = isIndex ? FUNCIONES_INDEX.lead : funcionesCopyForRegion(section!.lead, region);
+  const h1 = isIndex ? indexCopy.h1 : funcionesCopyForRegion(section!.title, region);
+  const lead = isIndex ? indexCopy.lead : funcionesCopyForRegion(section!.lead, region);
 
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
-  const path = isIndex ? FUNCIONES_PATH : funcionesHref(section!.slug);
-  const canonicalUrl =
-    canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}${path}` : null;
+  const hasBase = Boolean(canonicalBase && /^https?:\/\//i.test(canonicalBase));
+  const path = isIndex ? featuresBase : funcionesHref(section!.slug, locale);
+  const canonicalUrl = hasBase ? `${canonicalBase}${path}` : null;
+  const hreflangLinks = hasBase
+    ? buildFuncionesHreflangLinks(canonicalBase, isIndex ? undefined : section!.slug)
+    : [];
+
+  useEffect(() => {
+    if (locale !== 'en') return;
+    const cookie = readLandingRegionCookie();
+    if (cookie === 'AR' || cookie === 'ES') rememberSpanishLandingRegion(cookie);
+    setLandingRegionCookie('EN');
+    if (normalizeUiLocale(i18n.language) !== 'en-US') {
+      void changeLanguage('en-US');
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = 'en';
+    }
+  }, [locale]);
 
   const handleCta = () => {
     router.push('/login?action=register');
@@ -50,8 +98,12 @@ export default function FuncionesFeaturePage({ section, region: regionProp }: Pr
       <Head>
         <title>{pageTitle}</title>
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+        {hreflangLinks.map((alt) => (
+          <link key={alt.hreflang} rel="alternate" hrefLang={alt.hreflang} href={alt.href} />
+        ))}
         <meta name="description" content={pageDescription} />
         <meta name="robots" content="index, follow" />
+        <meta httpEquiv="content-language" content={locale === 'en' ? 'en' : 'es'} />
         <meta property="og:type" content="website" />
         {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
         <meta property="og:title" content={pageTitle} />
@@ -66,15 +118,15 @@ export default function FuncionesFeaturePage({ section, region: regionProp }: Pr
           <div className="container" style={{ maxWidth: 860 }}>
             <p className="text-muted small mb-2">
               <Link href={homeHref} className="text-decoration-none">
-                Inicio
+                {ui.home}
               </Link>
               <span aria-hidden="true"> · </span>
               {isIndex ? (
-                <span>Funciones</span>
+                <span>{ui.features}</span>
               ) : (
                 <>
-                  <Link href={FUNCIONES_PATH} className="text-decoration-none">
-                    Funciones
+                  <Link href={featuresBase} className="text-decoration-none">
+                    {ui.features}
                   </Link>
                   <span aria-hidden="true"> · </span>
                   <span>{funcionesCopyForRegion(section!.navLabel, region)}</span>
@@ -90,7 +142,7 @@ export default function FuncionesFeaturePage({ section, region: regionProp }: Pr
             {!isIndex ? (
               <div className="landing-hero-cta mt-3">
                 <button type="button" onClick={handleCta} className="landing-btn-primary landing-btn-large">
-                  {region === 'AR' ? 'Crear mi menú QR' : 'Crear mi carta digital'}
+                  {ui.cta}
                 </button>
               </div>
             ) : null}
@@ -103,7 +155,7 @@ export default function FuncionesFeaturePage({ section, region: regionProp }: Pr
               <ul className="list-unstyled mb-0">
                 {FUNCIONES_SECTIONS.map((s) => {
                   const title = funcionesCopyForRegion(s.title, region);
-                  const href = funcionesHref(s.slug);
+                  const href = funcionesHref(s.slug, locale);
                   return (
                     <li key={s.slug} className="mb-3">
                       <div className="card border-0 shadow-sm">
@@ -137,11 +189,11 @@ export default function FuncionesFeaturePage({ section, region: regionProp }: Pr
                   ))}
                 </ul>
                 <div className="d-flex flex-wrap gap-2">
-                  <Link href={FUNCIONES_PATH} className="btn btn-outline-secondary">
-                    Todas las funciones
+                  <Link href={featuresBase} className="btn btn-outline-secondary">
+                    {ui.allFeatures}
                   </Link>
                   <Link href="/documentacion" className="btn btn-outline-secondary">
-                    Ver documentación
+                    {ui.docs}
                   </Link>
                 </div>
               </>

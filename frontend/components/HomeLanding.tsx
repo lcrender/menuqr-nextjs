@@ -10,17 +10,19 @@ import LandingBenefitIcon from './LandingBenefitIcon';
 import api from '../lib/axios';
 import { preferredImageSrc } from '../lib/optimized-image';
 import { buildLandingJsonLd, siteJsonLdBaseUrl } from '../lib/json-ld-appmenuqr';
-import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
+import { plantillasCatalogPathForRegion } from '../lib/plantillas-catalog-url';
 import { getHomeLandingCopy } from '../lib/home-landing-copy';
 import {
   buildLandingHreflangLinks,
   landingHomePath,
   landingHtmlLang,
   landingOgLocale,
+  landingOgLocaleAlternates,
+  rememberSpanishLandingRegion,
   setLandingRegionCookie,
   type LandingRegion,
 } from '../lib/landing-region';
-
+import { changeLanguage } from '../src/i18n/config';
 type HomeLandingProps = {
   region: LandingRegion;
 };
@@ -36,6 +38,11 @@ export default function HomeLanding({ region }: HomeLandingProps) {
     if (typeof document !== 'undefined') {
       document.documentElement.lang = landingHtmlLang(region);
     }
+    if (region === 'AR' || region === 'ES') {
+      rememberSpanishLandingRegion(region);
+    }
+    // El selector del footer debe coincidir con el idioma de esta home.
+    void changeLanguage(region === 'EN' ? 'en-US' : 'es-ES');
   }, [region]);
 
   useEffect(() => {
@@ -88,11 +95,9 @@ export default function HomeLanding({ region }: HomeLandingProps) {
         ))}
         <meta property="og:type" content="website" />
         <meta property="og:locale" content={ogLocale} />
-        {region === 'AR' ? (
-          <meta property="og:locale:alternate" content="es_ES" />
-        ) : (
-          <meta property="og:locale:alternate" content="es_AR" />
-        )}
+        {landingOgLocaleAlternates(region).map((loc) => (
+          <meta key={loc} property="og:locale:alternate" content={loc} />
+        ))}
         {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
         <meta property="og:title" content={copy.pageTitle} />
         <meta property="og:description" content={copy.pageDescription} />
@@ -167,7 +172,12 @@ export default function HomeLanding({ region }: HomeLandingProps) {
             <p className="text-center text-muted mb-4 mx-auto" style={{ maxWidth: '40rem' }}>
               {copy.pricingIntro}
             </p>
-            <PricingPlansGrid variant="landing" pricingData={pricingData} landingPlanTaglines />
+            <PricingPlansGrid
+              variant="landing"
+              pricingData={pricingData}
+              landingPlanTaglines
+              locale={region === 'EN' ? 'en' : 'es'}
+            />
           </div>
         </section>
 
@@ -258,10 +268,10 @@ export default function HomeLanding({ region }: HomeLandingProps) {
               <p className="landing-cta-subtitle">{copy.ctaSubtitle}</p>
               <div className="landing-cta-buttons">
                 <Link
-                  href={PLANTILLAS_CATALOG_PATH}
+                  href={plantillasCatalogPathForRegion(region)}
                   className="landing-btn-secondary landing-btn-large landing-btn-cta-outline"
                 >
-                  Ver plantillas
+                  {copy.templatesCta}
                 </Link>
                 <button onClick={handleTryFree} className="landing-btn-primary landing-btn-large landing-btn-cta">
                   {copy.ctaPrimary}

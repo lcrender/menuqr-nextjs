@@ -34,6 +34,10 @@ export type HomeLandingCopy = {
     heroLead: string;
     ctaLabel: string;
     heroMockupImage: string;
+    /** Checklist bajo el CTA del hero. */
+    bullets: string[];
+    plantillasQrCaption: string;
+    plantillasQrAria: string;
   };
   benefitsTitle: string;
   benefitsIntro: string;
@@ -57,6 +61,8 @@ export type HomeLandingCopy = {
   ctaSubtitle: string;
   ctaPrimary: string;
   ctaNote: string;
+  /** CTA secundario del bloque final (plantillas). */
+  templatesCta: string;
 };
 
 const ES_FAQ: HomeLandingFaqItem[] = [
@@ -126,6 +132,16 @@ export const HOME_LANDING_ES: HomeLandingCopy = {
       'AppMenuQR es un software para restaurantes y bares que centraliza tu carta digital: gestiona productos y categorías, publica cambios en tiempo real y comparte un código QR para que tus clientes consulten el menú desde el móvil, sin aplicaciones ni impresiones constantes.',
     ctaLabel: 'Crear mi carta digital',
     heroMockupImage: SEO_LANDING_HERO_MOCKUP_IMAGE,
+    bullets: [
+      'Carta QR gratuita',
+      'Carta QR PRO (funcionalidades extras)',
+      'Sin tarjeta de crédito',
+      'Configuración en minutos',
+      'Soporte incluido',
+    ],
+    plantillasQrCaption: 'Escanea el QR o haz clic para ver plantillas.',
+    plantillasQrAria:
+      'Escanea el QR o haz clic para ver el catálogo de plantillas (se abre en una pestaña nueva)',
   },
   benefitsTitle: 'Software de carta digital para restaurantes, bares y cafeterías',
   benefitsIntro:
@@ -234,6 +250,7 @@ export const HOME_LANDING_ES: HomeLandingCopy = {
     'Centraliza la gestión de tu menú, publica cambios en tiempo real y ofrece a tus clientes una carta digital profesional desde el primer día.',
   ctaPrimary: 'Crear mi carta digital',
   ctaNote: 'Sin tarjeta de crédito • Configuración en minutos • Cancela cuando quieras',
+  templatesCta: 'Ver plantillas',
 };
 
 /**
@@ -254,6 +271,16 @@ export const HOME_LANDING_AR: HomeLandingCopy = {
       'Publicá un menú digital que tus clientes abren escaneando un QR desde el celular. Sin instalaciones ni vueltas: cargás platos, generás el código y mejorás la experiencia en sala. Pensado para locales en Argentina.',
     ctaLabel: 'Crear mi menú QR',
     heroMockupImage: SEO_LANDING_HERO_MOCKUP_IMAGE,
+    bullets: [
+      'Menú QR gratis',
+      'Menú QR PRO (funciones extra)',
+      'Sin tarjeta de crédito',
+      'Configuración en minutos',
+      'Soporte incluido',
+    ],
+    plantillasQrCaption: 'Escaneá el QR o hacé clic para ver plantillas.',
+    plantillasQrAria:
+      'Escaneá el QR o hacé clic para ver el catálogo de plantillas (se abre en una pestaña nueva)',
   },
   benefitsTitle: 'Todo lo que necesitás para tu carta digital con QR',
   benefitsIntro:
@@ -403,8 +430,201 @@ export const HOME_LANDING_AR: HomeLandingCopy = {
     'Centralizá la gestión de tu menú, publicá cambios en tiempo real y ofrecé a tus clientes una carta digital profesional desde el primer día.',
   ctaPrimary: 'Crear mi menú QR',
   ctaNote: 'Sin tarjeta de crédito • Configuración en minutos • Cancelá cuando quieras',
+  templatesCta: 'Ver plantillas',
+};
+
+/**
+ * English home (/en): SEO-oriented copy for QR menu / digital restaurant menu keywords.
+ * Pricing: GLOBAL (USD / PayPal) like /es.
+ */
+const EN_FAQ: HomeLandingFaqItem[] = [
+  {
+    question: 'What is a digital QR menu for restaurants?',
+    answer:
+      'A digital menu customers open on their phone by scanning a QR code. They can browse dishes, prices, and allergens in the browser—no app install. You manage the menu from a web dashboard with real-time updates.',
+  },
+  {
+    question: 'Do customers need to download an app?',
+    answer:
+      'No. Your QR menu opens in the mobile browser. Guests scan the code on the table, printed menu, or sign and see the menu instantly.',
+  },
+  {
+    question: 'Can I update dishes and prices anytime?',
+    answer:
+      'Yes. AppMenuQR is restaurant menu software that lets you edit categories, dishes, and prices whenever you need. Changes go live immediately—without reprinting the QR code.',
+  },
+  {
+    question: 'Can I hide out-of-stock items?',
+    answer:
+      'Yes. Temporarily disable dishes and turn them back on in seconds so your digital menu always matches what’s available in the kitchen.',
+  },
+  {
+    question: 'Does it work for bars, cafés, and restaurants?',
+    answer:
+      'Yes. It’s built for restaurants, bars, cafés, food trucks, and hospitality venues that want a professional QR code menu that’s easy to maintain.',
+  },
+  {
+    question: 'Can I show the menu in multiple languages?',
+    answer:
+      'Yes. Offer a multilingual digital menu for international guests. Multi-language menus are available on Pro plans and above.',
+  },
+  {
+    question: 'Is there a free plan to get started?',
+    answer:
+      'You can sign up and set up your digital QR menu on a free starter plan. Upgrade when you need more products, languages, or customization.',
+  },
+  {
+    question: 'Where can I place the QR code for my menu?',
+    answer:
+      'On tables, reservations, printed menus, windows, social media, or messaging apps. The same QR code keeps working when you update dishes or prices.',
+  },
+  {
+    question: 'Can I print a paper version of my QR menu?',
+    answer:
+      'Yes. From the admin panel you can generate a printable menu: choose restaurant, language, and menus, then print for the dining room, patio, or events.',
+  },
+  {
+    question: 'What if I have a lunch menu, dinner menu, or specials?',
+    answer:
+      'Create multiple menus (for example lunch, dinner, or a special) and, on Pro or Premium plans, schedule which days and hours each one is shown for your restaurant’s timezone. Guests scanning the QR see the right menu at the right time—without changing the code.',
+  },
+];
+
+export const HOME_LANDING_EN: HomeLandingCopy = {
+  region: 'EN',
+  pricingCountry: 'GLOBAL',
+  pageTitle: 'QR Menu for Restaurants | Digital Menu with QR Code | AppMenuQR',
+  pageDescription:
+    'Create a digital QR menu for restaurants: manage dishes, prices, and allergens, update in real time, and share a QR code guests open on their phone—no app required.',
+  hero: {
+    h1: 'Digital QR menu for restaurants',
+    h1Highlight: 'with a QR code',
+    heroLead:
+      'AppMenuQR is restaurant QR menu software that centralizes your digital menu: manage dishes and categories, publish updates in real time, and share a QR code so guests browse the menu on their phone—without apps or constant reprints.',
+    ctaLabel: 'Create my QR menu',
+    heroMockupImage: SEO_LANDING_HERO_MOCKUP_IMAGE,
+    bullets: [
+      'Free QR menu',
+      'PRO QR menu (extra features)',
+      'No credit card required',
+      'Set up in minutes',
+      'Support included',
+    ],
+    plantillasQrCaption: 'Scan the QR or click to browse templates.',
+    plantillasQrAria: 'Scan the QR or click to open the template catalog (opens in a new tab)',
+  },
+  benefitsTitle: 'Digital menu software for restaurants, bars, and cafés',
+  benefitsIntro:
+    'Everything you need to run a professional QR code menu from one dashboard.',
+  benefits: [
+    {
+      icon: 'emoji',
+      emoji: '🍽️',
+      title: 'Dish and category management',
+      description:
+        'Organize sections, dishes, prices, allergens, and descriptions with a panel built for day-to-day restaurant operations.',
+    },
+    {
+      icon: 'emoji',
+      emoji: '⚡',
+      title: 'Real-time menu updates',
+      description:
+        'Change your digital menu instantly. Guests always see the latest version—no need to reprint QR codes or paper menus.',
+    },
+    {
+      icon: 'emoji',
+      emoji: '✓',
+      title: 'Show or hide dishes',
+      description:
+        'Hide out-of-stock or seasonal items and bring them back when they’re available again.',
+    },
+    {
+      icon: 'qr',
+      title: 'QR code for tables and touchpoints',
+      description:
+        'Generate a restaurant QR menu ready for tables, counters, delivery, or social. One link, always up to date.',
+    },
+    {
+      icon: 'emoji',
+      emoji: '🌍',
+      title: 'Multilingual digital menu',
+      description:
+        'Serve local and international guests with a multi-language menu according to your plan.',
+    },
+    {
+      icon: 'emoji',
+      emoji: '🎨',
+      title: 'Professional look for your venue',
+      description:
+        'Templates that match your brand—from casual spots to restaurants that need a more polished digital menu.',
+    },
+  ],
+  proseTitle: 'Your digital menu, ready to run in minutes',
+  proseBody:
+    'Digitize the dining experience without reprinting every time you change a price or dish. AppMenuQR combines a digital restaurant menu, product management, and a QR code in an easy-to-use hospitality SaaS platform.',
+  highlights: [
+    { icon: 'emoji', emoji: '🖥️', text: 'Web dashboard to manage your digital menu' },
+    { icon: 'qr', text: 'QR code ready to print or share' },
+    { icon: 'emoji', emoji: '📱', text: 'No installs or technical skills required' },
+    { icon: 'emoji', emoji: '🖨️', text: 'Print a paper menu whenever you need it' },
+  ],
+  pricingTitle: 'Plans for your digital QR menu',
+  pricingIntro:
+    'Choose the product limits, languages, and customization your business needs. Start on the free plan and upgrade as you grow.',
+  stepsTitle: 'How a digital QR menu works',
+  stepsIntro: 'In a few steps you go from a paper menu to a cloud-managed restaurant digital menu:',
+  steps: [
+    'Create your AppMenuQR account',
+    'Set up your restaurant and menu sections',
+    'Add dishes, prices, and details',
+    'Generate the QR code for your digital menu',
+    'Place it on tables, printed menus, or visible spots',
+    'Guests scan and browse the menu on their phone',
+    'Update dishes and prices anytime, in real time',
+  ],
+  stepsOutro: 'Keep your restaurant QR menu current without reprinting materials.',
+  whyTitle: 'Real benefits of a digital menu for restaurants',
+  whyIntro:
+    'Beyond the QR code, what matters is how your team runs the menu every day: less friction, more control, and a better experience for guests dining in or checking the menu before they arrive.',
+  whyHeading: 'Why venues choose a QR code menu',
+  whyBenefits: [
+    {
+      emoji: '📱',
+      title: 'Better dining-room experience',
+      description:
+        'Guests check dishes and prices in seconds on their phone, with clear text, photos, and visible allergens—no downloads or counter waits.',
+    },
+    {
+      emoji: '💸',
+      title: 'Lower printing costs',
+      description:
+        'Cut reprints every time you adjust the menu. A well-managed digital restaurant menu saves paper and staff time over the long run.',
+    },
+    {
+      emoji: '⚡',
+      title: 'Instant operational control',
+      description:
+        'Change prices, add dishes, or hide out-of-stock items. Updates show immediately on your digital QR menu.',
+    },
+    {
+      emoji: '✨',
+      title: 'Modern, professional image',
+      description:
+        'Present a digital menu aligned with your brand. Ideal if you want to look current—using a restaurant QR menu as a complement, not the only message.',
+    },
+  ],
+  faqTitle: 'FAQ: digital menus and QR codes',
+  faq: EN_FAQ,
+  ctaTitle: 'Launch your digital QR menu',
+  ctaSubtitle:
+    'Centralize menu management, publish real-time updates, and offer guests a professional digital menu from day one.',
+  ctaPrimary: 'Create my QR menu',
+  ctaNote: 'No credit card • Set up in minutes • Cancel anytime',
+  templatesCta: 'Browse templates',
 };
 
 export function getHomeLandingCopy(region: LandingRegion): HomeLandingCopy {
-  return region === 'AR' ? HOME_LANDING_AR : HOME_LANDING_ES;
+  if (region === 'AR') return HOME_LANDING_AR;
+  if (region === 'EN') return HOME_LANDING_EN;
+  return HOME_LANDING_ES;
 }
