@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import type { TemplateConfigOption } from '../../lib/template-config-schema';
 import {
   SOL_NOCHE_HOTSPOT_FIELD_IDS,
@@ -6,7 +7,13 @@ import {
   type SolNocheEditHotspot,
 } from '../../lib/sol-noche-preview-edit';
 import PreviewTemplateConfigField from './PreviewTemplateConfigField';
+import i18n from '../../src/i18n/config';
+import systemPagesEs from '../../src/locales/fragments/systemPages.es.json';
+import systemPagesEn from '../../src/locales/fragments/systemPages.en.json';
 import styles from './TemplatePreviewEditPanel.module.css';
+
+i18n.addResourceBundle('es-ES', 'translation', { systemPages: systemPagesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { systemPages: systemPagesEn }, true, true);
 
 const LOGO_OPTION_IDS = new Set(['dayLogoUrl', 'nightLogoUrl']);
 
@@ -33,6 +40,7 @@ export default function TemplatePreviewEditPanel({
   selectedHotspot,
   onClose,
 }: Props) {
+  const { t } = useTranslation();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,34 +58,38 @@ export default function TemplatePreviewEditPanel({
   const optionsSchema = schema.filter((opt) => !LOGO_OPTION_IDS.has(opt.id));
 
   return (
-    <aside className={styles.panel} ref={panelRef} aria-label="Configuración de plantilla">
+    <aside className={styles.panel} ref={panelRef} aria-label={t('systemPages.preview.editPanelAria')}>
       <div className={styles.header}>
         <div>
-          <h2 className={styles.title}>Editar plantilla</h2>
+          <h2 className={styles.title}>{t('systemPages.preview.editTemplate')}</h2>
           <p className={styles.subtitle}>{templateLabel}</p>
         </div>
-        <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar edición">
+        <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t('systemPages.preview.editCloseAria')}>
           ×
         </button>
       </div>
 
       {selectedHotspot ? (
         <p className={styles.selectionHint}>
-          Editando: <strong>{SOL_NOCHE_HOTSPOT_LABELS[selectedHotspot]}</strong>
+          <Trans
+            i18nKey="systemPages.preview.editing"
+            values={{ label: SOL_NOCHE_HOTSPOT_LABELS[selectedHotspot] }}
+            components={{ strong: <strong /> }}
+          />
         </p>
       ) : (
-        <p className={styles.selectionHint}>Hacé clic en un elemento del menú para editarlo.</p>
+        <p className={styles.selectionHint}>{t('systemPages.preview.editHint')}</p>
       )}
 
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Contenido</h3>
+        <h3 className={styles.sectionTitle}>{t('systemPages.preview.contentSection')}</h3>
 
         {logoOptions.length > 0 ? (
           <div
             className={`${styles.contentField}${isHighlighted('dayLogoUrl') || isHighlighted('nightLogoUrl') ? ` ${styles.contentFieldHighlighted}` : ''}`}
           >
-            <span className={styles.fieldLabel}>Logos</span>
-            <p className={styles.fieldHint}>Un logo para modo claro y otro para modo oscuro.</p>
+            <span className={styles.fieldLabel}>{t('systemPages.preview.logos')}</span>
+            <p className={styles.fieldHint}>{t('systemPages.preview.logosHint')}</p>
             {logoOptions.map((opt) => (
               <PreviewTemplateConfigField
                 key={opt.id}
@@ -96,7 +108,7 @@ export default function TemplatePreviewEditPanel({
           data-field-id="restaurantName"
         >
           <label htmlFor="preview-restaurant-name" className={styles.fieldLabel}>
-            Nombre del comercio
+            {t('systemPages.preview.restaurantName')}
           </label>
           <input
             id="preview-restaurant-name"
@@ -113,7 +125,7 @@ export default function TemplatePreviewEditPanel({
           data-field-id="restaurantDescription"
         >
           <label htmlFor="preview-restaurant-desc" className={styles.fieldLabel}>
-            Descripción
+            {t('systemPages.preview.restaurantDescription')}
           </label>
           <textarea
             id="preview-restaurant-desc"
@@ -125,7 +137,7 @@ export default function TemplatePreviewEditPanel({
       </section>
 
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Opciones de la plantilla</h3>
+        <h3 className={styles.sectionTitle}>{t('systemPages.preview.templateOptions')}</h3>
         {optionsSchema.map((opt) => (
           <PreviewTemplateConfigField
             key={opt.id}
@@ -137,7 +149,7 @@ export default function TemplatePreviewEditPanel({
         ))}
       </section>
 
-      <p className={styles.footerNote}>Los cambios son solo de vista previa y no se guardan en tu comercio.</p>
+      <p className={styles.footerNote}>{t('systemPages.preview.previewOnlyNote')}</p>
     </aside>
   );
 }

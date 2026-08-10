@@ -1,17 +1,27 @@
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { usePublicAccountNav } from '../hooks/usePublicSession';
 import { landingSectionHref, useLandingHomeHref } from '../lib/landing-region';
 import { PLANTILLAS_CATALOG_PATH } from '../lib/plantillas-catalog-url';
 import LandingBrandMark from './LandingBrandMark';
+import AuthLanguageSwitcher from './AuthLanguageSwitcher';
+import i18n from '../src/i18n/config';
+import systemPagesEs from '../src/locales/fragments/systemPages.es.json';
+import systemPagesEn from '../src/locales/fragments/systemPages.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { systemPages: systemPagesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { systemPages: systemPagesEn }, true, true);
 
 /**
  * Footer público unificado (landing, legales, login, etc.):
  * columnas por temática — Producto, Recursos, Legal.
  */
 export default function LandingFooter() {
+  const { t } = useTranslation();
   const accountNav = usePublicAccountNav();
   const homeHref = useLandingHomeHref();
   const preciosHref = landingSectionHref(homeHref, 'precios');
+  const year = new Date().getFullYear();
 
   return (
     <footer className="landing-footer">
@@ -21,55 +31,58 @@ export default function LandingFooter() {
             <Link href={homeHref} className="landing-footer-brand text-decoration-none">
               <LandingBrandMark iconSize={40} />
             </Link>
+            <div className="landing-footer-lang">
+              <AuthLanguageSwitcher />
+            </div>
           </div>
 
-          <nav className="landing-footer-col" aria-label="Producto">
-            <h3 className="landing-footer-heading">Producto</h3>
+          <nav className="landing-footer-col" aria-label={t('systemPages.footer.product')}>
+            <h3 className="landing-footer-heading">{t('systemPages.footer.product')}</h3>
             <ul className="landing-footer-list">
               <li>
                 <Link href={preciosHref} className="landing-footer-link">
-                  Precios
+                  {t('systemPages.footer.prices')}
                 </Link>
               </li>
               <li>
                 <Link href="/funciones" className="landing-footer-link">
-                  Funciones
+                  {t('systemPages.footer.features')}
                 </Link>
               </li>
               <li>
                 <Link href={PLANTILLAS_CATALOG_PATH} className="landing-footer-link">
-                  Plantillas
+                  {t('systemPages.footer.templates')}
                 </Link>
               </li>
               <li>
                 <Link href="/carta-digital-restaurante-qr" className="landing-footer-link">
-                  Carta digital restaurante QR
+                  {t('systemPages.footer.digitalMenuQr')}
                 </Link>
               </li>
               <li>
                 <Link href="/software-carta-digital-restaurante" className="landing-footer-link">
-                  Software carta digital
+                  {t('systemPages.footer.digitalMenuSoftware')}
                 </Link>
               </li>
             </ul>
           </nav>
 
-          <nav className="landing-footer-col" aria-label="Recursos">
-            <h3 className="landing-footer-heading">Recursos</h3>
+          <nav className="landing-footer-col" aria-label={t('systemPages.footer.resources')}>
+            <h3 className="landing-footer-heading">{t('systemPages.footer.resources')}</h3>
             <ul className="landing-footer-list">
               <li>
                 <Link href="/blog" className="landing-footer-link">
-                  Blog
+                  {t('systemPages.footer.blog')}
                 </Link>
               </li>
               <li>
                 <Link href="/documentacion" className="landing-footer-link">
-                  Documentación
+                  {t('systemPages.footer.documentation')}
                 </Link>
               </li>
               <li>
                 <Link href="/soporte" className="landing-footer-link">
-                  Soporte
+                  {t('systemPages.footer.support')}
                 </Link>
               </li>
               <li>
@@ -80,22 +93,22 @@ export default function LandingFooter() {
             </ul>
           </nav>
 
-          <nav className="landing-footer-col" aria-label="Legal">
-            <h3 className="landing-footer-heading">Legal</h3>
+          <nav className="landing-footer-col" aria-label={t('systemPages.footer.legal')}>
+            <h3 className="landing-footer-heading">{t('systemPages.footer.legal')}</h3>
             <ul className="landing-footer-list">
               <li>
                 <Link href="/legal/terminos-y-condiciones" className="landing-footer-link">
-                  Términos y condiciones
+                  {t('systemPages.footer.terms')}
                 </Link>
               </li>
               <li>
                 <Link href="/legal/politica-de-privacidad" className="landing-footer-link">
-                  Política de privacidad
+                  {t('systemPages.footer.privacy')}
                 </Link>
               </li>
               <li>
                 <Link href="/legal/politica-de-cookies" className="landing-footer-link">
-                  Política de cookies
+                  {t('systemPages.footer.cookies')}
                 </Link>
               </li>
             </ul>
@@ -103,7 +116,7 @@ export default function LandingFooter() {
         </div>
 
         <div className="landing-footer-copyright">
-          <p>&copy; {new Date().getFullYear()} AppMenuQR. Todos los derechos reservados.</p>
+          <p>{t('systemPages.footer.copyright', { year })}</p>
         </div>
       </div>
     </footer>

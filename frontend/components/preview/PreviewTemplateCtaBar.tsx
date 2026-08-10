@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import api from '../../lib/axios';
 import { consumeTemplateAfterAuth, getNavigationForConsumeResult } from '../../lib/consume-template-after-auth';
 import { previewTemplateIdToCatalogSlug } from '../../lib/menu-template-preview-route';
@@ -11,7 +12,13 @@ import {
   buildIntentFromPreviewTemplateId,
   saveTemplateIntent,
 } from '../../lib/template-selection-intent';
+import i18n from '../../src/i18n/config';
+import systemPagesEs from '../../src/locales/fragments/systemPages.es.json';
+import systemPagesEn from '../../src/locales/fragments/systemPages.en.json';
 import styles from './PreviewTemplateCtaBar.module.css';
+
+i18n.addResourceBundle('es-ES', 'translation', { systemPages: systemPagesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { systemPages: systemPagesEn }, true, true);
 
 export interface PreviewTemplateCtaBarProps {
   previewTemplateId: string;
@@ -46,6 +53,7 @@ function buildRegisterHref(previewId: string): string {
 }
 
 export default function PreviewTemplateCtaBar({ previewTemplateId, templateLabel }: PreviewTemplateCtaBarProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -78,24 +86,27 @@ export default function PreviewTemplateCtaBar({ previewTemplateId, templateLabel
   return (
     <>
       <div className={`${styles.spacer} ${isPro ? styles.spacerPro : styles.spacerFree}`} aria-hidden />
-      <div className={styles.bar} role="region" aria-label="Acciones de plantilla">
+      <div className={styles.bar} role="region" aria-label={t('systemPages.preview.ctaRegionAria')}>
         <div className={styles.inner}>
           <div className={styles.info}>
             <p className={styles.titleRow}>
               <span className={styles.title}>{templateLabel}</span>
               {isPro ? (
-                <span className={`${styles.badge} ${styles.badgePro}`} aria-label="Plantilla Pro">
+                <span className={`${styles.badge} ${styles.badgePro}`} aria-label={t('systemPages.preview.badgeProAria')}>
                   Pro
                 </span>
               ) : (
-                <span className={`${styles.badge} ${styles.badgeFree}`} aria-label="Plantilla gratuita">
+                <span className={`${styles.badge} ${styles.badgeFree}`} aria-label={t('systemPages.preview.badgeFreeAria')}>
                   Free
                 </span>
               )}
             </p>
             {isPro ? (
               <p className={styles.proNote}>
-                Para usar esta plantilla necesitás un plan <strong>Pro</strong> o <strong>Premium</strong>.
+                <Trans
+                  i18nKey="systemPages.preview.proNote"
+                  components={{ strong: <strong /> }}
+                />
               </p>
             ) : null}
           </div>
@@ -106,10 +117,10 @@ export default function PreviewTemplateCtaBar({ previewTemplateId, templateLabel
               onClick={() => void handlePrimary()}
               disabled={busy || !meta}
             >
-              {busy ? 'Procesando…' : 'Usar esta plantilla'}
+              {busy ? t('systemPages.preview.processing') : t('systemPages.preview.useTemplate')}
             </button>
             <Link href={featuresHref} className={styles.secondary}>
-              Ver características
+              {t('systemPages.preview.viewFeatures')}
             </Link>
           </div>
         </div>

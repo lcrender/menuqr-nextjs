@@ -5,11 +5,19 @@ import LandingFooter from '../components/LandingFooter';
 import { useMemo, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import { getApiBaseUrl } from '../lib/config';
 import { type PremiumInquirySource } from '../lib/premium-inquiry-url';
 import type { GetServerSideProps } from 'next';
+import i18n from '../src/i18n/config';
+import systemPagesEs from '../src/locales/fragments/systemPages.es.json';
+import systemPagesEn from '../src/locales/fragments/systemPages.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { systemPages: systemPagesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { systemPages: systemPagesEn }, true, true);
 
 export default function ConsultaPlanPremiumPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const siteKey = (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '').trim();
 
@@ -36,19 +44,19 @@ export default function ConsultaPlanPremiumPage() {
     setOk(false);
 
     if (!siteKey) {
-      setError('El formulario no está configurado (falta reCAPTCHA site key).');
+      setError(t('systemPages.premiumInquiry.errorRecaptchaMissing'));
       return;
     }
 
     try {
       setSubmitting(true);
       if (typeof window === 'undefined' || !window.grecaptcha) {
-        setError('No se pudo inicializar reCAPTCHA.');
+        setError(t('systemPages.premiumInquiry.errorRecaptchaInit'));
         return;
       }
       const token = await window.grecaptcha.execute(siteKey, { action: 'premium_inquiry_submit' });
       if (!token) {
-        setError('No se pudo validar reCAPTCHA.');
+        setError(t('systemPages.premiumInquiry.errorRecaptchaValidate'));
         return;
       }
       await axios.post(`${getApiBaseUrl()}/public/premium-inquiry`, {
@@ -61,7 +69,7 @@ export default function ConsultaPlanPremiumPage() {
     } catch (err: unknown) {
       const raw = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       const msg = Array.isArray(raw) ? raw.join(' ') : raw;
-      setError(msg || 'No se pudo enviar la consulta. Intentá nuevamente.');
+      setError(msg || t('systemPages.premiumInquiry.errorSubmit'));
     } finally {
       setSubmitting(false);
     }
@@ -70,12 +78,9 @@ export default function ConsultaPlanPremiumPage() {
   return (
     <>
       <Head>
-        <title>Consulta Plan Premium a medida | AppMenuQR</title>
+        <title>{t('systemPages.premiumInquiry.metaTitle')}</title>
         <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
-        <meta
-          name="description"
-          content="Consultá por el Plan Premium de AppMenuQR: diseño y configuración personalizada de tu carta digital con QR para restaurantes y bares."
-        />
+        <meta name="description" content={t('systemPages.premiumInquiry.metaDescription')} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       {siteKey ? (
@@ -93,20 +98,15 @@ export default function ConsultaPlanPremiumPage() {
             <div className="landing-auth-container">
               <div className="premium-inquiry-card">
                 <div className="premium-inquiry-header">
-                  <span className="premium-inquiry-badge">A Medida</span>
-                  <h1 className="premium-inquiry-title">Consultá por el Plan Premium</h1>
-                  <p className="premium-inquiry-lead">
-                    Diseño y configuración personalizada para adaptar tu carta digital a las necesidades de tu
-                    negocio.
-                  </p>
-                  <p className="premium-inquiry-callout">Contanos qué necesitás</p>
+                  <span className="premium-inquiry-badge">{t('systemPages.premiumInquiry.badge')}</span>
+                  <h1 className="premium-inquiry-title">{t('systemPages.premiumInquiry.title')}</h1>
+                  <p className="premium-inquiry-lead">{t('systemPages.premiumInquiry.lead')}</p>
+                  <p className="premium-inquiry-callout">{t('systemPages.premiumInquiry.callout')}</p>
                 </div>
 
                 <div className="premium-inquiry-body">
                   {ok ? (
-                    <div className="alert alert-success">
-                      Consulta enviada correctamente. Te contactaremos a la brevedad.
-                    </div>
+                    <div className="alert alert-success">{t('systemPages.premiumInquiry.success')}</div>
                   ) : null}
                   {error ? <div className="alert alert-danger">{error}</div> : null}
 
@@ -114,7 +114,7 @@ export default function ConsultaPlanPremiumPage() {
                     <form onSubmit={submit} className="premium-inquiry-form">
                       <div className="mb-3">
                         <label className="form-label" htmlFor="premium-fullName">
-                          Nombre completo
+                          {t('systemPages.premiumInquiry.fullName')}
                         </label>
                         <input
                           id="premium-fullName"
@@ -128,7 +128,7 @@ export default function ConsultaPlanPremiumPage() {
                       </div>
                       <div className="mb-3">
                         <label className="form-label" htmlFor="premium-businessName">
-                          Nombre del negocio
+                          {t('systemPages.premiumInquiry.businessName')}
                         </label>
                         <input
                           id="premium-businessName"
@@ -142,7 +142,7 @@ export default function ConsultaPlanPremiumPage() {
                       </div>
                       <div className="mb-3">
                         <label className="form-label" htmlFor="premium-email">
-                          Email
+                          {t('systemPages.premiumInquiry.email')}
                         </label>
                         <input
                           id="premium-email"
@@ -156,7 +156,7 @@ export default function ConsultaPlanPremiumPage() {
                       </div>
                       <div className="mb-3">
                         <label className="form-label" htmlFor="premium-phone">
-                          Teléfono
+                          {t('systemPages.premiumInquiry.phone')}
                         </label>
                         <input
                           id="premium-phone"
@@ -171,7 +171,7 @@ export default function ConsultaPlanPremiumPage() {
                       </div>
                       <div className="mb-3">
                         <label className="form-label" htmlFor="premium-message">
-                          ¿Qué necesitás para tu carta digital?
+                          {t('systemPages.premiumInquiry.message')}
                         </label>
                         <textarea
                           id="premium-message"
@@ -185,7 +185,9 @@ export default function ConsultaPlanPremiumPage() {
                       </div>
 
                       <button type="submit" className="premium-inquiry-submit" disabled={submitting}>
-                        {submitting ? 'Enviando…' : 'Enviar consulta'}
+                        {submitting
+                          ? t('systemPages.premiumInquiry.submitting')
+                          : t('systemPages.premiumInquiry.submit')}
                       </button>
                     </form>
                   ) : null}

@@ -3,6 +3,7 @@ import type { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useState, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getAdjacentPreviewTemplateIds, getPreviewData, getPreviewTemplateIds } from '../../data/preview-data';
 import ClassicTemplate from '../../templates/classic/ClassicTemplate';
 import MinimalistTemplate from '../../templates/minimalist/MinimalistTemplate';
@@ -23,6 +24,7 @@ import {
 import PreviewTemplateCtaBar from '../../components/preview/PreviewTemplateCtaBar';
 import SolNochePreviewEditToolbar from '../../components/preview/SolNochePreviewEditToolbar';
 import TemplatePreviewEditPanel from '../../components/preview/TemplatePreviewEditPanel';
+import LandingFooter from '../../components/LandingFooter';
 import type { PreviewRestaurant } from '../../data/preview-data';
 import {
   buildTemplateConfigDefaults,
@@ -32,6 +34,12 @@ import {
 import type { SolNocheEditHotspot } from '../../lib/sol-noche-preview-edit';
 import { PLANTILLAS_CATALOG_PATH } from '../../lib/plantillas-catalog-url';
 import { iconLabelsForLocale } from '../../lib/allergen-icon-labels';
+import i18n from '../../src/i18n/config';
+import systemPagesEs from '../../src/locales/fragments/systemPages.es.json';
+import systemPagesEn from '../../src/locales/fragments/systemPages.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { systemPages: systemPagesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { systemPages: systemPagesEn }, true, true);
 
 const formatPrice = (price: ItemPrice) => {
   if (price.currency === 'ARS') {
@@ -56,7 +64,7 @@ const formatWhatsAppForLink = (whatsapp: string, country?: string): string => {
   return cleaned;
 };
 
-/** Nombres cortos para accesibilidad y barra móvil */
+/** Nombres cortos para accesibilidad y barra móvil (fallback si falta i18n) */
 const PREVIEW_SLUG_LABELS: Record<string, string> = {
   classic: 'Clásica',
   minimalista: 'Minimalista',
@@ -124,6 +132,7 @@ function smartFoodPreviewMenuSlug(locale: string, menuKey: string): string {
 }
 
 export default function PreviewPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { templateSlug } = router.query;
   const slug = typeof templateSlug === 'string' ? templateSlug : '';
@@ -131,21 +140,22 @@ export default function PreviewPage() {
 
   const data = slug ? getPreviewData(slug) : null;
   const validIds = getPreviewTemplateIds();
+  const labelFor = (id: string) => t(`systemPages.preview.slugs.${id}`, { defaultValue: PREVIEW_SLUG_LABELS[id] ?? id });
 
   if (!slug || !data) {
     return (
       <div className="container mt-5 py-5">
         <div className="alert alert-warning" role="alert">
           {slug && !data
-            ? `Plantilla "${slug}" no encontrada. Usa: ${validIds.join(', ')}`
-            : 'Especifica una plantilla en la URL: /preview/classic, /preview/minimalista, etc.'}
+            ? t('systemPages.preview.notFound', { slug, validIds: validIds.join(', ') })
+            : t('systemPages.preview.specifyTemplate')}
         </div>
         <p className="mt-3 d-flex flex-wrap gap-2">
           <Link href={PLANTILLAS_CATALOG_PATH} className="btn btn-outline-primary">
-            Catálogo de plantillas
+            {t('systemPages.preview.catalog')}
           </Link>
           <Link href="/admin/templates" className="btn btn-primary">
-            Ir a plantillas (admin)
+            {t('systemPages.preview.adminTemplates')}
           </Link>
         </p>
       </div>
@@ -253,13 +263,13 @@ export default function PreviewPage() {
   if (!menuListSource[0] || !selectedMenuFromList) {
     return (
       <div className="container mt-5 py-5">
-        <div className="alert alert-warning" role="alert">Sin menú en la vista previa.</div>
+        <div className="alert alert-warning" role="alert">{t('systemPages.preview.noMenu')}</div>
         <div className="d-flex flex-wrap gap-2 mt-2">
           <Link href={PLANTILLAS_CATALOG_PATH} className="btn btn-outline-primary">
-            Catálogo de plantillas
+            {t('systemPages.preview.catalog')}
           </Link>
           <Link href="/admin/templates" className="btn btn-primary">
-            Ir a plantillas (admin)
+            {t('systemPages.preview.adminTemplates')}
           </Link>
         </div>
       </div>
@@ -531,17 +541,16 @@ export default function PreviewPage() {
       />
     ) : null;
   const adjacent = getAdjacentPreviewTemplateIds(slug);
-  const labelFor = (id: string) => PREVIEW_SLUG_LABELS[id] ?? id;
 
   return (
     <>
       <Head>
         <meta name="robots" content="noindex, follow" />
       </Head>
-      <nav className="preview-nav-land" aria-label="Salir de la vista previa">
+      <nav className="preview-nav-land" aria-label={t('systemPages.preview.exitAria')}>
         <div className="preview-nav-land-inner">
           <Link href={PLANTILLAS_CATALOG_PATH} className="preview-nav-land-link">
-            Catálogo de plantillas
+            {t('systemPages.preview.catalog')}
           </Link>
         </div>
       </nav>
@@ -552,12 +561,12 @@ export default function PreviewPage() {
           <Link
             href={`/preview/${encodeURIComponent(adjacent.prevId)}`}
             className="preview-nav-step preview-nav-step-prev"
-            aria-label={`Plantilla anterior: ${labelFor(adjacent.prevId)}`}
+            aria-label={t('systemPages.preview.prevAria', { label: labelFor(adjacent.prevId) })}
           >
             <span className="preview-nav-step-chev" aria-hidden>
               ←
             </span>
-            <span>Anterior</span>
+            <span>{t('systemPages.preview.prev')}</span>
           </Link>
         ) : (
           <span className="preview-nav-step-spacer" aria-hidden />
@@ -566,14 +575,14 @@ export default function PreviewPage() {
           <div className="preview-phone-column">
             {solNocheEditToolbar}
             <div className="preview-phone-wrap">
-              <div className="preview-phone" aria-label="Mockup de teléfono">
+              <div className="preview-phone" aria-label={t('systemPages.preview.phoneMockupAria')}>
                 <div className="preview-phone-screen">
                   {isSolNochePreview ? (
                     <div className="preview-phone-live">{templateElement}</div>
                   ) : (
                     <iframe
                       key={slug}
-                      title="Vista previa mobile"
+                      title={t('systemPages.preview.iframeTitle')}
                       src={iframeSrc}
                       className="preview-phone-iframe"
                     />
@@ -588,9 +597,9 @@ export default function PreviewPage() {
           <Link
             href={`/preview/${encodeURIComponent(adjacent.nextId)}`}
             className="preview-nav-step preview-nav-step-next"
-            aria-label={`Plantilla siguiente: ${labelFor(adjacent.nextId)}`}
+            aria-label={t('systemPages.preview.nextAria', { label: labelFor(adjacent.nextId) })}
           >
-            <span>Próxima</span>
+            <span>{t('systemPages.preview.next')}</span>
             <span className="preview-nav-step-chev" aria-hidden>
               →
             </span>
@@ -607,20 +616,20 @@ export default function PreviewPage() {
             <Link
               href={`/preview/${encodeURIComponent(adjacent.prevId)}`}
               className="preview-nav-step preview-nav-step-prev"
-              aria-label={`Plantilla anterior: ${labelFor(adjacent.prevId)}`}
+              aria-label={t('systemPages.preview.prevAria', { label: labelFor(adjacent.prevId) })}
             >
               <span className="preview-nav-step-chev" aria-hidden>
                 ←
               </span>
-              <span>Anterior</span>
+              <span>{t('systemPages.preview.prev')}</span>
             </Link>
             <span className="preview-current-label">{labelFor(slug)}</span>
             <Link
               href={`/preview/${encodeURIComponent(adjacent.nextId)}`}
               className="preview-nav-step preview-nav-step-next"
-              aria-label={`Plantilla siguiente: ${labelFor(adjacent.nextId)}`}
+              aria-label={t('systemPages.preview.nextAria', { label: labelFor(adjacent.nextId) })}
             >
-              <span>Próxima</span>
+              <span>{t('systemPages.preview.next')}</span>
               <span className="preview-nav-step-chev" aria-hidden>
                 →
               </span>
@@ -842,6 +851,7 @@ export default function PreviewPage() {
         `}</style>
 
       <PreviewTemplateCtaBar previewTemplateId={slug} templateLabel={labelFor(slug)} />
+      {!embed ? <LandingFooter /> : null}
     </>
   );
 }

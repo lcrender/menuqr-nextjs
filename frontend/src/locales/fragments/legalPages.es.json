@@ -1,0 +1,23 @@
+{
+  "navLogin": "Iniciar Sesión",
+  "navAria": "Navegación",
+  "lastUpdated": "Última actualización: Marzo 2026",
+  "terms": {
+    "metaTitle": "Términos y Condiciones de Uso - AppMenuQR",
+    "metaDescription": "Términos y Condiciones de uso de la plataforma AppMenuQR para creación y gestión de menús digitales.",
+    "title": "Términos y Condiciones de Uso"
+  },
+  "privacy": {
+    "metaTitle": "Política de Privacidad - AppMenuQR",
+    "metaDescription": "Política de Privacidad de la plataforma AppMenuQR para la recopilación y uso de datos personales.",
+    "title": "Política de Privacidad"
+  },
+  "cookies": {
+    "metaTitle": "Política de Cookies - AppMenuQR",
+    "metaDescription": "Política de Cookies de la plataforma AppMenuQR sobre el uso de cookies y tecnologías similares.",
+    "title": "Política de Cookies"
+  },
+  "openForm": "Abrir formulario",
+  "openContactForm": "Abrir formulario de contacto",
+  "pricingPage": "página de precios"
+}

@@ -32,7 +32,10 @@ export default function PublicSupportPage() {
           <div className="container" style={{ maxWidth: 640, lineHeight: 1.65 }}>
             <h1 className="h3 mb-4">{t('adminSupport.public.title')}</h1>
             <p className="mb-4">{t('adminSupport.public.body')}</p>
-            <Link href={accountNav.href} className="landing-btn-primary landing-btn-large d-inline-block text-center text-decoration-none">
+            <Link
+              href={accountNav.href}
+              className="landing-btn-primary landing-btn-large d-inline-block text-center text-decoration-none"
+            >
               {accountNav.label}
             </Link>
           </div>
