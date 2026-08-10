@@ -1,13 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/axios';
 import { consumeTemplateAfterAuth, getNavigationForConsumeResult } from '../lib/consume-template-after-auth';
 import Head from 'next/head';
 import LandingFooter from '../components/LandingFooter';
+import AuthLandingNav from '../components/AuthLandingNav';
 import LandingHomeLink from '../components/LandingHomeLink';
-import LandingBrandMark from '../components/LandingBrandMark';
 import { trackEmailVerified } from '../lib/analytics';
+import i18n from '../src/i18n/config';
+import authPagesEs from '../src/locales/fragments/authPages.es.json';
+import authPagesEn from '../src/locales/fragments/authPages.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { authPages: authPagesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { authPages: authPagesEn }, true, true);
 
 function clearPendingPaidPlanLocal(): void {
   if (typeof window === 'undefined') return;
@@ -17,6 +24,7 @@ function clearPendingPaidPlanLocal(): void {
 }
 
 export default function VerifyEmail() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { token } = router.query;
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -60,7 +68,7 @@ export default function VerifyEmail() {
       }
 
       setStatus('success');
-      setMessage(response.data.message || 'Email verificado exitosamente. Tu cuenta ha sido activada.');
+      setMessage(response.data.message || t('authPages.verifyEmail.successDefault'));
 
       const pendingPlan = response.data?.pendingPlan as string | null | undefined;
       const pendingBillingCycleRaw = response.data?.pendingBillingCycle as string | null | undefined;
@@ -119,8 +127,7 @@ export default function VerifyEmail() {
     } catch (err: any) {
       setStatus('error');
       setMessage(
-        err.response?.data?.message ||
-          'Error al verificar el email. El token puede ser inválido o haber expirado.',
+        err.response?.data?.message || t('authPages.verifyEmail.errorDefault'),
       );
     }
   };
@@ -128,25 +135,12 @@ export default function VerifyEmail() {
   return (
     <>
       <Head>
-        <title>Verificar Email - AppMenuQR</title>
-        <meta name="description" content="Verifica tu dirección de email" />
+        <title>{t('authPages.verifyEmail.metaTitle')}</title>
+        <meta name="description" content={t('authPages.verifyEmail.metaDescription')} />
       </Head>
 
       <div className="landing-page">
-        <nav className="landing-nav">
-          <div className="container">
-            <div className="landing-nav-content">
-              <LandingHomeLink className="landing-logo">
-                <LandingBrandMark />
-              </LandingHomeLink>
-              <div className="landing-nav-actions">
-                <Link href="/login" className="landing-btn-secondary">
-                  Iniciar Sesión
-                </Link>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <AuthLandingNav showLoginLink />
 
         <section className="landing-auth">
           <div className="container">
@@ -155,11 +149,11 @@ export default function VerifyEmail() {
                 {status === 'loading' && (
                   <div className="landing-auth-header">
                     <div className="spinner-border text-primary" role="status" style={{ marginBottom: '24px' }}>
-                      <span className="visually-hidden">Verificando...</span>
+                      <span className="visually-hidden">{t('authPages.verifyEmail.loadingVisuallyHidden')}</span>
                     </div>
-                    <h1 className="landing-auth-title">Verificando tu email...</h1>
+                    <h1 className="landing-auth-title">{t('authPages.verifyEmail.loadingTitle')}</h1>
                     <p className="landing-auth-subtitle">
-                      Por favor espera mientras verificamos tu dirección de email.
+                      {t('authPages.verifyEmail.loadingSubtitle')}
                     </p>
                   </div>
                 )}
@@ -167,17 +161,17 @@ export default function VerifyEmail() {
                 {status === 'success' && (
                   <div className="landing-auth-header">
                     <div style={{ fontSize: '4rem', marginBottom: '24px' }}>✅</div>
-                    <h1 className="landing-auth-title">¡Email Verificado!</h1>
+                    <h1 className="landing-auth-title">{t('authPages.verifyEmail.successTitle')}</h1>
                     <p className="landing-auth-subtitle">{message}</p>
                     <p className="landing-auth-subtitle" style={{ marginTop: '16px', fontSize: '0.9rem' }}>
                       {checkoutHref
-                        ? 'Te llevamos al checkout de Pro (anual) en unos segundos...'
-                        : 'Serás redirigido a tu cuenta en unos segundos...'}
+                        ? t('authPages.verifyEmail.redirectCheckout')
+                        : t('authPages.verifyEmail.redirectAccount')}
                     </p>
                     <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {checkoutHref ? (
                         <Link href={checkoutHref} className="landing-btn-primary landing-btn-full">
-                          Continuar al checkout Pro
+                          {t('authPages.verifyEmail.continueCheckout')}
                         </Link>
                       ) : null}
                       <button
@@ -189,7 +183,7 @@ export default function VerifyEmail() {
                         }
                         onClick={goToFreeAccount}
                       >
-                        Ir a mi cuenta (plan Free)
+                        {t('authPages.verifyEmail.goFreeAccount')}
                       </button>
                     </div>
                   </div>
@@ -198,23 +192,23 @@ export default function VerifyEmail() {
                 {status === 'error' && (
                   <div className="landing-auth-header">
                     <div style={{ fontSize: '4rem', marginBottom: '24px' }}>❌</div>
-                    <h1 className="landing-auth-title">Error al Verificar</h1>
+                    <h1 className="landing-auth-title">{t('authPages.verifyEmail.errorTitle')}</h1>
                     <div className="landing-auth-error" style={{ marginTop: '24px' }}>
                       {message}
                     </div>
                     <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <Link href="/login" className="landing-btn-primary landing-btn-full">
-                        Ir a Iniciar Sesión
+                        {t('authPages.common.loginLink')}
                       </Link>
                       <LandingHomeLink className="landing-btn-secondary landing-btn-full">
-                        Volver al Inicio
+                        {t('authPages.common.backHome')}
                       </LandingHomeLink>
                     </div>
                     <p
                       className="landing-auth-subtitle"
                       style={{ marginTop: '24px', fontSize: '0.85rem', color: 'var(--landing-text-muted)' }}
                     >
-                      Si el problema persiste, contacta con soporte o intenta registrarte nuevamente.
+                      {t('authPages.verifyEmail.errorHint')}
                     </p>
                   </div>
                 )}

@@ -88,18 +88,20 @@ export class UsersService {
   }): Promise<User> {
     const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
     const marketingOptIn = data.marketingOptIn === true;
+    const preferredLanguage =
+      String(data.preferredLanguage || 'es').trim().toLowerCase() === 'en' ? 'en' : 'es';
     await this.postgres.executeRaw(
       `INSERT INTO users (
          id, email, password_hash, first_name, last_name, role, tenant_id, is_active,
          email_verified, email_verification_token, pending_plan, pending_billing_cycle,
          registration_country, declared_country, accepted_terms_at, marketing_opt_in, marketing_opt_in_at,
-         created_at, updated_at
+         preferred_language, created_at, updated_at
        )
        VALUES (
          $1, $2, $3, $4, $5, $6::"UserRole", $7, $8,
          $9, $10, $11, $12::"PlanType",
          $13, $14, $15, $16, $17,
-         NOW(), NOW()
+         $18, NOW(), NOW()
        )`,
       [
         id,
@@ -119,6 +121,7 @@ export class UsersService {
         data.acceptedTermsAt ?? null,
         marketingOptIn,
         marketingOptIn ? (data.marketingOptInAt ?? new Date()) : null,
+        preferredLanguage,
       ]
     );
     const user = await this.findById(id);
@@ -245,19 +248,21 @@ export class UsersService {
    * Confirma el cambio de email con el token del link. Valida token y expiración,
    * actualiza email, limpia pending_* e invalida el token. Retorna oldEmail para notificación.
    */
-  async confirmEmailChange(token: string): Promise<{ oldEmail: string; newEmail: string }> {
+  async confirmEmailChange(
+    token: string,
+  ): Promise<{ oldEmail: string; newEmail: string; preferredLanguage: 'es' | 'en' }> {
     if (!token || token.length < 32) {
       throw new BadRequestException('Enlace inválido o expirado.');
     }
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const rows = await this.postgres.queryRaw<any>(
-      `SELECT id, email, pending_email FROM users WHERE email_change_token = $1 AND email_change_expires_at > NOW() AND deleted_at IS NULL LIMIT 1`,
+      `SELECT id, email, pending_email, preferred_language FROM users WHERE email_change_token = $1 AND email_change_expires_at > NOW() AND deleted_at IS NULL LIMIT 1`,
       [tokenHash]
     );
     if (!rows[0]) {
       throw new BadRequestException('Enlace inválido o expirado.');
     }
-    const { id, email: oldEmail, pending_email: newEmail } = rows[0];
+    const { id, email: oldEmail, pending_email: newEmail, preferred_language } = rows[0];
     if (!newEmail) {
       throw new BadRequestException('Enlace inválido o expirado.');
     }
@@ -275,7 +280,11 @@ export class UsersService {
       [newEmail, id]
     );
     this.logger.log(`Email cambiado para usuario ${id}: ${oldEmail} -> ${newEmail}`);
-    return { oldEmail, newEmail };
+    return {
+      oldEmail,
+      newEmail,
+      preferredLanguage: preferred_language === 'en' ? 'en' : 'es',
+    };
   }
 
   /**

@@ -2,6 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from '@prisma/client';
 import { EmailService } from '../common/email/email.service';
+import {
+  defaultEmailDisplayName,
+  normalizeEmailLang,
+  subscriptionUserEmailCopy,
+  type EmailLang,
+} from '../common/email/email-i18n';
 import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import { AdminMessagesService } from '../admin-messages/admin-messages.service';
@@ -211,35 +217,56 @@ export class SubscriptionNotificationService {
     return slug ? map[slug] || slug : '—';
   }
 
-  private billingLabel(planType: PlanType | null): string {
-    if (planType === 'yearly') return 'Anual';
-    if (planType === 'monthly') return 'Mensual';
+  private billingLabel(planType: PlanType | null, lang: EmailLang = 'es'): string {
+    const copy = subscriptionUserEmailCopy[lang];
+    if (planType === 'yearly') return copy.annual;
+    if (planType === 'monthly') return copy.monthly;
     return '—';
   }
 
-  private providerLabel(provider: PaymentProvider | 'internal'): string {
+  private async resolveUserLang(userId: string): Promise<EmailLang> {
+    try {
+      const rows = await this.postgres.queryRaw<{ preferred_language: string | null }>(
+        `SELECT preferred_language FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+        [userId],
+      );
+      return normalizeEmailLang(rows[0]?.preferred_language);
+    } catch {
+      return 'es';
+    }
+  }
+
+  private formatDate(d?: Date | null, lang: EmailLang = 'es'): string {
+    if (!d || Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString(lang === 'en' ? 'en-US' : 'es-AR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  }
+
+  private providerLabel(
+    provider: PaymentProvider | 'internal',
+    lang: EmailLang = 'es',
+  ): string {
     if (provider === 'mercadopago') return 'Mercado Pago';
     if (provider === 'paypal') return 'PayPal';
-    if (provider === 'internal') return 'Código promocional';
+    if (provider === 'internal') return subscriptionUserEmailCopy[lang].promoProvider;
     return provider;
   }
 
-  private durationLabel(months: number | null, unlimited: boolean): string {
-    if (unlimited || months == null) return 'Ilimitada';
-    return months === 1 ? '1 mes' : `${months} meses`;
-  }
-
-  private formatLimit(n: number): string {
-    return n < 0 ? 'Ilimitado' : String(n);
-  }
-
-  private formatMoney(amount?: number | string | null, currency?: string | null): string {
+  private formatMoney(
+    amount?: number | string | null,
+    currency?: string | null,
+    lang: EmailLang = 'es',
+  ): string {
     if (amount === null || amount === undefined || amount === '') return '—';
     const n = typeof amount === 'string' ? Number(amount) : amount;
     if (!Number.isFinite(n)) return String(amount);
     const cur = (currency || '').toUpperCase();
+    const locale = lang === 'en' ? 'en-US' : 'es-AR';
     try {
-      return new Intl.NumberFormat('es-AR', {
+      return new Intl.NumberFormat(locale, {
         style: cur ? 'currency' : 'decimal',
         currency: cur || undefined,
         maximumFractionDigits: 2,
@@ -249,13 +276,13 @@ export class SubscriptionNotificationService {
     }
   }
 
-  private formatDate(d?: Date | null): string {
-    if (!d || Number.isNaN(d.getTime())) return '—';
-    return d.toLocaleDateString('es-AR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  private durationLabel(months: number | null, unlimited: boolean): string {
+    if (unlimited || months == null) return 'Ilimitada';
+    return months === 1 ? '1 mes' : `${months} meses`;
+  }
+
+  private formatLimit(n: number): string {
+    return n < 0 ? 'Ilimitado' : String(n);
   }
 
   private escapeHtml(s: string): string {
@@ -322,36 +349,43 @@ export class SubscriptionNotificationService {
       return;
     }
 
-    const name = payload.firstName?.trim() || 'hola';
+    const lang = await this.resolveUserLang(payload.userId);
+    const copy = subscriptionUserEmailCopy[lang];
+    const name =
+      payload.firstName?.trim() ||
+      (lang === 'en' ? defaultEmailDisplayName(lang) : 'hola');
+    const displayName = name.charAt(0).toUpperCase() + name.slice(1);
     const plan = this.planLabel(payload.planSlug);
-    const billing = this.billingLabel(payload.planType);
+    const billing = this.billingLabel(payload.planType, lang);
     const subscriptionUrl = `${this.frontendUrl.replace(/\/$/, '')}/admin/profile/subscription`;
     const isActivated = payload.kind === 'activated';
+    const labels = copy.labels;
 
-    const subject = isActivated
-      ? `Tu suscripción ${plan} está activa - AppMenuQR`
-      : `Renovación exitosa de tu plan ${plan} - AppMenuQR`;
-
+    const subject = isActivated ? copy.activatedSubject(plan) : copy.renewedSubject(plan);
     const intro = isActivated
-      ? `Confirmamos que tu suscripción al plan <strong>${this.escapeHtml(plan)}</strong> (${this.escapeHtml(billing)}) se activó correctamente.`
-      : `Tu suscripción al plan <strong>${this.escapeHtml(plan)}</strong> (${this.escapeHtml(billing)}) se renovó correctamente.`;
+      ? copy.activatedIntro(this.escapeHtml(plan), this.escapeHtml(billing))
+      : copy.renewedIntro(this.escapeHtml(plan), this.escapeHtml(billing));
 
     const body = `
-      <h2 style="margin-top:0;font-size:18px;">${isActivated ? '¡Suscripción exitosa!' : '¡Renovación exitosa!'}</h2>
-      <p>${this.escapeHtml(name.charAt(0).toUpperCase() + name.slice(1))}, ${intro}</p>
+      <h2 style="margin-top:0;font-size:18px;">${isActivated ? copy.activatedTitle : copy.renewedTitle}</h2>
+      <p>${this.escapeHtml(displayName)}, ${intro}</p>
       <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;width:180px;">Plan</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(plan)}</td></tr>
-        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Facturación</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(billing)}</td></tr>
-        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Pago</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(this.formatMoney(payload.amount, payload.currency))}</td></tr>
-        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Proveedor</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(this.providerLabel(payload.paymentProvider))}</td></tr>
-        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Período</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(this.formatDate(payload.currentPeriodStart))} → ${this.escapeHtml(this.formatDate(payload.currentPeriodEnd))}</td></tr>
+        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;width:180px;">${labels.plan}</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(plan)}</td></tr>
+        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">${labels.billing}</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(billing)}</td></tr>
+        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">${labels.payment}</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(this.formatMoney(payload.amount, payload.currency, lang))}</td></tr>
+        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">${labels.provider}</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(this.providerLabel(payload.paymentProvider, lang))}</td></tr>
+        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">${labels.period}</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(this.formatDate(payload.currentPeriodStart, lang))} → ${this.escapeHtml(this.formatDate(payload.currentPeriodEnd, lang))}</td></tr>
       </table>
       <p style="text-align:center;margin:24px 0;">
-        <a href="${this.escapeHtml(subscriptionUrl)}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;">Ver mi suscripción</a>
+        <a href="${this.escapeHtml(subscriptionUrl)}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;">${copy.cta}</a>
       </p>
     `;
 
-    await this.emailService.sendUserTransactionalEmail(to, subject, this.wrapEmail('Suscripción', body));
+    await this.emailService.sendUserTransactionalEmail(
+      to,
+      subject,
+      this.wrapEmail(copy.titleSuffix, body),
+    );
   }
 
   private async sendAdminEmail(payload: SubscriptionNotifyPayload): Promise<void> {
@@ -469,19 +503,23 @@ export class SubscriptionNotificationService {
 
     const userTo = (payload.userEmail || '').trim();
     if (this.isValidEmail(userTo)) {
-      const first = (payload.firstName || '').trim() || 'Hola';
+      const lang = await this.resolveUserLang(payload.userId);
+      const copy = subscriptionUserEmailCopy[lang];
+      const first =
+        (payload.firstName || '').trim() ||
+        (lang === 'en' ? 'Hi' : 'Hola');
       const userBody = `
-        <h2 style="margin-top:0;font-size:18px;">Tu suscripción fue cancelada</h2>
-        <p>${this.escapeHtml(first)}, confirmamos que cancelaste tu plan <strong>${this.escapeHtml(previousPlan)}</strong>.</p>
-        <p>Tu cuenta pasó al plan <strong>Free</strong>. A partir de ahora ya no vas a poder usar las ventajas del plan ${this.escapeHtml(previousPlan)} (límites, plantillas y funciones exclusivas de ese plan).</p>
-        <p><strong>Motivo indicado:</strong> ${this.escapeHtml(reason)}</p>
-        <p>Si querés volver a un plan de pago, podés hacerlo cuando quieras desde tu suscripción.</p>
-        <p style="margin-top:20px;"><a href="${this.escapeHtml(`${this.frontendUrl.replace(/\/$/, '')}/admin/profile/subscription`)}" style="display:inline-block;background:#6366f1;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">Ver planes</a></p>
+        ${copy.canceledBody(
+          this.escapeHtml(first),
+          this.escapeHtml(previousPlan),
+          this.escapeHtml(reason),
+        )}
+        <p style="margin-top:20px;"><a href="${this.escapeHtml(`${this.frontendUrl.replace(/\/$/, '')}/admin/profile/subscription`)}" style="display:inline-block;background:#6366f1;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">${copy.canceledCta}</a></p>
       `;
       await this.emailService.sendUserTransactionalEmail(
         userTo,
-        'Tu suscripción fue cancelada — pasaste a plan Free - AppMenuQR',
-        this.wrapEmail('Suscripción', userBody),
+        copy.canceledSubject,
+        this.wrapEmail(copy.titleSuffix, userBody),
       );
     } else {
       this.logger.warn(`Usuario sin email válido para cancelación (${payload.userId})`);

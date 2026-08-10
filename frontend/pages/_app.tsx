@@ -4,12 +4,23 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/landing.css';
 import '../styles/funciones-feature.css';
 import '../styles/cookie-consent.css';
-import '../src/i18n/config';
+import {
+  changeLanguage,
+  getCurrentLanguage,
+  resolveClientPreferredUiLocale,
+} from '../src/i18n/config';
 import CookieConsentRoot from '../components/CookieConsentRoot';
 import RouteScopedStylesheets from '../components/RouteScopedStylesheets';
 import { syncLandingRegionCookieFromUser } from '../lib/landing-region';
 
 export default function App({ Component, pageProps }: AppProps) {
+  useEffect(() => {
+    const preferred = resolveClientPreferredUiLocale();
+    if (preferred !== getCurrentLanguage()) {
+      void changeLanguage(preferred);
+    }
+  }, []);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem('user');

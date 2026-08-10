@@ -163,7 +163,9 @@ export class AuthService {
         acceptTerms,
         marketingOptIn,
         timezone,
+        preferredLanguage,
       } = registerDto;
+      const preferredLang = preferredLanguage === 'en' ? 'en' : 'es';
       const normalizedEmail = (email || '').trim().toLowerCase();
 
       if (acceptTerms !== true) {
@@ -226,6 +228,7 @@ export class AuthService {
         acceptedTermsAt: now,
         marketingOptIn: wantsMarketing,
         marketingOptInAt: wantsMarketing ? now : null,
+        preferredLanguage: preferredLang,
       });
 
       // Crear suscripción free por defecto (plan interno, sin proveedor de pago)
@@ -279,8 +282,9 @@ export class AuthService {
         try {
           await this.emailService.sendEmailVerification(
             normalizedEmail,
-            firstName || 'Usuario',
+            firstName || '',
             emailVerificationToken!,
+            preferredLang,
           );
         } catch (emailError) {
           this.logger.error(`Error enviando email de verificación a ${normalizedEmail}:`, emailError);
@@ -477,8 +481,9 @@ export class AuthService {
       // Enviar email
       await this.emailService.sendPasswordResetEmail(
         user.email,
-        user.firstName || 'Usuario',
-        resetToken
+        user.firstName || '',
+        resetToken,
+        (user as any).preferredLanguage,
       );
 
       this.logger.log(`Email de recuperación enviado a ${email}`);
@@ -579,8 +584,9 @@ export class AuthService {
     const { token, pendingEmail } = await this.usersService.requestEmailChange(userId, newEmail);
     await this.emailService.sendEmailChangeVerification(
       pendingEmail,
-      user.firstName || 'Usuario',
+      user.firstName || '',
       token,
+      (user as any).preferredLanguage,
     );
     return { message: 'Se envió un email de confirmación al nuevo correo. Revisa tu bandeja de entrada.' };
   }
@@ -589,8 +595,9 @@ export class AuthService {
    * Confirma el cambio de email con el token del link. Delega en UserService y notifica al email anterior.
    */
   async confirmEmailChange(token: string) {
-    const { oldEmail, newEmail } = await this.usersService.confirmEmailChange(token);
-    await this.emailService.sendEmailChangeNotification(oldEmail);
+    const { oldEmail, preferredLanguage } =
+      await this.usersService.confirmEmailChange(token);
+    await this.emailService.sendEmailChangeNotification(oldEmail, preferredLanguage);
     return { message: 'Email actualizado correctamente. Ya puedes iniciar sesión con tu nuevo correo.' };
   }
 

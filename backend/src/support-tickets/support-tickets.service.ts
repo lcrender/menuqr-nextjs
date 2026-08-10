@@ -10,6 +10,11 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma, SupportTicketStatus, UserRole } from '@prisma/client';
 import { PrismaService } from '../common/database/prisma.service';
 import { EmailService } from '../common/email/email.service';
+import {
+  defaultEmailDisplayName,
+  normalizeEmailLang,
+  supportTicketReplyEmailCopy,
+} from '../common/email/email-i18n';
 import { MinioService } from '../common/minio/minio.service';
 import { optimizeModernPair } from '../common/image/image-optimizer';
 import { CreateSupportTicketDto } from './dto/create-support-ticket.dto';
@@ -160,6 +165,7 @@ export class SupportTicketsService {
   private async notifyUserTicketReply(params: {
     userEmail: string;
     firstName?: string | null;
+    preferredLanguage?: string | null;
     ticketNumber: number;
     ticketSubject: string;
     adminMessage: string;
@@ -167,29 +173,32 @@ export class SupportTicketsService {
     const to = (params.userEmail || '').trim();
     if (!to) return;
 
+    const lang = normalizeEmailLang(params.preferredLanguage);
+    const copy = supportTicketReplyEmailCopy[lang];
     const frontendBase = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000').replace(/\/$/, '');
     const loginUrl = `${frontendBase}/login`;
-    const firstName = (params.firstName || '').trim() || 'Hola';
-    const subject = `[AppMenuQR] Respuesta a tu ticket #${params.ticketNumber}`;
+    const firstName =
+      (params.firstName || '').trim() || copy.defaultName || defaultEmailDisplayName(lang);
+    const subject = copy.subject(params.ticketNumber);
     const html = `
       <!DOCTYPE html>
-      <html>
+      <html lang="${lang}">
       <head><meta charset="utf-8" /></head>
       <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #111827;">
-        <h2 style="margin-top:0;">${escapeHtml(firstName)}, tenemos una respuesta a tu ticket</h2>
-        <p><strong>Ticket:</strong> #${params.ticketNumber} — ${escapeHtml(params.ticketSubject)}</p>
-        <p><strong>Respuesta del equipo:</strong></p>
+        <h2 style="margin-top:0;">${escapeHtml(copy.title(firstName))}</h2>
+        <p><strong>${escapeHtml(copy.ticketLabel)}:</strong> #${params.ticketNumber} — ${escapeHtml(params.ticketSubject)}</p>
+        <p><strong>${escapeHtml(copy.replyLabel)}:</strong></p>
         <pre style="white-space: pre-wrap; background:#f3f4f6; padding:12px; border-radius:8px;">${escapeHtml(
           params.adminMessage,
         )}</pre>
-        <p>Podés iniciar sesión para seguir el hilo y responder desde el panel de soporte.</p>
-        <p><a href="${escapeHtml(loginUrl)}">Ir a iniciar sesión</a></p>
+        <p>${escapeHtml(copy.followUp)}</p>
+        <p><a href="${escapeHtml(loginUrl)}">${escapeHtml(copy.cta)}</a></p>
       </body>
       </html>
     `;
 
     try {
-      await this.emailService.sendAdminNotificationEmail(to, subject, html);
+      await this.emailService.sendUserTransactionalEmail(to, subject, html);
     } catch (e) {
       this.logger.error(`Error enviando notificación al usuario por ticket #${params.ticketNumber}: ${e}`);
     }
@@ -492,7 +501,7 @@ export class SupportTicketsService {
         where: { id: ticketId },
         include: {
           user: {
-            select: { email: true, firstName: true },
+            select: { id: true, email: true, firstName: true },
           },
         },
       });
@@ -509,9 +518,21 @@ export class SupportTicketsService {
           data: { lastReplyAt: new Date(), lastReplyByRole: roleStr },
         }),
       ]);
+      let preferredLanguage: string | null = 'es';
+      try {
+        if (ticket.userId) {
+          const langRows = await this.prisma.$queryRaw<Array<{ preferred_language: string | null }>>`
+            SELECT preferred_language FROM users WHERE id = ${ticket.userId} AND deleted_at IS NULL LIMIT 1
+          `;
+          preferredLanguage = langRows[0]?.preferred_language ?? 'es';
+        }
+      } catch {
+        preferredLanguage = 'es';
+      }
       void this.notifyUserTicketReply({
         userEmail: ticket.user?.email || '',
         firstName: ticket.user?.firstName,
+        preferredLanguage,
         ticketNumber: ticket.ticketNumber,
         ticketSubject: ticket.subject,
         adminMessage: text,

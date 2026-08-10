@@ -2,6 +2,11 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PostgresService } from '../common/database/postgres.service';
 import { EmailService } from '../common/email/email.service';
+import {
+  defaultEmailDisplayName,
+  normalizeEmailLang,
+  promoReminderDefaults,
+} from '../common/email/email-i18n';
 import { UpdatePromoReminderSettingsDto } from './dto/promo-reminder-settings.dto';
 import { formatDateEsAr, PLAN_LABELS } from './promo-codes.constants';
 
@@ -168,7 +173,8 @@ export class PromoReminderService {
          pc.code as "promoCode",
          u.email,
          u.first_name as "firstName",
-         u.last_name as "lastName"
+         u.last_name as "lastName",
+         u.preferred_language as "preferredLanguage"
        FROM promo_code_redemptions r
        JOIN subscriptions s ON s.id = r.subscription_id
        JOIN promo_codes pc ON pc.id = r.promo_code_id
@@ -192,22 +198,41 @@ export class PromoReminderService {
     const subscriptionUrl = `${this.frontendUrl.replace(/\/$/, '')}/admin/profile/subscription`;
 
     for (const row of rows) {
+      const lang = normalizeEmailLang(row.preferredLanguage);
+      const localized =
+        promoReminderDefaults[lang].find((r) => r.daysBefore === rule.daysBefore) ||
+        (lang === 'en'
+          ? promoReminderDefaults.en[0]
+          : { subject: rule.subject, bodyHtml: rule.bodyHtml, daysBefore: rule.daysBefore });
+      // ES: prefer admin-configured templates; EN: always use English defaults
+      const template =
+        lang === 'en'
+          ? localized
+          : { subject: rule.subject, bodyHtml: rule.bodyHtml, daysBefore: rule.daysBefore };
+
       const expiresAt = new Date(row.expiresAt);
       const daysRemaining = String(
         Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 86400000)),
       );
       const vars = {
-        firstName: row.firstName || 'Usuario',
+        firstName: row.firstName || defaultEmailDisplayName(lang),
         lastName: row.lastName || '',
         email: row.email,
         planName: PLAN_LABELS[row.grantPlanSlug] ?? row.grantPlanSlug,
-        expiresAt: formatDateEsAr(expiresAt),
+        expiresAt:
+          lang === 'en'
+            ? expiresAt.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
+            : formatDateEsAr(expiresAt),
         daysRemaining,
         promoCode: row.promoCode,
         subscriptionUrl,
       };
-      const subject = this.replacePlaceholders(rule.subject, vars);
-      const body = this.replacePlaceholders(rule.bodyHtml, vars);
+      const subject = this.replacePlaceholders(template.subject, vars);
+      const body = this.replacePlaceholders(template.bodyHtml, vars);
 
       try {
         await this.emailService.sendUserTransactionalEmail(

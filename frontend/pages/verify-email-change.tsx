@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/axios';
 import Head from 'next/head';
 import LandingFooter from '../components/LandingFooter';
+import AuthLandingNav from '../components/AuthLandingNav';
 import LandingHomeLink from '../components/LandingHomeLink';
-import LandingBrandMark from '../components/LandingBrandMark';
+import i18n from '../src/i18n/config';
+import authPagesEs from '../src/locales/fragments/authPages.es.json';
+import authPagesEn from '../src/locales/fragments/authPages.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { authPages: authPagesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { authPages: authPagesEn }, true, true);
 
 export default function VerifyEmailChange() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { token } = router.query;
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -18,7 +26,7 @@ export default function VerifyEmailChange() {
       confirmEmailChange(token);
     } else if (router.isReady && !token) {
       setStatus('error');
-      setMessage('Enlace inválido. Falta el token de confirmación.');
+      setMessage(t('authPages.verifyEmailChange.errorMissingToken'));
     }
   }, [token, router.isReady]);
 
@@ -29,14 +37,16 @@ export default function VerifyEmailChange() {
         token: confirmToken,
       });
       setStatus('success');
-      setMessage(response.data.message || 'Email actualizado correctamente. Ya puedes iniciar sesión con tu nuevo correo.');
+      setMessage(
+        response.data.message || t('authPages.verifyEmailChange.successDefault'),
+      );
     } catch (err: any) {
       setStatus('error');
       const msg = err.response?.data?.message;
       if (msg) {
         setMessage(msg);
       } else {
-        setMessage('El enlace no es válido o ha expirado. Solicita un nuevo cambio de email desde tu perfil.');
+        setMessage(t('authPages.verifyEmailChange.errorDefault'));
       }
     }
   };
@@ -44,25 +54,12 @@ export default function VerifyEmailChange() {
   return (
     <>
       <Head>
-        <title>Confirmar cambio de email - AppMenuQR</title>
-        <meta name="description" content="Confirma el cambio de tu dirección de email" />
+        <title>{t('authPages.verifyEmailChange.metaTitle')}</title>
+        <meta name="description" content={t('authPages.verifyEmailChange.metaDescription')} />
       </Head>
 
       <div className="landing-page">
-        <nav className="landing-nav">
-          <div className="container">
-            <div className="landing-nav-content">
-              <LandingHomeLink className="landing-logo">
-                <LandingBrandMark />
-              </LandingHomeLink>
-              <div className="landing-nav-actions">
-                <Link href="/login" className="landing-btn-secondary">
-                  Iniciar Sesión
-                </Link>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <AuthLandingNav showLoginLink />
 
         <section className="landing-auth">
           <div className="container">
@@ -71,11 +68,15 @@ export default function VerifyEmailChange() {
                 {status === 'loading' && (
                   <div className="landing-auth-header">
                     <div className="spinner-border text-primary" role="status" style={{ marginBottom: '24px' }}>
-                      <span className="visually-hidden">Confirmando...</span>
+                      <span className="visually-hidden">
+                        {t('authPages.verifyEmailChange.loadingVisuallyHidden')}
+                      </span>
                     </div>
-                    <h1 className="landing-auth-title">Confirmando cambio de email...</h1>
+                    <h1 className="landing-auth-title">
+                      {t('authPages.verifyEmailChange.loadingTitle')}
+                    </h1>
                     <p className="landing-auth-subtitle">
-                      Por favor espera un momento.
+                      {t('authPages.verifyEmailChange.loadingSubtitle')}
                     </p>
                   </div>
                 )}
@@ -83,15 +84,15 @@ export default function VerifyEmailChange() {
                 {status === 'success' && (
                   <div className="landing-auth-header">
                     <div style={{ fontSize: '4rem', marginBottom: '24px' }}>✅</div>
-                    <h1 className="landing-auth-title">Email actualizado</h1>
-                    <p className="landing-auth-subtitle">
-                      {message}
-                    </p>
+                    <h1 className="landing-auth-title">
+                      {t('authPages.verifyEmailChange.successTitle')}
+                    </h1>
+                    <p className="landing-auth-subtitle">{message}</p>
                     <p className="landing-auth-subtitle" style={{ marginTop: '16px', fontSize: '0.9rem' }}>
-                      Se envió una notificación a tu email anterior informando del cambio.
+                      {t('authPages.verifyEmailChange.successNotify')}
                     </p>
                     <Link href="/login" className="landing-btn-primary landing-btn-full" style={{ marginTop: '24px' }}>
-                      Iniciar sesión
+                      {t('authPages.common.login')}
                     </Link>
                   </div>
                 )}
@@ -99,20 +100,25 @@ export default function VerifyEmailChange() {
                 {status === 'error' && (
                   <div className="landing-auth-header">
                     <div style={{ fontSize: '4rem', marginBottom: '24px' }}>❌</div>
-                    <h1 className="landing-auth-title">No se pudo completar el cambio</h1>
+                    <h1 className="landing-auth-title">
+                      {t('authPages.verifyEmailChange.errorTitle')}
+                    </h1>
                     <div className="landing-auth-error" style={{ marginTop: '24px' }}>
                       {message}
                     </div>
                     <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <Link href="/login" className="landing-btn-primary landing-btn-full">
-                        Ir a Iniciar Sesión
+                        {t('authPages.common.loginLink')}
                       </Link>
                       <LandingHomeLink className="landing-btn-secondary landing-btn-full">
-                        Volver al Inicio
+                        {t('authPages.common.backHome')}
                       </LandingHomeLink>
                     </div>
-                    <p className="landing-auth-subtitle" style={{ marginTop: '24px', fontSize: '0.85rem', color: 'var(--landing-text-muted)' }}>
-                      Si no realizaste este cambio, contacta a soporte inmediatamente.
+                    <p
+                      className="landing-auth-subtitle"
+                      style={{ marginTop: '24px', fontSize: '0.85rem', color: 'var(--landing-text-muted)' }}
+                    >
+                      {t('authPages.verifyEmailChange.errorHint')}
                     </p>
                   </div>
                 )}

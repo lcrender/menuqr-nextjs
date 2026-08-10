@@ -1,6 +1,5 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 
 // Importar traducciones
 import esES from '../locales/es-ES.json';
@@ -22,58 +21,72 @@ export const availableLocales = {
   },
 };
 
+/**
+ * Idioma fijo en SSR + primer paint del cliente (evita hydration mismatch).
+ * La preferencia de localStorage / navegador se aplica en el cliente tras montar (_app).
+ */
+export const I18N_SSR_DEFAULT_LOCALE = 'es-ES' as const;
+
+export function normalizeUiLocale(lang?: string | null): 'es-ES' | 'en-US' {
+  return String(lang || '').toLowerCase().startsWith('en') ? 'en-US' : 'es-ES';
+}
+
+/** Lee preferencia guardada o, si no hay, el idioma del navegador. Solo en cliente. */
+export function resolveClientPreferredUiLocale(): 'es-ES' | 'en-US' {
+  if (typeof window === 'undefined') return I18N_SSR_DEFAULT_LOCALE;
+  try {
+    const stored = localStorage.getItem('menuqr-locale');
+    if (stored) return normalizeUiLocale(stored);
+  } catch {
+    // ignore
+  }
+  try {
+    const nav = typeof navigator !== 'undefined' ? navigator.language || '' : '';
+    if (nav.toLowerCase().startsWith('en')) return 'en-US';
+  } catch {
+    // ignore
+  }
+  return I18N_SSR_DEFAULT_LOCALE;
+}
+
 // ========================================
 // CONFIGURACIÓN DE I18NEXT
 // ========================================
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    // Recursos de traducción
-    resources: {
-      'es-ES': {
-        translation: esES,
-      },
-      'en-US': {
-        translation: enUS,
-      },
+i18n.use(initReactI18next).init({
+  resources: {
+    'es-ES': {
+      translation: esES,
     },
-
-    // Configuración de detección de idioma
-    detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage'],
-      lookupLocalStorage: 'menuqr-locale',
+    'en-US': {
+      translation: enUS,
     },
+  },
 
-    // Configuración general
-    fallbackLng: 'es-ES',
-    debug: process.env.NODE_ENV === 'development',
+  // Mismo idioma en servidor y primer render del cliente → sin hydration error.
+  lng: I18N_SSR_DEFAULT_LOCALE,
+  fallbackLng: I18N_SSR_DEFAULT_LOCALE,
 
-    // Configuración de interpolación
-    interpolation: {
-      escapeValue: false, // React ya escapa por defecto
-    },
+  debug: process.env.NODE_ENV === 'development',
 
-    // Configuración de pluralización
-    pluralSeparator: '_',
-    contextSeparator: '_',
+  interpolation: {
+    escapeValue: false,
+  },
 
-    // Configuración de namespaces
-    defaultNS: 'translation',
-    ns: ['translation'],
+  pluralSeparator: '_',
+  contextSeparator: '_',
 
-    // Mantener códigos regionales (es-ES / en-US); no reducir a languageOnly.
-    load: 'currentOnly',
-    preload: ['es-ES', 'en-US'],
-    supportedLngs: ['es-ES', 'en-US'],
-    nonExplicitSupportedLngs: false,
+  defaultNS: 'translation',
+  ns: ['translation'],
 
-    // Configuración de react
-    react: {
-      useSuspense: false,
-    },
-  });
+  load: 'currentOnly',
+  preload: ['es-ES', 'en-US'],
+  supportedLngs: ['es-ES', 'en-US'],
+  nonExplicitSupportedLngs: false,
+
+  react: {
+    useSuspense: false,
+  },
+});
 
 // ========================================
 // FUNCIONES DE UTILIDAD
@@ -101,13 +114,12 @@ export function notifyPreferredLanguageChanged(lang: PreferredLanguageCode): voi
  */
 export const changeLanguage = async (locale: string): Promise<void> => {
   try {
-    await i18n.changeLanguage(locale);
+    const next = normalizeUiLocale(locale);
+    await i18n.changeLanguage(next);
 
-    // Solo usar localStorage en el cliente (navegador)
     if (typeof window !== 'undefined') {
-      localStorage.setItem('menuqr-locale', locale);
-      // Actualizar el atributo lang del HTML
-      document.documentElement.lang = locale;
+      localStorage.setItem('menuqr-locale', next);
+      document.documentElement.lang = next;
     }
   } catch (error) {
     console.error('Error cambiando idioma:', error);
@@ -118,7 +130,7 @@ export const changeLanguage = async (locale: string): Promise<void> => {
  * Obtiene el idioma actual
  */
 export const getCurrentLanguage = (): string => {
-  return i18n.language || 'es-ES';
+  return i18n.language || I18N_SSR_DEFAULT_LOCALE;
 };
 
 /**
@@ -160,7 +172,7 @@ export const formatNumber = (value: number, options?: Intl.NumberFormatOptions):
 export const formatDate = (date: Date | string, options?: Intl.DateTimeFormatOptions): string => {
   const locale = getCurrentLanguage();
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   return new Intl.DateTimeFormat(locale, {
     year: 'numeric',
     month: 'long',
@@ -175,10 +187,10 @@ export const formatDate = (date: Date | string, options?: Intl.DateTimeFormatOpt
 export const formatCurrency = (
   value: number,
   currency: string = 'USD',
-  options?: Intl.NumberFormatOptions
+  options?: Intl.NumberFormatOptions,
 ): string => {
   const locale = getCurrentLanguage();
-  
+
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
@@ -187,4 +199,3 @@ export const formatCurrency = (
 };
 
 export default i18n;
-

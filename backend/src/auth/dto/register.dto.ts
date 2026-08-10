@@ -110,5 +110,15 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   recaptchaToken?: string;
+
+  @ApiProperty({
+    description: 'Idioma preferido de la interfaz (es|en)',
+    example: 'es',
+    required: false,
+    enum: ['es', 'en'],
+  })
+  @IsOptional()
+  @IsIn(['es', 'en'])
+  preferredLanguage?: 'es' | 'en';
 }
 

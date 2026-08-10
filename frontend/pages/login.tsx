@@ -3,6 +3,7 @@ import type { GetServerSidePropsContext, InferGetServerSidePropsType } from 'nex
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Script from 'next/script';
+import { Trans, useTranslation } from 'react-i18next';
 import api from '../lib/axios';
 import Head from 'next/head';
 import AlertModal from '../components/AlertModal';
@@ -15,20 +16,19 @@ import {
   saveTemplateIntent,
 } from '../lib/template-selection-intent';
 import { syncLandingRegionCookieFromUser } from '../lib/landing-region';
-import LandingHomeLink from '../components/LandingHomeLink';
-import LandingBrandMark from '../components/LandingBrandMark';
+import AuthLandingNav from '../components/AuthLandingNav';
 import { trackSignUp } from '../lib/analytics';
+import i18n from '../src/i18n/config';
+import authPagesEs from '../src/locales/fragments/authPages.es.json';
+import authPagesEn from '../src/locales/fragments/authPages.en.json';
+
+i18n.addResourceBundle('es-ES', 'translation', { authPages: authPagesEs }, true, true);
+i18n.addResourceBundle('en-US', 'translation', { authPages: authPagesEn }, true, true);
 
 // Ocultar credenciales de prueba: en build de producción (NODE_ENV) o si se define NEXT_PUBLIC_APP_ENV=production
 const isProduction =
   typeof process !== 'undefined' &&
   (process.env.NEXT_PUBLIC_APP_ENV === 'production' || process.env.NODE_ENV === 'production');
-
-/** Textos SEO distintos entre login y registro (evita duplicados en auditorías y refuerza intención). */
-const LOGIN_META_DESCRIPTION =
-  'Accedé al panel de AppMenuQR para administrar tu menú digital, códigos QR y carta. Iniciá sesión con tu email y contraseña de titular o staff.';
-const REGISTER_META_DESCRIPTION =
-  'Alta gratuita en AppMenuQR: menú digital con código QR, plantillas y categorías para tu local. Registrate y publicá platos en minutos, sin papel.';
 
 const ROBOTS_NOINDEX = 'noindex, follow';
 
@@ -41,6 +41,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 type LoginPageProps = InferGetServerSidePropsType<typeof getServerSideProps>;
 
 export default function Login({ initialIsRegister }: LoginPageProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const siteKey = (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '').trim();
   /** Modo alineado con la URL (SSR usa initialIsRegister hasta que el router esté listo). */
@@ -49,8 +50,12 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
   /** Una sola URL canónica evita “contenido duplicado” entre /login y ?action=register. */
   const canonicalUrl =
     canonicalBase && /^https?:\/\//i.test(canonicalBase) ? `${canonicalBase}/login` : null;
-  const pageTitle = registerFromUrl ? 'Registrarse - AppMenuQR' : 'Iniciar Sesión - AppMenuQR';
-  const pageDescription = registerFromUrl ? REGISTER_META_DESCRIPTION : LOGIN_META_DESCRIPTION;
+  const pageTitle = registerFromUrl
+    ? t('authPages.login.metaTitleRegister')
+    : t('authPages.login.metaTitleLogin');
+  const pageDescription = registerFromUrl
+    ? t('authPages.login.metaDescriptionRegister')
+    : t('authPages.login.metaDescriptionLogin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -65,7 +70,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
   const [showRegisterSuccessModal, setShowRegisterSuccessModal] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<'starter' | 'pro' | 'premium' | null>(null);
   const [pendingBillingCycle, setPendingBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
-  const [templateIntentHint, setTemplateIntentHint] = useState<string | null>(null);
+  const [templateIntentName, setTemplateIntentName] = useState<string | null>(null);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const acceptTermsRef = useRef<HTMLInputElement>(null);
@@ -78,13 +83,13 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
       const intent = buildIntentFromPreviewTemplateId(raw);
       if (intent) {
         saveTemplateIntent(intent);
-        setTemplateIntentHint(`Seguirás con la plantilla «${intent.displayName}» al entrar.`);
+        setTemplateIntentName(intent.displayName);
         return;
       }
     }
     const stored = readTemplateIntent();
     if (stored) {
-      setTemplateIntentHint(`Seguirás con la plantilla «${stored.displayName}» al entrar.`);
+      setTemplateIntentName(stored.displayName);
     }
   }, [router.isReady, router.query.template]);
 
@@ -213,49 +218,48 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!trimmedEmail) {
-      nextFieldErrors.email = 'El email es obligatorio';
+      nextFieldErrors.email = t('authPages.login.errors.emailRequired');
     } else if (!emailRegex.test(trimmedEmail)) {
-      nextFieldErrors.email = 'El email no tiene un formato válido';
+      nextFieldErrors.email = t('authPages.login.errors.emailInvalid');
     }
 
     if (!password) {
-      nextFieldErrors.password = 'La contraseña es obligatoria';
+      nextFieldErrors.password = t('authPages.login.errors.passwordRequired');
     }
 
     if (!registerFromUrl && password && password.length < 8) {
-      nextFieldErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+      nextFieldErrors.password = t('authPages.login.errors.passwordMin');
     }
 
     if (registerFromUrl) {
       if (!trimmedFirstName) {
-        nextFieldErrors.firstName = 'El nombre es obligatorio';
+        nextFieldErrors.firstName = t('authPages.login.errors.firstNameRequired');
       } else if (trimmedFirstName.length < 2) {
-        nextFieldErrors.firstName = 'El nombre debe tener al menos 2 caracteres';
+        nextFieldErrors.firstName = t('authPages.login.errors.firstNameMin');
       } else if (trimmedFirstName.length > 50) {
-        nextFieldErrors.firstName = 'El nombre no puede exceder 50 caracteres';
+        nextFieldErrors.firstName = t('authPages.login.errors.firstNameMax');
       }
 
       if (!trimmedLastName) {
-        nextFieldErrors.lastName = 'El apellido es obligatorio';
+        nextFieldErrors.lastName = t('authPages.login.errors.lastNameRequired');
       } else if (trimmedLastName.length < 2) {
-        nextFieldErrors.lastName = 'El apellido debe tener al menos 2 caracteres';
+        nextFieldErrors.lastName = t('authPages.login.errors.lastNameMin');
       } else if (trimmedLastName.length > 50) {
-        nextFieldErrors.lastName = 'El apellido no puede exceder 50 caracteres';
+        nextFieldErrors.lastName = t('authPages.login.errors.lastNameMax');
       }
 
       if (password.length < 8) {
-        nextFieldErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+        nextFieldErrors.password = t('authPages.login.errors.passwordMin');
       }
 
       if (!confirmPassword) {
-        nextFieldErrors.confirmPassword = 'Debes confirmar la contraseña';
+        nextFieldErrors.confirmPassword = t('authPages.login.errors.confirmRequired');
       } else if (password !== confirmPassword) {
-        nextFieldErrors.confirmPassword = 'Las contraseñas no son iguales';
+        nextFieldErrors.confirmPassword = t('authPages.login.errors.confirmMismatch');
       }
 
       if (!acceptTerms) {
-        nextFieldErrors.acceptTerms =
-          'Es obligatorio aceptar los Términos y Condiciones y la Política de Privacidad.';
+        nextFieldErrors.acceptTerms = t('authPages.login.errors.acceptTermsRequired');
       }
     }
 
@@ -272,7 +276,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
     }
 
     if (registerFromUrl && isProduction && !siteKey) {
-      setError('El registro no está disponible en este momento (falta configuración de seguridad).');
+      setError(t('authPages.login.errors.registerUnavailable'));
       setLoading(false);
       return;
     }
@@ -280,19 +284,19 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
     let recaptchaToken: string | undefined;
     if (registerFromUrl && siteKey) {
       if (typeof window === 'undefined' || !window.grecaptcha) {
-        setError('No se pudo cargar reCAPTCHA. Recargá la página e intentá de nuevo.');
+        setError(t('authPages.login.errors.recaptchaLoad'));
         setLoading(false);
         return;
       }
       try {
         recaptchaToken = await window.grecaptcha.execute(siteKey, { action: 'register_submit' });
       } catch {
-        setError('No se pudo validar reCAPTCHA.');
+        setError(t('authPages.login.errors.recaptchaValidate'));
         setLoading(false);
         return;
       }
       if (!recaptchaToken) {
-        setError('No se pudo validar reCAPTCHA.');
+        setError(t('authPages.login.errors.recaptchaValidate'));
         setLoading(false);
         return;
       }
@@ -308,6 +312,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
           lastName: trimmedLastName,
           acceptTerms: true,
           marketingOptIn,
+          preferredLanguage: i18n.language?.startsWith('en') ? 'en' : 'es',
           pendingPlan: pendingPlan ?? undefined,
           pendingBillingCycle: pendingPlan ? pendingBillingCycle : undefined,
           timezone:
@@ -368,23 +373,37 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
       messageList.forEach((msg) => {
         const lower = msg.toLowerCase();
         if (lower.includes('email')) backendFieldErrors.email = msg;
-        if (lower.includes('contraseña')) backendFieldErrors.password = msg;
-        if (lower.includes('nombre') && !lower.includes('términos') && !lower.includes('terminos')) {
+        if (lower.includes('contraseña') || lower.includes('password')) backendFieldErrors.password = msg;
+        if (
+          (lower.includes('nombre') || lower.includes('first name') || lower.includes('firstname')) &&
+          !lower.includes('términos') &&
+          !lower.includes('terminos') &&
+          !lower.includes('terms')
+        ) {
           backendFieldErrors.firstName = msg;
         }
-        if (lower.includes('apellido')) backendFieldErrors.lastName = msg;
+        if (lower.includes('apellido') || lower.includes('last name') || lower.includes('lastname')) {
+          backendFieldErrors.lastName = msg;
+        }
         if (
           lower.includes('términos') ||
           lower.includes('terminos') ||
           lower.includes('privacidad') ||
+          lower.includes('privacy') ||
+          lower.includes('terms') ||
           lower.includes('acept')
         ) {
           backendFieldErrors.acceptTerms = msg;
         }
       });
 
-      if (registerFromUrl && normalizedMessage.includes('ya hay una cuenta con ese email')) {
-        setFieldErrors((prev) => ({ ...prev, email: 'Ya hay un usuario con ese email' }));
+      if (
+        registerFromUrl &&
+        (normalizedMessage.includes('ya hay una cuenta con ese email') ||
+          normalizedMessage.includes('already exists') ||
+          normalizedMessage.includes('email already'))
+      ) {
+        setFieldErrors((prev) => ({ ...prev, email: t('authPages.login.errors.emailTaken') }));
       } else if (Object.keys(backendFieldErrors).length > 0) {
         setFieldErrors((prev) => ({ ...prev, ...backendFieldErrors }));
       } else if (normalizedMessage) {
@@ -392,14 +411,21 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
       } else {
         setError(
           registerFromUrl
-            ? 'Error al registrarse. Por favor, revisa los datos e intenta nuevamente.'
-            : 'Error al iniciar sesión. Verifica tus credenciales.',
+            ? t('authPages.login.errors.registerGeneric')
+            : t('authPages.login.errors.loginGeneric'),
         );
       }
     } finally {
       setLoading(false);
     }
   };
+
+  const passwordToggleLabel = showPassword
+    ? t('authPages.common.hidePassword')
+    : t('authPages.common.showPassword');
+  const confirmPasswordToggleLabel = showConfirmPassword
+    ? t('authPages.common.hideConfirmPassword')
+    : t('authPages.common.showConfirmPassword');
 
   return (
     <>
@@ -425,16 +451,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
       ) : null}
 
       <div className="landing-page">
-        {/* Navigation */}
-        <nav className="landing-nav">
-          <div className="container">
-            <div className="landing-nav-content">
-              <LandingHomeLink className="landing-logo">
-                <LandingBrandMark />
-              </LandingHomeLink>
-            </div>
-          </div>
-        </nav>
+        <AuthLandingNav />
 
         {/* Login/Register Form */}
         <section className="landing-auth">
@@ -443,14 +460,16 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
               <div className="landing-auth-card">
                 <div className="landing-auth-header">
                   <h1 className="landing-auth-title">
-                    {registerFromUrl ? 'Crear Cuenta Gratis' : 'Iniciar Sesión'}
+                    {registerFromUrl
+                      ? t('authPages.login.titleRegister')
+                      : t('authPages.login.titleLogin')}
                   </h1>
                   <p className="landing-auth-subtitle">
                     {registerFromUrl
-                      ? 'Empezá gratis: plantillas, categorías y menú listo para mostrar con QR en tu mesa o vidriera.'
-                      : 'Gestioná platos, precios y el código QR de tu menú desde cualquier dispositivo.'}
+                      ? t('authPages.login.subtitleRegister')
+                      : t('authPages.login.subtitleLogin')}
                   </p>
-                  {templateIntentHint ? (
+                  {templateIntentName ? (
                     <p
                       className="landing-auth-subtitle"
                       style={{
@@ -463,7 +482,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                         fontSize: '0.95rem',
                       }}
                     >
-                      {templateIntentHint}
+                      {t('authPages.login.templateIntent', { name: templateIntentName })}
                     </p>
                   ) : null}
                 </div>
@@ -478,7 +497,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                       void router.replace({ pathname: '/login', query: queryRest }, undefined, { shallow: true });
                     }}
                   >
-                    Iniciar Sesión
+                    {t('authPages.login.tabLogin')}
                   </button>
                   <button
                     type="button"
@@ -491,7 +510,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                       );
                     }}
                   >
-                    Registrarse
+                    {t('authPages.login.tabRegister')}
                   </button>
                 </div>
 
@@ -520,7 +539,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                     <>
                       <div className="landing-auth-field">
                         <label htmlFor="firstName" className="landing-auth-label">
-                          Nombre
+                          {t('authPages.login.firstName')}
                         </label>
                         <input
                           type="text"
@@ -531,13 +550,13 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                           maxLength={50}
                           required
                           disabled={loading}
-                          placeholder="Tu nombre"
+                          placeholder={t('authPages.login.firstNamePlaceholder')}
                         />
                         {fieldErrors.firstName && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.firstName}</small>}
                       </div>
                       <div className="landing-auth-field">
                         <label htmlFor="lastName" className="landing-auth-label">
-                          Apellido
+                          {t('authPages.login.lastName')}
                         </label>
                         <input
                           type="text"
@@ -548,7 +567,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                           maxLength={50}
                           required
                           disabled={loading}
-                          placeholder="Tu apellido"
+                          placeholder={t('authPages.login.lastNamePlaceholder')}
                         />
                         {fieldErrors.lastName && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.lastName}</small>}
                       </div>
@@ -558,7 +577,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
 
                   <div className="landing-auth-field">
                     <label htmlFor="email" className="landing-auth-label">
-                      Email
+                      {t('authPages.common.email')}
                     </label>
                     <input
                       type="email"
@@ -568,14 +587,14 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={loading}
-                      placeholder="tu@email.com"
+                      placeholder={t('authPages.common.emailPlaceholder')}
                     />
                     {fieldErrors.email && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.email}</small>}
                   </div>
 
                   <div className="landing-auth-field">
                     <label htmlFor="password" className="landing-auth-label">
-                      Contraseña
+                      {t('authPages.common.password')}
                     </label>
                     <div className="landing-auth-password-wrap">
                       <input
@@ -587,14 +606,14 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                         required
                         disabled={loading}
                         minLength={8}
-                        placeholder="••••••••"
+                        placeholder={t('authPages.common.passwordPlaceholder')}
                       />
                       <button
                         type="button"
                         className="landing-auth-password-toggle"
                         onClick={() => setShowPassword((v) => !v)}
-                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                        title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        aria-label={passwordToggleLabel}
+                        title={passwordToggleLabel}
                       >
                         {showPassword ? '🙈' : '👁️'}
                       </button>
@@ -602,7 +621,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                     {fieldErrors.password && <small className="landing-auth-hint" style={{ color: '#dc2626' }}>{fieldErrors.password}</small>}
                     {registerFromUrl && (
                       <small className="landing-auth-hint">
-                        Mínimo 8 caracteres
+                        {t('authPages.login.passwordHint')}
                       </small>
                     )}
                   </div>
@@ -610,7 +629,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                   {registerFromUrl && (
                     <div className="landing-auth-field">
                       <label htmlFor="confirmPassword" className="landing-auth-label">
-                        Confirmar Contraseña
+                        {t('authPages.login.confirmPassword')}
                       </label>
                       <div className="landing-auth-password-wrap">
                         <input
@@ -622,14 +641,14 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                           required
                           disabled={loading}
                           minLength={8}
-                          placeholder="••••••••"
+                          placeholder={t('authPages.common.passwordPlaceholder')}
                         />
                         <button
                           type="button"
                           className="landing-auth-password-toggle"
                           onClick={() => setShowConfirmPassword((v) => !v)}
-                          aria-label={showConfirmPassword ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'}
-                          title={showConfirmPassword ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'}
+                          aria-label={confirmPasswordToggleLabel}
+                          title={confirmPasswordToggleLabel}
                         >
                           {showConfirmPassword ? '🙈' : '👁️'}
                         </button>
@@ -663,15 +682,25 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                           aria-describedby={fieldErrors.acceptTerms ? 'accept-terms-error' : undefined}
                         />
                         <span>
-                          Acepto los{' '}
-                          <Link href="/legal/terminos-y-condiciones" target="_blank" rel="noopener noreferrer">
-                            Términos y Condiciones
-                          </Link>{' '}
-                          y la{' '}
-                          <Link href="/legal/politica-de-privacidad" target="_blank" rel="noopener noreferrer">
-                            Política de Privacidad
-                          </Link>
-                          .
+                          <Trans
+                            i18nKey="authPages.login.acceptTerms"
+                            components={{
+                              termsLink: (
+                                <Link
+                                  href="/legal/terminos-y-condiciones"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                />
+                              ),
+                              privacyLink: (
+                                <Link
+                                  href="/legal/politica-de-privacidad"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                />
+                              ),
+                            }}
+                          />
                         </span>
                       </label>
                       {fieldErrors.acceptTerms && (
@@ -686,9 +715,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                           onChange={(e) => setMarketingOptIn(e.target.checked)}
                           disabled={loading}
                         />
-                        <span>
-                          Sí, quiero descubrir nuevas funciones, consejos y beneficios para aprovechar mejor MenuQR
-                        </span>
+                        <span>{t('authPages.login.marketingOptIn')}</span>
                       </label>
                     </div>
                   )}
@@ -698,16 +725,20 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                     className="landing-btn-primary landing-btn-full"
                     disabled={loading}
                   >
-                    {loading 
-                      ? (registerFromUrl ? 'Creando cuenta...' : 'Iniciando sesión...')
-                      : (registerFromUrl ? 'Crear Cuenta Gratis' : 'Iniciar Sesión')
+                    {loading
+                      ? (registerFromUrl
+                          ? t('authPages.login.submittingRegister')
+                          : t('authPages.login.submittingLogin'))
+                      : (registerFromUrl
+                          ? t('authPages.login.submitRegister')
+                          : t('authPages.login.submitLogin'))
                     }
                   </button>
 
                   {!registerFromUrl && (
                     <div className="landing-auth-help">
                       <Link href="/forgot-password" className="landing-auth-help-link">
-                        ¿Perdiste tu contraseña?
+                        {t('authPages.login.forgotPassword')}
                       </Link>
                     </div>
                   )}
@@ -716,9 +747,16 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                 {!registerFromUrl && !isProduction && (
                   <div className="landing-auth-footer">
                     <p className="landing-auth-footer-text">
-                      <strong>Credenciales de prueba:</strong><br />
-                      Super Admin: superadmin@menuqr.com / SuperAdmin123!<br />
-                      Admin: admin@demo.com / Admin123!
+                      <strong>{t('authPages.login.demoCredentialsTitle')}</strong>
+                      <br />
+                      {t('authPages.login.demoCredentialsBody')
+                        .split('\n')
+                        .map((line, idx, arr) => (
+                          <span key={line}>
+                            {line}
+                            {idx < arr.length - 1 ? <br /> : null}
+                          </span>
+                        ))}
                     </p>
                   </div>
                 )}
@@ -732,8 +770,8 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
 
       <AlertModal
         show={showRegisterSuccessModal}
-        title="Registro exitoso"
-        message="Por favor, verifica tu email. Hemos enviado un enlace de verificación a tu dirección de correo electrónico."
+        title={t('authPages.login.registerSuccessTitle')}
+        message={t('authPages.login.registerSuccessMessage')}
         variant="success"
         toastAutoHideMs={10000}
         onClose={() => setShowRegisterSuccessModal(false)}
