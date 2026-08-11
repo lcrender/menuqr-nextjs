@@ -54,6 +54,13 @@ function localeFromBlog(pathname: string | undefined): UiLocaleCode | null {
   return blog === 'en' ? 'en-US' : 'es-ES';
 }
 
+/** Ruta real en el navegador (sin query); en páginas dinámicas pathname es `/blog/[slug]`. */
+function routerPathForLocaleSwitch(router: { asPath: string; pathname: string }): string {
+  const raw = router.asPath.split('?')[0]?.split('#')[0]?.trim();
+  if (raw && raw !== router.pathname) return raw;
+  return router.pathname;
+}
+
 /**
  * Selector de idioma de UI (footer / páginas públicas).
  * Lista idiomas desde `availableLocales` — al agregar uno allí, aparece solo.
@@ -68,16 +75,17 @@ export default function AuthLanguageSwitcher() {
 
   const languages = getAvailableLanguages();
   const active = useMemo(() => {
-    const fromBlog = localeFromBlog(router.pathname);
+    const path = routerPathForLocaleSwitch(router);
+    const fromBlog = localeFromBlog(path);
     if (fromBlog) return fromBlog;
-    const fromFunciones = localeFromFunciones(router.pathname);
+    const fromFunciones = localeFromFunciones(path);
     if (fromFunciones) return fromFunciones;
-    const fromCatalog = localeFromPlantillasCatalog(router.pathname);
+    const fromCatalog = localeFromPlantillasCatalog(path);
     if (fromCatalog) return fromCatalog;
     const fromPage = localeFromMarketingHome(router.pathname);
     if (fromPage) return fromPage;
     return normalizeUiLocale(i18n.language || getCurrentLanguage());
-  }, [router.pathname, i18n.language]);
+  }, [router.pathname, router.asPath, i18n.language]);
   const activeMeta = languages.find((l) => l.code === active) ?? languages[0];
 
   const select = useCallback(
@@ -85,7 +93,9 @@ export default function AuthLanguageSwitcher() {
       setOpen(false);
       if (locale === active) return;
 
-      const blogLocale = blogLocaleFromPath(router.pathname);
+      const path = routerPathForLocaleSwitch(router);
+
+      const blogLocale = blogLocaleFromPath(path);
       if (blogLocale) {
         if (locale === 'en-US' && blogLocale !== 'en') {
           const cookie = readLandingRegionCookie();
@@ -93,21 +103,21 @@ export default function AuthLanguageSwitcher() {
           else rememberSpanishLandingRegion(resolvePreferredSpanishRegion());
           setLandingRegionCookie('EN');
           void changeLanguage('en-US');
-          void router.push(blogAlternatePath(router.pathname, 'en'));
+          void router.push(blogAlternatePath(path, 'en'));
           return;
         }
         if (locale === 'es-ES' && blogLocale !== 'es') {
           const spanishRegion = resolvePreferredSpanishRegion();
           setLandingRegionCookie(spanishRegion);
           void changeLanguage('es-ES');
-          void router.push(blogAlternatePath(router.pathname, 'es'));
+          void router.push(blogAlternatePath(path, 'es'));
           return;
         }
         void changeLanguage(locale);
         return;
       }
 
-      const funcionesLocale = funcionesLocaleFromPath(router.pathname);
+      const funcionesLocale = funcionesLocaleFromPath(path);
       if (funcionesLocale) {
         if (locale === 'en-US' && funcionesLocale !== 'en') {
           const cookie = readLandingRegionCookie();
@@ -115,14 +125,14 @@ export default function AuthLanguageSwitcher() {
           else rememberSpanishLandingRegion(resolvePreferredSpanishRegion());
           setLandingRegionCookie('EN');
           void changeLanguage('en-US');
-          void router.push(funcionesAlternatePath(router.pathname, 'en'));
+          void router.push(funcionesAlternatePath(path, 'en'));
           return;
         }
         if (locale === 'es-ES' && funcionesLocale !== 'es') {
           const spanishRegion = resolvePreferredSpanishRegion();
           setLandingRegionCookie(spanishRegion);
           void changeLanguage('es-ES');
-          void router.push(funcionesAlternatePath(router.pathname, 'es'));
+          void router.push(funcionesAlternatePath(path, 'es'));
           return;
         }
         void changeLanguage(locale);

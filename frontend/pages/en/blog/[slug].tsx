@@ -1,5 +1,6 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import BlogArticleSmartFood from '../../../components/blog/BlogArticleSmartFood';
+import BlogArticleAppMenuEnglish from '../../../components/blog/BlogArticleAppMenuEnglish';
 import {
   BLOG_ARTICLES,
   blogCanonicalSlug,
@@ -12,6 +13,9 @@ type Props = { slug: string };
 export default function BlogSlugEnPage({ slug }: Props) {
   if (slug === 'plantilla-smart-food-filtros-alimentarios') {
     return <BlogArticleSmartFood locale="en" />;
+  }
+  if (slug === 'app-menu-qr-now-available-in-english-es') {
+    return <BlogArticleAppMenuEnglish locale="en" />;
   }
   return null;
 }

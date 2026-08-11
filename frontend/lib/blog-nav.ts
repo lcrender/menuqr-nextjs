@@ -73,7 +73,37 @@ export const BLOG_ARTICLES: BlogArticleMeta[] = [
       en: ['Templates', 'Smart Food', 'Dietary filters'],
     },
   },
+  {
+    slug: 'app-menu-qr-now-available-in-english-es',
+    enSlug: 'app-menu-qr-now-available-in-english',
+    publishedAt: '2026-08-11',
+    title: {
+      es: 'App Menu QR ahora también está disponible en inglés',
+      en: 'App Menu QR is now also available in English',
+    },
+    excerpt: {
+      es: 'Desde ahora podés usar App Menu QR completamente en inglés: una plataforma preparada para que más restaurantes y negocios gestionen sus menús en su propio idioma.',
+      en: 'You can now use App Menu QR fully in English. A platform built for more restaurants and businesses to manage their menus in their preferred language.',
+    },
+    metaTitle: {
+      es: 'App Menu QR en inglés | Blog App Menu QR',
+      en: 'App Menu QR in English | App Menu QR Blog',
+    },
+    metaDescription: {
+      es: 'App Menu QR ahora también está disponible en inglés. Con i18n, adaptamos la interfaz a diferentes idiomas manteniendo la misma experiencia.',
+      en: 'App Menu QR is now also available in English. With i18n, we adapt the interface to different languages while keeping the same user experience.',
+    },
+    tags: {
+      es: ['App Menu QR', 'i18n', 'Inglés'],
+      en: ['App Menu QR', 'i18n', 'English'],
+    },
+  },
 ];
+
+/** Artículos ordenados por fecha de publicación (más reciente primero). */
+export function getBlogArticlesNewestFirst(): BlogArticleMeta[] {
+  return [...BLOG_ARTICLES].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+}
 
 export const BLOG_SLUGS = BLOG_ARTICLES.map((a) => a.slug);
 

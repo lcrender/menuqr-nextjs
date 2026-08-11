@@ -4,13 +4,13 @@ import Link from 'next/link';
 import LandingFooter from '../LandingFooter';
 import LandingNav from '../LandingNav';
 import {
-  BLOG_ARTICLES,
   BLOG_INDEX,
   blogArticleHref,
   blogMetaForLocale,
   blogPath,
   buildBlogHreflangLinks,
   formatBlogDate,
+  getBlogArticlesNewestFirst,
   type BlogUiLocale,
 } from '../../lib/blog-nav';
 import { buildBlogIndexJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
@@ -31,6 +31,7 @@ export default function BlogIndex({ locale = 'es' }: Props) {
   const homeHref = useLandingHomeHref(locale === 'en' ? '/en' : undefined);
   const index = BLOG_INDEX[locale];
   const catalogPath = blogPath(locale);
+  const articles = getBlogArticlesNewestFirst();
 
   useEffect(() => {
     const next = locale === 'en' ? 'en-US' : 'es-ES';
@@ -55,7 +56,7 @@ export default function BlogIndex({ locale = 'es' }: Props) {
   const jsonLd = (() => {
     const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
     if (!base) return null;
-    const articles = BLOG_ARTICLES.map((a) => {
+    const articlesForJsonLd = articles.map((a) => {
       const m = blogMetaForLocale(a, locale);
       return {
         slug: locale === 'en' ? a.enSlug : a.slug,
@@ -63,7 +64,7 @@ export default function BlogIndex({ locale = 'es' }: Props) {
         publishedAt: m.publishedAt,
       };
     });
-    return buildBlogIndexJsonLd(base, articles, { blogPath: catalogPath, locale });
+    return buildBlogIndexJsonLd(base, articlesForJsonLd, { blogPath: catalogPath, locale });
   })();
 
   return (
@@ -94,7 +95,7 @@ export default function BlogIndex({ locale = 'es' }: Props) {
               <p className="blog-lead">{index.lead}</p>
             </header>
             <ul className="blog-card-list">
-              {BLOG_ARTICLES.map((article) => {
+              {articles.map((article) => {
                 const m = blogMetaForLocale(article, locale);
                 const href = blogArticleHref(article.slug, locale);
                 return (
