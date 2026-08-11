@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import QRCode from 'react-qr-code';
 import { Trans, useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import api from '../../lib/axios';
 import AdminLayout from '../../components/AdminLayout';
 import PlanBadge from '../../components/profile/PlanBadge';
@@ -79,11 +80,11 @@ function dashboardCardToConfigState(card: DashboardRestaurantCard): RestaurantCo
 
 function templateLabelFromSlug(
   card: DashboardRestaurantCard,
-  t: (key: string, options?: Record<string, unknown>) => string,
+  t: TFunction,
 ): string {
   const id = card.restaurantTemplate;
   if (!id) return '';
-  return translateTemplateName(t as any, id);
+  return translateTemplateName(t, id);
 }
 
 function menuStatusLabel(
