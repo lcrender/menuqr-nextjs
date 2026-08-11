@@ -57,10 +57,12 @@ export default function AdminConfigDashboardCtaCard() {
       const res = await api.get<ApiResponse>('/admin/dashboard/cta-card', {
         params: { locale },
       });
-      setPlans(res.data.plans || []);
-      if (res.data.plans?.[0]?.planKey) {
+      const nextPlans = res.data.plans || [];
+      setPlans(nextPlans);
+      const firstPlanKey = nextPlans[0]?.planKey;
+      if (firstPlanKey) {
         setActivePlan((prev) =>
-          res.data.plans.some((p) => p.planKey === prev) ? prev : res.data.plans[0].planKey,
+          nextPlans.some((p) => p.planKey === prev) ? prev : firstPlanKey,
         );
       }
     } catch (e: any) {
