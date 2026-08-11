@@ -56,11 +56,13 @@ export default function AdminConfigDashboardWelcomeMessages() {
       const res = await api.get<ApiResponse>('/admin/dashboard/welcome-messages', {
         params: { locale },
       });
-      setPlans(res.data.plans || []);
+      const nextPlans = res.data.plans || [];
+      setPlans(nextPlans);
       setPlaceholders(res.data.placeholders || []);
-      if (res.data.plans?.[0]?.planKey) {
+      const firstPlanKey = nextPlans[0]?.planKey;
+      if (firstPlanKey) {
         setActivePlan((prev) =>
-          res.data.plans.some((p) => p.planKey === prev) ? prev : res.data.plans[0].planKey,
+          nextPlans.some((p) => p.planKey === prev) ? prev : firstPlanKey,
         );
       }
     } catch (e: any) {
