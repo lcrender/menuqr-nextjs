@@ -41,6 +41,7 @@
     "submittingLogin": "Signing in...",
     "submittingRegister": "Creating account...",
     "forgotPassword": "Forgot your password?",
+    "rememberCredentials": "Remember my details",
     "demoCredentialsTitle": "Test credentials:",
     "demoCredentialsBody": "Super Admin: superadmin@menuqr.com / SuperAdmin123!\nAdmin: admin@demo.com / Admin123!",
     "registerSuccessTitle": "Registration successful",

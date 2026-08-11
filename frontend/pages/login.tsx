@@ -32,6 +32,33 @@ const isProduction =
 
 const ROBOTS_NOINDEX = 'noindex, follow';
 
+const LOGIN_REMEMBER_KEY = 'menuqr:login-remember';
+
+type RememberedLogin = { email: string; password: string };
+
+function readRememberedLogin(): RememberedLogin | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(LOGIN_REMEMBER_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<RememberedLogin>;
+    const email = typeof parsed.email === 'string' ? parsed.email.trim() : '';
+    const password = typeof parsed.password === 'string' ? parsed.password : '';
+    if (!email || !password) return null;
+    return { email, password };
+  } catch {
+    return null;
+  }
+}
+
+function saveRememberedLogin(email: string, password: string) {
+  localStorage.setItem(LOGIN_REMEMBER_KEY, JSON.stringify({ email, password }));
+}
+
+function clearRememberedLogin() {
+  localStorage.removeItem(LOGIN_REMEMBER_KEY);
+}
+
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   context.res.setHeader('X-Robots-Tag', ROBOTS_NOINDEX);
   const initialIsRegister = context.query.action === 'register';
@@ -73,7 +100,16 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
   const [templateIntentName, setTemplateIntentName] = useState<string | null>(null);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const [rememberCredentials, setRememberCredentials] = useState(false);
   const acceptTermsRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const remembered = readRememberedLogin();
+    if (!remembered) return;
+    setEmail(remembered.email);
+    setPassword(remembered.password);
+    setRememberCredentials(true);
+  }, []);
 
   /** Persistir plantilla desde URL (/login?template=gourmet&plan=pro). */
   useEffect(() => {
@@ -360,6 +396,12 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
         localStorage.setItem('user', JSON.stringify(response.data.user));
         syncLandingRegionCookieFromUser(response.data.user);
 
+        if (rememberCredentials) {
+          saveRememberedLogin(trimmedEmail, password);
+        } else {
+          clearRememberedLogin();
+        }
+
         await navigateAfterAuth(response.data.user);
       }
     } catch (err: any) {
@@ -625,6 +667,24 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
                       </small>
                     )}
                   </div>
+
+                  {!registerFromUrl && (
+                    <div className="landing-auth-checks">
+                      <label className="landing-auth-check">
+                        <input
+                          type="checkbox"
+                          checked={rememberCredentials}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setRememberCredentials(checked);
+                            if (!checked) clearRememberedLogin();
+                          }}
+                          disabled={loading}
+                        />
+                        <span>{t('authPages.login.rememberCredentials')}</span>
+                      </label>
+                    </div>
+                  )}
 
                   {registerFromUrl && (
                     <div className="landing-auth-field">
