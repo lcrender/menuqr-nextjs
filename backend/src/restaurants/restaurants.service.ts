@@ -515,15 +515,7 @@ export class RestaurantsService {
     const planForTpl = await this.getTenantPlan(tenantId);
     await this.planLimits.assertTemplateAllowedForTenantPlan(planForTpl, template);
 
-    // Generar slug único
-    const baseSlug = this.generateSlug(data.name);
-    let slug = baseSlug;
-    let counter = 1;
-
-    while (await this.slugExists(slug, tenantId)) {
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
+    const slug = await this.allocateUniqueSlug(data.name);
 
     // Construir dirección completa si se proporcionan campos individuales
     let fullAddress = data.address;
@@ -646,16 +638,8 @@ export class RestaurantsService {
       updates.push(`name = $${paramIndex++}`);
       params.push(data.name);
       
-      // Si cambió el nombre, actualizar slug
-      const baseSlug = this.generateSlug(data.name);
-      let slug = baseSlug;
-      let counter = 1;
-
-      while (await this.slugExists(slug, tenantId, id)) {
-        slug = `${baseSlug}-${counter}`;
-        counter++;
-      }
-      
+      // Si cambió el nombre, actualizar slug (único a nivel global /r/:slug)
+      const slug = await this.allocateUniqueSlug(data.name, id);
       updates.push(`slug = $${paramIndex++}`);
       params.push(slug);
     }
@@ -849,7 +833,7 @@ export class RestaurantsService {
 
   async delete(id: string, tenantId: string) {
     await this.findById(id, tenantId);
-    // Liberar el slug para poder reutilizarlo al crear un nuevo comercio (constraint unique tenant_id + slug)
+    // Liberar el slug para poder reutilizarlo (unique global de slugs activos)
     const freedSlug = `deleted_${id}`;
 
     await this.postgres.executeRaw(
@@ -940,13 +924,13 @@ export class RestaurantsService {
     const slugConflict = await this.postgres.queryRaw<{ id: string }>(
       `SELECT id
        FROM restaurants
-       WHERE tenant_id = $1 AND slug = $2 AND deleted_at IS NULL
+       WHERE slug = $1 AND deleted_at IS NULL AND id != $2
        LIMIT 1`,
-      [targetTenantId, restaurant.slug],
+      [restaurant.slug, restaurantId],
     );
     if (slugConflict.length > 0) {
       throw new BadRequestException(
-        `No se puede transferir: ya existe un comercio con slug "${restaurant.slug}" en el tenant destino.`,
+        `No se puede transferir: ya existe un comercio con slug "${restaurant.slug}".`,
       );
     }
 
@@ -1220,21 +1204,36 @@ export class RestaurantsService {
     };
   }
 
-  private async slugExists(slug: string, tenantId: string, excludeId?: string): Promise<boolean> {
+  /** Slug público único entre todos los comercios no eliminados. */
+  private async allocateUniqueSlug(name: string, excludeId?: string): Promise<string> {
+    const baseSlug = this.generateSlug(name) || 'comercio';
+    let slug = baseSlug;
+    let counter = 1;
+
+    while (await this.slugExists(slug, excludeId)) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    return slug;
+  }
+
+  private async slugExists(slug: string, excludeId?: string): Promise<boolean> {
     let query = `
-      SELECT COUNT(*) as count 
-      FROM restaurants 
-      WHERE slug = $1 AND tenant_id = $2 AND deleted_at IS NULL
+      SELECT 1
+      FROM restaurants
+      WHERE slug = $1 AND deleted_at IS NULL
     `;
-    const params: any[] = [slug, tenantId];
+    const params: any[] = [slug];
 
     if (excludeId) {
-      query += ` AND id != $3`;
+      query += ` AND id != $2`;
       params.push(excludeId);
     }
 
+    query += ` LIMIT 1`;
     const result = await this.postgres.queryRaw<any>(query, params);
-    return parseInt(result[0].count) > 0;
+    return result.length > 0;
   }
 
   private generateSlug(text: string): string {

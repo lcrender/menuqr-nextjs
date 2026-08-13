@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import React from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -47,6 +47,7 @@ export default function Menus() {
   });
   const [editingSection, setEditingSection] = useState<any>(null);
   const [draggedSection, setDraggedSection] = useState<number | null>(null);
+  const sectionFormRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState({
     restaurantId: '',
     name: '',
@@ -519,12 +520,24 @@ export default function Menus() {
     }
   };
 
+  const sectionIsActive = (section: any): boolean => {
+    if (typeof section?.isActive === 'boolean') return section.isActive;
+    if (typeof section?.is_active === 'boolean') return section.is_active;
+    return true;
+  };
+
   const handleEditSection = (section: any) => {
     setEditingSection(section);
     setSectionFormData({
       name: section.name || '',
       sort: section.sort || 0,
-      isActive: section.isActive !== false,
+      isActive: sectionIsActive(section),
+    });
+    requestAnimationFrame(() => {
+      sectionFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const input = sectionFormRef.current?.querySelector('input');
+      input?.focus();
+      input?.select();
     });
   };
 
@@ -1504,7 +1517,17 @@ export default function Menus() {
                     </div>
                   ) : (
                     <>
-                      <form onSubmit={handleSectionSubmit} style={{ marginBottom: '32px' }}>
+                      <form
+                        ref={sectionFormRef}
+                        onSubmit={handleSectionSubmit}
+                        style={{
+                          marginBottom: '32px',
+                          padding: editingSection ? '16px' : 0,
+                          borderRadius: '12px',
+                          border: editingSection ? '2px solid var(--admin-primary)' : 'none',
+                          background: editingSection ? 'rgba(99, 102, 241, 0.06)' : 'transparent',
+                        }}
+                      >
                         <div className="wizard-step-centered">
                           <div className="wizard-fields-container">
                             <div className="wizard-field-large">
@@ -1610,9 +1633,7 @@ export default function Menus() {
                             .map((section, index) => (
                               <div
                                 key={section.id}
-                                className={`wizard-section-item ${draggedSection === index ? 'dragging' : ''}`}
-                                draggable
-                                onDragStart={() => handleDragStart(index)}
+                                className={`wizard-section-item ${draggedSection === index ? 'dragging' : ''} ${editingSection?.id === section.id ? 'wizard-section-item--editing' : ''}`}
                                 onDragOver={(e) => handleDragOver(e, index)}
                                 onDrop={(e) => handleDrop(e, index)}
                                 style={{
@@ -1622,9 +1643,11 @@ export default function Menus() {
                                   padding: '16px 20px',
                                   background: 'white',
                                   borderRadius: '12px',
-                                  border: '2px solid var(--admin-border)',
+                                  border: editingSection?.id === section.id
+                                    ? '2px solid var(--admin-primary)'
+                                    : '2px solid var(--admin-border)',
                                   transition: 'all 0.2s ease',
-                                  cursor: 'move',
+                                  cursor: 'default',
                                   opacity: draggedSection === index ? 0.5 : 1
                                 }}
                                 onMouseEnter={(e) => {
@@ -1632,16 +1655,29 @@ export default function Menus() {
                                   e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.15)';
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.currentTarget.style.borderColor = 'var(--admin-border)';
+                                  e.currentTarget.style.borderColor =
+                                    editingSection?.id === section.id
+                                      ? 'var(--admin-primary)'
+                                      : 'var(--admin-border)';
                                   e.currentTarget.style.boxShadow = 'none';
                                 }}
                               >
-                                <div className="wizard-section-drag-handle" style={{
-                                  cursor: 'grab',
-                                  fontSize: '20px',
-                                  color: 'var(--admin-text-muted)',
-                                  userSelect: 'none'
-                                }}>
+                                <div
+                                  className="wizard-section-drag-handle"
+                                  draggable
+                                  onDragStart={(e) => {
+                                    e.dataTransfer.effectAllowed = 'move';
+                                    e.dataTransfer.setData('text/plain', String(index));
+                                    handleDragStart(index);
+                                  }}
+                                  onDragEnd={() => setDraggedSection(null)}
+                                  style={{
+                                    cursor: 'grab',
+                                    fontSize: '20px',
+                                    color: 'var(--admin-text-muted)',
+                                    userSelect: 'none'
+                                  }}
+                                >
                                   ☰
                                 </div>
                                 <div className="wizard-section-content" style={{
@@ -1683,12 +1719,12 @@ export default function Menus() {
                                       borderRadius: '20px',
                                       fontSize: '0.75rem',
                                       fontWeight: 600,
-                                      background: section.isActive !== false 
+                                      background: sectionIsActive(section)
                                         ? 'linear-gradient(135deg, var(--admin-success) 0%, #059669 100%)'
                                         : 'var(--admin-text-muted)',
                                       color: 'white'
                                     }}>
-                                      {section.isActive !== false
+                                      {sectionIsActive(section)
                                         ? t('adminMenus.sections.active')
                                         : t('adminMenus.sections.inactive')}
                                     </span>
@@ -1713,7 +1749,13 @@ export default function Menus() {
                                   <button
                                     type="button"
                                     className="admin-btn admin-btn-sm"
-                                    onClick={() => handleEditSection(section)}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleEditSection(section);
+                                    }}
                                     style={{
                                       padding: '8px 16px',
                                       fontSize: '0.875rem',
@@ -1725,7 +1767,13 @@ export default function Menus() {
                                   <button
                                     type="button"
                                     className="admin-btn admin-btn-sm admin-btn-danger"
-                                    onClick={() => handleDeleteSectionClick(section.id)}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleDeleteSectionClick(section.id);
+                                    }}
                                     style={{
                                       padding: '8px 16px',
                                       fontSize: '0.875rem',

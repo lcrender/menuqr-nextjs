@@ -2808,7 +2808,7 @@ body {
   border: 2px solid var(--admin-border);
   border-radius: 12px;
   padding: 16px;
-  cursor: move;
+  cursor: default;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

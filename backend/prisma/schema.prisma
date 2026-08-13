@@ -222,7 +222,8 @@ model Restaurant {
   id          String   @id @default(cuid())
   tenantId    String   @map("tenant_id")
   name        String
-  slug        String   // URL amigable
+  /// URL pública `/r/:slug`. Única entre comercios no eliminados (índice parcial SQL).
+  slug        String
   description String?
   timezone    String   @default("UTC")
   template    String   @default("classic") // classic, modern, foodie - plantilla de diseño del restaurante
@@ -243,6 +244,7 @@ model Restaurant {
 
   // Índices y constraints
   @@unique([tenantId, slug])
+  // Unique global de slugs activos: restaurants_slug_active_key (migración SQL, deleted_at IS NULL)
   @@map("restaurants")
 }
 

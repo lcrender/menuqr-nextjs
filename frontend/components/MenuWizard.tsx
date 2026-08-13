@@ -1094,12 +1094,19 @@ export default function MenuWizard({
                     <div
                       key={section.id || section.tempId || index}
                       className={`wizard-section-item ${draggedSection === index ? 'dragging' : ''}`}
-                      draggable
-                      onDragStart={() => handleDragStart(index)}
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={(e) => handleDrop(e, index)}
                     >
-                      <div className="wizard-section-drag-handle">
+                      <div
+                        className="wizard-section-drag-handle"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.dataTransfer.setData('text/plain', String(index));
+                          handleDragStart(index);
+                        }}
+                        onDragEnd={() => setDraggedSection(null)}
+                      >
                         <span>☰</span>
                       </div>
                       <div className="wizard-section-content">
@@ -1129,14 +1136,26 @@ export default function MenuWizard({
                         <button
                           type="button"
                           className="admin-btn admin-btn-sm"
-                          onClick={() => handleEditSection(index)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEditSection(index);
+                          }}
                         >
                           {t('menuWizard.sections.edit')}
                         </button>
                         <button
                           type="button"
                           className="admin-btn admin-btn-sm admin-btn-danger"
-                          onClick={() => handleDeleteSection(index)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeleteSection(index);
+                          }}
                         >
                           {t('menuWizard.sections.delete')}
                         </button>
