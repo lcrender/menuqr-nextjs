@@ -185,16 +185,24 @@ export const subscriptionUserEmailCopy = {
     monthly: 'Mensual',
     annual: 'Anual',
     promoProvider: 'Código promocional',
-    canceledSubject: 'Tu suscripción fue cancelada — pasaste a plan Free - AppMenuQR',
-    canceledTitle: 'Tu suscripción fue cancelada',
-    canceledBody: (first: string, previousPlan: string, reason: string) => `
+    canceledImmediateSubject: 'Tu suscripción fue cancelada — pasaste a plan Free - AppMenuQR',
+    canceledScheduledSubject: 'Renovación cancelada — seguís con tu plan hasta el fin del período - AppMenuQR',
+    canceledImmediateBody: (first: string, previousPlan: string, reason: string) => `
         <h2 style="margin-top:0;font-size:18px;">Tu suscripción fue cancelada</h2>
         <p>${first}, confirmamos que cancelaste tu plan <strong>${previousPlan}</strong>.</p>
         <p>Tu cuenta pasó al plan <strong>Free</strong>. A partir de ahora ya no vas a poder usar las ventajas del plan ${previousPlan} (límites, plantillas y funciones exclusivas de ese plan).</p>
         <p><strong>Motivo indicado:</strong> ${reason}</p>
         <p>Si querés volver a un plan de pago, podés hacerlo cuando quieras desde tu suscripción.</p>
       `,
-    canceledCta: 'Ver planes',
+    canceledScheduledBody: (first: string, previousPlan: string, reason: string, accessUntil: string) => `
+        <h2 style="margin-top:0;font-size:18px;">Renovación cancelada</h2>
+        <p>${first}, confirmamos que cancelaste la renovación de tu plan <strong>${previousPlan}</strong>.</p>
+        <p>Ya no se realizarán cobros futuros. Vas a poder seguir usando tu plan <strong>${previousPlan}</strong> hasta el <strong>${accessUntil}</strong>. Después de esa fecha tu cuenta pasará al plan Free.</p>
+        <p><strong>Motivo indicado:</strong> ${reason}</p>
+        <p>Si querés volver a suscribirte, podés hacerlo cuando quieras desde tu perfil.</p>
+      `,
+    canceledCta: 'Ver mi suscripción',
+    canceledCtaPlans: 'Ver planes',
   },
   en: {
     titleSuffix: 'Subscription',
@@ -217,16 +225,24 @@ export const subscriptionUserEmailCopy = {
     monthly: 'Monthly',
     annual: 'Annual',
     promoProvider: 'Promo code',
-    canceledSubject: 'Your subscription was canceled — you moved to Free - AppMenuQR',
-    canceledTitle: 'Your subscription was canceled',
-    canceledBody: (first: string, previousPlan: string, reason: string) => `
+    canceledImmediateSubject: 'Your subscription was canceled — you moved to Free - AppMenuQR',
+    canceledScheduledSubject: 'Renewal canceled — you keep access until the end of the period - AppMenuQR',
+    canceledImmediateBody: (first: string, previousPlan: string, reason: string) => `
         <h2 style="margin-top:0;font-size:18px;">Your subscription was canceled</h2>
         <p>${first}, we confirm that you canceled your <strong>${previousPlan}</strong> plan.</p>
         <p>Your account moved to the <strong>Free</strong> plan. You will no longer have access to ${previousPlan} benefits (limits, templates, and exclusive features).</p>
         <p><strong>Reason provided:</strong> ${reason}</p>
         <p>If you want a paid plan again, you can upgrade anytime from your subscription page.</p>
       `,
-    canceledCta: 'View plans',
+    canceledScheduledBody: (first: string, previousPlan: string, reason: string, accessUntil: string) => `
+        <h2 style="margin-top:0;font-size:18px;">Renewal canceled</h2>
+        <p>${first}, we confirm that you canceled renewal of your <strong>${previousPlan}</strong> plan.</p>
+        <p>No future charges will be made. You can keep using <strong>${previousPlan}</strong> until <strong>${accessUntil}</strong>. After that date your account will move to the Free plan.</p>
+        <p><strong>Reason provided:</strong> ${reason}</p>
+        <p>If you want to subscribe again, you can do so anytime from your profile.</p>
+      `,
+    canceledCta: 'View my subscription',
+    canceledCtaPlans: 'View plans',
   },
 } as const;
 

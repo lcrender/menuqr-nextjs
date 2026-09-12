@@ -65,6 +65,9 @@ export type SubscriptionCanceledNotifyPayload = {
   reason: string;
   paymentProvider: PaymentProvider;
   externalSubscriptionId?: string | null;
+  /** Si false, el usuario sigue con el plan hasta accessUntil. */
+  effectiveImmediately?: boolean;
+  accessUntil?: Date | null;
 };
 
 @Injectable()
@@ -113,18 +116,43 @@ export class SubscriptionNotificationService {
   /**
    * Alta: primera activación (sin pago aún o primer cobro).
    * Renovación: cobros siguientes cuando la suscripción ya estaba activa.
+   *
+   * Nota: si el historial de payment_attempts quedó incompleto (p. ej. cobro
+   * quedó en pending por ON CONFLICT), `completedPaymentsCount` puede ser 1
+   * en una renovación real. En ese caso, si el email de alta ya se envió,
+   * clasificamos como renovación.
    */
   async notifyFromPaymentSuccess(params: {
     wasAlreadyActive: boolean;
     completedPaymentsCount: number;
     payload: Omit<SubscriptionNotifyPayload, 'kind'>;
   }): Promise<void> {
-    const isFirstPayment = params.completedPaymentsCount <= 1;
-    if (isFirstPayment || !params.wasAlreadyActive) {
-      await this.notify({ ...params.payload, kind: 'activated' });
+    const { wasAlreadyActive, completedPaymentsCount, payload } = params;
+
+    if (!wasAlreadyActive) {
+      await this.notify({ ...payload, kind: 'activated' });
       return;
     }
-    await this.notify({ ...params.payload, kind: 'renewed' });
+
+    if (completedPaymentsCount > 1) {
+      await this.notify({ ...payload, kind: 'renewed' });
+      return;
+    }
+
+    // Ya estaba activa y el contador de cobros no confirma renovación.
+    const subId = payload.externalSubscriptionId?.trim();
+    if (subId) {
+      const activatedKey = `activated:${payload.paymentProvider}:${subId}`;
+      if (await this.hasClaim(activatedKey)) {
+        this.logger.log(
+          `Suscripción ya activa y alta notificada (${activatedKey}); cobro tratado como renovación (completedCount=${completedPaymentsCount}).`,
+        );
+        await this.notify({ ...payload, kind: 'renewed' });
+        return;
+      }
+    }
+
+    await this.notify({ ...payload, kind: 'activated' });
   }
 
   /** Aviso al super admin cuando un usuario activa un plan con código promocional. */
@@ -171,6 +199,21 @@ export class SubscriptionNotificationService {
       return rows.length > 0;
     } catch (e) {
       this.logger.warn(`tryClaim falló para ${eventId}: ${e}`);
+      return false;
+    }
+  }
+
+  private async hasClaim(eventId: string): Promise<boolean> {
+    try {
+      const rows = await this.postgres.queryRaw<{ ok: number }>(
+        `SELECT 1 AS ok FROM webhook_events
+         WHERE provider = 'subscription_email' AND event_id = $1
+         LIMIT 1`,
+        [eventId],
+      );
+      return rows.length > 0;
+    } catch (e) {
+      this.logger.warn(`hasClaim falló para ${eventId}: ${e}`);
       return false;
     }
   }
@@ -495,11 +538,15 @@ export class SubscriptionNotificationService {
     );
   }
 
-  /** Emails al cancelar: usuario (pasó a Free) + super admin (motivo y datos). */
+  /** Emails al cancelar: usuario + super admin. Si no es inmediata, informa acceso hasta fin de ciclo. */
   async notifySubscriptionCanceled(payload: SubscriptionCanceledNotifyPayload): Promise<void> {
     const previousPlan = this.planLabel(payload.previousPlan);
     const fullName = [payload.firstName, payload.lastName].filter(Boolean).join(' ').trim() || '—';
     const reason = (payload.reason || '').trim() || '—';
+    const immediate = payload.effectiveImmediately === true;
+    const accessUntilLabel = payload.accessUntil
+      ? this.formatDate(payload.accessUntil)
+      : null;
 
     const userTo = (payload.userEmail || '').trim();
     if (this.isValidEmail(userTo)) {
@@ -508,17 +555,28 @@ export class SubscriptionNotificationService {
       const first =
         (payload.firstName || '').trim() ||
         (lang === 'en' ? 'Hi' : 'Hola');
+      const subject = immediate
+        ? copy.canceledImmediateSubject
+        : copy.canceledScheduledSubject;
+      const bodyHtml = immediate
+        ? copy.canceledImmediateBody(
+            this.escapeHtml(first),
+            this.escapeHtml(previousPlan),
+            this.escapeHtml(reason),
+          )
+        : copy.canceledScheduledBody(
+            this.escapeHtml(first),
+            this.escapeHtml(previousPlan),
+            this.escapeHtml(reason),
+            this.escapeHtml(accessUntilLabel || '—'),
+          );
       const userBody = `
-        ${copy.canceledBody(
-          this.escapeHtml(first),
-          this.escapeHtml(previousPlan),
-          this.escapeHtml(reason),
-        )}
-        <p style="margin-top:20px;"><a href="${this.escapeHtml(`${this.frontendUrl.replace(/\/$/, '')}/admin/profile/subscription`)}" style="display:inline-block;background:#6366f1;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">${copy.canceledCta}</a></p>
+        ${bodyHtml}
+        <p style="margin-top:20px;"><a href="${this.escapeHtml(`${this.frontendUrl.replace(/\/$/, '')}/admin/profile/subscription`)}" style="display:inline-block;background:#6366f1;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">${immediate ? copy.canceledCtaPlans : copy.canceledCta}</a></p>
       `;
       await this.emailService.sendUserTransactionalEmail(
         userTo,
-        copy.canceledSubject,
+        subject,
         this.wrapEmail(copy.titleSuffix, userBody),
       );
     } else {
@@ -531,17 +589,21 @@ export class SubscriptionNotificationService {
       return;
     }
 
+    const adminOutcome = immediate
+      ? 'pasó a <strong>Free</strong> de inmediato'
+      : `sigue con <strong>${this.escapeHtml(previousPlan)}</strong> hasta <strong>${this.escapeHtml(accessUntilLabel || '—')}</strong> (sin renovación)`;
+
     const adminBody = `
       <h2 style="margin-top:0;font-size:18px;">Cancelación de suscripción</h2>
-      <p>Un usuario canceló su plan y pasó a <strong>Free</strong>.</p>
+      <p>Un usuario canceló la renovación: ${adminOutcome}.</p>
       <table style="width:100%;border-collapse:collapse;margin:16px 0;">
         <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;width:180px;">Usuario ID</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(payload.userId)}</td></tr>
         <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Email</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(payload.userEmail)}</td></tr>
         <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Nombre</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(fullName)}</td></tr>
         <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Rol</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(payload.role || '—')}</td></tr>
         <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Tenant ID</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(payload.tenantId || '—')}</td></tr>
-        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Plan anterior</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(previousPlan)}</td></tr>
-        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Plan nuevo</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">Free</td></tr>
+        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Plan</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(previousPlan)}</td></tr>
+        <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Efecto</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${immediate ? 'Inmediato → Free' : `Acceso hasta ${this.escapeHtml(accessUntilLabel || '—')}`}</td></tr>
         <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Proveedor</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(this.providerLabel(payload.paymentProvider))}</td></tr>
         <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">ID externo</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(payload.externalSubscriptionId || '—')}</td></tr>
         <tr><td style="padding:8px 10px;border:1px solid #e5e7eb;font-weight:700;background:#fff;">Motivo</td><td style="padding:8px 10px;border:1px solid #e5e7eb;">${this.escapeHtml(reason)}</td></tr>
@@ -550,7 +612,9 @@ export class SubscriptionNotificationService {
 
     await this.emailService.sendAdminNotificationEmail(
       adminTo,
-      `[AppMenuQR] Cancelación → Free (${payload.userEmail})`,
+      immediate
+        ? `[AppMenuQR] Cancelación → Free (${payload.userEmail})`
+        : `[AppMenuQR] Cancelación al fin de período (${payload.userEmail})`,
       this.wrapEmail('Notificaciones', adminBody),
     );
   }

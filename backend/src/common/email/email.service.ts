@@ -9,6 +9,7 @@ import {
   normalizeEmailLang,
   type EmailLang,
 } from './email-i18n';
+import { EmailTemplatesService } from '../../email-templates/email-templates.service';
 
 @Injectable()
 export class EmailService implements OnModuleInit {
@@ -16,7 +17,10 @@ export class EmailService implements OnModuleInit {
   private readonly frontendUrl: string;
   private transporter: Transporter | null = null;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly emailTemplates: EmailTemplatesService,
+  ) {
     this.frontendUrl = this.configService.get('FRONTEND_URL', 'http://localhost:3000');
   }
 
@@ -54,6 +58,38 @@ export class EmailService implements OnModuleInit {
     return normalizeEmailLang(lang);
   }
 
+  /**
+   * Resuelve asunto + HTML desde las plantillas editables del panel.
+   * Si algo falla (DB caída, plantilla corrupta) cae al copy del código.
+   */
+  private async renderTemplate(
+    templateId: string,
+    lang: EmailLang,
+    vars: Record<string, string>,
+    fallback: () => { subject: string; html: string },
+  ): Promise<{ subject: string; html: string }> {
+    try {
+      const resolved = await this.emailTemplates.resolveContent(templateId, lang);
+      // El asunto es texto plano: no se escapa HTML. El cuerpo sí, salvo las
+      // variables marcadas con `allowHtml` en el catálogo.
+      const subject = this.emailTemplates.interpolate(
+        resolved.subject,
+        vars,
+        new Set(Object.keys(vars)),
+      );
+      const body = this.emailTemplates.interpolate(resolved.bodyHtml, vars, templateId);
+      return {
+        subject,
+        html: resolved.wrapInShell ? this.emailShell(lang, body) : body,
+      };
+    } catch (e) {
+      this.logger.warn(
+        `No se pudo resolver la plantilla "${templateId}" (${lang}); se usa el contenido por defecto: ${e}`,
+      );
+      return fallback();
+    }
+  }
+
   async sendPasswordResetEmail(
     email: string,
     firstName: string,
@@ -61,17 +97,24 @@ export class EmailService implements OnModuleInit {
     preferredLanguage?: string | null,
   ): Promise<void> {
     const lang = this.resolveLang(preferredLanguage);
-    const copy = authEmailCopy.passwordReset[lang];
     const name = firstName?.trim() || defaultEmailDisplayName(lang);
     const resetUrl = `${this.frontendUrl}/reset-password?token=${encodeURIComponent(resetToken)}`;
-    const html = this.getPasswordResetEmailTemplate(name, resetUrl, lang);
+    const { subject, html } = await this.renderTemplate(
+      'passwordReset',
+      lang,
+      { firstName: name, actionUrl: resetUrl, year: String(new Date().getFullYear()) },
+      () => ({
+        subject: authEmailCopy.passwordReset[lang].subject,
+        html: this.getPasswordResetEmailTemplate(name, resetUrl, lang),
+      }),
+    );
 
     if (this.transporter) {
       try {
         await this.transporter.sendMail({
           from: this.getFrom(),
           to: email,
-          subject: copy.subject,
+          subject,
           html,
         });
         this.logger.log(`Email de recuperación enviado a ${email} (${lang})`);
@@ -92,17 +135,24 @@ export class EmailService implements OnModuleInit {
     preferredLanguage?: string | null,
   ): Promise<void> {
     const lang = this.resolveLang(preferredLanguage);
-    const copy = authEmailCopy.emailVerification[lang];
     const name = firstName?.trim() || defaultEmailDisplayName(lang);
     const verificationUrl = `${this.frontendUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
-    const html = this.getVerificationEmailTemplate(name, verificationUrl, lang);
+    const { subject, html } = await this.renderTemplate(
+      'emailVerification',
+      lang,
+      { firstName: name, actionUrl: verificationUrl, year: String(new Date().getFullYear()) },
+      () => ({
+        subject: authEmailCopy.emailVerification[lang].subject,
+        html: this.getVerificationEmailTemplate(name, verificationUrl, lang),
+      }),
+    );
 
     if (this.transporter) {
       try {
         await this.transporter.sendMail({
           from: this.getFrom(),
           to: email,
-          subject: copy.subject,
+          subject,
           html,
         });
         this.logger.log(`Email de verificación enviado a ${email} (${lang})`);
@@ -163,17 +213,24 @@ export class EmailService implements OnModuleInit {
     preferredLanguage?: string | null,
   ): Promise<void> {
     const lang = this.resolveLang(preferredLanguage);
-    const copy = authEmailCopy.emailChangeVerification[lang];
     const name = firstName?.trim() || defaultEmailDisplayName(lang);
     const confirmUrl = `${this.frontendUrl}/verify-email-change?token=${encodeURIComponent(token)}`;
-    const html = this.getEmailChangeVerificationTemplate(name, confirmUrl, lang);
+    const { subject, html } = await this.renderTemplate(
+      'emailChangeVerification',
+      lang,
+      { firstName: name, actionUrl: confirmUrl, year: String(new Date().getFullYear()) },
+      () => ({
+        subject: authEmailCopy.emailChangeVerification[lang].subject,
+        html: this.getEmailChangeVerificationTemplate(name, confirmUrl, lang),
+      }),
+    );
 
     if (this.transporter) {
       try {
         await this.transporter.sendMail({
           from: this.getFrom(),
           to: newEmail,
-          subject: copy.subject,
+          subject,
           html,
         });
         this.logger.log(`Email de confirmación de cambio enviado a ${newEmail} (${lang})`);
@@ -193,15 +250,22 @@ export class EmailService implements OnModuleInit {
     preferredLanguage?: string | null,
   ): Promise<void> {
     const lang = this.resolveLang(preferredLanguage);
-    const copy = authEmailCopy.emailChangeNotification[lang];
-    const html = this.getEmailChangeNotificationTemplate(lang);
+    const { subject, html } = await this.renderTemplate(
+      'emailChangeNotification',
+      lang,
+      { year: String(new Date().getFullYear()) },
+      () => ({
+        subject: authEmailCopy.emailChangeNotification[lang].subject,
+        html: this.getEmailChangeNotificationTemplate(lang),
+      }),
+    );
 
     if (this.transporter) {
       try {
         await this.transporter.sendMail({
           from: this.getFrom(),
           to: oldEmail,
-          subject: copy.subject,
+          subject,
           html,
         });
         this.logger.log(`Notificación de cambio de email enviada a ${oldEmail} (${lang})`);

@@ -55,6 +55,28 @@ export class SubscriptionService {
     return this.mapRow(rows[0]);
   }
 
+  /** Fallback cuando el pago de MP no trae preapproval_id. */
+  async findActiveByUserAndProvider(
+    userId: string,
+    provider: PaymentProvider,
+  ): Promise<SubscriptionRow | null> {
+    const rows = await this.postgres.queryRaw<any>(
+      `SELECT id, user_id as "userId", payment_provider as "paymentProvider", external_subscription_id as "externalSubscriptionId",
+       billing_country as "billingCountry", currency, status, plan_type as "planType", subscription_plan as "subscriptionPlan",
+       current_period_start as "currentPeriodStart", current_period_end as "currentPeriodEnd", cancel_at_period_end as "cancelAtPeriodEnd",
+       created_at as "createdAt", updated_at as "updatedAt"
+       FROM subscriptions
+       WHERE user_id = $1
+         AND payment_provider = $2::"PaymentProvider"
+         AND status = 'active'::"SubscriptionStatus"
+       ORDER BY updated_at DESC, created_at DESC
+       LIMIT 1`,
+      [userId, provider],
+    );
+    if (!rows[0]) return null;
+    return this.mapRow(rows[0]);
+  }
+
   async findByUserId(userId: string): Promise<SubscriptionRow[]> {
     const rows = await this.postgres.queryRaw<any>(
       `SELECT id, user_id as "userId", payment_provider as "paymentProvider", external_subscription_id as "externalSubscriptionId",
@@ -169,6 +191,23 @@ export class SubscriptionService {
     );
   }
 
+  /** Estima fin de ciclo si falta current_period_end (mensual/anual desde el inicio). */
+  estimatePeriodEnd(
+    currentPeriodStart: Date | null | undefined,
+    planType: PlanType | string | null | undefined,
+  ): Date | null {
+    if (!currentPeriodStart) return null;
+    const start = new Date(currentPeriodStart);
+    if (Number.isNaN(start.getTime())) return null;
+    const end = new Date(start);
+    if (planType === 'yearly') {
+      end.setFullYear(end.getFullYear() + 1);
+    } else {
+      end.setMonth(end.getMonth() + 1);
+    }
+    return end;
+  }
+
   async expireDuePromoSubscriptions(): Promise<number> {
     const rows = await this.postgres.queryRaw<any>(
       `SELECT id, user_id as "userId", external_subscription_id as "externalSubscriptionId"
@@ -187,6 +226,38 @@ export class SubscriptionService {
       );
       await this.syncTenantPlanFromSubscription(row.userId);
       this.logger.log(`Promo subscription expired: ${row.externalSubscriptionId} user=${row.userId}`);
+    }
+    return rows.length;
+  }
+
+  /**
+   * Baja a Free las suscripciones con cancel_at_period_end cuyo ciclo pagado ya venció.
+   * El cobro ya se canceló en el proveedor al programar la cancelación.
+   */
+  async expireDueCanceledAtPeriodEnd(): Promise<number> {
+    const rows = await this.postgres.queryRaw<any>(
+      `SELECT id, user_id as "userId", external_subscription_id as "externalSubscriptionId",
+              payment_provider as "paymentProvider"
+       FROM subscriptions
+       WHERE status = 'active'::"SubscriptionStatus"
+         AND cancel_at_period_end = true
+         AND current_period_end IS NOT NULL
+         AND current_period_end < NOW()`,
+    );
+
+    for (const row of rows) {
+      await this.postgres.executeRaw(
+        `UPDATE subscriptions
+         SET status = 'canceled'::"SubscriptionStatus",
+             cancel_at_period_end = false,
+             updated_at = NOW()
+         WHERE id = $1`,
+        [row.id],
+      );
+      await this.syncTenantPlanFromSubscription(row.userId);
+      this.logger.log(
+        `Cancel-at-period-end applied: ${row.paymentProvider}/${row.externalSubscriptionId} user=${row.userId}`,
+      );
     }
     return rows.length;
   }

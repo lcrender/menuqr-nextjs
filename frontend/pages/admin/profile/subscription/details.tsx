@@ -151,15 +151,22 @@ export default function SubscriptionDetailsPage() {
     setCancelLoading(true);
     setCancelFormError(null);
     try {
-      await api.post('/subscriptions/cancel', {
+      const res = await api.post('/subscriptions/cancel', {
         externalSubscriptionId: cancelTarget.externalSubscriptionId,
         reason,
       });
+      const accessUntil = res.data?.accessUntil
+        ? formatDateTime(res.data.accessUntil)
+        : cancelTarget.currentPeriodEnd
+          ? formatDateTime(cancelTarget.currentPeriodEnd)
+          : null;
       setCancelTarget(null);
       await Promise.all([loadSubscriptions(), loadCurrentPlan()]);
       setAlert({
-        title: 'Suscripción cancelada',
-        message: 'Pasaste al plan Free. Te enviamos un email con la confirmación.',
+        title: 'Renovación cancelada',
+        message: accessUntil
+          ? `Cancelamos los cobros futuros. Seguí usando tu plan hasta el ${accessUntil}. Después pasás a Free.`
+          : 'Cancelamos la suscripción. Te enviamos un email con la confirmación.',
         variant: 'success',
       });
     } catch (err: any) {
@@ -251,6 +258,7 @@ export default function SubscriptionDetailsPage() {
                     !isFreeTenant &&
                     displayStatus === 'active' &&
                     s.status === 'active' &&
+                    !s.cancelAtPeriodEnd &&
                     planKey !== 'free' &&
                     !!s.externalSubscriptionId;
                   return (
@@ -327,9 +335,14 @@ export default function SubscriptionDetailsPage() {
                 </div>
                 <div className="modal-body">
                   <p className="mb-3">
-                    Vas a cancelar el plan{' '}
-                    <strong>{formatPlanLabel(cancelTarget.subscriptionPlan)}</strong>. Tu cuenta pasará al plan{' '}
-                    <strong>Free</strong> y perderás las ventajas del plan actual.
+                    Vas a cancelar la renovación del plan{' '}
+                    <strong>{formatPlanLabel(cancelTarget.subscriptionPlan)}</strong>. Se detienen los cobros
+                    futuros de inmediato, pero{' '}
+                    <strong>
+                      seguís usando el plan hasta el{' '}
+                      {formatDateTime(cancelTarget.currentPeriodEnd) || 'fin del período ya pagado'}
+                    </strong>
+                    . Recién entonces tu cuenta pasa a Free.
                   </p>
                   <div className="mb-3">
                     <label className="form-label" htmlFor="cancel-reason">

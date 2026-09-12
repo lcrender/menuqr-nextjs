@@ -627,6 +627,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         </li>
                         <li className="admin-nav-item">
                           <Link
+                            href="/admin/config/emails"
+                            className={`admin-nav-link ${currentPath === '/admin/config/emails' ? 'active' : ''}`}
+                            style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            {t("navigation.emails")}
+                          </Link>
+                        </li>
+                        <li className="admin-nav-item">
+                          <Link
                             href="/admin/config/messages"
                             className={`admin-nav-link ${currentPath === '/admin/config/messages' ? 'active' : ''}`}
                             style={{ fontSize: '0.9rem', paddingLeft: '30px' }}

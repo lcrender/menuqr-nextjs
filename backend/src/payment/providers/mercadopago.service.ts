@@ -480,9 +480,17 @@ export class MercadoPagoService implements IPaymentProviderService {
     const status = payment.status;
     const externalRef = payment.external_reference;
 
-    const preapprovalExt = payment.preapproval_id || payment.subscription_id;
-    const subscriptionExternalId = preapprovalExt ? String(preapprovalExt) : paymentId;
-    const sub = await this.subscriptionService.findByExternalId('mercadopago', subscriptionExternalId);
+    const preapprovalExt =
+      payment.preapproval_id ||
+      payment.subscription_id ||
+      payment.metadata?.preapproval_id ||
+      payment.point_of_interaction?.transaction_data?.subscription_id;
+    const subscriptionExternalId = preapprovalExt ? String(preapprovalExt) : null;
+    const sub = subscriptionExternalId
+      ? await this.subscriptionService.findByExternalId('mercadopago', subscriptionExternalId)
+      : externalRef
+        ? await this.subscriptionService.findActiveByUserAndProvider(String(externalRef), 'mercadopago')
+        : null;
 
     const attemptStatus: PaymentAttemptStatus =
       status === 'approved'
@@ -546,8 +554,8 @@ export class MercadoPagoService implements IPaymentProviderService {
       }
     }
 
-    // Activación del plan solo para pagos aprobados.
-    if (status === 'approved' && externalRef && sub) {
+    // Activación / renovación del plan solo para pagos aprobados.
+    if (status === 'approved' && sub) {
       const wasAlreadyActive = sub.status === 'active';
       const start = payment.date_approved ? new Date(payment.date_approved) : new Date();
       const ms =
@@ -607,6 +615,7 @@ export class MercadoPagoService implements IPaymentProviderService {
     let sub = await this.subscriptionService.findByExternalId('mercadopago', preapprovalId);
     const trialDays = 0; // el trial viene del free_trial del preapproval en MP, no del env global
     if (status === 'authorized' || status === 'approved') {
+      const wasAlreadyActive = sub?.status === 'active';
       const periodStart = preapproval.date_created ? new Date(preapproval.date_created) : new Date();
       const periodEnd =
         this.resolveTrialPeriodEnd(preapproval, trialDays, periodStart) ??
@@ -641,8 +650,9 @@ export class MercadoPagoService implements IPaymentProviderService {
       }
       if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
 
-      // Alta de suscripción: email al usuario y al super admin (idempotente con el cobro).
-      if (sub) {
+      // Solo email de alta al pasar a activa por primera vez.
+      // Las renovaciones llegan por webhook de payment y usan notifyFromPaymentSuccess.
+      if (sub && !wasAlreadyActive) {
         try {
           const actor = await this.usersService.findById(sub.userId);
           if (actor) {
@@ -667,9 +677,31 @@ export class MercadoPagoService implements IPaymentProviderService {
         }
       }
     } else if (status === 'cancelled') {
+      // Cancelación en MP: si aún queda ciclo pagado, mantener acceso local hasta period_end.
       if (sub) {
-        await this.subscriptionService.updateStatus('mercadopago', preapprovalId, { status: 'canceled' });
-        await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
+        const periodEnd =
+          sub.currentPeriodEnd ??
+          this.subscriptionService.estimatePeriodEnd(sub.currentPeriodStart, sub.planType);
+        const keepUntilPeriodEnd =
+          sub.cancelAtPeriodEnd ||
+          (periodEnd != null && periodEnd.getTime() > Date.now());
+
+        if (keepUntilPeriodEnd && periodEnd && periodEnd.getTime() > Date.now()) {
+          await this.subscriptionService.updateStatus('mercadopago', preapprovalId, {
+            status: 'active',
+            cancelAtPeriodEnd: true,
+            currentPeriodEnd: periodEnd,
+          });
+          this.logger.log(
+            `MP preapproval cancelled: acceso local hasta ${periodEnd.toISOString()} (${preapprovalId})`,
+          );
+        } else {
+          await this.subscriptionService.updateStatus('mercadopago', preapprovalId, {
+            status: 'canceled',
+            cancelAtPeriodEnd: false,
+          });
+          await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
+        }
       }
     } else if (status === 'pending') {
       if (sub && sub.status !== 'active') {

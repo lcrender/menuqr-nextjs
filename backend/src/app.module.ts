@@ -20,6 +20,7 @@ import { MetricsModule } from './metrics/metrics.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { PaymentModule } from './payment/payment.module';
 import { AdminMessagesModule } from './admin-messages/admin-messages.module';
+import { EmailTemplatesModule } from './email-templates/email-templates.module';
 import { MenuTranslationsModule } from './menu-translations/menu-translations.module';
 import { SupportTicketsModule } from './support-tickets/support-tickets.module';
 import { PromoCodesModule } from './promo-codes/promo-codes.module';
@@ -110,6 +111,7 @@ import { PlanLimitsModule } from './common/plan-limits/plan-limits.module';
     TrackingModule,
     PaymentModule,
     AdminMessagesModule,
+    EmailTemplatesModule,
     MenuTranslationsModule,
     SupportTicketsModule,
     PromoCodesModule,

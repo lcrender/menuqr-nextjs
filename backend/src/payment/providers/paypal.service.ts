@@ -401,7 +401,6 @@ export class PayPalService implements IPaymentProviderService {
         status: 'active',
         currentPeriodStart: startTime ? new Date(startTime) : null,
         currentPeriodEnd: endTime ? new Date(endTime) : null,
-        cancelAtPeriodEnd: false,
       });
     }
     if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
@@ -434,9 +433,39 @@ export class PayPalService implements IPaymentProviderService {
   }
 
   private async handleSubscriptionCanceled(subscriptionId: string): Promise<void> {
-    await this.subscriptionService.updateStatus('paypal', subscriptionId, { status: 'canceled' });
     const sub = await this.subscriptionService.findByExternalId('paypal', subscriptionId);
-    if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
+    if (!sub) {
+      await this.subscriptionService.updateStatus('paypal', subscriptionId, {
+        status: 'canceled',
+        cancelAtPeriodEnd: false,
+      });
+      return;
+    }
+
+    const periodEnd =
+      sub.currentPeriodEnd ??
+      this.subscriptionService.estimatePeriodEnd(sub.currentPeriodStart, sub.planType);
+    const keepUntilPeriodEnd =
+      sub.cancelAtPeriodEnd ||
+      (periodEnd != null && periodEnd.getTime() > Date.now());
+
+    if (keepUntilPeriodEnd && periodEnd && periodEnd.getTime() > Date.now()) {
+      await this.subscriptionService.updateStatus('paypal', subscriptionId, {
+        status: 'active',
+        cancelAtPeriodEnd: true,
+        currentPeriodEnd: periodEnd,
+      });
+      this.logger.log(
+        `PayPal subscription cancelled: acceso local hasta ${periodEnd.toISOString()} (${subscriptionId})`,
+      );
+      return;
+    }
+
+    await this.subscriptionService.updateStatus('paypal', subscriptionId, {
+      status: 'canceled',
+      cancelAtPeriodEnd: false,
+    });
+    await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
   }
 
   private async handleSubscriptionSuspended(subscriptionId: string): Promise<void> {

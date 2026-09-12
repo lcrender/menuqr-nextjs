@@ -198,6 +198,7 @@ export default function SubscriptionManagement() {
     (normalizedCurrentPlan !== 'free' && normalizedCurrentPlan !== 'pro_team') &&
     !!effectiveSubscription &&
     effectiveSubscription.status === 'active' &&
+    !effectiveSubscription.cancelAtPeriodEnd &&
     effectiveSubscription.paymentProvider !== 'internal' &&
     effectivePlanSlug !== 'free';
 
@@ -256,8 +257,17 @@ export default function SubscriptionManagement() {
               </div>
 
               <div className="col-12">
-                <div className="small text-muted">Próximo cobro / fin de período</div>
+                <div className="small text-muted">
+                  {effectiveSubscription?.cancelAtPeriodEnd
+                    ? 'Acceso hasta (sin renovación)'
+                    : 'Próximo cobro / fin de período'}
+                </div>
                 <div className="h5 mb-0">{periodEnd}</div>
+                {effectiveSubscription?.cancelAtPeriodEnd ? (
+                  <div className="small text-warning mt-1">
+                    Cancelación programada: no se renovará; después de esta fecha pasás a Free.
+                  </div>
+                ) : null}
               </div>
             </div>
 

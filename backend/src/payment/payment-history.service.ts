@@ -79,7 +79,22 @@ export class PaymentHistoryService {
           NOW(),
           NOW()
         )
-        ON CONFLICT ("payment_provider", "external_payment_id") DO NOTHING`,
+        ON CONFLICT ("payment_provider", "external_payment_id") DO UPDATE SET
+          subscription_id = COALESCE(EXCLUDED.subscription_id, payment_attempts.subscription_id),
+          provider_event_id = COALESCE(EXCLUDED.provider_event_id, payment_attempts.provider_event_id),
+          provider_status = EXCLUDED.provider_status,
+          status = CASE
+            WHEN payment_attempts.status = 'completed'::"PaymentAttemptStatus" THEN payment_attempts.status
+            ELSE EXCLUDED.status
+          END,
+          plan_slug = COALESCE(EXCLUDED.plan_slug, payment_attempts.plan_slug),
+          plan_type = COALESCE(EXCLUDED.plan_type, payment_attempts.plan_type),
+          amount = COALESCE(EXCLUDED.amount, payment_attempts.amount),
+          currency = COALESCE(EXCLUDED.currency, payment_attempts.currency),
+          occurred_at = COALESCE(EXCLUDED.occurred_at, payment_attempts.occurred_at),
+          failure_reason = COALESCE(EXCLUDED.failure_reason, payment_attempts.failure_reason),
+          raw_data = COALESCE(EXCLUDED.raw_data, payment_attempts.raw_data),
+          updated_at = NOW()`,
         [
           id,
           input.userId,

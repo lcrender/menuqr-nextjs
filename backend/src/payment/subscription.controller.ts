@@ -374,7 +374,7 @@ export class SubscriptionController {
   @Post('cancel')
   @ApiOperation({
     summary:
-      'Cancelar suscripción (motivo obligatorio): baja a Free de inmediato y notifica al usuario y al super admin',
+      'Cancelar renovación: detiene cobros en el proveedor ya; el plan pagado sigue hasta fin de ciclo (luego Free)',
   })
   async cancel(
     @Request() req: any,

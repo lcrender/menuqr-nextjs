@@ -10,7 +10,6 @@ import {
   PaymentProviderType,
   PlanType,
   CreateSubscriptionResult,
-  CancelSubscriptionResult,
   WebhookHandleResult,
 } from './interfaces/payment-provider.interface';
 import { PREMIUM_CHECKOUT_ENABLED } from './pricing.constants';
@@ -265,15 +264,21 @@ export class PaymentService {
   }
 
   /**
-   * Cancela la suscripción (proveedor si aplica), baja el tenant a Free de inmediato
-   * y notifica al usuario y al super admin con el motivo.
+   * Cancela la renovación en el proveedor de pago de inmediato, pero mantiene el plan
+   * pagado hasta `currentPeriodEnd` (cancel_at_period_end). Un job baja a Free al vencer.
    */
   async cancelSubscription(params: {
     userId: string;
     externalSubscriptionId?: string;
     cancelAtPeriodEnd?: boolean;
     reason: string;
-  }): Promise<CancelSubscriptionResult & { previousPlan: string; newPlan: string }> {
+  }): Promise<{
+    success: boolean;
+    previousPlan: string;
+    newPlan: string;
+    cancelAtPeriodEnd: boolean;
+    accessUntil: string | null;
+  }> {
     const reason = String(params.reason || '').trim();
     if (reason.length < 5) {
       throw new BadRequestException('El motivo de cancelación es obligatorio (mínimo 5 caracteres).');
@@ -296,18 +301,26 @@ export class PaymentService {
     if (sub.status !== 'active') {
       throw new BadRequestException('La suscripción ya no está activa.');
     }
+    if (sub.cancelAtPeriodEnd) {
+      throw new BadRequestException(
+        'La suscripción ya está programada para cancelarse al final del período pagado.',
+      );
+    }
 
     const previousPlan = String(sub.subscriptionPlan || 'free');
     if (previousPlan === 'free') {
       throw new BadRequestException('El plan Free no requiere cancelación.');
     }
 
+    // Siempre cancelamos el cobro futuro en el proveedor ya; el acceso local sigue hasta fin de ciclo.
+    const cancelAtPeriodEnd = params.cancelAtPeriodEnd !== false;
+
     if (sub.paymentProvider === 'mercadopago' || sub.paymentProvider === 'paypal') {
       try {
         const service = this.getProviderService(sub.paymentProvider);
         await service.cancelSubscription({
           externalSubscriptionId: sub.externalSubscriptionId,
-          cancelAtPeriodEnd: params.cancelAtPeriodEnd ?? false,
+          cancelAtPeriodEnd,
         });
       } catch (e) {
         this.logger.warn(
@@ -316,6 +329,47 @@ export class PaymentService {
       }
     }
 
+    const accessUntil =
+      sub.currentPeriodEnd ??
+      this.subscriptionService.estimatePeriodEnd(sub.currentPeriodStart, sub.planType);
+
+    if (cancelAtPeriodEnd && accessUntil && accessUntil.getTime() > Date.now()) {
+      await this.subscriptionService.updateStatus(sub.paymentProvider, sub.externalSubscriptionId, {
+        status: 'active',
+        cancelAtPeriodEnd: true,
+        currentPeriodEnd: accessUntil,
+      });
+      // No bajar a Free todavía: el tenant sigue con el plan pagado hasta accessUntil.
+
+      try {
+        await this.subscriptionNotifications.notifySubscriptionCanceled({
+          userId: params.userId,
+          userEmail: user.email,
+          firstName: user.firstName ?? null,
+          lastName: user.lastName ?? null,
+          role: user.role ?? null,
+          tenantId: user.tenantId ?? null,
+          previousPlan,
+          reason,
+          paymentProvider: sub.paymentProvider,
+          externalSubscriptionId: sub.externalSubscriptionId,
+          accessUntil,
+          effectiveImmediately: false,
+        });
+      } catch (e) {
+        this.logger.warn(`No se pudieron enviar emails de cancelación para user ${params.userId}: ${e}`);
+      }
+
+      return {
+        success: true,
+        previousPlan,
+        newPlan: previousPlan,
+        cancelAtPeriodEnd: true,
+        accessUntil: accessUntil.toISOString(),
+      };
+    }
+
+    // Sin fecha de fin de ciclo: baja inmediata a Free (fallback).
     await this.subscriptionService.updateStatus(sub.paymentProvider, sub.externalSubscriptionId, {
       status: 'canceled',
       cancelAtPeriodEnd: false,
@@ -334,6 +388,8 @@ export class PaymentService {
         reason,
         paymentProvider: sub.paymentProvider,
         externalSubscriptionId: sub.externalSubscriptionId,
+        accessUntil: null,
+        effectiveImmediately: true,
       });
     } catch (e) {
       this.logger.warn(`No se pudieron enviar emails de cancelación para user ${params.userId}: ${e}`);
@@ -343,6 +399,8 @@ export class PaymentService {
       success: true,
       previousPlan,
       newPlan: 'free',
+      cancelAtPeriodEnd: false,
+      accessUntil: null,
     };
   }
 

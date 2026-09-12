@@ -16,9 +16,12 @@ export class PromoSubscriptionJob {
   async handlePromoSubscriptions() {
     try {
       const remindersSent = await this.promoReminder.processDueReminders();
-      const expired = await this.subscriptionService.expireDuePromoSubscriptions();
-      if (remindersSent > 0 || expired > 0) {
-        this.logger.log(`Promo job: ${remindersSent} recordatorio(s), ${expired} suscripción(es) expirada(s)`);
+      const expiredPromo = await this.subscriptionService.expireDuePromoSubscriptions();
+      const expiredCancel = await this.subscriptionService.expireDueCanceledAtPeriodEnd();
+      if (remindersSent > 0 || expiredPromo > 0 || expiredCancel > 0) {
+        this.logger.log(
+          `Subscription job: ${remindersSent} recordatorio(s), ${expiredPromo} promo(s) expirada(s), ${expiredCancel} cancel-at-period-end`,
+        );
       }
     } catch (e) {
       this.logger.error(`Promo subscription job failed: ${e}`);
