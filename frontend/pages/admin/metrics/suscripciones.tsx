@@ -118,6 +118,8 @@ type Detail = {
   restaurants: Array<{ id: string; name: string; slug: string; isActive: boolean }>;
 };
 
+const SITUATION_OTHER = { label: 'Otra', className: 'bg-secondary' };
+
 const SITUATION: Record<string, { label: string; className: string }> = {
   active_paid: { label: 'Pagada y activa', className: 'bg-success' },
   active_unpaid: { label: 'Activa sin cobro registrado', className: 'bg-warning text-dark' },
@@ -129,8 +131,13 @@ const SITUATION: Record<string, { label: string; className: string }> = {
   canceled_after_payment: { label: 'Cancelada con pagos', className: 'bg-dark' },
   promo: { label: 'Canje de promo', className: 'bg-info text-dark' },
   expired: { label: 'Vencida', className: 'bg-secondary' },
-  other: { label: 'Otra', className: 'bg-secondary' },
+  other: SITUATION_OTHER,
 };
+
+function situationOf(key: string | null | undefined) {
+  if (!key) return SITUATION_OTHER;
+  return SITUATION[key] ?? SITUATION_OTHER;
+}
 
 const STATUS_LABEL: Record<string, string> = {
   active: 'Activa',
@@ -419,7 +426,7 @@ export default function MetricsSubscriptionsPage() {
                 </thead>
                 <tbody>
                   {items.map((row) => {
-                    const sit = SITUATION[row.situation] || SITUATION.other;
+                    const sit = situationOf(row.situation);
                     return (
                       <tr key={row.id}>
                         <td>
@@ -581,7 +588,7 @@ function SummaryCard({
 
 function DetailBody({ detail }: { detail: Detail }) {
   const s = detail.subscription;
-  const sit = SITUATION[s.situation] || SITUATION.other;
+  const sit = situationOf(s.situation);
   return (
     <>
       <div className="row g-3 mb-4">
