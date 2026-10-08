@@ -44,8 +44,8 @@ interface MetricsData {
     unpublishedMenus: number;
   };
   recent: {
-    users: Array<{ id: string; email: string; isActive: boolean; createdAt: string }>;
-    restaurants: Array<{ id: string; name: string; createdAt: string; hasVisibleProduct: boolean }>;
+    users: Array<{ id: string; email: string; isActive: boolean; plan: string | null; createdAt: string }>;
+    restaurants: Array<{ id: string; name: string; slug: string; createdAt: string; hasVisibleProduct: boolean }>;
   };
   excludedUsers?: number;
 }
@@ -67,6 +67,39 @@ export default function Metrics() {
       console.error('Error cargando métricas:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const planLabel = (plan: string | null) => {
+    switch ((plan || '').toLowerCase()) {
+      case 'premium':
+        return 'Premium';
+      case 'pro':
+        return 'Pro';
+      case 'pro_team':
+        return 'Pro Team';
+      case 'starter':
+      case 'basic':
+        return 'Starter';
+      case 'free':
+        return 'Gratis';
+      default:
+        return plan ? plan : 'N/A';
+    }
+  };
+
+  const planBadgeClass = (plan: string | null) => {
+    switch ((plan || '').toLowerCase()) {
+      case 'premium':
+        return 'bg-success';
+      case 'pro':
+      case 'pro_team':
+        return 'bg-info';
+      case 'starter':
+      case 'basic':
+        return 'bg-primary';
+      default:
+        return 'bg-secondary';
     }
   };
 
@@ -461,6 +494,9 @@ export default function Metrics() {
                         <span className={`badge ms-2 ${user.isActive ? 'bg-success' : 'bg-secondary'}`}>
                           {user.isActive ? 'Activo' : 'Inactivo'}
                         </span>
+                        <span className={`badge ms-1 ${planBadgeClass(user.plan)}`}>
+                          {planLabel(user.plan)}
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -483,7 +519,20 @@ export default function Metrics() {
                 <tbody>
                   {metrics.recent.restaurants.map((restaurant) => (
                     <tr key={restaurant.id}>
-                      <td>{restaurant.name}</td>
+                      <td>
+                        {restaurant.slug ? (
+                          <a
+                            href={`/r/${restaurant.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Ver la carta pública del comercio"
+                          >
+                            {restaurant.name}
+                          </a>
+                        ) : (
+                          restaurant.name
+                        )}
+                      </td>
                       <td>
                         {formatDate(restaurant.createdAt)}
                         {restaurant.hasVisibleProduct ? (

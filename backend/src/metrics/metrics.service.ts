@@ -301,12 +301,14 @@ export class MetricsService {
         id: string;
         email: string;
         isActive: boolean;
+        plan: string | null;
         createdAt: Date;
       }>(
-        `SELECT id, email, is_active as "isActive", created_at as "createdAt"
-        FROM users
-        WHERE deleted_at IS NULL AND ${this.userInMetrics()}
-        ORDER BY created_at DESC
+        `SELECT u.id, u.email, u.is_active as "isActive", t.plan, u.created_at as "createdAt"
+        FROM users u
+        LEFT JOIN tenants t ON t.id = u.tenant_id AND t.deleted_at IS NULL
+        WHERE u.deleted_at IS NULL AND ${this.userInMetrics('u')}
+        ORDER BY u.created_at DESC
         LIMIT 10`,
       );
 
@@ -314,10 +316,11 @@ export class MetricsService {
       const recentRestaurants = await this.postgres.queryRaw<{
         id: string;
         name: string;
+        slug: string;
         createdAt: Date;
         hasVisibleProduct: boolean;
       }>(
-        `SELECT r.id, r.name, r.created_at as "createdAt",
+        `SELECT r.id, r.name, r.slug, r.created_at as "createdAt",
           EXISTS (
             SELECT 1
             FROM menus m
@@ -414,11 +417,13 @@ export class MetricsService {
             id: u.id,
             email: u.email,
             isActive: u.isActive === true,
+            plan: u.plan || null,
             createdAt: u.createdAt,
           })),
           restaurants: recentRestaurants.map((r) => ({
             id: r.id,
             name: r.name,
+            slug: r.slug,
             createdAt: r.createdAt,
             hasVisibleProduct: r.hasVisibleProduct === true,
           })),
