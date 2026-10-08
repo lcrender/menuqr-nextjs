@@ -232,15 +232,23 @@ export class MetricsService {
       // Top comercios con más menús
       const topRestaurantsByMenus = await this.postgres.queryRaw<{
         name: string;
+        ownerEmail: string | null;
         menuCount: string;
       }>(
         `SELECT 
           r.name,
+          (
+            SELECT u.email
+            FROM users u
+            WHERE u.tenant_id = r.tenant_id AND u.deleted_at IS NULL
+            ORDER BY u.created_at ASC
+            LIMIT 1
+          ) as "ownerEmail",
           COUNT(DISTINCT m.id) as "menuCount"
         FROM restaurants r
         LEFT JOIN menus m ON m.restaurant_id = r.id AND m.deleted_at IS NULL
         WHERE r.deleted_at IS NULL AND ${this.tenantInMetrics('r.tenant_id')}
-        GROUP BY r.id, r.name
+        GROUP BY r.id, r.name, r.tenant_id
         ORDER BY "menuCount" DESC
         LIMIT 10`,
       );
@@ -248,15 +256,18 @@ export class MetricsService {
       // Top menús con más productos
       const topMenusByProducts = await this.postgres.queryRaw<{
         name: string;
+        restaurantName: string | null;
         productCount: string;
       }>(
         `SELECT 
           m.name,
+          r.name as "restaurantName",
           COUNT(DISTINCT mi.id) as "productCount"
         FROM menus m
         LEFT JOIN menu_items mi ON mi.menu_id = m.id AND mi.deleted_at IS NULL
+        LEFT JOIN restaurants r ON r.id = m.restaurant_id AND r.deleted_at IS NULL
         WHERE m.deleted_at IS NULL AND ${this.tenantInMetrics('m.tenant_id')}
-        GROUP BY m.id, m.name
+        GROUP BY m.id, m.name, r.name
         ORDER BY "productCount" DESC
         LIMIT 10`,
       );
@@ -289,9 +300,10 @@ export class MetricsService {
       const recentUsers = await this.postgres.queryRaw<{
         id: string;
         email: string;
+        isActive: boolean;
         createdAt: Date;
       }>(
-        `SELECT id, email, created_at as "createdAt"
+        `SELECT id, email, is_active as "isActive", created_at as "createdAt"
         FROM users
         WHERE deleted_at IS NULL AND ${this.userInMetrics()}
         ORDER BY created_at DESC
@@ -303,8 +315,21 @@ export class MetricsService {
         id: string;
         name: string;
         createdAt: Date;
+        hasVisibleProduct: boolean;
       }>(
-        `SELECT r.id, r.name, r.created_at as "createdAt"
+        `SELECT r.id, r.name, r.created_at as "createdAt",
+          EXISTS (
+            SELECT 1
+            FROM menus m
+            INNER JOIN menu_items mi
+              ON mi.menu_id = m.id
+             AND mi.deleted_at IS NULL
+             AND mi.active = true
+            WHERE m.restaurant_id = r.id
+              AND m.deleted_at IS NULL
+              AND m.status = 'PUBLISHED'
+              AND m.is_active = true
+          ) as "hasVisibleProduct"
         FROM restaurants r
         WHERE r.deleted_at IS NULL AND ${this.tenantInMetrics('r.tenant_id')}
         ORDER BY r.created_at DESC
@@ -370,10 +395,12 @@ export class MetricsService {
         })),
         topRestaurants: topRestaurantsByMenus.map((r) => ({
           name: r.name,
+          ownerEmail: r.ownerEmail || 'Sin usuario',
           menuCount: parseInt(r.menuCount, 10),
         })),
         topMenus: topMenusByProducts.map((m) => ({
           name: m.name,
+          restaurantName: m.restaurantName || 'Sin comercio',
           productCount: parseInt(m.productCount, 10),
         })),
         quality: {
@@ -386,12 +413,14 @@ export class MetricsService {
           users: recentUsers.map((u) => ({
             id: u.id,
             email: u.email,
+            isActive: u.isActive === true,
             createdAt: u.createdAt,
           })),
           restaurants: recentRestaurants.map((r) => ({
             id: r.id,
             name: r.name,
             createdAt: r.createdAt,
+            hasVisibleProduct: r.hasVisibleProduct === true,
           })),
         },
       };

@@ -35,8 +35,8 @@ interface MetricsData {
     products: number;
   }>;
   topUsers: Array<{ email: string; restaurantCount: number }>;
-  topRestaurants: Array<{ name: string; menuCount: number }>;
-  topMenus: Array<{ name: string; productCount: number }>;
+  topRestaurants: Array<{ name: string; ownerEmail: string; menuCount: number }>;
+  topMenus: Array<{ name: string; restaurantName: string; productCount: number }>;
   quality: {
     restaurantsWithoutMenus: number;
     menusWithoutProducts: number;
@@ -44,8 +44,8 @@ interface MetricsData {
     unpublishedMenus: number;
   };
   recent: {
-    users: Array<{ id: string; email: string; createdAt: string }>;
-    restaurants: Array<{ id: string; name: string; createdAt: string }>;
+    users: Array<{ id: string; email: string; isActive: boolean; createdAt: string }>;
+    restaurants: Array<{ id: string; name: string; createdAt: string; hasVisibleProduct: boolean }>;
   };
   excludedUsers?: number;
 }
@@ -327,7 +327,10 @@ export default function Metrics() {
                   {metrics.topRestaurants.map((restaurant, idx) => (
                     <tr key={idx}>
                       <td>{idx + 1}</td>
-                      <td>{restaurant.name}</td>
+                      <td>
+                        {restaurant.name}
+                        <div className="small text-muted">{restaurant.ownerEmail}</div>
+                      </td>
                       <td><strong>{restaurant.menuCount}</strong></td>
                     </tr>
                   ))}
@@ -352,7 +355,10 @@ export default function Metrics() {
                   {metrics.topMenus.map((menu, idx) => (
                     <tr key={idx}>
                       <td>{idx + 1}</td>
-                      <td>{menu.name}</td>
+                      <td>
+                        {menu.name}
+                        <div className="small text-muted">{menu.restaurantName}</div>
+                      </td>
                       <td><strong>{menu.productCount}</strong></td>
                     </tr>
                   ))}
@@ -450,7 +456,12 @@ export default function Metrics() {
                   {metrics.recent.users.map((user) => (
                     <tr key={user.id}>
                       <td>{user.email}</td>
-                      <td>{formatDate(user.createdAt)}</td>
+                      <td>
+                        {formatDate(user.createdAt)}
+                        <span className={`badge ms-2 ${user.isActive ? 'bg-success' : 'bg-secondary'}`}>
+                          {user.isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -473,7 +484,24 @@ export default function Metrics() {
                   {metrics.recent.restaurants.map((restaurant) => (
                     <tr key={restaurant.id}>
                       <td>{restaurant.name}</td>
-                      <td>{formatDate(restaurant.createdAt)}</td>
+                      <td>
+                        {formatDate(restaurant.createdAt)}
+                        {restaurant.hasVisibleProduct ? (
+                          <span
+                            className="badge bg-success ms-2"
+                            title="Tiene un menú publicado con al menos un producto activo"
+                          >
+                            Visible
+                          </span>
+                        ) : (
+                          <span
+                            className="badge bg-secondary ms-2"
+                            title="No hay un menú publicado con productos activos"
+                          >
+                            Sin carta
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
