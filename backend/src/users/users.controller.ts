@@ -54,6 +54,24 @@ export class UsersController {
     return { message: 'Usuario eliminado' };
   }
 
+  @Patch(':id/metrics')
+  @ApiOperation({ summary: 'Ocultar o mostrar un usuario en las métricas generales' })
+  @ApiResponse({ status: 200, description: 'Visibilidad en métricas actualizada' })
+  async setExcludeFromMetrics(
+    @Param('id') id: string,
+    @Body() body: { excludeFromMetrics: boolean },
+  ) {
+    if (typeof body?.excludeFromMetrics !== 'boolean') {
+      throw new BadRequestException('excludeFromMetrics debe ser boolean');
+    }
+    await this.usersService.setExcludeFromMetrics(id, body.excludeFromMetrics);
+    return {
+      message: body.excludeFromMetrics
+        ? 'Usuario oculto en métricas'
+        : 'Usuario visible en métricas',
+    };
+  }
+
   @Patch(':id/active')
   @ApiOperation({ summary: 'Activar o desactivar usuario' })
   @ApiResponse({ status: 200, description: 'Estado actualizado' })

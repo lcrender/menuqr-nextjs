@@ -31,10 +31,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const isConfigSection = currentPath.startsWith('/admin/config');
   const isToolsSection = currentPath.startsWith('/admin/herramientas');
   const isDashboardConfigSection = currentPath.startsWith('/admin/config/dashboard');
+  const isMetricsSection = currentPath.startsWith('/admin/metrics');
   const [helpMenuOpen, setHelpMenuOpen] = useState(isHelpSection);
   const [configMenuOpen, setConfigMenuOpen] = useState(isConfigSection);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(isToolsSection);
   const [dashboardConfigMenuOpen, setDashboardConfigMenuOpen] = useState(isDashboardConfigSection);
+  const [metricsMenuOpen, setMetricsMenuOpen] = useState(isMetricsSection);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -210,6 +212,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [isDashboardConfigSection]);
 
+  useEffect(() => {
+    if (isMetricsSection) setMetricsMenuOpen(true);
+  }, [isMetricsSection]);
+
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -334,12 +340,43 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     </Link>
                   </li>
                   <li className="admin-nav-item">
-                    <Link 
-                      href="/admin/metrics" 
-                      className={`admin-nav-link ${currentPath === '/admin/metrics' ? 'active' : ''}`}
-                    >
-                      {t("navigation.metrics")}
-                    </Link>
+                    <div>
+                      <button
+                        type="button"
+                        className={`admin-nav-link w-100 text-start d-flex justify-content-between align-items-center ${isMetricsSection ? 'active' : ''}`}
+                        onClick={() => setMetricsMenuOpen(!metricsMenuOpen)}
+                        style={{ border: 'none', cursor: 'pointer', background: 'transparent' }}
+                      >
+                        <span>{t("navigation.metrics")}</span>
+                        <span style={{ transform: metricsMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }}>
+                          ▼
+                        </span>
+                      </button>
+                      {metricsMenuOpen && (
+                        <ul className="admin-subnav" style={{ listStyle: 'none', paddingLeft: '20px', marginTop: '5px' }}>
+                          <li className="admin-nav-item">
+                            <Link
+                              href="/admin/metrics"
+                              className={`admin-nav-link ${currentPath === '/admin/metrics' ? 'active' : ''}`}
+                              style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                              onClick={() => setMobileNavOpen(false)}
+                            >
+                              {t("navigation.metricsOverview")}
+                            </Link>
+                          </li>
+                          <li className="admin-nav-item">
+                            <Link
+                              href="/admin/metrics/suscripciones"
+                              className={`admin-nav-link ${currentPath.startsWith('/admin/metrics/suscripciones') ? 'active' : ''}`}
+                              style={{ fontSize: '0.9rem', paddingLeft: '30px' }}
+                              onClick={() => setMobileNavOpen(false)}
+                            >
+                              {t("navigation.metricsSubscriptions")}
+                            </Link>
+                          </li>
+                        </ul>
+                      )}
+                    </div>
                   </li>
                 </>
               )}

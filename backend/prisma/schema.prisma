@@ -69,6 +69,8 @@ model User {
   marketingOptInAt       DateTime? @map("marketing_opt_in_at")
   /// Idioma preferido del panel y contenido nuevo: es | en
   preferredLanguage      String    @default("es") @map("preferred_language")
+  /// Si true, el super admin oculta a este usuario y los datos de su tenant en las métricas generales.
+  excludeFromMetrics     Boolean   @default(false) @map("exclude_from_metrics")
   createdAt               DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
   deletedAt             DateTime? @map("deleted_at")

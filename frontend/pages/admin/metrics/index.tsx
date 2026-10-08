@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
+import MetricsSubnav from '../../../components/admin/MetricsSubnav';
 
 interface MetricsData {
   general: {
@@ -46,6 +47,7 @@ interface MetricsData {
     users: Array<{ id: string; email: string; createdAt: string }>;
     restaurants: Array<{ id: string; name: string; createdAt: string }>;
   };
+  excludedUsers?: number;
 }
 
 export default function Metrics() {
@@ -110,12 +112,21 @@ export default function Metrics() {
 
   return (
     <AdminLayout>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="admin-title">Métricas del Sistema</h1>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h1 className="admin-title mb-0">Métricas del Sistema</h1>
         <button className="btn btn-primary" onClick={loadMetrics}>
           🔄 Actualizar
         </button>
       </div>
+      <MetricsSubnav />
+      {(metrics.excludedUsers ?? 0) > 0 && (
+        <div className="alert alert-warning py-2">
+          {metrics.excludedUsers === 1
+            ? '1 usuario de prueba está oculto en este resumen.'
+            : `${metrics.excludedUsers} usuarios de prueba están ocultos en este resumen.`}{' '}
+          Se marcan desde Usuarios.
+        </div>
+      )}
 
       {/* Métricas Generales */}
       <div className="row g-4 mb-4">

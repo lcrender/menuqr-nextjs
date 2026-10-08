@@ -7,6 +7,23 @@ export class MetricsService {
 
   constructor(private readonly postgres: PostgresService) {}
 
+  /** El usuario entra en el resumen general de métricas. */
+  private userInMetrics(alias?: string): string {
+    const col = alias ? `${alias}.exclude_from_metrics` : 'exclude_from_metrics';
+    return `COALESCE(${col}, false) = false`;
+  }
+
+  /** El tenant no pertenece a un usuario marcado como oculto en métricas. */
+  private tenantInMetrics(tenantIdExpr: string): string {
+    return `NOT EXISTS (
+      SELECT 1
+      FROM users metrics_excluded_user
+      WHERE metrics_excluded_user.deleted_at IS NULL
+        AND metrics_excluded_user.exclude_from_metrics = true
+        AND metrics_excluded_user.tenant_id = ${tenantIdExpr}
+    )`;
+  }
+
   async getSystemMetrics() {
     try {
       // Métricas generales del sistema
@@ -26,53 +43,57 @@ export class MetricsService {
       ] = await Promise.all([
         // Total de usuarios
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL`,
+          `SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL AND ${this.userInMetrics()}`,
         ),
         // Usuarios activos
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL AND is_active = true`,
+          `SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL AND is_active = true AND ${this.userInMetrics()}`,
         ),
         // Total de tenants
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM tenants WHERE deleted_at IS NULL`,
+          `SELECT COUNT(*) as count FROM tenants t WHERE t.deleted_at IS NULL AND ${this.tenantInMetrics('t.id')}`,
         ),
         // Total de comercios
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM restaurants WHERE deleted_at IS NULL`,
+          `SELECT COUNT(*) as count FROM restaurants r WHERE r.deleted_at IS NULL AND ${this.tenantInMetrics('r.tenant_id')}`,
         ),
         // Comercios activos
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM restaurants WHERE deleted_at IS NULL AND is_active = true`,
+          `SELECT COUNT(*) as count FROM restaurants r WHERE r.deleted_at IS NULL AND r.is_active = true AND ${this.tenantInMetrics('r.tenant_id')}`,
         ),
         // Total de menús
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM menus WHERE deleted_at IS NULL`,
+          `SELECT COUNT(*) as count FROM menus m WHERE m.deleted_at IS NULL AND ${this.tenantInMetrics('m.tenant_id')}`,
         ),
         // Menús publicados
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM menus WHERE deleted_at IS NULL AND status = 'PUBLISHED'`,
+          `SELECT COUNT(*) as count FROM menus m WHERE m.deleted_at IS NULL AND m.status = 'PUBLISHED' AND ${this.tenantInMetrics('m.tenant_id')}`,
         ),
         // Menús borradores
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM menus WHERE deleted_at IS NULL AND status = 'DRAFT'`,
+          `SELECT COUNT(*) as count FROM menus m WHERE m.deleted_at IS NULL AND m.status = 'DRAFT' AND ${this.tenantInMetrics('m.tenant_id')}`,
         ),
         // Total de secciones
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM menu_sections WHERE deleted_at IS NULL`,
+          `SELECT COUNT(*) as count FROM menu_sections ms WHERE ms.deleted_at IS NULL AND ${this.tenantInMetrics('ms.tenant_id')}`,
         ),
         // Total de productos
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM menu_items WHERE deleted_at IS NULL`,
+          `SELECT COUNT(*) as count FROM menu_items mi WHERE mi.deleted_at IS NULL AND ${this.tenantInMetrics('mi.tenant_id')}`,
         ),
         // Productos activos
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM menu_items WHERE deleted_at IS NULL AND active = true`,
+          `SELECT COUNT(*) as count FROM menu_items mi WHERE mi.deleted_at IS NULL AND mi.active = true AND ${this.tenantInMetrics('mi.tenant_id')}`,
         ),
         // Productos inactivos
         this.postgres.queryRaw<{ count: string }>(
-          `SELECT COUNT(*) as count FROM menu_items WHERE deleted_at IS NULL AND active = false`,
+          `SELECT COUNT(*) as count FROM menu_items mi WHERE mi.deleted_at IS NULL AND mi.active = false AND ${this.tenantInMetrics('mi.tenant_id')}`,
         ),
       ]);
+
+      const excludedUsers = await this.postgres.queryRaw<{ count: string }>(
+        `SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL AND exclude_from_metrics = true`,
+      );
 
       // Distribución por plan de suscripción
       const subscriptionPlans = await this.postgres.queryRaw<{ plan: string; count: string }>(
@@ -81,7 +102,7 @@ export class MetricsService {
           COUNT(DISTINCT u.id) as count
         FROM users u
         LEFT JOIN tenants t ON t.id = u.tenant_id AND t.deleted_at IS NULL
-        WHERE u.deleted_at IS NULL
+        WHERE u.deleted_at IS NULL AND ${this.userInMetrics('u')}
         GROUP BY t.plan
         ORDER BY count DESC`,
       );
@@ -92,7 +113,7 @@ export class MetricsService {
           COALESCE(r.template, 'classic') as template,
           COUNT(*) as count
         FROM restaurants r
-        WHERE r.deleted_at IS NULL
+        WHERE r.deleted_at IS NULL AND ${this.tenantInMetrics('r.tenant_id')}
         GROUP BY r.template
         ORDER BY count DESC`,
       );
@@ -103,7 +124,7 @@ export class MetricsService {
           r.default_currency as currency,
           COUNT(*) as count
         FROM restaurants r
-        WHERE r.deleted_at IS NULL AND r.default_currency IS NOT NULL
+        WHERE r.deleted_at IS NULL AND r.default_currency IS NOT NULL AND ${this.tenantInMetrics('r.tenant_id')}
         GROUP BY r.default_currency
         ORDER BY count DESC
         LIMIT 10`,
@@ -116,35 +137,35 @@ export class MetricsService {
             TO_CHAR(created_at, 'YYYY-MM') as month,
             COUNT(*) as count
           FROM users
-          WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '6 months'
+          WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '6 months' AND ${this.userInMetrics()}
           GROUP BY TO_CHAR(created_at, 'YYYY-MM')
           ORDER BY month ASC`,
         ),
         this.postgres.queryRaw<{ month: string; count: string }>(
           `SELECT 
-            TO_CHAR(created_at, 'YYYY-MM') as month,
+            TO_CHAR(r.created_at, 'YYYY-MM') as month,
             COUNT(*) as count
-          FROM restaurants
-          WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '6 months'
-          GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+          FROM restaurants r
+          WHERE r.deleted_at IS NULL AND r.created_at >= NOW() - INTERVAL '6 months' AND ${this.tenantInMetrics('r.tenant_id')}
+          GROUP BY TO_CHAR(r.created_at, 'YYYY-MM')
           ORDER BY month ASC`,
         ),
         this.postgres.queryRaw<{ month: string; count: string }>(
           `SELECT 
-            TO_CHAR(created_at, 'YYYY-MM') as month,
+            TO_CHAR(m.created_at, 'YYYY-MM') as month,
             COUNT(*) as count
-          FROM menus
-          WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '6 months'
-          GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+          FROM menus m
+          WHERE m.deleted_at IS NULL AND m.created_at >= NOW() - INTERVAL '6 months' AND ${this.tenantInMetrics('m.tenant_id')}
+          GROUP BY TO_CHAR(m.created_at, 'YYYY-MM')
           ORDER BY month ASC`,
         ),
         this.postgres.queryRaw<{ month: string; count: string }>(
           `SELECT 
-            TO_CHAR(created_at, 'YYYY-MM') as month,
+            TO_CHAR(mi.created_at, 'YYYY-MM') as month,
             COUNT(*) as count
-          FROM menu_items
-          WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '6 months'
-          GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+          FROM menu_items mi
+          WHERE mi.deleted_at IS NULL AND mi.created_at >= NOW() - INTERVAL '6 months' AND ${this.tenantInMetrics('mi.tenant_id')}
+          GROUP BY TO_CHAR(mi.created_at, 'YYYY-MM')
           ORDER BY month ASC`,
         ),
       ]);
@@ -202,7 +223,7 @@ export class MetricsService {
           COUNT(DISTINCT r.id) as "restaurantCount"
         FROM users u
         LEFT JOIN restaurants r ON r.tenant_id = u.tenant_id AND r.deleted_at IS NULL
-        WHERE u.deleted_at IS NULL
+        WHERE u.deleted_at IS NULL AND ${this.userInMetrics('u')}
         GROUP BY u.id, u.email
         ORDER BY "restaurantCount" DESC
         LIMIT 10`,
@@ -218,7 +239,7 @@ export class MetricsService {
           COUNT(DISTINCT m.id) as "menuCount"
         FROM restaurants r
         LEFT JOIN menus m ON m.restaurant_id = r.id AND m.deleted_at IS NULL
-        WHERE r.deleted_at IS NULL
+        WHERE r.deleted_at IS NULL AND ${this.tenantInMetrics('r.tenant_id')}
         GROUP BY r.id, r.name
         ORDER BY "menuCount" DESC
         LIMIT 10`,
@@ -234,7 +255,7 @@ export class MetricsService {
           COUNT(DISTINCT mi.id) as "productCount"
         FROM menus m
         LEFT JOIN menu_items mi ON mi.menu_id = m.id AND mi.deleted_at IS NULL
-        WHERE m.deleted_at IS NULL
+        WHERE m.deleted_at IS NULL AND ${this.tenantInMetrics('m.tenant_id')}
         GROUP BY m.id, m.name
         ORDER BY "productCount" DESC
         LIMIT 10`,
@@ -250,15 +271,18 @@ export class MetricsService {
         `SELECT 
           (SELECT COUNT(*) FROM restaurants r 
            WHERE r.deleted_at IS NULL 
+           AND ${this.tenantInMetrics('r.tenant_id')}
            AND NOT EXISTS (SELECT 1 FROM menus m WHERE m.restaurant_id = r.id AND m.deleted_at IS NULL)) as "restaurantsWithoutMenus",
           (SELECT COUNT(*) FROM menus m 
            WHERE m.deleted_at IS NULL 
+           AND ${this.tenantInMetrics('m.tenant_id')}
            AND NOT EXISTS (SELECT 1 FROM menu_items mi WHERE mi.menu_id = m.id AND mi.deleted_at IS NULL)) as "menusWithoutProducts",
           (SELECT COUNT(*) FROM menu_items mi 
            WHERE mi.deleted_at IS NULL 
+           AND ${this.tenantInMetrics('mi.tenant_id')}
            AND NOT EXISTS (SELECT 1 FROM item_prices ip WHERE ip.item_id = mi.id AND ip.deleted_at IS NULL)) as "productsWithoutPrices",
           (SELECT COUNT(*) FROM menus m 
-           WHERE m.deleted_at IS NULL AND m.status != 'PUBLISHED') as "unpublishedMenus"`,
+           WHERE m.deleted_at IS NULL AND m.status != 'PUBLISHED' AND ${this.tenantInMetrics('m.tenant_id')}) as "unpublishedMenus"`,
       );
 
       // Últimos usuarios registrados
@@ -269,7 +293,7 @@ export class MetricsService {
       }>(
         `SELECT id, email, created_at as "createdAt"
         FROM users
-        WHERE deleted_at IS NULL
+        WHERE deleted_at IS NULL AND ${this.userInMetrics()}
         ORDER BY created_at DESC
         LIMIT 10`,
       );
@@ -280,10 +304,10 @@ export class MetricsService {
         name: string;
         createdAt: Date;
       }>(
-        `SELECT id, name, created_at as "createdAt"
-        FROM restaurants
-        WHERE deleted_at IS NULL
-        ORDER BY created_at DESC
+        `SELECT r.id, r.name, r.created_at as "createdAt"
+        FROM restaurants r
+        WHERE r.deleted_at IS NULL AND ${this.tenantInMetrics('r.tenant_id')}
+        ORDER BY r.created_at DESC
         LIMIT 10`,
       );
 
@@ -297,13 +321,14 @@ export class MetricsService {
           COUNT(*) as "restaurantCount"
         FROM restaurants r
         LEFT JOIN tenants t ON t.id = r.tenant_id AND t.deleted_at IS NULL
-        WHERE r.deleted_at IS NULL
+        WHERE r.deleted_at IS NULL AND ${this.tenantInMetrics('r.tenant_id')}
         GROUP BY t.name
         ORDER BY "restaurantCount" DESC
         LIMIT 10`,
       );
 
       return {
+        excludedUsers: parseInt(excludedUsers[0]?.count || '0', 10),
         general: {
           totalUsers: parseInt(totalUsers[0]?.count || '0', 10),
           activeUsers: parseInt(activeUsers[0]?.count || '0', 10),
@@ -376,4 +401,3 @@ export class MetricsService {
     }
   }
 }
-

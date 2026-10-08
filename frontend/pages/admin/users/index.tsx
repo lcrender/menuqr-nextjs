@@ -16,6 +16,7 @@ interface UserStats {
   tenantId: string | null;
   tenantName: string | null;
   declaredCountry: string | null;
+  excludeFromMetrics: boolean;
   subscriptionPlan: string | null;
   restaurantCount: number;
   menuCount: number;
@@ -93,6 +94,30 @@ export default function Users() {
       setUserDetails(null);
     } finally {
       setLoadingDetails(false);
+    }
+  };
+
+  const handleToggleExcludeFromMetrics = async (e: React.MouseEvent, user: UserStats) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setActionLoading(user.id);
+    try {
+      const excludeFromMetrics = !user.excludeFromMetrics;
+      await api.patch(`/users/${user.id}/metrics`, { excludeFromMetrics });
+      setSelectedUser((prev: UserStats | null) =>
+        prev && prev.id === user.id ? { ...prev, excludeFromMetrics } : prev,
+      );
+      await loadUsers();
+      if (selectedUser?.id === user.id && userDetails?.user) {
+        setUserDetails({
+          ...userDetails,
+          user: { ...userDetails.user, excludeFromMetrics },
+        });
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Error al actualizar la visibilidad en métricas');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -250,6 +275,11 @@ export default function Users() {
             </button>
           )}
         </div>
+        {currentUser?.role === 'SUPER_ADMIN' && (
+          <p className="text-muted small mb-0 mt-2">
+            Marcá «Ocultar» para que un usuario de prueba y sus comercios, menús y productos no aparezcan en las métricas generales.
+          </p>
+        )}
       </div>
 
       {loading ? (
@@ -272,13 +302,14 @@ export default function Users() {
                 <th>Menús</th>
                 <th>PA</th>
                 <th>PI</th>
+                {currentUser?.role === 'SUPER_ADMIN' && <th>Métricas</th>}
                 {currentUser?.role === 'SUPER_ADMIN' && <th>Acciones</th>}
               </tr>
             </thead>
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={currentUser?.role === 'SUPER_ADMIN' ? 10 : 8} className="text-center text-muted">
+                  <td colSpan={currentUser?.role === 'SUPER_ADMIN' ? 11 : 8} className="text-center text-muted">
                     No hay usuarios registrados
                   </td>
                 </tr>
@@ -287,6 +318,9 @@ export default function Users() {
                   <tr key={user.id} style={{ cursor: 'pointer' }} onClick={() => handleUserClick(user)}>
                     <td>
                       <strong>{user.email}</strong>
+                      {user.excludeFromMetrics && (
+                        <span className="badge bg-warning text-dark ms-2">Oculto</span>
+                      )}
                       {(user.firstName || user.lastName) && (
                         <div className="small text-muted">
                           {user.firstName} {user.lastName}
@@ -356,6 +390,24 @@ export default function Users() {
                     <td>
                       <span className="badge bg-secondary">{user.inactiveProductCount}</span>
                     </td>
+                    {currentUser?.role === 'SUPER_ADMIN' && (
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <div className="form-check mb-0">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id={`exclude-metrics-${user.id}`}
+                            checked={!!user.excludeFromMetrics}
+                            disabled={actionLoading === user.id}
+                            readOnly
+                            onClick={(e) => handleToggleExcludeFromMetrics(e as any, user)}
+                          />
+                          <label className="form-check-label small" htmlFor={`exclude-metrics-${user.id}`}>
+                            Ocultar
+                          </label>
+                        </div>
+                      </td>
+                    )}
                     {currentUser?.role === 'SUPER_ADMIN' && (
                       <td onClick={(e) => e.stopPropagation()}>
                         <div className="d-flex align-items-center gap-2">
@@ -524,6 +576,7 @@ export default function Users() {
                       </dl>
                     </div>
                     {currentUser?.role === 'SUPER_ADMIN' && (
+                      <>
                       <div className="mb-4">
                         <h6 className="mb-2">Región de facturación</h6>
                         <p className="text-muted small mb-2">Define precios y proveedor de pago (Argentina: ARS/MercadoPago, resto: USD/PayPal).</p>
@@ -551,6 +604,33 @@ export default function Users() {
                           <option value="AR">Argentina (ARS)</option>
                         </select>
                       </div>
+                      <div className="mb-4">
+                        <h6 className="mb-2">Métricas generales</h6>
+                        <p className="text-muted small mb-2">
+                          Si lo marcás, este usuario y sus comercios, menús y productos dejan de contarse en el resumen de métricas.
+                        </p>
+                        <div className="form-check">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id="exclude-metrics-detail"
+                            checked={!!userDetails.user?.excludeFromMetrics}
+                            disabled={actionLoading === selectedUser?.id}
+                            readOnly
+                            onClick={(e) => {
+                              if (!selectedUser) return;
+                              handleToggleExcludeFromMetrics(e as any, {
+                                ...selectedUser,
+                                excludeFromMetrics: !!userDetails.user?.excludeFromMetrics,
+                              });
+                            }}
+                          />
+                          <label className="form-check-label" htmlFor="exclude-metrics-detail">
+                            Ocultar en métricas
+                          </label>
+                        </div>
+                      </div>
+                      </>
                     )}
                     {/* Comercios */}
                     <div className="mb-4">

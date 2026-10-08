@@ -11,6 +11,7 @@ type UserWithVerification = User & {
   pendingPlan?: string | null;
   pendingBillingCycle?: 'monthly' | 'yearly' | null;
   revokedSessionsBefore?: Date | null;
+  excludeFromMetrics?: boolean;
 };
 
 @Injectable()
@@ -52,6 +53,7 @@ export class UsersService {
       registrationCountry: row.registration_country ?? null,
       declaredCountry: row.declared_country ?? null,
       preferredLanguage: row.preferred_language === 'en' ? 'en' : 'es',
+      excludeFromMetrics: row.exclude_from_metrics === true,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       deletedAt: row.deleted_at,
@@ -448,6 +450,7 @@ export class UsersService {
         u.is_active as "isActive",
         u.tenant_id as "tenantId",
         u.declared_country as "declaredCountry",
+        u.exclude_from_metrics as "excludeFromMetrics",
         t.name as "tenantName",
         t.plan as "subscriptionPlan",
         COUNT(DISTINCT r.id) as "restaurantCount",
@@ -469,7 +472,7 @@ export class UsersService {
       params.push(`%${userEmail}%`);
     }
     
-    query += ` GROUP BY u.id, u.email, u.role, u.first_name, u.last_name, u.is_active, u.tenant_id, u.declared_country, t.name, t.plan
+    query += ` GROUP BY u.id, u.email, u.role, u.first_name, u.last_name, u.is_active, u.tenant_id, u.declared_country, u.exclude_from_metrics, t.name, t.plan
       ORDER BY u.created_at DESC`;
 
     // Aplicar paginación si se proporciona
@@ -496,6 +499,7 @@ export class UsersService {
         tenantId: u.tenantId,
         tenantName: u.tenantName,
         declaredCountry: u.declaredCountry ?? null,
+        excludeFromMetrics: u.excludeFromMetrics === true,
         subscriptionPlan: u.subscriptionPlan || null,
         restaurantCount: parseInt(u.restaurantCount) || 0,
         menuCount: parseInt(u.menuCount) || 0,
@@ -527,6 +531,7 @@ export class UsersService {
           registrationCountry: user.registrationCountry ?? null,
           lastLoginAt: user.lastLoginAt ?? null,
           createdAt: user.createdAt ?? null,
+          excludeFromMetrics: user.excludeFromMetrics === true,
         },
         restaurants: [],
         menus: [],
@@ -599,6 +604,7 @@ export class UsersService {
         registrationCountry: user.registrationCountry ?? null,
         lastLoginAt: user.lastLoginAt ?? null,
         createdAt: user.createdAt ?? null,
+        excludeFromMetrics: user.excludeFromMetrics === true,
       },
       restaurants: restaurants.map((r: any) => ({
         id: r.id,
@@ -628,6 +634,18 @@ export class UsersService {
         restaurantTemplate: p.restaurantTemplate || 'classic',
       })),
     };
+  }
+
+  /** Oculta o muestra al usuario (y los datos de su tenant) en las métricas generales. */
+  async setExcludeFromMetrics(userId: string, excludeFromMetrics: boolean): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    await this.postgres.executeRaw(
+      'UPDATE users SET exclude_from_metrics = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL',
+      [excludeFromMetrics, userId],
+    );
   }
 
   /** Activar o desactivar usuario (solo SUPER_ADMIN). */
