@@ -2,8 +2,9 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
-import LandingHomeLink from '../../components/LandingHomeLink';
+import PublicMenuStatus from '../../components/PublicMenuStatus';
 import { getApiBaseUrl } from '../../lib/config';
+import { getApiErrorMessage } from '../../lib/api-error-message';
 import { iconLabelsForLocale } from '../../lib/allergen-icon-labels';
 
 interface MenuSection {
@@ -62,7 +63,7 @@ export default function MenuPage() {
         if (err.response?.status === 404) {
           setError('Menú no encontrado');
         } else {
-          setError(err.message || 'Error cargando el menú');
+          setError(getApiErrorMessage(err, 'Error cargando el menú'));
         }
       } finally {
         setLoading(false);
@@ -85,16 +86,7 @@ export default function MenuPage() {
   }
 
   if (error || !menu) {
-    return (
-      <div className="container mt-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Menú no encontrado'}
-        </div>
-        <LandingHomeLink className="btn btn-primary mt-3">
-          Volver al inicio
-        </LandingHomeLink>
-      </div>
-    );
+    return <PublicMenuStatus message={error || 'Menú no encontrado'} />;
   }
 
   // Renderizar según la plantilla

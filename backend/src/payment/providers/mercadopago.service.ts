@@ -451,15 +451,19 @@ export class MercadoPagoService implements IPaymentProviderService {
       this.logger.log(`MercadoPago webhook ${eventId} already processed`);
       return { processed: true, idempotencyKey: eventId };
     }
-    const type = (body.type || body.action) as string | undefined;
-    this.logger.log(`MercadoPago webhook: ${type} (${eventId})`);
+    const type = String(body.type || '');
+    const action = String(body.action || '');
+    this.logger.log(`MercadoPago webhook: ${type || action} (${eventId})`);
 
-    if (type === 'payment' || type === 'payment.created') {
+    const isPayment =
+      type === 'payment' || type.startsWith('payment.') || action.startsWith('payment.');
+    if (isPayment) {
       const paymentId = (body.data as { id?: unknown } | undefined)?.id;
       if (paymentId != null) await this.handlePaymentCreated(String(paymentId), body, eventId);
     } else if (
       type === 'subscription_preapproval' ||
       type === 'preapproval' ||
+      action.startsWith('subscription_preapproval') ||
       body.type === 'subscription_preapproval'
     ) {
       const preapprovalId = (body.data as { id?: unknown } | undefined)?.id;
@@ -486,11 +490,15 @@ export class MercadoPagoService implements IPaymentProviderService {
       payment.metadata?.preapproval_id ||
       payment.point_of_interaction?.transaction_data?.subscription_id;
     const subscriptionExternalId = preapprovalExt ? String(preapprovalExt) : null;
-    const sub = subscriptionExternalId
+    let sub = subscriptionExternalId
       ? await this.subscriptionService.findByExternalId('mercadopago', subscriptionExternalId)
-      : externalRef
-        ? await this.subscriptionService.findActiveByUserAndProvider(String(externalRef), 'mercadopago')
-        : null;
+      : null;
+    if (!sub && externalRef) {
+      sub = await this.subscriptionService.findOpenBillableByUserAndProvider(
+        String(externalRef),
+        'mercadopago',
+      );
+    }
 
     const attemptStatus: PaymentAttemptStatus =
       status === 'approved'
@@ -523,8 +531,15 @@ export class MercadoPagoService implements IPaymentProviderService {
         failureReason: payment.status_detail ?? payment.failure_reason ?? null,
         rawData: payment,
       });
+      if (sub) {
+        await this.paymentHistory.attachUnlinkedPayments({
+          userId,
+          subscriptionId: sub.id,
+          externalSubscriptionId: sub.externalSubscriptionId,
+        });
+      }
 
-      // Notificar fallo (best-effort).
+      // Notificar fallo y, si el período pago ya venció, bajar a Free.
       if (attemptStatus === 'failed') {
         try {
           const actor = await this.usersService.findById(userId);
@@ -547,6 +562,9 @@ export class MercadoPagoService implements IPaymentProviderService {
                 currency: payment.currency_id ?? null,
               },
             );
+          }
+          if (sub && actor && (sub.status === 'active' || sub.status === 'past_due')) {
+            await this.applyMercadoPagoChargeFailure(sub, actor, String(paymentId));
           }
         } catch (e) {
           this.logger.warn(`No se pudo enviar notificación payment_failed (MP) para userId=${userId}: ${e}`);
@@ -641,11 +659,11 @@ export class MercadoPagoService implements IPaymentProviderService {
           cancelAtPeriodEnd: false,
         });
       } else if (sub) {
-        // Conservar plan_slug y plan_type ya guardados al crear el checkout (fuente de verdad).
+        // No pisar un período que ya dejó un pago aprobado.
         await this.subscriptionService.updateStatus('mercadopago', preapprovalId, {
           status: 'active',
-          currentPeriodStart: periodStart,
-          currentPeriodEnd: periodEnd,
+          ...(sub.currentPeriodStart ? {} : { currentPeriodStart: periodStart }),
+          ...(sub.currentPeriodEnd ? {} : { currentPeriodEnd: periodEnd }),
         });
       }
       if (sub) await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
@@ -675,6 +693,11 @@ export class MercadoPagoService implements IPaymentProviderService {
         } catch (e) {
           this.logger.warn(`No se pudo enviar emails subscription activated (MP) para userId=${sub.userId}: ${e}`);
         }
+      }
+    } else if (status === 'paused') {
+      if (sub && (sub.status === 'active' || sub.status === 'past_due')) {
+        const actor = await this.usersService.findById(sub.userId);
+        if (actor) await this.applyMercadoPagoChargeFailure(sub, actor, `paused:${preapprovalId}`);
       }
     } else if (status === 'cancelled') {
       // Cancelación en MP: si aún queda ciclo pagado, mantener acceso local hasta period_end.
@@ -709,5 +732,53 @@ export class MercadoPagoService implements IPaymentProviderService {
         await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
       }
     }
+  }
+
+  /**
+   * Cobro rechazado o suscripción pausada en Mercado Pago.
+   * Si el período ya pago sigue vigente, el plan se mantiene. Si ya venció, pasa a Free.
+   */
+  private async applyMercadoPagoChargeFailure(
+    sub: { userId: string; externalSubscriptionId: string; subscriptionPlan: string | null; status: string; currentPeriodEnd: Date | null },
+    actor: { id: string; email: string; firstName?: string | null; lastName?: string | null },
+    externalPaymentId: string,
+  ): Promise<void> {
+    const periodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
+    const periodEnded = periodEnd != null && periodEnd.getTime() < Date.now();
+    if (periodEnded) {
+      await this.subscriptionService.updateStatus('mercadopago', sub.externalSubscriptionId, {
+        status: 'canceled',
+        cancelAtPeriodEnd: false,
+      });
+      await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
+      await this.subscriptionNotifications.notifyUnpaidDowngrade({
+        userId: actor.id,
+        userEmail: actor.email,
+        firstName: actor.firstName ?? null,
+        lastName: actor.lastName ?? null,
+        previousPlan: sub.subscriptionPlan ?? 'pro',
+        paymentProvider: 'mercadopago',
+        externalSubscriptionId: sub.externalSubscriptionId,
+        externalPaymentId,
+        periodEnd,
+      });
+      return;
+    }
+
+    await this.subscriptionService.updateStatus('mercadopago', sub.externalSubscriptionId, {
+      status: 'past_due',
+    });
+    await this.subscriptionService.syncTenantPlanFromSubscription(sub.userId);
+    await this.subscriptionNotifications.notifyPaymentRejected({
+      userId: actor.id,
+      userEmail: actor.email,
+      firstName: actor.firstName ?? null,
+      lastName: actor.lastName ?? null,
+      previousPlan: sub.subscriptionPlan ?? 'pro',
+      paymentProvider: 'mercadopago',
+      externalSubscriptionId: sub.externalSubscriptionId,
+      externalPaymentId,
+      accessUntil: periodEnd,
+    });
   }
 }

@@ -618,4 +618,71 @@ export class SubscriptionNotificationService {
       this.wrapEmail('Notificaciones', adminBody),
     );
   }
+
+  /** Mercado Pago rechazó un cobro y el período pago todavía no venció. */
+  async notifyPaymentRejected(payload: {
+    userId: string;
+    userEmail: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    previousPlan: string;
+    paymentProvider: PaymentProvider;
+    externalSubscriptionId: string;
+    externalPaymentId: string;
+    accessUntil?: Date | null;
+  }): Promise<void> {
+    const claimKey = `payment-rejected:${payload.paymentProvider}:${payload.externalPaymentId}`;
+    if (!(await this.tryClaim(claimKey))) return;
+    const lang = await this.resolveUserLang(payload.userId);
+    const copy = subscriptionUserEmailCopy[lang];
+    const first = (payload.firstName || '').trim() || (lang === 'en' ? 'Hi' : 'Hola');
+    const plan = this.planLabel(payload.previousPlan);
+    const accessUntil = payload.accessUntil
+      ? this.formatDate(payload.accessUntil, lang)
+      : lang === 'en'
+        ? 'the end of the paid period'
+        : 'el fin del período ya pago';
+    const userTo = (payload.userEmail || '').trim();
+    if (!this.isValidEmail(userTo)) return;
+    const body = `
+      ${copy.paymentRejectedBody(this.escapeHtml(first), this.escapeHtml(plan), this.escapeHtml(accessUntil))}
+      <p style="margin-top:20px;"><a href="${this.escapeHtml(`${this.frontendUrl.replace(/\/$/, '')}/admin/profile/subscription`)}" style="display:inline-block;background:#6366f1;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">${copy.canceledCta}</a></p>
+    `;
+    await this.emailService.sendUserTransactionalEmail(
+      userTo,
+      copy.paymentRejectedSubject,
+      this.wrapEmail(copy.titleSuffix, body),
+    );
+  }
+
+  /** Período vencido y el cobro no se pudo hacer: la cuenta pasa a Free. Los datos no se borran. */
+  async notifyUnpaidDowngrade(payload: {
+    userId: string;
+    userEmail: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    previousPlan: string;
+    paymentProvider: PaymentProvider;
+    externalSubscriptionId: string;
+    externalPaymentId?: string | null;
+    periodEnd?: Date | null;
+  }): Promise<void> {
+    const claimKey = `unpaid-downgrade:${payload.paymentProvider}:${payload.externalSubscriptionId}`;
+    if (!(await this.tryClaim(claimKey))) return;
+    const lang = await this.resolveUserLang(payload.userId);
+    const copy = subscriptionUserEmailCopy[lang];
+    const first = (payload.firstName || '').trim() || (lang === 'en' ? 'Hi' : 'Hola');
+    const plan = this.planLabel(payload.previousPlan);
+    const userTo = (payload.userEmail || '').trim();
+    if (!this.isValidEmail(userTo)) return;
+    const body = `
+      ${copy.unpaidDowngradeBody(this.escapeHtml(first), this.escapeHtml(plan))}
+      <p style="margin-top:20px;"><a href="${this.escapeHtml(`${this.frontendUrl.replace(/\/$/, '')}/admin/profile/subscription`)}" style="display:inline-block;background:#6366f1;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">${copy.canceledCtaPlans}</a></p>
+    `;
+    await this.emailService.sendUserTransactionalEmail(
+      userTo,
+      copy.unpaidDowngradeSubject,
+      this.wrapEmail(copy.titleSuffix, body),
+    );
+  }
 }

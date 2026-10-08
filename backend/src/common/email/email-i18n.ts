@@ -203,6 +203,20 @@ export const subscriptionUserEmailCopy = {
       `,
     canceledCta: 'Ver mi suscripción',
     canceledCtaPlans: 'Ver planes',
+    paymentRejectedSubject: 'No pudimos cobrar tu suscripción - AppMenuQR',
+    paymentRejectedBody: (first: string, plan: string, accessUntil: string) => `
+        <h2 style="margin-top:0;font-size:18px;">No pudimos cobrar tu suscripción</h2>
+        <p>${first}, Mercado Pago rechazó el cobro de tu plan <strong>${plan}</strong>.</p>
+        <p>Seguís con ese plan hasta el <strong>${accessUntil}</strong>. Si el pago no se regulariza antes de esa fecha, la suscripción queda cancelada y tu cuenta pasa al plan Free.</p>
+        <p>Tus comercios, menús y productos se conservan. Con el plan Free aplican los límites de ese plan. Cuando vuelvas a suscribirte, recuperás las funciones del plan que elijas.</p>
+      `,
+    unpaidDowngradeSubject: 'Tu suscripción pasó al plan Free - AppMenuQR',
+    unpaidDowngradeBody: (first: string, plan: string) => `
+        <h2 style="margin-top:0;font-size:18px;">Tu suscripción quedó cancelada</h2>
+        <p>${first}, no pudimos cobrar la renovación de tu plan <strong>${plan}</strong> y el período pago ya terminó.</p>
+        <p>Tu cuenta pasó al plan <strong>Free</strong>. Los datos de tus comercios, menús y productos siguen guardados, con las restricciones del plan Free.</p>
+        <p>Si volvés a suscribirte, recuperás las características del plan que elijas.</p>
+      `,
   },
   en: {
     titleSuffix: 'Subscription',
@@ -243,6 +257,20 @@ export const subscriptionUserEmailCopy = {
       `,
     canceledCta: 'View my subscription',
     canceledCtaPlans: 'View plans',
+    paymentRejectedSubject: 'We could not charge your subscription - AppMenuQR',
+    paymentRejectedBody: (first: string, plan: string, accessUntil: string) => `
+        <h2 style="margin-top:0;font-size:18px;">We could not charge your subscription</h2>
+        <p>${first}, the payment for your <strong>${plan}</strong> plan was declined.</p>
+        <p>You keep that plan until <strong>${accessUntil}</strong>. If the payment is not completed by then, the subscription is canceled and your account moves to the Free plan.</p>
+        <p>Your businesses, menus, and products stay saved. The Free plan limits apply. If you subscribe again, you get the features of the plan you choose.</p>
+      `,
+    unpaidDowngradeSubject: 'Your subscription moved to the Free plan - AppMenuQR',
+    unpaidDowngradeBody: (first: string, plan: string) => `
+        <h2 style="margin-top:0;font-size:18px;">Your subscription was canceled</h2>
+        <p>${first}, we could not charge the renewal of your <strong>${plan}</strong> plan and the paid period has ended.</p>
+        <p>Your account moved to the <strong>Free</strong> plan. Your businesses, menus, and products are still saved, with Free plan limits.</p>
+        <p>If you subscribe again, you get the features of the plan you choose.</p>
+      `,
   },
 } as const;
 

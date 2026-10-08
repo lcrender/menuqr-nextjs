@@ -564,6 +564,7 @@ export default function Users() {
                                 <th>Plantilla</th>
                                 <th>Estado</th>
                                 <th>Menús</th>
+                                <th>Acciones</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -581,6 +582,30 @@ export default function Users() {
                                     </span>
                                   </td>
                                   <td>{restaurant.menuCount}</td>
+                                  <td>
+                                    <div className="d-flex flex-wrap gap-1">
+                                      {restaurant.slug ? (
+                                        <a
+                                          href={`/r/${restaurant.slug}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="btn btn-sm btn-info"
+                                          title="Abrir la carta pública del comercio"
+                                        >
+                                          Ver link
+                                        </a>
+                                      ) : (
+                                        <span className="text-muted small">Sin link</span>
+                                      )}
+                                      <Link
+                                        href={`/admin/comercios?restaurantName=${encodeURIComponent(restaurant.name || '')}`}
+                                        className="btn btn-sm btn-outline-primary"
+                                        title="Ver este comercio en el panel, filtrado por nombre"
+                                      >
+                                        Ver en el panel
+                                      </Link>
+                                    </div>
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>

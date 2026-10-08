@@ -20,6 +20,7 @@ import MenuWizard from '../../../components/MenuWizard';
 import ConfirmModal from '../../../components/ConfirmModal';
 import AlertModal from '../../../components/AlertModal';
 import { planAllowsMenuSchedule } from '../../../lib/menu-schedule';
+import { getApiErrorMessage } from '../../../lib/api-error-message';
 
 i18n.addResourceBundle('es-ES', 'translation', { adminMenus: adminMenusEs }, true, true);
 i18n.addResourceBundle('en-US', 'translation', { adminMenus: adminMenusEn }, true, true);
@@ -702,9 +703,7 @@ export default function Menus() {
       console.error('Status del error:', error.response?.status);
       // Recargar los menús en caso de error para restaurar el estado
       await loadData();
-      const errorMessage = Array.isArray(error.response?.data?.message) 
-        ? error.response.data.message.join(', ')
-        : error.response?.data?.message || error.message || t('adminMenus.alerts.unknownError');
+      const errorMessage = getApiErrorMessage(error, t('adminMenus.alerts.unknownError'));
       setAlertData({
         title: t('adminMenus.error'),
         message: t('adminMenus.alerts.menuReorderError', { error: errorMessage }),

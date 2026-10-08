@@ -137,6 +137,33 @@ export class PaymentHistoryService {
     }
   }
 
+  /** Asocia cobros previos que llegaron antes de existir la fila de suscripción. */
+  async attachUnlinkedPayments(params: {
+    userId: string;
+    subscriptionId: string;
+    externalSubscriptionId: string;
+  }): Promise<void> {
+    const externalId = params.externalSubscriptionId.trim();
+    if (!externalId || !params.subscriptionId) return;
+    try {
+      await this.postgres.executeRaw(
+        `UPDATE payment_attempts
+         SET subscription_id = $1, updated_at = NOW()
+         WHERE user_id = $2
+           AND payment_provider = 'mercadopago'::"PaymentProvider"
+           AND subscription_id IS NULL
+           AND (
+             raw_data->>'preapproval_id' = $3
+             OR raw_data->'metadata'->>'preapproval_id' = $3
+             OR raw_data->'point_of_interaction'->'transaction_data'->>'subscription_id' = $3
+           )`,
+        [params.subscriptionId, params.userId, externalId],
+      );
+    } catch (err) {
+      this.logger.warn(`No se pudieron asociar pagos sueltos: ${(err as Error)?.message ?? err}`);
+    }
+  }
+
   private async list({
     where,
     params,

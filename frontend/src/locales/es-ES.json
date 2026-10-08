@@ -264,7 +264,7 @@
     "restaurantCreated": "Restaurante creado exitosamente",
     "restaurantUpdated": "Restaurante actualizado exitosamente",
     "restaurantDeleted": "Restaurante eliminado exitosamente",
-    "restaurantNotFound": "Restaurante no encontrado",
+    "restaurantNotFound": "Comercio no encontrado",
     "restaurantLimitReached": "Has alcanzado el límite de restaurantes para tu plan",
     "restaurantSettings": "Configuración del Restaurante",
     "restaurantAnalytics": "Análisis del Restaurante",

@@ -2,10 +2,11 @@ import { useRouter } from 'next/router';
 import type { GetServerSideProps } from 'next';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import axios from 'axios';
-import LandingHomeLink from '../../../components/LandingHomeLink';
 import { getApiBaseUrl } from '../../../lib/config';
+import { getApiErrorMessage } from '../../../lib/api-error-message';
 import { iconLabelsForLocale } from '../../../lib/allergen-icon-labels';
 import { PublicHtmlSeoHead } from '../../../components/PublicHtmlSeoHead';
+import PublicMenuStatus from '../../../components/PublicMenuStatus';
 import {
   APP_MENU_QR_TITLE_SUFFIX,
   buildMetaDescription,
@@ -268,7 +269,7 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
         if (err.response?.status === 404) {
           setError('Menú no encontrado');
         } else {
-          setError(err.message || 'Error cargando el menú');
+          setError(getApiErrorMessage(err, 'Error cargando el menú'));
         }
       } finally {
         setLoading(false);
@@ -317,14 +318,7 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
     return (
       <>
         <PublicHtmlSeoHead seo={displaySeo} />
-        <div className="container mt-5">
-          <div className="alert alert-danger" role="alert">
-            {error || 'Menú no encontrado'}
-          </div>
-          <LandingHomeLink className="btn btn-primary mt-3">
-            Volver al inicio
-          </LandingHomeLink>
-        </div>
+        <PublicMenuStatus message={error || 'Menú no encontrado'} />
       </>
     );
   }

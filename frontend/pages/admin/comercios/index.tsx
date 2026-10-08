@@ -18,6 +18,7 @@ import AlertModal from '../../../components/AlertModal';
 import { isValidApiTemplateId, readTemplateIntent } from '../../../lib/template-selection-intent';
 import LogoCropModal from '../../../components/LogoCropModal';
 import CoverCropModal from '../../../components/CoverCropModal';
+import { getApiErrorMessage } from '../../../lib/api-error-message';
 
 i18n.addResourceBundle('es-ES', 'translation', { adminBusinesses: adminBusinessesEs }, true, true);
 i18n.addResourceBundle('en-US', 'translation', { adminBusinesses: adminBusinessesEn }, true, true);
@@ -153,6 +154,7 @@ export default function Restaurants() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedRestaurantForQR, setSelectedRestaurantForQR] = useState<any>(null);
   const [filterName, setFilterName] = useState<string>('');
+  const [nameQueryReady, setNameQueryReady] = useState(false);
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [limitMessage, setLimitMessage] = useState({ limit: 0, current: 0, plan: '' });
@@ -185,11 +187,21 @@ export default function Restaurants() {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (!router.isReady) return;
+    const name = typeof router.query.restaurantName === 'string' ? router.query.restaurantName : '';
+    if (name) {
+      setFilterName(name);
+      setPage(1);
+    }
+    setNameQueryReady(true);
+  }, [router.isReady, router.query.restaurantName]);
+
+  useEffect(() => {
+    if (user && nameQueryReady) {
       loadRestaurants();
       loadTenantPlan();
     }
-  }, [user, filterName, page, itemsPerPage]);
+  }, [user, filterName, page, itemsPerPage, nameQueryReady]);
 
   useEffect(() => {
     loadTenantPlan();
@@ -1069,7 +1081,7 @@ export default function Restaurants() {
       console.error('Detalles del error:', error.response?.data);
       setAlertData({
         title: t('adminBusinesses.alerts.error'),
-        message: error.response?.data?.message || error.message || t('adminBusinesses.alerts.updateError'),
+        message: getApiErrorMessage(error, t('adminBusinesses.alerts.updateError')),
         variant: 'error',
       });
       setShowAlert(true);

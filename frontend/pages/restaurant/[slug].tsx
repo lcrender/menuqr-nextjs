@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { getApiBaseUrl } from '../../lib/config';
+import { getApiErrorMessage } from '../../lib/api-error-message';
 import { iconLabelsForLocale } from '../../lib/allergen-icon-labels';
 import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
 import { PublicHtmlSeoHead } from '../../components/PublicHtmlSeoHead';
+import PublicMenuStatus from '../../components/PublicMenuStatus';
 import {
   APP_MENU_QR_TITLE_SUFFIX,
   buildMetaDescription,
@@ -306,9 +308,9 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
         }
       } catch (err: any) {
         if (err.response?.status === 404) {
-          setError('Restaurante no encontrado');
+          setError('Comercio no encontrado');
         } else {
-          setError(err.message || 'Error cargando el restaurante');
+          setError(getApiErrorMessage(err, 'Error cargando el comercio'));
         }
       } finally {
         setLoading(false);
@@ -375,11 +377,7 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
     return (
       <>
         <PublicHtmlSeoHead seo={displaySeo} />
-        <div className="container mt-5">
-          <div className="alert alert-danger" role="alert">
-            {error || 'Restaurante no encontrado'}
-          </div>
-        </div>
+        <PublicMenuStatus message={error || 'Comercio no encontrado'} />
       </>
     );
   }

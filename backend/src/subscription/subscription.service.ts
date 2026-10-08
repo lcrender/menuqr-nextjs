@@ -77,6 +77,36 @@ export class SubscriptionService {
     return this.mapRow(rows[0]);
   }
 
+  /**
+   * Suscripción de pago abierta: activa, en mora o checkout incompleto.
+   * El primer cobro de Mercado Pago a veces llega con la fila todavía en incomplete.
+   */
+  async findOpenBillableByUserAndProvider(
+    userId: string,
+    provider: PaymentProvider,
+  ): Promise<SubscriptionRow | null> {
+    const rows = await this.postgres.queryRaw<any>(
+      `SELECT id, user_id as "userId", payment_provider as "paymentProvider", external_subscription_id as "externalSubscriptionId",
+       billing_country as "billingCountry", currency, status, plan_type as "planType", subscription_plan as "subscriptionPlan",
+       current_period_start as "currentPeriodStart", current_period_end as "currentPeriodEnd", cancel_at_period_end as "cancelAtPeriodEnd",
+       created_at as "createdAt", updated_at as "updatedAt"
+       FROM subscriptions
+       WHERE user_id = $1
+         AND payment_provider = $2::"PaymentProvider"
+         AND status IN ('active'::"SubscriptionStatus", 'past_due'::"SubscriptionStatus", 'incomplete'::"SubscriptionStatus")
+         AND COALESCE(subscription_plan, '') <> 'free'
+       ORDER BY CASE status
+         WHEN 'active' THEN 0
+         WHEN 'past_due' THEN 1
+         ELSE 2
+       END, created_at DESC
+       LIMIT 1`,
+      [userId, provider],
+    );
+    if (!rows[0]) return null;
+    return this.mapRow(rows[0]);
+  }
+
   async findByUserId(userId: string): Promise<SubscriptionRow[]> {
     const rows = await this.postgres.queryRaw<any>(
       `SELECT id, user_id as "userId", payment_provider as "paymentProvider", external_subscription_id as "externalSubscriptionId",
@@ -262,6 +292,103 @@ export class SubscriptionService {
     return rows.length;
   }
 
+  /**
+   * Si el período pago ya venció y el cobro falló (o la suscripción está en mora),
+   * la marca canceled. No borra comercios, menús ni productos.
+   */
+  async expireUnpaidSubscriptionsPastPeriod(): Promise<
+    Array<{
+      id: string;
+      userId: string;
+      email: string;
+      firstName: string | null;
+      lastName: string | null;
+      previousPlan: string;
+      paymentProvider: PaymentProvider;
+      externalSubscriptionId: string;
+      periodEnd: Date | null;
+    }>
+  > {
+    const rows = await this.postgres.queryRaw<any>(
+      `SELECT s.id,
+              s.user_id as "userId",
+              s.subscription_plan as "previousPlan",
+              s.payment_provider as "paymentProvider",
+              s.external_subscription_id as "externalSubscriptionId",
+              s.current_period_end as "periodEnd",
+              u.email,
+              u.first_name as "firstName",
+              u.last_name as "lastName"
+       FROM subscriptions s
+       JOIN users u ON u.id = s.user_id AND u.deleted_at IS NULL
+       WHERE s.payment_provider IN ('mercadopago'::"PaymentProvider", 'paypal'::"PaymentProvider")
+         AND COALESCE(s.subscription_plan, '') NOT IN ('', 'free')
+         AND s.cancel_at_period_end = false
+         AND s.current_period_end IS NOT NULL
+         AND s.current_period_end < NOW()
+         AND (
+           s.status = 'past_due'::"SubscriptionStatus"
+           OR (
+             s.status = 'active'::"SubscriptionStatus"
+             AND EXISTS (
+               SELECT 1 FROM payment_attempts p
+               WHERE p.subscription_id = s.id
+                 AND p.status = 'failed'::"PaymentAttemptStatus"
+                 AND p.occurred_at >= COALESCE(s.current_period_start, s.current_period_end)
+             )
+             AND NOT EXISTS (
+               SELECT 1 FROM payment_attempts p
+               WHERE p.subscription_id = s.id
+                 AND p.status = 'completed'::"PaymentAttemptStatus"
+                 AND p.occurred_at >= s.current_period_end
+             )
+           )
+         )`,
+    );
+
+    const expired: Array<{
+      id: string;
+      userId: string;
+      email: string;
+      firstName: string | null;
+      lastName: string | null;
+      previousPlan: string;
+      paymentProvider: PaymentProvider;
+      externalSubscriptionId: string;
+      periodEnd: Date | null;
+    }> = [];
+
+    for (const row of rows) {
+      const updated = await this.postgres.queryRaw<{ id: string }>(
+        `UPDATE subscriptions
+         SET status = 'canceled'::"SubscriptionStatus",
+             cancel_at_period_end = false,
+             updated_at = NOW()
+         WHERE id = $1
+           AND status IN ('active'::"SubscriptionStatus", 'past_due'::"SubscriptionStatus")
+         RETURNING id`,
+        [row.id],
+      );
+      if (!updated[0]) continue;
+      await this.syncTenantPlanFromSubscription(row.userId);
+      expired.push({
+        id: row.id,
+        userId: row.userId,
+        email: row.email,
+        firstName: row.firstName ?? null,
+        lastName: row.lastName ?? null,
+        previousPlan: row.previousPlan,
+        paymentProvider: row.paymentProvider,
+        externalSubscriptionId: row.externalSubscriptionId,
+        periodEnd: row.periodEnd ? new Date(row.periodEnd) : null,
+      });
+      this.logger.log(
+        `Unpaid subscription canceled after period end: ${row.paymentProvider}/${row.externalSubscriptionId} user=${row.userId}`,
+      );
+    }
+    return expired;
+  }
+
   async updateStatus(
     provider: PaymentProvider,
     externalSubscriptionId: string,
@@ -312,10 +439,10 @@ export class SubscriptionService {
   }
 
   /**
-   * Sincroniza el plan del tenant con la suscripción activa del usuario.
-   * Si la suscripción está active y tiene subscription_plan, actualiza tenant.plan.
-   * Si está canceled/expired/past_due, baja a 'free'.
-   * No sobrescribe el plan 'pro_team' (asignado manualmente por super admin, sin suscripción).
+   * Sincroniza el plan del tenant con la suscripción de pago.
+   * Una suscripción activa de pago define el plan. Si está en mora pero el período ya pago
+   * no venció, se mantiene ese plan. Si no hay cobertura, baja a free.
+   * No borra comercios, menús ni productos. No pisa pro_team (asignado a mano).
    */
   async syncTenantPlanFromSubscription(userId: string): Promise<void> {
     const user = await this.postgres.queryRaw<any>(
@@ -343,8 +470,20 @@ export class SubscriptionService {
     }
 
     const subs = await this.findByUserId(userId);
-    const active = subs.find((s) => s.status === 'active');
-    const newPlan = active?.subscriptionPlan ?? 'free';
+    const now = Date.now();
+    const isPaid = (s: SubscriptionRow) =>
+      s.paymentProvider !== 'internal' &&
+      String(s.subscriptionPlan || '').toLowerCase() !== 'free' &&
+      String(s.subscriptionPlan || '').trim() !== '';
+    const activePaid = subs.find((s) => s.status === 'active' && isPaid(s));
+    const stillCovered = subs.find(
+      (s) =>
+        isPaid(s) &&
+        s.status === 'past_due' &&
+        s.currentPeriodEnd != null &&
+        new Date(s.currentPeriodEnd).getTime() > now,
+    );
+    const newPlan = activePaid?.subscriptionPlan ?? stillCovered?.subscriptionPlan ?? 'free';
 
     await this.postgres.executeRaw(
       'UPDATE tenants SET plan = $1, updated_at = NOW() WHERE id = $2',
@@ -353,7 +492,7 @@ export class SubscriptionService {
     this.logger.log(`Synced tenant ${tenantId} plan to ${newPlan} for user ${userId}`);
 
     // Si se activó un plan de pago, limpiar pendingPlan del flujo registro/verificación.
-    if (active && newPlan !== 'free') {
+    if (activePaid && newPlan !== 'free') {
       await this.postgres.executeRaw(
         'UPDATE users SET pending_plan = NULL, pending_billing_cycle = NULL, updated_at = NOW() WHERE id = $1',
         [userId],

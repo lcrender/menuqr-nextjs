@@ -6,6 +6,18 @@ type ApiErrorPayload = {
   statusCode?: number;
 };
 
+export const OFFLINE_ERROR_MESSAGE = 'Revise su conexión a internet.';
+
+/** Axios sin respuesta (sin red, DNS, servidor inalcanzable). */
+export function isOfflineError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const ax = error as AxiosError;
+  if (ax.code === 'ERR_NETWORK' || ax.code === 'ECONNABORTED') return true;
+  const msg = typeof ax.message === 'string' ? ax.message.trim().toLowerCase() : '';
+  if (msg === 'network error' || msg === 'networkerror') return true;
+  return !ax.response && Boolean((ax as { request?: unknown }).request);
+}
+
 /**
  * Extrae un mensaje legible de una respuesta de la API (axios u objeto similar).
  */
@@ -15,6 +27,10 @@ export function getApiErrorMessage(
 ): string {
   if (!error || typeof error !== 'object') {
     return fallback;
+  }
+
+  if (isOfflineError(error)) {
+    return OFFLINE_ERROR_MESSAGE;
   }
 
   const ax = error as AxiosError<ApiErrorPayload>;
