@@ -11,7 +11,7 @@ import api from '../lib/axios';
 import { preferredImageSrc } from '../lib/optimized-image';
 import { buildLandingJsonLd, siteJsonLdBaseUrl } from '../lib/json-ld-appmenuqr';
 import { plantillasCatalogPathForRegion } from '../lib/plantillas-catalog-url';
-import { getHomeLandingCopy } from '../lib/home-landing-copy';
+import { getHomeLandingCopy, homeStepsVideoSrc } from '../lib/home-landing-copy';
 import {
   buildLandingHreflangLinks,
   landingHomePath,
@@ -30,6 +30,7 @@ type HomeLandingProps = {
 export default function HomeLanding({ region }: HomeLandingProps) {
   const router = useRouter();
   const copy = getHomeLandingCopy(region);
+  const stepsVideoSrc = homeStepsVideoSrc(region);
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [stepsVideoPlaying, setStepsVideoPlaying] = useState(false);
@@ -40,6 +41,10 @@ export default function HomeLanding({ region }: HomeLandingProps) {
     if (!video) return;
     void video.play();
   };
+
+  useEffect(() => {
+    setStepsVideoPlaying(false);
+  }, [stepsVideoSrc]);
 
   useEffect(() => {
     setLandingRegionCookie(region);
@@ -204,6 +209,7 @@ export default function HomeLanding({ region }: HomeLandingProps) {
               </div>
               <div className="landing-steps-video">
                 <video
+                  key={stepsVideoSrc}
                   ref={stepsVideoRef}
                   controls={stepsVideoPlaying}
                   playsInline
@@ -212,14 +218,14 @@ export default function HomeLanding({ region }: HomeLandingProps) {
                   onPlay={() => setStepsVideoPlaying(true)}
                   onPause={() => setStepsVideoPlaying(false)}
                 >
-                  <source src="/videos/appmenuqr-carta-digital-1-minuto.mp4" type="video/mp4" />
+                  <source src={stepsVideoSrc} type="video/mp4" />
                 </video>
                 {!stepsVideoPlaying && (
                   <button
                     type="button"
                     className="landing-steps-play"
                     onClick={playStepsVideo}
-                    aria-label="Reproducir video"
+                    aria-label={region === 'EN' ? 'Play video' : 'Reproducir video'}
                   >
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M9 7.2v9.6l8.2-4.8L9 7.2z" fill="currentColor" />

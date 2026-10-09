@@ -628,3 +628,10 @@ export function getHomeLandingCopy(region: LandingRegion): HomeLandingCopy {
   if (region === 'EN') return HOME_LANDING_EN;
   return HOME_LANDING_ES;
 }
+
+/** Video de un minuto del homepage. Cada zona usa su propio archivo. */
+export function homeStepsVideoSrc(region: LandingRegion): string {
+  if (region === 'AR') return '/videos/appmenuqr-carta-digital-1-minuto-ar.mp4';
+  if (region === 'EN') return '/videos/appmenuqr-carta-digital-1-minuto-en.mp4';
+  return '/videos/appmenuqr-carta-digital-1-minuto-es.mp4';
+}
