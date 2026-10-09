@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -32,6 +32,14 @@ export default function HomeLanding({ region }: HomeLandingProps) {
   const copy = getHomeLandingCopy(region);
   const [pricingData, setPricingData] = useState<PricingData | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [stepsVideoPlaying, setStepsVideoPlaying] = useState(false);
+  const stepsVideoRef = useRef<HTMLVideoElement>(null);
+
+  const playStepsVideo = () => {
+    const video = stepsVideoRef.current;
+    if (!video) return;
+    void video.play();
+  };
 
   useEffect(() => {
     setLandingRegionCookie(region);
@@ -183,15 +191,42 @@ export default function HomeLanding({ region }: HomeLandingProps) {
 
         <section id="como-funciona" className="landing-prose-section">
           <div className="container">
-            <div className="landing-prose-inner">
-              <h2 className="landing-section-title">{copy.stepsTitle}</h2>
-              <p className="landing-steps-intro">{copy.stepsIntro}</p>
-              <ol className="landing-steps-list">
-                {copy.steps.map((step) => (
-                  <li key={step}>{step}</li>
-                ))}
-              </ol>
-              <p className="landing-steps-outro">{copy.stepsOutro}</p>
+            <h2 className="landing-section-title landing-steps-title">{copy.stepsTitle}</h2>
+            <div className="landing-steps-split">
+              <div className="landing-steps-copy">
+                <p className="landing-steps-intro">{copy.stepsIntro}</p>
+                <ol className="landing-steps-list">
+                  {copy.steps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
+                <p className="landing-steps-outro">{copy.stepsOutro}</p>
+              </div>
+              <div className="landing-steps-video">
+                <video
+                  ref={stepsVideoRef}
+                  controls={stepsVideoPlaying}
+                  playsInline
+                  preload="metadata"
+                  aria-label={copy.stepsTitle}
+                  onPlay={() => setStepsVideoPlaying(true)}
+                  onPause={() => setStepsVideoPlaying(false)}
+                >
+                  <source src="/videos/appmenuqr-carta-digital-1-minuto.mp4" type="video/mp4" />
+                </video>
+                {!stepsVideoPlaying && (
+                  <button
+                    type="button"
+                    className="landing-steps-play"
+                    onClick={playStepsVideo}
+                    aria-label="Reproducir video"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 7.2v9.6l8.2-4.8L9 7.2z" fill="currentColor" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </section>
