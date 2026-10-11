@@ -1,6 +1,7 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import BlogArticleSmartFood from '../../components/blog/BlogArticleSmartFood';
 import BlogArticleAppMenuEnglish from '../../components/blog/BlogArticleAppMenuEnglish';
+import BlogArticleCrearMenuQrGratis from '../../components/blog/BlogArticleCrearMenuQrGratis';
 import { BLOG_SLUGS, blogCanonicalSlug, getBlogArticleMeta, isBlogSlug } from '../../lib/blog-nav';
 
 type Props = { slug: string };
@@ -11,6 +12,9 @@ export default function BlogSlugPage({ slug }: Props) {
   }
   if (slug === 'app-menu-qr-now-available-in-english-es') {
     return <BlogArticleAppMenuEnglish locale="es" />;
+  }
+  if (slug === 'como-crear-un-menu-qr-gratis') {
+    return <BlogArticleCrearMenuQrGratis locale="es" />;
   }
   return null;
 }

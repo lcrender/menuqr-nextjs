@@ -2637,9 +2637,17 @@
 }
 
 .blog-h2 {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 650;
-  margin: 1.75rem 0 0.75rem;
+  margin: 2rem 0 0.75rem;
+  scroll-margin-top: 5.5rem;
+}
+
+.blog-h3 {
+  font-size: 1.05rem;
+  font-weight: 650;
+  margin: 1.35rem 0 0.45rem;
+  line-height: 1.35;
 }
 
 .blog-lead {
@@ -2735,6 +2743,95 @@
   margin-bottom: 1rem;
 }
 
+.blog-article-body a {
+  color: var(--landing-primary, #0d6efd);
+  text-underline-offset: 0.15em;
+}
+
+.blog-article-body a:hover {
+  text-decoration: underline;
+}
+
+.blog-article-body a.landing-btn-primary,
+.blog-article-body a.landing-btn-primary:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+.blog-toc {
+  margin: 0 0 1.75rem;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background: #f7f8f9;
+}
+
+.blog-toc-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5c5c5c;
+}
+
+.blog-toc ol {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.blog-toc li {
+  margin: 0.2rem 0;
+}
+
+.blog-toc a {
+  text-decoration: none;
+}
+
+.blog-example {
+  margin: 0 0 1.15rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.blog-figure {
+  margin: 0 0 1.25rem;
+}
+
+.blog-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+.blog-example figcaption {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.blog-example p {
+  margin: 0;
+}
+
+.blog-callout {
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--landing-primary, #0d6efd);
+  border-radius: 0 8px 8px 0;
+  background: #f4f7fb;
+}
+
+.blog-callout p {
+  margin: 0;
+}
+
+.blog-faq-item {
+  margin-bottom: 0.35rem;
+}
+
 .blog-bullets {
   padding-left: 1.2rem;
   margin-bottom: 1.5rem;
@@ -2765,8 +2862,10 @@
     padding-top: 1.5rem;
   }
 
-  .blog-cta-row .btn {
+  .blog-cta-row .btn,
+  .blog-cta-row .landing-btn-primary {
     width: 100%;
+    text-align: center;
   }
 }
 

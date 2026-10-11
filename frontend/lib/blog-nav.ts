@@ -98,6 +98,31 @@ export const BLOG_ARTICLES: BlogArticleMeta[] = [
       en: ['App Menu QR', 'i18n', 'English'],
     },
   },
+  {
+    slug: 'como-crear-un-menu-qr-gratis',
+    enSlug: 'how-to-create-a-free-qr-menu',
+    publishedAt: '2026-10-09',
+    title: {
+      es: 'Cómo crear un menú QR gratis para tu restaurante paso a paso',
+      en: 'How to create a free QR menu for your restaurant, step by step',
+    },
+    excerpt: {
+      es: 'Guía para crear un menú QR gratis: configura tu restaurante, organiza la carta digital y actualiza precios sin imprimir un código nuevo.',
+      en: 'A guide to creating a free QR menu: set up your restaurant, organize the digital menu, and update prices without printing a new code.',
+    },
+    metaTitle: {
+      es: 'Cómo crear un menú QR gratis paso a paso | App Menu QR',
+      en: 'How to Create a Free QR Menu Step by Step | App Menu QR',
+    },
+    metaDescription: {
+      es: 'Crea un menú QR gratis para tu restaurante, bar o cafetería. Actualiza precios sin reimprimir el código y publica tu carta digital en minutos con App Menu QR.',
+      en: 'Create a free QR menu for your restaurant, bar, or cafe. Update prices without reprinting the code and publish your digital menu in minutes with App Menu QR.',
+    },
+    tags: {
+      es: ['Menú QR', 'Carta digital', 'Restaurantes'],
+      en: ['QR menu', 'Digital menu', 'Restaurants'],
+    },
+  },
 ];
 
 /** Artículos ordenados por fecha de publicación (más reciente primero). */

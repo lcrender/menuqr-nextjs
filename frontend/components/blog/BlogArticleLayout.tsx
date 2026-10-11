@@ -24,13 +24,18 @@ import {
 } from '../../lib/landing-region';
 import { changeLanguage, normalizeUiLocale, getCurrentLanguage } from '../../src/i18n/config';
 
+type FaqItem = { question: string; answer: string };
+
 type Props = {
   meta: BlogArticleMeta;
   locale?: BlogUiLocale;
+  faq?: readonly FaqItem[];
   children: ReactNode;
 };
 
-export default function BlogArticleLayout({ meta, locale = 'es', children }: Props) {
+const BLOG_OG_IMAGE_PATH = '/images/app-menu-qr-logo.png';
+
+export default function BlogArticleLayout({ meta, locale = 'es', faq, children }: Props) {
   const homeHref = useLandingHomeHref(locale === 'en' ? '/en' : undefined);
   const index = BLOG_INDEX[locale];
   const localized = blogMetaForLocale(meta, locale);
@@ -55,7 +60,13 @@ export default function BlogArticleLayout({ meta, locale = 'es', children }: Pro
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   const hasBase = Boolean(canonicalBase && /^https?:\/\//i.test(canonicalBase));
   const canonicalUrl = hasBase ? `${canonicalBase}${articlePath}` : null;
+  const ogImage = hasBase ? `${canonicalBase}${BLOG_OG_IMAGE_PATH}` : null;
   const hreflangLinks = hasBase ? buildBlogHreflangLinks(canonicalBase, meta.slug) : [];
+  const publishedIso = /^\d{4}-\d{2}-\d{2}$/.test(meta.publishedAt)
+    ? `${meta.publishedAt}T12:00:00.000Z`
+    : meta.publishedAt;
+  const ogLocale = locale === 'en' ? 'en_US' : 'es_ES';
+  const ogLocaleAlternate = locale === 'en' ? 'es_ES' : 'en_US';
 
   const jsonLd = (() => {
     const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
@@ -68,7 +79,13 @@ export default function BlogArticleLayout({ meta, locale = 'es', children }: Pro
         metaDescription: localized.metaDescription,
         publishedAt: meta.publishedAt,
       },
-      { articlePath, blogPath: catalogPath, locale },
+      {
+        articlePath,
+        blogPath: catalogPath,
+        locale,
+        ...(ogImage ? { imageUrl: ogImage } : {}),
+        ...(faq && faq.length > 0 ? { faq } : {}),
+      },
     );
   })();
 
@@ -80,10 +97,30 @@ export default function BlogArticleLayout({ meta, locale = 'es', children }: Pro
         {hreflangLinks.map((alt) => (
           <link key={alt.hreflang} rel="alternate" hrefLang={alt.hreflang} href={alt.href} />
         ))}
-        <meta name="robots" content="index, follow" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
         <meta name="description" content={localized.metaDescription} />
         <meta httpEquiv="content-language" content={locale === 'en' ? 'en' : 'es'} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="App Menu QR" />
+        <meta property="og:locale" content={ogLocale} />
+        <meta property="og:locale:alternate" content={ogLocaleAlternate} />
+        {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
+        <meta property="og:title" content={localized.metaTitle} />
+        <meta property="og:description" content={localized.metaDescription} />
+        {ogImage ? <meta property="og:image" content={ogImage} /> : null}
+        {ogImage ? <meta property="og:image:alt" content="App Menu QR" /> : null}
+        <meta property="article:published_time" content={publishedIso} />
+        <meta property="article:modified_time" content={publishedIso} />
+        <meta property="article:section" content="Blog" />
+        {localized.tags.map((tag) => (
+          <meta key={tag} property="article:tag" content={tag} />
+        ))}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={localized.metaTitle} />
+        <meta name="twitter:description" content={localized.metaDescription} />
+        {ogImage ? <meta name="twitter:image" content={ogImage} /> : null}
+        {ogImage ? <meta name="twitter:image:alt" content="App Menu QR" /> : null}
         {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} /> : null}
       </Head>
       <div className="landing-page">

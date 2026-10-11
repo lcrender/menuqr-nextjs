@@ -428,7 +428,7 @@ export function buildBlogIndexJsonLd(
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
 }
 
-/** Artículo del blog (/blog/:slug o /en/blog/:slug): BlogPosting + BreadcrumbList. */
+/** Artículo del blog (/blog/:slug o /en/blog/:slug): BlogPosting + BreadcrumbList (+ FAQPage si hay preguntas visibles). */
 export function buildBlogArticleJsonLd(
   base: string,
   meta: {
@@ -437,7 +437,13 @@ export function buildBlogArticleJsonLd(
     metaDescription: string;
     publishedAt: string;
   },
-  options?: { articlePath?: string; blogPath?: string; locale?: 'es' | 'en' },
+  options?: {
+    articlePath?: string;
+    blogPath?: string;
+    locale?: 'es' | 'en';
+    imageUrl?: string;
+    faq?: readonly { question: string; answer: string }[];
+  },
 ): string {
   const b = base.replace(/\/$/, '');
   const blogPath = options?.blogPath ?? '/blog';
@@ -455,6 +461,7 @@ export function buildBlogArticleJsonLd(
       datePublished: meta.publishedAt,
       dateModified: meta.publishedAt,
       inLanguage: locale === 'en' ? 'en' : 'es',
+      ...(options?.imageUrl ? { image: options.imageUrl } : {}),
       isPartOf: { '@id': `${b}/#website` },
       author: { '@id': `${b}/#organization` },
       publisher: { '@id': `${b}/#organization` },
@@ -469,5 +476,20 @@ export function buildBlogArticleJsonLd(
       ],
     },
   ];
+
+  if (options?.faq && options.faq.length > 0) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': `${url}#faq`,
+      url,
+      inLanguage: locale === 'en' ? 'en' : 'es',
+      mainEntity: options.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: { '@type': 'Answer', text: item.answer },
+      })),
+    });
+  }
+
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
 }
