@@ -5,6 +5,11 @@
  */
 import { DEFAULT_BEACH_BAR_BACKGROUND_IMAGE } from './beach-bar-template';
 import { SOL_NOCHE_TIMEZONE_OPTIONS } from './sol-noche-template';
+import {
+  googleFontSelectOptions,
+  migrateLegacyTemplateFont,
+  TEMPLATE_GOOGLE_FONT_DEFAULT,
+} from './template-google-fonts';
 export type TemplateConfigOptionType = 'boolean' | 'number' | 'string' | 'select' | 'color' | 'image';
 
 export interface TemplateConfigOptionSelect {
@@ -38,6 +43,21 @@ export const TEMPLATE_NAMES: Record<string, string> = {
   beachBar: 'Beach Life',
   solNoche: 'Sol & Noche',
 };
+
+/** Selector de Google Fonts. El valor por defecto no pisa la fuente de la plantilla. */
+const GOOGLE_FONT_TEMPLATE_OPTION: TemplateConfigOption = {
+  id: 'googleFont',
+  label: 'Fuente',
+  description:
+    'Por defecto se usa la fuente de la plantilla. Podés reemplazarla por una de Google Fonts.',
+  type: 'select',
+  default: TEMPLATE_GOOGLE_FONT_DEFAULT,
+  options: googleFontSelectOptions(),
+};
+
+function withGoogleFont(options: TemplateConfigOption[]): TemplateConfigOption[] {
+  return [GOOGLE_FONT_TEMPLATE_OPTION, ...options];
+}
 
 /** Opciones de color comunes a todas las plantillas (los ejemplos ya usan estos colores). */
 const COMMON_COLOR_OPTIONS: TemplateConfigOption[] = [
@@ -158,23 +178,9 @@ const TRANSLATION_FLAGS_TEMPLATE_OPTIONS: TemplateConfigOption[] = [
   },
 ];
 
-/** Opciones Gourmet: colores, tipografía clásica y visibilidad (logo, portada, fotos de productos). */
+/** Opciones Gourmet: colores y visibilidad (logo, portada, fotos de productos). La fuente va en Google Fonts. */
 const GOURMET_OPTIONS: TemplateConfigOption[] = [
   ...COMMON_COLOR_OPTIONS,
-  {
-    id: 'fontFamily',
-    label: 'Tipografía',
-    description: 'Fuente clásica para títulos y texto.',
-    type: 'select',
-    default: 'serif',
-    options: [
-      { value: 'serif', label: 'Serif (Georgia)' },
-      { value: 'sans', label: 'Sans (Helvetica)' },
-      { value: 'century', label: 'Century Schoolbook' },
-      { value: 'baskerville', label: 'Baskerville' },
-      { value: 'palatino', label: 'Palatino' },
-    ],
-  },
   { id: 'showLogo', label: 'Mostrar logo', description: 'Mostrar el logo del comercio.', type: 'boolean', default: true },
   { id: 'showCoverImage', label: 'Mostrar imagen de portada', description: 'Mostrar la imagen de portada.', type: 'boolean', default: true },
   { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista (sin placeholder si no hay foto).', type: 'boolean', default: true },
@@ -302,40 +308,24 @@ const SOL_NOCHE_OPTIONS: TemplateConfigOption[] = [
   { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista.', type: 'boolean', default: true },
 ];
 
-/** Italian Food: tipografía (colores fijos de bandera, no configurables). */
-const ITALIAN_FOOD_OPTIONS: TemplateConfigOption[] = [
-  {
-    id: 'fontFamily',
-    label: 'Tipografía',
-    description: 'Fuente para títulos y textos de la plantilla.',
-    type: 'select',
-    default: 'playfair',
-    options: [
-      { value: 'playfair', label: 'Playfair Display (por defecto)' },
-      { value: 'cormorant', label: 'Cormorant Garamond' },
-      { value: 'bodoni', label: 'Bodoni Moda' },
-      { value: 'eb-garamond', label: 'EB Garamond' },
-      { value: 'lora', label: 'Lora' },
-      { value: 'cinzel', label: 'Cinzel' },
-    ],
-  },
-];
+/** Italian Food: colores fijos de bandera. La fuente se elige en Google Fonts. */
+const ITALIAN_FOOD_OPTIONS: TemplateConfigOption[] = [];
 
 /**
  * classic, minimalist y foodie incluyen además opciones de visibilidad (portada, logo, nombre, descripción).
  */
 export const TEMPLATE_CONFIG_SCHEMAS: Record<string, TemplateConfigOption[]> = {
-  classic: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  minimalist: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  foodie: [...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  burgers: [...BURGERS_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  italianFood: [...ITALIAN_FOOD_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  gourmet: [...GOURMET_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  proMobile: [...PRO_MOBILE_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  nightClub: [...NIGHT_CLUB_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  smartFood: [...SMART_FOOD_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
-  beachBar: [...BEACH_BAR_OPTIONS],
-  solNoche: [...SOL_NOCHE_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS],
+  classic: withGoogleFont([...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  minimalist: withGoogleFont([...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  foodie: withGoogleFont([...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  burgers: withGoogleFont([...BURGERS_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  italianFood: withGoogleFont([...ITALIAN_FOOD_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  gourmet: withGoogleFont([...GOURMET_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  proMobile: withGoogleFont([...PRO_MOBILE_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  nightClub: withGoogleFont([...NIGHT_CLUB_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  smartFood: withGoogleFont([...SMART_FOOD_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  beachBar: withGoogleFont([...BEACH_BAR_OPTIONS]),
+  solNoche: withGoogleFont([...SOL_NOCHE_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
 };
 
 /** Valores por defecto del esquema de una plantilla, fusionados con config existente. */
@@ -355,5 +345,9 @@ export function buildTemplateConfigDefaults(
   });
   if (restaurantColors?.primaryColor) values.primaryColor = restaurantColors.primaryColor;
   if (restaurantColors?.secondaryColor) values.secondaryColor = restaurantColors.secondaryColor;
+  const migratedFont = migrateLegacyTemplateFont(existing);
+  if (migratedFont && values.googleFont === TEMPLATE_GOOGLE_FONT_DEFAULT) {
+    values.googleFont = migratedFont;
+  }
   return values;
 }

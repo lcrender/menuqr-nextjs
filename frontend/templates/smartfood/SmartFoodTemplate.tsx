@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import OptimizedPicture from '../../components/OptimizedPicture';
 import TemplateFonts, { SMART_FOOD_FONTS_HREF } from '../../components/TemplateFonts';
+import TemplateGoogleFont from '../../components/TemplateGoogleFont';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import SmartFoodAllergenIcon from './SmartFoodAllergenIcon';
 import { smartFoodFilterUiForLocale } from '../../lib/allergen-icon-labels';
@@ -164,6 +165,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
   return (
     <>
       <TemplateFonts googleFontsHref={SMART_FOOD_FONTS_HREF} />
+      <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
     <div className="template-smartfood restaurant-container">
       <style jsx>{`
         .template-smartfood {

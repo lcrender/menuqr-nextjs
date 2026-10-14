@@ -101,6 +101,14 @@
       "label": "Show translation flags",
       "description": "If disabled, flag icons are hidden in the public menu language switcher when multiple translations are available."
     },
+    "googleFont": {
+      "label": "Font",
+      "description": "The template font is used by default. You can replace it with a Google Font.",
+      "sample": "Today's menu",
+      "values": {
+        "default": "Template font"
+      }
+    },
     "fontFamily": {
       "label": "Typography",
       "description": "Font for template titles and body text.",

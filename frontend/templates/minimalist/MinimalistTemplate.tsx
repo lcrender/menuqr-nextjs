@@ -3,6 +3,7 @@ import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
+import TemplateGoogleFont from '../../components/TemplateGoogleFont';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -115,6 +116,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
 
   return (
     <div className="template-minimalist restaurant-container" style={{ minHeight: '100vh', width: '100%' }}>
+      <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <style jsx>{`
         .template-minimalist {
           --primary-color: ${primaryColor};

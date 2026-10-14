@@ -8,6 +8,12 @@ import {
   translateTemplateConfigSelectLabel,
 } from '../../lib/template-config-i18n';
 import styles from './PreviewTemplateConfigField.module.css';
+import TemplateFonts from '../TemplateFonts';
+import {
+  findTemplateGoogleFont,
+  googleFontCssStack,
+  googleFontStylesheetHref,
+} from '../../lib/template-google-fonts';
 
 type Props = {
   option: TemplateConfigOption;
@@ -136,19 +142,34 @@ export default function PreviewTemplateConfigField({
   }
 
   if (option.type === 'select' && option.options) {
+    const chosenFont = option.id === 'googleFont' ? findTemplateGoogleFont(value) : null;
     return (
       <div className={fieldClass} id={`field-${option.id}`} data-field-id={option.id}>
         <label htmlFor={id} className={styles.label}>
           {label}
         </label>
         {description ? <p className={styles.hint}>{description}</p> : null}
-        <select id={id} className={styles.input} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)}>
+        <select
+          id={id}
+          className={styles.input}
+          value={String(value ?? '')}
+          style={chosenFont ? { fontFamily: googleFontCssStack(chosenFont) } : undefined}
+          onChange={(e) => onChange(e.target.value)}
+        >
           {option.options.map((o) => (
             <option key={o.value} value={o.value}>
               {translateTemplateConfigSelectLabel(t, option.id, o.value, o.label)}
             </option>
           ))}
         </select>
+        {chosenFont ? (
+          <>
+            <TemplateFonts googleFontsHref={googleFontStylesheetHref(chosenFont)} />
+            <p className={styles.fontSample} style={{ fontFamily: googleFontCssStack(chosenFont) }}>
+              {t('adminTemplates.configOptions.googleFont.sample')}
+            </p>
+          </>
+        ) : null}
       </div>
     );
   }

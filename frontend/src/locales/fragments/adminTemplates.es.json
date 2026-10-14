@@ -101,6 +101,14 @@
       "label": "Mostrar banderas de traducciones",
       "description": "Si está desactivado, se ocultan los iconos de bandera en el selector de idiomas del menú público cuando hay varias traducciones."
     },
+    "googleFont": {
+      "label": "Fuente",
+      "description": "Por defecto se usa la fuente de la plantilla. Podés reemplazarla por una de Google Fonts.",
+      "sample": "El menú del día",
+      "values": {
+        "default": "Fuente de la plantilla"
+      }
+    },
     "fontFamily": {
       "label": "Tipografía",
       "description": "Fuente para títulos y textos de la plantilla.",

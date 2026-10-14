@@ -10,6 +10,7 @@ import Link from 'next/link';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
+import TemplateGoogleFont from '../../components/TemplateGoogleFont';
 
 interface ClassicTemplateProps {
   restaurant: {
@@ -135,6 +136,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
       display: 'flex',
       flexDirection: 'column'
     }}>
+      <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <style jsx>{`
         .template-classic {
           --primary-color: ${primaryColor};

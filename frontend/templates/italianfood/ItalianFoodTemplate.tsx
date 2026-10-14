@@ -1,6 +1,7 @@
 import React from 'react';
 import OptimizedPicture from '../../components/OptimizedPicture';
 import TemplateFonts, { ITALIAN_FOOD_FONTS_HREF } from '../../components/TemplateFonts';
+import TemplateGoogleFont from '../../components/TemplateGoogleFont';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { preferredImageSrc } from '../../lib/optimized-image';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
@@ -100,7 +101,12 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
   const secondaryColor = '#CE2B37';
   const whiteColor = '#FFFFFF';
   const tc = restaurant.templateConfig || {};
-  const fontKey = typeof tc.fontFamily === 'string' ? tc.fontFamily : 'playfair';
+  const fontKey =
+    tc.googleFont === 'default' || (typeof tc.googleFont === 'string' && tc.googleFont !== '')
+      ? 'playfair'
+      : typeof tc.fontFamily === 'string'
+        ? tc.fontFamily
+        : 'playfair';
   const fonts = ITALIAN_FONT_FAMILIES[fontKey] ?? ITALIAN_FONT_FAMILIES.playfair!;
   const displayFont = fonts.display;
   const bodyFont = fonts.body;
@@ -139,6 +145,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
   return (
     <>
       <TemplateFonts googleFontsHref={ITALIAN_FOOD_FONTS_HREF} />
+      <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
     <div
       className="template-italianfood restaurant-container"
       style={containerStyle}

@@ -3,6 +3,7 @@ import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
+import TemplateGoogleFont from '../../components/TemplateGoogleFont';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -87,6 +88,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
 
   return (
     <div className="template-foodie restaurant-container" style={{ minHeight: '100vh', width: '100%', background: '#f8f9fa' }}>
+      <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <style jsx>{`
         .template-foodie {
           --primary-color: ${primaryColor};

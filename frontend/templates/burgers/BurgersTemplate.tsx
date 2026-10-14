@@ -3,6 +3,7 @@ import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
+import TemplateGoogleFont from '../../components/TemplateGoogleFont';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -114,6 +115,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
 
   return (
       <div className="template-burgers restaurant-container" style={{ minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden', boxSizing: 'border-box' }}>
+      <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <style jsx>{`
         .template-burgers {
           --primary-color: ${primaryColor};

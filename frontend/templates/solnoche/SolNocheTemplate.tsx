@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import OptimizedPicture from '../../components/OptimizedPicture';
 import FoodieLocaleSelect from '../../components/FoodieLocaleSelect';
+import TemplateGoogleFont from '../../components/TemplateGoogleFont';
 import type { TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import {
   FOOTER_REL_APPMENUQR,
@@ -222,6 +223,7 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
         } as React.CSSProperties
       }
     >
+      <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <div className="sol-noche-page">
         <header className="sol-noche-topbar">
           <EditZone

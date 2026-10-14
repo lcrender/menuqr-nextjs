@@ -3,6 +3,7 @@ import OptimizedPicture from '../../components/OptimizedPicture';
 import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
+import TemplateGoogleFont from '../../components/TemplateGoogleFont';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -81,7 +82,10 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
   const showCover = tc.showCoverImage !== false;
   const showLogo = tc.showLogo !== false;
   const showProductImages = tc.showProductImages !== false;
-  const fontKey = (tc.fontFamily as string) || 'serif';
+  const fontKey =
+    tc.googleFont === 'default' || (typeof tc.googleFont === 'string' && tc.googleFont !== '')
+      ? 'serif'
+      : (tc.fontFamily as string) || 'serif';
   const fontFamily =
     (fontKey in FONT_FAMILIES ? FONT_FAMILIES[fontKey] : undefined) ?? FONT_FAMILIES.serif;
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
@@ -90,6 +94,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
 
   return (
     <div className="template-gourmet restaurant-container" style={{ minHeight: '100vh', width: '100%', background: '#f8f9fa', fontFamily }}>
+      <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <style jsx>{`
         .template-gourmet {
           --primary-color: ${primaryColor};

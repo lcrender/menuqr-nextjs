@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import OptimizedPicture from '../../components/OptimizedPicture';
 import type { TemplateMenuLocalesProps } from '../../components/MenuLanguageSwitcher';
 import { resolveBeachBarBackgroundImage } from '../../lib/beach-bar-template';
+import TemplateGoogleFont from '../../components/TemplateGoogleFont';
 import { preferredImageSrc } from '../../lib/optimized-image';
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import {
@@ -170,6 +171,7 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
         } as React.CSSProperties
       }
     >
+      <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <div className="beachbar-bg" style={{ backgroundImage: `url('${preferredImageSrc(backgroundUrl)}')` }} aria-hidden />
       <div className="beachbar-bg-overlay" aria-hidden />
 

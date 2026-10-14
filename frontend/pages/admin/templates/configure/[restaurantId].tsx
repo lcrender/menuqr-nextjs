@@ -9,6 +9,14 @@ import api from '../../../../lib/axios';
 import AdminLayout from '../../../../components/AdminLayout';
 import { TEMPLATE_CONFIG_SCHEMAS, TemplateConfigOption } from '../../../../lib/template-config-schema';
 import {
+  findTemplateGoogleFont,
+  googleFontCssStack,
+  googleFontStylesheetHref,
+  migrateLegacyTemplateFont,
+  TEMPLATE_GOOGLE_FONT_DEFAULT,
+} from '../../../../lib/template-google-fonts';
+import TemplateFonts from '../../../../components/TemplateFonts';
+import {
   translateTemplateConfigOptionDescription,
   translateTemplateConfigOptionLabel,
   translateTemplateConfigSelectLabel,
@@ -80,6 +88,10 @@ export default function ConfigureTemplate() {
       // Los colores del comercio tienen prioridad (las plantillas ya los usan así)
       if (data.primaryColor != null && data.primaryColor !== '') defaults.primaryColor = data.primaryColor;
       if (data.secondaryColor != null && data.secondaryColor !== '') defaults.secondaryColor = data.secondaryColor;
+      const migratedFont = migrateLegacyTemplateFont(data.templateConfig);
+      if (migratedFont && defaults.googleFont === TEMPLATE_GOOGLE_FONT_DEFAULT) {
+        defaults.googleFont = migratedFont;
+      }
       setFormValues(defaults);
     } catch (e: any) {
       setError(
@@ -356,6 +368,7 @@ function Field({
     );
   }
   if (option.type === 'select' && option.options) {
+    const chosenFont = option.id === 'googleFont' ? findTemplateGoogleFont(value) : null;
     return (
       <div style={{ marginBottom: '20px' }}>
         <label htmlFor={id} className="form-label">{label}</label>
@@ -365,7 +378,11 @@ function Field({
           className="wizard-input-large"
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
-          style={{ width: '100%', maxWidth: '280px' }}
+          style={{
+            width: '100%',
+            maxWidth: option.id === 'googleFont' ? '420px' : '280px',
+            ...(chosenFont ? { fontFamily: googleFontCssStack(chosenFont) } : {}),
+          }}
         >
           {option.options.map((o) => (
             <option key={o.value} value={o.value}>
@@ -373,6 +390,14 @@ function Field({
             </option>
           ))}
         </select>
+        {chosenFont ? (
+          <>
+            <TemplateFonts googleFontsHref={googleFontStylesheetHref(chosenFont)} />
+            <p style={{ margin: '10px 0 0', fontSize: '1.25rem', lineHeight: 1.35, fontFamily: googleFontCssStack(chosenFont) }}>
+              {t('adminTemplates.configOptions.googleFont.sample')}
+            </p>
+          </>
+        ) : null}
       </div>
     );
   }

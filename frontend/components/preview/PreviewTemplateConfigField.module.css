@@ -33,6 +33,13 @@
   line-height: 1.45;
 }
 
+.fontSample {
+  margin: 10px 0 0;
+  font-size: 1.2rem;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
 .input {
   width: 100%;
   padding: 8px 10px;
