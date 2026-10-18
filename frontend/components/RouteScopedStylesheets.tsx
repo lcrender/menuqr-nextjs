@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 /** Bump al cambiar estilos admin para evitar caché del navegador. */
 const ADMIN_CSS_V = '20260807c';
 /** Bump al cambiar CSS de plantillas (preview mockup, etc.). */
-const MENU_CSS_V = '20260724z';
+const MENU_CSS_V = '20261016v';
 
 const ADMIN_STYLES = [
   `/css/admin.css?v=${ADMIN_CSS_V}`,
@@ -34,6 +34,7 @@ function needsAdminStyles(pathname: string): boolean {
 /** Cartas públicas, preview y rutas cortas /r /m */
 function needsMenuStyles(pathname: string, asPath: string): boolean {
   if (pathname.startsWith('/admin/menus/preview')) return true;
+  if (pathname.startsWith('/admin/templates/editor')) return true;
   if (
     pathname.startsWith('/restaurant') ||
     pathname.startsWith('/menu') ||

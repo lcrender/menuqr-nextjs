@@ -95,9 +95,12 @@
 
 .beachbar-logo {
   display: block;
-  width: min(100%, 148px);
-  height: auto;
+  width: 132px;
+  height: 132px;
   margin: 2.25rem auto 1.15rem;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .beachbar-intro {
@@ -108,7 +111,7 @@
 .beachbar-name {
   margin: 0 0 0.5rem;
   font-family: 'Brush Script MT', 'Segoe Script', 'Snell Roundhand', cursive;
-  font-size: clamp(2rem, 8vw, 2.65rem);
+  font-size: calc(clamp(2rem, 8vw, 2.65rem) * var(--tpl-scale-name, 1));
   font-weight: 400;
   line-height: 1.1;
   color: var(--beachbar-primary, #1e3a5f);
@@ -116,7 +119,7 @@
 
 .beachbar-desc {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: calc(0.92rem * var(--tpl-scale-desc, 1));
   line-height: 1.55;
   color: #4b5563;
 }
@@ -197,7 +200,7 @@
 
 .beachbar-section-nav .beachbar-tab {
   padding: 0.28rem 0.62rem;
-  font-size: 0.68rem;
+  font-size: calc(0.68rem * var(--tpl-scale-section, 1));
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -273,7 +276,7 @@
 
 .beachbar-product-name {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: calc(0.92rem * var(--tpl-scale-product, 1));
   font-weight: 700;
   line-height: 1.25;
   color: #111827;
@@ -281,7 +284,7 @@
 
 .beachbar-product-desc {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: calc(0.78rem * var(--tpl-scale-product-desc, 1));
   line-height: 1.4;
   color: #4b5563;
 }
@@ -297,7 +300,7 @@
 }
 
 .beachbar-price {
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--tpl-scale-price, 1));
   font-weight: 700;
   color: var(--beachbar-primary, #1e3a5f);
   white-space: nowrap;
@@ -305,7 +308,7 @@
 }
 
 .beachbar-price-label {
-  font-size: 0.65rem;
+  font-size: calc(0.65rem * var(--tpl-scale-price, 1));
   font-weight: 500;
   color: #6b7280;
   margin-right: 0.2rem;
@@ -367,31 +370,39 @@
 }
 
 /*
- * Mockup de teléfono (preview admin / live embed):
+ * Preview admin / editor visual / live embed:
  * el fondo usa position:fixed en la carta real; aquí hay que contenerlo
  * para que no cubra toda la pantalla por encima del marco.
  */
-.preview-phone-live:has(.template-beachbar) {
+.preview-phone-live:has(.template-beachbar),
+.visual-editor-stage:has(.template-beachbar) {
   overflow: hidden;
   position: relative;
   /* Crea containing block por si queda algún fixed */
   transform: translateZ(0);
 }
 
-.preview-phone-live .template-beachbar {
+.preview-phone-live .template-beachbar,
+.visual-editor-stage .template-beachbar {
   height: 100%;
   min-height: 100%;
   overflow: hidden;
   isolation: isolate;
+  position: relative;
 }
 
 .preview-phone-live .beachbar-bg,
-.preview-phone-live .beachbar-bg-overlay {
-  position: absolute;
-  inset: 0;
+.preview-phone-live .beachbar-bg-overlay,
+.visual-editor-stage .beachbar-bg,
+.visual-editor-stage .beachbar-bg-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
 }
 
-.preview-phone-live .beachbar-locale-float {
+.preview-phone-live .beachbar-locale-float,
+.visual-editor-stage .beachbar-locale-float {
   position: absolute;
 }
 
@@ -402,4 +413,18 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
+}
+
+/* En el editor visual el scroll lo maneja .stageWrap; la página crece con el contenido. */
+.visual-editor-stage .beachbar-page {
+  height: auto;
+  max-width: none;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.visual-editor-stage .template-beachbar {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
 }

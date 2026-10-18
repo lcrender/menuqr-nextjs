@@ -1,18 +1,50 @@
 /* PLANTILLA BURGERS - Diseño Profesional Estilo Hamburguesería */
 .template-burgers {
   font-family: 'Montserrat', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #fafafa;
-  background-image: 
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 10px,
-      rgba(231, 76, 60, 0.02) 10px,
-      rgba(231, 76, 60, 0.02) 20px
-    );
+  position: relative;
+  background: transparent;
   color: #2c3e50;
   max-width: 100%;
+  min-height: 0;
   overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Fondo fijo al viewport: los ítems scrollean encima (profundidad). */
+.burgers-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  pointer-events: none;
+}
+
+.burgers-bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.04) 35%,
+    rgba(0, 0, 0, 0.16) 100%
+  );
+  pointer-events: none;
+}
+
+.burgers-page {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
   box-sizing: border-box;
 }
 
@@ -22,8 +54,16 @@
   container-name: burgers-menu;
 }
 
+.template-burgers .burgers-restaurant-name {
+  font-size: calc(1.8rem * var(--tpl-scale-name, 1));
+}
+
+.template-burgers .restaurant-description-burgers {
+  font-size: calc(1rem * var(--tpl-scale-desc, 1));
+}
+
 .template-burgers .menu-section-title {
-  font-size: 1.7rem;
+  font-size: calc(1.7rem * var(--tpl-scale-section, 1));
   font-weight: 800;
   color: var(--primary-color, #e74c3c);
   margin-bottom: 40px;
@@ -34,13 +74,15 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.28), 0 0 1px rgba(0,0,0,0.4);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
 }
 
 .template-burgers .menu-item-card {
   background: white;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.18), 0 8px 18px rgba(0,0,0,0.22), 0 16px 36px rgba(0,0,0,0.16);
   transition: all 0.3s ease;
   height: 100%;
   display: flex;
@@ -50,11 +92,11 @@
 
 .template-burgers .menu-item-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.2), 0 14px 32px rgba(0,0,0,0.22);
 }
 
 .template-burgers .menu-item-name {
-  font-size: 1.5rem;
+  font-size: calc(1.5rem * var(--tpl-scale-product, 1));
   font-weight: 800;
   color: #2c3e50;
   margin-bottom: 12px;
@@ -65,14 +107,14 @@
 
 .template-burgers .menu-item-description {
   color: #6c757d;
-  font-size: 1rem;
+  font-size: calc(1rem * var(--tpl-scale-product-desc, 1));
   line-height: 1.7;
   margin-bottom: 20px;
   font-weight: 400;
 }
 
 .template-burgers .menu-item-price {
-  font-size: 1.5rem;
+  font-size: calc(1.5rem * var(--tpl-scale-price, 1));
   font-weight: 800;
   color: var(--primary-color, #e74c3c);
 }
@@ -82,6 +124,8 @@
   gap: 8px;
   margin-bottom: 20px;
   flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .template-burgers .menu-item-icon {
@@ -95,12 +139,27 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: none !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+  min-height: 1.8em;
+  box-sizing: border-box;
+}
+
+/* Compensa letter-spacing para centrar el texto en el pill. */
+.template-burgers .menu-item-icon .burgers-tag-label {
+  display: inline-block;
+  text-align: center;
+  margin-right: -0.5px;
+  letter-spacing: 0.5px;
 }
 
 .template-burgers .menu-tab-btn {
   background: var(--primary-color, #e74c3c);
   color: white;
-  border: none;
+  border: 3px solid var(--primary-color, #e74c3c);
   border-radius: 50px;
   font-weight: 700;
   text-transform: uppercase;
@@ -115,9 +174,9 @@
 }
 
 .template-burgers .menu-tab-btn-outline {
-  border-color: var(--primary-color, #e74c3c);
-  color: var(--primary-color, #e74c3c);
-  background: transparent;
+  border-color: var(--secondary-color, #c0392b);
+  color: white;
+  background: var(--secondary-color, #c0392b);
   border-radius: 50px;
   font-weight: 600;
   border-width: 3px;
@@ -127,17 +186,57 @@
 
 .template-burgers .menu-tab-btn-outline:hover {
   background: var(--primary-color, #e74c3c);
+  border-color: var(--primary-color, #e74c3c);
   color: white;
   transform: translateY(-2px);
 }
 
+.template-burgers .burgers-header-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 30px;
+}
+
 .template-burgers .burgers-logo-wrapper {
-  background: #fafafa;
+  background: transparent;
+  overflow: hidden;
+  border-radius: 12px;
+  line-height: 0;
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.template-burgers .burgers-logo-wrapper picture,
+.template-burgers .burgers-logo-wrapper .burgers-logo-img,
+.template-burgers .burgers-logo-wrapper img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  object-fit: cover !important;
+  display: block;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .template-burgers .burgers-restaurant-name {
   text-align: center;
   background: transparent !important;
+  caret-color: transparent;
+  outline: none !important;
+  box-shadow: none !important;
+  /* Evita el “palo” fantasma del letter-spacing tras la última letra al scrollear. */
+  margin-right: -2px;
+}
+
+.template-burgers .burgers-restaurant-name:focus,
+.template-burgers .burgers-restaurant-name:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .template-burgers .burgers-info-card {
@@ -148,6 +247,14 @@
   border-width: 4px;
   border-color: var(--primary-color, #e74c3c);
   box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.12), 0 16px 32px rgba(0,0,0,0.08);
+  overflow: visible;
+  scrollbar-width: none;
+}
+
+.template-burgers .burgers-info-card::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .template-burgers .section-nav-link {
@@ -158,10 +265,14 @@
   overflow-wrap: break-word;
   white-space: normal;
   text-align: center;
+  background: var(--secondary-color, #c0392b);
+  border-color: var(--secondary-color, #c0392b);
+  color: white;
 }
 
 .template-burgers .section-nav-link:hover {
   background: var(--primary-color, #e74c3c);
+  border-color: var(--primary-color, #e74c3c);
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -170,8 +281,34 @@
 .template-burgers .footer {
   background: linear-gradient(135deg, var(--primary-color, #e74c3c) 0%, var(--secondary-color, #c0392b) 100%);
   color: white;
-  padding: 50px 40px;
-  margin-top: 80px;
+  padding: 28px 28px 20px;
+  margin-top: auto;
+  margin-bottom: 0 !important;
+  flex-shrink: 0;
+}
+
+.template-burgers .footer .row {
+  margin-bottom: 0 !important;
+}
+
+.template-burgers .footer .row > [class*='col-'] {
+  margin-bottom: 0;
+}
+
+.template-burgers .burgers-cover-line {
+  display: block;
+  width: 100%;
+  height: 4px !important;
+  min-height: 4px;
+  max-height: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  flex-shrink: 0;
+  line-height: 0;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 2;
 }
 
 /* Grid de productos:
@@ -184,6 +321,7 @@
   grid-template-columns: 1fr;
   column-gap: 1.5rem;
   row-gap: 2rem;
+  gap: 2rem 1.5rem;
 }
 
 @media (min-width: 768px) {
@@ -218,7 +356,17 @@
 
 .template-burgers .burgers-cover {
   border: none !important;
+  border-bottom: 4px solid var(--primary-color, #e74c3c) !important;
+  border-radius: 16px 16px 0 0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.12), 0 16px 32px rgba(0,0,0,0.08);
+  flex-shrink: 0;
+  height: 350px;
+  min-height: 350px;
+  max-height: 350px;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
 }
 
 /* Compact layout: viewport real + mockup (container) */
@@ -235,17 +383,17 @@
   }
 
   .template-burgers .burgers-logo-wrapper {
-    width: 100%;
-    display: flex;
-    justify-content: center;
+    width: min(100%, 240px);
+    height: auto;
+    aspect-ratio: 1;
+    display: block;
   }
 
+  .template-burgers .burgers-logo-wrapper picture,
   .template-burgers .burgers-logo-wrapper img {
     width: 100% !important;
-    max-width: 100%;
-    height: auto !important;
-    aspect-ratio: 1;
-    object-fit: cover;
+    height: 100% !important;
+    object-fit: cover !important;
   }
 
   .template-burgers .burgers-info-card {
@@ -253,12 +401,8 @@
     min-width: 0 !important;
   }
 
-  .template-burgers .menu-section-title {
-    font-size: 1.7rem;
-  }
-
   .template-burgers .menu-item-name {
-    font-size: 1.25rem;
+    font-size: calc(1.25rem * var(--tpl-scale-product, 1));
   }
 }
 
@@ -275,17 +419,17 @@
   }
 
   .template-burgers .burgers-logo-wrapper {
-    width: 100%;
-    display: flex;
-    justify-content: center;
+    width: min(100%, 240px);
+    height: auto;
+    aspect-ratio: 1;
+    display: block;
   }
 
+  .template-burgers .burgers-logo-wrapper picture,
   .template-burgers .burgers-logo-wrapper img {
     width: 100% !important;
-    max-width: 100%;
-    height: auto !important;
-    aspect-ratio: 1;
-    object-fit: cover;
+    height: 100% !important;
+    object-fit: cover !important;
   }
 
   .template-burgers .burgers-info-card {
@@ -293,11 +437,95 @@
     min-width: 0 !important;
   }
 
-  .template-burgers .menu-section-title {
-    font-size: 1.7rem;
-  }
-
   .template-burgers .menu-item-name {
-    font-size: 1.25rem;
+    font-size: calc(1.25rem * var(--tpl-scale-product, 1));
   }
+}
+
+/*
+ * Preview admin / editor visual:
+ * NO usar `.template-burgers` solo (está en muchos nodos y rompe flex/grid).
+ * Fondo fijo al marco; scroll en .burgers-page.
+ */
+.preview-phone-live:has(.template-burgers.restaurant-container),
+.visual-editor-stage:has(.template-burgers.restaurant-container) {
+  overflow: hidden;
+  position: relative;
+  transform: translateZ(0);
+}
+
+.preview-phone-live .burgers-bg,
+.preview-phone-live .burgers-bg-overlay,
+.visual-editor-stage .burgers-bg,
+.visual-editor-stage .burgers-bg-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: scroll !important;
+}
+
+.preview-phone-live .template-burgers.restaurant-container,
+.visual-editor-stage .template-burgers.restaurant-container {
+  height: 100%;
+  min-height: 0 !important;
+  max-height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-phone-live .burgers-page,
+.visual-editor-stage .burgers-page {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  height: auto;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  /* Evita que flex encoja la portada / bloques al scrollear. */
+  align-items: stretch;
+}
+
+.preview-phone-live .burgers-page > *,
+.visual-editor-stage .burgers-page > * {
+  flex-shrink: 0 !important;
+}
+
+.preview-phone-live .burgers-cover,
+.visual-editor-stage .burgers-cover {
+  flex-shrink: 0 !important;
+  height: 350px !important;
+  min-height: 350px !important;
+  max-height: 350px !important;
+  display: block !important;
+  position: relative !important;
+  top: auto !important;
+  z-index: 2 !important;
+}
+
+.visual-editor-stage .burgers-page .footer {
+  margin-top: 48px !important;
+}
+
+.visual-editor-stage .burgers-header-row {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 30px !important;
+}
+
+.visual-editor-stage .burgers-products-grid {
+  display: grid !important;
+  gap: 2rem 1.5rem !important;
+  row-gap: 2rem !important;
+  column-gap: 1.5rem !important;
 }

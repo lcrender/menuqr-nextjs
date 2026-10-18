@@ -157,7 +157,7 @@
   }
 
   .template-pro-mobile .pro-mobile-title {
-    font-size: 2rem;
+    font-size: calc(2rem * var(--tpl-scale-name, 1));
     text-align: center;
   }
 
@@ -210,7 +210,7 @@
   }
 
   .template-pro-mobile .pro-mobile-title {
-    font-size: 2rem;
+    font-size: calc(2rem * var(--tpl-scale-name, 1));
     text-align: center;
   }
 
@@ -275,7 +275,7 @@
 }
 
 .preview-phone-live .template-pro-mobile .pro-mobile-title {
-  font-size: 1.45rem !important;
+  font-size: calc(1.45rem * var(--tpl-scale-name, 1)) !important;
 }
 
 .template-pro-mobile .pro-mobile-item-row {
@@ -292,7 +292,7 @@
 }
 
 .template-pro-mobile .pro-mobile-item-name {
-  font-size: 0.92rem;
+  font-size: calc(0.92rem * var(--tpl-scale-product, 1));
   font-weight: 700;
   margin: 0 0 4px;
   color: var(--pro-mobile-title, #1a1a2e);
@@ -300,11 +300,11 @@
 }
 
 .template-pro-mobile h3.pro-mobile-item-name {
-  font-size: 0.92rem;
+  font-size: calc(0.92rem * var(--tpl-scale-product, 1));
 }
 
 .template-pro-mobile .pro-mobile-item-desc {
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--tpl-scale-product-desc, 1));
   line-height: 1.45;
   color: var(--pro-mobile-desc, #5c5c5c);
   margin: 0 0 6px;
@@ -333,14 +333,18 @@
 }
 
 .template-pro-mobile .pro-mobile-item-price {
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--tpl-scale-price, 1));
   font-weight: 700;
   color: var(--primary-color, #1a1a2e);
   white-space: nowrap;
 }
 
+.template-night-club .pro-mobile-item-price {
+  color: var(--night-club-price, var(--primary-color, #9333ea));
+}
+
 .template-pro-mobile .pro-mobile-item-price-label {
-  font-size: 0.68rem;
+  font-size: calc(0.68rem * var(--tpl-scale-price, 1));
   color: var(--pro-mobile-price-label, #888);
   font-weight: 400;
   margin-right: 3px;
@@ -440,4 +444,47 @@
 .preview-phone-live .template-pro-mobile .pro-mobile-items {
   overflow-x: hidden;
   max-width: 100%;
+}
+
+.template-night-club .pro-mobile-title {
+  font-size: calc(1.45rem * var(--nc-scale-name, 1)) !important;
+}
+
+.template-night-club .pro-mobile-desc {
+  font-size: calc(0.85rem * var(--nc-scale-desc, 1)) !important;
+}
+
+.template-night-club .pro-mobile-item-name,
+.template-night-club h3.pro-mobile-item-name {
+  font-size: calc(0.92rem * var(--nc-scale-product, 1));
+  color: var(--nc-product-name, #f4f4f5);
+}
+
+.template-night-club .pro-mobile-item-desc {
+  font-size: calc(0.75rem * var(--nc-scale-product-desc, 1));
+  color: var(--nc-product-desc, #a1a1aa);
+}
+
+.template-night-club .pro-mobile-item-price {
+  font-size: calc(0.82rem * var(--nc-scale-price, 1));
+}
+
+.template-night-club .pro-mobile-item-price-label {
+  font-size: calc(0.68rem * var(--nc-scale-price, 1));
+}
+
+@media (min-width: 769px) {
+  .template-night-club .pro-mobile-title {
+    font-size: calc(2rem * var(--nc-scale-name, 1)) !important;
+  }
+}
+
+@container pro-mobile-menu (min-width: 769px) {
+  .template-night-club .pro-mobile-title {
+    font-size: calc(2rem * var(--nc-scale-name, 1)) !important;
+  }
+}
+
+.preview-phone-live .template-night-club .pro-mobile-title {
+  font-size: calc(1.45rem * var(--nc-scale-name, 1)) !important;
 }

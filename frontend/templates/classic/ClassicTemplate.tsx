@@ -11,6 +11,7 @@ import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../compo
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
 import TemplateGoogleFont from '../../components/TemplateGoogleFont';
+import { templateFontScale, templateFontScaleStyle } from '../../lib/template-font-scale';
 
 interface ClassicTemplateProps {
   restaurant: {
@@ -79,6 +80,8 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
   const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
+  const fontScaleStyle = templateFontScaleStyle(tc);
+  const sectionTitleFontSize = `calc(2rem * ${templateFontScale(tc.sectionTitleFontSize)})`;
 
   type MenuItem = NonNullable<ClassicTemplateProps['selectedMenu']>['sections'][number]['items'][number];
 
@@ -109,10 +112,10 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
           {item.prices.map((price, idx) => (
             <span
               key={idx}
+              className="template-classic classic-menu-item-price-badge"
               style={{
                 background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
                 color: 'white',
-                fontSize: '1rem',
                 fontWeight: '700',
                 padding: '8px 16px',
                 borderRadius: '25px',
@@ -120,7 +123,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
                 whiteSpace: 'nowrap',
               }}
             >
-              {price.label && <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>{price.label}: </span>}
+              {price.label && <span className="classic-menu-item-price-label">{price.label}: </span>}
               {formatPrice(price)}
             </span>
           ))}
@@ -134,7 +137,8 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
       minHeight: '100vh', 
       width: '100%',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      ...fontScaleStyle,
     }}>
       <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <style jsx>{`
@@ -145,9 +149,11 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
         .template-classic .restaurant-header {
           background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%);
         }
-        .template-classic .menu-section-title {
+        .template-classic .menu-section-title,
+        .template-classic h2.menu-section-title {
           color: ${primaryColor};
           border-bottom-color: ${primaryColor};
+          font-size: ${sectionTitleFontSize} !important;
         }
         .template-classic .menu-item-name {
           color: ${secondaryColor};
@@ -209,10 +215,11 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
                 style={{ maxWidth: '300px', maxHeight: '300px', marginBottom: '20px' }}
               />
             )}
-            {showName && <h1 style={{ color: secondaryColor, marginBottom: '15px' }}>{restaurant.name}</h1>}
+            {showName && <h1 className="classic-restaurant-name" style={{ color: secondaryColor, marginBottom: '15px' }}>{restaurant.name}</h1>}
           </div>
           {showDescription && restaurant.description && (
             <div 
+              className="classic-restaurant-description"
               dangerouslySetInnerHTML={{ __html: restaurant.description.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') }}
               style={{ color: '#6c757d', textAlign: 'center', marginBottom: '40px', maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 20px' }}
             />
@@ -274,7 +281,12 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
               const { featuredItems, regularItems } = splitHighlightedItems(section.items);
               return (
               <div key={section.id} id={`section-${section.id}`} className="template-classic menu-section" style={{ scrollMarginTop: '80px' }}>
-                <h2 className="template-classic menu-section-title">{section.name}</h2>
+                <h2
+                  className="template-classic menu-section-title"
+                  style={{ fontSize: sectionTitleFontSize }}
+                >
+                  {section.name}
+                </h2>
                 <div className="menu-items-container">
                   {featuredItems.length > 0 ? (
                     <div className="tpl-featured-block" style={featuredAccentStyle}>

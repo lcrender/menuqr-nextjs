@@ -30,7 +30,7 @@
 
 .template-smartfood .smartfood-restaurant-name {
   margin: 0 0 10px;
-  font-size: 1.65rem;
+  font-size: calc(1.65rem * var(--tpl-scale-name, 1));
   font-weight: 700;
   line-height: 1.25;
   text-align: center;
@@ -40,7 +40,7 @@
 .template-smartfood .smartfood-restaurant-desc {
   margin: 0 auto 20px;
   max-width: 560px;
-  font-size: 0.92rem;
+  font-size: calc(0.92rem * var(--tpl-scale-desc, 1));
   line-height: 1.6;
   color: #5f6b76;
   text-align: center;
@@ -86,7 +86,7 @@
   background: transparent;
   color: #4b5563;
   padding: 10px 16px;
-  font-size: 0.85rem;
+  font-size: calc(0.85rem * var(--tpl-scale-section, 1));
   font-weight: 600;
   border-radius: 10px;
   cursor: pointer;
@@ -205,14 +205,14 @@
 }
 
 .template-smartfood .smartfood-item-name {
-  font-size: 1rem;
+  font-size: calc(1rem * var(--tpl-scale-product, 1));
   font-weight: 700;
   margin-bottom: 4px;
   color: #1f2933;
 }
 
 .template-smartfood .smartfood-item-desc {
-  font-size: 0.86rem;
+  font-size: calc(0.86rem * var(--tpl-scale-product-desc, 1));
   line-height: 1.5;
   color: #5f6b76;
   margin-bottom: 8px;
@@ -250,13 +250,13 @@
 
 .template-smartfood .smartfood-price-label {
   display: block;
-  font-size: 0.72rem;
+  font-size: calc(0.72rem * var(--tpl-scale-price, 1));
   color: #6b7280;
   margin-bottom: 2px;
 }
 
 .template-smartfood .smartfood-price-value {
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--tpl-scale-price, 1));
   font-weight: 700;
   color: #1f2933;
   white-space: nowrap;

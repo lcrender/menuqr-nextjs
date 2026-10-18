@@ -52,8 +52,25 @@
   max-width: 100%;
 }
 
+.template-minimalist .minimalist-restaurant-name {
+  color: #1a1a1a;
+  margin-bottom: 15px;
+  font-size: calc(2.5rem * var(--tpl-scale-name, 1));
+  font-weight: 300;
+}
+
+.template-minimalist .minimalist-restaurant-description {
+  color: #666;
+  text-align: center;
+  margin: 0 auto 40px auto;
+  max-width: 1200px;
+  padding: 0 20px;
+  font-size: calc(1.1rem * var(--tpl-scale-desc, 1));
+  line-height: 1.7;
+}
+
 .template-minimalist .menu-section-title {
-  font-size: 1.5rem;
+  font-size: calc(1.5rem * var(--tpl-scale-section, 1));
   font-weight: 400;
   color: #1a1a1a;
   margin-bottom: 32px;
@@ -124,13 +141,13 @@
   align-items: flex-start;
   gap: 20px;
   flex-wrap: wrap;
-  padding: 14px 0;
+  padding: 24px 0;
   width: 100%;
   background: transparent;
 }
 
 .template-minimalist .menu-item.minimalist-menu-item--featured .minimalist-menu-item-inner {
-  padding: 14px 12px;
+  padding: 24px 12px;
 }
 
 .template-minimalist .menu-item:last-child {
@@ -142,7 +159,7 @@
 }
 
 .template-minimalist .menu-item-name {
-  font-size: 1.125rem;
+  font-size: calc(1.125rem * var(--tpl-scale-product, 1));
   font-weight: 400;
   color: #1a1a1a;
   margin-bottom: 8px;
@@ -151,14 +168,14 @@
 
 .template-minimalist .menu-item-description {
   color: #666;
-  font-size: 0.9375rem;
+  font-size: calc(0.9375rem * var(--tpl-scale-product-desc, 1));
   line-height: 1.6;
   margin-bottom: 12px;
   font-weight: 300;
 }
 
 .template-minimalist .menu-item-price {
-  font-size: 1.25rem;
+  font-size: calc(1.25rem * var(--tpl-scale-price, 1));
   font-weight: 400;
   color: var(--primary-color, #667eea);
   white-space: nowrap;

@@ -4,6 +4,7 @@ import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../compo
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
 import TemplateGoogleFont from '../../components/TemplateGoogleFont';
+import { templateFontScaleStyle } from '../../lib/template-font-scale';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -76,6 +77,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
   const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
+  const fontScaleStyle = templateFontScaleStyle(tc);
 
   type MenuItem = NonNullable<MinimalistTemplateProps['selectedMenu']>['sections'][number]['items'][number];
 
@@ -115,7 +117,10 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
   );
 
   return (
-    <div className="template-minimalist restaurant-container" style={{ minHeight: '100vh', width: '100%' }}>
+    <div
+      className="template-minimalist restaurant-container"
+      style={{ minHeight: '100vh', width: '100%', ...fontScaleStyle }}
+    >
       <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <style jsx>{`
         .template-minimalist {
@@ -166,12 +171,14 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
                 style={{ maxWidth: '300px', maxHeight: '300px', marginBottom: '20px' }}
               />
             )}
-            {showName && <h1 style={{ color: '#1a1a1a', marginBottom: '15px', fontSize: '2.5rem', fontWeight: '300' }}>{restaurant.name}</h1>}
+            {showName && (
+              <h1 className="template-minimalist minimalist-restaurant-name">{restaurant.name}</h1>
+            )}
           </div>
           {showDescription && restaurant.description && (
-            <div 
+            <div
+              className="template-minimalist minimalist-restaurant-description"
               dangerouslySetInnerHTML={{ __html: restaurant.description.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') }}
-              style={{ color: '#666', textAlign: 'center', marginBottom: '40px', maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 20px', fontSize: '1.1rem', lineHeight: '1.7' }}
             />
           )}
         </div>

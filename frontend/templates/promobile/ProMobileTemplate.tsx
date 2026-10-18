@@ -10,6 +10,7 @@ import {
   FOOTER_REL_EXTERNAL,
   footerWebsiteRel,
 } from '../../lib/template-footer-link-rel';
+import { templateFontScale, templateFontScaleStyle } from '../../lib/template-font-scale';
 
 interface ProMobileTemplateProps {
   restaurant: {
@@ -88,18 +89,40 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
   const showProductImages = !isNightClub && tc.showProductImages !== false;
   const headerNoName = !showName;
 
-  const pageBg = isNightClub ? '#0a0a0f' : '#fafafa';
-  const surfaceBg = isNightClub ? '#12121a' : '#fff';
-  const surfaceAlt = isNightClub ? '#16161f' : '#fff';
-  const titleColor = isNightClub ? '#f4f4f5' : '#1a1a2e';
-  const descColor = isNightClub ? '#a1a1aa' : '#5c5c5c';
-  const mutedColor = isNightClub ? '#71717a' : '#666';
+  const savedBackground = tc.backgroundColor;
+  const backgroundColor =
+    isNightClub && typeof savedBackground === 'string' && /^#[0-9A-Fa-f]{6}$/.test(savedBackground)
+      ? savedBackground
+      : '#0a0a0f';
+  const customBackground = isNightClub && backgroundColor.toLowerCase() !== '#0a0a0f';
+  const pageBg = isNightClub ? backgroundColor : '#fafafa';
+  const surfaceBg = customBackground ? backgroundColor : isNightClub ? '#12121a' : '#fff';
+  const surfaceAlt = customBackground ? backgroundColor : isNightClub ? '#16161f' : '#fff';
+  const hexOr = (value: unknown, fallback: string) =>
+    typeof value === 'string' && /^#[0-9A-Fa-f]{6}$/.test(value) ? value : fallback;
+  const titleColor = isNightClub ? hexOr(tc.restaurantNameColor, '#f4f4f5') : '#1a1a2e';
+  const descColor = isNightClub ? hexOr(tc.restaurantDescriptionColor, '#a1a1aa') : '#5c5c5c';
+  const mutedColor = isNightClub ? hexOr(tc.sectionTabColor, '#71717a') : '#666';
+  const productNameColor = isNightClub ? hexOr(tc.productNameColor, '#f4f4f5') : titleColor;
+  const productDescColor = isNightClub ? hexOr(tc.productDescriptionColor, '#a1a1aa') : descColor;
   const borderColor = isNightClub ? 'rgba(255,255,255,0.08)' : '#eee';
   const tabBorder = isNightClub ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.06)';
   const iconBg = isNightClub ? '#1e1e28' : '#f5f5f5';
   const iconBorder = isNightClub ? 'rgba(255,255,255,0.12)' : '#e0e0e0';
   const iconColor = isNightClub ? '#d4d4d8' : '#666';
-  const priceLabelColor = isNightClub ? '#71717a' : '#888';
+  const priceLabelColor = isNightClub ? productDescColor : '#888';
+  const savedPriceColor = tc.priceColor;
+  const priceColor =
+    isNightClub && typeof savedPriceColor === 'string' && /^#[0-9A-Fa-f]{6}$/.test(savedPriceColor)
+      ? savedPriceColor
+      : primaryColor;
+  const fontScaleStyle = templateFontScaleStyle(tc);
+  const nameScale = templateFontScale(tc.restaurantNameFontSize);
+  const descScale = templateFontScale(tc.restaurantDescriptionFontSize);
+  const sectionScale = templateFontScale(tc.sectionTabFontSize);
+  const productScale = templateFontScale(tc.productNameFontSize);
+  const productDescScale = templateFontScale(tc.productDescriptionFontSize);
+  const priceScale = templateFontScale(tc.priceFontSize);
   const rootClass = isNightClub ? 'template-pro-mobile template-night-club' : 'template-pro-mobile';
 
   const sections = selectedMenu?.sections ?? [];
@@ -181,7 +204,10 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
   };
 
   return (
-    <div className={`${rootClass} restaurant-container`} style={{ minHeight: '100vh', width: '100%', background: pageBg }}>
+    <div
+      className={`${rootClass} restaurant-container`}
+      style={{ minHeight: '100vh', width: '100%', background: pageBg, ...fontScaleStyle }}
+    >
       <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <style jsx>{`
         .template-pro-mobile {
@@ -195,6 +221,15 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
           --pro-mobile-icon-border: ${iconBorder};
           --pro-mobile-icon-color: ${iconColor};
           --pro-mobile-price-label: ${priceLabelColor};
+          --night-club-price: ${priceColor};
+          --nc-product-name: ${productNameColor};
+          --nc-product-desc: ${productDescColor};
+          --nc-scale-name: ${nameScale};
+          --nc-scale-desc: ${descScale};
+          --nc-scale-section: ${sectionScale};
+          --nc-scale-product: ${productScale};
+          --nc-scale-product-desc: ${productDescScale};
+          --nc-scale-price: ${priceScale};
         }
         .template-pro-mobile .pro-mobile-cover {
           width: 100%;
@@ -244,7 +279,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
           text-align: center;
         }
         .template-pro-mobile .pro-mobile-title {
-          font-size: 1.45rem;
+          font-size: calc(1.45rem * var(--tpl-scale-name, 1));
           font-weight: 700;
           margin: 0 0 8px;
           color: ${titleColor};
@@ -253,7 +288,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
           overflow-wrap: anywhere;
         }
         .template-pro-mobile .pro-mobile-desc {
-          font-size: 0.85rem;
+          font-size: calc(0.85rem * var(--tpl-scale-desc, 1));
           line-height: 1.55;
           color: ${descColor};
           margin: 0;
@@ -300,7 +335,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
           border-bottom: 1px solid ${tabBorder};
           background: transparent;
           color: ${mutedColor};
-          font-size: 0.62rem;
+          font-size: calc(0.62rem * var(--tpl-scale-section, 1));
           font-weight: 600;
           letter-spacing: 0.02em;
           padding: 14px 4px;
@@ -311,7 +346,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
         }
         .template-pro-mobile .pro-mobile-section-tab.active {
           background: ${primaryColor};
-          color: white;
+          color: ${isNightClub ? mutedColor : 'white'};
         }
         .template-pro-mobile .pro-mobile-items {
           flex: 1;
@@ -332,7 +367,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
             width: 72px;
           }
           .template-pro-mobile .pro-mobile-section-tab {
-            font-size: 0.72rem;
+            font-size: calc(0.72rem * var(--tpl-scale-section, 1));
             min-height: 88px;
           }
         }
@@ -414,6 +449,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
                     onClick={() => setActiveSectionId(section.id)}
                     aria-pressed={active}
                     title={section.name}
+                    style={active && isNightClub ? { color: mutedColor } : undefined}
                   >
                     {sectionTabLabel(section.name)}
                   </button>

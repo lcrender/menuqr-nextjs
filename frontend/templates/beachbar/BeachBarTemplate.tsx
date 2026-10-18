@@ -11,6 +11,7 @@ import {
   FOOTER_REL_EXTERNAL,
   footerWebsiteRel,
 } from '../../lib/template-footer-link-rel';
+import { templateFontScaleStyle } from '../../lib/template-font-scale';
 
 interface BeachBarTemplateProps {
   restaurant: {
@@ -98,6 +99,7 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
   const { featuredItems, regularItems } = splitHighlightedItems(visibleItems);
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': restaurant.primaryColor || '#0ea5e9' } as React.CSSProperties;
+  const fontScaleStyle = templateFontScaleStyle(tc);
 
   const renderBeachBarProduct = (item: (typeof visibleItems)[number], featured: boolean) => {
     const photo = showProductImages && item.photos?.[0] ? item.photos[0] : null;
@@ -168,6 +170,7 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
         {
           '--beachbar-primary': primaryColor,
           '--beachbar-secondary': secondaryColor,
+          ...fontScaleStyle,
         } as React.CSSProperties
       }
     >

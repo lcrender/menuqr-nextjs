@@ -1267,6 +1267,82 @@
       "action": "Action"
     },
     "configureTemplate": "Configure template",
+    "visualEditor": "Visual editor",
+    "visualEditorBeta": "Beta",
+    "visual": {
+      "back": "Back to Templates",
+      "reset": "Reset",
+      "save": "Save and publish",
+      "saving": "Publishing…",
+      "saved": "Published",
+      "pending": "Unpublished changes",
+      "published": "No pending changes",
+      "saveError": "Could not publish. Your changes are still in the editor.",
+      "leaveConfirm": "You have unpublished changes. If you leave now, they will be lost.",
+      "loadError": "Could not load this business design.",
+      "forbidden": "You cannot edit the design of this business.",
+      "pickTitle": "Choose a business",
+      "pickMessage": "The design applies to the whole business. Choose which one you want to customize.",
+      "noRestaurant": "Create a business before opening the visual editor.",
+      "previewMenu": "Preview menu",
+      "viewport": "Preview size",
+      "viewportPhone": "Mobile",
+      "viewportTablet": "Tablet",
+      "openPublic": "View restaurant",
+      "bgCustom": "Custom background",
+      "bgAdd": "Upload background",
+      "bgPickTitle": "Upload background",
+      "bgPickHint": "Recommended: 1080×1920 px (vertical 9:16). JPG, PNG or WebP.",
+      "bgDropTitle": "Drop a photo here",
+      "bgDropOr": "or click to choose one",
+      "bgReplaceTitle": "Replace background",
+      "bgReplaceMessage": "You already have a custom background. Uploading another one removes the current file from the server.",
+      "bgReplaceConfirm": "Continue",
+      "bgUploadInvalid": "Choose a JPG, PNG or WebP image.",
+      "bgUploadReadError": "Could not read the image.",
+      "bgUploadError": "Could not upload the background.",
+      "bgUploading": "Uploading background…",
+      "openTools": "Edit design",
+      "closeTools": "Close tools",
+      "globalNote": "The design belongs to the business. Publishing it updates every menu.",
+      "proLocked": "Available on Pro or Premium plans",
+      "proBadge": "Pro",
+      "proBlockedTitle": "This style is Pro",
+      "proBlockedMessage": "{{name}} is available on the <pro>Pro</pro> and <premium>Premium</premium> plans. Free and Starter can use the other styles.",
+      "proUpgrade": "Upgrade plan",
+      "fontLabel": "Font",
+      "fontDefault": "Template font",
+      "fontSample": "Today's menu",
+      "fontSearch": "Search font",
+      "fontEmpty": "No font matches.",
+      "fontGroups": {
+        "all": "All",
+        "sans-serif": "Sans",
+        "serif": "Serif",
+        "display": "Display",
+        "cursive": "Script"
+      },
+      "templateSwitchTitle": "Change style",
+      "templateSwitchMessage": "The preview updates immediately. Colors, the font, and options shared by both templates are kept. The public menu does not change until you publish.",
+      "templateSwitchConfirm": "Change style",
+      "templateSwitchCancel": "Cancel",
+      "groups": {
+        "styles": "Styles",
+        "colors": "Colors",
+        "typography": "Typography",
+        "header": "Header",
+        "background": "Background",
+        "elements": "Elements"
+      },
+      "hit": {
+        "name": "The name font applies to the whole menu of this business.",
+        "cover": "The cover belongs to the business and appears on every menu.",
+        "logo": "The logo belongs to the business. Here you only choose whether it is shown.",
+        "section": "Category styling is global: it changes every section.",
+        "product": "Product presentation is the same across the whole menu.",
+        "price": "The price color is the same for every product in the business."
+      }
+    },
     "classicFallback": "Classic",
     "catalogTitle": "Template catalog",
     "showingAll": "Showing all {{count}} templates",
@@ -1320,6 +1396,60 @@
         "label": "Primary color",
         "description": "Main template color (buttons, titles, highlighted elements)."
       },
+      "restaurantDescriptionColor": {
+        "label": "Description color",
+        "description": "Color of the business description."
+      },
+      "sectionTabColor": {
+        "label": "Category color",
+        "description": "Text color of the categories, including the one that is selected."
+      },
+      "productNameColor": {
+        "label": "Product title color",
+        "description": "Color of the product names."
+      },
+      "productDescriptionColor": {
+        "label": "Product description color",
+        "description": "Color of the product descriptions and the variant name, the text shown before the price."
+      },
+      "backgroundColor": {
+        "label": "Background color",
+        "description": "Neon Club background color. It does not change the primary color or the price color."
+      },
+      "priceColor": {
+        "label": "Price color",
+        "description": "Price color in Neon Club. It does not change the primary color."
+      },
+      "restaurantNameFontSize": {
+        "label": "Name size",
+        "description": "Make the business name larger or smaller.",
+        "values": { "small": "Small", "medium": "Medium", "large": "Large", "xlarge": "Extra large" }
+      },
+      "restaurantDescriptionFontSize": {
+        "label": "Description size",
+        "description": "Make the business description larger or smaller.",
+        "values": { "small": "Small", "medium": "Medium", "large": "Large", "xlarge": "Extra large" }
+      },
+      "sectionTabFontSize": {
+        "label": "Category size",
+        "description": "Make the category labels larger or smaller.",
+        "values": { "small": "Small", "medium": "Medium", "large": "Large", "xlarge": "Extra large" }
+      },
+      "productNameFontSize": {
+        "label": "Product name size",
+        "description": "Make product names larger or smaller.",
+        "values": { "small": "Small", "medium": "Medium", "large": "Large", "xlarge": "Extra large" }
+      },
+      "productDescriptionFontSize": {
+        "label": "Product description size",
+        "description": "Make product descriptions larger or smaller.",
+        "values": { "small": "Small", "medium": "Medium", "large": "Large", "xlarge": "Extra large" }
+      },
+      "priceFontSize": {
+        "label": "Price size",
+        "description": "Make prices larger or smaller.",
+        "values": { "small": "Small", "medium": "Medium", "large": "Large", "xlarge": "Extra large" }
+      },
       "secondaryColor": {
         "label": "Secondary color",
         "description": "Secondary color (accents, borders, highlighted text)."
@@ -1345,8 +1475,8 @@
         "description": "Text color for the business name in the header."
       },
       "sectionTitleFontSize": {
-        "label": "Section title font size",
-        "description": "Text size for menu category titles (for example: Burgers, Sides).",
+        "label": "Category size",
+        "description": "Enlarge or shrink category titles.",
         "values": {
           "small": "Small",
           "medium": "Medium",
@@ -1386,6 +1516,28 @@
       "showProductImages": {
         "label": "Show product photos",
         "description": "Show the product photo when available (no placeholder if missing)."
+      },
+      "backgroundId": {
+        "label": "Background",
+        "description": "Choose the template wallpaper.",
+        "values": {
+          "playa-tropical-de-ensueno": "Dreamy tropical beach",
+          "terraza-mediterranea-junto-al-mar": "Mediterranean terrace by the sea",
+          "atardecer-tropical-junto-al-mar": "Tropical sunset by the sea",
+          "vinedo-toscano-al-atardecer": "Tuscan vineyard at sunset",
+          "terraza-dorada-junto-al-lago-montanoso": "Golden terrace by a mountain lake",
+          "cafe-parisino-al-atardecer-con-torre-eiffel": "Parisian café at sunset with Eiffel Tower",
+          "times-square-bajo-la-lluvia": "Times Square in the rain",
+          "cafe-acogedor-con-luz-dorada-y-plantas": "Cozy café with golden light and plants",
+          "bokeh-nocturno-sobre-asfalto-mojado": "Night bokeh on wet asphalt",
+          "bar-rustico-entre-luces-calidas": "Rustic bar with warm lights",
+          "textura-calida-de-piedra-travertina": "Warm travertine stone texture",
+          "cocina-hamburgueseria": "Burger kitchen",
+          "hamburgueseria-mesa-madera": "Wooden table with burger",
+          "parrilla-hamburguesa": "Burger grill",
+          "hamburgueseria-rustica": "Rustic burger joint",
+          "custom": "Custom"
+        }
       },
       "backgroundImageUrl": {
         "label": "Background image",

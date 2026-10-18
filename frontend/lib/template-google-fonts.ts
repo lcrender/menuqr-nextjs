@@ -80,6 +80,15 @@ export function googleFontStylesheetHref(font: TemplateGoogleFont): string {
   return `https://fonts.googleapis.com/css2?family=${family}:wght@${font.weights}&display=swap`;
 }
 
+/** Una sola hoja para mostrar una muestra de cada fuente dentro del editor visual. */
+export function googleFontCatalogStylesheetHref(): string {
+  const families = TEMPLATE_GOOGLE_FONTS.map((font) => {
+    const family = encodeURIComponent(font.family).replace(/%20/g, '+');
+    return `family=${family}:wght@400`;
+  }).join('&');
+  return `https://fonts.googleapis.com/css2?${families}&display=swap`;
+}
+
 export function googleFontCssStack(font: TemplateGoogleFont): string {
   return `'${font.family}', ${font.category}`;
 }

@@ -77,6 +77,31 @@
   text-align: justify;
 }
 
+.template-gourmet .gourmet-restaurant-name {
+  font-size: calc(2.5rem * var(--tpl-scale-name, 1));
+}
+
+.template-gourmet .gourmet-restaurant-description {
+  font-size: calc(1rem * var(--tpl-scale-desc, 1));
+}
+
+.template-gourmet .menu-section-title,
+.template-gourmet h2.menu-section-title {
+  font-size: calc(2rem * var(--tpl-scale-section, 1)) !important;
+}
+
+.template-gourmet .menu-item-name {
+  font-size: calc(1.25rem * var(--tpl-scale-product, 1));
+}
+
+.template-gourmet .menu-item-description {
+  font-size: calc(0.95rem * var(--tpl-scale-product-desc, 1));
+}
+
+.template-gourmet .menu-item-price {
+  font-size: calc(1.25rem * var(--tpl-scale-price, 1));
+}
+
 @media (max-width: 768px) {
   .template-gourmet .gourmet-header {
     flex-direction: column;

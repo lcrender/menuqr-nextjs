@@ -13,6 +13,7 @@ import {
   FOOTER_REL_EXTERNAL,
   footerWebsiteRel,
 } from '../../lib/template-footer-link-rel';
+import { templateFontScaleStyle } from '../../lib/template-font-scale';
 
 interface SmartFoodTemplateProps {
   restaurant: {
@@ -96,6 +97,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
   );
   const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
+  const fontScaleStyle = templateFontScaleStyle(tc);
 
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [activeAllergenFilters, setActiveAllergenFilters] = useState<Set<string>>(new Set());
@@ -166,7 +168,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
     <>
       <TemplateFonts googleFontsHref={SMART_FOOD_FONTS_HREF} />
       <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
-    <div className="template-smartfood restaurant-container">
+    <div className="template-smartfood restaurant-container" style={fontScaleStyle}>
       <style jsx>{`
         .template-smartfood {
           --primary-color: ${primaryColor};

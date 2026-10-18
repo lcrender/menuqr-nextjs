@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import api from '../../../lib/axios';
 import AdminLayout from '../../../components/AdminLayout';
@@ -18,7 +19,10 @@ import {
 import { apiTemplateIdToCatalogSlug } from '../../../lib/template-selection-intent';
 import { translateTemplateName } from '../../../lib/template-config-i18n';
 import { TEMPLATES_CATALOG as templates, type TemplateCatalogItem } from '../../../lib/templates-catalog';
-import { DEFAULT_BEACH_BAR_BACKGROUND_IMAGE } from '../../../lib/beach-bar-template';
+import {
+  DEFAULT_BEACH_BAR_BACKGROUND_ID,
+  DEFAULT_BEACH_BAR_BACKGROUND_IMAGE,
+} from '../../../lib/beach-bar-template';
 import type { TemplateListFilters } from '../../../types/menu-template-catalog';
 
 const INITIAL_FILTERS: TemplateListFilters = {
@@ -33,7 +37,9 @@ type AdminGridItem =
 
 export default function Templates() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [editorPickerOpen, setEditorPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedRestaurant, setSelectedRestaurant] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -165,6 +171,7 @@ export default function Templates() {
             showRestaurantName: true,
             showRestaurantDescription: true,
             showProductImages: true,
+            backgroundId: DEFAULT_BEACH_BAR_BACKGROUND_ID,
             backgroundImageUrl: DEFAULT_BEACH_BAR_BACKGROUND_IMAGE,
             ...prevConfig,
           };
@@ -174,6 +181,7 @@ export default function Templates() {
             showRestaurantName: true,
             showRestaurantDescription: true,
             showProductImages: true,
+            backgroundId: DEFAULT_BEACH_BAR_BACKGROUND_ID,
             backgroundImageUrl: DEFAULT_BEACH_BAR_BACKGROUND_IMAGE,
           };
         }
@@ -262,6 +270,28 @@ export default function Templates() {
     }
   };
 
+  const openVisualEditor = (restaurantId?: string) => {
+    if (restaurantId) {
+      void router.push(`/admin/templates/editor/${restaurantId}`);
+      return;
+    }
+    if (restaurants.length === 0) {
+      setAlertModal({
+        title: t('adminTemplates.visual.pickTitle', { defaultValue: 'Elegí un comercio' }),
+        message: t('adminTemplates.visual.noRestaurant', {
+          defaultValue: 'Creá un comercio antes de abrir el editor visual.',
+        }),
+        variant: 'error',
+      });
+      return;
+    }
+    if (restaurants.length === 1) {
+      void router.push(`/admin/templates/editor/${restaurants[0].id}`);
+      return;
+    }
+    setEditorPickerOpen(true);
+  };
+
   const getRestaurantTemplate = (restaurantId: string) => {
     const restaurant = restaurants.find(r => r.id === restaurantId);
     return restaurant?.template || 'classic';
@@ -277,6 +307,23 @@ export default function Templates() {
               {t('adminTemplates.subtitle')}
             </p>
           </div>
+          <button type="button" className="admin-btn admin-btn-primary" onClick={() => openVisualEditor()}>
+            {t('adminTemplates.visualEditor', { defaultValue: 'Editor visual' })}
+            <span
+              style={{
+                marginLeft: 8,
+                fontSize: '0.7rem',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                background: 'rgba(255,255,255,0.22)',
+                borderRadius: 999,
+                padding: '2px 7px',
+                verticalAlign: 'middle',
+              }}
+            >
+              {t('adminTemplates.visualEditorBeta', { defaultValue: 'Beta' })}
+            </span>
+          </button>
         </div>
 
         {loading ? (
@@ -319,12 +366,21 @@ export default function Templates() {
                               </span>
                             </td>
                             <td className="text-end">
-                              <Link
-                                href={`/admin/templates/configure/${r.id}`}
-                                className="admin-btn admin-templates-config-link"
-                              >
-                                {t('adminTemplates.configureTemplate')}
-                              </Link>
+                              <div className="d-inline-flex flex-wrap justify-content-end gap-2">
+                                <Link
+                                  href={`/admin/templates/configure/${r.id}`}
+                                  className="admin-btn admin-templates-config-link"
+                                >
+                                  {t('adminTemplates.configureTemplate')}
+                                </Link>
+                                <button
+                                  type="button"
+                                  className="admin-btn"
+                                  onClick={() => openVisualEditor(r.id)}
+                                >
+                                  {t('adminTemplates.visualEditor', { defaultValue: 'Editor visual' })}
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -341,12 +397,23 @@ export default function Templates() {
                           {translateTemplateName(t, r.template) || t('adminTemplates.classicFallback')}
                         </span>
                       </div>
-                      <Link
-                        href={`/admin/templates/configure/${r.id}`}
-                        className="admin-btn admin-templates-config-link-mobile"
-                      >
-                        {t('adminTemplates.configureTemplate')}
-                      </Link>
+                      <div className="d-flex flex-column gap-2">
+                        <Link
+                          href={`/admin/templates/configure/${r.id}`}
+                          className="admin-btn admin-templates-config-link-mobile"
+                        >
+                          {t('adminTemplates.configureTemplate')}
+                        </Link>
+                        <button
+                          type="button"
+                          className="admin-btn"
+                          onClick={() => openVisualEditor(r.id)}
+                        >
+                          {t('adminTemplates.visualEditor', { defaultValue: 'Editor visual' })}
+                          {' '}
+                          <span className="badge bg-secondary">{t('adminTemplates.visualEditorBeta', { defaultValue: 'Beta' })}</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -404,6 +471,39 @@ export default function Templates() {
           </div>
         )}
       </div>
+
+      {editorPickerOpen && (
+        <div className="modal d-block" style={{ background: 'rgba(17,24,39,0.45)', zIndex: 80 }} role="dialog">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content p-3">
+              <h2 className="h5">{t('adminTemplates.visual.pickTitle', { defaultValue: 'Elegí un comercio' })}</h2>
+              <p className="text-muted">
+                {t('adminTemplates.visual.pickMessage', {
+                  defaultValue: 'El diseño se aplica a todo el comercio. Elegí cuál querés personalizar.',
+                })}
+              </p>
+              <div className="d-flex flex-column gap-2 mb-3">
+                {restaurants.map((restaurant) => (
+                  <button
+                    key={restaurant.id}
+                    type="button"
+                    className="admin-btn text-start"
+                    onClick={() => {
+                      setEditorPickerOpen(false);
+                      openVisualEditor(restaurant.id);
+                    }}
+                  >
+                    {restaurant.name}
+                  </button>
+                ))}
+              </div>
+              <button type="button" className="admin-btn admin-btn-secondary" onClick={() => setEditorPickerOpen(false)}>
+                {t('adminTemplates.visual.templateSwitchCancel', { defaultValue: 'Cancelar' })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {alertModal && (
         <AlertModal

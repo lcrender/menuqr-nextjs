@@ -11,8 +11,12 @@
   container-name: foodie-menu;
 }
 
+.template-foodie .foodie-restaurant-name {
+  font-size: calc(2.5rem * var(--tpl-scale-name, 1));
+}
+
 .template-foodie .foodie-restaurant-description {
-  font-size: 1rem;
+  font-size: calc(1rem * var(--tpl-scale-desc, 1));
   line-height: 1.6;
   color: #6c757d;
   max-width: 720px;
@@ -100,7 +104,7 @@
 
 .template-foodie .menu-section-title {
   position: relative;
-  font-size: 2rem;
+  font-size: calc(2rem * var(--tpl-scale-section, 1));
   font-weight: 600;
   color: var(--primary-color, #2c3e50);
   margin-bottom: 40px;
@@ -160,7 +164,7 @@
 }
 
 .template-foodie .menu-item-name {
-  font-size: 1.25rem;
+  font-size: calc(1.25rem * var(--tpl-scale-product, 1));
   font-weight: 600;
   color: #2c3e50;
   margin-bottom: 12px;
@@ -169,16 +173,23 @@
 
 .template-foodie .menu-item-description {
   color: #6c757d;
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--tpl-scale-product-desc, 1));
   line-height: 1.6;
   margin-bottom: 16px;
   font-weight: 400;
 }
 
 .template-foodie .menu-item-price {
-  font-size: 1.25rem;
+  font-size: calc(1.25rem * var(--tpl-scale-price, 1));
   font-weight: 600;
   color: var(--primary-color, #2c3e50);
+}
+
+.template-foodie .foodie-menu-item-price-label {
+  font-size: calc(0.9rem * var(--tpl-scale-price, 1));
+  color: #6c757d;
+  margin-right: 4px;
+  font-weight: 400;
 }
 
 .template-foodie .menu-item-icons {
@@ -544,11 +555,12 @@
     height: min(260px, 72vw);
   }
 
-  .template-foodie .restaurant-header h1 {
-    font-size: 2rem;
+  .template-foodie .restaurant-header h1,
+  .template-foodie .foodie-restaurant-name {
+    font-size: calc(2rem * var(--tpl-scale-name, 1));
   }
 
   .template-foodie .menu-section-title {
-    font-size: 1.5rem;
+    font-size: calc(1.5rem * var(--tpl-scale-section, 1));
   }
 }

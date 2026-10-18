@@ -7,6 +7,12 @@ export const COVER_OUTPUT_WIDTH_PX = 1200;
 export const COVER_OUTPUT_HEIGHT_PX = 800;
 export const COVER_MAX_BYTES = 600 * 1024;
 
+/** Fondo Beach Life / wallpaper vertical 9:16. */
+export const TEMPLATE_BG_OUTPUT_WIDTH_PX = 1080;
+export const TEMPLATE_BG_OUTPUT_HEIGHT_PX = 1920;
+export const TEMPLATE_BG_MAX_BYTES = 400 * 1024;
+export const TEMPLATE_BG_ASPECT = TEMPLATE_BG_OUTPUT_WIDTH_PX / TEMPLATE_BG_OUTPUT_HEIGHT_PX;
+
 export const PRODUCT_OUTPUT_PX = 800;
 export const PRODUCT_MAX_BYTES = 250 * 1024;
 
@@ -149,6 +155,22 @@ export async function exportProductWebpFile(imageSrc: string, pixelCrop: Area): 
     outputHeight: PRODUCT_OUTPUT_PX,
     maxBytes: PRODUCT_MAX_BYTES,
     filename: 'product.jpg',
+    minQuality: 0.08,
+  });
+}
+
+/** Fondo de plantilla: 1080×1920 px (JPEG → backend WebP). */
+export async function exportTemplateBackgroundWebpFile(
+  imageSrc: string,
+  pixelCrop: Area,
+): Promise<File> {
+  return exportCroppedFixedJpegFile({
+    imageSrc,
+    pixelCrop,
+    outputWidth: TEMPLATE_BG_OUTPUT_WIDTH_PX,
+    outputHeight: TEMPLATE_BG_OUTPUT_HEIGHT_PX,
+    maxBytes: TEMPLATE_BG_MAX_BYTES,
+    filename: 'background.jpg',
     minQuality: 0.08,
   });
 }

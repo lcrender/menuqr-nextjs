@@ -3,7 +3,14 @@
  * Cada plantilla puede definir sus propias opciones; aquí se preestablecen.
  * Los colores principales/secundarios se usan en todas las plantillas (las vistas ya los tienen establecidos).
  */
-import { DEFAULT_BEACH_BAR_BACKGROUND_IMAGE } from './beach-bar-template';
+import {
+  DEFAULT_BEACH_BAR_BACKGROUND_ID,
+  beachBarBackgroundSelectOptions,
+} from './beach-bar-template';
+import {
+  DEFAULT_BURGERS_BACKGROUND_ID,
+  burgersBackgroundSelectOptions,
+} from './burgers-template';
 import { SOL_NOCHE_TIMEZONE_OPTIONS } from './sol-noche-template';
 import {
   googleFontSelectOptions,
@@ -109,24 +116,17 @@ const VISIBILITY_OPTIONS: TemplateConfigOption[] = [
   },
 ];
 
-/** Solo plantilla Burgers: tamaño de los títulos de categoría (H2) en el menú público. */
-const BURGERS_SECTION_TITLE_SIZE: TemplateConfigOption = {
-  id: 'sectionTitleFontSize',
-  label: 'Tamaño de letra de los títulos de sección',
-  description: 'Tamaño del texto de las categorías del menú (por ejemplo: Hamburguesas, Acompañamientos).',
-  type: 'select',
-  default: 'medium',
-  options: [
-    { value: 'small', label: 'Pequeño' },
-    { value: 'medium', label: 'Mediano' },
-    { value: 'large', label: 'Grande' },
-    { value: 'xlarge', label: 'Extra grande' },
-  ],
-};
-
-/** Burgers: visibilidad + color del nombre (debajo de mostrar/ocultar nombre). */
+/** Burgers: fondo a elegir del catálogo, visibilidad + color del nombre. */
 const BURGERS_OPTIONS: TemplateConfigOption[] = [
   ...COMMON_COLOR_OPTIONS,
+  {
+    id: 'backgroundId',
+    label: 'Fondo',
+    description: 'Elegí el fondo de pantalla de Burgers.',
+    type: 'select',
+    default: DEFAULT_BURGERS_BACKGROUND_ID,
+    options: burgersBackgroundSelectOptions(),
+  },
   {
     id: 'showCoverImage',
     label: 'Mostrar imagen de portada',
@@ -162,7 +162,6 @@ const BURGERS_OPTIONS: TemplateConfigOption[] = [
     type: 'boolean',
     default: true,
   },
-  BURGERS_SECTION_TITLE_SIZE,
 ];
 
 /** Visible solo en planes de pago indicados (y super admin); en planes inferiores el menú público sigue mostrando banderas. */
@@ -178,30 +177,121 @@ const TRANSLATION_FLAGS_TEMPLATE_OPTIONS: TemplateConfigOption[] = [
   },
 ];
 
-/** Opciones Gourmet: colores y visibilidad (logo, portada, fotos de productos). La fuente va en Google Fonts. */
+/** Opciones Gourmet: colores y visibilidad (logo, portada, nombre, descripción, fotos). La fuente va en Google Fonts. */
 const GOURMET_OPTIONS: TemplateConfigOption[] = [
   ...COMMON_COLOR_OPTIONS,
   { id: 'showLogo', label: 'Mostrar logo', description: 'Mostrar el logo del comercio.', type: 'boolean', default: true },
   { id: 'showCoverImage', label: 'Mostrar imagen de portada', description: 'Mostrar la imagen de portada.', type: 'boolean', default: true },
+  { id: 'showRestaurantName', label: 'Mostrar nombre del comercio', description: 'Mostrar el nombre del comercio.', type: 'boolean', default: true },
+  { id: 'showRestaurantDescription', label: 'Mostrar descripción del comercio', description: 'Mostrar la descripción del comercio.', type: 'boolean', default: true },
   { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista (sin placeholder si no hay foto).', type: 'boolean', default: true },
 ];
 
-/** Modern Food: colores, visibilidad del encabezado y fotos de productos. */
+const TEMPLATE_FONT_SIZE_STEPS = [
+  { value: 'small', label: 'Pequeño' },
+  { value: 'medium', label: 'Mediano' },
+  { value: 'large', label: 'Grande' },
+  { value: 'xlarge', label: 'Extra grande' },
+];
+
+function templateFontSizeOption(id: string, label: string, description: string): TemplateConfigOption {
+  return {
+    id,
+    label,
+    description,
+    type: 'select',
+    default: 'medium',
+    options: TEMPLATE_FONT_SIZE_STEPS,
+  };
+}
+
+/** Plantillas con títulos de sección (H2): Classic, Minimalista, Foodie, Burgers, Gourmet, Italian. */
+const TYPOGRAPHY_SIZE_SECTION_TITLE: TemplateConfigOption[] = [
+  templateFontSizeOption('restaurantNameFontSize', 'Tamaño del nombre', 'Agrandá o achicá el nombre del comercio.'),
+  templateFontSizeOption('restaurantDescriptionFontSize', 'Tamaño de la descripción', 'Agrandá o achicá la descripción del comercio.'),
+  templateFontSizeOption('sectionTitleFontSize', 'Tamaño de las categorías', 'Agrandá o achicá los títulos de categoría.'),
+  templateFontSizeOption('productNameFontSize', 'Tamaño del producto', 'Agrandá o achicá el nombre de los productos.'),
+  templateFontSizeOption('productDescriptionFontSize', 'Tamaño de la descripción del producto', 'Agrandá o achicá la descripción de los productos.'),
+  templateFontSizeOption('priceFontSize', 'Tamaño del precio', 'Agrandá o achicá los precios.'),
+];
+
+/** Plantillas con pestañas laterales/superiores de categoría: Modern Food, Neon Club, Smart Food, Beach, Sol & Noche. */
+const TYPOGRAPHY_SIZE_SECTION_TABS: TemplateConfigOption[] = [
+  templateFontSizeOption('restaurantNameFontSize', 'Tamaño del nombre', 'Agrandá o achicá el nombre del comercio.'),
+  templateFontSizeOption('restaurantDescriptionFontSize', 'Tamaño de la descripción', 'Agrandá o achicá la descripción del comercio.'),
+  templateFontSizeOption('sectionTabFontSize', 'Tamaño de las categorías', 'Agrandá o achicá el texto de las categorías.'),
+  templateFontSizeOption('productNameFontSize', 'Tamaño del producto', 'Agrandá o achicá el nombre de los productos.'),
+  templateFontSizeOption('productDescriptionFontSize', 'Tamaño de la descripción del producto', 'Agrandá o achicá la descripción de los productos.'),
+  templateFontSizeOption('priceFontSize', 'Tamaño del precio', 'Agrandá o achicá los precios.'),
+];
+
+/** Modern Food: colores, tipografía, visibilidad del encabezado y fotos de productos. */
 const PRO_MOBILE_OPTIONS: TemplateConfigOption[] = [
   ...COMMON_COLOR_OPTIONS,
+  ...TYPOGRAPHY_SIZE_SECTION_TABS,
   ...VISIBILITY_OPTIONS,
   { id: 'showProductImages', label: 'Mostrar fotos de productos', description: 'Mostrar foto del producto cuando exista (sin placeholder si no hay foto).', type: 'boolean', default: true },
 ];
 
-/** Night Club: solo color principal (el secundario no se usa); sin fotos de productos. */
+/** Night Club: color principal, color de precios y tamaño de cada texto. Sin fotos de productos. */
 const NIGHT_CLUB_OPTIONS: TemplateConfigOption[] = [
   {
     id: 'primaryColor',
     label: 'Color principal',
-    description: 'Color principal de la plantilla (botones, títulos, elementos destacados).',
+    description: 'Color de botones, pestañas y elementos destacados.',
     type: 'color',
     default: '#9333ea',
   },
+  {
+    id: 'backgroundColor',
+    label: 'Color de fondo',
+    description: 'Color de fondo de Neon Club. No cambia el color principal ni el de los precios.',
+    type: 'color',
+    default: '#0a0a0f',
+  },
+  {
+    id: 'priceColor',
+    label: 'Color de los precios',
+    description: 'Color de los precios. No cambia el color principal.',
+    type: 'color',
+    default: '#9333ea',
+  },
+  {
+    id: 'restaurantNameColor',
+    label: 'Color del nombre',
+    description: 'Color del nombre del comercio.',
+    type: 'color',
+    default: '#f4f4f5',
+  },
+  {
+    id: 'restaurantDescriptionColor',
+    label: 'Color de la descripción',
+    description: 'Color de la descripción del comercio.',
+    type: 'color',
+    default: '#a1a1aa',
+  },
+  {
+    id: 'sectionTabColor',
+    label: 'Color de las categorías',
+    description: 'Color del texto de las categorías, incluida la que está seleccionada.',
+    type: 'color',
+    default: '#71717a',
+  },
+  {
+    id: 'productNameColor',
+    label: 'Color de título de Productos',
+    description: 'Color del nombre de los productos.',
+    type: 'color',
+    default: '#f4f4f5',
+  },
+  {
+    id: 'productDescriptionColor',
+    label: 'Color de la descripción del producto',
+    description: 'Color de la descripción de los productos y del nombre de la variante, el texto que aparece antes del precio.',
+    type: 'color',
+    default: '#a1a1aa',
+  },
+  ...TYPOGRAPHY_SIZE_SECTION_TABS,
   ...VISIBILITY_OPTIONS,
 ];
 
@@ -213,15 +303,16 @@ const SMART_FOOD_OPTIONS: TemplateConfigOption[] = [
   { id: 'showRestaurantDescription', label: 'Mostrar descripción del comercio', description: 'Mostrar la descripción del comercio.', type: 'boolean', default: true },
 ];
 
-/** Beach Life: fondo configurable por comercio, cards horizontales sobre playa. */
+/** Beach Life: fondo a elegir del catálogo, cards horizontales sobre playa. */
 const BEACH_BAR_OPTIONS: TemplateConfigOption[] = [
   ...COMMON_COLOR_OPTIONS,
   {
-    id: 'backgroundImageUrl',
-    label: 'Imagen de fondo',
-    description: 'Foto de fondo a pantalla completa. Cada comercio puede tener la suya.',
-    type: 'image',
-    default: DEFAULT_BEACH_BAR_BACKGROUND_IMAGE,
+    id: 'backgroundId',
+    label: 'Fondo',
+    description: 'Elegí el fondo de pantalla de Beach Life.',
+    type: 'select',
+    default: DEFAULT_BEACH_BAR_BACKGROUND_ID,
+    options: beachBarBackgroundSelectOptions(),
   },
   { id: 'showLogo', label: 'Mostrar logo', description: 'Mostrar el logo del comercio.', type: 'boolean', default: true },
   { id: 'showRestaurantName', label: 'Mostrar nombre del comercio', description: 'Mostrar el nombre del comercio.', type: 'boolean', default: true },
@@ -315,17 +406,52 @@ const ITALIAN_FOOD_OPTIONS: TemplateConfigOption[] = [];
  * classic, minimalist y foodie incluyen además opciones de visibilidad (portada, logo, nombre, descripción).
  */
 export const TEMPLATE_CONFIG_SCHEMAS: Record<string, TemplateConfigOption[]> = {
-  classic: withGoogleFont([...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
-  minimalist: withGoogleFont([...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
-  foodie: withGoogleFont([...COMMON_COLOR_OPTIONS, ...VISIBILITY_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
-  burgers: withGoogleFont([...BURGERS_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
-  italianFood: withGoogleFont([...ITALIAN_FOOD_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
-  gourmet: withGoogleFont([...GOURMET_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  classic: withGoogleFont([
+    ...COMMON_COLOR_OPTIONS,
+    ...TYPOGRAPHY_SIZE_SECTION_TITLE,
+    ...VISIBILITY_OPTIONS,
+    ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS,
+  ]),
+  minimalist: withGoogleFont([
+    ...COMMON_COLOR_OPTIONS,
+    ...TYPOGRAPHY_SIZE_SECTION_TITLE,
+    ...VISIBILITY_OPTIONS,
+    ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS,
+  ]),
+  foodie: withGoogleFont([
+    ...COMMON_COLOR_OPTIONS,
+    ...TYPOGRAPHY_SIZE_SECTION_TITLE,
+    ...VISIBILITY_OPTIONS,
+    ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS,
+  ]),
+  burgers: withGoogleFont([
+    ...BURGERS_OPTIONS,
+    ...TYPOGRAPHY_SIZE_SECTION_TITLE,
+    ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS,
+  ]),
+  italianFood: withGoogleFont([
+    ...ITALIAN_FOOD_OPTIONS,
+    ...TYPOGRAPHY_SIZE_SECTION_TITLE,
+    ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS,
+  ]),
+  gourmet: withGoogleFont([
+    ...GOURMET_OPTIONS,
+    ...TYPOGRAPHY_SIZE_SECTION_TITLE,
+    ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS,
+  ]),
   proMobile: withGoogleFont([...PRO_MOBILE_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
   nightClub: withGoogleFont([...NIGHT_CLUB_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
-  smartFood: withGoogleFont([...SMART_FOOD_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
-  beachBar: withGoogleFont([...BEACH_BAR_OPTIONS]),
-  solNoche: withGoogleFont([...SOL_NOCHE_OPTIONS, ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS]),
+  smartFood: withGoogleFont([
+    ...SMART_FOOD_OPTIONS,
+    ...TYPOGRAPHY_SIZE_SECTION_TABS,
+    ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS,
+  ]),
+  beachBar: withGoogleFont([...BEACH_BAR_OPTIONS, ...TYPOGRAPHY_SIZE_SECTION_TABS]),
+  solNoche: withGoogleFont([
+    ...SOL_NOCHE_OPTIONS,
+    ...TYPOGRAPHY_SIZE_SECTION_TABS,
+    ...TRANSLATION_FLAGS_TEMPLATE_OPTIONS,
+  ]),
 };
 
 /** Valores por defecto del esquema de una plantilla, fusionados con config existente. */
@@ -345,6 +471,14 @@ export function buildTemplateConfigDefaults(
   });
   if (restaurantColors?.primaryColor) values.primaryColor = restaurantColors.primaryColor;
   if (restaurantColors?.secondaryColor) values.secondaryColor = restaurantColors.secondaryColor;
+  if (templateId === 'nightClub') {
+    const savedPrice = existing?.priceColor;
+    const hasSavedPrice = typeof savedPrice === 'string' && /^#[0-9A-Fa-f]{6}$/.test(savedPrice);
+    if (!hasSavedPrice) {
+      const primary = values.primaryColor;
+      values.priceColor = typeof primary === 'string' && /^#[0-9A-Fa-f]{6}$/.test(primary) ? primary : '#9333ea';
+    }
+  }
   const migratedFont = migrateLegacyTemplateFont(existing);
   if (migratedFont && values.googleFont === TEMPLATE_GOOGLE_FONT_DEFAULT) {
     values.googleFont = migratedFont;

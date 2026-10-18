@@ -10,6 +10,7 @@ import {
   FOOTER_REL_EXTERNAL,
   footerWebsiteRel,
 } from '../../lib/template-footer-link-rel';
+import { templateFontScale, templateFontScaleStyle } from '../../lib/template-font-scale';
 
 const FONT_FAMILIES: Record<string, string> = {
   serif: 'Georgia, "Times New Roman", Times, serif',
@@ -81,6 +82,8 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
   const tc = restaurant.templateConfig || {};
   const showCover = tc.showCoverImage !== false;
   const showLogo = tc.showLogo !== false;
+  const showName = tc.showRestaurantName !== false;
+  const showDescription = tc.showRestaurantDescription !== false;
   const showProductImages = tc.showProductImages !== false;
   const fontKey =
     tc.googleFont === 'default' || (typeof tc.googleFont === 'string' && tc.googleFont !== '')
@@ -91,18 +94,22 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
   const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
+  const fontScaleStyle = templateFontScaleStyle(tc);
+  const sectionTitleFontSize = `calc(2rem * ${templateFontScale(tc.sectionTitleFontSize)})`;
 
   return (
-    <div className="template-gourmet restaurant-container" style={{ minHeight: '100vh', width: '100%', background: '#f8f9fa', fontFamily }}>
+    <div className="template-gourmet restaurant-container" style={{ minHeight: '100vh', width: '100%', background: '#f8f9fa', fontFamily, ...fontScaleStyle }}>
       <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <style jsx>{`
         .template-gourmet {
           --primary-color: ${primaryColor};
           --secondary-color: ${secondaryColor};
         }
-        .template-gourmet .menu-section-title {
+        .template-gourmet .menu-section-title,
+        .template-gourmet h2.menu-section-title {
           color: ${primaryColor};
           border-bottom-color: ${primaryColor};
+          font-size: ${sectionTitleFontSize} !important;
         }
         .template-gourmet .menu-item-card {
           width: 100%;
@@ -221,22 +228,26 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
               />
             </div>
           )}
-          <div className="gourmet-header-text">
-            <h1 className="gourmet-restaurant-name" style={{ fontSize: '2.5rem', fontWeight: '600', marginBottom: '12px', letterSpacing: '-0.02em', color: '#2c3e50', lineHeight: '1.2', fontFamily }}>
-              {restaurant.name}
-            </h1>
-            {restaurant.description && (
-              <div
-                className="gourmet-restaurant-description"
-                dangerouslySetInnerHTML={{
-                  __html: restaurant.description
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br />'),
-                }}
-                style={{ fontSize: '1rem', lineHeight: '1.6', color: '#6c757d', fontFamily }}
-              />
-            )}
-          </div>
+          {(showName || (showDescription && restaurant.description)) && (
+            <div className="gourmet-header-text">
+              {showName ? (
+                <h1 className="gourmet-restaurant-name" style={{ fontWeight: '600', marginBottom: '12px', letterSpacing: '-0.02em', color: '#2c3e50', lineHeight: '1.2', fontFamily }}>
+                  {restaurant.name}
+                </h1>
+              ) : null}
+              {showDescription && restaurant.description ? (
+                <div
+                  className="gourmet-restaurant-description"
+                  dangerouslySetInnerHTML={{
+                    __html: restaurant.description
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\n/g, '<br />'),
+                  }}
+                  style={{ lineHeight: '1.6', color: '#6c757d', fontFamily }}
+                />
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
 
@@ -331,11 +342,11 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
                     </div>
                   )}
                   <div className="gourmet-card-body">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '12px', color: '#2c3e50', lineHeight: '1.4', marginTop: 0, fontFamily }}>
+                    <h3 className="template-gourmet menu-item-name" style={{ fontWeight: '600', marginBottom: '12px', color: '#2c3e50', lineHeight: '1.4', marginTop: 0, fontFamily }}>
                       {item.name}
                     </h3>
                     {item.description && (
-                      <p style={{ color: '#6c757d', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: item.icons.length > 0 ? '12px' : '16px', marginTop: 0, flexGrow: 1, fontFamily }}>
+                      <p className="template-gourmet menu-item-description" style={{ color: '#6c757d', lineHeight: '1.6', marginBottom: item.icons.length > 0 ? '12px' : '16px', marginTop: 0, flexGrow: 1, fontFamily }}>
                         {item.description}
                       </p>
                     )}
@@ -367,7 +378,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
                     )}
                     <div style={{ marginTop: 'auto', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'baseline', justifyContent: 'flex-start', paddingTop: '8px', borderTop: '1px solid #f0f0f0' }}>
                       {item.prices.map((price, idx) => (
-                        <span key={idx} className="template-gourmet menu-item-price" style={{ fontSize: '1.25rem', fontWeight: '600', color: primaryColor, display: 'inline-block', lineHeight: '1.5', whiteSpace: 'nowrap', fontFamily }}>
+                        <span key={idx} className="template-gourmet menu-item-price" style={{ fontWeight: '600', color: primaryColor, display: 'inline-block', lineHeight: '1.5', whiteSpace: 'nowrap', fontFamily }}>
                           {price.label && <span style={{ fontSize: '0.9rem', color: '#6c757d', marginRight: '4px', fontWeight: '400' }}>{price.label}:</span>}
                           {formatPrice(price)}
                         </span>
@@ -379,7 +390,17 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
 
               return (
               <div key={section.id} id={`section-${section.id}`} style={{ scrollMarginTop: '100px', marginBottom: '80px' }}>
-                <h2 className="template-gourmet menu-section-title" style={{ fontSize: '2rem', fontWeight: '600', marginBottom: '40px', paddingBottom: '15px', borderBottom: `3px solid ${primaryColor}`, fontFamily }}>
+                <h2
+                  className="template-gourmet menu-section-title"
+                  style={{
+                    fontWeight: '600',
+                    marginBottom: '40px',
+                    paddingBottom: '15px',
+                    borderBottom: `3px solid ${primaryColor}`,
+                    fontFamily,
+                    fontSize: sectionTitleFontSize,
+                  }}
+                >
                   {section.name}
                 </h2>
                 {featuredItems.length > 0 ? (

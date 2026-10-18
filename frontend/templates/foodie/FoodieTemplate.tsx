@@ -4,6 +4,7 @@ import MenuLanguageSwitcher, { type TemplateMenuLocalesProps } from '../../compo
 import { recommendedProductLabelForLocale, splitHighlightedItems } from '../../lib/highlighted-menu-items';
 import { templateFooterLabelsForLocale } from '../../lib/template-footer-labels';
 import TemplateGoogleFont from '../../components/TemplateGoogleFont';
+import { templateFontScaleStyle } from '../../lib/template-font-scale';
 import {
   FOOTER_REL_APPMENUQR,
   FOOTER_REL_CONTACT,
@@ -85,9 +86,10 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
   const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
+  const fontScaleStyle = templateFontScaleStyle(tc);
 
   return (
-    <div className="template-foodie restaurant-container" style={{ minHeight: '100vh', width: '100%', background: '#f8f9fa' }}>
+    <div className="template-foodie restaurant-container" style={{ minHeight: '100vh', width: '100%', background: '#f8f9fa', ...fontScaleStyle }}>
       <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
       <style jsx>{`
         .template-foodie {
@@ -251,8 +253,8 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
           )}
           {showName && (
             <h1
+              className="foodie-restaurant-name"
               style={{
-                fontSize: '2.5rem',
                 fontWeight: '600',
                 marginBottom: 0,
                 letterSpacing: '-0.02em',
@@ -370,25 +372,29 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
                     </div>
                   )}
                   <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                    <h3 style={{
-                      fontSize: '1.25rem',
-                      fontWeight: '600',
-                      marginBottom: '12px',
-                      color: '#2c3e50',
-                      lineHeight: '1.4',
-                      marginTop: 0
-                    }}>
+                    <h3
+                      className="template-foodie menu-item-name"
+                      style={{
+                        fontWeight: '600',
+                        marginBottom: '12px',
+                        color: '#2c3e50',
+                        lineHeight: '1.4',
+                        marginTop: 0,
+                      }}
+                    >
                       {item.name}
                     </h3>
                     {item.description && (
-                      <p style={{
-                        color: '#6c757d',
-                        fontSize: '0.95rem',
-                        lineHeight: '1.6',
-                        marginBottom: item.icons.length > 0 ? '12px' : '16px',
-                        marginTop: 0,
-                        flexGrow: 1
-                      }}>
+                      <p
+                        className="template-foodie menu-item-description"
+                        style={{
+                          color: '#6c757d',
+                          lineHeight: '1.6',
+                          marginBottom: item.icons.length > 0 ? '12px' : '16px',
+                          marginTop: 0,
+                          flexGrow: 1,
+                        }}
+                      >
                         {item.description}
                       </p>
                     )}
@@ -438,15 +444,14 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
                           key={idx}
                           className="template-foodie menu-item-price"
                           style={{
-                            fontSize: '1.25rem',
                             fontWeight: '600',
                             color: primaryColor,
                             display: 'inline-block',
                             lineHeight: '1.5',
-                            whiteSpace: 'nowrap'
+                            whiteSpace: 'nowrap',
                           }}
                         >
-                          {price.label && <span style={{ fontSize: '0.9rem', color: '#6c757d', marginRight: '4px', fontWeight: '400' }}>{price.label}:</span>}
+                          {price.label && <span className="foodie-menu-item-price-label">{price.label}:</span>}
                           {formatPrice(price)}
                         </span>
                       ))}
@@ -458,7 +463,6 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
               return (
               <div key={section.id} id={`section-${section.id}`} style={{ scrollMarginTop: '100px', marginBottom: '80px' }}>
                 <h2 className="template-foodie menu-section-title" style={{
-                  fontSize: '2rem',
                   fontWeight: '600',
                   marginBottom: '40px',
                   paddingBottom: '15px',

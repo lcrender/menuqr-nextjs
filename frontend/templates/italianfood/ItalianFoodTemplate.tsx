@@ -12,6 +12,7 @@ import {
   FOOTER_REL_EXTERNAL,
   footerWebsiteRel,
 } from '../../lib/template-footer-link-rel';
+import { templateFontScaleStyle } from '../../lib/template-font-scale';
 
 /** Pares tipográficos: display (títulos) + body (descripciones). */
 const ITALIAN_FONT_FAMILIES: Record<string, { display: string; body: string }> = {
@@ -113,6 +114,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
   const recommendedLabel = recommendedProductLabelForLocale(menuLocales?.value);
   const footerLabels = templateFooterLabelsForLocale(menuLocales?.value);
   const featuredAccentStyle = { '--tpl-featured-accent': primaryColor } as React.CSSProperties;
+  const fontScaleStyle = templateFontScaleStyle(tc);
 
   // Función para separar el símbolo de la moneda del precio
   const formatPriceWithSeparatedSymbol = (price: { currency: string; label?: string; amount: number }) => {
@@ -148,7 +150,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
       <TemplateGoogleFont templateConfig={restaurant.templateConfig} />
     <div
       className="template-italianfood restaurant-container"
-      style={containerStyle}
+      style={{ ...containerStyle, ...fontScaleStyle }}
     >
       {/* Overlay para mejorar contraste */}
       <div style={{
@@ -225,7 +227,6 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
           )}
           <div className="template-italianfood restaurant-info-text">
             <h1 style={{ 
-              fontSize: '2.5rem', 
               fontWeight: '700', 
               marginBottom: '12px', 
               marginTop: 0,
@@ -247,7 +248,6 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                     .replace(/\n/g, '<br />')
                 }}
                 style={{ 
-                  fontSize: '1.15rem', 
                   lineHeight: '1.45', 
                   color: '#5a5a5a',
                   fontStyle: 'italic',
@@ -360,8 +360,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                     </div>
                   )}
                   <div style={{ padding: '16px', flexGrow: 0, display: 'flex', flexDirection: 'column', background: 'white', height: 'auto', minHeight: 'auto' }}>
-                    <h3 style={{
-                      fontSize: '1.6rem',
+                    <h3 className="template-italianfood menu-item-name" style={{
                       fontWeight: '600',
                       marginBottom: '8px',
                       marginTop: 0,
@@ -373,9 +372,8 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                       {item.name}
                     </h3>
                     {item.description && (
-                      <p style={{
+                      <p className="template-italianfood menu-item-description" style={{
                         color: '#6c757d',
-                        fontSize: '1.4rem',
                         lineHeight: '1.45',
                         marginBottom: item.icons.length > 0 ? '12px' : '16px',
                         marginTop: 0,
@@ -446,7 +444,6 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                             key={idx}
                             className="template-italianfood menu-item-price"
                             style={{
-                              fontSize: '1.2rem',
                               fontWeight: '700',
                               color: '#000000',
                               display: 'inline-block',
@@ -461,9 +458,9 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                               verticalAlign: 'baseline'
                             }}
                           >
-                            {price.label && <span style={{ fontSize: '1rem', color: '#6c757d', marginRight: '6px', fontWeight: '500', fontStyle: 'normal' }}>{price.label}:</span>}
-                            {symbol && <span style={{ fontSize: '0.85rem', marginRight: '4px', verticalAlign: 'baseline' }}>{symbol}</span>}
-                            <span style={{ fontSize: '1.4rem', verticalAlign: 'baseline' }}>{amount}</span>
+                            {price.label && <span className="template-italianfood menu-item-price-label" style={{ color: '#6c757d', marginRight: '6px', fontWeight: '500', fontStyle: 'normal' }}>{price.label}:</span>}
+                            {symbol && <span className="template-italianfood menu-item-price-symbol" style={{ marginRight: '4px', verticalAlign: 'baseline' }}>{symbol}</span>}
+                            <span className="template-italianfood menu-item-price-amount" style={{ verticalAlign: 'baseline' }}>{amount}</span>
                           </span>
                         );
                       })}
@@ -475,7 +472,6 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
               return (
               <div key={section.id} id={`section-${section.id}`} className="template-italianfood menu-section" style={{ scrollMarginTop: '60px', marginBottom: '48px', paddingTop: '30px', paddingBottom: '30px', paddingLeft: '20px', paddingRight: '20px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
                 <h2 className="template-italianfood menu-section-title" style={{
-                  fontSize: '2rem',
                   fontWeight: '700',
                   marginBottom: '32px',
                   marginTop: 0,

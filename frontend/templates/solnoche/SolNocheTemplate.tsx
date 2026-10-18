@@ -16,6 +16,7 @@ import {
 } from '../../lib/sol-noche-template';
 import { recommendedProductLabelForLocale } from '../../lib/highlighted-menu-items';
 import type { SolNocheEditHotspot } from '../../lib/sol-noche-preview-edit';
+import { templateFontScaleStyle } from '../../lib/template-font-scale';
 
 interface SolNocheMenuItem {
   id: string;
@@ -147,6 +148,7 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
   const showName = tc.showRestaurantName !== false;
   const showDescription = tc.showRestaurantDescription !== false;
   const showProductImages = tc.showProductImages !== false;
+  const fontScaleStyle = templateFontScaleStyle(tc);
 
   const [clockTick, setClockTick] = useState(0);
   useEffect(() => {
@@ -220,6 +222,7 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
         {
           '--sol-noche-primary': primaryColor,
           '--sol-noche-secondary': secondaryColor,
+          ...fontScaleStyle,
         } as React.CSSProperties
       }
     >

@@ -63,6 +63,60 @@
       "label": "Color principal",
       "description": "Color principal de la plantilla (botones, títulos, elementos destacados)."
     },
+    "restaurantDescriptionColor": {
+      "label": "Color de la descripción",
+      "description": "Color de la descripción del comercio."
+    },
+    "sectionTabColor": {
+      "label": "Color de las categorías",
+      "description": "Color del texto de las categorías, incluida la que está seleccionada."
+    },
+    "productNameColor": {
+      "label": "Color de título de Productos",
+      "description": "Color del nombre de los productos."
+    },
+    "productDescriptionColor": {
+      "label": "Color de la descripción del producto",
+      "description": "Color de la descripción de los productos y del nombre de la variante, el texto que aparece antes del precio."
+    },
+    "backgroundColor": {
+      "label": "Color de fondo",
+      "description": "Color de fondo de Neon Club. No cambia el color principal ni el de los precios."
+    },
+    "priceColor": {
+      "label": "Color de los precios",
+      "description": "Color de los precios en Neon Club. No cambia el color principal."
+    },
+    "restaurantNameFontSize": {
+      "label": "Tamaño del nombre",
+      "description": "Agrandá o achicá el nombre del comercio.",
+      "values": { "small": "Pequeño", "medium": "Mediano", "large": "Grande", "xlarge": "Extra grande" }
+    },
+    "restaurantDescriptionFontSize": {
+      "label": "Tamaño de la descripción",
+      "description": "Agrandá o achicá la descripción del comercio.",
+      "values": { "small": "Pequeño", "medium": "Mediano", "large": "Grande", "xlarge": "Extra grande" }
+    },
+    "sectionTabFontSize": {
+      "label": "Tamaño de las categorías",
+      "description": "Agrandá o achicá el texto de las categorías.",
+      "values": { "small": "Pequeño", "medium": "Mediano", "large": "Grande", "xlarge": "Extra grande" }
+    },
+    "productNameFontSize": {
+      "label": "Tamaño del producto",
+      "description": "Agrandá o achicá el nombre de los productos.",
+      "values": { "small": "Pequeño", "medium": "Mediano", "large": "Grande", "xlarge": "Extra grande" }
+    },
+    "productDescriptionFontSize": {
+      "label": "Tamaño de la descripción del producto",
+      "description": "Agrandá o achicá la descripción de los productos.",
+      "values": { "small": "Pequeño", "medium": "Mediano", "large": "Grande", "xlarge": "Extra grande" }
+    },
+    "priceFontSize": {
+      "label": "Tamaño del precio",
+      "description": "Agrandá o achicá los precios.",
+      "values": { "small": "Pequeño", "medium": "Mediano", "large": "Grande", "xlarge": "Extra grande" }
+    },
     "secondaryColor": {
       "label": "Color secundario",
       "description": "Color secundario (acentos, bordes, texto destacado)."
@@ -88,8 +142,8 @@
       "description": "Color del texto del nombre del comercio en la cabecera."
     },
     "sectionTitleFontSize": {
-      "label": "Tamaño de letra de los títulos de sección",
-      "description": "Tamaño del texto de las categorías del menú (por ejemplo: Hamburguesas, Acompañamientos).",
+      "label": "Tamaño de las categorías",
+      "description": "Agrandá o achicá los títulos de categoría.",
       "values": {
         "small": "Pequeño",
         "medium": "Mediano",
@@ -129,6 +183,28 @@
     "showProductImages": {
       "label": "Mostrar fotos de productos",
       "description": "Mostrar foto del producto cuando exista (sin placeholder si no hay foto)."
+    },
+    "backgroundId": {
+      "label": "Fondo",
+      "description": "Elegí el fondo de pantalla de la plantilla.",
+      "values": {
+        "playa-tropical-de-ensueno": "Playa tropical de ensueño",
+        "terraza-mediterranea-junto-al-mar": "Terraza mediterránea junto al mar",
+        "atardecer-tropical-junto-al-mar": "Atardecer tropical junto al mar",
+        "vinedo-toscano-al-atardecer": "Viñedo toscano al atardecer",
+        "terraza-dorada-junto-al-lago-montanoso": "Terraza dorada junto al lago montañoso",
+        "cafe-parisino-al-atardecer-con-torre-eiffel": "Café parisino al atardecer con Torre Eiffel",
+        "times-square-bajo-la-lluvia": "Times Square bajo la lluvia",
+        "cafe-acogedor-con-luz-dorada-y-plantas": "Café acogedor con luz dorada y plantas",
+        "bokeh-nocturno-sobre-asfalto-mojado": "Bokeh nocturno sobre asfalto mojado",
+        "bar-rustico-entre-luces-calidas": "Bar rústico entre luces cálidas",
+        "textura-calida-de-piedra-travertina": "Textura cálida de piedra travertina",
+        "cocina-hamburgueseria": "Cocina de hamburguesería",
+        "hamburgueseria-mesa-madera": "Mesa de madera con hamburguesa",
+        "parrilla-hamburguesa": "Parrilla de hamburguesa",
+        "hamburgueseria-rustica": "Hamburguesería rústica",
+        "custom": "Personalizado"
+      }
     },
     "backgroundImageUrl": {
       "label": "Imagen de fondo",
