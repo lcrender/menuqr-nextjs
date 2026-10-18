@@ -8,7 +8,14 @@ export type VisualEditorGroupId =
   | 'background'
   | 'elements';
 
-export type VisualHit = 'name' | 'cover' | 'logo' | 'section' | 'product' | 'price';
+export type VisualHit =
+  | 'name'
+  | 'description'
+  | 'cover'
+  | 'logo'
+  | 'section'
+  | 'product'
+  | 'price';
 
 const HEADER_IDS = new Set([
   'showCoverImage',
@@ -71,10 +78,15 @@ export function focusForHit(
   switch (hit) {
     case 'name':
       if (has('restaurantNameFontSize')) return { group: 'typography', optionId: 'restaurantNameFontSize' };
-      return { group: 'typography', optionId: 'googleFont' };
+      if (has('showRestaurantName')) return { group: 'header', optionId: 'showRestaurantName' };
+      return { group: 'header' };
+    case 'description':
+      if (has('restaurantDescriptionFontSize')) {
+        return { group: 'typography', optionId: 'restaurantDescriptionFontSize' };
+      }
+      if (has('showRestaurantDescription')) return { group: 'header', optionId: 'showRestaurantDescription' };
+      return { group: 'header' };
     case 'cover':
-      if (has('backgroundId')) return { group: 'background', optionId: 'backgroundId' };
-      if (has('backgroundImageUrl')) return { group: 'background', optionId: 'backgroundImageUrl' };
       if (has('showCoverImage')) return { group: 'header', optionId: 'showCoverImage' };
       if (has('dayCoverImageUrl')) return { group: 'header', optionId: 'dayCoverImageUrl' };
       return { group: 'header' };
@@ -103,6 +115,48 @@ function classNameOf(el: Element): string {
   return (el.getAttribute('class') || '').toLowerCase();
 }
 
+const VE_HIT_ATTR = 'data-ve-hit';
+
+function hitFromDataAttr(el: Element): VisualHit | null {
+  const raw = (el.getAttribute(VE_HIT_ATTR) || '').toLowerCase().trim();
+  if (
+    raw === 'name' ||
+    raw === 'description' ||
+    raw === 'cover' ||
+    raw === 'logo' ||
+    raw === 'section' ||
+    raw === 'product' ||
+    raw === 'price'
+  ) {
+    return raw;
+  }
+  return null;
+}
+
+/** Hit por geometría: útil cuando el nombre está sobre la portada con pointer-events en el degradé. */
+export function hitTestVeAttrAtPoint(
+  root: ParentNode,
+  clientX: number,
+  clientY: number,
+  hit: VisualHit,
+): Element | null {
+  const nodes = root.querySelectorAll(`[${VE_HIT_ATTR}="${hit}"]`);
+  for (let i = nodes.length - 1; i >= 0; i -= 1) {
+    const node = nodes[i];
+    if (!(node instanceof Element)) continue;
+    const rect = node.getBoundingClientRect();
+    if (
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+    ) {
+      return node;
+    }
+  }
+  return null;
+}
+
 /** Sube por el DOM del menú real y reconoce el elemento de diseño tocado. */
 export function detectVisualHit(
   start: Element | null,
@@ -110,6 +164,9 @@ export function detectVisualHit(
 ): { hit: VisualHit; element: Element } | null {
   let el: Element | null = start;
   while (el && el !== boundary) {
+    const dataHit = hitFromDataAttr(el);
+    if (dataHit) return { hit: dataHit, element: el };
+
     const cls = classNameOf(el);
     if (cls.includes('price')) return { hit: 'price', element: el };
     if (
@@ -123,22 +180,52 @@ export function detectVisualHit(
     ) {
       return { hit: 'section', element: el };
     }
+    if (cls.includes('edit-zone--name')) return { hit: 'name', element: el };
+    if (
+      cls.includes('restaurant-description') ||
+      cls.includes('description-burgers') ||
+      (cls.includes('pro-mobile-desc') && !cls.includes('item-desc')) ||
+      (cls.includes('beachbar-desc') && !cls.includes('product')) ||
+      (cls.includes('smartfood-restaurant-desc') && !cls.includes('item-desc')) ||
+      cls.includes('sol-noche-desc') ||
+      cls.includes('edit-zone--description')
+    ) {
+      return { hit: 'description', element: el };
+    }
     if (
       cls.includes('menu-item') ||
       cls.includes('product-card') ||
       cls.includes('product-name') ||
+      cls.includes('product-desc') ||
       cls.includes('item-card') ||
       cls.includes('item-row') ||
-      cls.includes('item-name')
+      cls.includes('item-name') ||
+      cls.includes('item-desc')
     ) {
       return { hit: 'product', element: el };
     }
-    if (cls.includes('cover') || cls.includes('banner') || cls.includes('hero')) {
-      return { hit: 'cover', element: el };
-    }
-    if (cls.includes('logo')) return { hit: 'logo', element: el };
-    if (cls.includes('restaurant-name') || el.tagName === 'H1') {
+    // Nombre antes que cover: clases tipo "name-on-cover" no deben abrir la portada.
+    if (
+      cls.includes('restaurant-name') ||
+      cls.includes('beachbar-name') ||
+      cls.includes('sol-noche-name') ||
+      cls.includes('foodie-restaurant-name') ||
+      cls.includes('pro-mobile-title') ||
+      cls.includes('smartfood-restaurant-name') ||
+      el.tagName === 'H1'
+    ) {
       return { hit: 'name', element: el };
+    }
+    if (cls.includes('edit-zone--logo') || /(^|\s|-)logo(-|\s|$)/.test(cls)) {
+      return { hit: 'logo', element: el };
+    }
+    if (
+      cls.includes('edit-zone--cover') ||
+      (/(^|\s|-)cover(-|\s|$)/.test(cls) && !cls.includes('name')) ||
+      cls.includes('banner') ||
+      cls.includes('hero')
+    ) {
+      return { hit: 'cover', element: el };
     }
     el = el.parentElement;
   }

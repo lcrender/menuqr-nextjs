@@ -212,7 +212,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
       `}</style>
 
       {showCover && restaurant.coverUrl && (
-        <div className="gourmet-cover" style={{ position: 'relative' }}>
+        <div className="gourmet-cover" data-ve-hit="cover" style={{ position: 'relative' }}>
           <OptimizedPicture src={restaurant.coverUrl} alt={restaurant.name} style={{ minHeight: '200px' }} />
         </div>
       )}
@@ -220,7 +220,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
       <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '40px 40px 60px 40px' }}>
         <div className="gourmet-header">
           {showLogo && restaurant.logoUrl && (
-            <div className="gourmet-logo" style={{ flexShrink: 0 }}>
+            <div className="gourmet-logo" data-ve-hit="logo" style={{ flexShrink: 0 }}>
               <OptimizedPicture
                 src={restaurant.logoUrl}
                 alt={restaurant.name}

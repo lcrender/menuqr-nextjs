@@ -197,8 +197,12 @@
 }
 
 .sol-noche-name--on-cover {
+  position: relative;
+  z-index: 2;
   color: #fff;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  /* Solo el texto recibe clics; el resto de la portada cambia la imagen. */
+  pointer-events: auto;
 }
 
 .sol-noche-desc-wrap {
@@ -236,6 +240,7 @@
     rgba(15, 23, 42, 0.35) 38%,
     rgba(15, 23, 42, 0.72) 100%
   );
+  /* El degradé deja pasar clics a la portada; solo el nombre captura eventos. */
   pointer-events: none;
 }
 

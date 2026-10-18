@@ -1335,12 +1335,36 @@
         "elements": "Elements"
       },
       "hit": {
-        "name": "The name font applies to the whole menu of this business.",
-        "cover": "The cover belongs to the business and appears on every menu.",
-        "logo": "The logo belongs to the business. Here you only choose whether it is shown.",
+        "name": "Tap the name to edit it. Changes belong to the business and apply to all menus when you publish.",
+        "description": "Tap the description to edit it. It stays in the draft until you publish.",
+        "cover": "Tap the cover to pick another photo. The server image stays until you publish.",
+        "logo": "Tap the logo to pick another photo. The server image stays until you publish.",
         "section": "Category styling is global: it changes every section.",
         "product": "Product presentation is the same across the whole menu.",
         "price": "The price color is the same for every product in the business."
+      },
+      "commerce": {
+        "editName": "Edit name",
+        "editDescription": "Edit description",
+        "editLogo": "Change logo",
+        "editCover": "Change cover",
+        "nameLabel": "Business name",
+        "descriptionLabel": "Description",
+        "textHint": "Changes stay in the draft. They apply to the business when you publish.",
+        "imageHint": "The new photo only appears in the draft. The current server image stays until you publish.",
+        "noLogo": "No logo yet.",
+        "noCover": "No cover yet.",
+        "pickImage": "Choose photo…",
+        "apply": "Apply to draft",
+        "invalidImage": "Choose a JPG, PNG, or WebP image.",
+        "readError": "Could not read the image."
+      },
+      "slugChoice": {
+        "title": "Name and URL change",
+        "body": "Changing the name may regenerate the <strong>public URL</strong>. <strong>Printed QR codes</strong> and old links would stop working.",
+        "currentUrl": "Current URL:",
+        "keepUrl": "Change name and keep the URL (QR codes keep working)",
+        "changeUrl": "Change name and the URL too (old QR codes stop working)"
       }
     },
     "classicFallback": "Classic",

@@ -206,7 +206,12 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
       <div className="beachbar-page">
         <header className="beachbar-header">
           {showLogo && restaurant.logoUrl ? (
-            <OptimizedPicture src={restaurant.logoUrl} alt={restaurant.name} className="beachbar-logo" />
+            <OptimizedPicture
+              src={restaurant.logoUrl}
+              alt={restaurant.name}
+              className="beachbar-logo"
+              data-ve-hit="logo"
+            />
           ) : null}
           {showName || showDescription ? (
             <div className="beachbar-glass beachbar-intro">

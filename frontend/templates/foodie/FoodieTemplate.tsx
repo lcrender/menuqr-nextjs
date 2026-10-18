@@ -221,9 +221,13 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
 
       {/* Cover Image */}
       {showCover && restaurant.coverUrl && (
-        <div style={{ width: '100%', height: '400px', overflow: 'hidden', position: 'relative' }}>
-          <OptimizedPicture 
-            src={restaurant.coverUrl} 
+        <div
+          className="template-foodie foodie-cover"
+          data-ve-hit="cover"
+          style={{ width: '100%', height: '400px', overflow: 'hidden', position: 'relative' }}
+        >
+          <OptimizedPicture
+            src={restaurant.coverUrl}
             alt={restaurant.name}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
@@ -243,7 +247,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
           }}
         >
           {showLogo && restaurant.logoUrl && (
-            <div className="foodie-logo-wrap" style={{ flexShrink: 0 }}>
+            <div className="foodie-logo-wrap" data-ve-hit="logo" style={{ flexShrink: 0 }}>
               <OptimizedPicture
                 src={restaurant.logoUrl}
                 alt={restaurant.name}

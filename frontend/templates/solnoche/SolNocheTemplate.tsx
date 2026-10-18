@@ -105,13 +105,31 @@ function EditZone({
   className?: string | undefined;
   children: React.ReactNode;
 }) {
-  if (!editMode) return <>{children}</>;
+  const veHit =
+    hotspot === 'logo' || hotspot === 'cover' || hotspot === 'name' || hotspot === 'description'
+      ? hotspot
+      : undefined;
+  if (!editMode) {
+    // Nombre sobre portada: el hit va en el <h1> (pointer-events: auto).
+    // Un wrapper con data-ve-hit="name" taparía toda la franja inferior.
+    if (veHit === 'name' && className?.includes('name-on-cover')) {
+      return <>{children}</>;
+    }
+    return veHit ? (
+      <div data-ve-hit={veHit} className={className}>
+        {children}
+      </div>
+    ) : (
+      <>{children}</>
+    );
+  }
   const isSelected = selectedHotspot === hotspot;
   return (
     <div
       role="button"
       tabIndex={0}
       className={`sol-noche-edit-zone${isSelected ? ' is-selected' : ''}${className ? ` ${className}` : ''}`}
+      data-ve-hit={veHit}
       onClick={() => onSelect?.(hotspot)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -290,7 +308,13 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
                 className="sol-noche-edit-zone--name-on-cover"
               >
                 <div className="sol-noche-cover-overlay">
-                  <h1 className="sol-noche-name sol-noche-name--on-cover">{restaurant.name}</h1>
+                  <h1
+                    className="sol-noche-name sol-noche-name--on-cover"
+                    data-ve-hit="name"
+                    style={{ pointerEvents: 'auto', position: 'relative', zIndex: 2 }}
+                  >
+                    {restaurant.name}
+                  </h1>
                 </div>
               </EditZone>
             ) : editMode ? (
@@ -303,7 +327,9 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
                 className="sol-noche-edit-zone--name-on-cover"
               >
                 <div className="sol-noche-cover-overlay">
-                  <span className="sol-noche-edit-placeholder">Nombre oculto</span>
+                  <span className="sol-noche-edit-placeholder" data-ve-hit="name">
+                    Nombre oculto
+                  </span>
                 </div>
               </EditZone>
             ) : null}

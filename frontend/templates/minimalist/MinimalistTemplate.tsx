@@ -157,7 +157,11 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
       <div className="template-minimalist minimalist-main-content">
         {/* Cover Image (si la plantilla la muestra) */}
         {showCover && restaurant.coverUrl && (
-          <div style={{ width: '100%', marginBottom: '24px', borderRadius: '12px', overflow: 'hidden' }}>
+          <div
+            className="template-minimalist minimalist-cover"
+            data-ve-hit="cover"
+            style={{ width: '100%', marginBottom: '24px', borderRadius: '12px', overflow: 'hidden' }}
+          >
             <OptimizedPicture src={restaurant.coverUrl} alt={restaurant.name} style={{ width: '100%', height: '280px', objectFit: 'cover' }} />
           </div>
         )}
@@ -165,8 +169,10 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
         <div className="mb-5">
           <div className="text-center mb-4">
             {showLogo && restaurant.logoUrl && (
-              <OptimizedPicture 
-                src={restaurant.logoUrl} 
+              <OptimizedPicture
+                className="template-minimalist minimalist-logo"
+                data-ve-hit="logo"
+                src={restaurant.logoUrl}
                 alt={restaurant.name}
                 style={{ maxWidth: '300px', maxHeight: '300px', marginBottom: '20px' }}
               />

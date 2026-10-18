@@ -1335,12 +1335,36 @@
         "elements": "Elementos"
       },
       "hit": {
-        "name": "La fuente del nombre se aplica a todo el menú de este comercio.",
-        "cover": "La portada es la del comercio y se ve en todos sus menús.",
-        "logo": "El logo es el del comercio. Acá solo decidís si se muestra.",
+        "name": "Tocá el nombre para editarlo. El cambio es del comercio y se aplica a todos sus menús al publicar.",
+        "description": "Tocá la descripción para editarla. Queda en el borrador hasta que publiques.",
+        "cover": "Tocá la portada para elegir otra foto. La imagen del servidor se mantiene hasta que publiques.",
+        "logo": "Tocá el logo para elegir otra foto. La imagen del servidor se mantiene hasta que publiques.",
         "section": "El estilo de las categorías es global: cambia todas las secciones.",
         "product": "La presentación de los productos es la misma en todo el menú.",
         "price": "El color de los precios es el mismo para todos los productos del comercio."
+      },
+      "commerce": {
+        "editName": "Editar nombre",
+        "editDescription": "Editar descripción",
+        "editLogo": "Cambiar logo",
+        "editCover": "Cambiar portada",
+        "nameLabel": "Nombre del comercio",
+        "descriptionLabel": "Descripción",
+        "textHint": "Los cambios quedan en el borrador. Se aplican al comercio cuando publiques.",
+        "imageHint": "La foto nueva solo se ve en el borrador. La imagen actual del servidor se mantiene hasta que publiques.",
+        "noLogo": "Todavía no hay logo.",
+        "noCover": "Todavía no hay portada.",
+        "pickImage": "Elegir foto…",
+        "apply": "Aplicar al borrador",
+        "invalidImage": "Elegí una imagen JPG, PNG o WebP.",
+        "readError": "No se pudo leer la imagen."
+      },
+      "slugChoice": {
+        "title": "Cambio de nombre y URL",
+        "body": "Cambiar el nombre puede regenerar la <strong>URL pública</strong>. Los <strong>QR impresos</strong> y enlaces viejos dejarían de funcionar.",
+        "currentUrl": "URL actual:",
+        "keepUrl": "Cambiar nombre y mantener la URL (QR siguen funcionando)",
+        "changeUrl": "Cambiar nombre y también la URL (QR viejos dejan de funcionar)"
       }
     },
     "classicFallback": "Clásica",

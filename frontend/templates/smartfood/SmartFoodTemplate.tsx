@@ -217,7 +217,12 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
 
       <div className="smartfood-shell">
         {showLogo && restaurant.logoUrl ? (
-          <OptimizedPicture src={restaurant.logoUrl} alt={restaurant.name} className="smartfood-logo" />
+          <OptimizedPicture
+            src={restaurant.logoUrl}
+            alt={restaurant.name}
+            className="smartfood-logo"
+            data-ve-hit="logo"
+          />
         ) : null}
 
         {showName ? <h1 className="smartfood-restaurant-name">{restaurant.name}</h1> : null}

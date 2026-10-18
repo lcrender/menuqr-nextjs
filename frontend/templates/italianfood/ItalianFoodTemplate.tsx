@@ -173,9 +173,13 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
         }
       `}</style>
       {/* Cover Image */}
-      <div style={{ width: '100%', height: '400px', overflow: 'hidden', position: 'relative' }}>
-        <OptimizedPicture 
-          src={restaurant.coverUrl || '/templates/italianfood/images/pattern-italian-food.jpg'} 
+      <div
+        className="template-italianfood italian-cover"
+        data-ve-hit="cover"
+        style={{ width: '100%', height: '400px', overflow: 'hidden', position: 'relative' }}
+      >
+        <OptimizedPicture
+          src={restaurant.coverUrl || '/templates/italianfood/images/pattern-italian-food.jpg'}
           alt={restaurant.name}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
@@ -206,10 +210,12 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
         className="template-italianfood restaurant-info-container"
         >
           {restaurant.logoUrl && (
-            <div style={{ 
+            <div
+              style={{
               flexShrink: 0
             }}
             className="template-italianfood logo-container-mobile"
+            data-ve-hit="logo"
             >
               <OptimizedPicture 
                 src={restaurant.logoUrl} 

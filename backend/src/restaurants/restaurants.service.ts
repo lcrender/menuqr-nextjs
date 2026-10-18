@@ -605,6 +605,8 @@ export class RestaurantsService {
     tenantId: string,
     data: {
     name?: string;
+    /** false = conservar slug/URL al renombrar; true/omitido = regenerar slug si el nombre cambió */
+    updateSlug?: boolean;
     description?: string;
     street?: string;
     city?: string;
@@ -637,11 +639,16 @@ export class RestaurantsService {
     if (data.name !== undefined) {
       updates.push(`name = $${paramIndex++}`);
       params.push(data.name);
-      
-      // Si cambió el nombre, actualizar slug (único a nivel global /r/:slug)
-      const slug = await this.allocateUniqueSlug(data.name, id);
-      updates.push(`slug = $${paramIndex++}`);
-      params.push(slug);
+
+      const previousName = String(restaurant.name || '');
+      const nameChanged = data.name !== previousName;
+      // Por defecto regenera slug al cambiar nombre (compat. panel Comercios).
+      // updateSlug: false conserva la URL pública y los QR impresos.
+      if (nameChanged && data.updateSlug !== false) {
+        const slug = await this.allocateUniqueSlug(data.name, id);
+        updates.push(`slug = $${paramIndex++}`);
+        params.push(slug);
+      }
     }
     if (data.description !== undefined) {
       updates.push(`description = $${paramIndex++}`);

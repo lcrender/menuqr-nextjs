@@ -605,6 +605,13 @@
   border-radius: 6px;
 }
 
+.stage :global([data-ve-hit='name']),
+.stage :global([data-ve-hit='description']),
+.stage :global([data-ve-hit='logo']),
+.stage :global([data-ve-hit='cover']) {
+  cursor: pointer;
+}
+
 .sheetHandle {
   display: none;
 }
@@ -641,6 +648,100 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.dialogWide {
+  width: min(100%, 520px);
+}
+
+.dialogActionsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dialogActionsStack .admin-btn,
+.dialogActionsStack :global(.admin-btn) {
+  width: 100%;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.35;
+  min-height: 44px;
+}
+
+.slugChoiceUrl {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  color: #4b5563;
+  word-break: break-all;
+}
+
+.slugChoiceUrl code {
+  font-size: 0.88em;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.commerceField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.commerceField span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.commerceField input,
+.commerceField textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  color: #111827;
+  background: #fff;
+}
+
+.commerceField textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.commerceHint {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.commerceMediaPreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  margin: 0 0 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.commerceLogoPreview {
+  max-width: 140px;
+  max-height: 140px;
+  object-fit: contain;
+}
+
+.commerceCoverPreview {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 .pickerList {

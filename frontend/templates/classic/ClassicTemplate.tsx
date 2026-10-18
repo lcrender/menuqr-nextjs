@@ -195,9 +195,9 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
       <div className="template-classic classic-main-content">
         {/* Cover Image */}
         {showCover && restaurant.coverUrl && (
-          <div className="template-classic classic-cover-wrapper mb-4">
-            <OptimizedPicture 
-              src={restaurant.coverUrl} 
+          <div className="template-classic classic-cover-wrapper mb-4" data-ve-hit="cover">
+            <OptimizedPicture
+              src={restaurant.coverUrl}
               alt={restaurant.name}
               style={{ width: '100%', height: '300px', objectFit: 'cover' }}
             />
@@ -208,9 +208,10 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
         <div className="mb-5">
           <div className="text-center mb-4" style={{ marginTop: '40px' }}>
             {showLogo && restaurant.logoUrl && (
-              <OptimizedPicture 
+              <OptimizedPicture
                 className="template-classic classic-logo"
-                src={restaurant.logoUrl} 
+                data-ve-hit="logo"
+                src={restaurant.logoUrl}
                 alt={restaurant.name}
                 style={{ maxWidth: '300px', maxHeight: '300px', marginBottom: '20px' }}
               />

@@ -24,17 +24,33 @@ import BackgroundThumbPicker from './BackgroundThumbPicker';
 import FontPicker from './FontPicker';
 import FontSizeStepper from './FontSizeStepper';
 import MenuTemplatePreview from './MenuTemplatePreview';
+import VisualCommerceEditDialog, {
+  type CommerceEditKind,
+} from './VisualCommerceEditDialog';
 import {
   detectVisualHit,
   elementsForSelectionKey,
   focusForHit,
   FONT_SIZE_OPTION_IDS,
   groupForOption,
+  hitTestVeAttrAtPoint,
   selectionKey,
   type VisualEditorGroupId,
   type VisualHit,
 } from '../../lib/visual-editor-groups';
 import styles from './VisualDesignEditor.module.css';
+
+const COMMERCE_EDIT_HITS = new Set<VisualHit>(['name', 'description', 'logo', 'cover']);
+
+function revokeIfBlob(url: string | null | undefined) {
+  if (url && url.startsWith('blob:')) {
+    try {
+      URL.revokeObjectURL(url);
+    } catch {
+      /* noop */
+    }
+  }
+}
 
 function backgroundPresetsForTemplate(templateId: string) {
   if (templateId === 'burgers') {
@@ -115,6 +131,8 @@ type StoredDraft = {
   template: string;
   config: Record<string, unknown>;
   menuId?: string | null;
+  name?: string;
+  description?: string;
 };
 
 function draftStorageKey(restaurantId: string): string {
@@ -160,6 +178,8 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
   const dirtyRef = useRef(false);
   const leaveMessageRef = useRef('');
   const restaurantIdRef = useRef(restaurantId);
+  const draftLogoBlobRef = useRef<string | null>(null);
+  const draftCoverBlobRef = useRef<string | null>(null);
   restaurantIdRef.current = restaurantId;
 
   const [loading, setLoading] = useState(true);
@@ -175,14 +195,27 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
   const [draftTemplate, setDraftTemplate] = useState('classic');
   const [draftConfig, setDraftConfig] = useState<Record<string, unknown>>({});
 
+  const [savedName, setSavedName] = useState('');
+  const [savedDescription, setSavedDescription] = useState('');
+  const [savedLogoUrl, setSavedLogoUrl] = useState<string | null>(null);
+  const [savedCoverUrl, setSavedCoverUrl] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState('');
+  const [draftDescription, setDraftDescription] = useState('');
+  const [draftLogoUrl, setDraftLogoUrl] = useState<string | null>(null);
+  const [draftCoverUrl, setDraftCoverUrl] = useState<string | null>(null);
+  const [draftLogoFile, setDraftLogoFile] = useState<File | null>(null);
+  const [draftCoverFile, setDraftCoverFile] = useState<File | null>(null);
+
   const [group, setGroup] = useState<VisualEditorGroupId | null>('styles');
   const [focusedOptionId, setFocusedOptionId] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [hit, setHit] = useState<VisualHit | null>(null);
+  const [commerceEdit, setCommerceEdit] = useState<CommerceEditKind | null>(null);
   const [viewport, setViewport] = useState<'phone' | 'desktop'>('phone');
   const [sheetOpen, setSheetOpen] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<string | null>(null);
   const [proBlockedName, setProBlockedName] = useState<string | null>(null);
+  const [slugChoiceOpen, setSlugChoiceOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveState, setSaveState] = useState<'idle' | 'saved' | 'error'>('idle');
   const [saveError, setSaveError] = useState('');
@@ -194,9 +227,14 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
     'Tenés cambios sin publicar. Si salís ahora, se pierden.',
   );
 
+  const profileDirty =
+    draftName !== savedName ||
+    draftDescription !== savedDescription ||
+    !!draftLogoFile ||
+    !!draftCoverFile;
   const dirty =
     !!restaurant &&
-    (draftTemplate !== savedTemplate || !configsEqual(draftConfig, savedConfig));
+    (draftTemplate !== savedTemplate || !configsEqual(draftConfig, savedConfig) || profileDirty);
   dirtyRef.current = dirty;
 
   useEffect(() => {
@@ -241,6 +279,13 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
   }, [router]);
 
   useEffect(() => {
+    return () => {
+      revokeIfBlob(draftLogoBlobRef.current);
+      revokeIfBlob(draftCoverBlobRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (loading || !restaurant) return;
     if (!dirty) {
       clearStoredDraft(restaurantId);
@@ -250,8 +295,23 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
       template: draftTemplate,
       config: draftConfig,
       menuId: selectedMenuId,
+      ...(draftName.trim() ? { name: draftName } : {}),
+      ...(draftDescription !== savedDescription || draftDescription
+        ? { description: draftDescription }
+        : {}),
     });
-  }, [loading, restaurant, dirty, restaurantId, draftTemplate, draftConfig, selectedMenuId]);
+  }, [
+    loading,
+    restaurant,
+    dirty,
+    restaurantId,
+    draftTemplate,
+    draftConfig,
+    selectedMenuId,
+    draftName,
+    draftDescription,
+    savedDescription,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -289,11 +349,31 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
         const stored = readStoredDraft(restaurantId);
         const storedMenuId =
           stored?.menuId && menuRows.some((menu) => menu.id === stored.menuId) ? stored.menuId : null;
+        const name = String(data.name || '');
+        const description = typeof data.description === 'string' ? data.description : '';
+        const logoUrl = typeof data.logoUrl === 'string' ? data.logoUrl : null;
+        const coverUrl = typeof data.coverUrl === 'string' ? data.coverUrl : null;
+        // No restaurar nombre vacío desde sessionStorage (borra el preview).
+        const storedName =
+          typeof stored?.name === 'string' && stored.name.trim() ? stored.name.trim() : null;
+        const hasStoredDescription = Boolean(stored && Object.prototype.hasOwnProperty.call(stored, 'description'));
+        const storedDescription =
+          hasStoredDescription && typeof stored?.description === 'string' ? stored.description : null;
         setRestaurant(data);
         setSavedTemplate(templateId);
         setSavedConfig(config);
         setDraftTemplate(stored?.template || templateId);
         setDraftConfig(stored ? { ...config, ...stored.config } : { ...config });
+        setSavedName(name);
+        setSavedDescription(description);
+        setSavedLogoUrl(logoUrl);
+        setSavedCoverUrl(coverUrl);
+        setDraftName(storedName || name);
+        setDraftDescription(storedDescription !== null ? storedDescription : description);
+        setDraftLogoUrl(logoUrl);
+        setDraftCoverUrl(coverUrl);
+        setDraftLogoFile(null);
+        setDraftCoverFile(null);
         setMenus(menuRows);
         setSelectedMenuId(storedMenuId || preferred?.id || null);
         setHasPaidTemplates(planAllowsPaidTemplates(planRes?.data?.plan, isSuperAdmin));
@@ -366,8 +446,10 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
 
   useEffect(() => {
     const root = stageRef.current;
-    if (!root || !selection) return;
+    if (!root) return;
     root.querySelectorAll('.ve-selected').forEach((node) => node.classList.remove('ve-selected'));
+    // Nombre/descripcion/logo/portada abren diálogo: sin contorno persistente.
+    if (!selection || COMMERCE_EDIT_HITS.has(selection.hit)) return;
     const nodes = elementsForSelectionKey(root, selection.classKey);
     const el = nodes[selection.index];
     el?.classList.add('ve-selected');
@@ -410,17 +492,50 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
   const selectedMenu = menus.find((menu) => menu.id === selectedMenuId) || null;
   const previewRestaurant = useMemo(() => {
     if (!restaurant) return null;
-    return {
+    // Si el borrador aún está vacío (carrera de carga / sessionStorage), usar el comercio.
+    const previewName = draftName.trim() || String(restaurant.name || '');
+    const descriptionEdited = draftDescription !== savedDescription;
+    const previewDescription = descriptionEdited
+      ? draftDescription
+      : draftDescription ||
+        (typeof restaurant.description === 'string' ? restaurant.description : '');
+    const next: Record<string, unknown> = {
       ...restaurant,
       id: String(restaurant.id),
-      name: String(restaurant.name || ''),
+      name: previewName,
+      description: previewDescription,
       slug: String(restaurant.slug || 'preview'),
       template: draftTemplate,
       templateConfig: draftConfig,
       primaryColor: hexColor(draftConfig.primaryColor, restaurant.primaryColor || '#007bff'),
       secondaryColor: hexColor(draftConfig.secondaryColor, restaurant.secondaryColor || '#0056b3'),
     };
-  }, [restaurant, draftTemplate, draftConfig]);
+    if (draftLogoUrl) next.logoUrl = draftLogoUrl;
+    else delete next.logoUrl;
+    if (draftCoverUrl) next.coverUrl = draftCoverUrl;
+    else delete next.coverUrl;
+    return next as typeof restaurant & {
+      id: string;
+      name: string;
+      description: string;
+      slug: string;
+      template: string;
+      templateConfig: Record<string, unknown>;
+      primaryColor: string;
+      secondaryColor: string;
+      logoUrl?: string;
+      coverUrl?: string;
+    };
+  }, [
+    restaurant,
+    draftTemplate,
+    draftConfig,
+    draftName,
+    draftDescription,
+    savedDescription,
+    draftLogoUrl,
+    draftCoverUrl,
+  ]);
 
   const previewMenu = selectedMenu
     ? {
@@ -470,8 +585,19 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
   };
 
   const resetDraft = () => {
+    revokeIfBlob(draftLogoBlobRef.current);
+    revokeIfBlob(draftCoverBlobRef.current);
+    draftLogoBlobRef.current = null;
+    draftCoverBlobRef.current = null;
     setDraftTemplate(savedTemplate);
     setDraftConfig(savedConfig);
+    setDraftName(savedName);
+    setDraftDescription(savedDescription);
+    setDraftLogoUrl(savedLogoUrl);
+    setDraftCoverUrl(savedCoverUrl);
+    setDraftLogoFile(null);
+    setDraftCoverFile(null);
+    setCommerceEdit(null);
     setSelection(null);
     setHit(null);
     setFocusedOptionId(null);
@@ -479,27 +605,97 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
     setSaveError('');
   };
 
-  const publish = async () => {
+  const requestPublish = () => {
     if (!restaurant || saving) return;
+    const nextName = draftName.trim() || savedName;
+    const nameChanged = nextName !== savedName.trim();
+    if (nameChanged && restaurant.slug) {
+      setSlugChoiceOpen(true);
+      return;
+    }
+    void publish({ updateSlug: false });
+  };
+
+  const publish = async (opts: { updateSlug: boolean }) => {
+    if (!restaurant || saving) return;
+    setSlugChoiceOpen(false);
     setSaving(true);
     setSaveError('');
     setSaveState('idle');
     try {
+      let nextLogoUrl = draftLogoUrl;
+      let nextCoverUrl = draftCoverUrl;
+
+      if (draftLogoFile) {
+        const formDataLogo = new FormData();
+        formDataLogo.append('file', draftLogoFile);
+        const logoRes = await api.post(`/media/restaurants/${restaurantId}/photo`, formDataLogo);
+        if (typeof logoRes.data?.url === 'string') nextLogoUrl = logoRes.data.url;
+      }
+      if (draftCoverFile) {
+        const formDataCover = new FormData();
+        formDataCover.append('file', draftCoverFile);
+        const coverRes = await api.post(`/media/restaurants/${restaurantId}/cover`, formDataCover);
+        if (typeof coverRes.data?.url === 'string') nextCoverUrl = coverRes.data.url;
+      }
+
       const primary = hexColor(draftConfig.primaryColor, restaurant.primaryColor || '#007bff');
       const secondary = hexColor(draftConfig.secondaryColor, restaurant.secondaryColor || '#0056b3');
       const templateConfig = { ...draftConfig, primaryColor: primary, secondaryColor: secondary };
-      await api.put(`/restaurants/${restaurantId}`, {
+      const nextName = draftName.trim() || savedName;
+      const nextDescription = draftDescription;
+      const nameChanged = nextName !== savedName.trim();
+      const payload: Record<string, unknown> = {
+        description: nextDescription,
         template: draftTemplate,
         templateConfig,
         primaryColor: primary,
         secondaryColor: secondary,
-      });
+      };
+      if (nameChanged) {
+        payload.name = nextName;
+        payload.updateSlug = opts.updateSlug;
+      }
+
+      const putRes = await api.put(`/restaurants/${restaurantId}`, payload);
+      const updated = putRes.data || {};
+      const nextSlug =
+        typeof updated.slug === 'string' && updated.slug.trim()
+          ? updated.slug
+          : String(restaurant.slug || '');
+
+      revokeIfBlob(draftLogoBlobRef.current);
+      revokeIfBlob(draftCoverBlobRef.current);
+      draftLogoBlobRef.current = null;
+      draftCoverBlobRef.current = null;
+
       setDraftConfig(templateConfig);
       setSavedConfig(templateConfig);
       setSavedTemplate(draftTemplate);
+      setDraftName(nextName);
+      setSavedName(nextName);
+      setDraftDescription(nextDescription);
+      setSavedDescription(nextDescription);
+      setDraftLogoUrl(nextLogoUrl);
+      setSavedLogoUrl(nextLogoUrl);
+      setDraftCoverUrl(nextCoverUrl);
+      setSavedCoverUrl(nextCoverUrl);
+      setDraftLogoFile(null);
+      setDraftCoverFile(null);
       setRestaurant((prev) =>
         prev
-          ? { ...prev, template: draftTemplate, templateConfig, primaryColor: primary, secondaryColor: secondary }
+          ? {
+              ...prev,
+              name: nextName,
+              description: nextDescription,
+              slug: nextSlug || prev.slug,
+              logoUrl: nextLogoUrl,
+              coverUrl: nextCoverUrl,
+              template: draftTemplate,
+              templateConfig,
+              primaryColor: primary,
+              secondaryColor: secondary,
+            }
           : prev,
       );
       setSaveState('saved');
@@ -528,26 +724,53 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
     if (control instanceof HTMLButtonElement) {
       event.preventDefault();
     }
+    // Nombre sobre portada (Sol & Noche): el degradé deja pasar el clic a la imagen.
+    // Preferimos el hit geométrico del nombre si el punto cae dentro de su caja.
+    const nameAtPoint = hitTestVeAttrAtPoint(root, event.clientX, event.clientY, 'name');
+    if (nameAtPoint && !control) {
+      event.preventDefault();
+      event.stopPropagation();
+      applyHit('name', nameAtPoint, root);
+      return;
+    }
     const found = detectVisualHit(target, root);
     if (control) {
       if (found) applyHit(found.hit, found.element, root);
+      else clearPreviewSelection();
       return;
     }
-    if (!found) return;
+    if (!found) {
+      clearPreviewSelection();
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     applyHit(found.hit, found.element, root);
   };
 
+  const clearPreviewSelection = () => {
+    setSelection(null);
+    setHit(null);
+    setFocusedOptionId(null);
+  };
+
   const applyHit = (nextHit: VisualHit, element: Element, root: HTMLElement) => {
     const classKey = selectionKey(element);
     const index = elementsForSelectionKey(root, classKey).indexOf(element);
-    setSelection({ hit: nextHit, classKey, index: Math.max(0, index) });
+    // Comercio: sin outline; el diálogo es el feedback.
+    setSelection(
+      COMMERCE_EDIT_HITS.has(nextHit)
+        ? null
+        : { hit: nextHit, classKey, index: Math.max(0, index) },
+    );
     setHit(nextHit);
     const focus = focusForHit(nextHit, optionIds);
     setGroup(focus.group);
     setFocusedOptionId(focus.optionId ?? null);
     setSheetOpen(true);
+    if (COMMERCE_EDIT_HITS.has(nextHit)) {
+      setCommerceEdit(nextHit as CommerceEditKind);
+    }
   };
 
   if (loading) {
@@ -600,7 +823,7 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
     <div className={styles.page}>
       <div className={styles.toolbar}>
         <div className={styles.identity}>
-          <h1 className={styles.name}>{restaurant.name}</h1>
+          <h1 className={styles.name}>{draftName || restaurant.name}</h1>
           <p className={statusClass}>{saving ? tx('adminTemplates.visual.saving', 'Publicando…') : statusText}</p>
         </div>
         <div className={styles.viewToggle} role="group" aria-label={tx('adminTemplates.visual.viewport', 'Tamaño de vista previa')}>
@@ -636,7 +859,12 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
           <button type="button" className="admin-btn" onClick={resetDraft} disabled={!dirty || saving}>
             {tx('adminTemplates.visual.reset', 'Restablecer')}
           </button>
-          <button type="button" className="admin-btn admin-btn-primary" onClick={publish} disabled={!dirty || saving}>
+          <button
+            type="button"
+            className="admin-btn admin-btn-primary"
+            onClick={requestPublish}
+            disabled={!dirty || saving}
+          >
             {tx('adminTemplates.visual.save', 'Guardar y publicar')}
           </button>
         </div>
@@ -830,6 +1058,103 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
           </div>
         </div>
       ) : null}
+
+      {slugChoiceOpen ? (
+        <div className={styles.backdrop} role="presentation" onClick={() => !saving && setSlugChoiceOpen(false)}>
+          <div
+            className={`${styles.dialog} ${styles.dialogWide}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ve-slug-choice-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="ve-slug-choice-title">
+              {tx('adminTemplates.visual.slugChoice.title', 'Cambio de nombre y URL')}
+            </h2>
+            <p>
+              <Trans
+                i18nKey="adminTemplates.visual.slugChoice.body"
+                components={{ strong: <strong /> }}
+              >
+                Cambiar el nombre puede regenerar la <strong>URL pública</strong>. Los{' '}
+                <strong>QR impresos</strong> y enlaces viejos dejarían de funcionar.
+              </Trans>
+            </p>
+            {restaurant.slug ? (
+              <p className={styles.slugChoiceUrl}>
+                {tx('adminTemplates.visual.slugChoice.currentUrl', 'URL actual:')}{' '}
+                <code>{`/r/${String(restaurant.slug)}`}</code>
+              </p>
+            ) : null}
+            <div className={styles.dialogActionsStack}>
+              <button
+                type="button"
+                className="admin-btn admin-btn-primary"
+                disabled={saving}
+                onClick={() => void publish({ updateSlug: false })}
+              >
+                {tx(
+                  'adminTemplates.visual.slugChoice.keepUrl',
+                  'Cambiar nombre y mantener la URL (QR siguen funcionando)',
+                )}
+              </button>
+              <button
+                type="button"
+                className="admin-btn"
+                disabled={saving}
+                onClick={() => void publish({ updateSlug: true })}
+              >
+                {tx(
+                  'adminTemplates.visual.slugChoice.changeUrl',
+                  'Cambiar nombre y también la URL (QR viejos dejan de funcionar)',
+                )}
+              </button>
+              <button
+                type="button"
+                className="admin-btn"
+                disabled={saving}
+                onClick={() => setSlugChoiceOpen(false)}
+              >
+                {tx('adminTemplates.visual.templateSwitchCancel', 'Cancelar')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <VisualCommerceEditDialog
+        kind={commerceEdit}
+        name={draftName}
+        description={draftDescription}
+        logoUrl={draftLogoUrl}
+        coverUrl={draftCoverUrl}
+        onClose={() => {
+          setCommerceEdit(null);
+          clearPreviewSelection();
+        }}
+        onSaveText={({ name, description }) => {
+          setDraftName(name);
+          setDraftDescription(description);
+          setSaveState('idle');
+          setSaveError('');
+        }}
+        onLogoFile={(file, previewUrl) => {
+          revokeIfBlob(draftLogoBlobRef.current);
+          draftLogoBlobRef.current = previewUrl;
+          setDraftLogoFile(file);
+          setDraftLogoUrl(previewUrl);
+          setSaveState('idle');
+          setSaveError('');
+        }}
+        onCoverFile={(file, previewUrl) => {
+          revokeIfBlob(draftCoverBlobRef.current);
+          draftCoverBlobRef.current = previewUrl;
+          setDraftCoverFile(file);
+          setDraftCoverUrl(previewUrl);
+          setSaveState('idle');
+          setSaveError('');
+        }}
+      />
     </div>
   );
 }

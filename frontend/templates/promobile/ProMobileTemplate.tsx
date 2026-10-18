@@ -374,14 +374,14 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
       `}</style>
 
       {showCover && restaurant.coverUrl && (
-        <div className="pro-mobile-cover">
+        <div className="pro-mobile-cover" data-ve-hit="cover">
           <OptimizedPicture src={restaurant.coverUrl} alt={restaurant.name} />
         </div>
       )}
 
       <header className={`pro-mobile-header${headerNoName ? ' pro-mobile-header--no-name' : ''}`}>
         {showLogo && restaurant.logoUrl && (
-          <div className="pro-mobile-logo" style={{ flexShrink: 0 }}>
+          <div className="pro-mobile-logo" data-ve-hit="logo" style={{ flexShrink: 0 }}>
             <OptimizedPicture src={restaurant.logoUrl} alt={restaurant.name} />
           </div>
         )}

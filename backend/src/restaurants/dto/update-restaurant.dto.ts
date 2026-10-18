@@ -11,6 +11,15 @@ export class UpdateRestaurantDto {
   @IsOptional()
   name?: string;
 
+  @ApiProperty({
+    description:
+      'Si es true (por defecto al cambiar el nombre), regenera el slug/URL pública. Si es false, solo actualiza el nombre y conserva la URL y los QR impresos.',
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  updateSlug?: boolean;
+
   @ApiProperty({ description: 'Descripción del comercio', required: false })
   @IsString()
   @IsOptional()

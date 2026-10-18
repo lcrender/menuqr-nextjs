@@ -195,6 +195,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
         <>
           <div
             className="template-burgers burgers-cover"
+            data-ve-hit="cover"
             style={{
               width: '100%',
               height: '350px',
@@ -259,6 +260,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
           {showLogo && restaurant.logoUrl && (
             <div
               className="template-burgers burgers-logo-wrapper"
+              data-ve-hit="logo"
               style={{
                 flexShrink: 0,
                 width: '240px',
