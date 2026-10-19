@@ -188,7 +188,8 @@ export function buildBlogArticlesEmailHtml(
   } else if (layout === 'list') {
     blocks = articles.map(listRow).join('\n');
   } else {
-    const [first, ...rest] = articles;
+    const first = articles[0]!;
+    const rest = articles.slice(1);
     blocks = heroBlock(first) + (rest.length ? `\n${rest.map(listRow).join('\n')}` : '');
   }
 

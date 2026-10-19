@@ -95,8 +95,9 @@ export default function AdminNovedadesEnviarPage() {
       setBodyHtml(res.data.bodyHtml || '');
       setPlans(res.data.plans || []);
       setCounts(res.data.counts || null);
-      if (res.data.plans?.length && !res.data.plans.some((p) => p.slug === plan)) {
-        setPlan(res.data.plans[0].slug);
+      const firstPlan = res.data.plans?.[0];
+      if (firstPlan && !res.data.plans.some((p) => p.slug === plan)) {
+        setPlan(firstPlan.slug);
       }
     } catch (e: any) {
       setError(e?.response?.data?.message || 'No se pudo cargar la plantilla');
@@ -152,7 +153,9 @@ export default function AdminNovedadesEnviarPage() {
       const next = index + direction;
       if (next < 0 || next >= prev.length) return prev;
       const copy = [...prev];
-      const [item] = copy.splice(index, 1);
+      const item = copy[index];
+      if (item == null) return prev;
+      copy.splice(index, 1);
       copy.splice(next, 0, item);
       return copy;
     });
