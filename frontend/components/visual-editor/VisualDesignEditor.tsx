@@ -366,6 +366,18 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
       orderDirty);
   dirtyRef.current = dirty;
 
+  /* En viewport estrecho (admin móvil) forzar preview móvil y no ofrecer tablet */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 960px)');
+    const forcePhone = () => {
+      if (mq.matches) setViewport('phone');
+    };
+    forcePhone();
+    mq.addEventListener('change', forcePhone);
+    return () => mq.removeEventListener('change', forcePhone);
+  }, []);
+
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!dirtyRef.current) return;

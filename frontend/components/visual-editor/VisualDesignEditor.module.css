@@ -958,6 +958,11 @@
     display: block;
   }
 
+  /* En admin móvil la preview ya es móvil: ocultar toggle Móvil/Tablet */
+  .viewToggle {
+    display: none;
+  }
+
   .tools {
     position: fixed;
     left: 0;
@@ -977,15 +982,35 @@
 
   .sheetHandle {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     width: 100%;
     min-height: 64px;
     border: 0;
-    background: #fff;
-    font-weight: 600;
-    font-size: 1rem;
-    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, var(--admin-primary, #6366f1) 0%, var(--admin-primary-dark, #4f46e5) 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    border-bottom: 0;
+    box-shadow: 0 -4px 18px rgba(79, 70, 229, 0.35);
+    cursor: pointer;
+  }
+
+  .sheetHandle::before {
+    content: '';
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.55);
+  }
+
+  .toolsOpen .sheetHandle {
+    background: linear-gradient(135deg, var(--admin-primary-light, #818cf8) 0%, var(--admin-primary, #6366f1) 100%);
+    box-shadow: none;
+    border-radius: 18px 18px 0 0;
   }
 
   .stageWrap {

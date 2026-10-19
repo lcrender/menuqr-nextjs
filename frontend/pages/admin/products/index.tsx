@@ -177,6 +177,25 @@ export default function Products() {
     localStorage.setItem(PRODUCT_COLUMNS_STORAGE_KEY, JSON.stringify(visibleColumns));
   }, [visibleColumns]);
 
+  /* Bloquear scroll del fondo mientras el modal de producto está abierto (móvil) */
+  useEffect(() => {
+    if (!showModal || typeof document === 'undefined') return;
+    const { body, documentElement } = document;
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyTouchAction = body.style.touchAction;
+    const prevHtmlOverflow = documentElement.style.overflow;
+    body.style.overflow = 'hidden';
+    body.style.touchAction = 'none';
+    documentElement.style.overflow = 'hidden';
+    body.classList.add('modal-open');
+    return () => {
+      body.style.overflow = prevBodyOverflow;
+      body.style.touchAction = prevBodyTouchAction;
+      documentElement.style.overflow = prevHtmlOverflow;
+      body.classList.remove('modal-open');
+    };
+  }, [showModal]);
+
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const productColumnDefs = useMemo(
@@ -2229,8 +2248,11 @@ export default function Products() {
       </div>
 
       {showModal && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-lg admin-product-edit-modal">
+        <div
+          className="modal show d-block admin-product-edit-modal-root"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+        >
+          <div className="modal-dialog modal-lg admin-product-edit-modal modal-dialog-scrollable">
             <div className="modal-content" style={{ borderRadius: '10px', overflow: 'hidden' }}>
               <div className="modal-header admin-product-edit-modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
                 <h5 className="modal-title" style={{ margin: 0, fontWeight: 600, fontSize: '1.15rem' }}>{editing ? t('adminProducts.form.editTitle') : t('adminProducts.form.newTitle')}</h5>

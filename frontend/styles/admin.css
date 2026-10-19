@@ -5125,22 +5125,74 @@ body {
   color: var(--admin-text, #495057);
 }
 
+/* Modal editar producto — overlay fijo con padding = márgenes visibles */
+.admin-product-edit-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1055;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
 @media (max-width: 991.98px) {
-  /* La clase va en el dialog (no en un padre): .modal-dialog.admin-product-edit-modal */
-  .modal-dialog.admin-product-edit-modal {
-    margin: 0.5rem;
-    max-width: calc(100% - 1rem);
-    width: calc(100% - 1rem);
-    height: calc(100dvh - 1rem);
-    max-height: calc(100dvh - 1rem);
+  .admin-product-edit-modal-root {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    /* Solo scrollea el modal-body; el overlay no debe mover el fondo */
+    overflow: hidden !important;
+    overscroll-behavior: none;
+    touch-action: none;
+    padding:
+      max(0.75rem, env(safe-area-inset-top, 0px))
+      max(0.75rem, env(safe-area-inset-right, 0px))
+      max(0.75rem, env(safe-area-inset-bottom, 0px))
+      max(0.75rem, env(safe-area-inset-left, 0px));
   }
 
-  .modal-dialog.admin-product-edit-modal .modal-content {
-    height: 100%;
-    max-width: 100%;
+  /* La clase va en el dialog: .modal-dialog.admin-product-edit-modal */
+  .admin-product-edit-modal-root .modal-dialog.admin-product-edit-modal {
+    margin: 0 auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    /* Altura fija para que el flex del body pueda hacer scroll interno */
+    height: calc(
+      100dvh - max(0.75rem, env(safe-area-inset-top, 0px)) - max(0.75rem, env(safe-area-inset-bottom, 0px))
+    );
+    max-height: calc(
+      100dvh - max(0.75rem, env(safe-area-inset-top, 0px)) - max(0.75rem, env(safe-area-inset-bottom, 0px))
+    );
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
+    box-sizing: border-box;
+    touch-action: manipulation;
+  }
+
+  .admin-product-edit-modal-root .modal-dialog.admin-product-edit-modal .modal-content {
+    height: 100%;
+    max-height: 100%;
+    max-width: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+    min-height: 0;
+  }
+
+  /*
+   * El <form> envuelve body+footer y rompe el flex de Bootstrap scrollable.
+   * Hay que convertirlo en columna flex para que solo el body scrollee.
+   */
+  .admin-product-edit-modal-root .modal-dialog.admin-product-edit-modal .modal-content > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .admin-product-edit-modal-header {
@@ -5157,12 +5209,17 @@ body {
     max-height: none !important;
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
 
   .admin-product-edit-modal-body > section {
     margin-bottom: 12px !important;
     padding-bottom: 12px !important;
+    max-width: 100%;
   }
 
   .admin-product-edit-modal-body > section:last-child {
@@ -5184,10 +5241,18 @@ body {
     font-size: 0.875rem;
   }
 
+  /*
+   * iOS Safari hace zoom automático si el input tiene font-size < 16px.
+   * Eso hace que el modal “se vea enorme” y sin márgenes hasta alejar el zoom.
+   */
   .admin-product-edit-modal-body .form-control,
-  .admin-product-edit-modal-body .form-select {
-    font-size: 0.875rem;
-    padding: 0.45rem 0.6rem;
+  .admin-product-edit-modal-body .form-select,
+  .admin-product-price-fields .form-control,
+  .admin-product-price-fields .form-select {
+    font-size: 16px !important;
+    padding: 0.5rem 0.65rem;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .admin-product-edit-modal-body textarea.form-control {
@@ -5215,8 +5280,6 @@ body {
 
   .admin-product-price-fields .form-control,
   .admin-product-price-fields .form-select {
-    font-size: 0.8125rem;
-    padding: 0.4rem 0.5rem;
     min-width: 0;
   }
 
@@ -5235,8 +5298,8 @@ body {
   }
 
   .admin-product-edit-modal-body .d-flex.flex-wrap.gap-2 .btn-sm {
-    font-size: 0.8125rem;
-    padding: 0.35rem 0.6rem;
+    font-size: 0.875rem;
+    padding: 0.4rem 0.65rem;
   }
 
   .admin-product-status-switches {
@@ -5258,7 +5321,7 @@ body {
   }
 
   .admin-product-photo-dropzone p {
-    font-size: 0.8125rem !important;
+    font-size: 0.875rem !important;
   }
 
   .admin-product-edit-modal-footer {
@@ -5273,6 +5336,7 @@ body {
     width: 100%;
     margin: 0;
     min-height: 44px;
+    font-size: 16px;
   }
 }
 
