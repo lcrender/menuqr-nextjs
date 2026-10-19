@@ -5,6 +5,7 @@ import i18n from '../src/i18n/config';
 import api, { type AxiosErrorWithMessage } from '../lib/axios';
 import { getApiErrorMessage } from '../lib/api-error-message';
 import AlertModal from './AlertModal';
+import AdminSelect from './AdminSelect';
 import {
   DEFAULT_PUBLIC_PLAN_LIMITS,
   fetchPublicPlanLimits,
@@ -371,7 +372,42 @@ export default function ProductWizard({
   const [draggedItem, setDraggedItem] = useState<{ sectionId: string; itemId: string } | null>(null);
   const [dragOverItem, setDragOverItem] = useState<{ sectionId: string; itemId: string | null; position: 'before' | 'after' } | null>(null);
   const [draggedPriceIndex, setDraggedPriceIndex] = useState<number | null>(null);
+  /** En móvil/táctil el HTML5 DnD no sirve: usamos flechas subir/bajar */
+  const [touchReorder, setTouchReorder] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mq = window.matchMedia('(max-width: 991.98px), (hover: none) and (pointer: coarse)');
+    const sync = () => setTouchReorder(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
   const [restaurantCurrency, setRestaurantCurrency] = useState<string>(defaultCurrency);
+  const [availableCurrencies, setAvailableCurrencies] = useState<string[]>([defaultCurrency || 'USD']);
+
+  const resolveRestaurantCurrencies = (restaurant: any, fallback = defaultCurrency) => {
+    const def = String(restaurant?.defaultCurrency || fallback || 'USD').trim().toUpperCase() || 'USD';
+    const codes = new Set<string>([def]);
+    const raw = restaurant?.additionalCurrencies;
+    const list = Array.isArray(raw)
+      ? raw
+      : typeof raw === 'string' && raw.trim()
+        ? (() => {
+            try {
+              return JSON.parse(raw);
+            } catch {
+              return [];
+            }
+          })()
+        : [];
+    if (Array.isArray(list)) {
+      list.forEach((c: unknown) => {
+        if (typeof c === 'string' && c.trim()) codes.add(c.trim().toUpperCase());
+      });
+    }
+    return { defaultCurrency: def, currencies: Array.from(codes) };
+  };
 
   /** Defaults + overrides de super admin (`GET /public/plan-limits`). */
   const [effectivePlanLimits, setEffectivePlanLimits] = useState<
@@ -649,6 +685,7 @@ export default function ProductWizard({
       setFormData(prev => ({ ...prev, sectionIds: [] }));
       // Si no hay menú seleccionado, usar la moneda por defecto
       setRestaurantCurrency(defaultCurrency);
+      setAvailableCurrencies([defaultCurrency || 'USD']);
     }
   }, [formData.menuId]);
 
@@ -670,8 +707,9 @@ export default function ProductWizard({
             });
             
             if (restaurantRes.status === 200 && restaurantRes.data) {
-              const restaurantCurrency = restaurantRes.data.defaultCurrency || defaultCurrency;
-              setRestaurantCurrency(restaurantCurrency);
+              const resolved = resolveRestaurantCurrencies(restaurantRes.data, defaultCurrency);
+              setRestaurantCurrency(resolved.defaultCurrency);
+              setAvailableCurrencies(resolved.currencies);
               
               // Si estamos en el paso de precios y el primer precio no tiene monto, actualizar la moneda
               const firstPrice = formData.prices[0];
@@ -679,13 +717,14 @@ export default function ProductWizard({
                 setFormData(prev => ({
                   ...prev,
                   prices: prev.prices.map((price, index) => 
-                    index === 0 ? { ...price, currency: restaurantCurrency } : price
+                    index === 0 ? { ...price, currency: resolved.defaultCurrency } : price
                   ),
                 }));
               }
             } else {
               // Si es 404, usar la moneda por defecto sin mostrar error
               setRestaurantCurrency(defaultCurrency);
+              setAvailableCurrencies([defaultCurrency || 'USD']);
             }
           } catch (error: any) {
             // Solo mostrar error si no es 404 (comercio no encontrado)
@@ -693,6 +732,7 @@ export default function ProductWizard({
               console.error('Error cargando comercio:', error);
             }
             setRestaurantCurrency(defaultCurrency);
+            setAvailableCurrencies([defaultCurrency || 'USD']);
           }
         };
         
@@ -700,10 +740,12 @@ export default function ProductWizard({
         loadRestaurantCurrency();
       } else {
         setRestaurantCurrency(defaultCurrency);
+        setAvailableCurrencies([defaultCurrency || 'USD']);
       }
     } catch (error) {
       console.error('Error cargando menú:', error);
       setRestaurantCurrency(defaultCurrency);
+      setAvailableCurrencies([defaultCurrency || 'USD']);
     }
   };
 
@@ -737,11 +779,13 @@ export default function ProductWizard({
             });
             
             if (restaurantRes.status === 200 && restaurantRes.data) {
-              const restaurantCurrency = restaurantRes.data.defaultCurrency || defaultCurrency;
-              setRestaurantCurrency(restaurantCurrency);
+              const resolved = resolveRestaurantCurrencies(restaurantRes.data, defaultCurrency);
+              setRestaurantCurrency(resolved.defaultCurrency);
+              setAvailableCurrencies(resolved.currencies);
             } else {
               // Si es 404, usar la moneda por defecto sin mostrar error
               setRestaurantCurrency(defaultCurrency);
+              setAvailableCurrencies([defaultCurrency || 'USD']);
             }
           } catch (error: any) {
             // Solo mostrar error si no es 404 (comercio no encontrado)
@@ -749,6 +793,7 @@ export default function ProductWizard({
               console.error('Error cargando comercio:', error);
             }
             setRestaurantCurrency(defaultCurrency);
+            setAvailableCurrencies([defaultCurrency || 'USD']);
           }
         };
         
@@ -756,6 +801,7 @@ export default function ProductWizard({
         loadRestaurantCurrency();
       } else {
         setRestaurantCurrency(defaultCurrency);
+        setAvailableCurrencies([defaultCurrency || 'USD']);
       }
       
       // Cargar secciones del menú
@@ -853,6 +899,20 @@ export default function ProductWizard({
     );
   };
 
+  const handleGoToBusiness = () => {
+    const restaurantId =
+      menuData?.restaurantId ||
+      menuData?.restaurant_id ||
+      initialRestaurantId ||
+      resolvedRestaurantId ||
+      '';
+    if (!restaurantId) {
+      alert(t('productWizard.manage.goToBusinessMissing'));
+      return;
+    }
+    router.push(`/admin?local=${encodeURIComponent(String(restaurantId))}`);
+  };
+
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, sectionId: string, itemId: string) => {
     setDraggedItem({ sectionId, itemId });
@@ -898,6 +958,52 @@ export default function ProductWizard({
     });
   };
 
+  const getSectionItemsSorted = useCallback(
+    (sectionId: string) =>
+      menuItems
+        .filter((item: any) => (item.sectionId || 'no-section') === sectionId)
+        .sort((a: any, b: any) => (a.sort || 0) - (b.sort || 0)),
+    [menuItems],
+  );
+
+  const persistSectionOrder = async (reorderedItems: any[]) => {
+    const itemOrders = reorderedItems.map((item: any, index: number) => ({
+      id: item.id,
+      sort: index,
+    }));
+
+    setMenuItems((prevItems: any[]) =>
+      prevItems.map((item: any) => {
+        const orderUpdate = itemOrders.find((io: any) => io.id === item.id);
+        return orderUpdate ? { ...item, sort: orderUpdate.sort } : item;
+      }),
+    );
+
+    try {
+      await api.post('/menu-items/reorder', {
+        itemOrders,
+        ...superAdminTenantParams(),
+      });
+    } catch (error: any) {
+      console.error('Error guardando orden:', error);
+      await loadMenuData();
+      alert(error.response?.data?.message || t('productWizard.alerts.saveOrderError'));
+    }
+  };
+
+  const moveMenuItemByOffset = async (sectionId: string, itemId: string, offset: number) => {
+    const sectionItems = getSectionItemsSorted(sectionId);
+    const fromIndex = sectionItems.findIndex((item: any) => item.id === itemId);
+    if (fromIndex === -1) return;
+    const toIndex = fromIndex + offset;
+    if (toIndex < 0 || toIndex >= sectionItems.length) return;
+
+    const reorderedItems = [...sectionItems];
+    const [moved] = reorderedItems.splice(fromIndex, 1);
+    reorderedItems.splice(toIndex, 0, moved);
+    await persistSectionOrder(reorderedItems);
+  };
+
   const handleDrop = async (e: React.DragEvent, targetSectionId: string, targetItemId?: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -912,10 +1018,7 @@ export default function ProductWizard({
     // Si se mueve a la misma sección, reordenar
     if (sourceSectionId === targetSectionId) {
       try {
-        // Obtener todos los productos de la sección ordenados por sort
-        const sectionItems = menuItems
-          .filter((item: any) => (item.sectionId || 'no-section') === sourceSectionId)
-          .sort((a: any, b: any) => (a.sort || 0) - (b.sort || 0));
+        const sectionItems = getSectionItemsSorted(sourceSectionId);
         
         // Encontrar el índice del item arrastrado
         const draggedIndex = sectionItems.findIndex((item: any) => item.id === sourceItemId);
@@ -992,37 +1095,7 @@ export default function ProductWizard({
         const reorderedItems = [...sectionItems];
         const [draggedItemData] = reorderedItems.splice(draggedIndex, 1);
         reorderedItems.splice(targetIndex, 0, draggedItemData);
-        
-        // Actualizar el orden de todos los items de la sección
-        const itemOrders = reorderedItems.map((item: any, index: number) => ({
-          id: item.id,
-          sort: index,
-        }));
-        
-        // Actualizar visualmente primero (sin recargar)
-        setMenuItems((prevItems: any[]) => {
-          return prevItems.map((item: any) => {
-            const orderUpdate = itemOrders.find((io: any) => io.id === item.id);
-            if (orderUpdate) {
-              return { ...item, sort: orderUpdate.sort };
-            }
-            return item;
-          });
-        });
-        
-        // Guardar en el backend (sin recargar si todo va bien)
-        try {
-          await api.post('/menu-items/reorder', {
-            itemOrders,
-            ...superAdminTenantParams(),
-          });
-          // No recargar si la actualización fue exitosa
-        } catch (error: any) {
-          console.error('Error guardando orden:', error);
-          // Solo recargar en caso de error para restaurar el estado
-          await loadMenuData();
-          alert(error.response?.data?.message || t('productWizard.alerts.saveOrderError'));
-        }
+        await persistSectionOrder(reorderedItems);
       } catch (error: any) {
         console.error('Error reordenando productos:', error);
         await loadMenuData();
@@ -1612,7 +1685,7 @@ export default function ProductWizard({
   if (currentStep === 0) {
     return (
       <React.Fragment>
-        <div className="restaurant-wizard">
+        <div className="restaurant-wizard restaurant-wizard-mobile">
           <div className="wizard-header">
             <h2 className="wizard-title">{menuData?.name || t('productWizard.common.menu')}</h2>
           <p className="wizard-subtitle">{t('productWizard.manage.subtitle')}</p>
@@ -1658,6 +1731,9 @@ export default function ProductWizard({
                           <h3 className="menu-preview-section-title">{section.name}</h3>
                           <span className="menu-preview-section-count">{t('productWizard.manage.productCount', { count: sectionItems.length })}</span>
                         </div>
+                        {touchReorder && sectionItems.length > 1 ? (
+                          <p className="menu-preview-reorder-hint">{t('productWizard.manage.reorderHintMobile')}</p>
+                        ) : null}
                         <div className="menu-preview-section-items">
                           {sectionItems.length === 0 ? (
                             <div 
@@ -1675,11 +1751,13 @@ export default function ProductWizard({
                               <p>{t('productWizard.manage.dropHere')}</p>
                             </div>
                           ) : (
-                            sectionItems.map((item: any, _itemIndex: number) => {
+                            sectionItems.map((item: any, itemIndex: number) => {
                               const isDragged = draggedItem?.itemId === item.id;
                               const isDragOver = dragOverItem?.itemId === item.id && dragOverItem?.sectionId === section.id;
                               const showBeforeIndicator = isDragOver && dragOverItem?.position === 'before';
                               const showAfterIndicator = isDragOver && dragOverItem?.position === 'after';
+                              const canMoveUp = itemIndex > 0;
+                              const canMoveDown = itemIndex < sectionItems.length - 1;
                               
                               return (
                                 <React.Fragment key={item.id}>
@@ -1695,18 +1773,58 @@ export default function ProductWizard({
                                     />
                                   )}
                                   <div
-                                    className="menu-preview-item"
-                                    draggable
+                                    className={`menu-preview-item${touchReorder ? ' menu-preview-item--touch' : ''}`}
+                                    draggable={!touchReorder}
                                     style={{
                                       opacity: isDragged ? 0.5 : 1,
-                                      cursor: 'move',
+                                      cursor: touchReorder ? 'default' : 'move',
                                       backgroundColor: isDragOver ? '#f0f8ff' : 'transparent',
                                     }}
-                                    onDragStart={(e) => handleDragStart(e, section.id, item.id)}
-                                    onDragEnd={handleDragEnd}
-                                    onDragOver={(e) => handleDragOverItem(e, section.id, item.id)}
-                                    onDrop={(e) => handleDrop(e, section.id, item.id)}
+                                    onDragStart={
+                                      touchReorder
+                                        ? undefined
+                                        : (e) => handleDragStart(e, section.id, item.id)
+                                    }
+                                    onDragEnd={touchReorder ? undefined : handleDragEnd}
+                                    onDragOver={
+                                      touchReorder
+                                        ? undefined
+                                        : (e) => handleDragOverItem(e, section.id, item.id)
+                                    }
+                                    onDrop={
+                                      touchReorder
+                                        ? undefined
+                                        : (e) => handleDrop(e, section.id, item.id)
+                                    }
                                   >
+                                    {touchReorder ? (
+                                      <div
+                                        className="menu-preview-item-reorder"
+                                        role="group"
+                                        aria-label={t('productWizard.manage.reorderHintMobile')}
+                                      >
+                                        <button
+                                          type="button"
+                                          className="menu-preview-item-move"
+                                          disabled={!canMoveUp}
+                                          onClick={() => moveMenuItemByOffset(section.id, item.id, -1)}
+                                          aria-label={t('productWizard.manage.moveUp', { name: item.name })}
+                                          title={t('productWizard.manage.moveUp', { name: item.name })}
+                                        >
+                                          ▲
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="menu-preview-item-move"
+                                          disabled={!canMoveDown}
+                                          onClick={() => moveMenuItemByOffset(section.id, item.id, 1)}
+                                          aria-label={t('productWizard.manage.moveDown', { name: item.name })}
+                                          title={t('productWizard.manage.moveDown', { name: item.name })}
+                                        >
+                                          ▼
+                                        </button>
+                                      </div>
+                                    ) : null}
                                     <div className="menu-preview-item-content">
                                       <div className="menu-preview-item-name">{item.name}</div>
                                       {item.description && (
@@ -1718,7 +1836,9 @@ export default function ProductWizard({
                                         </div>
                                       )}
                                     </div>
-                                    <div className="menu-preview-item-drag-handle">⋮⋮</div>
+                                    {!touchReorder ? (
+                                      <div className="menu-preview-item-drag-handle">⋮⋮</div>
+                                    ) : null}
                                   </div>
                                   {showAfterIndicator && (
                                     <div 
@@ -1744,19 +1864,25 @@ export default function ProductWizard({
                   {itemsBySection['no-section'] && itemsBySection['no-section'].length > 0 && (
                     <div 
                       className="menu-preview-section"
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, 'no-section')}
+                      onDragOver={touchReorder ? undefined : handleDragOver}
+                      onDrop={touchReorder ? undefined : (e) => handleDrop(e, 'no-section')}
                     >
                       <div className="menu-preview-section-header">
                         <h3 className="menu-preview-section-title">{t('productWizard.manage.noSection')}</h3>
                         <span className="menu-preview-section-count">{t('productWizard.manage.productCount', { count: itemsBySection['no-section'].length })}</span>
                       </div>
+                      {touchReorder && itemsBySection['no-section'].length > 1 ? (
+                        <p className="menu-preview-reorder-hint">{t('productWizard.manage.reorderHintMobile')}</p>
+                      ) : null}
                       <div className="menu-preview-section-items">
-                        {itemsBySection['no-section'].map((item: any) => {
+                        {itemsBySection['no-section'].map((item: any, itemIndex: number) => {
                           const isDragged = draggedItem?.itemId === item.id;
                           const isDragOver = dragOverItem?.itemId === item.id && dragOverItem?.sectionId === 'no-section';
                           const showBeforeIndicator = isDragOver && dragOverItem?.position === 'before';
                           const showAfterIndicator = isDragOver && dragOverItem?.position === 'after';
+                          const noSectionItems = itemsBySection['no-section'] || [];
+                          const canMoveUp = itemIndex > 0;
+                          const canMoveDown = itemIndex < noSectionItems.length - 1;
                           
                           return (
                             <React.Fragment key={item.id}>
@@ -1772,18 +1898,58 @@ export default function ProductWizard({
                                 />
                               )}
                               <div
-                                className="menu-preview-item"
-                                draggable
+                                className={`menu-preview-item${touchReorder ? ' menu-preview-item--touch' : ''}`}
+                                draggable={!touchReorder}
                                 style={{
                                   opacity: isDragged ? 0.5 : 1,
-                                  cursor: 'move',
+                                  cursor: touchReorder ? 'default' : 'move',
                                   backgroundColor: isDragOver ? '#f0f8ff' : 'transparent',
                                 }}
-                                onDragStart={(e) => handleDragStart(e, 'no-section', item.id)}
-                                onDragEnd={handleDragEnd}
-                                onDragOver={(e) => handleDragOverItem(e, 'no-section', item.id)}
-                                onDrop={(e) => handleDrop(e, 'no-section', item.id)}
+                                onDragStart={
+                                  touchReorder
+                                    ? undefined
+                                    : (e) => handleDragStart(e, 'no-section', item.id)
+                                }
+                                onDragEnd={touchReorder ? undefined : handleDragEnd}
+                                onDragOver={
+                                  touchReorder
+                                    ? undefined
+                                    : (e) => handleDragOverItem(e, 'no-section', item.id)
+                                }
+                                onDrop={
+                                  touchReorder
+                                    ? undefined
+                                    : (e) => handleDrop(e, 'no-section', item.id)
+                                }
                               >
+                                {touchReorder ? (
+                                  <div
+                                    className="menu-preview-item-reorder"
+                                    role="group"
+                                    aria-label={t('productWizard.manage.reorderHintMobile')}
+                                  >
+                                    <button
+                                      type="button"
+                                      className="menu-preview-item-move"
+                                      disabled={!canMoveUp}
+                                      onClick={() => moveMenuItemByOffset('no-section', item.id, -1)}
+                                      aria-label={t('productWizard.manage.moveUp', { name: item.name })}
+                                      title={t('productWizard.manage.moveUp', { name: item.name })}
+                                    >
+                                      ▲
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="menu-preview-item-move"
+                                      disabled={!canMoveDown}
+                                      onClick={() => moveMenuItemByOffset('no-section', item.id, 1)}
+                                      aria-label={t('productWizard.manage.moveDown', { name: item.name })}
+                                      title={t('productWizard.manage.moveDown', { name: item.name })}
+                                    >
+                                      ▼
+                                    </button>
+                                  </div>
+                                ) : null}
                                 <div className="menu-preview-item-content">
                                   <div className="menu-preview-item-name">{item.name}</div>
                                   {item.description && (
@@ -1795,7 +1961,9 @@ export default function ProductWizard({
                                     </div>
                                   )}
                                 </div>
-                                <div className="menu-preview-item-drag-handle">⋮⋮</div>
+                                {!touchReorder ? (
+                                  <div className="menu-preview-item-drag-handle">⋮⋮</div>
+                                ) : null}
                               </div>
                               {showAfterIndicator && (
                                 <div 
@@ -1890,6 +2058,13 @@ export default function ProductWizard({
                 </button>
               </>
             )}
+            <button
+              type="button"
+              className="admin-btn admin-btn-secondary"
+              onClick={handleGoToBusiness}
+            >
+              {t('productWizard.manage.goToBusiness')}
+            </button>
             {menuData?.status !== 'PUBLISHED' && onCancel && (
               <button 
                 type="button" 
@@ -2168,7 +2343,7 @@ export default function ProductWizard({
   // Wizard de creación de producto
   const totalSteps = 3;
   return (
-    <div className="restaurant-wizard">
+    <div className="restaurant-wizard restaurant-wizard-mobile">
       <div className="wizard-header">
         <h2 className="wizard-title">{t('productWizard.create.title')}</h2>
         <p className="wizard-subtitle">{t('productWizard.create.subtitle')}</p>
@@ -2210,61 +2385,64 @@ export default function ProductWizard({
               {/* Comercio + menú (filtrado); con un solo local el comercio no se muestra */}
               {(menus.length > 0 || showRestaurantPicker) && (
                 <div className="wizard-field wizard-field-large">
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '12px 16px',
-                      alignItems: 'flex-end',
-                    }}
-                  >
+                  <div className="admin-fancy-select-row">
                     {showRestaurantPicker && (
-                      <div style={{ flex: '1 1 200px', minWidth: 0 }}>
+                      <div className="admin-fancy-select-row__item">
                         <label className="wizard-label">{t('productWizard.form.restaurant')}</label>
-                        <select
-                          className="admin-form-control wizard-input-large"
+                        <AdminSelect
                           value={wizardRestaurantId}
-                          onChange={(e) => {
-                            const v = e.target.value;
+                          placeholder={t('productWizard.form.chooseRestaurant')}
+                          aria-label={t('productWizard.form.restaurant')}
+                          searchPlaceholder={t('productWizard.form.chooseRestaurant')}
+                          leadingIcon={<span aria-hidden>🏪</span>}
+                          options={[
+                            { value: '', label: t('productWizard.form.chooseRestaurant') },
+                            ...(restaurantsProp ?? []).map((r: any) => ({
+                              value: String(r.id),
+                              label: r.name,
+                            })),
+                          ]}
+                          onChange={(v) => {
                             setWizardRestaurantId(v);
                             setFormData((fd) => ({ ...fd, menuId: '', sectionIds: [] }));
                           }}
-                        >
-                          <option value="">{t('productWizard.form.chooseRestaurant')}</option>
-                          {(restaurantsProp ?? []).map((r: any) => (
-                            <option key={r.id} value={r.id}>
-                              {r.name}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </div>
                     )}
                     {menus.length > 0 && (
-                      <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+                      <div className="admin-fancy-select-row__item">
                         <label className="wizard-label">{t('productWizard.form.menuOptional')}</label>
-                        <select
-                          className="admin-form-control wizard-input-large"
+                        <AdminSelect
                           value={formData.menuId}
                           disabled={showRestaurantPicker && !wizardRestaurantId}
-                          onChange={(e) =>
+                          placeholder={
+                            showRestaurantPicker && !wizardRestaurantId
+                              ? t('productWizard.form.chooseRestaurantFirst')
+                              : t('productWizard.form.unassigned')
+                          }
+                          aria-label={t('productWizard.form.menuOptional')}
+                          leadingIcon={<span aria-hidden>📋</span>}
+                          options={[
+                            {
+                              value: '',
+                              label:
+                                showRestaurantPicker && !wizardRestaurantId
+                                  ? t('productWizard.form.chooseRestaurantFirst')
+                                  : t('productWizard.form.unassigned'),
+                            },
+                            ...filteredMenus.map((menu: any) => ({
+                              value: String(menu.id),
+                              label: menu.name,
+                            })),
+                          ]}
+                          onChange={(v) =>
                             setFormData((fd) => ({
                               ...fd,
-                              menuId: e.target.value,
+                              menuId: v,
                               sectionIds: [],
                             }))
                           }
-                        >
-                          <option value="">
-                            {showRestaurantPicker && !wizardRestaurantId
-                              ? t('productWizard.form.chooseRestaurantFirst')
-                              : t('productWizard.form.unassigned')}
-                          </option>
-                          {filteredMenus.map((menu: any) => (
-                            <option key={menu.id} value={menu.id}>
-                              {menu.name}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </div>
                     )}
                   </div>
@@ -2434,18 +2612,16 @@ export default function ProductWizard({
                       value={price.currency}
                       onChange={(e) => updatePrice(index, 'currency', e.target.value)}
                     >
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (€)</option>
-                      <option value="ARS">ARS ($)</option>
-                      <option value="MXN">MXN ($)</option>
-                      <option value="CLP">CLP ($)</option>
-                      <option value="COP">COP ($)</option>
-                      <option value="PEN">PEN (S/)</option>
-                      <option value="BRL">BRL (R$)</option>
-                      <option value="UYU">UYU ($)</option>
-                      <option value="PYG">PYG (₲)</option>
-                      <option value="BOB">BOB (Bs.)</option>
-                      <option value="VES">VES (Bs.)</option>
+                      {Array.from(
+                        new Set([
+                          ...availableCurrencies,
+                          ...(price.currency ? [String(price.currency).toUpperCase()] : []),
+                        ]),
+                      ).map((code) => (
+                        <option key={code} value={code}>
+                          {code}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="wizard-price-field">

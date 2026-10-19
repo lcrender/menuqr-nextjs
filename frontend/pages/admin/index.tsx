@@ -360,6 +360,34 @@ export default function Admin() {
     }
   };
 
+  const localFocusHandledRef = useRef<string | null>(null);
+
+  // Ir a la card de un local (?local=<restaurantId>), p. ej. desde gestión de productos del menú
+  useEffect(() => {
+    if (!router.isReady || loading || user?.role !== 'ADMIN') return;
+    const localId = typeof router.query.local === 'string' ? router.query.local.trim() : '';
+    if (!localId) {
+      localFocusHandledRef.current = null;
+      return;
+    }
+    if (!dashboardCards.length) return;
+    if (localFocusHandledRef.current === localId) return;
+    if (!dashboardCards.some((c) => String(c.restaurantId) === localId)) return;
+
+    localFocusHandledRef.current = localId;
+    const el = document.getElementById(`dashboard-local-${localId}`);
+    if (!el) return;
+
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('dashboard-restaurant-card--focus');
+    });
+    window.setTimeout(() => {
+      el.classList.remove('dashboard-restaurant-card--focus');
+    }, 2200);
+    router.replace('/admin', undefined, { shallow: true });
+  }, [router.isReady, router.query.local, loading, user?.role, dashboardCards]);
+
   const handleDownloadDashboardQR = (slug: string | null | undefined, qrId: string) => {
     if (!slug) return;
     const url = typeof window !== 'undefined' ? `${window.location.origin}/r/${slug}` : '';
@@ -786,7 +814,10 @@ export default function Admin() {
               const noProducts = (card.menusSummary ?? []).filter((m) => m.productCount === 0);
               return (
                 <div key={card.restaurantId} className="col-12">
-                  <div className="admin-card">
+                  <div
+                    id={`dashboard-local-${card.restaurantId}`}
+                    className="admin-card dashboard-restaurant-card"
+                  >
                     <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                       <h5 className="admin-card-title mb-0 dashboard-restaurant-card-title">{localName}</h5>
                       <span className="badge bg-secondary">{t('dashboardPage.restaurant.configPending')}</span>
@@ -859,7 +890,10 @@ export default function Admin() {
 
             return (
               <div key={card.restaurantId} className="col-12">
-                <div className="admin-card">
+                <div
+                  id={`dashboard-local-${card.restaurantId}`}
+                  className="admin-card dashboard-restaurant-card"
+                >
                   {card.restaurantIsActive === false && (
                     <div className="alert alert-warning mb-3 py-2" role="alert">
                       <Trans

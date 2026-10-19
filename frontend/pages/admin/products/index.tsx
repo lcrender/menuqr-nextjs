@@ -48,6 +48,24 @@ const DEFAULT_VISIBLE_COLUMNS: Record<ProductTableColumnKey, boolean> = {
 
 const PRODUCT_COLUMNS_STORAGE_KEY = 'admin-products-visible-columns-v1';
 
+const CURRENCY_CODES = ['USD', 'EUR', 'ARS', 'MXN', 'CLP', 'COP', 'PEN', 'BRL', 'UYU', 'PYG', 'BOB', 'VES'] as const;
+
+function parseAdditionalCurrencies(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .filter((c): c is string => typeof c === 'string' && c.trim() !== '')
+      .map((c) => c.trim().toUpperCase());
+  }
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      return parseAdditionalCurrencies(JSON.parse(raw));
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 function loadVisibleColumnsFromStorage(): Record<ProductTableColumnKey, boolean> {
   if (typeof window === 'undefined') return { ...DEFAULT_VISIBLE_COLUMNS };
   try {
@@ -1141,12 +1159,33 @@ export default function Products() {
     return section?.name || 'N/A';
   };
 
+  const getRestaurantForMenu = (menuId?: string) => {
+    if (!menuId) return null;
+    const menu = menus.find((m) => m.id === menuId);
+    if (!menu) return null;
+    return restaurants.find((r) => r.id === (menu.restaurantId || menu.restaurant_id)) || null;
+  };
+
   const getDefaultCurrency = (menuId?: string) => {
-    if (!menuId) return 'USD';
-    const menu = menus.find(m => m.id === menuId);
-    if (!menu) return 'USD';
-    const restaurant = restaurants.find(r => r.id === (menu.restaurantId || menu.restaurant_id));
+    const restaurant = getRestaurantForMenu(menuId);
     return restaurant?.defaultCurrency || 'USD';
+  };
+
+  /** Monedas configuradas en el comercio (principal + adicionales). Incluye la actual si es legacy. */
+  const getAvailableCurrencies = (menuId?: string, currentCurrency?: string) => {
+    const restaurant = getRestaurantForMenu(menuId);
+    const codes = new Set<string>();
+    if (restaurant) {
+      const def = String(restaurant.defaultCurrency || 'USD').trim().toUpperCase() || 'USD';
+      codes.add(def);
+      parseAdditionalCurrencies(restaurant.additionalCurrencies).forEach((c) => codes.add(c));
+    } else {
+      CURRENCY_CODES.forEach((c) => codes.add(c));
+    }
+    if (currentCurrency && currentCurrency.trim()) {
+      codes.add(currentCurrency.trim().toUpperCase());
+    }
+    return Array.from(codes);
   };
 
   const formatPrice = (price: any) => {
@@ -2311,14 +2350,19 @@ export default function Products() {
                           </div>
                         ) : null}
                         <div className="admin-product-price-fields">
-                          <input
-                            type="text"
-                            className="form-control admin-product-price-currency"
-                            placeholder={t('adminProducts.form.currencyPlaceholder')}
+                          <select
+                            className="form-select admin-product-price-currency"
                             value={price.currency}
                             onChange={(e) => updatePrice(index, 'currency', e.target.value)}
                             required
-                          />
+                            aria-label={t('adminProducts.form.currencyPlaceholder')}
+                          >
+                            {getAvailableCurrencies(formData.menuId, price.currency).map((code) => (
+                              <option key={code} value={code}>
+                                {code}
+                              </option>
+                            ))}
+                          </select>
                           <input
                             type="text"
                             className="form-control admin-product-price-label"

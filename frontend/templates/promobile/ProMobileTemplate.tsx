@@ -174,12 +174,12 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
           )}
           <div className="pro-mobile-item-prices">
             {item.prices.map((price, idx) => (
-              <span key={idx} className="pro-mobile-item-price">
-                {price.label && (
-                  <span className="pro-mobile-item-price-label">{price.label}:</span>
-                )}
-                {formatPrice(price)}
-              </span>
+              <div key={idx} className="pro-mobile-item-price">
+                {price.label ? (
+                  <span className="pro-mobile-item-price-label">{price.label}</span>
+                ) : null}
+                <span className="pro-mobile-item-price-value">{formatPrice(price)}</span>
+              </div>
             ))}
           </div>
         </div>

@@ -287,7 +287,9 @@
   box-sizing: border-box;
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
+  /* Solo recortar horizontalmente: varios precios deben poder crecer en altura */
+  overflow-x: hidden;
+  overflow-y: visible;
   border-bottom: 1px solid var(--pro-mobile-border, #eee);
 }
 
@@ -329,13 +331,27 @@
 .template-pro-mobile .pro-mobile-item-prices {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 2px;
+  min-width: 0;
+  width: 100%;
 }
 
 .template-pro-mobile .pro-mobile-item-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
+  max-width: 100%;
+  min-width: 0;
   font-size: calc(0.82rem * var(--tpl-scale-price, 1));
   font-weight: 700;
   color: var(--primary-color, #1a1a2e);
+  line-height: 1.35;
+}
+
+.template-pro-mobile .pro-mobile-item-price-value {
   white-space: nowrap;
 }
 
@@ -347,7 +363,12 @@
   font-size: calc(0.68rem * var(--tpl-scale-price, 1));
   color: var(--pro-mobile-price-label, #888);
   font-weight: 400;
-  margin-right: 3px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.template-pro-mobile .pro-mobile-item-price-label::after {
+  content: ':';
 }
 
 .template-pro-mobile .pro-mobile-item-row.no-photo {
@@ -361,7 +382,8 @@
   margin: 0;
   padding: 0;
   max-width: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .template-pro-mobile .pro-mobile-item-row--featured {
@@ -395,7 +417,9 @@
 
 .template-pro-mobile .pro-mobile-item-main {
   min-width: 0;
-  overflow: hidden;
+  min-height: min-content;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .template-pro-mobile .pro-mobile-item-photo {

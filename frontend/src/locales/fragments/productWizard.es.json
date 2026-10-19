@@ -56,7 +56,12 @@
     "publishMenu": "📢 Publicar Menú",
     "menuPublished": "✓ Menú publicado",
     "unpublishing": "Despublicando...",
-    "unpublishMenu": "Despublicar menú"
+    "unpublishMenu": "Despublicar menú",
+    "goToBusiness": "Ficha del comercio",
+    "goToBusinessMissing": "No se pudo identificar el comercio de este menú.",
+    "moveUp": "Subir {{name}}",
+    "moveDown": "Bajar {{name}}",
+    "reorderHintMobile": "Usá las flechas para cambiar el orden de los productos."
   },
   "unpublishModal": {
     "title": "Despublicar Menú",
@@ -103,7 +108,7 @@
     "menuOptional": "Menú (opcional)",
     "chooseRestaurantFirst": "Elegí un comercio primero",
     "unassigned": "Sin asignar (producto independiente)",
-    "menuHelp": "Podés crear el producto sin menú y asignarlo después. Los menús se filtran por el local elegido.",
+    "menuHelp": "Podés crear el producto sin menú y asignarlo después. Los menús se filtran por el local elegido. No se verá en la carta hasta que lo asignes a un menú.",
     "menuSections": "Secciones del menú",
     "loadingSections": "(cargando...)",
     "noSectionsWarning": "⚠️ Este menú no tiene secciones. El producto se guardará pero no se mostrará hasta que agregues secciones al menú y lo asignes.",

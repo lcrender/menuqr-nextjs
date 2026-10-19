@@ -255,7 +255,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </span>
           </button>
           <span className="admin-mobile-topbar-brand">
-            <LandingBrandMark compact iconSize={28} textSize="0.75rem" />
+            <LandingBrandMark compact iconSize={44} textSize="1.15rem" />
           </span>
         </header>
 

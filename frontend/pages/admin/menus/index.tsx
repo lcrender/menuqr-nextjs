@@ -1279,13 +1279,13 @@ export default function Menus() {
 
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-lg" style={{ maxWidth: '800px' }}>
+          <div className="modal-dialog modal-lg admin-menus-edit-modal" style={{ maxWidth: '800px' }}>
             <div className="modal-content" style={{ 
               borderRadius: '20px', 
               border: 'none',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)'
             }}>
-              <div className="modal-header" style={{ 
+              <div className="modal-header admin-menus-edit-modal-header" style={{ 
                 borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
                 padding: '32px 40px 24px 40px',
                 background: 'transparent'
@@ -1319,7 +1319,7 @@ export default function Menus() {
               </div>
               
               {/* Tabs - Mostrar siempre, pero secciones solo funciona si el menú tiene ID */}
-              <ul className="nav nav-tabs" style={{ 
+              <ul className="nav nav-tabs admin-menus-edit-modal-tabs" style={{ 
                 padding: '0 40px', 
                 borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
                 background: 'transparent',
@@ -1388,7 +1388,7 @@ export default function Menus() {
                   const shouldClose = target?.getAttribute('data-close-after-save') === 'true';
                   handleSubmit(e, shouldClose);
                 }}>
-                  <div className="modal-body" style={{ padding: '40px' }}>
+                  <div className="modal-body admin-menus-edit-modal-body" style={{ padding: '40px' }}>
                     <div className="wizard-step-centered">
                       <div className="wizard-fields-container">
                         <div className="wizard-field-large">
@@ -1434,7 +1434,7 @@ export default function Menus() {
                       </div>
                     </div>
                   </div>
-                  <div className="modal-footer" style={{ 
+                  <div className="modal-footer admin-menus-edit-modal-footer" style={{ 
                     borderTop: '1px solid rgba(226, 232, 240, 0.8)',
                     padding: '24px 40px 32px 40px',
                     background: 'transparent',
@@ -1503,7 +1503,7 @@ export default function Menus() {
                 </div>
                 </form>
               ) : (
-                <div className="modal-body" style={{ padding: '40px' }}>
+                <div className="modal-body admin-menus-edit-modal-body" style={{ padding: '40px' }}>
                   {!editing || !editing.id ? (
                     <div className="alert alert-info" style={{
                       padding: '20px',

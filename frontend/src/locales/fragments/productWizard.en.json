@@ -56,7 +56,12 @@
     "publishMenu": "📢 Publish Menu",
     "menuPublished": "✓ Menu published",
     "unpublishing": "Unpublishing...",
-    "unpublishMenu": "Unpublish menu"
+    "unpublishMenu": "Unpublish menu",
+    "goToBusiness": "Business profile",
+    "goToBusinessMissing": "Could not identify the business for this menu.",
+    "moveUp": "Move {{name}} up",
+    "moveDown": "Move {{name}} down",
+    "reorderHintMobile": "Use the arrows to change the product order."
   },
   "unpublishModal": {
     "title": "Unpublish Menu",
@@ -103,7 +108,7 @@
     "menuOptional": "Menu (optional)",
     "chooseRestaurantFirst": "Choose a business first",
     "unassigned": "Unassigned (standalone product)",
-    "menuHelp": "You can create the product without a menu and assign it later. Menus are filtered by the selected location.",
+    "menuHelp": "You can create the product without a menu and assign it later. Menus are filtered by the selected location. It will not appear on the menu until you assign it to one.",
     "menuSections": "Menu sections",
     "loadingSections": "(loading...)",
     "noSectionsWarning": "⚠️ This menu has no sections. The product will be saved but will not appear until you add sections to the menu and assign it.",
