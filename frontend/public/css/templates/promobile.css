@@ -488,3 +488,38 @@
 .preview-phone-live .template-night-club .pro-mobile-title {
   font-size: calc(1.45rem * var(--nc-scale-name, 1)) !important;
 }
+
+/* Footer: una columna en móvil / mockup */
+@media (max-width: 767.98px) {
+  .template-pro-mobile .footer .row > [class*='col-'] {
+    flex: 0 0 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .template-pro-mobile .footer .row > [class*='col-'] + [class*='col-'] {
+    margin-top: 1.25rem;
+  }
+}
+
+.preview-phone-live .template-pro-mobile .footer .row > [class*='col-'] {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.preview-phone-live .template-pro-mobile .footer .row > [class*='col-'] + [class*='col-'] {
+  margin-top: 1.25rem;
+}
+
+@container pro-mobile-menu (max-width: 767px) {
+  .template-pro-mobile .footer .row > [class*='col-'] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .template-pro-mobile .footer .row > [class*='col-'] + [class*='col-'] {
+    margin-top: 1.25rem;
+  }
+}

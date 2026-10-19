@@ -86,7 +86,12 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
   type MenuItem = NonNullable<ClassicTemplateProps['selectedMenu']>['sections'][number]['items'][number];
 
   const renderMenuItem = (item: MenuItem, featured: boolean) => (
-    <div key={item.id} className={`template-classic menu-item${featured ? ' classic-menu-item--featured' : ''}`}>
+    <div
+      key={item.id}
+      className={`template-classic menu-item${featured ? ' classic-menu-item--featured' : ''}`}
+      data-ve-hit="product"
+      data-item-id={item.id}
+    >
       <div className="classic-menu-item-inner">
         <div style={{ flex: 1, minWidth: '250px' }}>
           {featured ? <p className="tpl-featured-label">{recommendedLabel}</p> : null}
@@ -269,6 +274,8 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
                       key={section.id}
                       href={`#section-${section.id}`}
                       className="classic-section-nav-link"
+                      data-ve-hit="section"
+                      data-section-id={section.id}
                     >
                       {section.name}
                     </a>
@@ -281,9 +288,11 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
             {selectedMenu.sections.map((section) => {
               const { featuredItems, regularItems } = splitHighlightedItems(section.items);
               return (
-              <div key={section.id} id={`section-${section.id}`} className="template-classic menu-section" style={{ scrollMarginTop: '80px' }}>
+              <div key={section.id} id={`section-${section.id}`} className="template-classic menu-section" data-ve-hit="section" data-section-id={section.id} style={{ scrollMarginTop: '80px' }}>
                 <h2
                   className="template-classic menu-section-title"
+                  data-ve-hit="section"
+                  data-section-id={section.id}
                   style={{ fontSize: sectionTitleFontSize }}
                 >
                   {section.name}
@@ -304,7 +313,7 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({
       </div>
 
       {/* Footer */}
-      <footer className="template-classic footer mt-5" style={{ padding: '40px 40px', color: 'white', marginTop: 'auto', width: '100%' }}>
+      <footer className="template-classic footer mt-5" data-ve-hit="footer" style={{ padding: '40px 40px', color: 'white', marginTop: 'auto', width: '100%' }}>
         <div style={{ width: '100%', maxWidth: '100%' }}>
           <div className="row">
             <div className="col-md-6">

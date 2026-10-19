@@ -327,6 +327,8 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
                       key={section.id}
                       href={`#section-${section.id}`}
                       className="section-nav-link"
+                      data-ve-hit="section"
+                      data-section-id={section.id}
                       style={{
                         width: 'auto',
                         height: 'auto',
@@ -356,7 +358,11 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
             {selectedMenu.sections.map((section) => {
               const { featuredItems, regularItems } = splitHighlightedItems(section.items);
               const renderFoodieCard = (item: (typeof section.items)[number], featured: boolean) => (
-                <div className={`template-foodie menu-item-card${featured ? ' tpl-featured-card' : ''}`} style={{
+                <div
+                  className={`template-foodie menu-item-card${featured ? ' tpl-featured-card' : ''}`}
+                  data-ve-hit="product"
+                  data-item-id={item.id}
+                  style={{
                   background: 'white',
                   borderRadius: 0,
                   overflow: 'hidden',
@@ -465,8 +471,8 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
               );
 
               return (
-              <div key={section.id} id={`section-${section.id}`} style={{ scrollMarginTop: '100px', marginBottom: '80px' }}>
-                <h2 className="template-foodie menu-section-title" style={{
+              <div key={section.id} id={`section-${section.id}`} data-ve-hit="section" data-section-id={section.id} style={{ scrollMarginTop: '100px', marginBottom: '80px' }}>
+                <h2 className="template-foodie menu-section-title" data-ve-hit="section" data-section-id={section.id} style={{
                   fontWeight: '600',
                   marginBottom: '40px',
                   paddingBottom: '15px',
@@ -498,7 +504,7 @@ const FoodieTemplate: React.FC<FoodieTemplateProps> = ({
       </div>
 
       {/* Footer */}
-      <footer className="template-foodie footer mt-5 foodie-content-wrap" style={{ padding: '50px 16px', color: 'white', marginTop: '80px', width: '100%' }}>
+      <footer className="template-foodie footer mt-5 foodie-content-wrap" data-ve-hit="footer" style={{ padding: '50px 16px', color: 'white', marginTop: '80px', width: '100%' }}>
         <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
           <div className="row">
             <div className="col-md-6">

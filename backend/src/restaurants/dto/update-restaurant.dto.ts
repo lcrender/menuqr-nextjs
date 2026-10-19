@@ -66,6 +66,7 @@ export class UpdateRestaurantDto {
   whatsapp?: string;
 
   @ApiProperty({ description: 'Email del comercio', required: false })
+  @ValidateIf((o) => o.email != null && String(o.email).trim() !== '')
   @IsEmail()
   @IsOptional()
   email?: string;

@@ -13,6 +13,7 @@ export type VisualHit =
   | 'description'
   | 'cover'
   | 'logo'
+  | 'footer'
   | 'section'
   | 'product'
   | 'price';
@@ -93,6 +94,8 @@ export function focusForHit(
     case 'logo':
       if (has('showLogo')) return { group: 'header', optionId: 'showLogo' };
       return { group: 'header' };
+    case 'footer':
+      return { group: 'elements' };
     case 'section':
       if (has('sectionTabFontSize')) return { group: 'typography', optionId: 'sectionTabFontSize' };
       if (has('sectionTitleFontSize')) return { group: 'typography', optionId: 'sectionTitleFontSize' };
@@ -124,6 +127,7 @@ function hitFromDataAttr(el: Element): VisualHit | null {
     raw === 'description' ||
     raw === 'cover' ||
     raw === 'logo' ||
+    raw === 'footer' ||
     raw === 'section' ||
     raw === 'product' ||
     raw === 'price'
@@ -157,6 +161,28 @@ export function hitTestVeAttrAtPoint(
   return null;
 }
 
+/** ID de producto más cercano (data-item-id en la tarjeta). */
+export function findClosestItemId(start: Element | null, boundary: Element): string | null {
+  let el: Element | null = start;
+  while (el && el !== boundary) {
+    const id = el.getAttribute('data-item-id');
+    if (id) return id;
+    el = el.parentElement;
+  }
+  return null;
+}
+
+/** ID de categoría más cercano (data-section-id en tab, título o bloque). */
+export function findClosestSectionId(start: Element | null, boundary: Element): string | null {
+  let el: Element | null = start;
+  while (el && el !== boundary) {
+    const id = el.getAttribute('data-section-id');
+    if (id) return id;
+    el = el.parentElement;
+  }
+  return null;
+}
+
 /** Sube por el DOM del menú real y reconoce el elemento de diseño tocado. */
 export function detectVisualHit(
   start: Element | null,
@@ -164,6 +190,10 @@ export function detectVisualHit(
 ): { hit: VisualHit; element: Element } | null {
   let el: Element | null = start;
   while (el && el !== boundary) {
+    // Cualquier clic dentro de una tarjeta de producto (incl. precio/foto).
+    if (el.getAttribute('data-item-id')) {
+      return { hit: 'product', element: el };
+    }
     const dataHit = hitFromDataAttr(el);
     if (dataHit) return { hit: dataHit, element: el };
 
@@ -203,6 +233,9 @@ export function detectVisualHit(
       cls.includes('item-desc')
     ) {
       return { hit: 'product', element: el };
+    }
+    if (cls.includes('footer') || el.tagName === 'FOOTER') {
+      return { hit: 'footer', element: el };
     }
     // Nombre antes que cover: clases tipo "name-on-cover" no deben abrir la portada.
     if (

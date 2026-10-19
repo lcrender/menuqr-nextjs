@@ -104,7 +104,12 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
   const renderBeachBarProduct = (item: (typeof visibleItems)[number], featured: boolean) => {
     const photo = showProductImages && item.photos?.[0] ? item.photos[0] : null;
     return (
-      <article key={item.id} className={`beachbar-product-card${featured ? ' tpl-featured-card' : ''}`}>
+      <article
+        key={item.id}
+        className={`beachbar-product-card${featured ? ' tpl-featured-card' : ''}`}
+        data-ve-hit="product"
+        data-item-id={item.id}
+      >
         {photo ? (
           <div className="beachbar-product-photo-wrap">
             <OptimizedPicture
@@ -251,6 +256,8 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
                   key={section.id}
                   type="button"
                   className={`beachbar-tab ${activeSectionId === section.id ? 'active' : 'inactive'}`}
+                  data-ve-hit="section"
+                  data-section-id={section.id}
                   onClick={() => setActiveSectionId(section.id)}
                   aria-pressed={activeSectionId === section.id}
                 >
@@ -295,7 +302,7 @@ const BeachBarTemplate: React.FC<BeachBarTemplateProps> = ({
           </div>
         ) : null}
 
-        <footer className="beachbar-glass beachbar-footer">
+        <footer className="beachbar-glass beachbar-footer" data-ve-hit="footer">
           <div className="beachbar-footer-grid">
             <div>
               {restaurant.address ? <div>{restaurant.address}</div> : null}

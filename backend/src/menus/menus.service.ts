@@ -8,6 +8,7 @@ import {
   normalizeMenuSchedule,
   planAllowsMenuSchedule,
 } from '../common/menu-schedule.util';
+import { PublicResponseCacheService } from '../public/public-response-cache.service';
 
 @Injectable()
 export class MenusService {
@@ -18,7 +19,12 @@ export class MenusService {
     private readonly qrService: QRService,
     private readonly planLimits: PlanLimitsService,
     private readonly i18nService: I18nService,
+    private readonly publicResponseCache: PublicResponseCacheService,
   ) {}
+
+  private async bustPublicCache() {
+    await this.publicResponseCache.invalidatePublicResponses();
+  }
 
   async findAll(tenantId: string | null, restaurantId?: string, menuName?: string): Promise<any[]> {
     let query = `
@@ -546,7 +552,9 @@ export class MenusService {
       });
     }
 
-    return this.findById(id, tenantId);
+    const updated = await this.findById(id, tenantId);
+    await this.bustPublicCache();
+    return updated;
   }
 
   async publish(id: string, tenantId: string) {
@@ -562,12 +570,15 @@ export class MenusService {
         // No fallar la publicación si falla la generación de QR
       }
     }
-    
+
+    await this.bustPublicCache();
     return menu;
   }
 
   async unpublish(id: string, tenantId: string) {
-    return this.update(id, tenantId, { status: 'DRAFT' });
+    const menu = await this.update(id, tenantId, { status: 'DRAFT' });
+    await this.bustPublicCache();
+    return menu;
   }
 
   async delete(id: string, tenantId: string) {

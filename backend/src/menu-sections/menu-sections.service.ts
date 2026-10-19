@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { PostgresService } from '../common/database/postgres.service';
 import { I18nService } from '../common/i18n/i18n.service';
 import { assertMenuAccessible } from '../common/menu-tenant-sync';
+import { PublicResponseCacheService } from '../public/public-response-cache.service';
 
 @Injectable()
 export class MenuSectionsService {
@@ -10,7 +11,12 @@ export class MenuSectionsService {
   constructor(
     private readonly postgres: PostgresService,
     private readonly i18nService: I18nService,
+    private readonly publicResponseCache: PublicResponseCacheService,
   ) {}
+
+  private async bustPublicCache() {
+    await this.publicResponseCache.invalidatePublicResponses();
+  }
 
   async findAll(tenantId: string, menuId: string) {
     await assertMenuAccessible(this.postgres, menuId, tenantId);
@@ -111,7 +117,9 @@ export class MenuSectionsService {
       { sourceLocale },
     );
 
-    return this.findById(id, tenantId);
+    const created = await this.findById(id, tenantId);
+    await this.bustPublicCache();
+    return created;
   }
 
   async update(id: string, tenantId: string, data: {
@@ -163,7 +171,9 @@ export class MenuSectionsService {
       );
     }
 
-    return this.findById(id, tenantId);
+    const updated = await this.findById(id, tenantId);
+    await this.bustPublicCache();
+    return updated;
   }
 
   async delete(id: string, tenantId: string) {
@@ -174,6 +184,7 @@ export class MenuSectionsService {
       [id, tenantId]
     );
 
+    await this.bustPublicCache();
     return { message: 'Sección eliminada exitosamente' };
   }
 }

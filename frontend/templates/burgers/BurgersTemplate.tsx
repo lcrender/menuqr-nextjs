@@ -390,6 +390,8 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                       key={section.id}
                       href={`#section-${section.id}`}
                       className="section-nav-link"
+                      data-ve-hit="section"
+                      data-section-id={section.id}
                       style={{ 
                         borderRadius: '50px',
                         background: secondaryColor,
@@ -417,7 +419,11 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
             {selectedMenu.sections.map((section) => {
               const { featuredItems, regularItems } = splitHighlightedItems(section.items);
               const renderBurgerCard = (item: (typeof section.items)[number], featured: boolean) => (
-                <div className={`template-burgers menu-item-card${featured ? ' tpl-featured-card' : ''}`} style={{
+                <div
+                  className={`template-burgers menu-item-card${featured ? ' tpl-featured-card' : ''}`}
+                  data-ve-hit="product"
+                  data-item-id={item.id}
+                  style={{
                   background: 'white',
                   borderRadius: '16px',
                   overflow: 'hidden',
@@ -551,7 +557,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
               );
 
               return (
-              <div key={section.id} id={`section-${section.id}`} style={{ scrollMarginTop: '100px', marginBottom: '40px', position: 'relative' }}>
+              <div key={section.id} id={`section-${section.id}`} data-ve-hit="section" data-section-id={section.id} style={{ scrollMarginTop: '100px', marginBottom: '40px', position: 'relative' }}>
                 <div style={{
                   position: 'absolute',
                   top: '-10px',
@@ -565,6 +571,8 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
                 </div>
                 <h2
                   className="template-burgers menu-section-title"
+                  data-ve-hit="section"
+                  data-section-id={section.id}
                   style={{
                     fontWeight: '800',
                     borderBottom: `4px solid ${primaryColor}`,
@@ -598,6 +606,7 @@ const BurgersTemplate: React.FC<BurgersTemplateProps> = ({
       {/* Footer */}
       <footer
         className="template-burgers footer"
+        data-ve-hit="footer"
         style={{
           padding: '28px 28px 16px',
           color: 'white',

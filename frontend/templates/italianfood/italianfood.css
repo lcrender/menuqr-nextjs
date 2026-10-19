@@ -326,6 +326,41 @@
   border-image: repeating-linear-gradient(90deg, #009246 0px, #009246 12px, #FFFFFF 12px, #FFFFFF 24px, #CE2B37 24px, #CE2B37 36px) 1;
 }
 
+/* Footer: una columna en móvil / mockup */
+@media (max-width: 767.98px) {
+  .template-italianfood .footer .row > [class*='col-'] {
+    flex: 0 0 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .template-italianfood .footer .row > [class*='col-'] + [class*='col-'] {
+    margin-top: 1.25rem;
+  }
+}
+
+.preview-phone-live .template-italianfood .footer .row > [class*='col-'] {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.preview-phone-live .template-italianfood .footer .row > [class*='col-'] + [class*='col-'] {
+  margin-top: 1.25rem;
+}
+
+@container italian-menu (max-width: 767px) {
+  .template-italianfood .footer .row > [class*='col-'] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .template-italianfood .footer .row > [class*='col-'] + [class*='col-'] {
+    margin-top: 1.25rem;
+  }
+}
+
 .template-italianfood .footer::before {
   content: '';
   position: absolute;

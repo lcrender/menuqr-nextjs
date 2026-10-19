@@ -312,6 +312,8 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
                   key={section.id}
                   href={`#section-${section.id}`}
                   className="section-nav-link"
+                  data-ve-hit="section"
+                  data-section-id={section.id}
                   style={{ 
                     borderRadius: '8px',
                     background: 'transparent',
@@ -343,7 +345,11 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
             {selectedMenu.sections.map((section) => {
               const { featuredItems, regularItems } = splitHighlightedItems(section.items);
               const renderItalianCard = (item: (typeof section.items)[number], featured: boolean) => (
-                <div className={`template-italianfood menu-item-card${featured ? ' tpl-featured-card' : ''}`} style={{
+                <div
+                  className={`template-italianfood menu-item-card${featured ? ' tpl-featured-card' : ''}`}
+                  data-ve-hit="product"
+                  data-item-id={item.id}
+                  style={{
                   background: 'white',
                   borderRadius: '8px',
                   overflow: 'hidden',
@@ -476,8 +482,8 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
               );
 
               return (
-              <div key={section.id} id={`section-${section.id}`} className="template-italianfood menu-section" style={{ scrollMarginTop: '60px', marginBottom: '48px', paddingTop: '30px', paddingBottom: '30px', paddingLeft: '20px', paddingRight: '20px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
-                <h2 className="template-italianfood menu-section-title" style={{
+              <div key={section.id} id={`section-${section.id}`} className="template-italianfood menu-section" data-ve-hit="section" data-section-id={section.id} style={{ scrollMarginTop: '60px', marginBottom: '48px', paddingTop: '30px', paddingBottom: '30px', paddingLeft: '20px', paddingRight: '20px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
+                <h2 className="template-italianfood menu-section-title" data-ve-hit="section" data-section-id={section.id} style={{
                   fontWeight: '700',
                   marginBottom: '32px',
                   marginTop: 0,
@@ -517,7 +523,7 @@ const ItalianFoodTemplate: React.FC<ItalianFoodTemplateProps> = ({
         )}
 
         {/* Footer */}
-        <footer className="template-italianfood footer mt-5" style={{ 
+        <footer className="template-italianfood footer mt-5" data-ve-hit="footer" style={{ 
           padding: '24px 20px', 
           color: '#000000', 
           backgroundColor: '#fafafa',

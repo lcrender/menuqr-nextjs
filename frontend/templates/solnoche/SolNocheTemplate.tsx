@@ -422,6 +422,8 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
                   key={section.id}
                   type="button"
                   className={`sol-noche-section-btn${section.id === activeSectionId ? ' active' : ''}`}
+                  data-ve-hit="section"
+                  data-section-id={section.id}
                   onClick={() => setActiveSectionId(section.id)}
                 >
                   {section.name}
@@ -442,7 +444,12 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
                     {featuredItems.map((item) => {
                       const photo = showProductImages && item.photos?.[0] ? item.photos[0] : null;
                       return (
-                        <article key={item.id} className={`sol-noche-featured-card${photo ? '' : ' no-photo'}`}>
+                        <article
+                          key={item.id}
+                          className={`sol-noche-featured-card${photo ? '' : ' no-photo'}`}
+                          data-ve-hit="product"
+                          data-item-id={item.id}
+                        >
                           {photo ? (
                             <div className="sol-noche-featured-photo-wrap">
                               <OptimizedPicture
@@ -477,6 +484,8 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
                         <article
                           key={item.id}
                           className={`sol-noche-regular-card${imageRight ? ' image-right' : ' image-left'}${photo ? '' : ' no-photo'}`}
+                          data-ve-hit="product"
+                          data-item-id={item.id}
                         >
                           {photo ? (
                             <div className="sol-noche-regular-photo-wrap">
@@ -508,7 +517,7 @@ const SolNocheTemplate: React.FC<SolNocheTemplateProps> = ({
           <p className="sol-noche-empty">No hay productos en este menú.</p>
         )}
 
-        <footer className="sol-noche-footer">
+        <footer className="sol-noche-footer" data-ve-hit="footer">
           <div className="sol-noche-footer-grid">
             <div>
               {restaurant.address ? <div>{restaurant.address}</div> : null}

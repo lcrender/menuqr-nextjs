@@ -162,3 +162,38 @@
 .preview-phone-live .template-gourmet .gourmet-restaurant-description {
   text-align: center !important;
 }
+
+/* Footer: una columna en móvil / mockup */
+@media (max-width: 767.98px) {
+  .template-gourmet .footer .row > [class*='col-'] {
+    flex: 0 0 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .template-gourmet .footer .row > [class*='col-'] + [class*='col-'] {
+    margin-top: 1.25rem;
+  }
+}
+
+.preview-phone-live .template-gourmet .footer .row > [class*='col-'] {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.preview-phone-live .template-gourmet .footer .row > [class*='col-'] + [class*='col-'] {
+  margin-top: 1.25rem;
+}
+
+@container gourmet-menu (max-width: 767px) {
+  .template-gourmet .footer .row > [class*='col-'] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .template-gourmet .footer .row > [class*='col-'] + [class*='col-'] {
+    margin-top: 1.25rem;
+  }
+}

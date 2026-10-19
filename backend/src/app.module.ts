@@ -14,6 +14,7 @@ import { MenusModule } from './menus/menus.module';
 import { MenuItemsModule } from './menu-items/menu-items.module';
 import { MenuSectionsModule } from './menu-sections/menu-sections.module';
 import { PublicModule } from './public/public.module';
+import { PublicResponseCacheModule } from './public/public-response-cache.module';
 import { MediaModule } from './media/media.module';
 import { QRModule } from './qr/qr.module';
 import { MetricsModule } from './metrics/metrics.module';
@@ -97,6 +98,7 @@ import { PlanLimitsModule } from './common/plan-limits/plan-limits.module';
     // ========================================
     // MÓDULOS DE LA APLICACIÓN
     // ========================================
+    PublicResponseCacheModule,
     AuthModule,
     UsersModule,
     TenantsModule,

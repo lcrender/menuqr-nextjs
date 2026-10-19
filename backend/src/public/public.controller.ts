@@ -14,7 +14,7 @@ export class PublicController {
 
   @Get('restaurants/:slug')
   @Public()
-  @CacheTTL(300) // Cache por 5 minutos
+  @CacheTTL(60_000) // 60s; se invalida al mutar menús/productos
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener comercio público por slug (cacheable)' })
   @ApiParam({ name: 'slug', description: 'Slug del comercio' })
@@ -36,7 +36,7 @@ export class PublicController {
 
   @Get('restaurants/:restaurantSlug/menus/:menuSlug')
   @Public()
-  @CacheTTL(300) // Cache por 5 minutos
+  @CacheTTL(60_000) // 60s; se invalida al mutar menús/productos
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener menú público por slug (cacheable)' })
   @ApiParam({ name: 'restaurantSlug', description: 'Slug del comercio' })
@@ -60,7 +60,7 @@ export class PublicController {
 
   @Get('menus/:id')
   @Public()
-  @CacheTTL(300) // Cache por 5 minutos
+  @CacheTTL(60_000) // 60s; se invalida al mutar menús/productos
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener menú público por ID (cacheable, deprecated - usar slug)' })
   @ApiParam({ name: 'id', description: 'ID del menú' })

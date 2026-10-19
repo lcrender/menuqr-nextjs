@@ -267,6 +267,8 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
                 key={section.id}
                 type="button"
                 className={`smartfood-section-btn ${activeSectionId === section.id ? 'active' : 'inactive'}`}
+                data-ve-hit="section"
+                data-section-id={section.id}
                 onClick={() => scrollToSection(section.id)}
               >
                 {section.name}
@@ -323,7 +325,12 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
               filteredSections.map((section) => {
                 const { featuredItems, regularItems } = splitHighlightedItems(section.items);
                 const renderSmartFoodItem = (item: (typeof section.items)[number], featured: boolean) => (
-                  <article key={item.id} className={`smartfood-item-card${featured ? ' tpl-featured-card' : ''}`}>
+                  <article
+                    key={item.id}
+                    className={`smartfood-item-card${featured ? ' tpl-featured-card' : ''}`}
+                    data-ve-hit="product"
+                    data-item-id={item.id}
+                  >
                     <div className="smartfood-item-main">
                       {featured ? <p className="tpl-featured-label">{recommendedLabel}</p> : null}
                       <div className="smartfood-item-name">{item.name}</div>
@@ -351,8 +358,8 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
                 );
 
                 return (
-                <div key={section.id}>
-                  <h2 id={`smartfood-section-${section.id}`} className="smartfood-section-heading">
+                <div key={section.id} data-ve-hit="section" data-section-id={section.id}>
+                  <h2 id={`smartfood-section-${section.id}`} className="smartfood-section-heading" data-ve-hit="section" data-section-id={section.id}>
                     {section.name}
                   </h2>
                   <div className="smartfood-section-items">
@@ -371,7 +378,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
         ) : null}
       </div>
 
-      <footer className="template-smartfood footer mt-5" style={{ padding: '40px 24px', width: '100%' }}>
+      <footer className="template-smartfood footer mt-5" data-ve-hit="footer" style={{ padding: '40px 24px', width: '100%' }}>
         <div style={{ width: '100%', maxWidth: '720px', margin: '0 auto' }}>
           <div className="row">
             <div className="col-md-6">

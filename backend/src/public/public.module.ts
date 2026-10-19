@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { CacheModule } from '@nestjs/cache-manager';
 import { PublicController } from './public.controller';
 import { PublicService } from './public.service';
 import { DatabaseModule } from '../common/database/database.module';
@@ -8,6 +7,7 @@ import { PlanLimitsModule } from '../common/plan-limits/plan-limits.module';
 import { EmailModule } from '../common/email/email.module';
 import { RecaptchaModule } from '../common/recaptcha/recaptcha.module';
 
+// La caché de respuestas GET /public/* vive en PublicResponseCacheModule (global, AppModule).
 @Module({
   imports: [
     DatabaseModule,
@@ -15,7 +15,6 @@ import { RecaptchaModule } from '../common/recaptcha/recaptcha.module';
     PlanLimitsModule,
     EmailModule,
     RecaptchaModule,
-    CacheModule.register(),
   ],
   controllers: [PublicController],
   providers: [PublicService],

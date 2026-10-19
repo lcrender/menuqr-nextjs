@@ -292,6 +292,8 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
                       key={section.id}
                       href={`#section-${section.id}`}
                       className="section-nav-link"
+                      data-ve-hit="section"
+                      data-section-id={section.id}
                       style={{
                         borderRadius: '6px',
                         background: 'transparent',
@@ -318,6 +320,8 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
               const renderGourmetCard = (item: (typeof section.items)[number], featured: boolean) => (
                 <div
                   className={`template-gourmet menu-item-card${featured ? ' tpl-featured-card' : ''}`}
+                  data-ve-hit="product"
+                  data-item-id={item.id}
                   style={{
                     background: 'white',
                     borderRadius: '12px',
@@ -389,9 +393,11 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
               );
 
               return (
-              <div key={section.id} id={`section-${section.id}`} style={{ scrollMarginTop: '100px', marginBottom: '80px' }}>
+              <div key={section.id} id={`section-${section.id}`} data-ve-hit="section" data-section-id={section.id} style={{ scrollMarginTop: '100px', marginBottom: '80px' }}>
                 <h2
                   className="template-gourmet menu-section-title"
+                  data-ve-hit="section"
+                  data-section-id={section.id}
                   style={{
                     fontWeight: '600',
                     marginBottom: '40px',
@@ -427,7 +433,7 @@ const GourmetTemplate: React.FC<GourmetTemplateProps> = ({
         )}
       </div>
 
-      <footer className="template-gourmet footer mt-5" style={{ padding: '50px 40px', color: 'white', marginTop: '80px', width: '100%', fontFamily }}>
+      <footer className="template-gourmet footer mt-5" data-ve-hit="footer" style={{ padding: '50px 40px', color: 'white', marginTop: '80px', width: '100%', fontFamily }}>
         <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
           <div className="row">
             <div className="col-md-6">

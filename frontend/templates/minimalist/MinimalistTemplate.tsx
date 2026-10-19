@@ -82,7 +82,12 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
   type MenuItem = NonNullable<MinimalistTemplateProps['selectedMenu']>['sections'][number]['items'][number];
 
   const renderMenuItem = (item: MenuItem, featured: boolean) => (
-    <div key={item.id} className={`template-minimalist menu-item${featured ? ' minimalist-menu-item--featured' : ''}`}>
+    <div
+      key={item.id}
+      className={`template-minimalist menu-item${featured ? ' minimalist-menu-item--featured' : ''}`}
+      data-ve-hit="product"
+      data-item-id={item.id}
+    >
       <div className="minimalist-menu-item-inner">
         <div style={{ flex: 1, minWidth: '250px' }}>
           {featured ? <p className="tpl-featured-label">{recommendedLabel}</p> : null}
@@ -246,6 +251,8 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
                     <a
                       key={section.id}
                       href={`#section-${section.id}`}
+                      data-ve-hit="section"
+                      data-section-id={section.id}
                       style={{ 
                         borderRadius: '30px',
                         background: 'transparent',
@@ -282,8 +289,8 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
             {selectedMenu.sections.map((section) => {
               const { featuredItems, regularItems } = splitHighlightedItems(section.items);
               return (
-              <div key={section.id} id={`section-${section.id}`} className="template-minimalist menu-section" style={{ scrollMarginTop: '80px' }}>
-                <h2 className="template-minimalist menu-section-title">{section.name}</h2>
+              <div key={section.id} id={`section-${section.id}`} className="template-minimalist menu-section" data-ve-hit="section" data-section-id={section.id} style={{ scrollMarginTop: '80px' }}>
+                <h2 className="template-minimalist menu-section-title" data-ve-hit="section" data-section-id={section.id}>{section.name}</h2>
                 <div className="menu-items-container">
                   {featuredItems.length > 0 ? (
                     <div className="tpl-featured-block" style={featuredAccentStyle}>
@@ -300,7 +307,7 @@ const MinimalistTemplate: React.FC<MinimalistTemplateProps> = ({
       </div>
 
       {/* Footer */}
-      <footer className="template-minimalist footer mt-5 minimalist-footer" style={{ width: '100%' }}>
+      <footer className="template-minimalist footer mt-5 minimalist-footer" data-ve-hit="footer" style={{ width: '100%' }}>
         <div style={{ width: '100%', maxWidth: '100%' }}>
           <div className="row">
             <div className="col-md-6">

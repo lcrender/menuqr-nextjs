@@ -3,6 +3,7 @@ import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import { I18nService } from '../common/i18n/i18n.service';
 import { assertMenuAccessible, assertSectionAccessible } from '../common/menu-tenant-sync';
+import { PublicResponseCacheService } from '../public/public-response-cache.service';
 
 @Injectable()
 export class MenuItemsService {
@@ -12,7 +13,12 @@ export class MenuItemsService {
     private readonly postgres: PostgresService,
     private readonly planLimits: PlanLimitsService,
     private readonly i18nService: I18nService,
+    private readonly publicResponseCache: PublicResponseCacheService,
   ) {}
+
+  private async bustPublicCache() {
+    await this.publicResponseCache.invalidatePublicResponses();
+  }
 
   private async resolveMenuSourceLocale(menuId: string, tenantId: string): Promise<string> {
     try {
@@ -586,7 +592,9 @@ export class MenuItemsService {
       }
     }
 
-    return this.findById(id, tenantId);
+    const created = await this.findById(id, tenantId);
+    await this.bustPublicCache();
+    return created;
   }
 
   async update(id: string, tenantId: string, data: {
@@ -789,7 +797,9 @@ export class MenuItemsService {
       });
     }
 
-    return this.findById(id, tenantId);
+    const updated = await this.findById(id, tenantId);
+    await this.bustPublicCache();
+    return updated;
   }
 
   async delete(id: string, tenantId: string) {
@@ -800,6 +810,7 @@ export class MenuItemsService {
       [id, tenantId]
     );
 
+    await this.bustPublicCache();
     return { message: 'Item eliminado exitosamente' };
   }
 
@@ -911,7 +922,9 @@ export class MenuItemsService {
       );
     }
 
-    return this.findById(newId, tenantId);
+    const copied = await this.findById(newId, tenantId);
+    await this.bustPublicCache();
+    return copied;
   }
 
   // Gestión de precios
@@ -987,7 +1000,8 @@ export class MenuItemsService {
 
       await Promise.all(updatePromises);
       this.logger.log('Orden de productos actualizado exitosamente');
-      
+      await this.bustPublicCache();
+
       return { success: true, message: 'Orden actualizado exitosamente' };
     } catch (error: any) {
       this.logger.error(`Error actualizando orden de productos: ${error.message}`, error.stack);

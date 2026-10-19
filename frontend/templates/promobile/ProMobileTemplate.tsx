@@ -153,7 +153,12 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
     const hasPhoto = showProductImages && !!item.photos?.length;
     const photoSize = 76;
     return (
-      <article key={item.id} className={`pro-mobile-item-row${hasPhoto ? '' : ' no-photo'}${featured ? ' pro-mobile-item-row--featured' : ''}`}>
+      <article
+        key={item.id}
+        className={`pro-mobile-item-row${hasPhoto ? '' : ' no-photo'}${featured ? ' pro-mobile-item-row--featured' : ''}`}
+        data-ve-hit="product"
+        data-item-id={item.id}
+      >
         <div className="pro-mobile-item-main">
           {featured ? <p className="tpl-featured-label">{recommendedLabel}</p> : null}
           <h3 className="pro-mobile-item-name">{item.name}</h3>
@@ -446,6 +451,8 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
                     key={section.id}
                     type="button"
                     className={`pro-mobile-section-tab${active ? ' active' : ''}`}
+                    data-ve-hit="section"
+                    data-section-id={section.id}
                     onClick={() => setActiveSectionId(section.id)}
                     aria-pressed={active}
                     title={section.name}
@@ -481,7 +488,7 @@ const ProMobileTemplate: React.FC<ProMobileTemplateProps> = ({
         )}
       </div>
 
-      <footer className="template-pro-mobile footer mt-4" style={{ padding: '40px 20px', color: 'white', width: '100%' }}>
+      <footer className="template-pro-mobile footer mt-4" data-ve-hit="footer" style={{ padding: '40px 20px', color: 'white', width: '100%' }}>
         <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto' }}>
           <div className="row">
             <div className="col-md-6">
