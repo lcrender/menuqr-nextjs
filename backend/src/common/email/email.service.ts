@@ -29,6 +29,11 @@ export class EmailService implements OnModuleInit {
     return emailBrandHeaderHtml(this.frontendUrl, opts);
   }
 
+  /** Envuelve contenido interno con la misma cáscara HTML de los emails del sistema. */
+  wrapInShell(lang: EmailLang | string | null | undefined, contentHtml: string): string {
+    return this.emailShell(this.resolveLang(lang), contentHtml);
+  }
+
   onModuleInit() {
     const host = this.configService.get('SMTP_HOST');
     const user = this.configService.get('SMTP_USER');

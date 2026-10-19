@@ -8,12 +8,7 @@ import {
   translateTemplateConfigSelectLabel,
 } from '../../lib/template-config-i18n';
 import styles from './PreviewTemplateConfigField.module.css';
-import TemplateFonts from '../TemplateFonts';
-import {
-  findTemplateGoogleFont,
-  googleFontCssStack,
-  googleFontStylesheetHref,
-} from '../../lib/template-google-fonts';
+import FontPicker from '../visual-editor/FontPicker';
 
 type Props = {
   option: TemplateConfigOption;
@@ -141,8 +136,17 @@ export default function PreviewTemplateConfigField({
     );
   }
 
+  if (option.id === 'googleFont') {
+    return (
+      <div className={fieldClass} id={`field-${option.id}`} data-field-id={option.id}>
+        <span className={styles.label}>{label}</span>
+        {description ? <p className={styles.hint}>{description}</p> : null}
+        <FontPicker value={value} onChange={(fontId) => onChange(fontId)} />
+      </div>
+    );
+  }
+
   if (option.type === 'select' && option.options) {
-    const chosenFont = option.id === 'googleFont' ? findTemplateGoogleFont(value) : null;
     return (
       <div className={fieldClass} id={`field-${option.id}`} data-field-id={option.id}>
         <label htmlFor={id} className={styles.label}>
@@ -153,7 +157,6 @@ export default function PreviewTemplateConfigField({
           id={id}
           className={styles.input}
           value={String(value ?? '')}
-          style={chosenFont ? { fontFamily: googleFontCssStack(chosenFont) } : undefined}
           onChange={(e) => onChange(e.target.value)}
         >
           {option.options.map((o) => (
@@ -162,14 +165,6 @@ export default function PreviewTemplateConfigField({
             </option>
           ))}
         </select>
-        {chosenFont ? (
-          <>
-            <TemplateFonts googleFontsHref={googleFontStylesheetHref(chosenFont)} />
-            <p className={styles.fontSample} style={{ fontFamily: googleFontCssStack(chosenFont) }}>
-              {t('adminTemplates.configOptions.googleFont.sample')}
-            </p>
-          </>
-        ) : null}
       </div>
     );
   }

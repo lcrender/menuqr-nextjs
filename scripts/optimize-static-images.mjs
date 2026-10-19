@@ -30,6 +30,8 @@ const FOLDER_LIMITS = {
   images: { maxWidth: 1200 },
   /** Capturas de panel / landings de funciones: priorizar nitidez de texto */
   funciones: { maxWidth: 2000, preset: 'ui' },
+  /** Capturas del blog (panel admin, demos): priorizar nitidez de texto */
+  blog: { maxWidth: 1400, preset: 'ui' },
 };
 
 /** @param {string} dir */

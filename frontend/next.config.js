@@ -118,6 +118,16 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/admin/templates',
+        destination: '/admin/design',
+        permanent: true,
+      },
+      {
+        source: '/admin/templates/:path*',
+        destination: '/admin/design/:path*',
+        permanent: true,
+      },
+      {
         source: '/menu-qr-restaurante',
         destination: '/',
         permanent: true,

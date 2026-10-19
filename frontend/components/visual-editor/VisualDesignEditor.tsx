@@ -11,7 +11,6 @@ import {
 } from '../../lib/template-config-schema';
 import { TEMPLATES_CATALOG } from '../../lib/templates-catalog';
 import { translateTemplateName } from '../../lib/template-config-i18n';
-import { googleFontCatalogStylesheetHref } from '../../lib/template-google-fonts';
 import {
   BEACH_BAR_BACKGROUNDS,
   DEFAULT_BEACH_BAR_BACKGROUND_ID,
@@ -619,17 +618,6 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
       else node.removeAttribute('data-ve-inactive');
     });
   });
-
-  useEffect(() => {
-    if (group !== 'typography') return;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = googleFontCatalogStylesheetHref();
-    document.head.appendChild(link);
-    return () => {
-      link.remove();
-    };
-  }, [group]);
 
   const schema = TEMPLATE_CONFIG_SCHEMAS[draftTemplate] || TEMPLATE_CONFIG_SCHEMAS.classic || [];
   const optionIds = schema.map((option) => option.id);
@@ -1925,8 +1913,8 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
     return (
       <div className="admin-card p-4">
         <p>{loadError || tx('adminTemplates.visual.loadError', 'No se pudo cargar el diseño del comercio.')}</p>
-        <Link href="/admin/templates" className="admin-btn">
-          {tx('adminTemplates.visual.back', 'Volver a Plantillas')}
+        <Link href="/admin/design" className="admin-btn">
+          {tx('adminTemplates.visual.back', 'Volver a Diseño')}
         </Link>
       </div>
     );
@@ -2021,8 +2009,8 @@ export default function VisualDesignEditor({ restaurantId }: Props) {
               {tx('adminTemplates.visual.openPublic', 'Ver comercio')}
             </a>
           ) : null}
-          <Link href="/admin/templates" className={`admin-btn ${styles.backLink}`}>
-            {tx('adminTemplates.visual.back', 'Volver a Plantillas')}
+          <Link href="/admin/design" className={`admin-btn ${styles.backLink}`}>
+            {tx('adminTemplates.visual.back', 'Volver a Diseño')}
           </Link>
           <button type="button" className="admin-btn" onClick={resetDraft} disabled={!dirty || saving}>
             {tx('adminTemplates.visual.reset', 'Restablecer')}

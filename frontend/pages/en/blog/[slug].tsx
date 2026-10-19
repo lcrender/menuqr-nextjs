@@ -2,6 +2,7 @@ import type { GetStaticPaths, GetStaticProps } from 'next';
 import BlogArticleSmartFood from '../../../components/blog/BlogArticleSmartFood';
 import BlogArticleAppMenuEnglish from '../../../components/blog/BlogArticleAppMenuEnglish';
 import BlogArticleCrearMenuQrGratis from '../../../components/blog/BlogArticleCrearMenuQrGratis';
+import BlogArticlePersonalizacion from '../../../components/blog/BlogArticlePersonalizacion';
 import {
   BLOG_ARTICLES,
   blogCanonicalSlug,
@@ -12,6 +13,9 @@ import {
 type Props = { slug: string };
 
 export default function BlogSlugEnPage({ slug }: Props) {
+  if (slug === 'nuevas-opciones-personalizacion-menu-digital') {
+    return <BlogArticlePersonalizacion locale="en" />;
+  }
   if (slug === 'plantilla-smart-food-filtros-alimentarios') {
     return <BlogArticleSmartFood locale="en" />;
   }

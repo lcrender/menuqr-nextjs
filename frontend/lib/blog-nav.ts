@@ -6,12 +6,19 @@ import type { LandingRegion } from './landing-region';
 
 export type BlogUiLocale = 'es' | 'en';
 
+/** Categorías del blog (id estable; labels por idioma). */
+export type BlogCategoryId = 'nuevas-funciones' | 'tutoriales';
+
 export type BlogArticleMeta = {
   /** Slug canónico ES (también id interno). */
   slug: string;
   /** Slug SEO bajo `/en/blog/…` */
   enSlug: string;
   publishedAt: string;
+  category: BlogCategoryId;
+  /** Imagen thumbnail del listado (/blog). Preferir .jpg/.png con variantes AVIF/WebP. */
+  thumbnail: string;
+  thumbnailAlt: Record<BlogUiLocale, string>;
   title: Record<BlogUiLocale, string>;
   excerpt: Record<BlogUiLocale, string>;
   metaTitle: Record<BlogUiLocale, string>;
@@ -24,6 +31,30 @@ export const BLOG_PATH_EN = '/en/blog' as const;
 /** Alias histórico → ES */
 export const BLOG_PATH = BLOG_PATH_ES;
 
+export const BLOG_CATEGORIES: Record<
+  BlogCategoryId,
+  { label: Record<BlogUiLocale, string> }
+> = {
+  'nuevas-funciones': {
+    label: {
+      es: 'Nuevas funciones',
+      en: 'New features',
+    },
+  },
+  tutoriales: {
+    label: {
+      es: 'Tutoriales y contenido',
+      en: 'Guides & content',
+    },
+  },
+};
+
+export const BLOG_CATEGORY_IDS = Object.keys(BLOG_CATEGORIES) as BlogCategoryId[];
+
+export function blogCategoryLabel(category: BlogCategoryId, locale: BlogUiLocale): string {
+  return BLOG_CATEGORIES[category].label[locale];
+}
+
 export const BLOG_INDEX = {
   es: {
     metaTitle: 'Blog | App Menu QR — novedades de carta digital',
@@ -34,6 +65,9 @@ export const BLOG_INDEX = {
     readMore: 'Leer artículo',
     home: 'Inicio',
     breadcrumbAria: 'Miga de pan',
+    filterAria: 'Filtrar por categoría',
+    filterAll: 'Todos',
+    emptyFilter: 'No hay artículos en esta categoría por ahora.',
   },
   en: {
     metaTitle: 'Blog | App Menu QR — digital menu updates',
@@ -44,14 +78,54 @@ export const BLOG_INDEX = {
     readMore: 'Read article',
     home: 'Home',
     breadcrumbAria: 'Breadcrumb',
+    filterAria: 'Filter by category',
+    filterAll: 'All',
+    emptyFilter: 'There are no articles in this category yet.',
   },
 } as const;
 
 export const BLOG_ARTICLES: BlogArticleMeta[] = [
   {
+    slug: 'nuevas-opciones-personalizacion-menu-digital',
+    enSlug: 'new-digital-menu-customization-options',
+    publishedAt: '2026-10-19',
+    category: 'nuevas-funciones',
+    thumbnail: '/blog/nuevas-opciones-personalizacion-menu-digital.jpg',
+    thumbnailAlt: {
+      es: 'Configuración de tipografías y colores en App Menu QR',
+      en: 'Font and color settings in App Menu QR',
+    },
+    title: {
+      es: 'Más opciones de personalización para diseñar tu menú digital',
+      en: 'More customization options to design your digital menu',
+    },
+    excerpt: {
+      es: 'Actualizamos la configuración de plantillas con nuevas tipografías de Google Fonts, tamaños de texto y más colores para personalizar tu menú digital QR.',
+      en: 'We updated template settings with new Google Fonts typefaces, text sizes, and more colors to customize your digital QR menu.',
+    },
+    metaTitle: {
+      es: 'Nuevas opciones de diseño para tu menú digital QR | App Menu QR',
+      en: 'New design options for your digital QR menu | App Menu QR',
+    },
+    metaDescription: {
+      es: 'Personalizá tu menú digital QR con nuevas fuentes de Google Fonts, tamaños de texto y colores. Descubrí las novedades de AppMenuQR.',
+      en: 'Customize your digital QR menu with new Google Fonts, text sizes, and colors. Discover the latest AppMenuQR updates.',
+    },
+    tags: {
+      es: ['Diseño de menú digital', 'Plantillas'],
+      en: ['Digital menu design', 'Templates'],
+    },
+  },
+  {
     slug: 'plantilla-smart-food-filtros-alimentarios',
     enSlug: 'smart-food-template-dietary-filters',
     publishedAt: '2026-08-07',
+    category: 'nuevas-funciones',
+    thumbnail: '/preview/preview-smart-food.png',
+    thumbnailAlt: {
+      es: 'Vista previa de la plantilla Smart Food',
+      en: 'Smart Food template preview',
+    },
     title: {
       es: 'Nueva plantilla Smart Food: filtros alimentarios en tu carta digital QR',
       en: 'New Smart Food template: dietary filters on your digital QR menu',
@@ -77,6 +151,12 @@ export const BLOG_ARTICLES: BlogArticleMeta[] = [
     slug: 'app-menu-qr-now-available-in-english-es',
     enSlug: 'app-menu-qr-now-available-in-english',
     publishedAt: '2026-08-11',
+    category: 'nuevas-funciones',
+    thumbnail: '/blog/app-menu-qr-disponible-en-ingles.jpg',
+    thumbnailAlt: {
+      es: 'Panel de administración de App Menu QR en inglés',
+      en: 'App Menu QR admin panel in English',
+    },
     title: {
       es: 'App Menu QR ahora también está disponible en inglés',
       en: 'App Menu QR is now also available in English',
@@ -102,6 +182,12 @@ export const BLOG_ARTICLES: BlogArticleMeta[] = [
     slug: 'como-crear-un-menu-qr-gratis',
     enSlug: 'how-to-create-a-free-qr-menu',
     publishedAt: '2026-10-09',
+    category: 'tutoriales',
+    thumbnail: '/blog/que-es-un-menu-qr.jpg',
+    thumbnailAlt: {
+      es: 'Código QR junto a un menú digital en el celular',
+      en: 'QR code next to a digital menu on a phone',
+    },
     title: {
       es: 'Cómo crear un menú QR gratis para tu restaurante paso a paso',
       en: 'How to create a free QR menu for your restaurant, step by step',
@@ -126,8 +212,9 @@ export const BLOG_ARTICLES: BlogArticleMeta[] = [
 ];
 
 /** Artículos ordenados por fecha de publicación (más reciente primero). */
-export function getBlogArticlesNewestFirst(): BlogArticleMeta[] {
-  return [...BLOG_ARTICLES].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+export function getBlogArticlesNewestFirst(category?: BlogCategoryId | null): BlogArticleMeta[] {
+  const list = category ? BLOG_ARTICLES.filter((a) => a.category === category) : BLOG_ARTICLES;
+  return [...list].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 }
 
 export const BLOG_SLUGS = BLOG_ARTICLES.map((a) => a.slug);
@@ -204,6 +291,10 @@ export function blogMetaForLocale(meta: BlogArticleMeta, locale: BlogUiLocale) {
     slug: meta.slug,
     enSlug: meta.enSlug,
     publishedAt: meta.publishedAt,
+    category: meta.category,
+    categoryLabel: blogCategoryLabel(meta.category, locale),
+    thumbnail: meta.thumbnail,
+    thumbnailAlt: meta.thumbnailAlt[locale],
     title: meta.title[locale],
     excerpt: meta.excerpt[locale],
     metaTitle: meta.metaTitle[locale],

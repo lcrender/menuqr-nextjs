@@ -1,16 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import LandingFooter from '../LandingFooter';
 import LandingNav from '../LandingNav';
+import OptimizedPicture from '../OptimizedPicture';
 import {
+  BLOG_CATEGORY_IDS,
   BLOG_INDEX,
   blogArticleHref,
+  blogCategoryLabel,
   blogMetaForLocale,
   blogPath,
   buildBlogHreflangLinks,
   formatBlogDate,
   getBlogArticlesNewestFirst,
+  type BlogCategoryId,
   type BlogUiLocale,
 } from '../../lib/blog-nav';
 import { buildBlogIndexJsonLd, siteJsonLdBaseUrl } from '../../lib/json-ld-appmenuqr';
@@ -27,11 +31,16 @@ type Props = {
   locale?: BlogUiLocale;
 };
 
+type CategoryFilter = 'all' | BlogCategoryId;
+
 export default function BlogIndex({ locale = 'es' }: Props) {
   const homeHref = useLandingHomeHref(locale === 'en' ? '/en' : undefined);
   const index = BLOG_INDEX[locale];
   const catalogPath = blogPath(locale);
-  const articles = getBlogArticlesNewestFirst();
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const articles = getBlogArticlesNewestFirst(
+    categoryFilter === 'all' ? null : categoryFilter,
+  );
 
   useEffect(() => {
     const next = locale === 'en' ? 'en-US' : 'es-ES';
@@ -56,7 +65,7 @@ export default function BlogIndex({ locale = 'es' }: Props) {
   const jsonLd = (() => {
     const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
     if (!base) return null;
-    const articlesForJsonLd = articles.map((a) => {
+    const articlesForJsonLd = getBlogArticlesNewestFirst().map((a) => {
       const m = blogMetaForLocale(a, locale);
       return {
         slug: locale === 'en' ? a.enSlug : a.slug,
@@ -94,35 +103,76 @@ export default function BlogIndex({ locale = 'es' }: Props) {
               <h1 className="blog-h1">{index.h1}</h1>
               <p className="blog-lead">{index.lead}</p>
             </header>
-            <ul className="blog-card-list">
-              {articles.map((article) => {
-                const m = blogMetaForLocale(article, locale);
-                const href = blogArticleHref(article.slug, locale);
-                return (
-                  <li key={article.slug}>
-                    <article className="blog-card">
-                      <time className="blog-card-date" dateTime={article.publishedAt}>
-                        {formatBlogDate(article.publishedAt, locale)}
-                      </time>
-                      <h2 className="blog-card-title">
-                        <Link href={href}>{m.title}</Link>
-                      </h2>
-                      <p className="blog-card-excerpt">{m.excerpt}</p>
-                      {m.tags.length > 0 ? (
-                        <ul className="blog-tags">
-                          {m.tags.map((tag) => (
-                            <li key={tag}>{tag}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      <Link href={href} className="blog-card-link">
-                        {index.readMore}
-                      </Link>
-                    </article>
-                  </li>
-                );
-              })}
-            </ul>
+
+            <div className="blog-category-filters" role="group" aria-label={index.filterAria}>
+              <button
+                type="button"
+                className={`blog-category-filter${categoryFilter === 'all' ? ' is-active' : ''}`}
+                aria-pressed={categoryFilter === 'all'}
+                onClick={() => setCategoryFilter('all')}
+              >
+                {index.filterAll}
+              </button>
+              {BLOG_CATEGORY_IDS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`blog-category-filter${categoryFilter === id ? ' is-active' : ''}`}
+                  aria-pressed={categoryFilter === id}
+                  onClick={() => setCategoryFilter(id)}
+                >
+                  {blogCategoryLabel(id, locale)}
+                </button>
+              ))}
+            </div>
+
+            {articles.length === 0 ? (
+              <p className="blog-empty-filter">{index.emptyFilter}</p>
+            ) : (
+              <ul className="blog-card-list">
+                {articles.map((article) => {
+                  const m = blogMetaForLocale(article, locale);
+                  const href = blogArticleHref(article.slug, locale);
+                  return (
+                    <li key={article.slug}>
+                      <article className="blog-card">
+                        <Link href={href} className="blog-card-thumb" aria-hidden="true" tabIndex={-1}>
+                          <OptimizedPicture
+                            src={m.thumbnail}
+                            alt=""
+                            width={320}
+                            height={240}
+                            loading="lazy"
+                          />
+                        </Link>
+                        <div className="blog-card-body">
+                          <div className="blog-card-meta">
+                            <span className="blog-category-badge">{m.categoryLabel}</span>
+                            <time className="blog-card-date" dateTime={article.publishedAt}>
+                              {formatBlogDate(article.publishedAt, locale)}
+                            </time>
+                          </div>
+                          <h2 className="blog-card-title">
+                            <Link href={href}>{m.title}</Link>
+                          </h2>
+                          <p className="blog-card-excerpt">{m.excerpt}</p>
+                          {m.tags.length > 0 ? (
+                            <ul className="blog-tags">
+                              {m.tags.map((tag) => (
+                                <li key={tag}>{tag}</li>
+                              ))}
+                            </ul>
+                          ) : null}
+                          <Link href={href} className="blog-card-link">
+                            {index.readMore}
+                          </Link>
+                        </div>
+                      </article>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </main>
         <LandingFooter />

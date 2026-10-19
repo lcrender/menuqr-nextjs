@@ -2,11 +2,15 @@ import type { GetStaticPaths, GetStaticProps } from 'next';
 import BlogArticleSmartFood from '../../components/blog/BlogArticleSmartFood';
 import BlogArticleAppMenuEnglish from '../../components/blog/BlogArticleAppMenuEnglish';
 import BlogArticleCrearMenuQrGratis from '../../components/blog/BlogArticleCrearMenuQrGratis';
+import BlogArticlePersonalizacion from '../../components/blog/BlogArticlePersonalizacion';
 import { BLOG_SLUGS, blogCanonicalSlug, getBlogArticleMeta, isBlogSlug } from '../../lib/blog-nav';
 
 type Props = { slug: string };
 
 export default function BlogSlugPage({ slug }: Props) {
+  if (slug === 'nuevas-opciones-personalizacion-menu-digital') {
+    return <BlogArticlePersonalizacion locale="es" />;
+  }
   if (slug === 'plantilla-smart-food-filtros-alimentarios') {
     return <BlogArticleSmartFood locale="es" />;
   }

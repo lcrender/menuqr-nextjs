@@ -34,7 +34,7 @@ function needsAdminStyles(pathname: string): boolean {
 /** Cartas públicas, preview y rutas cortas /r /m */
 function needsMenuStyles(pathname: string, asPath: string): boolean {
   if (pathname.startsWith('/admin/menus/preview')) return true;
-  if (pathname.startsWith('/admin/templates/editor')) return true;
+  if (pathname.startsWith('/admin/design/editor')) return true;
   if (
     pathname.startsWith('/restaurant') ||
     pathname.startsWith('/menu') ||

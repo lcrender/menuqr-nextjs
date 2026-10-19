@@ -1,9 +1,10 @@
-import { Controller, Get, Param, Request, Query, Patch, Delete, Body } from '@nestjs/common';
+import { Controller, Get, Param, Request, Query, Patch, Delete, Body, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { BadRequestException } from '@nestjs/common';
 import { UpdateUserByAdminDto } from './dto/update-user-by-admin.dto';
+import { SendMarketingNewsletterDto } from './dto/send-marketing-newsletter.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -41,6 +42,21 @@ export class UsersController {
       limit: Number.isFinite(limitNum) ? limitNum : undefined,
       offset: Number.isFinite(offsetNum) ? offsetNum : undefined,
     });
+  }
+
+  @Get('marketing-opt-in/compose')
+  @ApiOperation({ summary: 'Plantilla y conteos para redactar email de novedades' })
+  @ApiResponse({ status: 200, description: 'Datos del compositor' })
+  async marketingCompose(@Query('lang') lang?: string) {
+    const resolved = lang === 'en' ? 'en' : 'es';
+    return this.usersService.getMarketingComposeData(resolved);
+  }
+
+  @Post('marketing-opt-in/send')
+  @ApiOperation({ summary: 'Enviar email a suscriptores de novedades' })
+  @ApiResponse({ status: 200, description: 'Resultado del envío' })
+  async sendMarketingNewsletter(@Body() body: SendMarketingNewsletterDto) {
+    return this.usersService.sendMarketingNewsletter(body);
   }
 
   @Delete('remove/:id')

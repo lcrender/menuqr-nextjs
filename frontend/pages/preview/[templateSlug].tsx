@@ -157,7 +157,7 @@ export default function PreviewPage() {
           <Link href={plantillasHref} className="btn btn-outline-primary">
             {t('systemPages.preview.catalog')}
           </Link>
-          <Link href="/admin/templates" className="btn btn-primary">
+          <Link href="/admin/design" className="btn btn-primary">
             {t('systemPages.preview.adminTemplates')}
           </Link>
         </p>
@@ -271,7 +271,7 @@ export default function PreviewPage() {
           <Link href={plantillasHref} className="btn btn-outline-primary">
             {t('systemPages.preview.catalog')}
           </Link>
-          <Link href="/admin/templates" className="btn btn-primary">
+          <Link href="/admin/design" className="btn btn-primary">
             {t('systemPages.preview.adminTemplates')}
           </Link>
         </div>

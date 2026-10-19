@@ -55,10 +55,10 @@ export default function BlogArticleSmartFood({ locale = 'es' }: Props) {
       </ul>
 
       <div className="blog-cta-row">
-        <Link href={c.demoHref} className="btn btn-primary">
+        <Link href={c.demoHref} className="landing-btn-primary">
           {c.ctaDemoLabel}
         </Link>
-        <Link href={c.featuresHref} className="btn btn-outline-primary">
+        <Link href={c.featuresHref} className="landing-btn-secondary">
           {c.ctaFeaturesLabel}
         </Link>
       </div>

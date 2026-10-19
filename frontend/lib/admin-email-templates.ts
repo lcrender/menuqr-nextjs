@@ -10,7 +10,8 @@ export type EmailTemplateCategory =
   | 'promo'
   | 'support'
   | 'public'
-  | 'admin_messages';
+  | 'admin_messages'
+  | 'marketing';
 
 export type EmailTemplateLang = 'es' | 'en';
 

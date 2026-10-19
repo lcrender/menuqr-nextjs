@@ -272,7 +272,7 @@ export default function Templates() {
 
   const openVisualEditor = (restaurantId?: string) => {
     if (restaurantId) {
-      void router.push(`/admin/templates/editor/${restaurantId}`);
+      void router.push(`/admin/design/editor/${restaurantId}`);
       return;
     }
     if (restaurants.length === 0) {
@@ -286,7 +286,7 @@ export default function Templates() {
       return;
     }
     if (restaurants.length === 1) {
-      void router.push(`/admin/templates/editor/${restaurants[0].id}`);
+      void router.push(`/admin/design/editor/${restaurants[0].id}`);
       return;
     }
     setEditorPickerOpen(true);
@@ -368,7 +368,7 @@ export default function Templates() {
                             <td className="text-end">
                               <div className="d-inline-flex flex-wrap justify-content-end gap-2">
                                 <Link
-                                  href={`/admin/templates/configure/${r.id}`}
+                                  href={`/admin/design/configure/${r.id}`}
                                   className="admin-btn admin-templates-config-link"
                                 >
                                   {t('adminTemplates.configureTemplate')}
@@ -399,7 +399,7 @@ export default function Templates() {
                       </div>
                       <div className="d-flex flex-column gap-2">
                         <Link
-                          href={`/admin/templates/configure/${r.id}`}
+                          href={`/admin/design/configure/${r.id}`}
                           className="admin-btn admin-templates-config-link-mobile"
                         >
                           {t('adminTemplates.configureTemplate')}
@@ -516,7 +516,7 @@ export default function Templates() {
             ? {
                 actionButton: {
                   label: t('adminTemplates.configureTemplate'),
-                  href: `/admin/templates/configure/${alertModal.restaurantId}`,
+                  href: `/admin/design/configure/${alertModal.restaurantId}`,
                 },
               }
             : {})}

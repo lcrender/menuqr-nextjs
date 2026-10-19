@@ -2,6 +2,12 @@ import { Injectable, NotFoundException, BadRequestException, Logger, InternalSer
 import { PostgresService } from '../common/database/postgres.service';
 import { User } from '@prisma/client';
 import * as crypto from 'crypto';
+import { EmailService } from '../common/email/email.service';
+import { EmailTemplatesService } from '../email-templates/email-templates.service';
+import { defaultEmailDisplayName, normalizeEmailLang } from '../common/email/email-i18n';
+import { TENANT_PLAN_KEYS, type TenantPlanKey } from '../common/plan-limits/plan-limits.constants';
+import { PLAN_DISPLAY_LABELS } from '../dashboard-welcome/dashboard-welcome.constants';
+import type { SendMarketingNewsletterDto } from './dto/send-marketing-newsletter.dto';
 
 // Tipo extendido para incluir campos de verificación de email y sesiones
 type UserWithVerification = User & {
@@ -14,11 +20,23 @@ type UserWithVerification = User & {
   excludeFromMetrics?: boolean;
 };
 
+type MarketingRecipient = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  preferredLanguage: string | null;
+};
+
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
+  private static readonly MARKETING_TEMPLATE_ID = 'marketing.newsletter';
 
-  constructor(private readonly postgres: PostgresService) {}
+  constructor(
+    private readonly postgres: PostgresService,
+    private readonly emailService: EmailService,
+    private readonly emailTemplates: EmailTemplatesService,
+  ) {}
 
   async findByEmail(email: string): Promise<UserWithVerification | null> {
     const result = await this.postgres.queryRaw<any>(
@@ -708,6 +726,7 @@ export class UsersService {
          u.role,
          u.is_active AS "isActive",
          u.email_verified AS "emailVerified",
+         u.preferred_language AS "preferredLanguage",
          u.marketing_opt_in AS "marketingOptIn",
          u.marketing_opt_in_at AS "marketingOptInAt",
          u.accepted_terms_at AS "acceptedTermsAt",
@@ -733,6 +752,7 @@ export class UsersService {
         role: r.role,
         isActive: r.isActive,
         emailVerified: r.emailVerified,
+        preferredLanguage: String(r.preferredLanguage || 'es').trim().toLowerCase() === 'en' ? 'en' : 'es',
         marketingOptIn: r.marketingOptIn,
         marketingOptInAt: r.marketingOptInAt,
         acceptedTermsAt: r.acceptedTermsAt,
@@ -744,6 +764,182 @@ export class UsersService {
       })),
       total,
     };
+  }
+
+  /** Datos iniciales del compositor de novedades (plantilla + conteos). */
+  async getMarketingComposeData(lang: 'es' | 'en' = 'es') {
+    const [resolved, counts] = await Promise.all([
+      this.emailTemplates.resolveContent(UsersService.MARKETING_TEMPLATE_ID, lang),
+      this.getMarketingAudienceCounts(),
+    ]);
+
+    return {
+      templateId: UsersService.MARKETING_TEMPLATE_ID,
+      lang,
+      subject: resolved.subject,
+      bodyHtml: resolved.bodyHtml,
+      wrapInShell: resolved.wrapInShell,
+      plans: TENANT_PLAN_KEYS.map((key) => ({
+        slug: key,
+        label: PLAN_DISPLAY_LABELS[key],
+        count: counts.byPlan[key] ?? 0,
+      })),
+      counts: {
+        all: counts.all,
+        verified: counts.verified,
+        byPlan: counts.byPlan,
+      },
+    };
+  }
+
+  async getMarketingAudienceCounts(): Promise<{
+    all: number;
+    verified: number;
+    byPlan: Record<TenantPlanKey, number>;
+  }> {
+    const [totals, planRows] = await Promise.all([
+      this.postgres.queryRaw<{ all_count: string; verified_count: string }>(
+        `SELECT
+           COUNT(*)::text AS all_count,
+           COUNT(*) FILTER (WHERE u.email_verified = true)::text AS verified_count
+         FROM users u
+         WHERE u.deleted_at IS NULL AND u.marketing_opt_in = true AND u.is_active = true`,
+      ),
+      this.postgres.queryRaw<{ plan: string | null; plan_count: string }>(
+        `SELECT t.plan AS plan, COUNT(*)::text AS plan_count
+         FROM users u
+         LEFT JOIN tenants t ON t.id = u.tenant_id
+         WHERE u.deleted_at IS NULL AND u.marketing_opt_in = true AND u.is_active = true
+         GROUP BY t.plan`,
+      ),
+    ]);
+
+    const byPlan = Object.fromEntries(TENANT_PLAN_KEYS.map((k) => [k, 0])) as Record<
+      TenantPlanKey,
+      number
+    >;
+    for (const row of planRows) {
+      if (row.plan && TENANT_PLAN_KEYS.includes(row.plan as TenantPlanKey)) {
+        byPlan[row.plan as TenantPlanKey] = parseInt(row.plan_count, 10) || 0;
+      }
+    }
+
+    return {
+      all: parseInt(totals[0]?.all_count || '0', 10) || 0,
+      verified: parseInt(totals[0]?.verified_count || '0', 10) || 0,
+      byPlan,
+    };
+  }
+
+  async sendMarketingNewsletter(dto: SendMarketingNewsletterDto) {
+    const subject = dto.subject.trim();
+    const bodyHtml = dto.bodyHtml.trim();
+    if (!subject || !bodyHtml) {
+      throw new BadRequestException('Asunto y cuerpo son obligatorios');
+    }
+
+    const recipients = await this.resolveMarketingRecipients(dto);
+    if (recipients.length === 0) {
+      throw new BadRequestException('No hay destinatarios para la audiencia seleccionada');
+    }
+
+    const shellLang = normalizeEmailLang(dto.lang || 'es');
+    const year = String(new Date().getFullYear());
+    let sent = 0;
+    const failed: Array<{ email: string; error: string }> = [];
+
+    for (const recipient of recipients) {
+      const firstName =
+        recipient.firstName?.trim() || defaultEmailDisplayName(shellLang);
+      const vars = { firstName, year };
+      const personalizedSubject = this.emailTemplates.interpolate(subject, vars, new Set());
+      const personalizedBody = this.emailTemplates.interpolate(
+        bodyHtml,
+        vars,
+        UsersService.MARKETING_TEMPLATE_ID,
+      );
+      const html = this.emailService.wrapInShell(shellLang, personalizedBody);
+
+      try {
+        await this.emailService.sendUserTransactionalEmail(
+          recipient.email,
+          personalizedSubject,
+          html,
+        );
+        sent += 1;
+      } catch (err: any) {
+        const message = err?.message ? String(err.message) : 'Error desconocido';
+        failed.push({ email: recipient.email, error: message });
+        this.logger.error(`Fallo envío novedades a ${recipient.email}: ${message}`);
+      }
+
+      // Evitar saturar SMTP en envíos masivos.
+      if (recipients.length > 1) {
+        await new Promise((r) => setTimeout(r, 40));
+      }
+    }
+
+    this.logger.log(
+      `Newsletter novedades: audience=${dto.audience} total=${recipients.length} sent=${sent} failed=${failed.length}`,
+    );
+
+    return {
+      audience: dto.audience,
+      plan: dto.plan ?? null,
+      total: recipients.length,
+      sent,
+      failed,
+    };
+  }
+
+  private async resolveMarketingRecipients(
+    dto: SendMarketingNewsletterDto,
+  ): Promise<MarketingRecipient[]> {
+    if (dto.audience === 'test') {
+      const email = (dto.testEmail || '').trim().toLowerCase();
+      if (!email) throw new BadRequestException('Indicá un email de prueba');
+      const rows = await this.postgres.queryRaw<MarketingRecipient>(
+        `SELECT u.id, u.email, u.first_name AS "firstName", u.preferred_language AS "preferredLanguage"
+         FROM users u
+         WHERE u.deleted_at IS NULL
+           AND u.marketing_opt_in = true
+           AND LOWER(u.email) = $1
+         LIMIT 1`,
+        [email],
+      );
+      if (!rows[0]) {
+        throw new BadRequestException(
+          'Ese email no está entre los suscriptores de novedades (o no existe)',
+        );
+      }
+      return rows;
+    }
+
+    const params: any[] = [];
+    let where =
+      `u.deleted_at IS NULL AND u.marketing_opt_in = true AND u.is_active = true`;
+
+    if (dto.audience === 'verified') {
+      where += ` AND u.email_verified = true`;
+    }
+
+    if (dto.audience === 'plan') {
+      const plan = dto.plan;
+      if (!plan || !TENANT_PLAN_KEYS.includes(plan)) {
+        throw new BadRequestException('Indicá un plan válido');
+      }
+      params.push(plan);
+      where += ` AND t.plan = $${params.length}`;
+    }
+
+    return this.postgres.queryRaw<MarketingRecipient>(
+      `SELECT u.id, u.email, u.first_name AS "firstName", u.preferred_language AS "preferredLanguage"
+       FROM users u
+       LEFT JOIN tenants t ON t.id = u.tenant_id
+       WHERE ${where}
+       ORDER BY u.email ASC`,
+      params,
+    );
   }
 }
 

@@ -1245,11 +1245,27 @@ body {
   border-color: var(--admin-border-light, #e5e7eb);
 }
 
+.admin-templates-restaurants-table .admin-btn,
+.admin-templates-restaurants-mobile .admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
 .admin-templates-config-link {
   padding: 6px 14px;
   font-size: 0.875rem;
   text-decoration: none;
-  display: inline-block;
+  min-height: 36px;
+}
+
+.admin-templates-restaurants-table .admin-btn:not(.admin-templates-config-link) {
+  padding: 6px 14px;
+  font-size: 0.875rem;
+  min-height: 36px;
 }
 
 .admin-templates-restaurants-mobile {

@@ -1,6 +1,6 @@
 {
-  "title": "Templates",
-  "subtitle": "Select a template to apply to your businesses",
+  "title": "Design",
+  "subtitle": "Choose and customize the look of your businesses",
   "loading": "Loading...",
   "restaurantsByTemplate": "Your businesses by template",
   "emptyRestaurants": "You don't have any businesses yet. Create one under Businesses and assign a template here.",
@@ -23,8 +23,8 @@
   },
   "configure": {
     "breadcrumb": "Breadcrumb",
-    "backToTemplates": "← Back to Templates",
-    "backToTemplatesShort": "Back to Templates",
+    "backToTemplates": "← Back to Design",
+    "backToTemplatesShort": "Back to Design",
     "loading": "Loading...",
     "notFound": "Business not found",
     "loadError": "Error loading business",

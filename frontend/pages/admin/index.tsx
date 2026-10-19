@@ -210,14 +210,14 @@ function DashboardRestaurantTemplateBlock({
         <div className="col-12 col-md-4">
           <div className="d-flex flex-column gap-2">
             <Link
-              href={`/admin/templates/configure/${card.restaurantId}`}
+              href={`/admin/design/configure/${card.restaurantId}`}
               className="btn btn-sm btn-primary text-white w-100"
               style={{ fontWeight: 600, textDecoration: 'none', border: 'none' }}
             >
               {t('dashboardPage.template.configure')}
             </Link>
             <Link
-              href="/admin/templates"
+              href="/admin/design"
               className="btn btn-sm btn-primary text-white w-100"
               style={{ fontWeight: 600, textDecoration: 'none', border: 'none' }}
             >
@@ -626,8 +626,8 @@ export default function Admin() {
                   <a
                     href={
                       templateWelcomeBanner.restaurantId
-                        ? `/admin/templates/configure/${encodeURIComponent(templateWelcomeBanner.restaurantId)}`
-                        : '/admin/templates'
+                        ? `/admin/design/configure/${encodeURIComponent(templateWelcomeBanner.restaurantId)}`
+                        : '/admin/design'
                     }
                     className="alert-link"
                   />

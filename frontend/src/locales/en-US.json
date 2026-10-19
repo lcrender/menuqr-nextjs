@@ -102,7 +102,7 @@
     "menus": "Menus",
     "items": "Products",
     "products": "Products",
-    "templates": "Templates",
+    "templates": "Design",
     "translations": "Translations",
     "profile": "My profile",
     "users": "Users",
@@ -1256,8 +1256,8 @@
     }
   },
   "adminTemplates": {
-    "title": "Templates",
-    "subtitle": "Select a template to apply to your businesses",
+    "title": "Design",
+    "subtitle": "Choose and customize the look of your businesses",
     "loading": "Loading...",
     "restaurantsByTemplate": "Your businesses by template",
     "emptyRestaurants": "You don't have any businesses yet. Create one under Businesses and assign a template here.",
@@ -1270,7 +1270,7 @@
     "visualEditor": "Visual editor",
     "visualEditorBeta": "Beta",
     "visual": {
-      "back": "Back to Templates",
+      "back": "Back to Design",
       "reset": "Reset",
       "save": "Save and publish",
       "saving": "Publishing…",
@@ -1443,8 +1443,8 @@
     },
     "configure": {
       "breadcrumb": "Breadcrumb",
-      "backToTemplates": "← Back to Templates",
-      "backToTemplatesShort": "Back to Templates",
+      "backToTemplates": "← Back to Design",
+      "backToTemplatesShort": "Back to Design",
       "loading": "Loading...",
       "notFound": "Business not found",
       "loadError": "Error loading business",

@@ -106,7 +106,7 @@ export const PLANTILLA_GOURMET_LANDING: PlantillaLandingContent = {
     primaryLabel: 'Actualizar a PRO',
     primaryHref: '/precios',
     secondaryLabel: 'Usar esta plantilla',
-    secondaryHref: '/admin/templates',
+    secondaryHref: '/admin/design',
     secondaryShowOnlyForPro: true,
   },
 };

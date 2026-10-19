@@ -4,6 +4,19 @@
 
 export const BLOG_ARTICLE_APP_MENU_QR_ENGLISH = {
   slug: 'app-menu-qr-now-available-in-english-es',
+  image: {
+    src: '/blog/app-menu-qr-disponible-en-ingles.jpg',
+    width: 1024,
+    height: 593,
+  },
+  imageAlt: {
+    es: 'Panel de productos de App Menu QR con la interfaz en inglés',
+    en: 'App Menu QR products panel with the interface in English',
+  },
+  imageCaption: {
+    es: 'La plataforma ya se puede usar completamente en inglés, incluido el panel de administración.',
+    en: 'The platform can now be used fully in English, including the admin panel.',
+  },
   lead: {
     es: 'Seguimos mejorando App Menu QR para que cada vez más restaurantes y negocios puedan crear y gestionar sus cartas digitales o listas de precios de forma simple.',
     en: 'We keep improving App Menu QR so more restaurants and businesses can easily create and manage their digital menus or price lists.',

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import AdminLayout from '../../../components/AdminLayout';
-import api from '../../../lib/axios';
+import AdminLayout from '../../../../components/AdminLayout';
+import api from '../../../../lib/axios';
 
 type Row = {
   id: string;
@@ -11,6 +11,7 @@ type Row = {
   lastName: string | null;
   isActive: boolean;
   emailVerified: boolean;
+  preferredLanguage?: string | null;
   marketingOptInAt: string | null;
   createdAt: string;
   tenantName: string | null;
@@ -30,6 +31,11 @@ function formatDate(iso: string | null): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+/** Código de idioma en 2 caracteres (ES / EN). */
+function formatLangCode(lang: string | null | undefined): string {
+  return String(lang || 'es').trim().toLowerCase() === 'en' ? 'EN' : 'ES';
 }
 
 export default function AdminUsersNovedadesPage() {
@@ -102,9 +108,14 @@ export default function AdminUsersNovedadesPage() {
       <div className="mb-4">
         <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
           <h1 className="h3 mb-0">Suscriptores de novedades</h1>
-          <Link href="/admin/users" className="btn btn-outline-secondary btn-sm">
-            Volver a usuarios
-          </Link>
+          <div className="d-flex flex-wrap gap-2">
+            <Link href="/admin/users/novedades/enviar" className="btn btn-primary btn-sm">
+              Redactar email
+            </Link>
+            <Link href="/admin/users" className="btn btn-outline-secondary btn-sm">
+              Volver a usuarios
+            </Link>
+          </div>
         </div>
         <p className="text-muted mb-0">
           Usuarios que marcaron en el registro que quieren descubrir nuevas funciones, consejos y beneficios de
@@ -159,6 +170,7 @@ export default function AdminUsersNovedadesPage() {
               <tr>
                 <th>Email</th>
                 <th>Nombre</th>
+                <th title="Idioma por defecto">Id.</th>
                 <th>Plan</th>
                 <th>Opt-in</th>
                 <th>Registro</th>
@@ -168,13 +180,13 @@ export default function AdminUsersNovedadesPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-4">
+                  <td colSpan={7} className="text-center py-4">
                     <div className="spinner-border spinner-border-sm" role="status" />
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center text-muted py-4">
+                  <td colSpan={7} className="text-center text-muted py-4">
                     No hay usuarios suscritos a novedades
                     {emailFilter.trim() ? ' con ese filtro' : ''}.
                   </td>
@@ -187,6 +199,14 @@ export default function AdminUsersNovedadesPage() {
                     </td>
                     <td>
                       {[r.firstName, r.lastName].filter(Boolean).join(' ') || '—'}
+                    </td>
+                    <td>
+                      <span
+                        className="badge bg-light text-dark border"
+                        title="Idioma por defecto"
+                      >
+                        {formatLangCode(r.preferredLanguage)}
+                      </span>
                     </td>
                     <td>
                       <span className="badge bg-secondary">{r.tenantPlan || '—'}</span>

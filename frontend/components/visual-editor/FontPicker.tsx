@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   TEMPLATE_GOOGLE_FONT_DEFAULT,
   TEMPLATE_GOOGLE_FONTS,
   findTemplateGoogleFont,
+  googleFontCatalogStylesheetHref,
   googleFontCssStack,
   type TemplateGoogleFont,
 } from '../../lib/template-google-fonts';
-import styles from './VisualDesignEditor.module.css';
+import styles from './FontPicker.module.css';
 
 type FontGroup = 'all' | TemplateGoogleFont['category'];
 
@@ -32,6 +33,17 @@ export default function FontPicker({ value, onChange }: Props) {
   const isDefault = !selected;
   const sample = t('adminTemplates.visual.fontSample', { defaultValue: 'El menú del día' });
   const defaultLabel = t('adminTemplates.visual.fontDefault', { defaultValue: 'Fuente de la plantilla' });
+
+  useEffect(() => {
+    const existing = document.querySelector('link[data-ve-font-catalog="1"]');
+    if (existing) return undefined;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = googleFontCatalogStylesheetHref();
+    link.setAttribute('data-ve-font-catalog', '1');
+    document.head.appendChild(link);
+    return undefined;
+  }, []);
 
   const fonts = useMemo(() => {
     const needle = query.trim().toLowerCase();

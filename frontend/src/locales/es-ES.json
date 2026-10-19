@@ -102,7 +102,7 @@
     "menus": "Menús",
     "items": "Productos",
     "products": "Productos",
-    "templates": "Plantillas",
+    "templates": "Diseño",
     "translations": "Traducciones",
     "profile": "Mi perfil",
     "users": "Usuarios",
@@ -1256,8 +1256,8 @@
     }
   },
   "adminTemplates": {
-    "title": "Plantillas",
-    "subtitle": "Selecciona una plantilla para aplicar a tus comercios",
+    "title": "Diseño",
+    "subtitle": "Elegí y personalizá el diseño de tus comercios",
     "loading": "Cargando...",
     "restaurantsByTemplate": "Tus comercios por plantilla",
     "emptyRestaurants": "Aún no tienes comercios. Crea uno en Comercios y asígnale una plantilla aquí.",
@@ -1270,7 +1270,7 @@
     "visualEditor": "Editor visual",
     "visualEditorBeta": "Beta",
     "visual": {
-      "back": "Volver a Plantillas",
+      "back": "Volver a Diseño",
       "reset": "Restablecer",
       "save": "Guardar y publicar",
       "saving": "Publicando…",
@@ -1443,8 +1443,8 @@
     },
     "configure": {
       "breadcrumb": "Navegación",
-      "backToTemplates": "← Volver a Plantillas",
-      "backToTemplatesShort": "Volver a Plantillas",
+      "backToTemplates": "← Volver a Diseño",
+      "backToTemplatesShort": "Volver a Diseño",
       "loading": "Cargando...",
       "notFound": "Comercio no encontrado",
       "loadError": "Error al cargar el comercio",

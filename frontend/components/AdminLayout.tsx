@@ -334,7 +334,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   <li className="admin-nav-item">
                     <Link
                       href="/admin/users/novedades"
-                      className={`admin-nav-link ${currentPath === '/admin/users/novedades' ? 'active' : ''}`}
+                      className={`admin-nav-link ${currentPath === '/admin/users/novedades' || currentPath.startsWith('/admin/users/novedades/') ? 'active' : ''}`}
                     >
                       {t("navigation.news")}
                     </Link>
@@ -410,8 +410,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
               <li className="admin-nav-item">
                 <Link 
-                  href="/admin/templates" 
-                  className={`admin-nav-link ${currentPath.startsWith('/admin/templates') ? 'active' : ''}`}
+                  href="/admin/design" 
+                  className={`admin-nav-link ${currentPath.startsWith('/admin/design') ? 'active' : ''}`}
                 >
                   {t("navigation.templates")}
                 </Link>

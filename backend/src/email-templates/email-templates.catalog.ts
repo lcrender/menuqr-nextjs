@@ -14,7 +14,8 @@ export type EmailTemplateCategory =
   | 'promo'
   | 'support'
   | 'public'
-  | 'admin_messages';
+  | 'admin_messages'
+  | 'marketing';
 
 export type EmailTemplateVariable = {
   key: string;
@@ -84,6 +85,11 @@ export const EMAIL_TEMPLATE_CATEGORIES: Array<{
     id: 'admin_messages',
     label: 'Notificaciones internas',
     description: 'Avisos configurables en Mensajes (destino y toggles).',
+  },
+  {
+    id: 'marketing',
+    label: 'Novedades y marketing',
+    description: 'Emails a suscriptores de novedades y promociones.',
   },
 ];
 
@@ -1266,6 +1272,48 @@ ${adminFooter()}`,
 {{deviceHtml}}
 {{extraHtml}}
 ${adminFooter()}`,
+      },
+    },
+  },
+
+  // ========================================
+  // MARKETING — envíos manuales desde Novedades
+  // ========================================
+  {
+    id: 'marketing.newsletter',
+    category: 'marketing',
+    name: 'Novedades / newsletter',
+    when: 'El SUPER_ADMIN redacta y envía un email a suscriptores de novedades.',
+    recipient: 'Usuarios con marketing_opt_in (audiencia elegida en el panel)',
+    wrapInShell: true,
+    sendUsesOverride: true,
+    note:
+      'Plantilla base para el compositor de Novedades. El asunto y el cuerpo se pueden editar por envío; también podés guardar un override aquí como punto de partida.',
+    variables: [VAR_FIRST_NAME, VAR_YEAR],
+    defaults: {
+      es: {
+        subject: 'Novedades de AppMenuQR',
+        bodyHtml: `<div class="content">
+  <h2>Hola {{firstName}},</h2>
+  <p>Queremos contarte las novedades de AppMenuQR para que saques más provecho a tu menú digital.</p>
+  <p>Editá este texto desde el panel de Novedades antes de enviar.</p>
+  <p>Saludos,<br>El equipo de AppMenuQR</p>
+</div>
+<div class="footer">
+  <p>&copy; {{year}} AppMenuQR. Recibís este email porque te suscribiste a novedades.</p>
+</div>`,
+      },
+      en: {
+        subject: 'AppMenuQR updates',
+        bodyHtml: `<div class="content">
+  <h2>Hi {{firstName}},</h2>
+  <p>We want to share the latest AppMenuQR updates so you can get more from your digital menu.</p>
+  <p>Edit this text from the Newsletters panel before sending.</p>
+  <p>Best regards,<br>The AppMenuQR team</p>
+</div>
+<div class="footer">
+  <p>&copy; {{year}} AppMenuQR. You’re receiving this email because you opted in to updates.</p>
+</div>`,
       },
     },
   },

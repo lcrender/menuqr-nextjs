@@ -9,13 +9,10 @@ import api from '../../../../lib/axios';
 import AdminLayout from '../../../../components/AdminLayout';
 import { TEMPLATE_CONFIG_SCHEMAS, TemplateConfigOption } from '../../../../lib/template-config-schema';
 import {
-  findTemplateGoogleFont,
-  googleFontCssStack,
-  googleFontStylesheetHref,
   migrateLegacyTemplateFont,
   TEMPLATE_GOOGLE_FONT_DEFAULT,
 } from '../../../../lib/template-google-fonts';
-import TemplateFonts from '../../../../components/TemplateFonts';
+import FontPicker from '../../../../components/visual-editor/FontPicker';
 import {
   translateTemplateConfigOptionDescription,
   translateTemplateConfigOptionLabel,
@@ -155,7 +152,7 @@ export default function ConfigureTemplate() {
     <AdminLayout>
       <div className="admin-main" style={{ padding: '20px', paddingTop: '40px', maxWidth: '720px' }}>
         <nav aria-label={t('adminTemplates.configure.breadcrumb')} style={{ marginBottom: '24px' }}>
-          <Link href="/admin/templates" style={{ color: 'var(--admin-primary)', textDecoration: 'none', fontSize: '0.9375rem' }}>
+          <Link href="/admin/design" style={{ color: 'var(--admin-primary)', textDecoration: 'none', fontSize: '0.9375rem' }}>
             {t('adminTemplates.configure.backToTemplates')}
           </Link>
         </nav>
@@ -171,7 +168,7 @@ export default function ConfigureTemplate() {
             <p style={{ color: 'var(--admin-error)', marginBottom: '16px' }}>
               {error || t('adminTemplates.configure.notFound')}
             </p>
-            <Link href="/admin/templates" className="admin-btn" style={{ display: 'inline-block' }}>
+            <Link href="/admin/design" className="admin-btn" style={{ display: 'inline-block' }}>
               {t('adminTemplates.configure.backToTemplatesShort')}
             </Link>
           </div>
@@ -192,7 +189,7 @@ export default function ConfigureTemplate() {
                 <p style={{ marginBottom: '0' }}>
                   {t('adminTemplates.configure.noOptions')}
                 </p>
-                <Link href="/admin/templates" className="admin-btn" style={{ display: 'inline-block', marginTop: '20px' }}>
+                <Link href="/admin/design" className="admin-btn" style={{ display: 'inline-block', marginTop: '20px' }}>
                   {t('adminTemplates.configure.backToTemplatesShort')}
                 </Link>
               </div>
@@ -228,7 +225,7 @@ export default function ConfigureTemplate() {
                       t('adminTemplates.configure.save')
                     )}
                   </button>
-                  <Link href="/admin/templates" style={{ lineHeight: '40px', color: 'var(--admin-text-muted)' }}>
+                  <Link href="/admin/design" style={{ lineHeight: '40px', color: 'var(--admin-text-muted)' }}>
                     {t('adminTemplates.configure.cancel')}
                   </Link>
                 </div>
@@ -367,8 +364,25 @@ function Field({
       </div>
     );
   }
+  if (option.id === 'googleFont') {
+    return (
+      <div style={{ marginBottom: '20px' }}>
+        <span className="form-label" id={id}>
+          {label}
+        </span>
+        {description ? (
+          <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-muted)', marginBottom: '10px' }}>
+            {description}
+          </p>
+        ) : null}
+        <div style={{ maxWidth: 420 }}>
+          <FontPicker value={value} onChange={(fontId) => onChange(fontId)} />
+        </div>
+      </div>
+    );
+  }
+
   if (option.type === 'select' && option.options) {
-    const chosenFont = option.id === 'googleFont' ? findTemplateGoogleFont(value) : null;
     return (
       <div style={{ marginBottom: '20px' }}>
         <label htmlFor={id} className="form-label">{label}</label>
@@ -378,11 +392,7 @@ function Field({
           className="wizard-input-large"
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
-          style={{
-            width: '100%',
-            maxWidth: option.id === 'googleFont' ? '420px' : '280px',
-            ...(chosenFont ? { fontFamily: googleFontCssStack(chosenFont) } : {}),
-          }}
+          style={{ width: '100%', maxWidth: '280px' }}
         >
           {option.options.map((o) => (
             <option key={o.value} value={o.value}>
@@ -390,14 +400,6 @@ function Field({
             </option>
           ))}
         </select>
-        {chosenFont ? (
-          <>
-            <TemplateFonts googleFontsHref={googleFontStylesheetHref(chosenFont)} />
-            <p style={{ margin: '10px 0 0', fontSize: '1.25rem', lineHeight: 1.35, fontFamily: googleFontCssStack(chosenFont) }}>
-              {t('adminTemplates.configOptions.googleFont.sample')}
-            </p>
-          </>
-        ) : null}
       </div>
     );
   }

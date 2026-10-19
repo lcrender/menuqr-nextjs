@@ -112,7 +112,7 @@ export default function BlogArticleLayout({ meta, locale = 'es', faq, children }
         {ogImage ? <meta property="og:image:alt" content="App Menu QR" /> : null}
         <meta property="article:published_time" content={publishedIso} />
         <meta property="article:modified_time" content={publishedIso} />
-        <meta property="article:section" content="Blog" />
+        <meta property="article:section" content={localized.categoryLabel} />
         {localized.tags.map((tag) => (
           <meta key={tag} property="article:tag" content={tag} />
         ))}
@@ -136,9 +136,12 @@ export default function BlogArticleLayout({ meta, locale = 'es', faq, children }
             </nav>
             <article className="blog-article">
               <header className="blog-article-header">
-                <time className="blog-card-date" dateTime={meta.publishedAt}>
-                  {formatBlogDate(meta.publishedAt, locale)}
-                </time>
+                <div className="blog-card-meta">
+                  <span className="blog-category-badge">{localized.categoryLabel}</span>
+                  <time className="blog-card-date" dateTime={meta.publishedAt}>
+                    {formatBlogDate(meta.publishedAt, locale)}
+                  </time>
+                </div>
                 <h1 className="blog-h1">{localized.title}</h1>
                 {localized.tags.length > 0 ? (
                   <ul className="blog-tags">

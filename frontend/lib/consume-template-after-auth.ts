@@ -24,7 +24,7 @@ function normalizePlanKey(plan: string | null | undefined): string {
     .replace(/_+/g, '_');
 }
 
-/** Acceso a plantillas PRO (Gourmet, etc.): mismo criterio que /admin/templates. */
+/** Acceso a plantillas PRO (Gourmet, etc.): mismo criterio que /admin/design. */
 export function tenantPlanAllowsProTemplates(plan: string | null | undefined): boolean {
   const k = normalizePlanKey(plan);
   const key = k === 'proteam' ? 'pro_team' : k;

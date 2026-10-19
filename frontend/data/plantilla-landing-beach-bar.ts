@@ -179,7 +179,7 @@ export const PLANTILLA_BEACH_BAR_LANDING: PlantillaLandingContent = {
     primaryLabel: 'Actualizar a PRO',
     primaryHref: '/precios',
     secondaryLabel: 'Usar esta plantilla',
-    secondaryHref: '/admin/templates',
+    secondaryHref: '/admin/design',
     secondaryShowOnlyForPro: true,
   },
 };
