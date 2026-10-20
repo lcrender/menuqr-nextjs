@@ -3,6 +3,7 @@
  */
 
 import type { BlogUiLocale } from '../../lib/blog-nav';
+import { blogArticleHref } from '../../lib/blog-nav';
 import { funcionesHref } from '../../lib/funciones-nav';
 import { plantillasCatalogPath } from '../../lib/plantillas-catalog-url';
 
@@ -36,7 +37,13 @@ export type BlogGuideArticle = {
 
 const REGISTER_HREF = '/login?action=register';
 
-function article(locale: BlogUiLocale, dynamicHref: string, templatesHref: string, homeHref: string): BlogGuideArticle {
+function article(
+  locale: BlogUiLocale,
+  dynamicHref: string,
+  templatesHref: string,
+  homeHref: string,
+  compareHref: string,
+): BlogGuideArticle {
   const productsHref = funcionesHref('gestionar-productos-menu', locale);
   const scheduleHref = funcionesHref('programar-menus', locale);
   const languagesHref = funcionesHref('menu-multidioma', locale);
@@ -262,7 +269,9 @@ function article(locale: BlogUiLocale, dynamicHref: string, templatesHref: strin
           content: [
             'A QR menu built on a dedicated platform is managed from a dashboard: you update one product, keep a mobile-friendly layout, and reuse the same code. If your offer changes often, a ',
             { link: 'dynamic QR menu', href: dynamicHref },
-            ' is more practical than a PDF menu.',
+            ' is more practical than a PDF menu. For a fuller comparison, see ',
+            { link: 'QR menu vs. PDF', href: compareHref },
+            '.',
           ],
         },
         {
@@ -562,7 +571,9 @@ function article(locale: BlogUiLocale, dynamicHref: string, templatesHref: strin
         content: [
           'Un menú QR creado en una plataforma especializada se administra desde un panel: actualizas un producto, conservas un diseño adaptado al móvil y mantienes el mismo código. Si tu oferta cambia con frecuencia, un ',
           { link: 'menú QR dinámico', href: dynamicHref },
-          ' resulta más práctico que una carta en PDF.',
+          ' resulta más práctico que una carta en PDF. Para una comparación más completa, consulta ',
+          { link: 'Menú QR vs. PDF', href: compareHref },
+          '.',
         ],
       },
       {
@@ -645,5 +656,6 @@ export function getBlogArticleCrearMenuQrGratis(locale: BlogUiLocale): BlogGuide
   const dynamicHref = funcionesHref('menu-qr-dinamico', locale);
   const templatesHref = plantillasCatalogPath(locale);
   const homeHref = locale === 'en' ? '/en' : '/';
-  return article(locale, dynamicHref, templatesHref, homeHref);
+  const compareHref = blogArticleHref('menu-qr-vs-pdf', locale);
+  return article(locale, dynamicHref, templatesHref, homeHref, compareHref);
 }

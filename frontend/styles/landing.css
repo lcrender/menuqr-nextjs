@@ -2758,6 +2758,7 @@
   height: 100%;
   min-height: 112px;
   object-fit: cover;
+  object-position: left center;
 }
 
 .blog-card-body {
@@ -2982,6 +2983,47 @@
 
 .blog-bullets li {
   margin-bottom: 0.45rem;
+}
+
+.blog-steps {
+  padding-left: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.blog-steps li {
+  margin-bottom: 0.55rem;
+}
+
+.blog-table-wrap {
+  overflow-x: auto;
+  margin: 0 0 1.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.blog-table {
+  width: 100%;
+  min-width: 32rem;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.blog-table th,
+.blog-table td {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #e2e2e2;
+  text-align: left;
+  vertical-align: top;
+}
+
+.blog-table th {
+  background: #f7f7f7;
+  font-weight: 600;
+  color: #222;
+}
+
+.blog-table tbody tr:nth-child(even) {
+  background: #fafafa;
 }
 
 .blog-cta-row {

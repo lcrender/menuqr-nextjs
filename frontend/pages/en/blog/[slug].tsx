@@ -2,6 +2,7 @@ import type { GetStaticPaths, GetStaticProps } from 'next';
 import BlogArticleSmartFood from '../../../components/blog/BlogArticleSmartFood';
 import BlogArticleAppMenuEnglish from '../../../components/blog/BlogArticleAppMenuEnglish';
 import BlogArticleCrearMenuQrGratis from '../../../components/blog/BlogArticleCrearMenuQrGratis';
+import BlogArticleMenuQrVsPdf from '../../../components/blog/BlogArticleMenuQrVsPdf';
 import BlogArticlePersonalizacion from '../../../components/blog/BlogArticlePersonalizacion';
 import {
   BLOG_ARTICLES,
@@ -24,6 +25,9 @@ export default function BlogSlugEnPage({ slug }: Props) {
   }
   if (slug === 'como-crear-un-menu-qr-gratis') {
     return <BlogArticleCrearMenuQrGratis locale="en" />;
+  }
+  if (slug === 'menu-qr-vs-pdf') {
+    return <BlogArticleMenuQrVsPdf locale="en" />;
   }
   return null;
 }

@@ -86,6 +86,37 @@ export const BLOG_INDEX = {
 
 export const BLOG_ARTICLES: BlogArticleMeta[] = [
   {
+    slug: 'menu-qr-vs-pdf',
+    enSlug: 'qr-menu-vs-pdf',
+    publishedAt: '2026-10-20',
+    category: 'tutoriales',
+    thumbnail: '/blog/menu-qr-vs-pdf.jpg',
+    thumbnailAlt: {
+      es: 'Menú QR dinámico en el móvil con actualización en tiempo real',
+      en: 'Dynamic QR menu on a phone with real-time updates',
+    },
+    title: {
+      es: 'Menú QR vs. PDF: ¿cuál es la mejor opción para tu restaurante?',
+      en: 'QR menu vs. PDF: which is the better option for your restaurant?',
+    },
+    excerpt: {
+      es: 'Compara menú QR dinámico y carta en PDF: actualización de precios, experiencia móvil y facilidad de gestión para elegir la mejor carta digital.',
+      en: 'Compare a dynamic QR menu and a PDF menu: price updates, mobile experience, and day-to-day management so you can choose the best digital menu.',
+    },
+    metaTitle: {
+      es: 'Menú QR vs. PDF: ¿cuál es mejor para tu restaurante?',
+      en: 'QR Menu vs. PDF: Which Is Better for Your Restaurant?',
+    },
+    metaDescription: {
+      es: '¿Menú QR o PDF para tu restaurante? Compara sus ventajas, diferencias y facilidad de actualización para elegir la mejor carta digital para tu negocio.',
+      en: 'QR menu or PDF for your restaurant? Compare advantages, differences, and how easy each is to update so you can choose the best digital menu.',
+    },
+    tags: {
+      es: ['Menú QR vs PDF', 'Carta digital', 'Menú digital para restaurantes'],
+      en: ['QR menu vs PDF', 'Digital menu', 'Restaurant digital menu'],
+    },
+  },
+  {
     slug: 'nuevas-opciones-personalizacion-menu-digital',
     enSlug: 'new-digital-menu-customization-options',
     publishedAt: '2026-10-19',

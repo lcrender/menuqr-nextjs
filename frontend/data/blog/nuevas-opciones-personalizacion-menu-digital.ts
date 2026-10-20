@@ -9,7 +9,7 @@ export const BLOG_ARTICLE_PERSONALIZACION_SLUG =
 
 const IMAGE = {
   src: '/blog/nuevas-opciones-personalizacion-menu-digital.jpg',
-  width: 817,
+  width: 507,
   height: 1024,
 } as const;
 
