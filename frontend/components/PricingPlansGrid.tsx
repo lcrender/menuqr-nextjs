@@ -421,7 +421,7 @@ export default function PricingPlansGrid({
           {landingPlanTaglines ? (
             <p className="landing-pricing-plan-tagline small text-muted mb-2">{ui.starterTagline}</p>
           ) : null}
-          {renderPaidPriceBlock(planStarter, 'USD 3.49', 'USD', 3.49)}
+          {renderPaidPriceBlock(planStarter, 'USD 7.99', 'USD', 7.99)}
         </div>
         <ul className="landing-pricing-features">
           <li className="landing-pricing-feature">
@@ -499,7 +499,7 @@ export default function PricingPlansGrid({
           {landingPlanTaglines ? (
             <p className="landing-pricing-plan-tagline small text-muted mb-2">{ui.proTagline}</p>
           ) : null}
-          {renderPaidPriceBlock(planPro, 'USD 7.99', 'USD', 7.99)}
+          {renderPaidPriceBlock(planPro, 'USD 12.99', 'USD', 12.99)}
         </div>
         <ul className="landing-pricing-features">
           <li
