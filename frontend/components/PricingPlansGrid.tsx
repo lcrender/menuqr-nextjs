@@ -40,6 +40,26 @@ function yearlyAmount(plan: { price: number; priceYearly?: number }): number {
   return plan.priceYearly ?? plan.price * 10;
 }
 
+/** Fila “Fotos de productos”: ✓ o ✗ según productPhotosAllowed del plan. */
+function renderProductPhotosFeatureRow(allowed: boolean, yesLabel: string, noLabel: string) {
+  if (allowed) {
+    return (
+      <li className="landing-pricing-feature landing-pricing-feature-highlight">
+        <span className="landing-pricing-check">✓</span>
+        <span>
+          <strong>{yesLabel}</strong>
+        </span>
+      </li>
+    );
+  }
+  return (
+    <li className="landing-pricing-feature landing-pricing-muted">
+      <span>✗</span>
+      <span>{noLabel}</span>
+    </li>
+  );
+}
+
 /** Fila “Destacar productos”: ✓ destacado o ✗ en gris, según límites públicos del plan. */
 function renderDestacarProductosFeatureRow(allowed: boolean, label: string) {
   if (allowed) {
@@ -55,6 +75,15 @@ function renderDestacarProductosFeatureRow(allowed: boolean, label: string) {
   return (
     <li className="landing-pricing-feature landing-pricing-muted">
       <span>✗</span>
+      <span>{label}</span>
+    </li>
+  );
+}
+
+function renderWebTypographyRow(label: string) {
+  return (
+    <li className="landing-pricing-feature">
+      <span className="landing-pricing-check">✓</span>
       <span>{label}</span>
     </li>
   );
@@ -101,10 +130,7 @@ function FreeFeaturesList({
         <span className="landing-pricing-check">✓</span>
         <span>{ui.products(lim.productLimit)}</span>
       </li>
-      <li className="landing-pricing-feature landing-pricing-muted">
-        <span>✗</span>
-        <span>{ui.noProductPhotos}</span>
-      </li>
+      {renderProductPhotosFeatureRow(lim.productPhotosAllowed, ui.productPhotos, ui.noProductPhotos)}
       <li className="landing-pricing-feature">
         <span className="landing-pricing-check">✓</span>
         <span>{ui.allergens}</span>
@@ -122,6 +148,7 @@ function FreeFeaturesList({
         <span className="landing-pricing-check">✓</span>
         <span>{ui.basicTemplates}</span>
       </li>
+      {renderWebTypographyRow(ui.webTypography)}
       <li className="landing-pricing-feature">
         <span className="landing-pricing-check">✓</span>
         <span>{ui.printMenu}</span>
@@ -359,13 +386,10 @@ export default function PricingPlansGrid({
 
   return (
     <div className="landing-pricing-grid">
-      {showBillingToggle && !isLanding && BillingToggle}
+      {showBillingToggle && BillingToggle}
 
       {/* Plan Free */}
-      {!isSubscription && (
-        <div
-          className={`landing-pricing-card ${isLanding || isSubscription ? 'landing-pricing-card-free-horizontal' : ''}`}
-        >
+      <div className="landing-pricing-card">
           <div className="landing-pricing-header">
             <h3 className="landing-pricing-name">Free</h3>
             <div className="landing-pricing-price">
@@ -405,14 +429,7 @@ export default function PricingPlansGrid({
           >
             {loadingPlan === 'free' ? '…' : ui.startFree}
           </button>
-        </div>
-      )}
-
-      {isLanding && showBillingToggle ? (
-        <h3 className="landing-pricing-grid-subheading">{ui.paidSubheading}</h3>
-      ) : null}
-
-      {showBillingToggle && isLanding && BillingToggle}
+      </div>
 
       {/* Plan Starter */}
       <div className="landing-pricing-card">
@@ -438,10 +455,7 @@ export default function PricingPlansGrid({
             <span className="landing-pricing-check">✓</span>
             <span>{ui.products(S.productLimit)}</span>
           </li>
-          <li className="landing-pricing-feature landing-pricing-muted">
-            <span>✗</span>
-            <span>{ui.noProductPhotos}</span>
-          </li>
+          {renderProductPhotosFeatureRow(S.productPhotosAllowed, ui.productPhotos, ui.noProductPhotos)}
           <li className="landing-pricing-feature">
             <span className="landing-pricing-check">✓</span>
             <span>{ui.allergens}</span>
@@ -459,6 +473,7 @@ export default function PricingPlansGrid({
             <span className="landing-pricing-check">✓</span>
             <span>{ui.basicTemplates}</span>
           </li>
+          {renderWebTypographyRow(ui.webTypography)}
           <li className="landing-pricing-feature">
             <span className="landing-pricing-check">✓</span>
             <span>{ui.printMenu}</span>
@@ -518,12 +533,7 @@ export default function PricingPlansGrid({
             <span className="landing-pricing-check">✓</span>
             <span>{ui.products(P.productLimit)}</span>
           </li>
-          <li
-            className={`landing-pricing-feature${P.productPhotosAllowed ? ' landing-pricing-feature-highlight' : ''}`}
-          >
-            <span className="landing-pricing-check">✓</span>
-            <span>{ui.productPhotos}</span>
-          </li>
+          {renderProductPhotosFeatureRow(P.productPhotosAllowed, ui.productPhotos, ui.noProductPhotos)}
           <li className="landing-pricing-feature">
             <span className="landing-pricing-check">✓</span>
             <span>{ui.allergens}</span>
@@ -553,6 +563,7 @@ export default function PricingPlansGrid({
               )}
             </span>
           </li>
+          {renderWebTypographyRow(ui.webTypography)}
           <li className="landing-pricing-feature">
             <span className="landing-pricing-check">✓</span>
             <span>{ui.printMenu}</span>
@@ -585,59 +596,6 @@ export default function PricingPlansGrid({
         </button>
       </div>
 
-      {/* Plan Premium — propuesta a medida (sin checkout) */}
-      <div className="landing-pricing-card landing-pricing-card-premium">
-        <div className="landing-pricing-badge landing-pricing-badge-premium">{ui.customBadge}</div>
-        <div className="landing-pricing-header">
-          <h3 className="landing-pricing-name">{ui.premiumName}</h3>
-          <p className="landing-pricing-premium-lead">{ui.premiumLead}</p>
-          <p className="landing-pricing-premium-callout">{ui.premiumCallout}</p>
-        </div>
-        <ul className="landing-pricing-features">
-          <li className="landing-pricing-feature landing-pricing-feature-highlight">
-            <span className="landing-pricing-check">✓</span>
-            <span>{ui.premiumDesign}</span>
-          </li>
-          <li className="landing-pricing-feature landing-pricing-feature-highlight">
-            <span className="landing-pricing-check">✓</span>
-            <span>{ui.premiumTypography}</span>
-          </li>
-          <li className="landing-pricing-feature landing-pricing-feature-highlight">
-            <span className="landing-pricing-check">✓</span>
-            <span>{ui.premiumInitialSetup}</span>
-          </li>
-          <li className="landing-pricing-feature landing-pricing-feature-highlight">
-            <span className="landing-pricing-check">✓</span>
-            <span>{ui.premiumFullLoad}</span>
-          </li>
-          <li className="landing-pricing-feature landing-pricing-feature-highlight">
-            <span className="landing-pricing-check">✓</span>
-            <span>{ui.premiumAdaptations}</span>
-          </li>
-          <li className="landing-pricing-feature landing-pricing-feature-highlight">
-            <span className="landing-pricing-check">✓</span>
-            <span>{ui.premiumLaunchHelp}</span>
-          </li>
-          <li className="landing-pricing-feature landing-pricing-feature-highlight">
-            <span className="landing-pricing-check">✓</span>
-            <span>{ui.premiumCustomSupport}</span>
-          </li>
-          <li className="landing-pricing-feature landing-pricing-feature-highlight">
-            <span className="landing-pricing-check">✓</span>
-            <span>{ui.premiumCustomProposal}</span>
-          </li>
-        </ul>
-        <div className="landing-pricing-premium-footer">
-          <p className="landing-pricing-premium-footer-text">{ui.premiumFooter}</p>
-        </div>
-        <Link
-          href={buildPremiumInquiryUrl('precios')}
-          className="landing-btn-secondary landing-btn-full landing-pricing-premium-cta"
-        >
-          {ui.consultPlan}
-        </Link>
-      </div>
-
       {(isSubscription || isLanding) && pricingData ? (
         isMercadoPago ? (
           <p className="text-muted small mt-3 w-100" style={{ gridColumn: '1 / -1' }}>
@@ -650,40 +608,51 @@ export default function PricingPlansGrid({
         )
       ) : null}
 
-      {/* Plan Free (ultima fila en Desktop para la pagina de gestión) */}
-      {isSubscription && (
-        <div className="landing-pricing-card landing-pricing-card-free-horizontal">
-          <div className="landing-pricing-header">
-            <h3 className="landing-pricing-name">Free</h3>
-            <div className="landing-pricing-price">
-              <span className="landing-pricing-amount">{formatCurrency(0, freeCurrency)}</span>
-              <span className="landing-pricing-period">{ui.perMonth}</span>
+      {isLanding ? (
+        <div className="landing-pricing-extras">
+          <div className="landing-pricing-custom-card">
+            <div className="landing-pricing-custom-copy">
+              <h3 className="landing-pricing-custom-title">{ui.customTitle}</h3>
+              <p className="landing-pricing-custom-body">{ui.customBody}</p>
             </div>
-            <p className="landing-pricing-free-note mb-0">
-              {freeNoteShortLines[0]}
-              <br />
-              {freeNoteShortLines[1]}
-            </p>
-            <div
-              className="landing-pricing-annual-offer landing-pricing-annual-offer-placeholder"
-              aria-hidden="true"
+            <Link
+              href={buildPremiumInquiryUrl('precios')}
+              className="landing-btn-secondary landing-pricing-custom-cta"
             >
-              <span className="landing-pricing-offer-strike">000</span>
-              <span className="landing-pricing-discount-offer-badge">00% {ui.discount}</span>
-              <span className="landing-pricing-offer-final">000</span>
-            </div>
+              {ui.customCta}
+            </Link>
           </div>
-          <FreeFeaturesList lim={F} ui={ui} />
-          <button
-            type="button"
-            onClick={() => handleCta('free')}
-            className="landing-btn-secondary landing-btn-full"
-            disabled={loadingPlan !== null}
-          >
-            {loadingPlan === 'free' ? '…' : ui.startFree}
-          </button>
+
+          <div className="landing-pricing-programs">
+            <article className="landing-pricing-program-card">
+              <h3 className="landing-pricing-program-title">{ui.affiliateTitle}</h3>
+              <p className="landing-pricing-program-lead">{ui.affiliateLead}</p>
+              <ul className="landing-pricing-program-list">
+                {ui.affiliateBullets.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <Link href="/afiliados" className="landing-btn-secondary landing-pricing-program-cta">
+                {ui.affiliateCta}
+              </Link>
+            </article>
+
+            <article className="landing-pricing-program-card">
+              <h3 className="landing-pricing-program-title">{ui.partnerTitle}</h3>
+              <p className="landing-pricing-program-subtitle">{ui.partnerSubtitle}</p>
+              <p className="landing-pricing-program-lead">{ui.partnerBody}</p>
+              <ul className="landing-pricing-program-list">
+                {ui.partnerBullets.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <Link href="/partners" className="landing-btn-secondary landing-pricing-program-cta">
+                {ui.partnerCta}
+              </Link>
+            </article>
+          </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

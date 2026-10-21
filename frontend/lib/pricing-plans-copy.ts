@@ -21,6 +21,7 @@ export type PricingPlansUiCopy = {
   reorderProducts: string;
   highlightProducts: string;
   basicTemplates: string;
+  webTypography: string;
   printMenu: string;
   scheduleMenu: string;
   oneLanguage: string;
@@ -53,6 +54,18 @@ export type PricingPlansUiCopy = {
   consultPlan: string;
   securePaymentsMp: string;
   securePaymentsPaypal: string;
+  customTitle: string;
+  customBody: string;
+  customCta: string;
+  affiliateTitle: string;
+  affiliateLead: string;
+  affiliateBullets: string[];
+  affiliateCta: string;
+  partnerTitle: string;
+  partnerSubtitle: string;
+  partnerBody: string;
+  partnerBullets: string[];
+  partnerCta: string;
   restaurants: (n: number) => string;
   menus: (n: number) => string;
   products: (n: number) => string;
@@ -79,6 +92,7 @@ const ES: PricingPlansUiCopy = {
   reorderProducts: 'Reordenar productos',
   highlightProducts: 'Destacar productos',
   basicTemplates: 'Plantillas básicas',
+  webTypography: 'Selección de tipografía web',
   printMenu: 'Imprimir carta en papel',
   scheduleMenu: 'Programar menú',
   oneLanguage: '1 idioma',
@@ -112,6 +126,33 @@ const ES: PricingPlansUiCopy = {
   consultPlan: 'Consultar plan',
   securePaymentsMp: 'Pagos seguros con',
   securePaymentsPaypal: 'Pagos seguros con',
+  customTitle: '¿Necesitás algo más personalizado?',
+  customBody:
+    'Podemos ayudarte con el diseño, la configuración inicial, la carga de productos y adaptaciones específicas para tu negocio.',
+  customCta: 'Consultar',
+  affiliateTitle: 'Afiliados',
+  affiliateLead:
+    'Recomendá AppMenuQR y recibí una comisión recurrente del 25% por las suscripciones de los clientes que refieras.',
+  affiliateBullets: [
+    '25% de comisión recurrente.',
+    'Seguimiento de tus referidos.',
+    'Comisiones sobre pagos efectivamente cobrados.',
+    'Panel para consultar tus resultados.',
+  ],
+  affiliateCta: 'Quiero ser afiliado',
+  partnerTitle: 'Partners',
+  partnerSubtitle: 'Ofrecé AppMenuQR a tus propios clientes',
+  partnerBody:
+    'Si sos agencia, diseñador, community manager, fotógrafo, desarrollador o trabajás con comercios gastronómicos, podés utilizar AppMenuQR para ofrecer tu propio servicio de menú digital.',
+  partnerBullets: [
+    'Administrá varios comercios.',
+    'Creá menús, productos y diseños.',
+    'Invitá usuarios a cada comercio.',
+    'Precio especial por comercio.',
+    'Cuantos más clientes tengas, menor será tu precio.',
+    'Vos decidís cuánto cobrarle a tus clientes.',
+  ],
+  partnerCta: 'Quiero ser Partner',
   restaurants: (n) => (n === 1 ? '1 comercio' : `${n} comercios`),
   menus: (n) => (n === -1 ? 'Menús ilimitados' : `Hasta ${n} menús`),
   products: (n) => (n === -1 ? 'Productos ilimitados' : `Hasta ${n} productos`),
@@ -138,6 +179,7 @@ const EN: PricingPlansUiCopy = {
   reorderProducts: 'Reorder products',
   highlightProducts: 'Highlight products',
   basicTemplates: 'Basic templates',
+  webTypography: 'Web typography selection',
   printMenu: 'Print paper menu',
   scheduleMenu: 'Schedule menus',
   oneLanguage: '1 language',
@@ -171,6 +213,33 @@ const EN: PricingPlansUiCopy = {
   consultPlan: 'Request a quote',
   securePaymentsMp: 'Secure payments with',
   securePaymentsPaypal: 'Secure payments with',
+  customTitle: 'Need something more tailored?',
+  customBody:
+    'We can help with the design, the initial setup, loading your products, and specific adaptations for your business.',
+  customCta: 'Contact us',
+  affiliateTitle: 'Affiliates',
+  affiliateLead:
+    'Recommend AppMenuQR and earn a recurring 25% commission on subscriptions from the customers you refer.',
+  affiliateBullets: [
+    '25% recurring commission.',
+    'Referral tracking.',
+    'Commissions on payments actually collected.',
+    'A dashboard to review your results.',
+  ],
+  affiliateCta: 'I want to be an affiliate',
+  partnerTitle: 'Partners',
+  partnerSubtitle: 'Offer AppMenuQR to your own clients',
+  partnerBody:
+    'If you are an agency, designer, community manager, photographer, developer, or you work with food businesses, you can use AppMenuQR to offer your own digital menu service.',
+  partnerBullets: [
+    'Manage several venues.',
+    'Create menus, products, and designs.',
+    'Invite users to each venue.',
+    'Special price per venue.',
+    'The more clients you have, the lower your price.',
+    'You decide what to charge your clients.',
+  ],
+  partnerCta: 'I want to be a Partner',
   restaurants: (n) => (n === 1 ? '1 venue' : `${n} venues`),
   menus: (n) => (n === -1 ? 'Unlimited menus' : `Up to ${n} menus`),
   products: (n) => (n === -1 ? 'Unlimited products' : `Up to ${n} products`),

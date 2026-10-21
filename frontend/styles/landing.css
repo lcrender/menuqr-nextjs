@@ -1558,7 +1558,7 @@
     gap: 24px;
   }
 
-  /* Landing: Free horizontal arriba y luego 3 planes en columnas */
+  /* Free, Starter y Pro ocupan las 3 columnas. */
   .landing-pricing-card.landing-pricing-card-free-horizontal {
     grid-column: 1 / -1;
     display: grid;
@@ -1715,6 +1715,202 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+}
+
+.landing-pricing-extras {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.landing-pricing-custom-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 32px;
+  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 48%);
+  border: 2px solid #c4b5fd;
+  border-radius: 16px;
+  padding: 28px 32px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.landing-pricing-custom-card:hover {
+  border-color: #a78bfa;
+  box-shadow: 0 12px 28px rgba(91, 33, 182, 0.14);
+}
+
+.landing-pricing-custom-copy {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.landing-pricing-custom-title {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--landing-text);
+}
+
+.landing-pricing-custom-body {
+  margin: 0;
+  color: var(--landing-text-secondary);
+  line-height: 1.55;
+}
+
+.landing-pricing-custom-cta,
+.landing-pricing-program-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.landing-pricing-programs {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.landing-pricing-program-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 2px solid var(--landing-border);
+  border-radius: 16px;
+  padding: 28px 28px 24px;
+}
+
+.landing-pricing-program-title {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.landing-pricing-program-subtitle {
+  margin: 0 0 10px;
+  font-weight: 600;
+  color: var(--landing-text);
+}
+
+.landing-pricing-program-lead {
+  margin: 0 0 14px;
+  color: var(--landing-text-secondary);
+  line-height: 1.55;
+}
+
+.landing-pricing-program-list {
+  margin: 0 0 20px;
+  padding-left: 1.15rem;
+  color: var(--landing-text);
+  flex: 1;
+}
+
+.landing-pricing-program-list li + li {
+  margin-top: 6px;
+}
+
+.landing-pricing-program-cta {
+  align-self: flex-start;
+}
+
+@media (min-width: 900px) {
+  .landing-pricing-programs {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.program-soon-page {
+  padding: 48px 0 88px;
+  background:
+    radial-gradient(900px 280px at 50% -40px, rgba(99, 102, 241, 0.16), transparent 70%),
+    var(--landing-bg-light);
+}
+
+.program-soon-card {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 220px);
+  border: 1px solid #ddd6fe;
+  border-radius: 20px;
+  padding: clamp(32px, 5vw, 64px);
+  box-shadow: 0 16px 40px rgba(91, 33, 182, 0.06);
+}
+
+.program-soon-banner {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 18px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #fff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.program-soon-card h1 {
+  margin: 0;
+  max-width: 16ch;
+  font-size: clamp(2.4rem, 5vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.program-soon-kicker {
+  margin: 18px 0 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--landing-text);
+}
+
+.program-soon-lead {
+  margin: 16px 0 0;
+  width: 100%;
+  max-width: none;
+  color: var(--landing-text-secondary);
+  font-size: 1.08rem;
+  line-height: 1.65;
+}
+
+.program-soon-points {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.program-soon-points li {
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(196, 181, 253, 0.7);
+  color: var(--landing-text);
+  line-height: 1.45;
+}
+
+.program-soon-note {
+  margin: 28px 0 0;
+  color: var(--landing-text-muted);
+  font-size: 0.95rem;
+}
+
+@media (min-width: 768px) {
+  .program-soon-points {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .landing-pricing-badge {
