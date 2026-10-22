@@ -120,7 +120,7 @@ export default function ProfileCouponsPage() {
         <h1 className="h3 mb-2 fw-semibold">Cupones</h1>
         <p className="text-muted mb-4">
           Ingresá tu código promocional. Si aplica a un plan de pago, te llevaremos al checkout con el cupón
-          precargado. Los cupones de Pro Team u otros beneficios especiales se activan desde aquí.
+          precargado.
         </p>
 
         <section className="card profile-section">

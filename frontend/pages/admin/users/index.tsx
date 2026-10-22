@@ -3,6 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import api from '../../../lib/axios';
+import { accountCancelReasonLabel } from '../../../lib/account-cancel-reasons';
 import AdminLayout from '../../../components/AdminLayout';
 import { getMenuStatusLabelEs } from '../../../lib/menu-status-label';
 
@@ -290,7 +291,7 @@ export default function Users() {
         </div>
       ) : (
         <div className="table-responsive">
-          <table className="table">
+          <table className="table table-admin-users">
             <thead>
               <tr>
                 <th>Email</th>
@@ -565,7 +566,7 @@ export default function Users() {
                           </>
                         ) : null}
                         <dt className="col-sm-3 col-md-2 text-muted">Última conexión</dt>
-                        <dd className="col-sm-9 col-md-10 mb-0">
+                        <dd className="col-sm-9 col-md-10">
                           {userDetails.user?.lastLoginAt
                             ? new Date(userDetails.user.lastLoginAt).toLocaleString('es-AR', {
                                 dateStyle: 'medium',
@@ -573,6 +574,25 @@ export default function Users() {
                               })
                             : 'Sin conexiones registradas'}
                         </dd>
+                        {userDetails.user?.accountCancelledAt ? (
+                          <>
+                            <dt className="col-sm-3 col-md-2 text-muted">Canceló la cuenta</dt>
+                            <dd className="col-sm-9 col-md-10">
+                              {new Date(userDetails.user.accountCancelledAt).toLocaleString('es-AR', {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })}
+                              {userDetails.user?.isActive ? ' (la cuenta fue reactivada después)' : ''}
+                            </dd>
+                            <dt className="col-sm-3 col-md-2 text-muted">Motivo</dt>
+                            <dd className="col-sm-9 col-md-10 mb-0">
+                              {accountCancelReasonLabel(userDetails.user.accountCancelReason, 'es') || 'Sin motivo'}
+                              {userDetails.user.accountCancelReasonDetail
+                                ? ` — ${userDetails.user.accountCancelReasonDetail}`
+                                : ''}
+                            </dd>
+                          </>
+                        ) : null}
                       </dl>
                     </div>
                     {currentUser?.role === 'SUPER_ADMIN' && (

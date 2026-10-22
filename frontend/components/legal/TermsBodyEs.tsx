@@ -162,6 +162,44 @@ export default function TermsBodyEs({ preciosHref }: TermsBodyProps) {
       </ul>
       <p>En casos graves, la suspensión podrá realizarse sin previo aviso.</p>
 
+      <h3 style={{ fontSize: '1rem', marginTop: '16px' }}>Cuentas inactivas</h3>
+      <p>
+        Con el objetivo de mantener la Plataforma optimizada y evitar el almacenamiento indefinido de cuentas que ya no
+        se utilizan, AppMenuQR podrá eliminar cuentas inactivas de acuerdo con los siguientes criterios:
+      </p>
+      <ul>
+        <li>
+          Las cuentas registradas con un correo electrónico que no haya sido verificado, y que por ello no hayan podido
+          crear contenido, podrán ser eliminadas sin previo aviso una vez transcurridos 7 días desde el registro si la
+          cuenta no fue activada.
+        </li>
+        <li>
+          Las cuentas activadas que no hayan creado al menos un comercio con un menú y un producto podrán ser eliminadas
+          después de 30 días de inactividad.
+        </li>
+        <li>
+          Las cuentas gratuitas que contengan comercios, menús y productos, pero que no registren accesos reales a los
+          menús publicados ni actividad en la cuenta, podrán ser eliminadas después de 180 días de inactividad.
+        </li>
+        <li>
+          Antes de eliminar una cuenta gratuita que contenga información, AppMenuQR enviará avisos al correo electrónico
+          asociado a la cuenta. El usuario podrá responder para indicar que no desea que la cuenta sea eliminada y así
+          conservarla.
+        </li>
+        <li>
+          Las cuentas con una suscripción paga activa no serán eliminadas por falta de uso mientras la suscripción
+          permanezca vigente.
+        </li>
+        <li>
+          Cuando el usuario cierre o cancele su cuenta, los datos asociados podrán eliminarse una vez transcurridos 90
+          días desde el cierre o la cancelación.
+        </li>
+        <li>
+          Determinada información administrativa, contable o relacionada con pagos podrá conservarse durante los
+          períodos exigidos por la normativa aplicable, incluso después de eliminar la cuenta.
+        </li>
+      </ul>
+
       <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>11. Propiedad Intelectual</h2>
       <p>
         El diseño, funcionamiento, software y contenido de la Plataforma son propiedad de su titular o de sus

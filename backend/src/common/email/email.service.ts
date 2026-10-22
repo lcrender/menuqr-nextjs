@@ -133,6 +133,44 @@ export class EmailService implements OnModuleInit {
     }
   }
 
+  async sendAccountReactivationEmail(
+    email: string,
+    firstName: string,
+    token: string,
+    preferredLanguage?: string | null,
+  ): Promise<void> {
+    const lang = this.resolveLang(preferredLanguage);
+    const name = firstName?.trim() || defaultEmailDisplayName(lang);
+    const actionUrl = `${this.frontendUrl}/reactivar-cuenta?token=${encodeURIComponent(token)}`;
+    const { subject, html } = await this.renderTemplate(
+      'accountReactivation',
+      lang,
+      { firstName: name, actionUrl, year: String(new Date().getFullYear()) },
+      () => ({
+        subject: authEmailCopy.accountReactivation[lang].subject,
+        html: this.getAccountReactivationEmailTemplate(name, actionUrl, lang),
+      }),
+    );
+
+    if (this.transporter) {
+      try {
+        await this.transporter.sendMail({
+          from: this.getFrom(),
+          to: email,
+          subject,
+          html,
+        });
+        this.logger.log(`Email de reactivación enviado a ${email} (${lang})`);
+      } catch (err) {
+        this.logger.error(`Error enviando email de reactivación a ${email}:`, err);
+        throw err;
+      }
+    } else {
+      this.logger.log(`[DEV] Email de reactivación para ${email} (${lang})`);
+      this.logger.warn(`🔗 Enlace reactivación: ${actionUrl}`);
+    }
+  }
+
   async sendEmailVerification(
     email: string,
     firstName: string,
@@ -309,6 +347,32 @@ ${this.brandHeaderHtml()}
       </body>
       </html>
     `;
+  }
+
+  private getAccountReactivationEmailTemplate(firstName: string, actionUrl: string, lang: EmailLang): string {
+    const c = authEmailCopy.accountReactivation[lang];
+    const year = new Date().getFullYear();
+    return this.emailShell(
+      lang,
+      `
+          <div class="content">
+            <h2>${c.greeting(firstName)}</h2>
+            <p>${c.body[0]}</p>
+            <p>${c.body[1]}</p>
+            <div style="text-align: center;">
+              <a href="${actionUrl}" class="button">${c.cta}</a>
+            </div>
+            <p>${c.orPaste}</p>
+            <p style="word-break: break-all; color: #6366f1;">${actionUrl}</p>
+            <p><strong>${c.expires}</strong></p>
+            <p>${c.ignore}</p>
+            <p>${c.regards}<br>${c.team}</p>
+          </div>
+          <div class="footer">
+            <p>${c.footer(year)}</p>
+          </div>
+      `,
+    );
   }
 
   private getPasswordResetEmailTemplate(firstName: string, resetUrl: string, lang: EmailLang): string {

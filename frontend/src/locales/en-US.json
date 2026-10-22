@@ -603,7 +603,7 @@
     "coupons": {
       "title": "Coupons",
       "redeem": "Redeem coupon",
-      "help": "If you have a promo code, you can validate it here and continue to checkout with the benefit applied, or activate special plans like Pro Team."
+      "help": "If you have a promo code, you can validate it here and continue to checkout with the benefit applied."
     },
     "payments": {
       "title": "Payment history",

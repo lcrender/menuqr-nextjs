@@ -65,7 +65,9 @@
       "recaptchaValidate": "Could not validate reCAPTCHA.",
       "emailTaken": "An account with that email already exists",
       "registerGeneric": "Could not register. Please check your details and try again.",
-      "loginGeneric": "Could not sign in. Check your credentials."
+      "loginGeneric": "Could not sign in. Check your credentials.",
+    "accountCancelled": "Your account is deactivated. To sign in again, log in and confirm the reactivation email.",
+    "reactivationEmailSent": "This account is deactivated. We sent you an email to confirm reactivation."
     }
   },
   "forgot": {
@@ -132,6 +134,18 @@
     "errorMissingToken": "Invalid link. Confirmation token is missing.",
     "errorDefault": "The link is invalid or has expired. Request a new email change from your profile.",
     "errorHint": "If you did not request this change, contact support immediately."
+  },
+  "reactivate": {
+    "metaTitle": "Reactivate account - AppMenuQR",
+    "metaDescription": "Confirm reactivation of your AppMenuQR account",
+    "loadingTitle": "Reactivating your account...",
+    "loadingSubtitle": "We are confirming the link.",
+    "successTitle": "Account reactivated",
+    "successDefault": "Your account is active again. You can sign in now.",
+    "errorTitle": "Could not reactivate",
+    "errorMissingToken": "The link is invalid or incomplete.",
+    "errorDefault": "The link is invalid or expired. Sign in again to receive another one.",
+    "goLogin": "Go to sign in"
   },
   "registro": {
     "metaTitle": "Sign Up - AppMenuQR",

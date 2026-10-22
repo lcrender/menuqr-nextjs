@@ -71,6 +71,12 @@ model User {
   preferredLanguage      String    @default("es") @map("preferred_language")
   /// Si true, el super admin oculta a este usuario y los datos de su tenant en las métricas generales.
   excludeFromMetrics     Boolean   @default(false) @map("exclude_from_metrics")
+  /// Cierre voluntario de la cuenta (is_active pasa a false). Se conserva al reactivar.
+  accountCancelledAt     DateTime? @map("account_cancelled_at")
+  accountCancelReason    String?   @map("account_cancel_reason")
+  accountCancelReasonDetail String? @map("account_cancel_reason_detail")
+  accountReactivationToken String? @map("account_reactivation_token")
+  accountReactivationExpiresAt DateTime? @map("account_reactivation_expires_at")
   createdAt               DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
   deletedAt             DateTime? @map("deleted_at")

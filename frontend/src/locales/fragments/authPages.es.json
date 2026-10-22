@@ -65,7 +65,9 @@
       "recaptchaValidate": "No se pudo validar reCAPTCHA.",
       "emailTaken": "Ya hay un usuario con ese email",
       "registerGeneric": "Error al registrarse. Por favor, revisa los datos e intenta nuevamente.",
-      "loginGeneric": "Error al iniciar sesión. Verifica tus credenciales."
+      "loginGeneric": "Error al iniciar sesión. Verifica tus credenciales.",
+    "accountCancelled": "Tu cuenta quedó desactivada. Si querés volver a entrar, iniciá sesión y confirmá el email de reactivación.",
+    "reactivationEmailSent": "Tu cuenta está desactivada. Te enviamos un email para confirmar la reactivación."
     }
   },
   "forgot": {
@@ -132,6 +134,18 @@
     "errorMissingToken": "Enlace inválido. Falta el token de confirmación.",
     "errorDefault": "El enlace no es válido o ha expirado. Solicita un nuevo cambio de email desde tu perfil.",
     "errorHint": "Si no realizaste este cambio, contacta a soporte inmediatamente."
+  },
+  "reactivate": {
+    "metaTitle": "Reactivar cuenta - AppMenuQR",
+    "metaDescription": "Confirmá la reactivación de tu cuenta de AppMenuQR",
+    "loadingTitle": "Reactivando tu cuenta...",
+    "loadingSubtitle": "Estamos confirmando el enlace.",
+    "successTitle": "Cuenta reactivada",
+    "successDefault": "Tu cuenta volvió a estar activa. Ya podés iniciar sesión.",
+    "errorTitle": "No se pudo reactivar",
+    "errorMissingToken": "El enlace no es válido o está incompleto.",
+    "errorDefault": "El enlace no es válido o expiró. Iniciá sesión de nuevo para recibir otro.",
+    "goLogin": "Ir a iniciar sesión"
   },
   "registro": {
     "metaTitle": "Registro - AppMenuQR",

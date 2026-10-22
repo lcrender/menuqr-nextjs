@@ -104,6 +104,13 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
   const acceptTermsRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!router.isReady) return;
+    if (router.query.accountCancelled === '1') {
+      setMessage(t('authPages.login.errors.accountCancelled'));
+    }
+  }, [router.isReady, router.query.accountCancelled, t]);
+
+  useEffect(() => {
     const remembered = readRememberedLogin();
     if (!remembered) return;
     setEmail(remembered.email);
@@ -244,6 +251,7 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setMessage('');
     setFieldErrors({});
     setLoading(true);
 
@@ -389,6 +397,11 @@ export default function Login({ initialIsRegister }: LoginPageProps) {
           email: trimmedEmail,
           password,
         });
+
+        if (response.data?.reactivationRequired) {
+          setMessage(response.data.message || t('authPages.login.errors.reactivationEmailSent'));
+          return;
+        }
 
         // Guardar tokens en localStorage
         localStorage.setItem('accessToken', response.data.accessToken);

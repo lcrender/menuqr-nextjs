@@ -14,6 +14,7 @@ export interface ProfileMe {
   /** Preferencia de idioma del panel y contenido nuevo: es | en */
   preferredLanguage?: 'es' | 'en' | string | null;
   tenant?: { id: string; name: string; plan?: string | null } | null;
+  role?: string;
 }
 
 export type ProfilePreferredLanguage = 'es' | 'en';

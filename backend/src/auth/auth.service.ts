@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger, NotFoundException, InternalServerErrorException, HttpException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger, NotFoundException, InternalServerErrorException, HttpException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -10,6 +10,7 @@ import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { CancelAccountDto } from './dto/cancel-account.dto';
 
 // Servicios
 import { UsersService } from '../users/users.service';
@@ -28,6 +29,8 @@ type UserWithVerification = User & {
   emailVerified: boolean;
   emailVerificationToken: string | null;
   emailVerifiedAt: Date | null;
+  preferredLanguage?: string | null;
+  accountCancelledAt?: Date | null;
 };
 
 @Injectable()
@@ -90,9 +93,40 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     try {
       const { email, password } = loginDto;
+      const isDev = this.configService.get('NODE_ENV') === 'development';
+      const user = await this.usersService.findByEmail(email);
 
-      // Validar credenciales
-      const user = await this.validateUser(email, password);
+      if (!user) {
+        if (isDev) this.logger.warn(`[dev] Login fallido: usuario no encontrado (${email})`);
+        throw new UnauthorizedException('Credenciales inválidas');
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+      if (!isPasswordValid) {
+        if (isDev) this.logger.warn(`[dev] Login fallido: contraseña incorrecta (${email})`);
+        throw new UnauthorizedException('Credenciales inválidas');
+      }
+
+      if (!user.isActive) {
+        if (user.accountCancelledAt) {
+          await this.issueAccountReactivation(user);
+          const en = user.preferredLanguage === 'en';
+          return {
+            reactivationRequired: true,
+            message: en
+              ? 'This account is deactivated. We sent you an email to confirm reactivation.'
+              : 'Tu cuenta está desactivada. Te enviamos un email para confirmar la reactivación.',
+          };
+        }
+        if (isDev) this.logger.warn(`[dev] Login fallido: usuario inactivo (${email})`);
+        throw new UnauthorizedException('Credenciales inválidas');
+      }
+
+      if (!isDev && !user.emailVerified) {
+        throw new UnauthorizedException('Por favor, verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.');
+      }
+
+      await this.usersService.updateLastLogin(user.id);
 
       // Generar tokens
       const tokens = await this.generateTokens(user);
@@ -618,6 +652,93 @@ export class AuthService {
         current: true,
       },
     ];
+  }
+
+  /**
+   * El titular desactiva su cuenta. No borra datos. Una suscripción paga vigente bloquea el cierre.
+   */
+  async cancelMyAccount(userId: string, dto: CancelAccountDto) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    if (user.role === 'SUPER_ADMIN') {
+      throw new ForbiddenException('La cuenta de super admin no se puede cancelar desde el perfil');
+    }
+    if (!user.isActive && user.accountCancelledAt) {
+      throw new BadRequestException('Esta cuenta ya está desactivada');
+    }
+
+    const blockingPlan = await this.usersService.findPaidPlanBlockingAccountCancel(userId);
+    if (blockingPlan) {
+      const labels: Record<string, string> = {
+        starter: 'Starter',
+        pro: 'Pro',
+        premium: 'Premium',
+      };
+      const label = labels[blockingPlan];
+      const en = user.preferredLanguage === 'en';
+      throw new BadRequestException(
+        en
+          ? label
+            ? `You have an active ${label} subscription. Cancel it first from Subscription. Then you can deactivate the account.`
+            : 'You have an active subscription. Cancel it first from Subscription. Then you can deactivate the account.'
+          : label
+            ? `Tenés una suscripción ${label} activa. Cancelala primero desde Suscripción. Después vas a poder desactivar la cuenta.`
+            : 'Tenés una suscripción activa. Cancelala primero desde Suscripción. Después vas a poder desactivar la cuenta.',
+      );
+    }
+
+    const detail = (dto.detail || '').trim();
+    if (dto.reason === 'other' && detail.length < 3) {
+      throw new BadRequestException(
+        user.preferredLanguage === 'en'
+          ? 'Tell us a bit more about why you are cancelling.'
+          : 'Contanos un poco más por qué cancelás la cuenta.',
+      );
+    }
+
+    await this.usersService.cancelOwnAccount(userId, dto.reason, detail || null);
+    this.logger.log(`Cuenta cancelada por el usuario ${user.email} (${dto.reason})`);
+    return {
+      message:
+        user.preferredLanguage === 'en'
+          ? 'Your account was deactivated.'
+          : 'Tu cuenta fue desactivada.',
+    };
+  }
+
+  async reactivateAccount(token: string) {
+    const clean = (token || '').trim();
+    const user = await this.usersService.findByReactivationToken(clean);
+    if (!user) {
+      throw new BadRequestException('El enlace no es válido o expiró. Iniciá sesión de nuevo para recibir otro.');
+    }
+    await this.usersService.reactivateCancelledAccount(user.id);
+    this.logger.log(`Cuenta reactivada para ${user.email}`);
+    const en = user.preferredLanguage === 'en';
+    return {
+      message: en
+        ? 'Your account is active again. You can sign in now.'
+        : 'Tu cuenta volvió a estar activa. Ya podés iniciar sesión.',
+    };
+  }
+
+  private async issueAccountReactivation(user: {
+    id: string;
+    email: string;
+    firstName?: string | null;
+    preferredLanguage?: string | null;
+  }) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    await this.usersService.saveAccountReactivationToken(user.id, token, expiresAt);
+    await this.emailService.sendAccountReactivationEmail(
+      user.email,
+      user.firstName || '',
+      token,
+      user.preferredLanguage,
+    );
   }
 
   /**

@@ -1005,6 +1005,18 @@ body {
   vertical-align: middle;
 }
 
+.table.table-admin-users thead th {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table.table-admin-users tbody td {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table.table-admin-users tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .table-striped tbody tr:nth-of-type(odd) {
   background: transparent;
 }

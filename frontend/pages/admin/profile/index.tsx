@@ -13,6 +13,7 @@ import ProfileSecurity from '../../../components/profile/ProfileSecurity';
 import ProfileSubscription, { type SubscriptionItem } from '../../../components/profile/ProfileSubscription';
 import ProfileCoupons from '../../../components/profile/ProfileCoupons';
 import ProfilePaymentHistory from '../../../components/profile/ProfilePaymentHistory';
+import ProfileCancelAccount from '../../../components/profile/ProfileCancelAccount';
 import { syncLandingRegionCookieFromUser } from '../../../lib/landing-region';
 import {
   changeLanguage,
@@ -208,6 +209,8 @@ export default function Profile() {
             <ProfileCoupons />
 
             <ProfilePaymentHistory />
+
+            {profile?.role !== 'SUPER_ADMIN' && <ProfileCancelAccount />}
           </div>
         </div>
       </div>

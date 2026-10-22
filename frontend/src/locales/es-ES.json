@@ -603,7 +603,7 @@
     "coupons": {
       "title": "Cupones",
       "redeem": "Canjear cupón",
-      "help": "Si tenés un código promocional, podés validarlo aquí y continuar al checkout con el beneficio aplicado o activar planes especiales como Pro Team."
+      "help": "Si tenés un código promocional, podés validarlo aquí y continuar al checkout con el beneficio aplicado."
     },
     "payments": {
       "title": "Historial de pagos",

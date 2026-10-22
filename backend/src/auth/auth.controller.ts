@@ -11,6 +11,8 @@ import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { CancelAccountDto } from './dto/cancel-account.dto';
+import { ReactivateAccountDto } from './dto/reactivate-account.dto';
 import { Public } from '../common/decorators/public.decorator';
 
 /** Rate limit estricto solo para endpoints públicos sensibles (no para /auth/me). */
@@ -139,6 +141,29 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Token inválido o expirado' })
   async confirmEmailChange(@Body() body: { token: string }) {
     return this.authService.confirmEmailChange(body.token);
+  }
+
+  @Post('reactivate-account')
+  @Public()
+  @UseGuards(ThrottlerGuard)
+  @AuthAbuseThrottle()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirmar reactivación de una cuenta desactivada' })
+  @ApiBody({ type: ReactivateAccountDto })
+  @ApiResponse({ status: 200, description: 'Cuenta reactivada' })
+  @ApiResponse({ status: 400, description: 'Token inválido o expirado' })
+  async reactivateAccount(@Body() body: ReactivateAccountDto) {
+    return this.authService.reactivateAccount(body.token);
+  }
+
+  @Post('me/cancel-account')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Desactivar la cuenta del usuario autenticado' })
+  @ApiBody({ type: CancelAccountDto })
+  @ApiResponse({ status: 200, description: 'Cuenta desactivada' })
+  @ApiResponse({ status: 400, description: 'Suscripción activa o datos inválidos' })
+  async cancelMyAccount(@Request() req: any, @Body() body: CancelAccountDto) {
+    return this.authService.cancelMyAccount(req.user.id, body);
   }
 
   @Post('logout')

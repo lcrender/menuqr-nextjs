@@ -155,11 +155,45 @@ export function defaultEmailDisplayName(lang: EmailLang): string {
   return lang === 'en' ? 'there' : 'Usuario';
 }
 
+const accountReactivation: Record<EmailLang, AuthEmailCopy> = {
+  es: {
+    subject: 'Confirmá la reactivación de tu cuenta - AppMenuQR',
+    greeting: (n) => `Hola ${n},`,
+    body: [
+      'Recibimos un inicio de sesión en tu cuenta de AppMenuQR, que está desactivada.',
+      'Para volver a activarla, confirmá con el siguiente botón:',
+    ],
+    cta: 'Reactivar mi cuenta',
+    orPaste: 'O copia y pega este enlace en tu navegador:',
+    expires: 'Este enlace expira en 48 horas.',
+    ignore: 'Si no intentaste entrar, podés ignorar este email. La cuenta sigue desactivada.',
+    regards: 'Saludos,',
+    team: 'El equipo de AppMenuQR',
+    footer: (y) => `© ${y} AppMenuQR. Todos los derechos reservados.`,
+  },
+  en: {
+    subject: 'Confirm reactivation of your account - AppMenuQR',
+    greeting: (n) => `Hi ${n},`,
+    body: [
+      'We received a sign-in attempt on your AppMenuQR account, which is deactivated.',
+      'To turn it back on, confirm with the button below:',
+    ],
+    cta: 'Reactivate my account',
+    orPaste: 'Or copy and paste this link into your browser:',
+    expires: 'This link expires in 48 hours.',
+    ignore: 'If you did not try to sign in, you can ignore this email. The account stays deactivated.',
+    regards: 'Best regards,',
+    team: 'The AppMenuQR team',
+    footer: (y) => `© ${y} AppMenuQR. All rights reserved.`,
+  },
+};
+
 export const authEmailCopy = {
   passwordReset,
   emailVerification,
   emailChangeVerification,
   emailChangeNotification,
+  accountReactivation,
 };
 
 /** Copy for subscription activation / renewal emails to the user. */

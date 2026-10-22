@@ -366,6 +366,52 @@ export const EMAIL_TEMPLATE_DEFINITIONS: EmailTemplateDefinition[] = [
     },
   },
   {
+    id: 'accountReactivation',
+    category: 'auth',
+    name: 'Reactivar cuenta',
+    when: 'Cuando alguien inicia sesión con una cuenta que el titular desactivó.',
+    recipient: 'Usuario',
+    wrapInShell: true,
+    sendUsesOverride: true,
+    variables: [VAR_FIRST_NAME, VAR_ACTION_URL, VAR_YEAR],
+    defaults: {
+      es: {
+        subject: 'Confirmá la reactivación de tu cuenta - AppMenuQR',
+        bodyHtml: authBody({
+          greeting: 'Hola {{firstName}},',
+          paragraphs: [
+            'Recibimos un inicio de sesión en tu cuenta de AppMenuQR, que está desactivada.',
+            'Para volver a activarla, confirmá con el siguiente botón:',
+          ],
+          cta: 'Reactivar mi cuenta',
+          orPaste: 'O copia y pega este enlace en tu navegador:',
+          expires: 'Este enlace expira en 48 horas.',
+          ignore: 'Si no intentaste entrar, podés ignorar este email. La cuenta sigue desactivada.',
+          regards: 'Saludos,',
+          team: 'El equipo de AppMenuQR',
+          footer: '© {{year}} AppMenuQR. Todos los derechos reservados.',
+        }),
+      },
+      en: {
+        subject: 'Confirm reactivation of your account - AppMenuQR',
+        bodyHtml: authBody({
+          greeting: 'Hi {{firstName}},',
+          paragraphs: [
+            'We received a sign-in attempt on your AppMenuQR account, which is deactivated.',
+            'To turn it back on, confirm with the button below:',
+          ],
+          cta: 'Reactivate my account',
+          orPaste: 'Or copy and paste this link into your browser:',
+          expires: 'This link expires in 48 hours.',
+          ignore: 'If you did not try to sign in, you can ignore this email. The account stays deactivated.',
+          regards: 'Best regards,',
+          team: 'The AppMenuQR team',
+          footer: '© {{year}} AppMenuQR. All rights reserved.',
+        }),
+      },
+    },
+  },
+  {
     id: 'emailChangeVerification',
     category: 'auth',
     name: 'Confirmar cambio de email',

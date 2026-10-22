@@ -18,6 +18,12 @@ type UserWithVerification = User & {
   pendingBillingCycle?: 'monthly' | 'yearly' | null;
   revokedSessionsBefore?: Date | null;
   excludeFromMetrics?: boolean;
+  preferredLanguage?: string | null;
+  accountCancelledAt?: Date | null;
+  accountCancelReason?: string | null;
+  accountCancelReasonDetail?: string | null;
+  accountReactivationToken?: string | null;
+  accountReactivationExpiresAt?: Date | null;
 };
 
 type MarketingRecipient = {
@@ -72,6 +78,11 @@ export class UsersService {
       declaredCountry: row.declared_country ?? null,
       preferredLanguage: row.preferred_language === 'en' ? 'en' : 'es',
       excludeFromMetrics: row.exclude_from_metrics === true,
+      accountCancelledAt: row.account_cancelled_at ?? null,
+      accountCancelReason: row.account_cancel_reason ?? null,
+      accountCancelReasonDetail: row.account_cancel_reason_detail ?? null,
+      accountReactivationToken: row.account_reactivation_token ?? null,
+      accountReactivationExpiresAt: row.account_reactivation_expires_at ?? null,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       deletedAt: row.deleted_at,
@@ -550,6 +561,10 @@ export class UsersService {
           lastLoginAt: user.lastLoginAt ?? null,
           createdAt: user.createdAt ?? null,
           excludeFromMetrics: user.excludeFromMetrics === true,
+          isActive: user.isActive,
+          accountCancelledAt: user.accountCancelledAt ?? null,
+          accountCancelReason: user.accountCancelReason ?? null,
+          accountCancelReasonDetail: user.accountCancelReasonDetail ?? null,
         },
         restaurants: [],
         menus: [],
@@ -623,6 +638,10 @@ export class UsersService {
         lastLoginAt: user.lastLoginAt ?? null,
         createdAt: user.createdAt ?? null,
         excludeFromMetrics: user.excludeFromMetrics === true,
+        isActive: user.isActive,
+        accountCancelledAt: user.accountCancelledAt ?? null,
+        accountCancelReason: user.accountCancelReason ?? null,
+        accountCancelReasonDetail: user.accountCancelReasonDetail ?? null,
       },
       restaurants: restaurants.map((r: any) => ({
         id: r.id,
@@ -673,8 +692,99 @@ export class UsersService {
       throw new NotFoundException('Usuario no encontrado');
     }
     await this.postgres.executeRaw(
-      'UPDATE users SET is_active = $1, updated_at = NOW() WHERE id = $2',
+      `UPDATE users
+       SET is_active = $1,
+           account_reactivation_token = CASE WHEN $1 = true THEN NULL ELSE account_reactivation_token END,
+           account_reactivation_expires_at = CASE WHEN $1 = true THEN NULL ELSE account_reactivation_expires_at END,
+           updated_at = NOW()
+       WHERE id = $2`,
       [isActive, userId]
+    );
+  }
+
+  /**
+   * Suscripción Starter, Pro, Pro Team o Premium todavía activa y sin baja programada.
+   * Pro Team asignado a mano vive en el plan del tenant.
+   */
+  async findPaidPlanBlockingAccountCancel(userId: string): Promise<string | null> {
+    const paid = new Set(['starter', 'pro', 'pro_team', 'premium']);
+    const rows = await this.postgres.queryRaw<any>(
+      `SELECT LOWER(COALESCE(s.subscription_plan, '')) AS slug,
+              s.payment_provider AS provider,
+              s.cancel_at_period_end AS "cancelAtPeriodEnd",
+              LOWER(COALESCE(t.plan, '')) AS "tenantPlan"
+       FROM users u
+       LEFT JOIN tenants t ON t.id = u.tenant_id
+       LEFT JOIN subscriptions s ON s.user_id = u.id AND s.status = 'active'
+       WHERE u.id = $1 AND u.deleted_at IS NULL`,
+      [userId],
+    );
+    if (!rows.length) return null;
+    const tenantPlan = String(rows[0].tenantPlan || '');
+    if (tenantPlan === 'pro_team') return 'pro_team';
+    for (const row of rows) {
+      const provider = String(row.provider || '');
+      if (!provider || provider === 'internal') continue;
+      const slug = String(row.slug || '');
+      const effective = paid.has(slug) ? slug : paid.has(tenantPlan) ? tenantPlan : '';
+      if (!effective) continue;
+      if (row.cancelAtPeriodEnd === true) continue;
+      return effective;
+    }
+    return null;
+  }
+
+  async cancelOwnAccount(userId: string, reason: string, detail: string | null): Promise<void> {
+    await this.postgres.executeRaw(
+      `UPDATE users
+       SET is_active = false,
+           account_cancelled_at = NOW(),
+           account_cancel_reason = $2,
+           account_cancel_reason_detail = $3,
+           account_reactivation_token = NULL,
+           account_reactivation_expires_at = NULL,
+           revoked_sessions_before = NOW(),
+           updated_at = NOW()
+       WHERE id = $1 AND deleted_at IS NULL`,
+      [userId, reason, detail],
+    );
+  }
+
+  async saveAccountReactivationToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+    await this.postgres.executeRaw(
+      `UPDATE users
+       SET account_reactivation_token = $2,
+           account_reactivation_expires_at = $3,
+           updated_at = NOW()
+       WHERE id = $1 AND deleted_at IS NULL AND is_active = false`,
+      [userId, token, expiresAt],
+    );
+  }
+
+  async findByReactivationToken(token: string): Promise<UserWithVerification | null> {
+    const result = await this.postgres.queryRaw<any>(
+      `SELECT * FROM users
+       WHERE account_reactivation_token = $1
+         AND deleted_at IS NULL
+         AND is_active = false
+         AND account_cancelled_at IS NOT NULL
+         AND account_reactivation_expires_at > NOW()
+       LIMIT 1`,
+      [token],
+    );
+    if (!result[0]) return null;
+    return this.mapUserFromDb(result[0]);
+  }
+
+  async reactivateCancelledAccount(userId: string): Promise<void> {
+    await this.postgres.executeRaw(
+      `UPDATE users
+       SET is_active = true,
+           account_reactivation_token = NULL,
+           account_reactivation_expires_at = NULL,
+           updated_at = NOW()
+       WHERE id = $1 AND deleted_at IS NULL`,
+      [userId],
     );
   }
 

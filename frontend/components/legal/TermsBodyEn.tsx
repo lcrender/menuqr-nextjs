@@ -154,6 +154,43 @@ export default function TermsBodyEn({ preciosHref }: TermsBodyProps) {
       </ul>
       <p>In serious cases, suspension may occur without prior notice.</p>
 
+      <h3 style={{ fontSize: '1rem', marginTop: '16px' }}>Inactive accounts</h3>
+      <p>
+        In order to keep the Platform efficient and avoid indefinite storage of accounts that are no longer used,
+        AppMenuQR may delete inactive accounts according to the following criteria:
+      </p>
+      <ul>
+        <li>
+          Accounts registered with an email address that was never verified, and that therefore could not create any
+          content, may be deleted without prior notice once 7 days have passed since registration if the account was not
+          activated.
+        </li>
+        <li>
+          Activated accounts that have not created at least one venue with one menu and one product may be deleted after
+          30 days of inactivity.
+        </li>
+        <li>
+          Free accounts that contain venues, menus and products, but that show no real visits to the published menus and
+          no account activity, may be deleted after 180 days of inactivity.
+        </li>
+        <li>
+          Before deleting a free account that contains information, AppMenuQR will send notices to the email address
+          associated with the account. The user may reply to say they do not want the account deleted and thus keep it.
+        </li>
+        <li>
+          Accounts with an active paid subscription will not be deleted for lack of use while the subscription remains
+          in effect.
+        </li>
+        <li>
+          When the user closes or cancels their account, the associated data may be deleted once 90 days have passed
+          since closure or cancellation.
+        </li>
+        <li>
+          Certain administrative, accounting or payment-related information may be retained for the periods required by
+          applicable law, even after the account is deleted.
+        </li>
+      </ul>
+
       <h2 style={{ fontSize: '1.1rem', marginTop: '24px' }}>11. Intellectual Property</h2>
       <p>
         The design, operation, software and content of the Platform are the property of its owner or respective
