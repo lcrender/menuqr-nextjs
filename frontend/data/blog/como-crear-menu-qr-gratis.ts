@@ -43,6 +43,7 @@ function article(
   templatesHref: string,
   homeHref: string,
   compareHref: string,
+  qrGuideHref: string,
 ): BlogGuideArticle {
   const productsHref = funcionesHref('gestionar-productos-menu', locale);
   const scheduleHref = funcionesHref('programar-menus', locale);
@@ -180,7 +181,9 @@ function article(
         {
           type: 'p',
           content: [
-            'When the menu is ready, download your business QR code. Print it and place it on tables, at the entrance, or on the counter, at a size and height that is easy to scan. Before you leave it in the dining room, test it on your own phone: confirm the menu opens, prices match, and photos load.',
+            'When the menu is ready, download your business QR code. Print it and place it on tables, at the entrance, or on the counter, at a size and height that is easy to scan. Before you leave it in the dining room, test it on your own phone: confirm the menu opens, prices match, and photos load. For download, print, and placement details, see ',
+            { link: 'how to create a QR code for your restaurant menu', href: qrGuideHref },
+            '.',
           ],
         },
         {
@@ -482,7 +485,9 @@ function article(
       {
         type: 'p',
         content: [
-          'Cuando la carta esté lista, descarga el código QR del negocio. Imprímelo y colócalo en las mesas, en la entrada o en el mostrador, a una altura y con un tamaño fáciles de escanear. Antes de dejarlo en sala, pruébalo con tu propio teléfono: comprueba que el menú abre, que los precios coinciden y que las fotos cargan.',
+          'Cuando la carta esté lista, descarga el código QR del negocio. Imprímelo y colócalo en las mesas, en la entrada o en el mostrador, a una altura y con un tamaño fáciles de escanear. Antes de dejarlo en sala, pruébalo con tu propio teléfono: comprueba que el menú abre, que los precios coinciden y que las fotos cargan. Si quieres el detalle de descarga, impresión y ubicación, consulta ',
+          { link: 'cómo crear un código QR para la carta de tu restaurante', href: qrGuideHref },
+          '.',
         ],
       },
       {
@@ -657,5 +662,6 @@ export function getBlogArticleCrearMenuQrGratis(locale: BlogUiLocale): BlogGuide
   const templatesHref = plantillasCatalogPath(locale);
   const homeHref = locale === 'en' ? '/en' : '/';
   const compareHref = blogArticleHref('menu-qr-vs-pdf', locale);
-  return article(locale, dynamicHref, templatesHref, homeHref, compareHref);
+  const qrGuideHref = blogArticleHref('crear-codigo-qr-carta-restaurante', locale);
+  return article(locale, dynamicHref, templatesHref, homeHref, compareHref, qrGuideHref);
 }

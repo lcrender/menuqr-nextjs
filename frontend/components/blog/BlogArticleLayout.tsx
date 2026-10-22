@@ -60,7 +60,10 @@ export default function BlogArticleLayout({ meta, locale = 'es', faq, children }
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
   const hasBase = Boolean(canonicalBase && /^https?:\/\//i.test(canonicalBase));
   const canonicalUrl = hasBase ? `${canonicalBase}${articlePath}` : null;
-  const ogImage = hasBase ? `${canonicalBase}${BLOG_OG_IMAGE_PATH}` : null;
+  const ogImagePath = meta.ogImage || BLOG_OG_IMAGE_PATH;
+  const ogImage = hasBase ? `${canonicalBase}${ogImagePath}` : null;
+  const ogImageAlt = meta.ogImageAlt?.[locale] || (meta.ogImage ? localized.thumbnailAlt : 'App Menu QR');
+  const twitterCard = meta.ogImage ? 'summary_large_image' : 'summary';
   const hreflangLinks = hasBase ? buildBlogHreflangLinks(canonicalBase, meta.slug) : [];
   const publishedIso = /^\d{4}-\d{2}-\d{2}$/.test(meta.publishedAt)
     ? `${meta.publishedAt}T12:00:00.000Z`
@@ -109,18 +112,20 @@ export default function BlogArticleLayout({ meta, locale = 'es', faq, children }
         <meta property="og:title" content={localized.metaTitle} />
         <meta property="og:description" content={localized.metaDescription} />
         {ogImage ? <meta property="og:image" content={ogImage} /> : null}
-        {ogImage ? <meta property="og:image:alt" content="App Menu QR" /> : null}
+        {ogImage ? <meta property="og:image:alt" content={ogImageAlt} /> : null}
+        {meta.ogImageWidth ? <meta property="og:image:width" content={String(meta.ogImageWidth)} /> : null}
+        {meta.ogImageHeight ? <meta property="og:image:height" content={String(meta.ogImageHeight)} /> : null}
         <meta property="article:published_time" content={publishedIso} />
         <meta property="article:modified_time" content={publishedIso} />
         <meta property="article:section" content={localized.categoryLabel} />
         {localized.tags.map((tag) => (
           <meta key={tag} property="article:tag" content={tag} />
         ))}
-        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:card" content={twitterCard} />
         <meta name="twitter:title" content={localized.metaTitle} />
         <meta name="twitter:description" content={localized.metaDescription} />
         {ogImage ? <meta name="twitter:image" content={ogImage} /> : null}
-        {ogImage ? <meta name="twitter:image:alt" content="App Menu QR" /> : null}
+        {ogImage ? <meta name="twitter:image:alt" content={ogImageAlt} /> : null}
         {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} /> : null}
       </Head>
       <div className="landing-page">

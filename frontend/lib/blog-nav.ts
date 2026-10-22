@@ -18,7 +18,14 @@ export type BlogArticleMeta = {
   category: BlogCategoryId;
   /** Imagen thumbnail del listado (/blog). Preferir .jpg/.png con variantes AVIF/WebP. */
   thumbnail: string;
+  /** Recorte del thumb en el listado. Por defecto se prioriza la izquierda. */
+  thumbnailAlign?: 'left' | 'center';
   thumbnailAlt: Record<BlogUiLocale, string>;
+  /** Imagen para Open Graph, Twitter y JSON-LD. Si falta, se usa el logo. */
+  ogImage?: string;
+  ogImageAlt?: Record<BlogUiLocale, string>;
+  ogImageWidth?: number;
+  ogImageHeight?: number;
   title: Record<BlogUiLocale, string>;
   excerpt: Record<BlogUiLocale, string>;
   metaTitle: Record<BlogUiLocale, string>;
@@ -85,6 +92,45 @@ export const BLOG_INDEX = {
 } as const;
 
 export const BLOG_ARTICLES: BlogArticleMeta[] = [
+  {
+    slug: 'crear-codigo-qr-carta-restaurante',
+    enSlug: 'how-to-create-a-qr-code-for-your-restaurant-menu',
+    publishedAt: '2026-10-22',
+    category: 'tutoriales',
+    thumbnail: '/blog/crear-codigo-qr-carta-restaurante.jpg',
+    thumbnailAlign: 'center',
+    ogImage: '/blog/crear-codigo-qr-carta-telefono.jpg',
+    ogImageAlt: {
+      es: 'Cliente escaneando un código QR de mesa y consultando la carta digital en el teléfono',
+      en: 'Guest scanning a table QR code and opening the digital menu on a phone',
+    },
+    ogImageWidth: 900,
+    ogImageHeight: 720,
+    thumbnailAlt: {
+      es: 'Código QR de carta en un soporte de mesa junto a un café',
+      en: 'Menu QR code on a table stand next to a coffee',
+    },
+    title: {
+      es: 'Cómo generar un código QR para la carta de tu restaurante paso a paso',
+      en: 'How to generate a QR code for your restaurant menu, step by step',
+    },
+    excerpt: {
+      es: 'Aprende a crear un código QR gratis para la carta de tu restaurante, descargarlo, imprimirlo y actualizar productos y precios sin cambiar el código.',
+      en: 'Learn how to create a free QR code for your restaurant menu, download it, print it, and update products and prices without changing the code.',
+    },
+    metaTitle: {
+      es: 'Cómo crear un código QR para la carta de tu restaurante',
+      en: 'How to Create a QR Code for Your Restaurant Menu',
+    },
+    metaDescription: {
+      es: 'Aprende a crear un código QR gratis para la carta de tu restaurante. Descubre cómo descargarlo, imprimirlo y actualizar tus productos y precios fácilmente.',
+      en: 'Learn how to create a free QR code for your restaurant menu. See how to download it, print it, and update products and prices easily.',
+    },
+    tags: {
+      es: ['Código QR para carta de restaurante', 'Carta digital', 'Menú QR'],
+      en: ['Restaurant menu QR code', 'Digital menu', 'QR menu'],
+    },
+  },
   {
     slug: 'menu-qr-vs-pdf',
     enSlug: 'qr-menu-vs-pdf',

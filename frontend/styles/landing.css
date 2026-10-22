@@ -2957,6 +2957,11 @@
   object-position: left center;
 }
 
+.blog-card-thumb.is-center picture,
+.blog-card-thumb.is-center img {
+  object-position: center center;
+}
+
 .blog-card-body {
   flex: 1;
   min-width: 0;

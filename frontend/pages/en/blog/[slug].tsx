@@ -1,6 +1,7 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import BlogArticleSmartFood from '../../../components/blog/BlogArticleSmartFood';
 import BlogArticleAppMenuEnglish from '../../../components/blog/BlogArticleAppMenuEnglish';
+import BlogArticleCrearCodigoQr from '../../../components/blog/BlogArticleCrearCodigoQr';
 import BlogArticleCrearMenuQrGratis from '../../../components/blog/BlogArticleCrearMenuQrGratis';
 import BlogArticleMenuQrVsPdf from '../../../components/blog/BlogArticleMenuQrVsPdf';
 import BlogArticlePersonalizacion from '../../../components/blog/BlogArticlePersonalizacion';
@@ -28,6 +29,9 @@ export default function BlogSlugEnPage({ slug }: Props) {
   }
   if (slug === 'menu-qr-vs-pdf') {
     return <BlogArticleMenuQrVsPdf locale="en" />;
+  }
+  if (slug === 'crear-codigo-qr-carta-restaurante') {
+    return <BlogArticleCrearCodigoQr locale="en" />;
   }
   return null;
 }

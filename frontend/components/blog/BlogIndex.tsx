@@ -136,7 +136,12 @@ export default function BlogIndex({ locale = 'es' }: Props) {
                   return (
                     <li key={article.slug}>
                       <article className="blog-card">
-                        <Link href={href} className="blog-card-thumb" aria-hidden="true" tabIndex={-1}>
+                        <Link
+                          href={href}
+                          className={`blog-card-thumb${article.thumbnailAlign === 'center' ? ' is-center' : ''}`}
+                          aria-hidden="true"
+                          tabIndex={-1}
+                        >
                           <OptimizedPicture
                             src={m.thumbnail}
                             alt=""
