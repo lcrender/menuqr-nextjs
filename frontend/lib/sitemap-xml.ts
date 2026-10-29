@@ -19,7 +19,6 @@ import {
   BLOG_ARTICLES,
   BLOG_PATH_EN,
   BLOG_PATH_ES,
-  BLOG_SLUGS,
   buildBlogHreflangLinks,
 } from './blog-nav';
 
@@ -107,20 +106,6 @@ export function buildSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
       lastmod: today,
       ...(base ? { alternates: buildFuncionesHreflangLinks(base) } : {}),
     },
-    {
-      path: BLOG_PATH_ES,
-      changefreq: 'weekly',
-      priority: '0.8',
-      lastmod: today,
-      ...(base ? { alternates: buildBlogHreflangLinks(base) } : {}),
-    },
-    {
-      path: BLOG_PATH_EN,
-      changefreq: 'weekly',
-      priority: '0.8',
-      lastmod: today,
-      ...(base ? { alternates: buildBlogHreflangLinks(base) } : {}),
-    },
     ...SEO_LANDING_SLUGS.filter((slug) => !SEO_LANDINGS[slug].noIndex).map((slug) => ({
       path: `/${slug}`,
       changefreq: 'monthly' as const,
@@ -170,24 +155,48 @@ export function buildSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
     }
   }
 
-  for (const slug of BLOG_SLUGS) {
-    const enSlug = BLOG_ARTICLES.find((a) => a.slug === slug)?.enSlug;
+  return out;
+}
+
+/** Índice y artículos del blog. Lo sirve el contenedor del blog en /sitemap-blog.xml. */
+export function buildBlogSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
+  const base = (absoluteBaseUrl || '').replace(/\/$/, '');
+  const newest = BLOG_ARTICLES.reduce((latest, article) => {
+    return article.publishedAt > latest ? article.publishedAt : latest;
+  }, '1970-01-01');
+
+  const out: SitemapEntry[] = [
+    {
+      path: BLOG_PATH_ES,
+      changefreq: 'weekly',
+      priority: '0.8',
+      lastmod: newest,
+      ...(base ? { alternates: buildBlogHreflangLinks(base) } : {}),
+    },
+    {
+      path: BLOG_PATH_EN,
+      changefreq: 'weekly',
+      priority: '0.8',
+      lastmod: newest,
+      ...(base ? { alternates: buildBlogHreflangLinks(base) } : {}),
+    },
+  ];
+
+  for (const article of BLOG_ARTICLES) {
     out.push({
-      path: `/blog/${encodeURIComponent(slug)}`,
+      path: `${BLOG_PATH_ES}/${encodeURIComponent(article.slug)}`,
       changefreq: 'monthly',
       priority: '0.75',
-      lastmod: today,
-      ...(base ? { alternates: buildBlogHreflangLinks(base, slug) } : {}),
+      lastmod: article.publishedAt,
+      ...(base ? { alternates: buildBlogHreflangLinks(base, article.slug) } : {}),
     });
-    if (enSlug) {
-      out.push({
-        path: `${BLOG_PATH_EN}/${encodeURIComponent(enSlug)}`,
-        changefreq: 'monthly',
-        priority: '0.75',
-        lastmod: today,
-        ...(base ? { alternates: buildBlogHreflangLinks(base, slug) } : {}),
-      });
-    }
+    out.push({
+      path: `${BLOG_PATH_EN}/${encodeURIComponent(article.enSlug)}`,
+      changefreq: 'monthly',
+      priority: '0.75',
+      lastmod: article.publishedAt,
+      ...(base ? { alternates: buildBlogHreflangLinks(base, article.slug) } : {}),
+    });
   }
 
   return out;
@@ -226,4 +235,8 @@ ${body}
 
 export function buildSitemapXml(absoluteBaseUrl: string): string {
   return renderSitemapXml(absoluteBaseUrl, buildSitemapEntries(absoluteBaseUrl));
+}
+
+export function buildBlogSitemapXml(absoluteBaseUrl: string): string {
+  return renderSitemapXml(absoluteBaseUrl, buildBlogSitemapEntries(absoluteBaseUrl));
 }

@@ -2844,6 +2844,8 @@
   font-weight: 650;
   margin: 1.35rem 0 0.45rem;
   line-height: 1.35;
+  /* El nav fijo mide ~5.5rem; este margen deja el título visible, un poco por debajo. */
+  scroll-margin-top: 7.25rem;
 }
 
 .blog-lead {

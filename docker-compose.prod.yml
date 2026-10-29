@@ -170,6 +170,7 @@ services:
         INTERNAL_API_URL: http://backend:3001
         NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
     container_name: menuqr_frontend
+    image: menuqr-frontend:prod
     restart: always
     env_file:
       - .env
@@ -187,8 +188,9 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=root_default"
       - "traefik.http.services.menuqr-front.loadbalancer.server.port=3000"
-      # HTTPS canónico: solo apex (sin www)
-      - "traefik.http.routers.menuqr-front.rule=Host(`appmenuqr.com`)"
+      # HTTPS canónico: apex, sin las rutas del blog (las sirve menuqr_blog).
+      - "traefik.http.routers.menuqr-front.rule=Host(`appmenuqr.com`) && !Path(`/blog`) && !PathPrefix(`/blog/`) && !Path(`/en/blog`) && !PathPrefix(`/en/blog/`) && !Path(`/sitemap-blog.xml`) && !PathPrefix(`/blog-static`)"
+      - "traefik.http.routers.menuqr-front.priority=10"
       - "traefik.http.routers.menuqr-front.entrypoints=websecure"
       - "traefik.http.routers.menuqr-front.tls=true"
       - "traefik.http.routers.menuqr-front.tls.certresolver=mytlschallenge"
@@ -219,6 +221,47 @@ services:
       - "traefik.http.middlewares.menuqr-front-http-www-to-apex.redirectregex.regex=^https?://www\\.appmenuqr\\.com(.*)$$"
       - "traefik.http.middlewares.menuqr-front-http-www-to-apex.redirectregex.replacement=https://appmenuqr.com$$1"
       - "traefik.http.middlewares.menuqr-front-http-www-to-apex.redirectregex.permanent=true"
+
+  # Imagen propia: el HTML del blog pide JS/CSS bajo /blog-static, no al frontend.
+  blog:
+    image: menuqr-blog:prod
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        NEXT_PUBLIC_API_URL: /api-proxy
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        NEXT_PUBLIC_APP_ENV: production
+        INTERNAL_API_URL: http://backend:3001
+        NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+        NEXT_PUBLIC_ASSET_PREFIX: /blog-static
+    container_name: menuqr_blog
+    restart: always
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      INTERNAL_API_URL: http://backend:3001
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    depends_on:
+      - backend
+    networks:
+      - root_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=root_default"
+      - "traefik.http.services.menuqr-blog.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.menuqr-blog-strip.stripprefix.prefixes=/blog-static"
+      - "traefik.http.routers.menuqr-blog.rule=Host(`appmenuqr.com`) && (Path(`/blog`) || PathPrefix(`/blog/`) || Path(`/en/blog`) || PathPrefix(`/en/blog/`) || Path(`/sitemap-blog.xml`) || PathPrefix(`/blog-static`))"
+      - "traefik.http.routers.menuqr-blog.middlewares=menuqr-blog-strip"
+      - "traefik.http.routers.menuqr-blog.priority=100"
+      - "traefik.http.routers.menuqr-blog.entrypoints=websecure"
+      - "traefik.http.routers.menuqr-blog.tls=true"
+      - "traefik.http.routers.menuqr-blog.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.menuqr-blog.service=menuqr-blog"
 
 volumes:
   postgres_data:

@@ -93,6 +93,45 @@ export const BLOG_INDEX = {
 
 export const BLOG_ARTICLES: BlogArticleMeta[] = [
   {
+    slug: 'ventajas-menu-qr-dinamico',
+    enSlug: 'benefits-of-a-dynamic-qr-menu',
+    publishedAt: '2026-10-26',
+    category: 'tutoriales',
+    thumbnail: '/funciones/menu-qr-dinamico/mismo-qr-carta-actualizada.png',
+    thumbnailAlign: 'center',
+    ogImage: '/funciones/menu-qr-dinamico/mismo-qr-carta-actualizada.png',
+    ogImageAlt: {
+      es: 'Mismo código QR en la mesa con la carta digital actualizada en el teléfono',
+      en: 'Same table QR code with the updated digital menu on a phone',
+    },
+    ogImageWidth: 1024,
+    ogImageHeight: 895,
+    thumbnailAlt: {
+      es: 'Código QR de mesa y carta digital actualizada en el teléfono',
+      en: 'Table QR code and updated digital menu on a phone',
+    },
+    title: {
+      es: '7 ventajas de utilizar un menú QR dinámico en tu restaurante',
+      en: '7 benefits of using a dynamic QR menu in your restaurant',
+    },
+    excerpt: {
+      es: 'Un menú QR dinámico permite actualizar precios, ocultar agotados, imprimir la carta, traducirla y programar menús sin cambiar el código de las mesas.',
+      en: 'A dynamic QR menu lets you update prices, hide sold-out items, print the menu, translate it, and schedule menus without changing the table code.',
+    },
+    metaTitle: {
+      es: '7 ventajas de un menú QR dinámico para tu restaurante',
+      en: '7 Benefits of a Dynamic QR Menu for Your Restaurant',
+    },
+    metaDescription: {
+      es: 'Descubre 7 ventajas de un menú QR dinámico: actualizar precios, ocultar agotados, imprimir la carta, traducir con IA y programar menús sin cambiar el código QR.',
+      en: 'See 7 benefits of a dynamic QR menu: update prices, hide sold-out items, print the menu, translate with AI, and schedule menus without changing the QR code.',
+    },
+    tags: {
+      es: ['Menú QR dinámico', 'Carta digital', 'Restaurantes'],
+      en: ['Dynamic QR menu', 'Digital menu', 'Restaurants'],
+    },
+  },
+  {
     slug: 'crear-codigo-qr-carta-restaurante',
     enSlug: 'how-to-create-a-qr-code-for-your-restaurant-menu',
     publishedAt: '2026-10-22',

@@ -5,6 +5,7 @@ import BlogArticleCrearCodigoQr from '../../../components/blog/BlogArticleCrearC
 import BlogArticleCrearMenuQrGratis from '../../../components/blog/BlogArticleCrearMenuQrGratis';
 import BlogArticleMenuQrVsPdf from '../../../components/blog/BlogArticleMenuQrVsPdf';
 import BlogArticlePersonalizacion from '../../../components/blog/BlogArticlePersonalizacion';
+import BlogArticleVentajasMenuQr from '../../../components/blog/BlogArticleVentajasMenuQr';
 import {
   BLOG_ARTICLES,
   blogCanonicalSlug,
@@ -32,6 +33,9 @@ export default function BlogSlugEnPage({ slug }: Props) {
   }
   if (slug === 'crear-codigo-qr-carta-restaurante') {
     return <BlogArticleCrearCodigoQr locale="en" />;
+  }
+  if (slug === 'ventajas-menu-qr-dinamico') {
+    return <BlogArticleVentajasMenuQr locale="en" />;
   }
   return null;
 }

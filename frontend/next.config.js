@@ -1,3 +1,6 @@
+/** Prefijo solo en la imagen del blog. Así su JS/CSS no se pide al contenedor del sitio. */
+const assetPrefix = process.env.NEXT_PUBLIC_ASSET_PREFIX || '';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // ========================================
@@ -265,6 +268,7 @@ const nextConfig = {
   // CONFIGURACIÓN DE OUTPUT
   // ========================================
   output: 'standalone',
+  ...(assetPrefix ? { assetPrefix } : {}),
 
   // ========================================
   // CONFIGURACIÓN DE TRAILING SLASH

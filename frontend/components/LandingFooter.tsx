@@ -77,9 +77,9 @@ export default function LandingFooter() {
             <h3 className="landing-footer-heading">{t('systemPages.footer.resources')}</h3>
             <ul className="landing-footer-list">
               <li>
-                <Link href={blogHref} className="landing-footer-link">
+                <a href={blogHref} className="landing-footer-link">
                   {t('systemPages.footer.blog')}
-                </Link>
+                </a>
               </li>
               <li>
                 <Link href="/documentacion" className="landing-footer-link">

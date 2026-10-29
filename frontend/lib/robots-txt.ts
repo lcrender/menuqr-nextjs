@@ -9,5 +9,6 @@ Disallow: /preview/
 Allow: /
 
 Sitemap: ${base}/sitemap.xml
+Sitemap: ${base}/sitemap-blog.xml
 `;
 }

@@ -30,6 +30,28 @@ Equivalente en un solo paso para ambos servicios:
 docker compose -f docker-compose.prod.yml up -d --build --force-recreate frontend backend
 ```
 
+## Publicar un artículo del blog
+
+El blog corre en `menuqr_blog` (`menuqr-blog:prod`). Traefik le manda `/blog`, `/en/blog`, `/sitemap-blog.xml` y `/blog-static`. El resto del sitio, incluido `/sitemap.xml` y `/robots.txt`, sigue en `menuqr_frontend`. El JavaScript del blog sale de `/blog-static` para no chocar con el del sitio.
+
+La primera vez que entra este cambio hay que construir y recrear los dos, porque las reglas de Traefik y `robots.txt` viven en el frontend:
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml build frontend blog
+docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate frontend blog
+```
+
+A partir de ahí, un artículo nuevo solo recrea el blog:
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml build blog
+docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate blog
+```
+
+Eso no reinicia el frontend ni el backend. `/sitemap.xml` no lista artículos. `/sitemap-blog.xml` sí, y `robots.txt` declara los dos. Un cambio del sitio (fuera del blog) sigue pidiendo rebuild del frontend.
+
 ## Comprobar que el contenedor usa imagen reciente
 
 ```bash
