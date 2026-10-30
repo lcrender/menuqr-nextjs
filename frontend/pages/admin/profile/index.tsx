@@ -172,8 +172,8 @@ export default function Profile() {
   return (
     <AdminLayout>
       <div className="container-fluid py-4">
-        <h1 className="h3 mb-4 fw-semibold">{t('myProfile.title')}</h1>
-        <p className="text-muted mb-4">{t('myProfile.subtitle')}</p>
+        <h1 className="admin-title mb-2">{t('myProfile.title')}</h1>
+        <p className="text-muted mb-4" style={{ fontSize: '1.05rem' }}>{t('myProfile.subtitle')}</p>
 
         <div className="row">
           <div className="col-lg-8">

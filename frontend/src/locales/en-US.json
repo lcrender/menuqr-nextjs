@@ -233,7 +233,8 @@
     "template": {
       "label": "Template:",
       "configure": "Template settings",
-      "change": "Change template"
+      "change": "Change template",
+      "visualEditor": "Visual editor"
     },
     "menuStatus": {
       "published": "Published",

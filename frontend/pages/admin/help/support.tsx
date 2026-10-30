@@ -114,17 +114,15 @@ export default function SupportPage() {
 
   return (
     <AdminLayout>
-      <div className="container-fluid py-4">
+      <div className="container-fluid py-4 admin-support-page">
         <div className="row">
           <div className="col-12 col-xl-10">
-            <h1 className="mb-3">{t('adminSupport.title')}</h1>
-            <p className="lead text-muted mb-4">{t('adminSupport.lead')}</p>
+            <h1 className="admin-title mb-2">{t('adminSupport.title')}</h1>
+            <p className="admin-support-lead">{t('adminSupport.lead')}</p>
 
-            <div className="card mb-4 border-info">
-              <div className="card-header bg-info bg-opacity-10">
-                <h2 className="h5 mb-0">{t('adminSupport.docsCard.title')}</h2>
-              </div>
-              <div className="card-body">
+            <div className="admin-card mb-4">
+              <h2 className="admin-card-title mb-2">{t('adminSupport.docsCard.title')}</h2>
+              <div className="admin-card-body">
                 <p className="mb-0">
                   <Trans
                     i18nKey="adminSupport.docsCard.body"
@@ -136,11 +134,9 @@ export default function SupportPage() {
               </div>
             </div>
 
-            <div className="card mb-4 border-warning">
-              <div className="card-header bg-warning text-dark">
-                <h2 className="h5 mb-0">{t('adminSupport.tips.title')}</h2>
-              </div>
-              <div className="card-body">
+            <div className="admin-card mb-4">
+              <h2 className="admin-card-title mb-2">{t('adminSupport.tips.title')}</h2>
+              <div className="admin-card-body">
                 <ul className="mb-0">
                   <li>{t('adminSupport.tips.expectedVsActual')}</li>
                   <li>{t('adminSupport.tips.reproSteps')}</li>
@@ -151,11 +147,9 @@ export default function SupportPage() {
               </div>
             </div>
 
-            <div className="card mb-4 border-primary">
-              <div className="card-header bg-primary text-white">
-                <h2 className="h5 mb-0">{t('adminSupport.form.title')}</h2>
-              </div>
-              <div className="card-body">
+            <div className="admin-card mb-4">
+              <h2 className="admin-card-title mb-3">{t('adminSupport.form.title')}</h2>
+              <div className="admin-card-body">
                 <form onSubmit={(ev) => void onCreate(ev)}>
                   <div className="mb-3">
                     <label className="form-label" htmlFor="ticket-subject">
@@ -202,7 +196,7 @@ export default function SupportPage() {
                     <div className="d-flex flex-wrap align-items-center gap-2">
                       <button
                         type="button"
-                        className="btn btn-outline-secondary"
+                        className="admin-btn admin-btn-secondary"
                         onClick={() => fileInputRef.current?.click()}
                       >
                         {t('adminSupport.form.chooseFiles')}
@@ -223,21 +217,27 @@ export default function SupportPage() {
                     ) : null}
                   </div>
                   {formError ? <div className="alert alert-danger py-2">{formError}</div> : null}
-                  <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  <button type="submit" className="admin-btn" disabled={submitting}>
                     {submitting ? t('adminSupport.form.submitting') : t('adminSupport.form.submit')}
                   </button>
                 </form>
               </div>
             </div>
 
-            <div className="card mb-4">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h2 className="h5 mb-0">{t('adminSupport.list.title')}</h2>
-                <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => void load()} disabled={loading}>
+            <div className="admin-card mb-4" style={{ paddingLeft: 0, paddingRight: 0, paddingBottom: 0 }}>
+              <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 px-4 pb-3">
+                <h2 className="admin-card-title mb-0">{t('adminSupport.list.title')}</h2>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary"
+                  style={{ padding: '8px 16px', fontSize: '0.875rem' }}
+                  onClick={() => void load()}
+                  disabled={loading}
+                >
                   {t('adminSupport.list.refresh')}
                 </button>
               </div>
-              <div className="card-body p-0">
+              <div className="admin-card-body p-0">
                 {listError ? <div className="alert alert-danger m-3 mb-0">{listError}</div> : null}
                 {loading ? (
                   <div className="p-4 text-center text-muted">{t('adminSupport.list.loading')}</div>
@@ -269,7 +269,7 @@ export default function SupportPage() {
                             <td className="small text-muted">{ticket.attachmentUrls?.length ?? 0}</td>
                             <td className="small text-muted">{new Date(ticket.updatedAt).toLocaleString()}</td>
                             <td className="text-end">
-                              <Link href={`/admin/help/support/${ticket.id}`} className="btn btn-sm btn-outline-primary">
+                              <Link href={`/admin/help/support/${ticket.id}`} className="btn btn-sm btn-primary">
                                 {t('adminSupport.list.view')}
                               </Link>
                             </td>

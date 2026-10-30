@@ -215,7 +215,15 @@ export default function Products() {
     [isSuperAdmin, t],
   );
 
-  const showProductColumn = (key: ProductTableColumnKey) => visibleColumns[key] !== false;
+  const showProductColumn = (key: ProductTableColumnKey) => {
+    if (visibleColumns[key] === false) return false;
+    // Ocultar columnas cuyo valor ya está fijado por el filtro activo
+    if (key === 'restaurant' && (Boolean(filterRestaurantId) || Boolean(filterRestaurantName))) return false;
+    if (key === 'menu' && (Boolean(filterMenuId) || Boolean(filterMenuName))) return false;
+    if (key === 'section' && (Boolean(filterSectionId) || Boolean(filterSectionName))) return false;
+    if (key === 'tenant' && (Boolean(filterTenantName) || Boolean(selectedTenantId))) return false;
+    return true;
+  };
 
   const getProductPhotoUrl = (product: any): string | null => {
     const photos = product?.photos;
@@ -1441,7 +1449,7 @@ export default function Products() {
       {(restaurants.length > 0 || (isSuperAdmin && superAdminSearched)) && (
         <>
       {user && user.role !== 'SUPER_ADMIN' && (
-        <div className="mb-3 p-3 bg-light rounded border">
+        <div className="admin-card mb-3">
           <div className="d-flex align-items-center gap-2 mb-2">
             <strong style={{ fontSize: '1.1rem' }}>
               {t('adminProducts.planUsage.available', { used: total || products.length, limit: getProductLimit() === -1 ? '∞' : getProductLimit() })}
@@ -1453,8 +1461,8 @@ export default function Products() {
         </div>
       )}
 
-      {/* Sección de filtros: nombre, comercio, menú, sección */}
-      <div className="mb-3 p-3 bg-light rounded border admin-products-filters">
+      {/* Filtros (+ selección en lote en móvil, misma card) */}
+      <div className="mb-3 admin-card admin-products-filters">
         <h6 className="mb-3 fw-semibold">{t('adminProducts.filters')}</h6>
         <div className="admin-products-filters-grid">
           <div className="admin-products-filter-item">
@@ -1612,11 +1620,191 @@ export default function Products() {
             </div>
           )}
         </div>
+
+        {!loading && products.length > 0 && (
+          <div className="d-lg-none admin-products-bulk-inline">
+            <hr className="admin-products-section-divider" />
+            <div className="fw-semibold text-secondary small text-uppercase mb-2">{t('adminProducts.bulk.title')}</div>
+            <div className="admin-products-bulk-toolbar">
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-primary"
+                onClick={toggleSelectAllProducts}
+              >
+                {allVisibleProductsSelected ? t('adminProducts.bulk.deselectAll') : t('adminProducts.bulk.selectAll')}
+              </button>
+              <span className="text-muted small">
+                {selectedProductIds.length} seleccionado(s)
+              </span>
+            </div>
+            <div className="admin-products-bulk-grid">
+              <div className="admin-products-bulk-field">
+                <label className="form-label small mb-0 text-muted" htmlFor="bulk-action-select-mobile">
+                  {t('adminProducts.bulk.action')}
+                </label>
+                <select
+                  id="bulk-action-select-mobile"
+                  className="form-select form-select-sm"
+                  value={bulkAction}
+                  onChange={(e) => setBulkAction(e.target.value)}
+                >
+                  <option value="">{t('adminProducts.bulk.chooseAction')}</option>
+                  <option value="copy">{t('adminProducts.bulk.copyToMenu')}</option>
+                  <option value="copy_delete">{t('adminProducts.bulk.copyAndDelete')}</option>
+                  <option value="delete">{t('adminProducts.bulk.deleteSelected')}</option>
+                </select>
+              </div>
+              {(bulkAction === 'copy' || bulkAction === 'copy_delete') && (() => {
+                const sel = getSelectedProducts();
+                const rid0 = sel[0] ? getRestaurantIdForProduct(sel[0]) : null;
+                const sameRestaurant =
+                  rid0 &&
+                  sel.length > 0 &&
+                  sel.every((p) => getRestaurantIdForProduct(p) === rid0);
+                const selTenant = sel[0] ? sel[0].tenantId || sel[0].tenant_id : null;
+                const restaurantPool = (restaurants || []).filter((r: any) => {
+                  if (!selTenant) return true;
+                  return String(r.tenantId || r.tenant_id || '') === String(selTenant);
+                });
+                const otherRestaurants = restaurantPool.filter(
+                  (r: any) => rid0 == null || String(r.id) !== String(rid0),
+                );
+                const effectiveRid =
+                  bulkDestinationRestaurantId === ''
+                    ? rid0
+                    : bulkDestinationRestaurantId || null;
+                const menuOpts =
+                  effectiveRid && sameRestaurant
+                    ? menus.filter((m: any) => {
+                        const okR =
+                          String(m.restaurantId ?? m.restaurant_id ?? '') === String(effectiveRid);
+                        if (!selTenant) return okR;
+                        const mt = m.tenantId ?? m.tenant_id;
+                        return okR && String(mt ?? '') === String(selTenant);
+                      })
+                    : [];
+                const sameRestaurantLabel =
+                  rid0 && restaurantPool.length
+                    ? (() => {
+                        const nm =
+                          restaurantPool.find((r: any) => String(r.id) === String(rid0))?.name ||
+                          'este local';
+                        return t('adminProducts.bulk.sameRestaurantNamed', { name: nm });
+                      })()
+                    : t('adminProducts.bulk.sameRestaurantSelection');
+                const canListMenus = Boolean(sameRestaurant && effectiveRid);
+
+                return (
+                  <>
+                    <div className="admin-products-bulk-field">
+                      <label className="form-label small mb-0 text-muted" htmlFor="bulk-dest-restaurant-mobile">
+                        {t('adminProducts.bulk.destinationRestaurant')}
+                      </label>
+                      <select
+                        id="bulk-dest-restaurant-mobile"
+                        className="form-select form-select-sm"
+                        value={bulkDestinationRestaurantId}
+                        onChange={(e) => setBulkDestinationRestaurantId(e.target.value)}
+                        disabled={!sameRestaurant}
+                      >
+                        <option value="">
+                          {sameRestaurant ? sameRestaurantLabel : t('adminProducts.bulk.sameLocalProducts')}
+                        </option>
+                        {otherRestaurants.map((r: any) => (
+                          <option key={r.id} value={r.id}>
+                            {r.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-products-bulk-field">
+                      <label className="form-label small mb-0 text-muted" htmlFor="bulk-target-menu-mobile">
+                        {t('adminProducts.bulk.destinationMenu')}
+                      </label>
+                      <select
+                        id="bulk-target-menu-mobile"
+                        className="form-select form-select-sm"
+                        value={bulkTargetMenuId}
+                        onChange={(e) => {
+                          setBulkTargetMenuId(e.target.value);
+                          setBulkTargetSectionId('');
+                          setBulkNewSectionName('');
+                        }}
+                        disabled={!canListMenus}
+                      >
+                        <option value="">
+                          {!sameRestaurant
+                            ? t('adminProducts.bulk.mustSameRestaurant')
+                            : canListMenus
+                              ? t('adminProducts.bulk.selectMenu')
+                              : t('adminProducts.bulk.chooseRestaurantAbove')}
+                        </option>
+                        {menuOpts.map((m: any) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-products-bulk-field">
+                      <label className="form-label small mb-0 text-muted" htmlFor="bulk-target-section-mobile">
+                        {t('adminProducts.bulk.destinationSection')}
+                      </label>
+                      <select
+                        id="bulk-target-section-mobile"
+                        className="form-select form-select-sm"
+                        value={bulkTargetSectionId}
+                        onChange={(e) => setBulkTargetSectionId(e.target.value)}
+                        disabled={!bulkTargetMenuId}
+                      >
+                        <option value="">{bulkTargetMenuId ? t('adminProducts.bulk.selectSection') : t('adminProducts.bulk.firstMenu')}</option>
+                        {bulkCopySections.map((s: any) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
+                        <option value={SECTION_DEST_NEW}>{t('adminProducts.bulk.newSection')}</option>
+                      </select>
+                    </div>
+                    {bulkTargetSectionId === SECTION_DEST_NEW && bulkTargetMenuId ? (
+                      <div className="admin-products-bulk-field">
+                        <label className="form-label small mb-0 text-muted" htmlFor="bulk-new-section-name-mobile">
+                          {t('adminProducts.bulk.newSectionName')}
+                        </label>
+                        <input
+                          id="bulk-new-section-name-mobile"
+                          type="text"
+                          className="form-control form-control-sm"
+                          value={bulkNewSectionName}
+                          onChange={(e) => setBulkNewSectionName(e.target.value)}
+                          placeholder={t('adminProducts.bulk.newSectionPlaceholder')}
+                          maxLength={160}
+                          autoComplete="off"
+                        />
+                      </div>
+                    ) : null}
+                  </>
+                );
+              })()}
+              <div className="admin-products-bulk-field admin-products-bulk-field--apply">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary w-100"
+                  disabled={bulkLoading || selectedProductIds.length === 0 || !bulkAction}
+                  onClick={handleBulkApply}
+                >
+                  {bulkLoading ? t('adminProducts.bulk.applying') : t('adminProducts.bulk.apply')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Desktop: lote y columnas como cards hermanas (sin card padre) */}
       {!loading && products.length > 0 && (
-        <div className="admin-products-tools-row mb-3">
-          <div className="admin-products-tools-panel admin-products-bulk-bar p-3 border rounded bg-white">
+        <div className="admin-products-tools-row mb-3 d-none d-lg-flex">
+          <div className="admin-products-tools-panel admin-products-bulk-bar admin-card">
           <div className="fw-semibold text-secondary small text-uppercase mb-2">{t('adminProducts.bulk.title')}</div>
           <div className="admin-products-bulk-toolbar">
             <button
@@ -1792,7 +1980,7 @@ export default function Products() {
           </div>
           </div>
 
-          <div className="admin-products-tools-panel admin-products-columns-bar p-3 border rounded bg-white d-none d-lg-flex flex-column">
+          <div className="admin-products-tools-panel admin-products-columns-bar admin-card d-flex flex-column">
             <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
               <div className="fw-semibold text-secondary small text-uppercase">{t('adminProducts.visibleColumns.title')}</div>
               <button type="button" className="btn btn-link btn-sm p-0 text-decoration-none" onClick={resetVisibleColumns}>
@@ -1807,7 +1995,7 @@ export default function Products() {
                     type="checkbox"
                     className="form-check-input"
                     id={`product-col-${col.key}`}
-                    checked={showProductColumn(col.key)}
+                    checked={visibleColumns[col.key] !== false}
                     onChange={(e) =>
                       setVisibleColumns((prev) => ({ ...prev, [col.key]: e.target.checked }))
                     }
@@ -2101,32 +2289,38 @@ export default function Products() {
                     </span>
                   </div>
                 </div>
-                {isSuperAdmin && product.tenantName && (
+                {isSuperAdmin && product.tenantName && showProductColumn('tenant') && (
                   <p className="admin-products-mobile-meta">
                     <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaTenant')}</span>{' '}
                     <span className="badge bg-info">{product.tenantName}</span>
                   </p>
                 )}
+                {showProductColumn('restaurant') && (
                 <p className="admin-products-mobile-meta">
                   <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaRestaurant')}</span>{' '}
                   <strong>
                     {product.restaurantName && product.restaurantName !== 'Sin restaurante' ? product.restaurantName : t('adminProducts.table.noRestaurant')}
                   </strong>
                 </p>
-                {isSuperAdmin && (
+                )}
+                {isSuperAdmin && showProductColumn('template') && (
                   <p className="admin-products-mobile-meta">
                     <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaTemplate')}</span>{' '}
                     <span className="badge bg-secondary">{templateShort}</span>
                   </p>
                 )}
+                {showProductColumn('menu') && (
                 <p className="admin-products-mobile-meta">
                   <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaMenu')}</span>{' '}
                   {menuLabel ? <strong>{menuLabel}</strong> : <span className="text-muted">{t('adminProducts.table.unassigned')}</span>}
                 </p>
+                )}
+                {showProductColumn('section') && (
                 <p className="admin-products-mobile-meta">
                   <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaSection')}</span>{' '}
                   {sectionLabel ? <strong>{sectionLabel}</strong> : <span className="text-muted">—</span>}
                 </p>
+                )}
                 <p className="admin-products-mobile-meta">
                   <span className="admin-products-mobile-meta-label">{t('adminProducts.table.metaPosition')}</span>{' '}
                   <strong>

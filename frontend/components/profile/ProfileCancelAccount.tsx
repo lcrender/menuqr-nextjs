@@ -84,15 +84,13 @@ export default function ProfileCancelAccount() {
   };
 
   return (
-    <section className="card profile-section border-danger-subtle">
-      <div className="card-header bg-white border-bottom">
-        <h2 className="h5 mb-0 fw-semibold">{t.title}</h2>
-      </div>
-      <div className="card-body">
+    <section className="admin-card profile-section border-danger-subtle mb-4">
+      <h2 className="admin-card-title">{t.title}</h2>
+      <div className="admin-card-body">
         <p className="text-muted mb-3">{t.lead}</p>
         <p className="small text-muted mb-3">{t.subscriptionHint}</p>
         {!open ? (
-          <button type="button" className="btn btn-outline-danger" onClick={() => setOpen(true)}>
+          <button type="button" className="btn btn-sm btn-danger" onClick={() => setOpen(true)}>
             {t.open}
           </button>
         ) : (

@@ -304,6 +304,8 @@ export class RestaurantsService {
     const productLinkedCount = parseInt(productLinkedResult[0]?.count || '0', 10);
     const hasProductLinkedToMenu = productLinkedCount >= 1;
 
+    const currentlyComplete = hasMenu && hasProductLinkedToMenu;
+
     let progressPercentage = 33;
     if (hasMenu) progressPercentage = 66;
     if (hasProductLinkedToMenu) progressPercentage = 100;
@@ -321,9 +323,10 @@ export class RestaurantsService {
       primary_color: string | null;
       secondary_color: string | null;
       template_config: unknown;
+      onboarding_completed_at: Date | string | null;
     }>(
       `SELECT is_active, slug, name, address, logo_url, template, email, phone, website,
-              primary_color, secondary_color, template_config
+              primary_color, secondary_color, template_config, onboarding_completed_at
        FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
       [restaurantId],
     );
@@ -339,6 +342,24 @@ export class RestaurantsService {
     const restaurantPrimaryColor = restaurantRow[0]?.primary_color ?? null;
     const restaurantSecondaryColor = restaurantRow[0]?.secondary_color ?? null;
     const restaurantTemplateConfig = this.parseTemplateConfigJson(restaurantRow[0]?.template_config);
+    let onboardingCompletedAt = restaurantRow[0]?.onboarding_completed_at ?? null;
+
+    // Primera vez que completa el wizard: fijar desbloqueo permanente del QR
+    if (currentlyComplete && !onboardingCompletedAt) {
+      await this.postgres.executeRaw(
+        `UPDATE restaurants
+         SET onboarding_completed_at = NOW(), updated_at = NOW()
+         WHERE id = $1 AND deleted_at IS NULL AND onboarding_completed_at IS NULL`,
+        [restaurantId],
+      );
+      onboardingCompletedAt = new Date();
+    }
+
+    // Si alguna vez completó el onboarding, el QR/dashboard completo quedan desbloqueados
+    const onboardingUnlocked = Boolean(onboardingCompletedAt) || currentlyComplete;
+    if (onboardingUnlocked) {
+      progressPercentage = 100;
+    }
 
     const menusSummaryRows = await this.postgres.queryRaw<any>(
       `SELECT m.id, m.name, m.status, COUNT(mi.id)::text as product_count
@@ -360,7 +381,7 @@ export class RestaurantsService {
       hasRestaurant: true,
       hasMenu,
       hasProductLinkedToMenu,
-      isComplete: hasMenu && hasProductLinkedToMenu,
+      isComplete: onboardingUnlocked,
       progressPercentage,
       restaurantIsActive,
       restaurantSlug,

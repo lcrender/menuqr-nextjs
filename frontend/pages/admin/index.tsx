@@ -7,11 +7,6 @@ import type { TFunction } from 'i18next';
 import api from '../../lib/axios';
 import AdminLayout from '../../components/AdminLayout';
 import PlanBadge from '../../components/profile/PlanBadge';
-import {
-  buildTemplateConfigSummaryLines,
-  partitionTemplateSummaryLines,
-  type TemplateConfigSummaryLine,
-} from '../../lib/dashboard-template-config-summary';
 import { translateTemplateName } from '../../lib/template-config-i18n';
 import { consumeTemplateAfterAuth, getNavigationForConsumeResult } from '../../lib/consume-template-after-auth';
 import {
@@ -103,57 +98,6 @@ function menuStatusLabel(
   }
 }
 
-function DashboardTemplateConfigLinesList({ lines }: { lines: TemplateConfigSummaryLine[] }) {
-  if (lines.length === 0) return null;
-
-  return (
-    <ul
-      className="list-unstyled mb-0 ps-0"
-      style={{
-        fontSize: '0.75rem',
-        lineHeight: 1.45,
-        letterSpacing: '0.01em',
-      }}
-    >
-      {lines.map((ln) => (
-        <li
-          key={ln.id}
-          className="d-flex align-items-start gap-2"
-          style={{
-            color: 'var(--admin-text-muted, #6c757d)',
-            opacity: ln.isDefault ? 0.78 : 1,
-          }}
-        >
-          {ln.colorSwatch ? (
-            <span
-              title={ln.valueText}
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: 2,
-                background: ln.colorSwatch,
-                border: '1px solid rgba(0,0,0,0.12)',
-                flexShrink: 0,
-                marginTop: '0.2em',
-              }}
-              aria-hidden
-            />
-          ) : null}
-          <span style={{ minWidth: 0 }}>
-            <span className="text-dark" style={{ fontWeight: 500 }}>
-              {ln.label}
-            </span>
-            <span style={{ margin: '0 0.35rem', opacity: 0.4 }} aria-hidden>
-              ·
-            </span>
-            <span>{ln.valueText}</span>
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function DashboardRestaurantTemplateBlock({
   card,
   templateLabel,
@@ -162,68 +106,44 @@ function DashboardRestaurantTemplateBlock({
   templateLabel: string;
 }) {
   const { t } = useTranslation();
-  const allLines = useMemo(
-    () =>
-      buildTemplateConfigSummaryLines(
-        card.restaurantTemplate,
-        card.restaurantTemplateConfig,
-        card.restaurantPrimaryColor,
-        card.restaurantSecondaryColor,
-        t,
-      ),
-    [
-      card.restaurantTemplate,
-      card.restaurantTemplateConfig,
-      card.restaurantPrimaryColor,
-      card.restaurantSecondaryColor,
-      t,
-    ],
-  );
-
-  const { generalLines, visibilityLines } = useMemo(
-    () => partitionTemplateSummaryLines(allLines),
-    [allLines],
-  );
 
   return (
     <div className="flex-grow-1 w-100" style={{ minWidth: 0 }}>
-      <div className="row g-2 g-md-3 align-items-start">
-        <div className="col-12 col-md-4">
-          <div
-            className="mb-0"
-            style={{
-              fontSize: '0.75rem',
-              lineHeight: 1.45,
-              letterSpacing: '0.01em',
-            }}
+      <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center justify-content-between gap-3">
+        <div
+          className="mb-0"
+          style={{
+            fontSize: '0.9rem',
+            lineHeight: 1.45,
+            letterSpacing: '0.01em',
+          }}
+        >
+          <span className="text-muted">{t('dashboardPage.template.label')} </span>
+          <span className="text-dark fw-semibold">{templateLabel || '—'}</span>
+        </div>
+        <div className="d-flex flex-column flex-sm-row flex-wrap gap-2">
+          <Link
+            href={`/admin/design/configure/${card.restaurantId}`}
+            className="admin-btn admin-btn-secondary"
+            style={{ padding: '8px 16px', fontSize: '0.875rem', textDecoration: 'none', textAlign: 'center' }}
           >
-            <span className="text-muted">{t('dashboardPage.template.label')} </span>
-            <span className="text-dark fw-semibold">{templateLabel || '—'}</span>
-          </div>
-          <div className="mt-1">
-            <DashboardTemplateConfigLinesList lines={generalLines} />
-          </div>
-        </div>
-        <div className="col-12 col-md-4">
-          <DashboardTemplateConfigLinesList lines={visibilityLines} />
-        </div>
-        <div className="col-12 col-md-4">
-          <div className="d-flex flex-column gap-2">
-            <Link
-              href={`/admin/design/configure/${card.restaurantId}`}
-              className="btn btn-sm btn-primary text-white w-100"
-              style={{ fontWeight: 600, textDecoration: 'none', border: 'none' }}
-            >
-              {t('dashboardPage.template.configure')}
-            </Link>
-            <Link
-              href="/admin/design"
-              className="btn btn-sm btn-primary text-white w-100"
-              style={{ fontWeight: 600, textDecoration: 'none', border: 'none' }}
-            >
-              {t('dashboardPage.template.change')}
-            </Link>
-          </div>
+            {t('dashboardPage.template.configure')}
+          </Link>
+          <Link
+            href="/admin/design"
+            className="admin-btn admin-btn-secondary"
+            style={{ padding: '8px 16px', fontSize: '0.875rem', textDecoration: 'none', textAlign: 'center' }}
+          >
+            {t('dashboardPage.template.change')}
+          </Link>
+          <Link
+            href={`/admin/design/editor/${card.restaurantId}`}
+            className="admin-btn"
+            style={{ padding: '8px 16px', fontSize: '0.875rem', textDecoration: 'none', textAlign: 'center' }}
+          >
+            {t('dashboardPage.template.visualEditor', { defaultValue: 'Editor visual' })}
+            <span className="admin-beta-badge">{t('adminTemplates.visualEditorBeta', { defaultValue: 'Beta' })}</span>
+          </Link>
         </div>
       </div>
     </div>
@@ -725,7 +645,7 @@ export default function Admin() {
           {!showEmptyTenantWizard && (
             <div className="row g-4 mb-4 dashboard-stats-row">
             {stats.totalRestaurants !== undefined && stats.restaurantLimit !== undefined && (
-              <div className="col-6 col-lg-4">
+              <div className="col-12 col-md-6 col-lg-4">
                 <div className="admin-stat-card h-100 d-flex flex-column">
                   <p className="admin-stat-title">{t('dashboardPage.stats.restaurants')}</p>
                   <h2 className="admin-stat-value">
@@ -740,7 +660,7 @@ export default function Admin() {
             )}
 
             {stats.totalMenus !== undefined && stats.menuLimit !== undefined && (
-              <div className="col-6 col-lg-4">
+              <div className="col-12 col-md-6 col-lg-4">
                 <div className="admin-stat-card h-100 d-flex flex-column">
                   <p className="admin-stat-title">{t('dashboardPage.stats.menus')}</p>
                   <h2 className="admin-stat-value">
@@ -755,7 +675,7 @@ export default function Admin() {
             )}
 
             {stats.totalProducts !== undefined && stats.productLimit !== undefined && (
-              <div className="col-6 col-lg-4">
+              <div className="col-12 col-md-6 col-lg-4">
                 <div className="admin-stat-card h-100 d-flex flex-column">
                   <p className="admin-stat-title">{t('dashboardPage.stats.products')}</p>
                   <h2 className="admin-stat-value">
@@ -769,15 +689,8 @@ export default function Admin() {
               </div>
             )}
 
-            <div className="col-6 col-lg-12 dashboard-cta-col">
-              <div
-                className="admin-stat-card h-100 d-flex flex-column justify-content-center"
-                style={{
-                  background: 'linear-gradient(135deg, #e8f4fd 0%, #d4ebfa 100%)',
-                  border: '2px solid var(--bs-primary, #0d6efd)',
-                  boxShadow: '0 4px 12px rgba(13, 110, 253, 0.2)',
-                }}
-              >
+            <div className="col-12 dashboard-cta-col">
+              <div className="admin-stat-card admin-cta-card h-100 d-flex flex-column justify-content-center">
                 <p className="admin-stat-title mb-2" style={{ fontSize: '1rem' }}>
                   {dashboardCtaCard?.title ?? t('dashboardPage.ctaFallback.title')}
                 </p>
@@ -786,8 +699,8 @@ export default function Admin() {
                 </p>
                 <a
                   href={dashboardCtaCard?.buttonLink ?? '/admin/profile/subscription'}
-                  className="btn btn-primary btn-sm align-self-start"
-                  style={{ textDecoration: 'none', fontWeight: 600 }}
+                  className="admin-btn admin-btn-accent align-self-start"
+                  style={{ textDecoration: 'none', padding: '8px 16px', fontSize: '0.875rem' }}
                 >
                   {dashboardCtaCard?.buttonText ?? t('dashboardPage.ctaFallback.buttonText')}
                 </a>
@@ -1042,9 +955,9 @@ export default function Admin() {
               {t('dashboardPage.welcomeFallback', { name: user?.firstName || user?.email })}
             </h5>
           </div>
-          <div className="row g-4 mb-4">
+          <div className="row g-4 mb-4 dashboard-stats-row">
             {stats.totalRestaurants !== undefined && (
-              <div className="col-md-3 col-sm-6">
+              <div className="col-12 col-sm-6 col-md-3">
                 <div className="admin-stat-card h-100 d-flex flex-column">
                   <p className="admin-stat-title">{t('dashboardPage.stats.restaurants')}</p>
                   <h2 className="admin-stat-value">{stats.totalRestaurants}</h2>
@@ -1055,7 +968,7 @@ export default function Admin() {
               </div>
             )}
             {stats.totalMenus !== undefined && (
-              <div className="col-md-3 col-sm-6">
+              <div className="col-12 col-sm-6 col-md-3">
                 <div className="admin-stat-card h-100 d-flex flex-column">
                   <p className="admin-stat-title">{t('dashboardPage.stats.menus')}</p>
                   <h2 className="admin-stat-value">{stats.totalMenus}</h2>
@@ -1067,13 +980,13 @@ export default function Admin() {
             )}
             {stats.totalTenants !== undefined && (
               <>
-                <div className="col-md-3 col-sm-6">
+                <div className="col-12 col-sm-6 col-md-3">
                   <div className="admin-stat-card h-100">
                     <p className="admin-stat-title">{t('dashboardPage.stats.tenants')}</p>
                     <h2 className="admin-stat-value">{stats.totalTenants}</h2>
                   </div>
                 </div>
-                <div className="col-md-3 col-sm-6">
+                <div className="col-12 col-sm-6 col-md-3">
                   <div className="admin-stat-card h-100">
                     <p className="admin-stat-title">{t('dashboardPage.stats.users')}</p>
                     <h2 className="admin-stat-value">{stats.totalUsers}</h2>

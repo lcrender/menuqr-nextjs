@@ -243,13 +243,8 @@ export default function AdminConfigDashboardCtaCard() {
                     Vista previa — plan {active.label} ({activeLocale === 'en' ? 'EN' : 'ES'})
                   </div>
                   <div
-                    className="admin-stat-card d-flex flex-column justify-content-center p-3"
-                    style={{
-                      background: 'linear-gradient(135deg, #e8f4fd 0%, #d4ebfa 100%)',
-                      border: '2px solid var(--bs-primary, #0d6efd)',
-                      boxShadow: '0 4px 12px rgba(13, 110, 253, 0.2)',
-                      maxWidth: 320,
-                    }}
+                    className="admin-stat-card admin-cta-card d-flex flex-column justify-content-center p-3"
+                    style={{ maxWidth: 320 }}
                   >
                     <p className="admin-stat-title mb-2" style={{ fontSize: '1rem' }}>
                       {active.title || 'Título'}
@@ -257,7 +252,10 @@ export default function AdminConfigDashboardCtaCard() {
                     <p className="small text-muted mb-3" style={{ lineHeight: 1.4 }}>
                       {active.description || 'Descripción'}
                     </p>
-                    <span className="btn btn-primary btn-sm align-self-start" style={{ pointerEvents: 'none' }}>
+                    <span
+                      className="admin-btn admin-btn-accent align-self-start"
+                      style={{ pointerEvents: 'none', padding: '8px 16px', fontSize: '0.875rem' }}
+                    >
                       {active.buttonText || 'Botón'}
                     </span>
                   </div>

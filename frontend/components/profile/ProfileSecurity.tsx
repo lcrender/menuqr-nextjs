@@ -98,13 +98,11 @@ export default function ProfileSecurity({
   };
 
   return (
-    <section className="card profile-section">
-      <div className="card-header bg-white border-bottom">
-        <h2 className="h5 mb-0 fw-semibold">{t('myProfile.security.title')}</h2>
-      </div>
-      <div className="card-body">
+    <section className="admin-card profile-section mb-4">
+      <h2 className="admin-card-title">{t('myProfile.security.title')}</h2>
+      <div className="admin-card-body">
         {showChangePassword ? (
-          <div className="border rounded p-3 mb-4 bg-light">
+          <div className="admin-card mb-4" style={{ marginBottom: '1rem' }}>
             <h3 className="h6 mb-3">{t('myProfile.security.changePassword')}</h3>
             <form onSubmit={handleChangePassword}>
               <div className="mb-2">
@@ -152,10 +150,10 @@ export default function ProfileSecurity({
               </div>
               {passwordError && <div className="text-danger small mb-2">{passwordError}</div>}
               <div className="d-flex gap-2">
-                <button type="submit" className="btn btn-primary btn-sm" disabled={passwordLoading}>
+                <button type="submit" className="admin-btn" style={{ padding: '8px 16px', fontSize: '0.875rem' }} disabled={passwordLoading}>
                   {passwordLoading ? '…' : t('myProfile.security.updatePassword')}
                 </button>
-                <button type="button" className="btn btn-outline-secondary btn-sm" onClick={onCloseChangePassword}>
+                <button type="button" className="admin-btn admin-btn-secondary" style={{ padding: '8px 16px', fontSize: '0.875rem' }} onClick={onCloseChangePassword}>
                   {t('myProfile.security.cancel')}
                 </button>
               </div>

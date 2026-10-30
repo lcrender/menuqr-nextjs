@@ -233,7 +233,8 @@
     "template": {
       "label": "Plantilla:",
       "configure": "Configuración de plantilla",
-      "change": "Cambiar plantilla"
+      "change": "Cambiar plantilla",
+      "visualEditor": "Editor visual"
     },
     "menuStatus": {
       "published": "Publicado",

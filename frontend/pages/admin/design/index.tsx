@@ -309,18 +309,7 @@ export default function Templates() {
           </div>
           <button type="button" className="admin-btn admin-btn-primary" onClick={() => openVisualEditor()}>
             {t('adminTemplates.visualEditor', { defaultValue: 'Editor visual' })}
-            <span
-              style={{
-                marginLeft: 8,
-                fontSize: '0.7rem',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                background: 'rgba(255,255,255,0.22)',
-                borderRadius: 999,
-                padding: '2px 7px',
-                verticalAlign: 'middle',
-              }}
-            >
+            <span className="admin-beta-badge">
               {t('adminTemplates.visualEditorBeta', { defaultValue: 'Beta' })}
             </span>
           </button>
@@ -411,7 +400,7 @@ export default function Templates() {
                         >
                           {t('adminTemplates.visualEditor', { defaultValue: 'Editor visual' })}
                           {' '}
-                          <span className="badge bg-secondary">{t('adminTemplates.visualEditorBeta', { defaultValue: 'Beta' })}</span>
+                          <span className="admin-beta-badge">{t('adminTemplates.visualEditorBeta', { defaultValue: 'Beta' })}</span>
                         </button>
                       </div>
                     </div>

@@ -86,7 +86,7 @@ export default function SupportTicketDetailPage() {
 
   return (
     <AdminLayout>
-      <div className="container-fluid py-4">
+      <div className="container-fluid py-4 admin-support-detail">
         <nav aria-label="breadcrumb" className="mb-3">
           <ol className="breadcrumb mb-0">
             <li className="breadcrumb-item">
@@ -108,7 +108,7 @@ export default function SupportTicketDetailPage() {
           <>
             <div className="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
               <div>
-                <h1 className="h3 mb-1">
+                <h1 className="admin-title mb-2" style={{ fontSize: '1.75rem' }}>
                   #{ticket.ticketNumber} — {ticket.subject}
                 </h1>
                 <p className="text-muted small mb-0">
@@ -123,9 +123,9 @@ export default function SupportTicketDetailPage() {
             </div>
 
             {ticket.attachmentUrls && ticket.attachmentUrls.length > 0 ? (
-              <div className="card mb-4">
-                <div className="card-header">{t('adminSupport.detail.attachmentsTitle')}</div>
-                <div className="card-body d-flex flex-wrap gap-3">
+              <div className="admin-card mb-4">
+                <h2 className="admin-card-title">{t('adminSupport.detail.attachmentsTitle')}</h2>
+                <div className="admin-card-body d-flex flex-wrap gap-3">
                   {ticket.attachmentUrls.map((u) => (
                     <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="d-block">
                       <img src={u} alt="" className="img-thumbnail" style={{ maxWidth: 220, maxHeight: 220, objectFit: 'cover' }} />
@@ -135,11 +135,11 @@ export default function SupportTicketDetailPage() {
               </div>
             ) : null}
 
-            <div className="card mb-4">
-              <div className="card-header">{t('adminSupport.detail.historyTitle')}</div>
+            <div className="admin-card mb-4" style={{ paddingLeft: 0, paddingRight: 0, paddingBottom: 0 }}>
+              <h2 className="admin-card-title px-4">{t('adminSupport.detail.historyTitle')}</h2>
               <ul className="list-group list-group-flush">
                 {ticket.messages.map((m) => (
-                  <li key={m.id} className="list-group-item">
+                  <li key={m.id} className="list-group-item px-4">
                     <div className="d-flex justify-content-between flex-wrap gap-2">
                       <strong className="small text-capitalize">{m.authorRole.toLowerCase().replace('_', ' ')}</strong>
                       <span className="small text-muted">{new Date(m.createdAt).toLocaleString()}</span>
@@ -155,9 +155,9 @@ export default function SupportTicketDetailPage() {
             {ticket.status === 'closed' ? (
               <div className="alert alert-secondary">{t('adminSupport.detail.closedMessage')}</div>
             ) : (
-              <div className="card mb-4">
-                <div className="card-header">{t('adminSupport.detail.replyTitle')}</div>
-                <div className="card-body">
+              <div className="admin-card mb-4">
+                <h2 className="admin-card-title">{t('adminSupport.detail.replyTitle')}</h2>
+                <div className="admin-card-body">
                   <form onSubmit={(ev) => void sendReply(ev)}>
                     <textarea
                       className="form-control mb-2"
@@ -169,7 +169,7 @@ export default function SupportTicketDetailPage() {
                       placeholder={t('adminSupport.detail.replyPlaceholder')}
                     />
                     {replyError ? <div className="alert alert-danger py-2">{replyError}</div> : null}
-                    <button type="submit" className="btn btn-primary" disabled={sending}>
+                    <button type="submit" className="admin-btn" disabled={sending}>
                       {sending ? t('adminSupport.detail.replySubmitting') : t('adminSupport.detail.replySubmit')}
                     </button>
                   </form>

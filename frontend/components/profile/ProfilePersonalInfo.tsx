@@ -132,11 +132,9 @@ export default function ProfilePersonalInfo({
     : '—';
 
   return (
-    <section className="card profile-section">
-      <div className="card-header bg-white border-bottom">
-        <h2 className="h5 mb-0 fw-semibold">{t('myProfile.personalInfo.title')}</h2>
-      </div>
-      <div className="card-body">
+    <section className="admin-card profile-section mb-4">
+      <h2 className="admin-card-title">{t('myProfile.personalInfo.title')}</h2>
+      <div className="admin-card-body">
         {feedback && (
           <div className={`alert alert-${feedback.type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`} role="alert">
             {feedback.message}
@@ -242,10 +240,10 @@ export default function ProfilePersonalInfo({
 
           {error && <div className="mt-2 text-danger small">{error}</div>}
           <div className="mt-4 d-flex flex-wrap gap-2">
-            <button type="submit" className="btn btn-primary" disabled={saving}>
+            <button type="submit" className="admin-btn" disabled={saving}>
               {saving ? t('myProfile.personalInfo.saving') : t('myProfile.personalInfo.saveChanges')}
             </button>
-            <button type="button" className="btn btn-outline-secondary" onClick={onOpenChangePassword}>
+            <button type="button" className="admin-btn admin-btn-secondary" onClick={onOpenChangePassword}>
               {t('myProfile.personalInfo.changePassword')}
             </button>
           </div>

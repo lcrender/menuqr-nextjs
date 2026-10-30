@@ -43,20 +43,21 @@ export default function ProfileSubscription({
   };
 
   return (
-    <section className="card profile-section">
-      <div className="card-header bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h2 className="h5 mb-0 fw-semibold">{t('myProfile.subscription.title')}</h2>
+    <section className="admin-card profile-section mb-4">
+      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h2 className="admin-card-title mb-0">{t('myProfile.subscription.title')}</h2>
         <div className="d-flex align-items-center gap-2">
           <PlanBadge plan={effectivePlan} />
           <Link
             href="/admin/profile/subscription"
-            className={isFree ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary'}
+            className={isFree ? 'admin-btn' : 'admin-btn admin-btn-secondary'}
+            style={{ padding: '8px 16px', fontSize: '0.875rem', textDecoration: 'none' }}
           >
             {t('myProfile.subscription.manage')}
           </Link>
         </div>
       </div>
-      <div className="card-body">
+      <div className="admin-card-body">
         {feedback && (
           <div className={`alert alert-${feedback.type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`} role="alert">
             {feedback.message}

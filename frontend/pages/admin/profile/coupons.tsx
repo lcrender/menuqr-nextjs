@@ -112,19 +112,19 @@ export default function ProfileCouponsPage() {
     <AdminLayout>
       <div className="container-fluid py-4" style={{ maxWidth: 720 }}>
         <div className="d-flex align-items-center gap-2 mb-4">
-          <Link href="/admin/profile" className="btn btn-sm btn-outline-secondary">
+          <Link href="/admin/profile" className="admin-btn admin-btn-secondary" style={{ padding: '8px 16px', fontSize: '0.875rem', textDecoration: 'none' }}>
             ← Volver al perfil
           </Link>
         </div>
 
-        <h1 className="h3 mb-2 fw-semibold">Cupones</h1>
+        <h1 className="admin-title mb-2">Cupones</h1>
         <p className="text-muted mb-4">
           Ingresá tu código promocional. Si aplica a un plan de pago, te llevaremos al checkout con el cupón
           precargado.
         </p>
 
-        <section className="card profile-section">
-          <div className="card-body">
+        <section className="admin-card profile-section mb-4">
+          <div className="admin-card-body">
             <form onSubmit={handleValidate}>
               <label className="form-label fw-medium" htmlFor="coupon-code">
                 Código del cupón
@@ -140,7 +140,7 @@ export default function ProfileCouponsPage() {
                   autoComplete="off"
                   spellCheck={false}
                 />
-                <button type="submit" className="btn btn-primary" disabled={validating || redeeming}>
+                <button type="submit" className="admin-btn" disabled={validating || redeeming}>
                   {validating ? 'Validando…' : 'Validar cupón'}
                 </button>
               </div>

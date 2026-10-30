@@ -53,13 +53,11 @@ export default function ProfilePaymentHistory({
   }
 
   return (
-    <div className={embedded ? '' : 'card profile-section'}>
+    <div className={embedded ? '' : 'admin-card profile-section mb-4'}>
       {!embedded && (
-        <div className="card-header bg-white border-bottom">
-          <h2 className="h5 mb-0 fw-semibold">{t('myProfile.payments.title')}</h2>
-        </div>
+        <h2 className="admin-card-title">{t('myProfile.payments.title')}</h2>
       )}
-      <div className={embedded ? '' : 'card-body'}>
+      <div className={embedded ? '' : 'admin-card-body'}>
         <div className="table-responsive">
           <table className="table table-sm table-hover align-middle">
             <thead>

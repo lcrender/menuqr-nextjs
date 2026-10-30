@@ -1025,7 +1025,8 @@ export default function AdminTranslationsPage() {
     }
   }, [restaurantTargetLocales, restaurantAutoLocale]);
 
-  const canChangeRestaurant = restaurants.length > 1 || !!restaurantSearch.trim() || isSuperAdmin;
+  /** Solo si hay más de un comercio (con uno solo no tiene sentido “cambiar”) */
+  const canChangeRestaurant = restaurants.length > 1;
 
   const restaurantAllLocales = useMemo(() => {
     const map = new Map<string, { locale: string; label: string; countryCode: string }>();
@@ -1381,7 +1382,7 @@ export default function AdminTranslationsPage() {
     return (
       <AdminLayout>
         <div className="py-4 px-2 px-md-0">
-          <h1 className="h3 mb-3">{t('adminTranslations.title')}</h1>
+          <h1 className="admin-title mb-3">{t('adminTranslations.title')}</h1>
           <p className="lead text-muted mb-2" style={{ fontSize: '1.05rem' }}>
             <Trans i18nKey="adminTranslations.upgrade.lead" components={{ strong: <strong /> }} />
           </p>
@@ -1391,54 +1392,43 @@ export default function AdminTranslationsPage() {
 
           <div className="row g-4 align-items-stretch">
             <div className="col-12 col-md-4">
-              <div className="card h-100 border-secondary shadow-sm" style={{ opacity: 0.92 }}>
-                <div className="card-body d-flex flex-column">
-                  <h2 className="h5 mb-2">{t('adminTranslations.upgrade.cardTranslationsTitle')}</h2>
-                  <p className="small text-muted flex-grow-1 mb-3">
-                    {t('adminTranslations.upgrade.cardTranslationsDesc')}
-                  </p>
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary w-100"
-                    disabled
-                    tabIndex={-1}
-                    style={{ pointerEvents: 'none' }}
-                  >
-                    {t('adminTranslations.upgrade.availableOnPlans')}
-                  </button>
-                </div>
+              <div className="admin-stat-card h-100 d-flex flex-column" style={{ opacity: 0.92 }}>
+                <h2 className="h5 mb-2">{t('adminTranslations.upgrade.cardTranslationsTitle')}</h2>
+                <p className="small text-muted flex-grow-1 mb-3">
+                  {t('adminTranslations.upgrade.cardTranslationsDesc')}
+                </p>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary w-100"
+                  disabled
+                  tabIndex={-1}
+                  style={{ pointerEvents: 'none' }}
+                >
+                  {t('adminTranslations.upgrade.availableOnPlans')}
+                </button>
               </div>
             </div>
 
             <div className="col-12 col-md-4">
-              <div className="card h-100 border-secondary shadow-sm" style={{ opacity: 0.92 }}>
-                <div className="card-body d-flex flex-column">
-                  <h2 className="h5 mb-2">{t('adminTranslations.upgrade.cardAutoTitle')}</h2>
-                  <p className="small text-muted flex-grow-1 mb-3">
-                    {t('adminTranslations.upgrade.cardAutoDesc')}
-                  </p>
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary w-100"
-                    disabled
-                    tabIndex={-1}
-                    style={{ pointerEvents: 'none' }}
-                  >
-                    {t('adminTranslations.upgrade.availableOnPlans')}
-                  </button>
-                </div>
+              <div className="admin-stat-card h-100 d-flex flex-column" style={{ opacity: 0.92 }}>
+                <h2 className="h5 mb-2">{t('adminTranslations.upgrade.cardAutoTitle')}</h2>
+                <p className="small text-muted flex-grow-1 mb-3">
+                  {t('adminTranslations.upgrade.cardAutoDesc')}
+                </p>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary w-100"
+                  disabled
+                  tabIndex={-1}
+                  style={{ pointerEvents: 'none' }}
+                >
+                  {t('adminTranslations.upgrade.availableOnPlans')}
+                </button>
               </div>
             </div>
 
             <div className="col-12 col-md-4">
-              <div
-                className="admin-stat-card h-100 d-flex flex-column justify-content-center"
-                style={{
-                  background: 'linear-gradient(135deg, #e8f4fd 0%, #d4ebfa 100%)',
-                  border: '2px solid var(--bs-primary, #0d6efd)',
-                  boxShadow: '0 4px 12px rgba(13, 110, 253, 0.2)',
-                }}
-              >
+              <div className="admin-stat-card admin-cta-card h-100 d-flex flex-column justify-content-center">
                 <p className="admin-stat-title mb-2" style={{ fontSize: '1rem' }}>
                   {t('adminTranslations.upgrade.promoTitle')}
                 </p>
@@ -1447,8 +1437,8 @@ export default function AdminTranslationsPage() {
                 </p>
                 <Link
                   href="/admin/profile/subscription"
-                  className="btn btn-primary btn-sm align-self-start"
-                  style={{ textDecoration: 'none', fontWeight: 600 }}
+                  className="admin-btn admin-btn-accent align-self-start"
+                  style={{ textDecoration: 'none', padding: '8px 16px', fontSize: '0.875rem' }}
                 >
                   {t('adminTranslations.upgrade.manageSubscription')}
                 </Link>
@@ -1528,17 +1518,16 @@ export default function AdminTranslationsPage() {
                         role="listbox"
                         aria-label={t('adminTranslations.page.businessLabel')}
                       >
-                        {restaurants.map((r, idx) => {
+                        {restaurants.map((r) => {
                           const id = String(r.id);
                           const selected = id === selectedRestaurantId;
-                          const tone = idx % 2 === 0 ? 'tone-blue' : 'tone-violet';
                           return (
                             <button
                               key={id}
                               type="button"
                               role="option"
                               aria-selected={selected}
-                              className={`admin-translations-restaurant-option ${tone} ${selected ? 'is-selected' : ''}`}
+                              className={`admin-translations-restaurant-option ${selected ? 'is-selected' : ''}`}
                               onClick={() => selectRestaurantAndContinue(id)}
                             >
                               <span className="admin-translations-restaurant-option__name">
@@ -1568,7 +1557,7 @@ export default function AdminTranslationsPage() {
                 <div className="admin-translations-panel-toggles mb-3">
                   <button
                     type="button"
-                    className={`admin-translations-panel-toggle tone-blue ${
+                    className={`admin-translations-panel-toggle ${
                       step2Panel === 'all' ? 'is-active' : ''
                     }`}
                     disabled={loadingMenus || menus.length === 0}
@@ -1578,7 +1567,7 @@ export default function AdminTranslationsPage() {
                   </button>
                   <button
                     type="button"
-                    className={`admin-translations-panel-toggle tone-violet ${
+                    className={`admin-translations-panel-toggle ${
                       step2Panel === 'one' ? 'is-active' : ''
                     }`}
                     disabled={loadingMenus || menus.length === 0}
@@ -1588,7 +1577,7 @@ export default function AdminTranslationsPage() {
                   </button>
                   <button
                     type="button"
-                    className={`admin-translations-panel-toggle tone-blue ${
+                    className={`admin-translations-panel-toggle ${
                       step2Panel === 'default' ? 'is-active' : ''
                     }`}
                     disabled={loadingMenus || menus.length === 0}
@@ -1666,7 +1655,7 @@ export default function AdminTranslationsPage() {
                               <div className="admin-translations-all-actions mb-3">
                                 <button
                                   type="button"
-                                  className="btn btn-primary admin-translations-all-actions__run"
+                                  className="admin-btn admin-translations-all-actions__run"
                                   disabled={restaurantAutoBusy || !restaurantAutoLocale}
                                   onClick={() => void requestRestaurantAutoTranslate()}
                                 >
@@ -1725,7 +1714,7 @@ export default function AdminTranslationsPage() {
                             ];
                             return (
                               <div key={m.id} className="col-12 col-lg-6">
-                                <div className="card h-100 shadow-sm">
+                                <div className="admin-card h-100 mb-0">
                                   <div className="card-body">
                                     <div className="admin-translations-card-header">
                                       <div className="admin-translations-card-title-row">
@@ -1814,7 +1803,7 @@ export default function AdminTranslationsPage() {
                                     <div className="admin-translations-card-actions mt-4">
                                       <button
                                         type="button"
-                                        className="btn btn-primary"
+                                        className="admin-btn"
                                         onClick={() => openAddLocale(m.id)}
                                       >
                                         {t('adminTranslations.menuCard.addLocale')}
@@ -2022,7 +2011,7 @@ export default function AdminTranslationsPage() {
 
                           <button
                             type="button"
-                            className="btn btn-primary w-100 admin-translations-all-actions__run"
+                            className="admin-btn w-100 admin-translations-all-actions__run"
                             disabled={
                               defaultLocaleBusy ||
                               !defaultLocalePick ||
@@ -2048,23 +2037,24 @@ export default function AdminTranslationsPage() {
 
                   </>
                 )}
-
-                {canChangeRestaurant && (
-                  <div className="wizard-footer admin-translations-wizard-footer">
-                    <button
-                      type="button"
-                      className="admin-btn admin-btn-secondary"
-                      onClick={() => {
-                        setStep2Panel(null);
-                        setWizardStep(1);
-                      }}
-                    >
-                      {t('adminTranslations.wizard.back')}
-                    </button>
-                  </div>
-                )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Fuera del wizard: siempre pegado al borde inferior del viewport */}
+        {wizardStep === 2 && canChangeRestaurant && (
+          <div className="admin-translations-wizard-footer" role="navigation" aria-label={t('adminTranslations.wizard.back')}>
+            <button
+              type="button"
+              className="admin-btn admin-btn-secondary"
+              onClick={() => {
+                setStep2Panel(null);
+                setWizardStep(1);
+              }}
+            >
+              {t('adminTranslations.wizard.back')}
+            </button>
           </div>
         )}
       </div>
@@ -2280,7 +2270,7 @@ export default function AdminTranslationsPage() {
                 <button type="button" className="btn btn-outline-secondary" onClick={() => setAddOpen(false)}>
                   {t('adminTranslations.common.cancel')}
                 </button>
-                <button type="button" className="btn btn-primary" disabled={addSaving} onClick={() => void submitAddLocale()}>
+                <button type="button" className="admin-btn" disabled={addSaving} onClick={() => void submitAddLocale()}>
                   {addSaving ? t('adminTranslations.common.saving') : t('adminTranslations.addLocale.submit')}
                 </button>
               </div>
@@ -2466,7 +2456,7 @@ export default function AdminTranslationsPage() {
                 <button type="button" className="btn btn-outline-secondary" onClick={() => setSettingsOpen(false)}>
                   {t('adminTranslations.common.cancel')}
                 </button>
-                <button type="button" className="btn btn-primary" disabled={settingsSaving} onClick={() => void saveSettings()}>
+                <button type="button" className="admin-btn" disabled={settingsSaving} onClick={() => void saveSettings()}>
                   {settingsSaving ? t('adminTranslations.common.saving') : t('adminTranslations.common.save')}
                 </button>
               </div>
@@ -2608,7 +2598,7 @@ export default function AdminTranslationsPage() {
                 </button>
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="admin-btn"
                   disabled={benchLoading || benchSaving}
                   onClick={() => void saveWorkbench()}
                 >
