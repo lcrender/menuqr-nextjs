@@ -217,7 +217,8 @@ export function buildLandingHreflangLinks(absoluteBaseUrl: string): LandingHrefl
  */
 export function useLandingHomeHref(override?: string): string {
   const router = useRouter();
-  const [href, setHref] = useState(() => override || landingHomeHrefFromPath(router.pathname) || '/');
+  // `/` redirige por geo. En páginas sin home regional el HTML debe enlazar a `/es` (200).
+  const [href, setHref] = useState(() => override || landingHomeHrefFromPath(router.pathname) || '/es');
 
   useEffect(() => {
     const sync = () => {

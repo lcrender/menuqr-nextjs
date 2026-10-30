@@ -89,7 +89,7 @@ export function buildSitemapEntries(absoluteBaseUrl?: string): SitemapEntry[] {
         ? { alternates: buildPlantillasCatalogHreflangLinks(base) }
         : {}),
     },
-    { path: '/precios', changefreq: 'weekly', priority: '0.9', lastmod: today },
+    // /precios no va al sitemap: sin ?reason= responde noindex y redirige a /ar|/es|/en#precios.
     { path: '/soporte', changefreq: 'weekly', priority: '0.7', lastmod: today },
     { path: '/documentacion', changefreq: 'weekly', priority: '0.8', lastmod: today },
     {

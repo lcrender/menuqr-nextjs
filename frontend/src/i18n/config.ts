@@ -1,4 +1,5 @@
 import i18n from 'i18next';
+import { htmlLangFromUiLocale, marketingHtmlLang } from '../../lib/html-lang';
 import { initReactI18next } from 'react-i18next';
 
 // Importar traducciones
@@ -151,7 +152,10 @@ export const changeLanguage = async (locale: string): Promise<void> => {
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('menuqr-locale', next);
-      document.documentElement.lang = next;
+      // En /en, /es y /ar el lang sigue la ruta (hreflang). Si no, el idioma de la UI,
+      // pero en código corto (`en` / `es`) para no dejar `en-US` contra hreflang `en`.
+      document.documentElement.lang =
+        marketingHtmlLang(window.location.pathname) ?? htmlLangFromUiLocale(next);
     }
   } catch (error) {
     console.error('Error cambiando idioma:', error);

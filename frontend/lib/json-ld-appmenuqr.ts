@@ -262,21 +262,38 @@ export function buildPlantillaDetalleJsonLd(
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
 }
 
-/** Documentación pública: WebPage + BreadcrumbList (índice o sección). */
-export function buildDocumentacionJsonLd(base: string, opts: { slug?: string; title: string }): string {
+/** Documentación pública: WebPage + TechArticle + BreadcrumbList (índice o sección). */
+export function buildDocumentacionJsonLd(
+  base: string,
+  opts: { slug?: string; title: string; description: string },
+): string {
   const b = base.replace(/\/$/, '');
   const slug = opts.slug?.trim();
   const isIndex = !slug;
   const url = isIndex ? `${b}/documentacion` : `${b}/documentacion/${encodeURIComponent(slug)}`;
+  const org = buildOrganizationNode(b);
   const graph: Record<string, unknown>[] = [
+    org,
     {
       '@type': 'WebPage',
       '@id': `${url}#webpage`,
       url,
       name: opts.title,
+      description: opts.description,
       isPartOf: { '@id': `${b}/#website` },
       about: { '@id': `${b}/#organization` },
       inLanguage: 'es',
+    },
+    {
+      '@type': 'TechArticle',
+      '@id': `${url}#article`,
+      headline: opts.title,
+      description: opts.description,
+      url,
+      inLanguage: 'es',
+      mainEntityOfPage: { '@id': `${url}#webpage` },
+      author: { '@id': `${b}/#organization` },
+      publisher: { '@id': `${b}/#organization` },
     },
     {
       '@type': 'BreadcrumbList',
@@ -285,7 +302,7 @@ export function buildDocumentacionJsonLd(base: string, opts: { slug?: string; ti
           '@type': 'ListItem',
           position: 1,
           name: 'Inicio',
-          item: b,
+          item: `${b}/es`,
         },
         {
           '@type': 'ListItem',

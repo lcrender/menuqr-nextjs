@@ -50,7 +50,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Documentación | AppMenuQR',
     metaTitleAdmin: 'Documentación | Ayuda',
     metaDescription:
-      'Guía AppMenuQR: registro, comercio, menús, CSV, plantillas, publicación, programación, QR, impresión en papel, administración del negocio, traducciones, suscripciones y pagos.',
+      'Guía de AppMenuQR para crear tu carta digital: comercio, menús, productos, CSV, plantillas, publicación, código QR, impresión, traducciones y suscripciones.',
     group: 'Introducción',
     keywords: 'inicio guía flujo resumen pasos registro sesión',
     searchText: 'resumen flujo completo crear comercio menú csv secciones productos qr verificar email',
@@ -62,7 +62,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Crear un comercio | Documentación AppMenuQR',
     metaTitleAdmin: 'Crear un comercio | Ayuda',
     metaDescription:
-      'Alta del primer comercio en AppMenuQR: datos, dirección en mapa, teléfono, WhatsApp, logo, plantilla por defecto y moneda principal.',
+      'Cómo dar de alta tu primer comercio en AppMenuQR: datos del local, dirección en el mapa, teléfono, WhatsApp, logo, plantilla por defecto y moneda.',
     group: 'Primeros pasos',
     keywords: 'comercio crear logo portada moneda plantilla dirección whatsapp maps video tutorial youtube',
     searchText: 'comercios menú lateral crear guardar primera vez asistente video tutorial primeros pasos',
@@ -74,7 +74,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Crear un menú | Documentación AppMenuQR',
     metaTitleAdmin: 'Crear un menú | Ayuda',
     metaDescription:
-      'Cómo crear menús por comercio: nombre visible para clientes, descripción opcional y secciones dentro del menú.',
+      'Cómo crear un menú por comercio en AppMenuQR: nombre visible para tus clientes, descripción opcional y secciones para organizar la carta.',
     group: 'Primeros pasos',
     keywords: 'menú crear borrador comercio nombre botón secciones video tutorial youtube',
     searchText: 'menús nuevo guardar almuerzo cena entradas principales video tutorial primeros pasos',
@@ -86,7 +86,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Secciones del menú | Documentación AppMenuQR',
     metaTitleAdmin: 'Secciones del menú | Ayuda',
     metaDescription:
-      'Organizar categorías en el menú: agregar sección, orden con arrastre y líneas de agarre.',
+      'Cómo organizar las categorías del menú en AppMenuQR: agregar una sección, cambiar el orden arrastrando y usar las líneas de agarre.',
     group: 'Menú',
     keywords: 'secciones categorías menú orden drag agregar',
     searchText: 'secciones del menú agregar orden tres líneas',
@@ -98,7 +98,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Crear productos | Documentación AppMenuQR',
     metaTitleAdmin: 'Crear productos | Ayuda',
     metaDescription:
-      'Alta de productos con precios en la moneda del comercio, iconos y asignación a secciones.',
+      'Cómo cargar productos en AppMenuQR: precios en la moneda del comercio, iconos, destacado y asignación a las secciones del menú.',
     group: 'Menú',
     keywords: 'productos precios iconos moneda destacado',
     searchText: 'productos del menú crear precio moneda principal comercio',
@@ -110,7 +110,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Reordenar productos | Documentación AppMenuQR',
     metaTitleAdmin: 'Reordenar productos | Ayuda',
     metaDescription:
-      'Cambiar el orden de productos con arrastrar y soltar dentro de una sección o entre secciones.',
+      'Cómo cambiar el orden de los productos en AppMenuQR arrastrando y soltando dentro de una sección o moviéndolos entre secciones.',
     group: 'Menú',
     keywords: 'orden arrastrar drag drop productos',
     searchText: 'reordenar arrastra suelta sección',
@@ -122,7 +122,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Importar menú con CSV | Documentación AppMenuQR',
     metaTitleAdmin: 'Importar menú con CSV | Ayuda',
     metaDescription:
-      'Importar secciones y productos desde CSV: columnas, alérgenos, límites del plan y edición posterior completa.',
+      'Cómo importar secciones y productos desde un CSV en AppMenuQR: columnas, alérgenos, límites del plan y edición completa después de la carga.',
     group: 'Menú',
     keywords: 'csv importar plantilla secciones productos precios',
     searchText: 'nombre_seccion nombre_producto moneda precio importación editar después',
@@ -134,7 +134,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Plantillas de diseño | Documentación AppMenuQR',
     metaTitleAdmin: 'Plantillas de diseño | Ayuda',
     metaDescription:
-      'Plantilla por defecto al crear el comercio, Menú plantillas para previsualizar, colores y opciones del negocio.',
+      'Cómo elegir la plantilla al crear el comercio y previsualizar el diseño, los colores y las opciones del menú digital en AppMenuQR.',
     group: 'Diseño',
     keywords: 'plantilla diseño preview colores logo nombre classic foodie',
     searchText: 'plantilla comercio editar activar desactivar primarios secundarios',
@@ -146,7 +146,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Publicar el menú | Documentación AppMenuQR',
     metaTitleAdmin: 'Publicar el menú | Ayuda',
     metaDescription:
-      'Estado borrador o publicado, botones publicar y despublicar; enlace del comercio con menús ocultos hasta publicar.',
+      'Cómo pasar un menú de borrador a publicado en AppMenuQR, despublicarlo y qué ve el cliente cuando abre el enlace del comercio.',
     group: 'Publicación',
     keywords: 'publicar borrador despublicar estado acciones lista menús',
     searchText: 'columna estado qr visible oculto',
@@ -158,7 +158,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Programar visibilidad del menú | Documentación AppMenuQR',
     metaTitleAdmin: 'Programar visibilidad del menú | Ayuda',
     metaDescription:
-      'Programación semanal de menús en planes Pro y Premium: días, horarios, fechas y huso horario del comercio.',
+      'Cómo programar menús por día y horario en planes Pro y Premium: fechas, franjas y huso horario del comercio en AppMenuQR.',
     group: 'Publicación',
     keywords: 'programar horario días semana visibilidad pro premium timezone',
     searchText: 'lunes martes horario desde hasta fechas guardar programación menús',
@@ -170,7 +170,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Código QR del comercio | Documentación AppMenuQR',
     metaTitleAdmin: 'Código QR del comercio | Ayuda',
     metaDescription:
-      'QR del comercio en el dashboard: todos los menús publicados, descarga, impresión y aviso si cambias el nombre.',
+      'Dónde descargar el código QR del comercio en el panel de AppMenuQR, cómo imprimirlo y qué pasa si cambiás el nombre del local.',
     group: 'Publicación',
     keywords: 'qr código descargar dashboard comercio menús nombre enlace',
     searchText: 'imprimir escanear google maps cambiar nombre nuevo qr',
@@ -182,7 +182,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Imprimir carta en papel | Documentación AppMenuQR',
     metaTitleAdmin: 'Imprimir carta en papel | Ayuda',
     metaDescription:
-      'Imprimí tu menú en papel desde el panel: plantillas, logo, secciones, idioma y menús a incluir.',
+      'Cómo imprimir la carta en papel desde el panel de AppMenuQR: plantillas, logo, secciones, idioma y menús que querés incluir.',
     group: 'Publicación',
     keywords: 'imprimir papel carta plantilla pdf logo secciones idioma menús',
     searchText: 'imprimir carta comercio clásica elegante moderna bistro vista previa',
@@ -194,7 +194,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Desactivar comercio | Documentación AppMenuQR',
     metaTitleAdmin: 'Desactivar comercio | Ayuda',
     metaDescription:
-      'Qué ocurre si desactivás el comercio: la página pública y el QR no se muestran hasta reactivarlo.',
+      'Qué ocurre al desactivar un comercio en AppMenuQR: la página pública y el código QR dejan de mostrarse hasta que lo reactives.',
     group: 'Administración del negocio',
     keywords: 'desactivar comercio ocultar pausa cerrar página pública qr',
     searchText: 'comercio inactivo volver activar cartel online',
@@ -206,7 +206,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Eliminar comercio | Documentación AppMenuQR',
     metaTitleAdmin: 'Eliminar comercio | Ayuda',
     metaDescription:
-      'Eliminar un comercio borra todos los datos asociados de forma irreversible.',
+      'Qué implica eliminar un comercio en AppMenuQR: se borran menús, productos y datos asociados de forma permanente e irreversible.',
     group: 'Administración del negocio',
     keywords: 'eliminar comercio borrar datos permanentemente peligro',
     searchText: 'borrar negocio irreversible menús productos',
@@ -218,7 +218,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Despublicar y eliminar menús | Documentación AppMenuQR',
     metaTitleAdmin: 'Despublicar y eliminar menús | Ayuda',
     metaDescription:
-      'Menús despublicados en la carta online, eliminar menú sin borrar productos y productos huérfanos.',
+      'Cómo despublicar un menú en la carta online, eliminarlo sin borrar productos y qué pasa con los productos que quedan sin menú.',
     group: 'Administración del negocio',
     keywords: 'despublicar menú eliminar menú productos sin menú visible carta',
     searchText: 'borrar menu productos asignar huérfano',
@@ -230,7 +230,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Traducciones del menú | Documentación AppMenuQR',
     metaTitleAdmin: 'Traducciones del menú | Ayuda',
     metaDescription:
-      'Pasos para traducir contenido en AppMenuQR y límites según tu plan de suscripción.',
+      'Cómo traducir el menú en AppMenuQR, qué textos se pueden traducir y qué límites de idiomas aplican según tu plan de suscripción.',
     group: 'Contenido e idiomas',
     keywords: 'traducciones idiomas i18n plan límites suscripción video tutorial youtube traducción automática',
     searchText: 'traducir menu texto segundo idioma',
@@ -242,7 +242,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Edición masiva de productos | Documentación AppMenuQR',
     metaTitleAdmin: 'Edición masiva de productos | Ayuda',
     metaDescription:
-      'Acciones masivas sobre productos: borrar, mover entre menús y comercios, duplicados y límites del plan.',
+      'Cómo editar productos en lote en AppMenuQR: borrar, mover entre menús o comercios, duplicar y respetar los límites del plan.',
     group: 'Productos avanzado',
     keywords: 'masivo borrar mover duplicar plan límite productos',
     searchText: 'trasladar otro comercio copiar cantidad',
@@ -254,7 +254,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Editar producto: precios y estado | Documentación AppMenuQR',
     metaTitleAdmin: 'Editar producto: precios y estado | Ayuda',
     metaDescription:
-      'Activar o desactivar un producto, nombre, descripción, precios y foto según tu plan.',
+      'Cómo editar un producto en AppMenuQR: activarlo o desactivarlo, cambiar nombre, descripción, precios y foto según tu plan.',
     group: 'Productos avanzado',
     keywords: 'editar producto precio foto activar desactivar',
     searchText: 'descripción opciones precio imagen plan',
@@ -266,7 +266,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Suscripciones y pagos | Documentación AppMenuQR',
     metaTitleAdmin: 'Suscripciones y pagos | Ayuda',
     metaDescription:
-      'Medios de pago (Mercado Pago Argentina, PayPal internacional), baja cuando quieras.',
+      'Cómo pagar tu plan de AppMenuQR con Mercado Pago en Argentina o PayPal en el resto del mundo, y cómo darte de baja cuando quieras.',
     group: 'Cuenta y facturación',
     keywords: 'suscripción pago mercadopago paypal argentina baja cancelar',
     searchText: 'facturación plan cobro mensual',
@@ -278,7 +278,7 @@ export const DOCUMENTATION_SECTIONS: DocSection[] = [
     metaTitlePublic: 'Plantillas | Documentación AppMenuQR',
     metaTitleAdmin: 'Plantillas | Ayuda',
     metaDescription:
-      'Resumen de las plantillas de carta digital disponibles y enlace a las características de cada una.',
+      'Qué plantillas de carta digital ofrece AppMenuQR y cómo abrir la ficha de características de cada una antes de elegirla.',
     group: 'Plantillas',
     keywords:
       'plantillas catálogo características smart food beach gourmet minimalista classic foodie burgers',

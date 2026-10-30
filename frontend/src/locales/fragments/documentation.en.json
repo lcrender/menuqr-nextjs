@@ -21,7 +21,7 @@
       "group": "Introduction",
       "metaTitlePublic": "Documentation | AppMenuQR",
       "metaTitleAdmin": "Documentation | Help",
-      "metaDescription": "AppMenuQR guide: registration, business, menus, CSV, templates, publishing, scheduling, QR, paper printing, business admin, translations, subscriptions and payments.",
+      "metaDescription": "AppMenuQR guide to build your digital menu: venue, menus, products, CSV, templates, publishing, QR code, printing, translations and subscriptions.",
       "keywords": "home guide flow summary steps registration session",
       "searchText": "summary full flow create business menu csv sections products qr verify email"
     },
@@ -31,7 +31,7 @@
       "group": "Getting started",
       "metaTitlePublic": "Create a business | AppMenuQR Documentation",
       "metaTitleAdmin": "Create a business | Help",
-      "metaDescription": "Set up your first business in AppMenuQR: details, map address, phone, WhatsApp, logo, default template and main currency.",
+      "metaDescription": "How to set up your first venue in AppMenuQR: business details, map address, phone, WhatsApp, logo, default template and main currency.",
       "keywords": "business create logo cover currency template address whatsapp maps video tutorial youtube",
       "searchText": "businesses side menu create save first time wizard video tutorial getting started"
     },
@@ -41,7 +41,7 @@
       "group": "Getting started",
       "metaTitlePublic": "Create a menu | AppMenuQR Documentation",
       "metaTitleAdmin": "Create a menu | Help",
-      "metaDescription": "How to create menus per business: customer-facing name, optional description and sections within the menu.",
+      "metaDescription": "How to create a menu for your venue in AppMenuQR: the name guests see, an optional description and sections to organize the menu.",
       "keywords": "menu create draft business name button sections video tutorial youtube",
       "searchText": "menus new save lunch dinner starters mains video tutorial getting started"
     },
@@ -51,7 +51,7 @@
       "group": "Menu",
       "metaTitlePublic": "Menu sections | AppMenuQR Documentation",
       "metaTitleAdmin": "Menu sections | Help",
-      "metaDescription": "Organize categories in the menu: add section, reorder with drag and grip handles.",
+      "metaDescription": "How to organize menu categories in AppMenuQR: add a section, reorder it by dragging and use the grip handles on each row.",
       "keywords": "sections categories menu order drag add",
       "searchText": "menu sections add order three lines"
     },
@@ -61,7 +61,7 @@
       "group": "Menu",
       "metaTitlePublic": "Create products | AppMenuQR Documentation",
       "metaTitleAdmin": "Create products | Help",
-      "metaDescription": "Add products with prices in the business currency, icons and section assignment.",
+      "metaDescription": "How to add products in AppMenuQR: prices in your venue currency, icons, featuring a dish and assigning it to a menu section.",
       "keywords": "products prices icons currency featured",
       "searchText": "menu products create price main currency business"
     },
@@ -71,7 +71,7 @@
       "group": "Menu",
       "metaTitlePublic": "Reorder products | AppMenuQR Documentation",
       "metaTitleAdmin": "Reorder products | Help",
-      "metaDescription": "Change product order with drag and drop within a section or between sections.",
+      "metaDescription": "How to change product order in AppMenuQR by dragging and dropping items within a section or moving them between sections.",
       "keywords": "order drag drop products",
       "searchText": "reorder drag drop section"
     },
@@ -81,7 +81,7 @@
       "group": "Menu",
       "metaTitlePublic": "Import menu from CSV | AppMenuQR Documentation",
       "metaTitleAdmin": "Import menu from CSV | Help",
-      "metaDescription": "Import sections and products from CSV: columns, allergens, plan limits and full editing afterwards.",
+      "metaDescription": "How to import sections and products from a CSV in AppMenuQR: columns, allergens, plan limits and full editing after the import.",
       "keywords": "csv import template sections products prices",
       "searchText": "section_name product_name currency price import edit later"
     },
@@ -91,7 +91,7 @@
       "group": "Design",
       "metaTitlePublic": "Design templates | AppMenuQR Documentation",
       "metaTitleAdmin": "Design templates | Help",
-      "metaDescription": "Default template when creating the business, Menu templates to preview, colors and business options.",
+      "metaDescription": "How to set the default template when you create a venue and preview colors and design options for your digital menu in AppMenuQR.",
       "keywords": "template design preview colors logo name classic foodie",
       "searchText": "business template edit enable disable primary secondary"
     },
@@ -101,7 +101,7 @@
       "group": "Publishing",
       "metaTitlePublic": "Publish the menu | AppMenuQR Documentation",
       "metaTitleAdmin": "Publish the menu | Help",
-      "metaDescription": "Draft or published status, publish and unpublish buttons; business link with menus hidden until published.",
+      "metaDescription": "How to switch a menu from draft to published in AppMenuQR, unpublish it, and what guests see when they open your venue link.",
       "keywords": "publish draft unpublish status actions menus list",
       "searchText": "status column qr visible hidden"
     },
@@ -111,7 +111,7 @@
       "group": "Publishing",
       "metaTitlePublic": "Schedule menu visibility | AppMenuQR Documentation",
       "metaTitleAdmin": "Schedule menu visibility | Help",
-      "metaDescription": "Weekly menu scheduling on Pro and Premium plans: days, times, dates and business timezone.",
+      "metaDescription": "How to schedule menus by day and time on Pro and Premium plans: dates, time windows and your venue timezone in AppMenuQR.",
       "keywords": "schedule hours days week visibility pro premium timezone",
       "searchText": "monday tuesday hours from to dates save menu schedule"
     },
@@ -121,7 +121,7 @@
       "group": "Publishing",
       "metaTitlePublic": "Business QR code | AppMenuQR Documentation",
       "metaTitleAdmin": "Business QR code | Help",
-      "metaDescription": "Business QR on the dashboard: all published menus, download, print and notice if you change the name.",
+      "metaDescription": "Where to download your venue QR code in the AppMenuQR dashboard, how to print it, and what happens if you change the business name.",
       "keywords": "qr code download dashboard business menus name link",
       "searchText": "print scan google maps change name new qr"
     },
@@ -131,7 +131,7 @@
       "group": "Publishing",
       "metaTitlePublic": "Print paper menu | AppMenuQR Documentation",
       "metaTitleAdmin": "Print paper menu | Help",
-      "metaDescription": "Print your menu on paper from the panel: templates, logo, sections, language and menus to include.",
+      "metaDescription": "How to print your menu on paper from the AppMenuQR panel: templates, logo, sections, language and which menus to include.",
       "keywords": "print paper menu template pdf logo sections language menus",
       "searchText": "print menu business classic elegant modern bistro preview"
     },
@@ -141,7 +141,7 @@
       "group": "Business admin",
       "metaTitlePublic": "Deactivate business | AppMenuQR Documentation",
       "metaTitleAdmin": "Deactivate business | Help",
-      "metaDescription": "What happens if you deactivate the business: the public page and QR are hidden until you reactivate it.",
+      "metaDescription": "What happens when you deactivate a venue in AppMenuQR: the public page and QR code stay hidden until you turn it back on.",
       "keywords": "deactivate business hide pause close public page qr",
       "searchText": "inactive business reactivate online sign"
     },
@@ -151,7 +151,7 @@
       "group": "Business admin",
       "metaTitlePublic": "Delete business | AppMenuQR Documentation",
       "metaTitleAdmin": "Delete business | Help",
-      "metaDescription": "Deleting a business permanently removes all associated data.",
+      "metaDescription": "What deleting a venue in AppMenuQR means: menus, products and related data are removed permanently and cannot be restored.",
       "keywords": "delete business erase data permanently danger",
       "searchText": "delete business irreversible menus products"
     },
@@ -161,7 +161,7 @@
       "group": "Business admin",
       "metaTitlePublic": "Unpublish and delete menus | AppMenuQR Documentation",
       "metaTitleAdmin": "Unpublish and delete menus | Help",
-      "metaDescription": "Unpublished menus on the online card, delete menu without deleting products and orphan products.",
+      "metaDescription": "How to unpublish a menu on the online card, delete it without removing products, and what happens to dishes left without a menu.",
       "keywords": "unpublish menu delete menu products without menu visible card",
       "searchText": "delete menu assign products orphan"
     },
@@ -171,7 +171,7 @@
       "group": "Content & languages",
       "metaTitlePublic": "Menu translations | AppMenuQR Documentation",
       "metaTitleAdmin": "Menu translations | Help",
-      "metaDescription": "Steps to translate content in AppMenuQR and limits based on your subscription plan.",
+      "metaDescription": "How to translate your menu in AppMenuQR, which texts can be translated, and the language limits of each subscription plan.",
       "keywords": "translations languages i18n plan limits subscription video tutorial youtube auto translation",
       "searchText": "translate menu text second language"
     },
@@ -181,7 +181,7 @@
       "group": "Advanced products",
       "metaTitlePublic": "Bulk product editing | AppMenuQR Documentation",
       "metaTitleAdmin": "Bulk product editing | Help",
-      "metaDescription": "Bulk actions on products: delete, move between menus and businesses, duplicates and plan limits.",
+      "metaDescription": "How to edit products in bulk in AppMenuQR: delete, move them between menus or venues, duplicate, and stay within plan limits.",
       "keywords": "bulk delete move duplicate plan limit products",
       "searchText": "transfer other business copy quantity"
     },
@@ -191,7 +191,7 @@
       "group": "Advanced products",
       "metaTitlePublic": "Edit product: prices and status | AppMenuQR Documentation",
       "metaTitleAdmin": "Edit product: prices and status | Help",
-      "metaDescription": "Enable or disable a product, name, description, prices and photo according to your plan.",
+      "metaDescription": "How to edit a product in AppMenuQR: turn it on or off, and change the name, description, prices and photo for your plan.",
       "keywords": "edit product price photo enable disable",
       "searchText": "description options price image plan"
     },
@@ -201,7 +201,7 @@
       "group": "Account & billing",
       "metaTitlePublic": "Subscriptions and payments | AppMenuQR Documentation",
       "metaTitleAdmin": "Subscriptions and payments | Help",
-      "metaDescription": "Payment methods (Mercado Pago Argentina, PayPal international), cancel anytime.",
+      "metaDescription": "How to pay for AppMenuQR with Mercado Pago in Argentina or PayPal elsewhere, and how to cancel your subscription anytime.",
       "keywords": "subscription payment mercadopago paypal argentina cancel unsubscribe",
       "searchText": "billing plan monthly charge"
     },
@@ -211,7 +211,7 @@
       "group": "Templates",
       "metaTitlePublic": "Templates | AppMenuQR Documentation",
       "metaTitleAdmin": "Templates | Help",
-      "metaDescription": "Overview of available digital menu templates and links to each template's features.",
+      "metaDescription": "Which digital menu templates AppMenuQR offers and how to open each template's feature page before you choose one for your venue.",
       "keywords": "templates catalog features smart food beach gourmet minimalist classic foodie burgers",
       "searchText": "template card features smart-food beach-bar gourmet minimalist night-club modern-food italian-food sol-noche foodie classic burgers"
     }

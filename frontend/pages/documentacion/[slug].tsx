@@ -1,8 +1,8 @@
-import Head from 'next/head';
 import type { GetStaticPaths, GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'react-i18next';
 import LandingNav from '../../components/LandingNav';
 import LandingFooter from '../../components/LandingFooter';
+import DocumentationSeoHead from '../../components/documentation/DocumentationSeoHead';
 import { DocumentationShell } from '../../components/documentation/DocumentationShell';
 import { DOC_BODY_BY_SLUG } from '../../components/documentation/DocumentationBodies';
 import {
@@ -23,25 +23,27 @@ export default function DocumentacionSlugPage({ slug }: Props) {
   const meta = translateDocSection(getDocBySlug(slug)!, t);
   const render = DOC_BODY_BY_SLUG[slug as DocSection['slug']]!;
   const canonicalBase = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/$/, '');
-  const canonicalUrl =
-    canonicalBase && /^https?:\/\//i.test(canonicalBase)
-      ? `${canonicalBase}/documentacion/${slug}`
-      : null;
+  const siteBase = canonicalBase && /^https?:\/\//i.test(canonicalBase) ? canonicalBase : null;
+  const canonicalUrl = siteBase ? `${siteBase}/documentacion/${slug}` : null;
   const docsJsonLd = (() => {
     const base = siteJsonLdBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
     if (!base) return null;
-    return buildDocumentacionJsonLd(base, { slug, title: meta.metaTitlePublic });
+    return buildDocumentacionJsonLd(base, {
+      slug,
+      title: meta.metaTitlePublic,
+      description: meta.metaDescription,
+    });
   })();
 
   return (
     <>
-      <Head>
-        <title>{meta.metaTitlePublic}</title>
-        {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
-        <meta name="description" content={meta.metaDescription} />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {docsJsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: docsJsonLd }} /> : null}
-      </Head>
+      <DocumentationSeoHead
+        title={meta.metaTitlePublic}
+        description={meta.metaDescription}
+        siteBase={siteBase}
+        canonicalUrl={canonicalUrl}
+        jsonLd={docsJsonLd}
+      />
       <div className="landing-page">
         <LandingNav />
         <main className="py-4 py-md-5">
