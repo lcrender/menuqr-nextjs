@@ -17,9 +17,13 @@ import {
   robotsContent,
   sectionNamesForMeta,
 } from '../../lib/public-restaurant-meta';
-import { buildRestaurantHubSsrSeo } from '../../lib/ssr-public-restaurant-seo';
+import {
+  buildRestaurantHubSsrSeo,
+  type PublicRestaurantBranding,
+} from '../../lib/ssr-public-restaurant-seo';
 import { changeLanguage, getCurrentLanguage, isLanguageAvailable } from '../../src/i18n/config';
 import { isBcp47MenuLocale, type MenuLangManifestEntry, buildTemplateMenuLocales } from '../../components/MenuLanguageSwitcher';
+import PublicRestaurantLoading from '../../components/PublicRestaurantLoading';
 import ClassicTemplate from '../../templates/classic/ClassicTemplate';
 import MinimalistTemplate from '../../templates/minimalist/MinimalistTemplate';
 import FoodieTemplate from '../../templates/foodie/FoodieTemplate';
@@ -147,7 +151,13 @@ function restaurantLocaleStorageKey(restaurantSlug: string) {
   return `menuqr-menu-content-locale:restaurant:${restaurantSlug}`;
 }
 
-export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
+export default function RestaurantPage({
+  seo,
+  branding,
+}: {
+  seo: PublicHtmlSeo;
+  branding: PublicRestaurantBranding;
+}) {
   const router = useRouter();
   const { slug, lang, locale: localeQueryParam } = router.query;
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -161,6 +171,10 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
   const iconLabels = useMemo(() => iconLabelsForLocale(contentLocale), [contentLocale]);
   const footerLabels = useMemo(() => templateFooterLabelsForLocale(contentLocale), [contentLocale]);
   const selectedMenuSlugRef = useRef<string | null>(null);
+  const contentLocaleRef = useRef(contentLocale);
+  contentLocaleRef.current = contentLocale;
+  const hasRestaurantRef = useRef(false);
+  hasRestaurantRef.current = !!restaurant;
 
   useEffect(() => {
     if (!router.isReady || typeof slug !== 'string') return;
@@ -236,16 +250,48 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMenu?.id, selectedMenu?.availableLocales, contentLocale, slug]);
 
+  const loadMenu = async (menuSlug: string, opts?: { silent?: boolean; locale?: string }) => {
+    if (!slug) return;
+    selectedMenuSlugRef.current = menuSlug;
+    const silent = !!opts?.silent;
+    const locale = opts?.locale || contentLocaleRef.current;
+
+    if (!silent) setLoadingMenu(true);
+    try {
+      const response = await axios.get(
+        `${getApiBaseUrl()}/public/restaurants/${slug}/menus/${menuSlug}`,
+        { params: { locale } },
+      );
+      setSelectedMenu(response.data);
+    } catch (err: any) {
+      console.error('Error cargando menú:', err);
+    } finally {
+      if (!silent) setLoadingMenu(false);
+    }
+  };
+
   useEffect(() => {
     if (!slug) return;
+    let cancelled = false;
+    // Solo soft-refresh si ya hay datos del mismo comercio (cambio de idioma).
+    const softRefresh =
+      hasRestaurantRef.current && restaurant?.slug === slug;
 
     const fetchRestaurant = async () => {
+      const localeForRequest = contentLocale;
       try {
-        setLoading(true);
+        if (!softRefresh) {
+          setRestaurant(null);
+          setSelectedMenu(null);
+          setMenuList([]);
+          setLoading(true);
+          setError('');
+        }
         const response = await axios.get(
           `${getApiBaseUrl()}/public/restaurants/${slug}`,
-          { params: { locale: contentLocale } },
+          { params: { locale: localeForRequest } },
         );
+        if (cancelled) return;
         const data = response.data;
         
         // Extraer WhatsApp del phone si existe
@@ -304,39 +350,26 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
             prefer && sortedMenus.some((m: { slug: string }) => m.slug === prefer)
               ? prefer
               : sortedMenus[0].slug;
-          await loadMenu(slugToLoad);
+          await loadMenu(slugToLoad, { silent: softRefresh, locale: localeForRequest });
         }
       } catch (err: any) {
+        if (cancelled) return;
         if (err.response?.status === 404) {
           setError('Comercio no encontrado');
         } else {
           setError(getApiErrorMessage(err, 'Error cargando el comercio'));
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    fetchRestaurant();
+    void fetchRestaurant();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, contentLocale]);
-
-  const loadMenu = async (menuSlug: string) => {
-    if (!slug) return;
-    selectedMenuSlugRef.current = menuSlug;
-
-    setLoadingMenu(true);
-    try {
-      const response = await axios.get(
-        `${getApiBaseUrl()}/public/restaurants/${slug}/menus/${menuSlug}`,
-        { params: { locale: contentLocale } },
-      );
-      setSelectedMenu(response.data);
-    } catch (err: any) {
-      console.error('Error cargando menú:', err);
-    } finally {
-      setLoadingMenu(false);
-    }
-  };
 
   const displaySeo: PublicHtmlSeo = (() => {
     if (loading) return seo;
@@ -358,17 +391,14 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
     };
   })();
 
-  if (loading) {
+  if (loading && !restaurant) {
     return (
       <>
         <PublicHtmlSeoHead seo={displaySeo} />
-        <div className="container mt-5">
-          <div className="text-center">
-            <div className="spinner-border" role="status">
-              <span className="visually-hidden">Cargando...</span>
-            </div>
-          </div>
-        </div>
+        <PublicRestaurantLoading
+          logoUrl={branding?.logoUrl}
+          name={branding?.name}
+        />
       </>
     );
   }
@@ -758,7 +788,10 @@ export default function RestaurantPage({ seo }: { seo: PublicHtmlSeo }) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps<{ seo: PublicHtmlSeo }> = async (ctx) => {
-  const seo = await buildRestaurantHubSsrSeo(ctx);
-  return { props: { seo } };
+export const getServerSideProps: GetServerSideProps<{
+  seo: PublicHtmlSeo;
+  branding: PublicRestaurantBranding;
+}> = async (ctx) => {
+  const { seo, branding } = await buildRestaurantHubSsrSeo(ctx);
+  return { props: { seo, branding } };
 };

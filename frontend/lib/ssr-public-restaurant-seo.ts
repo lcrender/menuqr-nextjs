@@ -14,6 +14,20 @@ import {
 /** Alineado con `isBcp47MenuLocale` (MenuLanguageSwitcher): `xx-XX`. */
 const BCP47_MENU = /^[a-z]{2}-[A-Z]{2}$/;
 
+export type PublicRestaurantBranding = {
+  logoUrl?: string | null;
+  name?: string | null;
+};
+
+export type PublicRestaurantSsrPayload = {
+  seo: PublicHtmlSeo;
+  branding: PublicRestaurantBranding;
+};
+
+function emptyBranding(): PublicRestaurantBranding {
+  return { logoUrl: null, name: null };
+}
+
 function pickSsrMenuLocale(ctx: GetServerSidePropsContext): string {
   const l = ctx.query.locale;
   const g = ctx.query.lang;
@@ -24,7 +38,7 @@ function pickSsrMenuLocale(ctx: GetServerSidePropsContext): string {
 
 export async function buildRestaurantHubSsrSeo(
   ctx: GetServerSidePropsContext,
-): Promise<PublicHtmlSeo> {
+): Promise<PublicRestaurantSsrPayload> {
   const slug = ctx.params?.slug;
   /** URL pública corta (`rewrites` /r/:slug → /restaurant/:slug); canónica única para SEO. */
   const canonicalPath = typeof slug === 'string' ? `/r/${encodeURIComponent(slug)}` : '/';
@@ -33,10 +47,13 @@ export async function buildRestaurantHubSsrSeo(
 
   if (typeof slug !== 'string') {
     return {
-      title: APP_MENU_QR_TITLE_SUFFIX,
-      description: '',
-      robots: 'noindex, nofollow',
-      canonicalUrl,
+      seo: {
+        title: APP_MENU_QR_TITLE_SUFFIX,
+        description: '',
+        robots: 'noindex, nofollow',
+        canonicalUrl,
+      },
+      branding: emptyBranding(),
     };
   }
 
@@ -50,17 +67,25 @@ export async function buildRestaurantHubSsrSeo(
     );
     if (!res.ok) {
       return {
-        title: APP_MENU_QR_TITLE_SUFFIX,
-        description: '',
-        robots: 'noindex, nofollow',
-        canonicalUrl,
+        seo: {
+          title: APP_MENU_QR_TITLE_SUFFIX,
+          description: '',
+          robots: 'noindex, nofollow',
+          canonicalUrl,
+        },
+        branding: emptyBranding(),
       };
     }
 
     const data = (await res.json()) as {
       name?: string;
       description?: string | null;
+      logoUrl?: string | null;
       menus?: Array<{ slug: string; sort?: number }>;
+    };
+    const branding: PublicRestaurantBranding = {
+      logoUrl: data.logoUrl || null,
+      name: data.name || slug,
     };
 
     const menus = Array.isArray(data.menus) ? data.menus : [];
@@ -91,24 +116,30 @@ export async function buildRestaurantHubSsrSeo(
     });
 
     return {
-      title: buildPublicRestaurantTitle(data.name || slug),
-      description,
-      robots: robotsContent(sortedMenus.length > 0),
-      canonicalUrl,
+      seo: {
+        title: buildPublicRestaurantTitle(data.name || slug),
+        description,
+        robots: robotsContent(sortedMenus.length > 0),
+        canonicalUrl,
+      },
+      branding,
     };
   } catch {
     return {
-      title: APP_MENU_QR_TITLE_SUFFIX,
-      description: '',
-      robots: 'noindex, nofollow',
-      canonicalUrl,
+      seo: {
+        title: APP_MENU_QR_TITLE_SUFFIX,
+        description: '',
+        robots: 'noindex, nofollow',
+        canonicalUrl,
+      },
+      branding: emptyBranding(),
     };
   }
 }
 
 export async function buildPublicMenuSsrSeo(
   ctx: GetServerSidePropsContext,
-): Promise<PublicHtmlSeo> {
+): Promise<PublicRestaurantSsrPayload> {
   const rs = ctx.params?.restaurantSlug;
   const ms = ctx.params?.menuSlug;
   const canonicalPath =
@@ -120,10 +151,13 @@ export async function buildPublicMenuSsrSeo(
 
   if (typeof rs !== 'string' || typeof ms !== 'string') {
     return {
-      title: APP_MENU_QR_TITLE_SUFFIX,
-      description: '',
-      robots: 'noindex, nofollow',
-      canonicalUrl,
+      seo: {
+        title: APP_MENU_QR_TITLE_SUFFIX,
+        description: '',
+        robots: 'noindex, nofollow',
+        canonicalUrl,
+      },
+      branding: emptyBranding(),
     };
   }
 
@@ -138,10 +172,13 @@ export async function buildPublicMenuSsrSeo(
 
     if (!menuRes.ok) {
       return {
-        title: APP_MENU_QR_TITLE_SUFFIX,
-        description: '',
-        robots: 'noindex, nofollow',
-        canonicalUrl,
+        seo: {
+          title: APP_MENU_QR_TITLE_SUFFIX,
+          description: '',
+          robots: 'noindex, nofollow',
+          canonicalUrl,
+        },
+        branding: emptyBranding(),
       };
     }
 
@@ -157,13 +194,16 @@ export async function buildPublicMenuSsrSeo(
 
     let restaurantDescription: string | null | undefined;
     let restaurantName = menuData.restaurantName ?? '';
+    let logoUrl: string | null = null;
     if (restaurantRes.ok) {
       const rd = (await restaurantRes.json()) as {
         description?: string | null;
         name?: string;
+        logoUrl?: string | null;
       };
       restaurantDescription = rd.description ?? null;
       if (rd.name) restaurantName = rd.name;
+      logoUrl = rd.logoUrl || null;
     }
 
     const description = buildMetaDescription({
@@ -172,17 +212,26 @@ export async function buildPublicMenuSsrSeo(
     });
 
     return {
-      title: buildPublicRestaurantTitle(restaurantName || rs),
-      description,
-      robots: robotsContent(true),
-      canonicalUrl,
+      seo: {
+        title: buildPublicRestaurantTitle(restaurantName || rs),
+        description,
+        robots: robotsContent(true),
+        canonicalUrl,
+      },
+      branding: {
+        logoUrl,
+        name: restaurantName || rs,
+      },
     };
   } catch {
     return {
-      title: APP_MENU_QR_TITLE_SUFFIX,
-      description: '',
-      robots: 'noindex, nofollow',
-      canonicalUrl,
+      seo: {
+        title: APP_MENU_QR_TITLE_SUFFIX,
+        description: '',
+        robots: 'noindex, nofollow',
+        canonicalUrl,
+      },
+      branding: emptyBranding(),
     };
   }
 }

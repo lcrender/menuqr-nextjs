@@ -1,12 +1,13 @@
 import { useRouter } from 'next/router';
 import type { GetServerSideProps } from 'next';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import axios from 'axios';
 import { getApiBaseUrl } from '../../../lib/config';
 import { getApiErrorMessage } from '../../../lib/api-error-message';
 import { iconLabelsForLocale } from '../../../lib/allergen-icon-labels';
 import { PublicHtmlSeoHead } from '../../../components/PublicHtmlSeoHead';
 import PublicMenuStatus from '../../../components/PublicMenuStatus';
+import PublicRestaurantLoading from '../../../components/PublicRestaurantLoading';
 import {
   APP_MENU_QR_TITLE_SUFFIX,
   buildMetaDescription,
@@ -15,7 +16,10 @@ import {
   robotsContent,
   sectionNamesForMeta,
 } from '../../../lib/public-restaurant-meta';
-import { buildPublicMenuSsrSeo } from '../../../lib/ssr-public-restaurant-seo';
+import {
+  buildPublicMenuSsrSeo,
+  type PublicRestaurantBranding,
+} from '../../../lib/ssr-public-restaurant-seo';
 import { changeLanguage, getCurrentLanguage, isLanguageAvailable } from '../../../src/i18n/config';
 import { isBcp47MenuLocale, type MenuLangManifestEntry, buildTemplateMenuLocales } from '../../../components/MenuLanguageSwitcher';
 import ClassicTemplate from '../../../templates/classic/ClassicTemplate';
@@ -132,7 +136,13 @@ function menuLocaleStorageKey(restaurantSlug: string, menuSlug: string) {
   return `menuqr-menu-content-locale:${restaurantSlug}:${menuSlug}`;
 }
 
-export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
+export default function MenuPage({
+  seo,
+  branding,
+}: {
+  seo: PublicHtmlSeo;
+  branding: PublicRestaurantBranding;
+}) {
   const router = useRouter();
   const { restaurantSlug, menuSlug, lang, locale: localeQueryParam } = router.query;
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -142,6 +152,8 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
   /** Locale BCP-47 para textos del menú y restaurante (API pública), independiente del i18n de la app. */
   const [contentLocale, setContentLocale] = useState('es-ES');
   const iconLabels = useMemo(() => iconLabelsForLocale(contentLocale), [contentLocale]);
+  const hasContentRef = useRef(false);
+  hasContentRef.current = !!menu && !!restaurant;
 
   // Idioma del menú desde URL (`?locale=`), `?lang=` si es BCP-47, localStorage por menú, o idioma UI.
   useEffect(() => {
@@ -222,15 +234,26 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
 
   useEffect(() => {
     if (!restaurantSlug || !menuSlug) return;
+    let cancelled = false;
+    const softRefresh =
+      hasContentRef.current &&
+      restaurant?.slug === restaurantSlug &&
+      menu?.slug === menuSlug;
 
     const fetchData = async () => {
       try {
-        setLoading(true);
+        if (!softRefresh) {
+          setMenu(null);
+          setRestaurant(null);
+          setLoading(true);
+          setError('');
+        }
         // Obtener el menú
         const menuResponse = await axios.get(
           `${getApiBaseUrl()}/public/restaurants/${restaurantSlug}/menus/${menuSlug}`,
           { params: { locale: contentLocale } },
         );
+        if (cancelled) return;
         setMenu(menuResponse.data);
         
         // Obtener el restaurante para tener todos los datos necesarios
@@ -238,6 +261,7 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
           `${getApiBaseUrl()}/public/restaurants/${restaurantSlug}`,
           { params: { locale: contentLocale } },
         );
+        if (cancelled) return;
         const restaurantData = restaurantResponse.data;
         
         // Extraer WhatsApp del phone si existe
@@ -252,8 +276,8 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
           whatsapp,
         });
 
-        // Registrar vista del menú
-        if (menuResponse.data?.id && restaurantData?.tenantId) {
+        // Registrar vista del menú (solo en carga inicial, no al cambiar idioma)
+        if (!softRefresh && menuResponse.data?.id && restaurantData?.tenantId) {
           try {
             await axios.post(`${getApiBaseUrl()}/tracking/menu-view`, {
               menuId: menuResponse.data.id,
@@ -266,17 +290,21 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
           }
         }
       } catch (err: any) {
+        if (cancelled) return;
         if (err.response?.status === 404) {
           setError('Menú no encontrado');
         } else {
           setError(getApiErrorMessage(err, 'Error cargando el menú'));
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    fetchData();
+    void fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [restaurantSlug, menuSlug, contentLocale]);
 
   const displaySeo: PublicHtmlSeo = (() => {
@@ -299,17 +327,14 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
     };
   })();
 
-  if (loading) {
+  if (loading && !menu && !restaurant) {
     return (
       <>
         <PublicHtmlSeoHead seo={displaySeo} />
-        <div className="container mt-5">
-          <div className="text-center">
-            <div className="spinner-border" role="status">
-              <span className="visually-hidden">Cargando...</span>
-            </div>
-          </div>
-        </div>
+        <PublicRestaurantLoading
+          logoUrl={branding?.logoUrl}
+          name={branding?.name}
+        />
       </>
     );
   }
@@ -412,7 +437,10 @@ export default function MenuPage({ seo }: { seo: PublicHtmlSeo }) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps<{ seo: PublicHtmlSeo }> = async (ctx) => {
-  const seo = await buildPublicMenuSsrSeo(ctx);
-  return { props: { seo } };
+export const getServerSideProps: GetServerSideProps<{
+  seo: PublicHtmlSeo;
+  branding: PublicRestaurantBranding;
+}> = async (ctx) => {
+  const { seo, branding } = await buildPublicMenuSsrSeo(ctx);
+  return { props: { seo, branding } };
 };
