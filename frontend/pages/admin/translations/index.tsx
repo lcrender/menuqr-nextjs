@@ -1638,11 +1638,12 @@ export default function AdminTranslationsPage() {
                                 <AdminSelect
                                   value={restaurantAutoLocale}
                                   onChange={setRestaurantAutoLocale}
-                                  options={restaurantTargetLocales.map((l) => ({
-                                    value: l.locale,
-                                    label: l.label,
-                                    hint: suggestedFlagCodeFromLocale(l.locale) || undefined,
-                                  }))}
+                                  options={restaurantTargetLocales.map((l) => {
+                                    const code = suggestedFlagCodeFromLocale(l.locale);
+                                    return code
+                                      ? { value: l.locale, label: l.label, hint: code }
+                                      : { value: l.locale, label: l.label };
+                                  })}
                                   placeholder={t('adminTranslations.autoTranslate.targetLocale')}
                                   searchable={restaurantTargetLocales.length > 6}
                                   searchPlaceholder={t('adminTranslations.page.searchPlaceholder')}

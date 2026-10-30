@@ -5,11 +5,9 @@
  */
 
 function normalizePath(path: string | undefined | null): string {
-  const pathname = String(path || '')
-    .split('?')[0]
-    .split('#')[0]
-    .replace(/\/+$/, '')
-    .toLowerCase();
+  const withoutQuery = String(path || '').split('?')[0] ?? '';
+  const withoutHash = withoutQuery.split('#')[0] ?? '';
+  const pathname = withoutHash.replace(/\/+$/, '').toLowerCase();
   return pathname || '/';
 }
 
