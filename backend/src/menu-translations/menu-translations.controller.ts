@@ -20,6 +20,7 @@ import { RenameMenuLocaleDto } from './dto/rename-menu-locale.dto';
 import { SaveMenuLocaleWorkbenchDto } from './dto/save-menu-locale-workbench.dto';
 import { PatchMenuTranslationSettingsDto } from './dto/patch-menu-translation-settings.dto';
 import { PostAutoTranslateDto } from './dto/post-auto-translate.dto';
+import { PostRestaurantAutoTranslateDto } from './dto/post-restaurant-auto-translate.dto';
 import { SetDefaultLocaleDto } from './dto/set-default-locale.dto';
 import { AutoTranslateService } from '../auto-translate/auto-translate.service';
 
@@ -178,6 +179,74 @@ export class MenuTranslationsController {
       targetLocale: body.targetLocale,
       force: !!body.force,
       tenantPlan: plan,
+    });
+  }
+
+  @Get('restaurants/:restaurantId/locale-coverage')
+  @ApiOperation({
+    summary: 'Cobertura de un idioma en todos los menús del comercio (faltantes / incompletos / listos)',
+  })
+  @ApiQuery({ name: 'locale', required: true, example: 'en-US' })
+  @ApiQuery({ name: 'tenantId', required: false })
+  async getRestaurantLocaleCoverage(
+    @Param('restaurantId') restaurantId: string,
+    @Query('locale') locale: string,
+    @Query('tenantId') tenantIdQuery: string | undefined,
+    @Request() req: any,
+  ) {
+    if (!restaurantId) throw new BadRequestException('restaurantId es requerido');
+    if (!locale?.trim()) throw new BadRequestException('locale es requerido');
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, undefined, tenantIdQuery);
+    return this.menuTranslationsService.getRestaurantLocaleCoverage(tenantId, restaurantId, locale);
+  }
+
+  @Post('restaurants/:restaurantId/set-default-locale')
+  @ApiOperation({
+    summary:
+      'Definir un idioma por defecto en todos los menús del comercio que ya tengan ese idioma agregado',
+  })
+  async postRestaurantSetDefaultLocale(
+    @Param('restaurantId') restaurantId: string,
+    @Body() body: SetDefaultLocaleDto,
+    @Request() req: any,
+  ) {
+    if (!restaurantId) throw new BadRequestException('restaurantId es requerido');
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, body.tenantId);
+    return this.menuTranslationsService.setRestaurantDefaultLocale(tenantId, restaurantId, body.locale);
+  }
+
+  @Post('restaurants/:restaurantId/auto-translate')
+  @ApiOperation({
+    summary:
+      'Traducción automática del idioma destino en todos los menús del comercio que lo tengan. Consume un solo uso mensual.',
+  })
+  async postRestaurantAutoTranslate(
+    @Param('restaurantId') restaurantId: string,
+    @Body() body: PostRestaurantAutoTranslateDto,
+    @Request() req: any,
+  ) {
+    if (!restaurantId) throw new BadRequestException('restaurantId es requerido');
+    if (!body?.targetLocale) throw new BadRequestException('targetLocale es requerido');
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, body.tenantId);
+    const userId = req.user?.id as string | undefined;
+    if (!userId) throw new ForbiddenException();
+    const plan = await this.menuTranslationsService.getTenantPlan(tenantId);
+    if (!this.autoTranslateService.planAllowsAutoTranslateForTenantPlan(plan)) {
+      throw new ForbiddenException('Disponible solo en planes Pro, Pro Team o Premium.');
+    }
+    const menus = await this.menuTranslationsService.listMenusForRestaurant(tenantId, restaurantId);
+    return this.autoTranslateService.runForRestaurant({
+      tenantId,
+      restaurantId,
+      userId,
+      targetLocale: body.targetLocale,
+      force: !!body.force,
+      tenantPlan: plan,
+      menus: menus.map((m: { id: string; locales: string[]; sourceLocale?: string }) => ({
+        id: m.id,
+        locales: m.locales || [],
+        sourceLocale: m.sourceLocale,
+      })),
     });
   }
 }

@@ -9,6 +9,8 @@ interface ConfirmModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   variant?: 'danger' | 'warning' | 'primary';
+  /** Clases extra en el root (ej. sheet fullscreen móvil). */
+  className?: string;
 }
 
 export default function ConfirmModal({
@@ -20,6 +22,7 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
   variant = 'danger',
+  className = '',
 }: ConfirmModalProps) {
   if (!show) return null;
 
@@ -45,14 +48,18 @@ export default function ConfirmModal({
   };
 
   const style = variantStyles[variant];
+  const sheet = className.includes('admin-translations-sheet');
 
   return (
     <div
-      className="modal show"
+      className={`modal show ${className}`.trim()}
       style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
       onClick={onCancel}
     >
-      <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`modal-dialog ${sheet ? 'modal-dialog-scrollable admin-translations-sheet__dialog' : 'modal-dialog-centered'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-content">
           <div className="modal-header" style={{ borderBottom: '1px solid #dee2e6' }}>
             <h5 className="modal-title" style={{ color: style.titleColor }}>
@@ -69,7 +76,10 @@ export default function ConfirmModal({
           <div className="modal-body" style={{ padding: '24px' }}>
             <p style={{ marginBottom: 0, fontSize: '16px' }}>{message}</p>
           </div>
-          <div className="modal-footer" style={{ borderTop: '1px solid #dee2e6' }}>
+          <div
+            className={`modal-footer ${sheet ? 'admin-translations-sheet__footer' : ''}`}
+            style={{ borderTop: '1px solid #dee2e6' }}
+          >
             <button type="button" className="btn btn-secondary" onClick={onCancel}>
               {cancelText}
             </button>

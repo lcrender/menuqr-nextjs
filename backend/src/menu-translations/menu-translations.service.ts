@@ -764,4 +764,167 @@ export class MenuTranslationsService {
       locales: await this.distinctLocalesForMenu(tenantId, menuId, newSource),
     };
   }
+
+  /**
+   * Cobertura de un locale en un menú: si falta el idioma, textos aún iguales al base, o desactualizados.
+   */
+  async getMenuLocaleCoverage(tenantId: string, menuId: string, localeRaw: string) {
+    const locale = this.normalizeMenuLocaleTag(localeRaw);
+    await this.assertMenuBelongs(tenantId, menuId);
+    const source = await this.getSourceLocale(tenantId, menuId);
+    const menuRows = await this.postgres.queryRaw<{ id: string; name: string }>(
+      `SELECT id, name FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [menuId, tenantId],
+    );
+    const menuName = menuRows[0]?.name || menuId;
+    const locales = await this.distinctLocalesForMenu(tenantId, menuId, source);
+    const hasLocale = locales.includes(locale);
+    if (!hasLocale) {
+      return {
+        menuId,
+        menuName,
+        locale,
+        sourceLocale: source,
+        hasLocale: false,
+        isDefault: false,
+        missingSections: 0,
+        missingItems: 0,
+        staleFields: 0,
+        sameAsSourceItems: 0,
+        sameAsSourceSections: 0,
+        ready: false,
+        status: 'missing_locale' as const,
+      };
+    }
+    if (locale === source) {
+      return {
+        menuId,
+        menuName,
+        locale,
+        sourceLocale: source,
+        hasLocale: true,
+        isDefault: true,
+        missingSections: 0,
+        missingItems: 0,
+        staleFields: 0,
+        sameAsSourceItems: 0,
+        sameAsSourceSections: 0,
+        ready: true,
+        status: 'is_default' as const,
+      };
+    }
+
+    const sections = await this.postgres.queryRaw<{ id: string; name: string }>(
+      `SELECT id, name FROM menu_sections WHERE menu_id = $1 AND deleted_at IS NULL`,
+      [menuId],
+    );
+    const items = await this.postgres.queryRaw<{ id: string; name: string }>(
+      `SELECT id, name FROM menu_items WHERE menu_id = $1 AND deleted_at IS NULL`,
+      [menuId],
+    );
+
+    let missingSections = 0;
+    let sameAsSourceSections = 0;
+    let staleFields = 0;
+    for (const s of sections) {
+      const base = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, source);
+      const cur = await this.i18n.getTranslations(tenantId, 'menu_section', s.id, locale);
+      const st = await this.i18n.getStaleKeyMap(tenantId, 'menu_section', s.id, locale);
+      const baseName = String(base.name || s.name || '').trim();
+      const curName = String(cur.name || '').trim();
+      if (!curName) missingSections++;
+      else if (baseName && curName === baseName) sameAsSourceSections++;
+      if (st.name) staleFields++;
+    }
+
+    let missingItems = 0;
+    let sameAsSourceItems = 0;
+    for (const it of items) {
+      const base = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, source);
+      const cur = await this.i18n.getTranslations(tenantId, 'menu_item', it.id, locale);
+      const st = await this.i18n.getStaleKeyMap(tenantId, 'menu_item', it.id, locale);
+      const baseName = String(base.name || it.name || '').trim();
+      const curName = String(cur.name || '').trim();
+      if (!curName) missingItems++;
+      else if (baseName && curName === baseName) sameAsSourceItems++;
+      if (st.name) staleFields++;
+      if (st.description) staleFields++;
+    }
+
+    const menuStale = await this.i18n.getStaleKeyMap(tenantId, 'menu', menuId, locale);
+    if (menuStale.name) staleFields++;
+    if (menuStale.description) staleFields++;
+
+    const issues =
+      missingSections + missingItems + sameAsSourceSections + sameAsSourceItems + staleFields;
+    return {
+      menuId,
+      menuName,
+      locale,
+      sourceLocale: source,
+      hasLocale: true,
+      isDefault: false,
+      missingSections,
+      missingItems,
+      staleFields,
+      sameAsSourceItems,
+      sameAsSourceSections,
+      ready: issues === 0,
+      status: (issues === 0 ? 'ready' : 'incomplete') as 'ready' | 'incomplete',
+    };
+  }
+
+  async getRestaurantLocaleCoverage(tenantId: string, restaurantId: string, localeRaw: string) {
+    const locale = this.normalizeMenuLocaleTag(localeRaw);
+    if (!locale || !MENU_LOCALE_BCP47_REGEX.test(locale)) {
+      throw new BadRequestException('Código de idioma (locale) inválido.');
+    }
+    const menus = await this.listMenusForRestaurant(tenantId, restaurantId);
+    const rows = [];
+    for (const m of menus) {
+      rows.push(await this.getMenuLocaleCoverage(tenantId, m.id, locale));
+    }
+    const missingLocale = rows.filter((r) => !r.hasLocale).length;
+    const incomplete = rows.filter((r) => r.hasLocale && !r.isDefault && !r.ready).length;
+    const ready = rows.filter((r) => r.ready || r.isDefault).length;
+    return {
+      locale,
+      menuCount: rows.length,
+      missingLocale,
+      incomplete,
+      ready,
+      menus: rows,
+    };
+  }
+
+  async setRestaurantDefaultLocale(tenantId: string, restaurantId: string, localeRaw: string) {
+    const locale = this.normalizeMenuLocaleTag(localeRaw);
+    if (!locale || !MENU_LOCALE_BCP47_REGEX.test(locale)) {
+      throw new BadRequestException('Código de idioma (locale) inválido.');
+    }
+    const menus = await this.listMenusForRestaurant(tenantId, restaurantId);
+    const updated: string[] = [];
+    const skipped: Array<{ menuId: string; menuName: string; reason: string }> = [];
+    for (const m of menus) {
+      const source = String(m.sourceLocale || 'es-ES');
+      if (source === locale) {
+        skipped.push({ menuId: m.id, menuName: m.name, reason: 'already_default' });
+        continue;
+      }
+      if (!(m.locales || []).includes(locale)) {
+        skipped.push({ menuId: m.id, menuName: m.name, reason: 'missing_locale' });
+        continue;
+      }
+      await this.setDefaultLocale(tenantId, m.id, locale);
+      updated.push(m.id);
+    }
+    return {
+      ok: true,
+      locale,
+      updatedCount: updated.length,
+      skippedCount: skipped.length,
+      updated,
+      skipped,
+    };
+  }
 }

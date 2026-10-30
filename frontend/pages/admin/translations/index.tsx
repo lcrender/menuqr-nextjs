@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Trans, useTranslation } from 'react-i18next';
 import api from '../../../lib/axios';
 import { MenuLocaleFlagGlyph } from '../../../lib/menu-locale-flag';
+import { nativeLocaleDisplayName } from '../../../lib/menu-locale-native-names';
 import AdminLayout from '../../../components/AdminLayout';
+import AdminSelect from '../../../components/AdminSelect';
 import AlertModal from '../../../components/AlertModal';
 import ConfirmModal from '../../../components/ConfirmModal';
 import i18n from '../../../src/i18n/config';
@@ -226,9 +228,22 @@ function menuSourceLocale(m: Pick<MenuRow, 'sourceLocale'> | null | undefined): 
 }
 
 function defaultLocaleLabel(locale: string): string {
+  const native = nativeLocaleDisplayName(locale);
+  if (native && native !== locale) return native;
+  const presetKey = `adminTranslations.localePresets.items.${locale}`;
+  const preset = i18n.t(presetKey);
+  if (preset && preset !== presetKey) return preset;
   if (locale === 'es-ES') return i18n.t('adminTranslations.localeLabels.es-ES');
   if (locale === 'en-US') return i18n.t('adminTranslations.localeLabels.en-US');
   return locale;
+}
+
+function menuStatusLabel(status: string | undefined): string | null {
+  if (!status) return null;
+  const key = `adminTranslations.status.${status}`;
+  const label = i18n.t(key);
+  if (label && label !== key) return label;
+  return status;
 }
 
 function defaultManifestDisplayLabel(locale: string, manifestLabel?: string | null): string {
@@ -290,6 +305,32 @@ export default function AdminTranslationsPage() {
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [selectedRestaurantId, setSelectedRestaurantId] = useState('');
+  const [wizardStep, setWizardStep] = useState<1 | 2>(1);
+  const [step2Panel, setStep2Panel] = useState<'all' | 'one' | 'default' | null>(null);
+  const selectedRestaurantIdRef = useRef(selectedRestaurantId);
+  selectedRestaurantIdRef.current = selectedRestaurantId;
+  const [defaultLocalePick, setDefaultLocalePick] = useState('');
+  const [defaultCoverage, setDefaultCoverage] = useState<{
+    locale: string;
+    missingLocale: number;
+    incomplete: number;
+    ready: number;
+    menus: Array<{
+      menuId: string;
+      menuName: string;
+      hasLocale: boolean;
+      isDefault: boolean;
+      ready: boolean;
+      status: string;
+      missingSections: number;
+      missingItems: number;
+      staleFields: number;
+      sameAsSourceItems: number;
+      sameAsSourceSections: number;
+    }>;
+  } | null>(null);
+  const [defaultCoverageLoading, setDefaultCoverageLoading] = useState(false);
+  const [defaultLocaleBusy, setDefaultLocaleBusy] = useState(false);
   const [menus, setMenus] = useState<MenuRow[]>([]);
   const [loadingPage, setLoadingPage] = useState(true);
   const [loadingMenus, setLoadingMenus] = useState(false);
@@ -302,6 +343,7 @@ export default function AdminTranslationsPage() {
   } | null>(null);
 
   const [addOpen, setAddOpen] = useState(false);
+  const [addScope, setAddScope] = useState<'menu' | 'restaurant'>('menu');
   const [addMenuId, setAddMenuId] = useState<string | null>(null);
   const [addLocalePreset, setAddLocalePreset] = useState('en-US');
   const [addLocaleCustom, setAddLocaleCustom] = useState('');
@@ -310,6 +352,8 @@ export default function AdminTranslationsPage() {
   const [addSaving, setAddSaving] = useState(false);
   const [addVisiblePublic, setAddVisiblePublic] = useState(true);
   const [addLocaleSearch, setAddLocaleSearch] = useState('');
+  const [addLocaleSuggestOpen, setAddLocaleSuggestOpen] = useState(false);
+  const [addLocaleHighlight, setAddLocaleHighlight] = useState(0);
   const [deleteLocaleBusy, setDeleteLocaleBusy] = useState<{ menuId: string; locale: string } | null>(null);
   const [setDefaultBusyKey, setSetDefaultBusyKey] = useState<string | null>(null);
   const [confirmDeleteLocale, setConfirmDeleteLocale] = useState<{ menu: MenuRow; locale: string } | null>(null);
@@ -319,6 +363,13 @@ export default function AdminTranslationsPage() {
     force: boolean;
     message: string;
   } | null>(null);
+  const [confirmRestaurantAutoTranslate, setConfirmRestaurantAutoTranslate] = useState<{
+    force: boolean;
+    message: string;
+  } | null>(null);
+  const [restaurantAutoBusy, setRestaurantAutoBusy] = useState(false);
+  const [restaurantAutoForce, setRestaurantAutoForce] = useState(false);
+  const [restaurantAutoLocale, setRestaurantAutoLocale] = useState('');
 
   const [localeToggleKey, setLocaleToggleKey] = useState<string | null>(null);
 
@@ -357,9 +408,35 @@ export default function AdminTranslationsPage() {
         locale,
         title: t(`adminTranslations.localePresets.items.${locale}`),
         group,
+        groupKey: g.groupKey,
       }));
     });
   }, [t]);
+
+  const filteredLocalePresets = useMemo(() => {
+    const q = addLocaleSearch.trim().toLowerCase();
+    if (!q) return flatLocalePresets.slice(0, 8);
+    return flatLocalePresets
+      .filter((it) => {
+        const native = nativeLocaleDisplayName(it.locale).toLowerCase();
+        return (
+          it.title.toLowerCase().includes(q) ||
+          native.includes(q) ||
+          it.locale.toLowerCase().includes(q) ||
+          it.group.toLowerCase().includes(q)
+        );
+      })
+      .slice(0, 12);
+  }, [addLocaleSearch, flatLocalePresets]);
+
+  const pickAddLocalePreset = useCallback((locale: string, title: string) => {
+    setAddLocalePreset(locale);
+    setAddLocaleSearch(title);
+    setAddFlag(suggestedFlagCodeFromLocale(locale));
+    setAddLabel(nativeLocaleDisplayName(locale));
+    setAddLocaleSuggestOpen(false);
+    setAddLocaleHighlight(0);
+  }, []);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -416,17 +493,6 @@ export default function AdminTranslationsPage() {
     setShowAlert(true);
   }, []);
 
-  const filteredLocalePresets = useMemo(() => {
-    const q = addLocaleSearch.trim().toLowerCase();
-    if (!q) return flatLocalePresets;
-    return flatLocalePresets.filter(
-      (it) =>
-        it.title.toLowerCase().includes(q) ||
-        it.locale.toLowerCase().includes(q) ||
-        it.group.toLowerCase().includes(q),
-    );
-  }, [addLocaleSearch, flatLocalePresets]);
-
   const loadRestaurants = useCallback(
     async (searchName?: string) => {
       try {
@@ -463,13 +529,42 @@ export default function AdminTranslationsPage() {
     };
   }, [user, loadRestaurants]);
 
+  const beginRestaurantStep2 = useCallback((restaurantId: string) => {
+    setSelectedRestaurantId(restaurantId);
+    setStep2Panel(null);
+    setMenus([]);
+    setDefaultCoverage(null);
+    setLoadingMenus(true);
+    setWizardStep(2);
+  }, []);
+
+  /** Un solo comercio: saltear el paso 1 y entrar directo a traducciones. */
+  useEffect(() => {
+    if (loadingPage) return;
+    if (restaurantSearch.trim()) return;
+    if (restaurants.length !== 1) return;
+    const onlyId = String(restaurants[0]?.id || '');
+    if (!onlyId) return;
+    if (wizardStep !== 1) return;
+    beginRestaurantStep2(onlyId);
+  }, [loadingPage, restaurants, restaurantSearch, wizardStep, beginRestaurantStep2]);
+
+  const selectRestaurantAndContinue = useCallback(
+    (restaurantId: string) => {
+      beginRestaurantStep2(restaurantId);
+    },
+    [beginRestaurantStep2],
+  );
+
   const loadMenus = useCallback(async () => {
     if (!selectedRestaurantId || !canAccessPage) {
       setMenus([]);
+      setLoadingMenus(false);
       return;
     }
     if (isSuperAdmin && !tenantIdForApi) {
       setMenus([]);
+      setLoadingMenus(false);
       showAlertMsg(
         t('adminTranslations.alerts.tenantUnavailableTitle'),
         t('adminTranslations.alerts.tenantUnavailable'),
@@ -477,18 +572,21 @@ export default function AdminTranslationsPage() {
       );
       return;
     }
+    const restaurantId = selectedRestaurantId;
     setLoadingMenus(true);
     try {
-      const params: Record<string, string> = { restaurantId: selectedRestaurantId };
+      const params: Record<string, string> = { restaurantId };
       if (isSuperAdmin && tenantIdForApi) params.tenantId = tenantIdForApi;
       const res = await api.get('/menu-translations/menus', { params });
+      if (selectedRestaurantIdRef.current !== restaurantId) return;
       setMenus(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
+      if (selectedRestaurantIdRef.current !== restaurantId) return;
       const msg = e?.response?.data?.message || e?.message || t('adminTranslations.alerts.loadMenusError');
       showAlertMsg(t('adminTranslations.alerts.translationsTitle'), String(msg), 'error');
       setMenus([]);
     } finally {
-      setLoadingMenus(false);
+      if (selectedRestaurantIdRef.current === restaurantId) setLoadingMenus(false);
     }
   }, [selectedRestaurantId, canAccessPage, isSuperAdmin, tenantIdForApi, showAlertMsg, t]);
 
@@ -496,17 +594,22 @@ export default function AdminTranslationsPage() {
     void loadMenus();
   }, [loadMenus]);
 
-  const openAddLocale = (menuId: string) => {
+  const beginAddLocale = (scope: 'menu' | 'restaurant', menuId: string | null) => {
+    setAddScope(scope);
     setAddMenuId(menuId);
-    const initial = 'en-US';
-    setAddLocalePreset(initial);
+    setAddLocalePreset('');
     setAddLocaleCustom('');
     setAddLocaleSearch('');
+    setAddLocaleSuggestOpen(false);
+    setAddLocaleHighlight(0);
     setAddLabel('');
-    setAddFlag(suggestedFlagCodeFromLocale(initial) || 'US');
+    setAddFlag('');
     setAddVisiblePublic(true);
     setAddOpen(true);
   };
+
+  const openAddLocale = (menuId: string) => beginAddLocale('menu', menuId);
+  const openAddLocaleRestaurant = () => beginAddLocale('restaurant', null);
 
   const requestDeleteMenuLocale = useCallback((m: MenuRow, locale: string) => {
     if (locale === menuSourceLocale(m)) return;
@@ -568,7 +671,8 @@ export default function AdminTranslationsPage() {
   );
 
   const submitAddLocale = async () => {
-    if (!addMenuId) return;
+    if (addScope === 'menu' && !addMenuId) return;
+    if (addScope === 'restaurant' && menus.length === 0) return;
     const rawLocale =
       addLocalePreset === ADD_LOCALE_CUSTOM ? addLocaleCustom : addLocalePreset;
     const locale = normalizeMenuLocaleInput(rawLocale);
@@ -584,15 +688,6 @@ export default function AdminTranslationsPage() {
       );
       return;
     }
-    const addBase = menuSourceLocale(menus.find((x) => x.id === addMenuId) || { sourceLocale: 'es-ES' });
-    if (locale === addBase) {
-      showAlertMsg(
-        t('adminTranslations.alerts.localeTitle'),
-        t('adminTranslations.addLocale.alreadyBase', { locale }),
-        'warning',
-      );
-      return;
-    }
     const fc = addFlag.trim().toUpperCase();
     if (fc && !MENU_FLAG_CODE_RE.test(fc)) {
       showAlertMsg(
@@ -602,18 +697,61 @@ export default function AdminTranslationsPage() {
       );
       return;
     }
+    const bodyBase: Record<string, unknown> = {
+      locale,
+      label: addLabel.trim() || nativeLocaleDisplayName(locale) || undefined,
+      flagCode: fc || undefined,
+      ...(addVisiblePublic ? {} : { enabledPublic: false }),
+    };
+    if (isSuperAdmin && tenantIdForApi) bodyBase.tenantId = tenantIdForApi;
+
     setAddSaving(true);
     try {
-      const body: any = {
-        locale,
-        label: addLabel.trim() || undefined,
-        flagCode: fc || undefined,
-        ...(addVisiblePublic ? {} : { enabledPublic: false }),
-      };
-      if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
-      await api.post(`/menu-translations/menus/${addMenuId}/locales`, body);
+      if (addScope === 'menu' && addMenuId) {
+        const addBase = menuSourceLocale(menus.find((x) => x.id === addMenuId) || { sourceLocale: 'es-ES' });
+        if (locale === addBase) {
+          showAlertMsg(
+            t('adminTranslations.alerts.localeTitle'),
+            t('adminTranslations.addLocale.alreadyBase', { locale: defaultLocaleLabel(locale) }),
+            'warning',
+          );
+          return;
+        }
+        await api.post(`/menu-translations/menus/${addMenuId}/locales`, bodyBase);
+        showAlertMsg(t('adminTranslations.alerts.doneTitle'), t('adminTranslations.addLocale.success'), 'success');
+      } else {
+        let added = 0;
+        let skipped = 0;
+        for (const m of menus) {
+          const source = menuSourceLocale(m);
+          if (locale === source || (m.locales || []).includes(locale)) {
+            skipped++;
+            continue;
+          }
+          try {
+            await api.post(`/menu-translations/menus/${m.id}/locales`, bodyBase);
+            added++;
+          } catch {
+            skipped++;
+          }
+        }
+        if (added === 0) {
+          showAlertMsg(
+            t('adminTranslations.alerts.addLocaleTitle'),
+            t('adminTranslations.addLocale.restaurantNoneAdded', {
+              locale: defaultLocaleLabel(locale),
+            }),
+            'warning',
+          );
+          return;
+        }
+        showAlertMsg(
+          t('adminTranslations.alerts.doneTitle'),
+          t('adminTranslations.addLocale.restaurantSuccess', { added, skipped }),
+          'success',
+        );
+      }
       setAddOpen(false);
-      showAlertMsg(t('adminTranslations.alerts.doneTitle'), t('adminTranslations.addLocale.success'), 'success');
       await loadMenus();
     } catch (e: any) {
       const msg = e?.response?.data?.message || e?.message || t('adminTranslations.common.error');
@@ -764,9 +902,12 @@ export default function AdminTranslationsPage() {
       const loc =
         autoLocalePick[m.id] || (m.locales || []).find((l) => l !== source);
       if (!loc) {
+        const mmEmpty = manifestMap(m.translationManifest);
         showAlertMsg(
           t('adminTranslations.alerts.autoTranslateTitle'),
-          t('adminTranslations.autoTranslate.needLocale', { source }),
+          t('adminTranslations.autoTranslate.needLocale', {
+            source: defaultManifestDisplayLabel(source, mmEmpty[source]?.label),
+          }),
           'warning',
         );
         return;
@@ -798,13 +939,14 @@ export default function AdminTranslationsPage() {
                 limit: st.monthlyLimit,
               })
             : '';
+        const mm = manifestMap(m.translationManifest);
         setConfirmAutoTranslate({
           menu: m,
           locale: loc,
           force,
           message: t('adminTranslations.autoTranslate.confirmMessage', {
-            source,
-            locale: loc,
+            source: defaultManifestDisplayLabel(source, mm[source]?.label),
+            locale: defaultManifestDisplayLabel(loc, mm[loc]?.label),
             forceNote: force ? t('adminTranslations.autoTranslate.forceNote') : '',
             extra,
           }),
@@ -830,15 +972,10 @@ export default function AdminTranslationsPage() {
     try {
       const body: Record<string, unknown> = { targetLocale: loc, force };
       if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
-      const res = await api.post(`/menu-translations/menus/${m.id}/auto-translate`, body);
-      const d = res.data as { segmentCount?: number; apiUnits?: number; cacheHits?: number };
+      await api.post(`/menu-translations/menus/${m.id}/auto-translate`, body);
       showAlertMsg(
         t('adminTranslations.alerts.autoTranslateTitle'),
-        t('adminTranslations.autoTranslate.success', {
-          segments: d.segmentCount ?? 0,
-          apiUnits: d.apiUnits ?? 0,
-          cacheHits: d.cacheHits ?? 0,
-        }),
+        t('adminTranslations.autoTranslate.success'),
         'success',
       );
       await loadMenus();
@@ -852,6 +989,293 @@ export default function AdminTranslationsPage() {
       setAutoBusyMenuId(null);
     }
   }, [confirmAutoTranslate, isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg, t]);
+
+  const restaurantDefaultLocale = useMemo(() => {
+    if (menus.length === 0) return '';
+    const sources = menus.map((m) => menuSourceLocale(m));
+    const first = sources[0] || '';
+    return sources.every((s) => s === first) ? first : first;
+  }, [menus]);
+
+  const restaurantTargetLocales = useMemo(() => {
+    const set = new Map<string, { locale: string; label: string }>();
+    for (const m of menus) {
+      const source = menuSourceLocale(m);
+      const mm = manifestMap(m.translationManifest);
+      for (const loc of m.locales || []) {
+        if (loc === source) continue;
+        if (!set.has(loc)) {
+          set.set(loc, {
+            locale: loc,
+            label: defaultManifestDisplayLabel(loc, mm[loc]?.label),
+          });
+        }
+      }
+    }
+    return Array.from(set.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [menus]);
+
+  useEffect(() => {
+    if (restaurantTargetLocales.length === 0) {
+      setRestaurantAutoLocale('');
+      return;
+    }
+    if (!restaurantTargetLocales.some((l) => l.locale === restaurantAutoLocale)) {
+      setRestaurantAutoLocale(restaurantTargetLocales[0]!.locale);
+    }
+  }, [restaurantTargetLocales, restaurantAutoLocale]);
+
+  const canChangeRestaurant = restaurants.length > 1 || !!restaurantSearch.trim() || isSuperAdmin;
+
+  const restaurantAllLocales = useMemo(() => {
+    const map = new Map<string, { locale: string; label: string; countryCode: string }>();
+    for (const m of menus) {
+      const mm = manifestMap(m.translationManifest);
+      for (const loc of m.locales || []) {
+        if (!map.has(loc)) {
+          const fromManifest = String(mm[loc]?.flagCode || '')
+            .trim()
+            .toUpperCase();
+          const countryCode =
+            fromManifest && MENU_FLAG_CODE_RE.test(fromManifest)
+              ? fromManifest
+              : suggestedFlagCodeFromLocale(loc);
+          map.set(loc, {
+            locale: loc,
+            label: defaultManifestDisplayLabel(loc, mm[loc]?.label),
+            countryCode,
+          });
+        }
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [menus]);
+
+  useEffect(() => {
+    if (step2Panel !== 'default') return;
+    if (!defaultLocalePick && restaurantDefaultLocale) {
+      setDefaultLocalePick(restaurantDefaultLocale);
+    }
+  }, [step2Panel, defaultLocalePick, restaurantDefaultLocale]);
+
+  useEffect(() => {
+    if (step2Panel !== 'default' || !selectedRestaurantId || !defaultLocalePick) {
+      setDefaultCoverage(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setDefaultCoverageLoading(true);
+      try {
+        const params: Record<string, string> = { locale: defaultLocalePick };
+        if (isSuperAdmin && tenantIdForApi) params.tenantId = tenantIdForApi;
+        const res = await api.get(
+          `/menu-translations/restaurants/${selectedRestaurantId}/locale-coverage`,
+          { params },
+        );
+        if (!cancelled) setDefaultCoverage(res.data);
+      } catch (e: unknown) {
+        if (!cancelled) {
+          setDefaultCoverage(null);
+          const msg =
+            (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+            (e as Error)?.message ||
+            t('adminTranslations.common.error');
+          showAlertMsg(t('adminTranslations.alerts.defaultLocaleTitle'), String(msg), 'error');
+        }
+      } finally {
+        if (!cancelled) setDefaultCoverageLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    step2Panel,
+    selectedRestaurantId,
+    defaultLocalePick,
+    isSuperAdmin,
+    tenantIdForApi,
+    showAlertMsg,
+    t,
+  ]);
+
+  const applyRestaurantDefaultLocale = useCallback(async () => {
+    if (!selectedRestaurantId || !defaultLocalePick) return;
+    if (defaultLocalePick === restaurantDefaultLocale) return;
+    setDefaultLocaleBusy(true);
+    try {
+      const body: Record<string, string> = { locale: defaultLocalePick };
+      if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
+      const res = await api.post(
+        `/menu-translations/restaurants/${selectedRestaurantId}/set-default-locale`,
+        body,
+      );
+      const d = res.data as { updatedCount?: number; skippedCount?: number };
+      showAlertMsg(
+        t('adminTranslations.alerts.defaultLocaleTitle'),
+        t('adminTranslations.wizard.defaultApplied', {
+          locale: defaultLocaleLabel(defaultLocalePick),
+          updated: d.updatedCount ?? 0,
+          skipped: d.skippedCount ?? 0,
+        }),
+        'success',
+      );
+      await loadMenus();
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (e as Error)?.message ||
+        t('adminTranslations.common.error');
+      showAlertMsg(t('adminTranslations.alerts.defaultLocaleTitle'), String(msg), 'error');
+    } finally {
+      setDefaultLocaleBusy(false);
+    }
+  }, [
+    selectedRestaurantId,
+    defaultLocalePick,
+    restaurantDefaultLocale,
+    isSuperAdmin,
+    tenantIdForApi,
+    loadMenus,
+    showAlertMsg,
+    t,
+  ]);
+
+  const toggleStep2Panel = (panel: 'all' | 'one' | 'default') => {
+    setStep2Panel((prev) => (prev === panel ? null : panel));
+  };
+
+  const requestRestaurantAutoTranslate = useCallback(async () => {
+    if (!selectedRestaurantId || menus.length === 0) return;
+    const loc = restaurantAutoLocale;
+    if (!loc) {
+      showAlertMsg(
+        t('adminTranslations.alerts.autoTranslateTitle'),
+        t('adminTranslations.autoTranslate.restaurantNeedLocales'),
+        'warning',
+      );
+      return;
+    }
+    const force = restaurantAutoForce;
+    setRestaurantAutoBusy(true);
+    try {
+      const first = menus.find((m) => (m.locales || []).some((l) => l === loc));
+      let extra = '';
+      if (first) {
+        const params: Record<string, string> = { locale: loc };
+        if (isSuperAdmin && tenantIdForApi) params.tenantId = tenantIdForApi;
+        const stRes = await api.get(`/menu-translations/menus/${first.id}/auto-translate/status`, {
+          params,
+        });
+        const st = stRes.data as {
+          reason?: string;
+          reasonCode?: string;
+          monthlyUsed?: number;
+          monthlyLimit?: number;
+        };
+        const hardBlock = new Set([
+          'monthly_limit',
+          'plan_not_allowed',
+          'plan_limit_zero',
+          'global_disabled',
+          'user_disabled',
+          'translator_not_configured',
+        ]);
+        if (st.reasonCode && hardBlock.has(st.reasonCode)) {
+          showAlertMsg(
+            t('adminTranslations.alerts.autoTranslateTitle'),
+            st.reason || t('adminTranslations.autoTranslate.cannotRun'),
+            'warning',
+          );
+          return;
+        }
+        if (st.monthlyLimit != null) {
+          extra = t('adminTranslations.autoTranslate.monthlyUsage', {
+            used: st.monthlyUsed,
+            limit: st.monthlyLimit,
+          });
+        }
+      }
+      const localeLabel =
+        restaurantTargetLocales.find((x) => x.locale === loc)?.label ||
+        defaultLocaleLabel(loc);
+      const sourceLabel = defaultLocaleLabel(restaurantDefaultLocale);
+      setConfirmRestaurantAutoTranslate({
+        force,
+        message: t('adminTranslations.autoTranslate.restaurantConfirmMessage', {
+          source: sourceLabel,
+          locale: localeLabel,
+          forceNote: force ? t('adminTranslations.autoTranslate.restaurantForceNote') : '',
+          extra,
+        }),
+      });
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (e as Error)?.message ||
+        t('adminTranslations.common.error');
+      showAlertMsg(t('adminTranslations.alerts.autoTranslateTitle'), String(msg), 'error');
+    } finally {
+      setRestaurantAutoBusy(false);
+    }
+  }, [
+    selectedRestaurantId,
+    menus,
+    restaurantAutoLocale,
+    restaurantAutoForce,
+    restaurantTargetLocales,
+    restaurantDefaultLocale,
+    isSuperAdmin,
+    tenantIdForApi,
+    showAlertMsg,
+    t,
+  ]);
+
+  const executeRestaurantAutoTranslate = useCallback(async () => {
+    if (!confirmRestaurantAutoTranslate || !selectedRestaurantId || !restaurantAutoLocale) return;
+    const { force } = confirmRestaurantAutoTranslate;
+    setConfirmRestaurantAutoTranslate(null);
+    setRestaurantAutoBusy(true);
+    try {
+      const body: Record<string, unknown> = {
+        force,
+        targetLocale: restaurantAutoLocale,
+      };
+      if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
+      const res = await api.post(
+        `/menu-translations/restaurants/${selectedRestaurantId}/auto-translate`,
+        body,
+      );
+      const d = res.data as { menuCount?: number; localeRuns?: number };
+      showAlertMsg(
+        t('adminTranslations.alerts.autoTranslateTitle'),
+        t('adminTranslations.autoTranslate.restaurantSuccess', {
+          menus: d.menuCount ?? 0,
+          locales: d.localeRuns ?? 0,
+        }),
+        'success',
+      );
+      await loadMenus();
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (e as Error)?.message ||
+        t('adminTranslations.common.error');
+      showAlertMsg(t('adminTranslations.alerts.autoTranslateTitle'), String(msg), 'error');
+    } finally {
+      setRestaurantAutoBusy(false);
+    }
+  }, [
+    confirmRestaurantAutoTranslate,
+    selectedRestaurantId,
+    restaurantAutoLocale,
+    isSuperAdmin,
+    tenantIdForApi,
+    loadMenus,
+    showAlertMsg,
+    t,
+  ]);
 
   const openWorkbench = async (menuId: string, locale: string) => {
     const menuRow = menus.find((x) => x.id === menuId);
@@ -943,8 +1367,6 @@ export default function AdminTranslationsPage() {
     return false;
   }, [benchMenuStale, benchSections, benchItems]);
 
-  const addMenuSource = menuSourceLocale(menus.find((x) => x.id === addMenuId) || { sourceLocale: 'es-ES' });
-
   if (loadingPage || !user) {
     return (
       <div className="container mt-5 text-center">
@@ -991,10 +1413,7 @@ export default function AdminTranslationsPage() {
             <div className="col-12 col-md-4">
               <div className="card h-100 border-secondary shadow-sm" style={{ opacity: 0.92 }}>
                 <div className="card-body d-flex flex-column">
-                  <h2 className="h5 mb-2">
-                    {t('adminTranslations.upgrade.cardAutoTitle')}{' '}
-                    <span className="badge bg-info text-dark">{t('adminTranslations.common.beta')}</span>
-                  </h2>
+                  <h2 className="h5 mb-2">{t('adminTranslations.upgrade.cardAutoTitle')}</h2>
                   <p className="small text-muted flex-grow-1 mb-3">
                     {t('adminTranslations.upgrade.cardAutoDesc')}
                   </p>
@@ -1043,14 +1462,7 @@ export default function AdminTranslationsPage() {
 
   return (
     <AdminLayout>
-      <div className="py-3">
-        <h1 className="h3 mb-2">{t('adminTranslations.title')}</h1>
-        {(restaurants.length > 0 || isSuperAdmin) && (
-          <p className="text-muted small mb-4">
-            <Trans i18nKey="adminTranslations.page.publicToggleHint" components={{ strong: <strong /> }} />
-          </p>
-        )}
-
+      <div className="py-3 admin-translations-page">
         {!isSuperAdmin && restaurants.length === 0 && (
           <div className="admin-card mb-4" style={{ textAlign: 'center', padding: '2rem' }}>
             <p className="mb-3" style={{ fontSize: '1.1rem', color: 'var(--admin-text-secondary)' }}>
@@ -1063,254 +1475,614 @@ export default function AdminTranslationsPage() {
         )}
 
         {(restaurants.length > 0 || isSuperAdmin) && (
-          <>
-        <div className="row g-3 mb-4">
-          <div className="col-md-6">
-            <label className="form-label">{t('adminTranslations.page.businessLabel')}</label>
-            {isSuperAdmin && (
-              <div className="input-group mb-2">
-                <input
-                  className="form-control"
-                  placeholder={t('adminTranslations.page.searchPlaceholder')}
-                  value={restaurantSearch}
-                  onChange={(e) => setRestaurantSearch(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={() => void loadRestaurants(restaurantSearch)}
-                >
-                  {t('adminTranslations.page.search')}
-                </button>
-              </div>
-            )}
-            <select
-              className="form-select"
-              value={selectedRestaurantId}
-              onChange={(e) => setSelectedRestaurantId(e.target.value)}
-            >
-              <option value="">{t('adminTranslations.page.selectBusiness')}</option>
-              {restaurants.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                  {r.tenantName ? ` — ${r.tenantName}` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+          <div className="restaurant-wizard-container admin-translations-wizard">
+            {wizardStep === 1 && (
+              <>
+            <div className="wizard-header">
+              <h1 className="wizard-title">{t('adminTranslations.title')}</h1>
+            </div>
 
-        {!selectedRestaurantId ? (
-          <p className="text-muted">{t('adminTranslations.page.selectBusinessHint')}</p>
-        ) : loadingMenus ? (
-          <div className="text-center py-5">
-            <div className="spinner-border spinner-border-sm" />
-          </div>
-        ) : menus.length === 0 ? (
-          <p className="text-muted">{t('adminTranslations.page.noMenus')}</p>
-        ) : (
-          <div className="row g-3">
-            {menus.map((m) => {
-              const mm = manifestMap(m.translationManifest);
-              return (
-                <div key={m.id} className="col-12 col-lg-6">
-                  <div className="card h-100 shadow-sm">
-                    <div className="card-body">
-                      <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
-                        <div>
-                          <h2 className="h5 mb-0">{m.name}</h2>
-                          {m.status && (
-                            <span className="badge bg-secondary text-uppercase small">{m.status}</span>
-                          )}
-                        </div>
-                        <div className="d-flex flex-wrap gap-1">
-                          <button type="button" className="btn btn-sm btn-primary" onClick={() => openAddLocale(m.id)}>
-                            {t('adminTranslations.menuCard.addLocale')}
-                          </button>
-                          <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => openSettings(m)}>
-                            {t('adminTranslations.menuCard.nameAndLocales')}
-                          </button>
-                        </div>
+            <div className="wizard-progress">
+              <div className="wizard-progress-bar">
+                <div className="wizard-progress-fill" style={{ width: '50%' }} />
+              </div>
+            </div>
+              </>
+            )}
+
+            {wizardStep === 1 && (
+              <div className="wizard-step-content wizard-step-centered">
+                <div className="wizard-step-header">
+                  <h3 className="wizard-step-title">{t('adminTranslations.wizard.step1Title')}</h3>
+                </div>
+                <div className="wizard-fields-container">
+                  <div className="wizard-field wizard-field-large">
+                    {isSuperAdmin && (
+                      <div className="input-group input-group-sm mb-3">
+                        <input
+                          className="form-control"
+                          placeholder={t('adminTranslations.page.searchPlaceholder')}
+                          value={restaurantSearch}
+                          onChange={(e) => setRestaurantSearch(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              void loadRestaurants(restaurantSearch);
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary"
+                          onClick={() => void loadRestaurants(restaurantSearch)}
+                        >
+                          {t('adminTranslations.page.search')}
+                        </button>
                       </div>
-                      <div className="d-flex flex-wrap align-items-stretch gap-2 mt-3">
-                        {(m.locales || []).map((loc) => {
-                          const meta = mm[loc];
-                          const source = menuSourceLocale(m);
-                          const isBase = loc === source;
-                          const visiblePublic = meta?.enabledPublic !== false;
-                          const toggleBusy = localeToggleKey === `${m.id}:${loc}`;
-                          const setDefaultBusy =
-                            setDefaultBusyKey === `${m.id}:${loc}`;
+                    )}
+                    {restaurants.length === 0 ? (
+                      <p className="text-muted mb-0">{t('adminTranslations.page.noBusinessMatches')}</p>
+                    ) : (
+                      <div
+                        className="admin-translations-restaurant-list"
+                        role="listbox"
+                        aria-label={t('adminTranslations.page.businessLabel')}
+                      >
+                        {restaurants.map((r, idx) => {
+                          const id = String(r.id);
+                          const selected = id === selectedRestaurantId;
+                          const tone = idx % 2 === 0 ? 'tone-blue' : 'tone-violet';
                           return (
-                            <div
-                              key={loc}
-                              className="d-flex flex-column border rounded px-2 py-2 bg-light"
-                              style={{ fontSize: '0.9rem', minWidth: '140px' }}
+                            <button
+                              key={id}
+                              type="button"
+                              role="option"
+                              aria-selected={selected}
+                              className={`admin-translations-restaurant-option ${tone} ${selected ? 'is-selected' : ''}`}
+                              onClick={() => selectRestaurantAndContinue(id)}
                             >
-                              <div className="d-flex align-items-center gap-1 flex-wrap">
-                                <span title={loc} style={{ fontSize: '1.25rem', lineHeight: 1 }}>
-                                  <MenuLocaleFlagGlyph flagCode={meta?.flagCode} locale={loc} />
+                              <span className="admin-translations-restaurant-option__name">
+                                {String(r.name || id)}
+                              </span>
+                              {r.tenantName ? (
+                                <span className="admin-translations-restaurant-option__hint">
+                                  {String(r.tenantName)}
                                 </span>
-                                <span className="text-muted">{defaultManifestDisplayLabel(loc, meta?.label)}</span>
-                                {isBase && (
-                                  <span
-                                    className="badge bg-primary ms-1"
-                                    title={t('adminTranslations.menuCard.defaultBadgeTitle')}
-                                  >
-                                    {t('adminTranslations.menuCard.defaultBadge')}
-                                  </span>
-                                )}
-                                {!isBase && (m.autoTranslatedLocales || []).includes(loc) && (
-                                  <span
-                                    className="badge bg-info text-dark ms-1"
-                                    title={t('adminTranslations.menuCard.autoBadgeTitle')}
-                                  >
-                                    {t('adminTranslations.menuCard.autoBadge')}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="form-check form-switch mt-2 mb-1">
-                                <input
-                                  className="form-check-input"
-                                  type="checkbox"
-                                  role="switch"
-                                  id={`public-${m.id}-${loc}`}
-                                  checked={visiblePublic}
-                                  disabled={toggleBusy}
-                                  title={t('adminTranslations.menuCard.publicToggleTitle')}
-                                  onChange={(e) => void toggleLocaleVisibleOnPublicMenu(m, loc, e.target.checked)}
-                                />
-                                <label className="form-check-label small" htmlFor={`public-${m.id}-${loc}`}>
-                                  {t('adminTranslations.menuCard.publicMenu')}
-                                </label>
-                              </div>
-                              <div className="mt-auto d-flex flex-wrap gap-2 align-items-center">
-                                {!isBase ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      className="btn btn-link btn-sm p-0"
-                                      onClick={() => void openWorkbench(m.id, loc)}
-                                    >
-                                      {t('adminTranslations.menuCard.translate')}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="btn btn-link btn-sm p-0"
-                                      disabled={setDefaultBusy}
-                                      onClick={() => void setMenuDefaultLocale(m, loc)}
-                                      title={t('adminTranslations.menuCard.useAsDefaultTitle')}
-                                    >
-                                      {setDefaultBusy
-                                        ? t('adminTranslations.menuCard.changing')
-                                        : t('adminTranslations.menuCard.useAsDefault')}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="btn btn-link btn-sm p-0 text-danger"
-                                      disabled={
-                                        !!deleteLocaleBusy &&
-                                        deleteLocaleBusy.menuId === m.id &&
-                                        deleteLocaleBusy.locale === loc
-                                      }
-                                      onClick={() => requestDeleteMenuLocale(m, loc)}
-                                    >
-                                      {deleteLocaleBusy?.menuId === m.id && deleteLocaleBusy?.locale === loc
-                                        ? t('adminTranslations.menuCard.deleting')
-                                        : t('adminTranslations.menuCard.deleteLocale')}
-                                    </button>
-                                  </>
-                                ) : (
-                                  <Link href="/admin/menus" className="btn btn-link btn-sm p-0">
-                                    {t('adminTranslations.menuCard.editBase')}
-                                  </Link>
-                                )}
-                              </div>
-                            </div>
+                              ) : null}
+                            </button>
                           );
                         })}
                       </div>
-                      {canAccessPage && (m.locales || []).some((l) => l !== menuSourceLocale(m)) && (
-                        <div className="mt-3 pt-3 border-top">
-                          <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-                            <h3 className="h6 text-muted mb-0">{t('adminTranslations.autoTranslate.title')}</h3>
-                          </div>
-                          <p className="small text-muted mb-2">
-                            <Trans
-                              i18nKey="adminTranslations.autoTranslate.help"
-                              values={{ source: menuSourceLocale(m) }}
-                              components={{ strong: <strong /> }}
-                            />
-                          </p>
-                          <div className="row g-2 align-items-end">
-                            <div className="col-md-4">
-                              <label className="form-label small mb-0">
-                                {t('adminTranslations.autoTranslate.targetLocale')}
-                              </label>
-                              <select
-                                className="form-select form-select-sm"
-                                value={autoLocalePick[m.id] || (m.locales || []).find((l) => l !== menuSourceLocale(m)) || ''}
-                                onChange={(e) =>
-                                  setAutoLocalePick((prev) => ({ ...prev, [m.id]: e.target.value }))
-                                }
-                              >
-                                {(m.locales || [])
-                                  .filter((l) => l !== menuSourceLocale(m))
-                                  .map((l) => (
-                                    <option key={l} value={l}>
-                                      {defaultManifestDisplayLabel(l, mm[l]?.label)} ({l})
-                                    </option>
-                                  ))}
-                              </select>
-                            </div>
-                            <div className="col-md-4">
-                              <div className="form-check mt-2">
-                                <input
-                                  className="form-check-input"
-                                  type="checkbox"
-                                  id={`auto-force-${m.id}`}
-                                  checked={!!autoForce[m.id]}
-                                  onChange={(e) =>
-                                    setAutoForce((prev) => ({ ...prev, [m.id]: e.target.checked }))
-                                  }
-                                />
-                                <label className="form-check-label small" htmlFor={`auto-force-${m.id}`}>
-                                  {t('adminTranslations.autoTranslate.force')}
-                                </label>
-                              </div>
-                            </div>
-                            <div className="col-md-4">
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-primary w-100"
-                                disabled={autoBusyMenuId === m.id}
-                                onClick={() => void requestMenuAutoTranslate(m)}
-                              >
-                                {autoBusyMenuId === m.id
-                                  ? t('adminTranslations.autoTranslate.processing')
-                                  : t('adminTranslations.autoTranslate.run')}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            )}
+
+            {wizardStep === 2 && (
+              <div
+                className={`wizard-step-content admin-translations-step2 ${
+                  canChangeRestaurant ? 'has-fixed-footer' : ''
+                }`}
+              >
+                <div className="admin-translations-panel-toggles mb-3">
+                  <button
+                    type="button"
+                    className={`admin-translations-panel-toggle tone-blue ${
+                      step2Panel === 'all' ? 'is-active' : ''
+                    }`}
+                    disabled={loadingMenus || menus.length === 0}
+                    onClick={() => toggleStep2Panel('all')}
+                  >
+                    {t('adminTranslations.wizard.panelAll')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`admin-translations-panel-toggle tone-violet ${
+                      step2Panel === 'one' ? 'is-active' : ''
+                    }`}
+                    disabled={loadingMenus || menus.length === 0}
+                    onClick={() => toggleStep2Panel('one')}
+                  >
+                    {t('adminTranslations.wizard.panelOne')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`admin-translations-panel-toggle tone-blue ${
+                      step2Panel === 'default' ? 'is-active' : ''
+                    }`}
+                    disabled={loadingMenus || menus.length === 0}
+                    onClick={() => toggleStep2Panel('default')}
+                  >
+                    {t('adminTranslations.wizard.panelDefault')}
+                  </button>
+                </div>
+
+                {loadingMenus ? (
+                  <div className="text-center py-4">
+                    <div className="spinner-border spinner-border-sm" />
+                  </div>
+                ) : menus.length === 0 ? (
+                  <p className="text-muted">{t('adminTranslations.page.noMenus')}</p>
+                ) : (
+                  <>
+                    {step2Panel === 'all' && (
+                      <section className="admin-translations-section admin-card mb-4">
+                        <div className="admin-card-body">
+                          <h4 className="wizard-section-title mb-2">
+                            {t('adminTranslations.wizard.panelAll')}
+                          </h4>
+                          <p className="small text-muted mb-3">
+                            {t('adminTranslations.autoTranslate.restaurantHelp')}
+                          </p>
+
+                          <div className="admin-translations-field mb-3">
+                            <label className="wizard-label">
+                              {t('adminTranslations.autoTranslate.defaultLocale')}
+                            </label>
+                            <div className="admin-translations-restaurant-auto__meta">
+                              <div className="fw-semibold d-flex align-items-center gap-2">
+                                <MenuLocaleFlagGlyph
+                                  flagCode={suggestedFlagCodeFromLocale(restaurantDefaultLocale)}
+                                  locale={restaurantDefaultLocale}
+                                />
+                                <span>{defaultLocaleLabel(restaurantDefaultLocale)}</span>
+                                {suggestedFlagCodeFromLocale(restaurantDefaultLocale) ? (
+                                  <span className="admin-translations-default-option__code">
+                                    {suggestedFlagCodeFromLocale(restaurantDefaultLocale)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                          </div>
+
+                          {restaurantTargetLocales.length === 0 ? (
+                            <p className="small text-muted mb-3">
+                              {t('adminTranslations.wizard.noAdditionalLocales')}
+                            </p>
+                          ) : (
+                            <>
+                              <div className="admin-translations-field mb-3">
+                                <label className="wizard-label" htmlFor="restaurant-auto-locale">
+                                  {t('adminTranslations.autoTranslate.targetLocale')}
+                                </label>
+                                <AdminSelect
+                                  value={restaurantAutoLocale}
+                                  onChange={setRestaurantAutoLocale}
+                                  options={restaurantTargetLocales.map((l) => ({
+                                    value: l.locale,
+                                    label: l.label,
+                                    hint: suggestedFlagCodeFromLocale(l.locale) || undefined,
+                                  }))}
+                                  placeholder={t('adminTranslations.autoTranslate.targetLocale')}
+                                  searchable={restaurantTargetLocales.length > 6}
+                                  searchPlaceholder={t('adminTranslations.page.searchPlaceholder')}
+                                  emptyMessage={t('adminTranslations.page.noBusinessMatches')}
+                                  aria-label={t('adminTranslations.autoTranslate.targetLocale')}
+                                  className="admin-translations-embedded-select"
+                                />
+                              </div>
+
+                              <div className="admin-translations-all-actions mb-3">
+                                <button
+                                  type="button"
+                                  className="btn btn-primary admin-translations-all-actions__run"
+                                  disabled={restaurantAutoBusy || !restaurantAutoLocale}
+                                  onClick={() => void requestRestaurantAutoTranslate()}
+                                >
+                                  {restaurantAutoBusy
+                                    ? t('adminTranslations.autoTranslate.processing')
+                                    : t('adminTranslations.autoTranslate.restaurantRun')}
+                                </button>
+                                <div className="form-check mb-0">
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="restaurant-auto-force"
+                                    checked={restaurantAutoForce}
+                                    onChange={(e) => setRestaurantAutoForce(e.target.checked)}
+                                  />
+                                  <label
+                                    className="form-check-label small"
+                                    htmlFor="restaurant-auto-force"
+                                  >
+                                    {t('adminTranslations.autoTranslate.forceShort')}
+                                  </label>
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          <div className="admin-translations-all-divider" />
+
+                          <button
+                            type="button"
+                            className="btn btn-outline-primary w-100"
+                            onClick={openAddLocaleRestaurant}
+                          >
+                            {t('adminTranslations.wizard.addLocaleAllMenus')}
+                          </button>
+                        </div>
+                      </section>
+                    )}
+
+                    {step2Panel === 'one' && (
+                      <section className="admin-translations-section mb-3">
+                        <h4 className="wizard-section-title mb-1">
+                          {t('adminTranslations.wizard.panelOne')}
+                        </h4>
+                        <p className="small text-muted mb-3">{t('adminTranslations.wizard.sectionBHelp')}</p>
+
+                        <div className="row g-3">
+                          {menus.map((m) => {
+                            const mm = manifestMap(m.translationManifest);
+                            const source = menuSourceLocale(m);
+                            const statusText = menuStatusLabel(m.status);
+                            const extraLocales = (m.locales || []).filter((l) => l !== source);
+                            const orderedLocales = [
+                              ...(m.locales || []).includes(source) ? [source] : [],
+                              ...extraLocales,
+                            ];
+                            return (
+                              <div key={m.id} className="col-12 col-lg-6">
+                                <div className="card h-100 shadow-sm">
+                                  <div className="card-body">
+                                    <div className="admin-translations-card-header">
+                                      <div className="admin-translations-card-title-row">
+                                        <h2 className="h5 mb-0 admin-translations-card-title">{m.name}</h2>
+                                        {statusText && (
+                                          <span className="badge bg-secondary admin-translations-card-status">
+                                            {statusText}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div className="admin-translations-locale-list">
+                                      {orderedLocales.map((loc) => {
+                                        const meta = mm[loc];
+                                        const isBase = loc === source;
+                                        const visiblePublic = meta?.enabledPublic !== false;
+                                        const toggleBusy = localeToggleKey === `${m.id}:${loc}`;
+                                        const displayName = defaultManifestDisplayLabel(loc, meta?.label);
+                                        return (
+                                          <div key={loc} className="admin-translations-locale-row" title={loc}>
+                                            <div className="admin-translations-locale-row__meta">
+                                              <span style={{ fontSize: '1.25rem', lineHeight: 1 }} aria-hidden>
+                                                <MenuLocaleFlagGlyph flagCode={meta?.flagCode} locale={loc} />
+                                              </span>
+                                              <span className="admin-translations-locale-row__name">{displayName}</span>
+                                              {isBase && (
+                                                <span className="badge bg-primary">
+                                                  {t('adminTranslations.menuCard.defaultBadge')}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="admin-translations-locale-row__controls">
+                                              <div className="form-check form-switch">
+                                                <input
+                                                  className="form-check-input"
+                                                  type="checkbox"
+                                                  role="switch"
+                                                  id={`public-${m.id}-${loc}`}
+                                                  checked={visiblePublic}
+                                                  disabled={toggleBusy}
+                                                  onChange={(e) =>
+                                                    void toggleLocaleVisibleOnPublicMenu(m, loc, e.target.checked)
+                                                  }
+                                                />
+                                                <label className="form-check-label small" htmlFor={`public-${m.id}-${loc}`}>
+                                                  {t('adminTranslations.menuCard.publicMenu')}
+                                                </label>
+                                              </div>
+                                              {!isBase ? (
+                                                <>
+                                                  <button
+                                                    type="button"
+                                                    className="btn btn-outline-primary admin-translations-locale-action"
+                                                    onClick={() => void openWorkbench(m.id, loc)}
+                                                  >
+                                                    {t('adminTranslations.menuCard.translate')}
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    className="btn btn-link text-danger admin-translations-locale-delete"
+                                                    disabled={
+                                                      !!deleteLocaleBusy &&
+                                                      deleteLocaleBusy.menuId === m.id &&
+                                                      deleteLocaleBusy.locale === loc
+                                                    }
+                                                    onClick={() => requestDeleteMenuLocale(m, loc)}
+                                                  >
+                                                    {t('adminTranslations.menuCard.deleteLocale')}
+                                                  </button>
+                                                </>
+                                              ) : (
+                                                <Link
+                                                  href="/admin/menus"
+                                                  className="btn btn-outline-secondary admin-translations-locale-action"
+                                                >
+                                                  {t('adminTranslations.menuCard.editBase')}
+                                                </Link>
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+
+                                    <div className="admin-translations-card-actions mt-4">
+                                      <button
+                                        type="button"
+                                        className="btn btn-primary"
+                                        onClick={() => openAddLocale(m.id)}
+                                      >
+                                        {t('adminTranslations.menuCard.addLocale')}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn btn-outline-secondary"
+                                        onClick={() => openSettings(m)}
+                                      >
+                                        {t('adminTranslations.menuCard.nameAndLocales')}
+                                      </button>
+                                    </div>
+
+                                    {extraLocales.length > 0 && (
+                                      <div className="admin-translations-auto">
+                                        <h3 className="h6 text-muted mb-1">{t('adminTranslations.autoTranslate.title')}</h3>
+                                        <div className="admin-translations-restaurant-auto__meta mb-2">
+                                          <div className="small text-muted mb-0">
+                                            {t('adminTranslations.autoTranslate.defaultLocale')}
+                                          </div>
+                                          <div className="fw-semibold small">
+                                            {defaultManifestDisplayLabel(source, mm[source]?.label)}
+                                          </div>
+                                        </div>
+                                        <div className="admin-translations-auto-actions mb-2">
+                                          <div className="admin-translations-auto-select">
+                                            <label className="form-label small mb-0">
+                                              {t('adminTranslations.autoTranslate.targetLocale')}
+                                            </label>
+                                            <select
+                                              className="form-select form-select-sm"
+                                              value={autoLocalePick[m.id] || extraLocales[0] || ''}
+                                              onChange={(e) =>
+                                                setAutoLocalePick((prev) => ({ ...prev, [m.id]: e.target.value }))
+                                              }
+                                            >
+                                              {extraLocales.map((l) => (
+                                                <option key={l} value={l}>
+                                                  {defaultManifestDisplayLabel(l, mm[l]?.label)}
+                                                </option>
+                                              ))}
+                                            </select>
+                                          </div>
+                                          <button
+                                            type="button"
+                                            className="btn btn-outline-primary admin-translations-all-actions__run"
+                                            disabled={autoBusyMenuId === m.id}
+                                            onClick={() => void requestMenuAutoTranslate(m)}
+                                          >
+                                            {autoBusyMenuId === m.id
+                                              ? t('adminTranslations.autoTranslate.processing')
+                                              : t('adminTranslations.autoTranslate.run')}
+                                          </button>
+                                        </div>
+                                        <div className="form-check">
+                                          <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            id={`auto-force-${m.id}`}
+                                            checked={!!autoForce[m.id]}
+                                            onChange={(e) =>
+                                              setAutoForce((prev) => ({ ...prev, [m.id]: e.target.checked }))
+                                            }
+                                          />
+                                          <label className="form-check-label small" htmlFor={`auto-force-${m.id}`}>
+                                            {t('adminTranslations.autoTranslate.forceShort')}
+                                          </label>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    )}
+
+                    {step2Panel === 'default' && (
+                      <section className="admin-translations-section admin-card mb-4">
+                        <div className="admin-card-body">
+                          <h4 className="wizard-section-title mb-2">
+                            {t('adminTranslations.wizard.panelDefault')}
+                          </h4>
+                          <p className="small text-muted mb-3">
+                            {t('adminTranslations.wizard.defaultHelp')}
+                          </p>
+
+                          <div className="admin-translations-default-list mb-3">
+                            {restaurantAllLocales.map((l) => {
+                              const isCurrent = l.locale === restaurantDefaultLocale;
+                              const isPick = l.locale === defaultLocalePick;
+                              return (
+                                <button
+                                  key={l.locale}
+                                  type="button"
+                                  className={`admin-translations-default-option ${isPick ? 'is-selected' : ''} ${
+                                    isCurrent ? 'is-current' : ''
+                                  }`}
+                                  onClick={() => setDefaultLocalePick(l.locale)}
+                                >
+                                  <span className="admin-translations-default-option__main">
+                                    <MenuLocaleFlagGlyph flagCode={l.countryCode} locale={l.locale} />
+                                    <span className="admin-translations-default-option__name">{l.label}</span>
+                                    {l.countryCode ? (
+                                      <span className="admin-translations-default-option__code">
+                                        {l.countryCode}
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                  {isCurrent && (
+                                    <span className="badge bg-primary">
+                                      {t('adminTranslations.menuCard.defaultBadge')}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {defaultCoverageLoading ? (
+                            <div className="text-center py-3">
+                              <div className="spinner-border spinner-border-sm" />
+                            </div>
+                          ) : defaultCoverage && defaultLocalePick !== restaurantDefaultLocale ? (
+                            <div className="admin-translations-gaps mb-3">
+                              <h5 className="h6 mb-2">{t('adminTranslations.wizard.gapsTitle')}</h5>
+                              {(defaultCoverage.missingLocale > 0 || defaultCoverage.incomplete > 0) && (
+                                <div className="alert alert-warning py-2 small mb-3" role="status">
+                                  {t('adminTranslations.wizard.gapsSummary', {
+                                    missing: defaultCoverage.missingLocale,
+                                    incomplete: defaultCoverage.incomplete,
+                                    ready: defaultCoverage.ready,
+                                  })}
+                                </div>
+                              )}
+                              {defaultCoverage.missingLocale === 0 && defaultCoverage.incomplete === 0 && (
+                                <div className="alert alert-success py-2 small mb-3" role="status">
+                                  {t('adminTranslations.wizard.gapsReady')}
+                                </div>
+                              )}
+                              <ul className="admin-translations-gaps__list list-unstyled mb-0">
+                                {defaultCoverage.menus.map((row) => {
+                                  if (row.isDefault || row.ready) {
+                                    return (
+                                      <li key={row.menuId} className="admin-translations-gaps__item is-ok">
+                                        <strong>{row.menuName}</strong>
+                                        <span className="text-muted small ms-2">
+                                          {row.isDefault
+                                            ? t('adminTranslations.wizard.gapAlreadyDefault')
+                                            : t('adminTranslations.wizard.gapOk')}
+                                        </span>
+                                      </li>
+                                    );
+                                  }
+                                  const bits: string[] = [];
+                                  if (!row.hasLocale) {
+                                    bits.push(t('adminTranslations.wizard.gapMissingLocale'));
+                                  } else {
+                                    if (row.missingItems > 0) {
+                                      bits.push(
+                                        t('adminTranslations.wizard.gapMissingItems', {
+                                          count: row.missingItems,
+                                        }),
+                                      );
+                                    }
+                                    if (row.missingSections > 0) {
+                                      bits.push(
+                                        t('adminTranslations.wizard.gapMissingSections', {
+                                          count: row.missingSections,
+                                        }),
+                                      );
+                                    }
+                                    if (row.sameAsSourceItems > 0) {
+                                      bits.push(
+                                        t('adminTranslations.wizard.gapSameAsSourceItems', {
+                                          count: row.sameAsSourceItems,
+                                        }),
+                                      );
+                                    }
+                                    if (row.sameAsSourceSections > 0) {
+                                      bits.push(
+                                        t('adminTranslations.wizard.gapSameAsSourceSections', {
+                                          count: row.sameAsSourceSections,
+                                        }),
+                                      );
+                                    }
+                                    if (row.staleFields > 0) {
+                                      bits.push(
+                                        t('adminTranslations.wizard.gapStale', { count: row.staleFields }),
+                                      );
+                                    }
+                                  }
+                                  return (
+                                    <li key={row.menuId} className="admin-translations-gaps__item is-warn">
+                                      <div className="fw-semibold">{row.menuName}</div>
+                                      <div className="small text-muted">{bits.join(' · ')}</div>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          ) : null}
+
+                          <button
+                            type="button"
+                            className="btn btn-primary w-100 admin-translations-all-actions__run"
+                            disabled={
+                              defaultLocaleBusy ||
+                              !defaultLocalePick ||
+                              defaultLocalePick === restaurantDefaultLocale ||
+                              defaultCoverageLoading
+                            }
+                            onClick={() => void applyRestaurantDefaultLocale()}
+                          >
+                            {defaultLocaleBusy
+                              ? t('adminTranslations.common.saving')
+                              : t('adminTranslations.wizard.defaultApply')}
+                          </button>
+                          {defaultCoverage &&
+                            defaultLocalePick !== restaurantDefaultLocale &&
+                            defaultCoverage.missingLocale > 0 && (
+                              <p className="form-text small text-muted mt-2 mb-0">
+                                {t('adminTranslations.wizard.defaultSkipNote')}
+                              </p>
+                            )}
+                        </div>
+                      </section>
+                    )}
+
+                  </>
+                )}
+
+                {canChangeRestaurant && (
+                  <div className="wizard-footer admin-translations-wizard-footer">
+                    <button
+                      type="button"
+                      className="admin-btn admin-btn-secondary"
+                      onClick={() => {
+                        setStep2Panel(null);
+                        setWizardStep(1);
+                      }}
+                    >
+                      {t('adminTranslations.wizard.back')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        )}
-          </>
         )}
       </div>
 
-      {addOpen && addMenuId && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} role="dialog">
-          <div className="modal-dialog modal-dialog-centered">
+      {addOpen && (
+        <div
+          className="modal show d-block admin-translations-modal admin-translations-sheet"
+          style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+          role="dialog"
+        >
+          <div className="modal-dialog modal-dialog-scrollable admin-translations-sheet__dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">{t('adminTranslations.addLocale.title')}</h5>
+                <h5 className="modal-title">
+                  {addScope === 'restaurant'
+                    ? t('adminTranslations.addLocale.titleRestaurant')
+                    : t('adminTranslations.addLocale.title')}
+                </h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -1320,110 +2092,110 @@ export default function AdminTranslationsPage() {
               </div>
               <div className="modal-body">
                 <p className="small text-muted">
-                  {t('adminTranslations.addLocale.intro', { source: addMenuSource })}
+                  {addScope === 'restaurant'
+                    ? t('adminTranslations.addLocale.introRestaurant')
+                    : t('adminTranslations.addLocale.intro')}
                 </p>
                 <div className="mb-3">
-                  <label className="form-label">{t('adminTranslations.addLocale.localeLabel')}</label>
-                  <input
-                    type="search"
-                    className="form-control form-control-sm mb-2"
-                    placeholder={t('adminTranslations.addLocale.searchPlaceholder')}
-                    value={addLocaleSearch}
-                    onChange={(e) => setAddLocaleSearch(e.target.value)}
-                    autoComplete="off"
-                  />
-                  <div className="border rounded bg-white" style={{ maxHeight: 260 }}>
-                    <div className="list-group list-group-flush overflow-auto" style={{ maxHeight: 200 }}>
-                      {filteredLocalePresets.map((p) => (
-                        <button
-                          key={p.locale}
-                          type="button"
-                          className={`list-group-item list-group-item-action py-2 px-3 w-100 text-start small ${
-                            addLocalePreset === p.locale && addLocalePreset !== ADD_LOCALE_CUSTOM ? 'active' : ''
-                          }`}
-                          onClick={() => {
-                            setAddLocalePreset(p.locale);
-                            setAddFlag(suggestedFlagCodeFromLocale(p.locale));
-                          }}
-                        >
-                          <span className="fw-semibold">{p.title}</span>{' '}
-                          <span className="text-muted">{p.locale}</span>
-                          <span className="d-block text-muted" style={{ fontSize: '0.7rem' }}>
-                            {p.group}
-                          </span>
-                        </button>
-                      ))}
-                      {filteredLocalePresets.length === 0 && (
-                        <div className="p-3 small text-muted">{t('adminTranslations.addLocale.noMatches')}</div>
-                      )}
-                    </div>
-                    <div className="border-top p-2 bg-light">
-                      <button
-                        type="button"
-                        className={`btn btn-sm w-100 ${
-                          addLocalePreset === ADD_LOCALE_CUSTOM ? 'btn-primary' : 'btn-outline-secondary'
-                        }`}
-                        onClick={() => {
-                          setAddLocalePreset(ADD_LOCALE_CUSTOM);
-                          setAddFlag('');
-                        }}
+                  <label className="form-label" htmlFor="add-locale-autocomplete">
+                    {t('adminTranslations.addLocale.localeLabel')}
+                  </label>
+                  <div className="admin-translations-autocomplete">
+                    <input
+                      id="add-locale-autocomplete"
+                      type="search"
+                      className="form-control"
+                      placeholder={t('adminTranslations.addLocale.searchPlaceholder')}
+                      value={addLocaleSearch}
+                      autoComplete="off"
+                      autoFocus
+                      role="combobox"
+                      aria-expanded={addLocaleSuggestOpen}
+                      aria-controls="add-locale-suggestions"
+                      aria-autocomplete="list"
+                      onFocus={() => setAddLocaleSuggestOpen(true)}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setAddLocaleSearch(v);
+                        setAddLocaleSuggestOpen(true);
+                        setAddLocaleHighlight(0);
+                        if (addLocalePreset && addLocalePreset !== ADD_LOCALE_CUSTOM) {
+                          setAddLocalePreset('');
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (!addLocaleSuggestOpen && (e.key === 'ArrowDown' || e.key === 'Enter')) {
+                          setAddLocaleSuggestOpen(true);
+                        }
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setAddLocaleHighlight((h) =>
+                            Math.min(filteredLocalePresets.length - 1, h + 1),
+                          );
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setAddLocaleHighlight((h) => Math.max(0, h - 1));
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const pick = filteredLocalePresets[addLocaleHighlight];
+                          if (pick) pickAddLocalePreset(pick.locale, pick.title);
+                        } else if (e.key === 'Escape') {
+                          setAddLocaleSuggestOpen(false);
+                        }
+                      }}
+                      onBlur={() => {
+                        window.setTimeout(() => setAddLocaleSuggestOpen(false), 150);
+                      }}
+                    />
+                    {addLocaleSuggestOpen && (
+                      <div
+                        id="add-locale-suggestions"
+                        className="admin-translations-autocomplete__list"
+                        role="listbox"
                       >
-                        {t('adminTranslations.addLocale.customOption')}
-                      </button>
-                    </div>
+                        {filteredLocalePresets.length === 0 ? (
+                          <div className="admin-translations-autocomplete__empty">
+                            {t('adminTranslations.addLocale.noMatches')}
+                          </div>
+                        ) : (
+                          filteredLocalePresets.map((p, idx) => (
+                            <button
+                              key={p.locale}
+                              type="button"
+                              role="option"
+                              aria-selected={
+                                addLocalePreset === p.locale || addLocaleHighlight === idx
+                              }
+                              className={`admin-translations-autocomplete__item ${
+                                addLocaleHighlight === idx || addLocalePreset === p.locale
+                                  ? 'is-active'
+                                  : ''
+                              }`}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onMouseEnter={() => setAddLocaleHighlight(idx)}
+                              onClick={() => pickAddLocalePreset(p.locale, p.title)}
+                            >
+                              <span className="fw-semibold">{p.title}</span>
+                              <span className="admin-translations-autocomplete__native">
+                                {nativeLocaleDisplayName(p.locale)}
+                              </span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {addLocalePreset !== ADD_LOCALE_CUSTOM && (
+                  {addLocalePreset && addLocalePreset !== ADD_LOCALE_CUSTOM && (
                     <p className="form-text small text-muted mb-0 mt-1">
                       <Trans
                         i18nKey="adminTranslations.addLocale.selected"
-                        values={{ locale: addLocalePreset }}
+                        values={{ name: defaultLocaleLabel(addLocalePreset) }}
                         components={{ strong: <strong /> }}
                       />
                     </p>
                   )}
                 </div>
-                {addLocalePreset === ADD_LOCALE_CUSTOM && (
-                  <div className="mb-3">
-                    <label className="form-label">{t('adminTranslations.addLocale.customCodeLabel')}</label>
-                    <input
-                      className="form-control font-monospace"
-                      value={addLocaleCustom}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setAddLocaleCustom(v);
-                        const n = normalizeMenuLocaleInput(v);
-                        if (n) setAddFlag(suggestedFlagCodeFromLocale(n));
-                      }}
-                      placeholder={t('adminTranslations.addLocale.customCodePlaceholder')}
-                    />
-                    <p className="form-text small text-muted mb-0">
-                      {t('adminTranslations.addLocale.customCodeHelp')}
-                    </p>
-                  </div>
-                )}
-                <div className="mb-3">
-                  <label className="form-label">{t('adminTranslations.addLocale.panelLabel')}</label>
-                  <input
-                    className="form-control"
-                    value={addLabel}
-                    onChange={(e) => setAddLabel(e.target.value)}
-                    placeholder={t('adminTranslations.addLocale.panelLabelPlaceholder')}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">{t('adminTranslations.addLocale.flagLabel')}</label>
-                  <input
-                    className="form-control"
-                    maxLength={10}
-                    value={addFlag}
-                    onChange={(e) => setAddFlag(e.target.value.toUpperCase())}
-                    placeholder={t('adminTranslations.addLocale.flagPlaceholder')}
-                  />
-                  <p className="form-text small text-muted mb-0">
-                    <Trans i18nKey="adminTranslations.addLocale.flagHelp" components={{ strong: <strong /> }} />
-                  </p>
-                </div>
-                <div className="form-check form-switch mb-0">
+                <div className="form-check form-switch mb-3">
                   <input
                     className="form-check-input"
                     type="checkbox"
@@ -1436,8 +2208,75 @@ export default function AdminTranslationsPage() {
                     {t('adminTranslations.addLocale.showPublic')}
                   </label>
                 </div>
+                <details className="admin-translations-advanced">
+                  <summary>{t('adminTranslations.common.advancedOptions')}</summary>
+                  <div className="admin-translations-advanced__body pt-3">
+                    <div className="mb-3">
+                      <button
+                        type="button"
+                        className={`btn btn-sm w-100 ${
+                          addLocalePreset === ADD_LOCALE_CUSTOM ? 'btn-primary' : 'btn-outline-secondary'
+                        }`}
+                        onClick={() => {
+                          setAddLocalePreset(ADD_LOCALE_CUSTOM);
+                          setAddFlag('');
+                          setAddLabel('');
+                        }}
+                      >
+                        {t('adminTranslations.addLocale.customOption')}
+                      </button>
+                    </div>
+                    {addLocalePreset === ADD_LOCALE_CUSTOM && (
+                      <div className="mb-3">
+                        <label className="form-label">{t('adminTranslations.addLocale.customCodeLabel')}</label>
+                        <input
+                          className="form-control font-monospace"
+                          value={addLocaleCustom}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setAddLocaleCustom(v);
+                            const n = normalizeMenuLocaleInput(v);
+                            if (n) {
+                              setAddFlag(suggestedFlagCodeFromLocale(n));
+                              setAddLabel(nativeLocaleDisplayName(n));
+                            }
+                          }}
+                          placeholder={t('adminTranslations.addLocale.customCodePlaceholder')}
+                        />
+                        <p className="form-text small text-muted mb-0">
+                          {t('adminTranslations.addLocale.customCodeHelp')}
+                        </p>
+                      </div>
+                    )}
+                    <div className="mb-3">
+                      <label className="form-label">{t('adminTranslations.addLocale.panelLabel')}</label>
+                      <input
+                        className="form-control"
+                        value={addLabel}
+                        onChange={(e) => setAddLabel(e.target.value)}
+                        placeholder={t('adminTranslations.addLocale.panelLabelPlaceholder')}
+                      />
+                      <p className="form-text small text-muted mb-0">
+                        {t('adminTranslations.addLocale.panelLabelHelp')}
+                      </p>
+                    </div>
+                    <div className="mb-0">
+                      <label className="form-label">{t('adminTranslations.addLocale.flagLabel')}</label>
+                      <input
+                        className="form-control"
+                        maxLength={10}
+                        value={addFlag}
+                        onChange={(e) => setAddFlag(e.target.value.toUpperCase())}
+                        placeholder={t('adminTranslations.addLocale.flagPlaceholder')}
+                      />
+                      <p className="form-text small text-muted mb-0">
+                        <Trans i18nKey="adminTranslations.addLocale.flagHelp" components={{ strong: <strong /> }} />
+                      </p>
+                    </div>
+                  </div>
+                </details>
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer admin-translations-sheet__footer">
                 <button type="button" className="btn btn-outline-secondary" onClick={() => setAddOpen(false)}>
                   {t('adminTranslations.common.cancel')}
                 </button>
@@ -1451,8 +2290,12 @@ export default function AdminTranslationsPage() {
       )}
 
       {settingsOpen && settingsMenu && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} role="dialog">
-          <div className="modal-dialog modal-lg modal-dialog-scrollable">
+        <div
+          className="modal show d-block admin-translations-modal admin-translations-sheet"
+          style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+          role="dialog"
+        >
+          <div className="modal-dialog modal-dialog-scrollable admin-translations-sheet__dialog admin-translations-sheet__dialog--md">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">{t('adminTranslations.settings.title')}</h5>
@@ -1464,140 +2307,162 @@ export default function AdminTranslationsPage() {
                 />
               </div>
               <div className="modal-body">
-                <div className="mb-3">
-                  <label className="form-label">
-                    {t('adminTranslations.settings.menuNameLabel', {
-                      sourceSuffix: settingsMenu ? ` ${menuSourceLocale(settingsMenu)}` : '',
-                    })}
+                <div className="admin-translations-field mb-4">
+                  <label className="wizard-label" htmlFor="settings-menu-name">
+                    {t('adminTranslations.settings.menuNameLabel')}
                   </label>
-                  <input className="form-control" value={settingsName} onChange={(e) => setSettingsName(e.target.value)} />
-                </div>
-                <hr />
-                <h6 className="text-muted">{t('adminTranslations.settings.labelsHeading')}</h6>
-                <p className="small text-muted">
-                  <Trans
-                    i18nKey="adminTranslations.settings.labelsHelp"
-                    values={{
-                      sourceParen: settingsMenu ? ` (${menuSourceLocale(settingsMenu)})` : '',
-                    }}
-                    components={{ code: <code />, strong: <strong /> }}
+                  <input
+                    id="settings-menu-name"
+                    className="form-control form-control-lg admin-translations-settings-name"
+                    value={settingsName}
+                    onChange={(e) => setSettingsName(e.target.value)}
                   />
-                </p>
-                {settingsManifestRows.map((row, idx) => (
-                  <div key={row.locale} className="row g-2 align-items-end mb-2">
-                      <div className="col-md-2">
-                      <label className="form-label small mb-0">{row.locale}</label>
-                      <div className="form-control-plaintext fw-semibold d-flex align-items-center" style={{ minHeight: 32 }}>
-                        <MenuLocaleFlagGlyph flagCode={row.flagCode} locale={row.locale} />
+                  <p className="form-text small text-muted mb-0">
+                    {t('adminTranslations.settings.menuNameHelp')}
+                  </p>
+                </div>
+
+                <h6 className="wizard-section-title mb-1">
+                  {t('adminTranslations.settings.labelsHeading')}
+                </h6>
+                <p className="small text-muted mb-3">{t('adminTranslations.settings.labelsHelp')}</p>
+
+                <div className="admin-translations-settings-locales">
+                  {settingsManifestRows.map((row, idx) => {
+                    const isBase = row.locale === menuSourceLocale(settingsMenu);
+                    return (
+                      <div key={row.locale} className="admin-translations-settings-locale">
+                        <div className="admin-translations-settings-locale__head">
+                          <span className="admin-translations-settings-locale__flag" aria-hidden>
+                            <MenuLocaleFlagGlyph flagCode={row.flagCode} locale={row.locale} />
+                          </span>
+                          <div className="min-w-0 flex-grow-1">
+                            <div className="fw-semibold text-truncate">
+                              {defaultManifestDisplayLabel(row.locale, row.label)}
+                            </div>
+                            {isBase && (
+                              <span className="badge bg-primary mt-1">
+                                {t('adminTranslations.menuCard.defaultBadge')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="admin-translations-settings-locale__fields">
+                          <div className="admin-translations-field mb-2">
+                            <label className="form-label small mb-1" htmlFor={`settings-label-${row.locale}`}>
+                              {t('adminTranslations.settings.label')}
+                            </label>
+                            <input
+                              id={`settings-label-${row.locale}`}
+                              className="form-control"
+                              value={row.label || ''}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setSettingsManifestRows((prev) =>
+                                  prev.map((r, i) => (i === idx ? { ...r, label: v } : r)),
+                                );
+                              }}
+                              placeholder={nativeLocaleDisplayName(row.locale)}
+                            />
+                          </div>
+                          <div className="admin-translations-field mb-2">
+                            <label className="form-label small mb-1" htmlFor={`settings-flag-${row.locale}`}>
+                              {t('adminTranslations.settings.countryCode')}
+                            </label>
+                            <input
+                              id={`settings-flag-${row.locale}`}
+                              className="form-control"
+                              maxLength={10}
+                              value={row.flagCode || ''}
+                              onChange={(e) => {
+                                const v = e.target.value.toUpperCase();
+                                setSettingsManifestRows((prev) =>
+                                  prev.map((r, i) => (i === idx ? { ...r, flagCode: v } : r)),
+                                );
+                              }}
+                              placeholder={t('adminTranslations.settings.countryPlaceholder')}
+                            />
+                          </div>
+                          <div className="form-check form-switch mb-0">
+                            <input
+                              type="checkbox"
+                              className="form-check-input"
+                              role="switch"
+                              id={`enabled-public-${row.locale}`}
+                              checked={row.enabledPublic !== false}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setSettingsManifestRows((prev) =>
+                                  prev.map((r, i) => (i === idx ? { ...r, enabledPublic: checked } : r)),
+                                );
+                              }}
+                            />
+                            <label className="form-check-label" htmlFor={`enabled-public-${row.locale}`}>
+                              {t('adminTranslations.settings.visiblePublic')}
+                            </label>
+                          </div>
+                        </div>
                       </div>
+                    );
+                  })}
+                </div>
+
+                <details className="admin-translations-advanced mt-3">
+                  <summary>{t('adminTranslations.common.advancedOptions')}</summary>
+                  <div className="admin-translations-advanced__body pt-3">
+                    <h6 className="text-muted">{t('adminTranslations.settings.renameHeading')}</h6>
+                    <p className="small text-muted">{t('adminTranslations.settings.renameHelp')}</p>
+                    <div className="admin-translations-field mb-2">
+                      <label className="form-label small">
+                        {t('adminTranslations.settings.currentLocale')}
+                      </label>
+                      <select
+                        className="form-select"
+                        value={renameFrom}
+                        onChange={(e) => setRenameFrom(e.target.value)}
+                      >
+                        <option value="">—</option>
+                        {settingsManifestRows
+                          .filter((r) => r.locale !== menuSourceLocale(settingsMenu))
+                          .map((r) => (
+                            <option key={r.locale} value={r.locale}>
+                              {defaultManifestDisplayLabel(r.locale, r.label)}
+                            </option>
+                          ))}
+                      </select>
                     </div>
-                    <div className="col-md-4">
+                    <div className="admin-translations-field mb-2">
+                      <label className="form-label small">{t('adminTranslations.settings.newCode')}</label>
+                      <input
+                        className="form-control"
+                        placeholder="en-US"
+                        value={renameTo}
+                        onChange={(e) => setRenameTo(e.target.value)}
+                      />
+                    </div>
+                    <div className="admin-translations-field mb-2">
                       <label className="form-label small">{t('adminTranslations.settings.label')}</label>
                       <input
-                        className="form-control form-control-sm"
-                        value={row.label || ''}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setSettingsManifestRows((prev) =>
-                            prev.map((r, i) => (i === idx ? { ...r, label: v } : r)),
-                          );
-                        }}
+                        className="form-control"
+                        value={renameLabel}
+                        onChange={(e) => setRenameLabel(e.target.value)}
                       />
                     </div>
-                    <div className="col-md-3">
-                      <label className="form-label small">{t('adminTranslations.settings.countryCode')}</label>
+                    <div className="admin-translations-field mb-0">
+                      <label className="form-label small">{t('adminTranslations.settings.country')}</label>
                       <input
-                        className="form-control form-control-sm"
+                        className="form-control"
                         maxLength={10}
-                        value={row.flagCode || ''}
-                        onChange={(e) => {
-                          const v = e.target.value.toUpperCase();
-                          setSettingsManifestRows((prev) =>
-                            prev.map((r, i) => (i === idx ? { ...r, flagCode: v } : r)),
-                          );
-                        }}
+                        value={renameFlag}
+                        onChange={(e) => setRenameFlag(e.target.value.toUpperCase())}
+                        placeholder={t('adminTranslations.settings.countryPlaceholder')}
                       />
                     </div>
-                    <div className="col-md-3">
-                      <div className="form-check mt-2">
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          id={`enabled-public-${row.locale}`}
-                          checked={row.enabledPublic !== false}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            setSettingsManifestRows((prev) =>
-                              prev.map((r, i) => (i === idx ? { ...r, enabledPublic: checked } : r)),
-                            );
-                          }}
-                        />
-                        <label className="form-check-label small" htmlFor={`enabled-public-${row.locale}`}>
-                          {t('adminTranslations.settings.visiblePublic')}
-                        </label>
-                      </div>
-                    </div>
                   </div>
-                ))}
-                <hr />
-                <h6 className="text-muted">{t('adminTranslations.settings.renameHeading')}</h6>
-                <p className="small text-muted">
-                  <Trans
-                    i18nKey="adminTranslations.settings.renameHelp"
-                    values={{
-                      sourceCode: settingsMenu ? ` (${menuSourceLocale(settingsMenu)})` : '',
-                    }}
-                    components={{ code: <code /> }}
-                  />
-                </p>
-                <div className="row g-2">
-                  <div className="col-md-4">
-                    <label className="form-label small">{t('adminTranslations.settings.currentLocale')}</label>
-                    <select
-                      className="form-select form-select-sm"
-                      value={renameFrom}
-                      onChange={(e) => setRenameFrom(e.target.value)}
-                    >
-                      <option value="">—</option>
-                      {settingsManifestRows
-                        .filter((r) => r.locale !== menuSourceLocale(settingsMenu))
-                        .map((r) => (
-                          <option key={r.locale} value={r.locale}>
-                            {r.locale}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label small">{t('adminTranslations.settings.newCode')}</label>
-                    <input
-                      className="form-control form-control-sm"
-                      placeholder="en-US"
-                      value={renameTo}
-                      onChange={(e) => setRenameTo(e.target.value)}
-                    />
-                  </div>
-                  <div className="col-md-2">
-                    <label className="form-label small">{t('adminTranslations.settings.label')}</label>
-                    <input
-                      className="form-control form-control-sm"
-                      value={renameLabel}
-                      onChange={(e) => setRenameLabel(e.target.value)}
-                    />
-                  </div>
-                  <div className="col-md-2">
-                    <label className="form-label small">{t('adminTranslations.settings.country')}</label>
-                    <input
-                      className="form-control form-control-sm"
-                      maxLength={10}
-                      value={renameFlag}
-                      onChange={(e) => setRenameFlag(e.target.value.toUpperCase())}
-                      placeholder={t('adminTranslations.settings.countryPlaceholder')}
-                    />
-                  </div>
-                </div>
+                </details>
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer admin-translations-sheet__footer">
                 <button type="button" className="btn btn-outline-secondary" onClick={() => setSettingsOpen(false)}>
                   {t('adminTranslations.common.cancel')}
                 </button>
@@ -1611,14 +2476,24 @@ export default function AdminTranslationsPage() {
       )}
 
       {benchOpen && benchMenuId && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} role="dialog">
-          <div className="modal-dialog modal-xl modal-dialog-scrollable">
-            <div className="modal-content" style={{ maxHeight: '92vh' }}>
+        <div
+          className="modal show d-block admin-translations-modal admin-translations-sheet"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          role="dialog"
+        >
+          <div className="modal-dialog modal-dialog-scrollable admin-translations-sheet__dialog admin-translations-sheet__dialog--xl">
+            <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">
                   <Trans
                     i18nKey="adminTranslations.workbench.title"
-                    values={{ locale: benchLocale }}
+                    values={{
+                      locale: (() => {
+                        const menuRow = menus.find((x) => x.id === benchMenuId);
+                        const meta = manifestMap(menuRow?.translationManifest)[benchLocale];
+                        return defaultManifestDisplayLabel(benchLocale, meta?.label);
+                      })(),
+                    }}
                     components={{ muted: <span className="text-muted" /> }}
                   />
                 </h5>
@@ -1727,7 +2602,7 @@ export default function AdminTranslationsPage() {
                   </>
                 )}
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer admin-translations-sheet__footer">
                 <button type="button" className="btn btn-outline-secondary" onClick={() => setBenchOpen(false)}>
                   {t('adminTranslations.common.close')}
                 </button>
@@ -1746,11 +2621,18 @@ export default function AdminTranslationsPage() {
       )}
 
       <ConfirmModal
+        className="admin-translations-modal admin-translations-sheet"
         show={!!confirmDeleteLocale}
         title={t('adminTranslations.confirm.deleteLocaleTitle')}
         message={
           confirmDeleteLocale
-            ? t('adminTranslations.confirm.deleteLocaleMessage', { locale: confirmDeleteLocale.locale })
+            ? t('adminTranslations.confirm.deleteLocaleMessage', {
+                locale: defaultManifestDisplayLabel(
+                  confirmDeleteLocale.locale,
+                  manifestMap(confirmDeleteLocale.menu.translationManifest)[confirmDeleteLocale.locale]
+                    ?.label,
+                ),
+              })
             : ''
         }
         confirmText={t('adminTranslations.confirm.delete')}
@@ -1761,6 +2643,7 @@ export default function AdminTranslationsPage() {
       />
 
       <ConfirmModal
+        className="admin-translations-modal admin-translations-sheet"
         show={!!confirmAutoTranslate}
         title={t('adminTranslations.autoTranslate.confirmTitle')}
         message={confirmAutoTranslate?.message || ''}
@@ -1769,6 +2652,18 @@ export default function AdminTranslationsPage() {
         variant="primary"
         onConfirm={() => void executeMenuAutoTranslate()}
         onCancel={() => setConfirmAutoTranslate(null)}
+      />
+
+      <ConfirmModal
+        className="admin-translations-modal admin-translations-sheet"
+        show={!!confirmRestaurantAutoTranslate}
+        title={t('adminTranslations.autoTranslate.restaurantConfirmTitle')}
+        message={confirmRestaurantAutoTranslate?.message || ''}
+        confirmText={t('adminTranslations.autoTranslate.confirmTranslate')}
+        cancelText={t('adminTranslations.common.cancel')}
+        variant="primary"
+        onConfirm={() => void executeRestaurantAutoTranslate()}
+        onCancel={() => setConfirmRestaurantAutoTranslate(null)}
       />
 
       {alertData && (

@@ -842,20 +842,62 @@ export class AutoTranslateService {
     targetLocale: string;
     force: boolean;
     tenantPlan: string | null | undefined;
-  }): Promise<{ segmentCount: number; apiUnits: number; cacheHits: number }> {
-    const { tenantId, menuId, userId, targetLocale, force, tenantPlan } = params;
-    const pre = await this.assertPreconditionsAndGetMenu(
+    /** Si false, no inserta fila de uso ni chequea límite (lote restaurant). Default true. */
+    recordUsage?: boolean;
+    /** Si true, no lanza cuando el locale ya fue auto-traducido; lo omite. */
+    skipIfAlreadyDone?: boolean;
+  }): Promise<{ segmentCount: number; apiUnits: number; cacheHits: number; skipped?: boolean }> {
+    const {
       tenantId,
       menuId,
       userId,
       targetLocale,
-      tenantPlan,
       force,
-    );
+      tenantPlan,
+      recordUsage = true,
+      skipIfAlreadyDone = false,
+    } = params;
 
-    const sourceLocale = pre.sourceLocale || (await this.getMenuSourceLocale(tenantId, menuId));
+    if (recordUsage) {
+      await this.assertPreconditionsAndGetMenu(
+        tenantId,
+        menuId,
+        userId,
+        targetLocale,
+        tenantPlan,
+        force,
+      );
+    } else {
+      // Preconditions globales/plan sin consumir ni exigir “aún no traducido”
+      await this.assertRestaurantBatchPreconditions(userId, tenantPlan);
+      const sourceLocaleEarly = await this.getMenuSourceLocale(tenantId, menuId);
+      if (this.isSameMenuLocale(targetLocale, sourceLocaleEarly)) {
+        return { segmentCount: 0, apiUnits: 0, cacheHits: 0, skipped: true };
+      }
+      const locales = await this.distinctLocalesForMenu(tenantId, menuId, sourceLocaleEarly);
+      if (!locales.some((l) => this.isSameMenuLocale(l, targetLocale))) {
+        return { segmentCount: 0, apiUnits: 0, cacheHits: 0, skipped: true };
+      }
+      if (!force) {
+        const completed = await this.getCompletedAutoTranslateLocales(tenantId, menuId);
+        if (completed.some((l) => this.isSameMenuLocale(l, targetLocale))) {
+          if (skipIfAlreadyDone) {
+            return { segmentCount: 0, apiUnits: 0, cacheHits: 0, skipped: true };
+          }
+          throw new BadRequestException(
+            'Este idioma del menú ya fue traducido automáticamente. Marcá “Forzar retraducción” para volver a ejecutar.',
+          );
+        }
+      }
+      await this.readMenuAutoTranslateState(tenantId, menuId);
+    }
+
+    const sourceLocale = await this.getMenuSourceLocale(tenantId, menuId);
     const segments = await this.collectSegments(tenantId, menuId, sourceLocale);
     if (segments.length === 0) {
+      if (!recordUsage) {
+        return { segmentCount: 0, apiUnits: 0, cacheHits: 0, skipped: true };
+      }
       throw new BadRequestException('No hay textos en el idioma base para traducir en este menú.');
     }
 
@@ -944,15 +986,157 @@ export class AutoTranslateService {
       );
     }
 
-    await this.postgres.executeRaw(
-      `INSERT INTO auto_translate_usage (id, user_id, tenant_id, menu_id, target_locale, forced, segment_count, api_units, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
-      [randomUUID(), userId, tenantId, menuId, targetLocale, force, segments.length, apiUnits],
-    );
+    if (recordUsage) {
+      await this.postgres.executeRaw(
+        `INSERT INTO auto_translate_usage (id, user_id, tenant_id, menu_id, target_locale, forced, segment_count, api_units, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+        [randomUUID(), userId, tenantId, menuId, targetLocale, force, segments.length, apiUnits],
+      );
+    }
 
     this.i18n.clearCache(tenantId);
 
     return { segmentCount: segments.length, apiUnits, cacheHits };
+  }
+
+  /** Chequeos globales/plan/límite para lote de comercio (sin validar un menú concreto). */
+  private async assertRestaurantBatchPreconditions(
+    userId: string,
+    tenantPlan: string | null | undefined,
+  ): Promise<void> {
+    if (!this.isTranslateBackendConfigured()) {
+      throw new ServiceUnavailableException(
+        'Traducción automática no configurada (OPENAI_API_KEY, o MICROSOFT_TRANSLATOR_KEY + MICROSOFT_TRANSLATOR_REGION).',
+      );
+    }
+    if (!(await this.getAppSettingGlobalEnabled())) {
+      throw new ForbiddenException('La traducción automática está desactivada en el sistema.');
+    }
+    const uf = await this.getUserAutoTranslateEnabled(userId);
+    if (uf === false) {
+      throw new ForbiddenException('La traducción automática está desactivada para tu usuario.');
+    }
+    if (!this.planAllowsAutoTranslateForTenantPlan(tenantPlan)) {
+      throw new ForbiddenException('Disponible solo en planes Pro, Pro Team o Premium.');
+    }
+    const monthlyLimit = await this.planLimits.getAutoTranslateMonthlyPerUser(tenantPlan || 'free');
+    if (monthlyLimit === 0) {
+      throw new ForbiddenException('Tu plan no incluye traducción automática.');
+    }
+    const used = await this.countMonthlyUsageUtc(userId);
+    if (monthlyLimit > 0 && used >= monthlyLimit) {
+      throw new ForbiddenException(`Límite mensual alcanzado (${monthlyLimit} traducciones automáticas).`);
+    }
+  }
+
+  /**
+   * Traduce el idioma destino en todos los menús del comercio que lo tengan.
+   * Cuenta **un solo uso** mensual, aunque procese varios menús.
+   */
+  async runForRestaurant(params: {
+    tenantId: string;
+    restaurantId: string;
+    userId: string;
+    targetLocale: string;
+    force: boolean;
+    tenantPlan: string | null | undefined;
+    menus: Array<{ id: string; locales: string[]; sourceLocale?: string }>;
+  }): Promise<{
+    menuCount: number;
+    localeRuns: number;
+    skippedRuns: number;
+    segmentCount: number;
+    apiUnits: number;
+    cacheHits: number;
+  }> {
+    const { tenantId, restaurantId, userId, targetLocale, force, tenantPlan, menus } = params;
+    await this.assertRestaurantBatchPreconditions(userId, tenantPlan);
+
+    if (!menus.length) {
+      throw new BadRequestException('No hay menús en este comercio.');
+    }
+    if (!targetLocale?.trim()) {
+      throw new BadRequestException('Elegí un idioma destino.');
+    }
+
+    const jobs: { menuId: string; locale: string }[] = [];
+    for (const m of menus) {
+      const source = (m.sourceLocale || 'es-ES').trim() || 'es-ES';
+      if (this.isSameMenuLocale(targetLocale, source)) continue;
+      const hasTarget = (m.locales || []).some((loc) => this.isSameMenuLocale(loc, targetLocale));
+      if (hasTarget) {
+        jobs.push({ menuId: m.id, locale: targetLocale });
+      }
+    }
+    if (jobs.length === 0) {
+      throw new BadRequestException(
+        `Ningún menú tiene el idioma ${targetLocale} para traducir (o es el idioma base).`,
+      );
+    }
+
+    let segmentCount = 0;
+    let apiUnits = 0;
+    let cacheHits = 0;
+    let localeRuns = 0;
+    let skippedRuns = 0;
+    const menusTouched = new Set<string>();
+
+    for (const job of jobs) {
+      const result = await this.runForMenu({
+        tenantId,
+        menuId: job.menuId,
+        userId,
+        targetLocale: job.locale,
+        force,
+        tenantPlan,
+        recordUsage: false,
+        skipIfAlreadyDone: true,
+      });
+      if (result.skipped) {
+        skippedRuns++;
+        continue;
+      }
+      localeRuns++;
+      menusTouched.add(job.menuId);
+      segmentCount += result.segmentCount;
+      apiUnits += result.apiUnits;
+      cacheHits += result.cacheHits;
+    }
+
+    if (localeRuns === 0) {
+      throw new BadRequestException(
+        force
+          ? 'No se pudo traducir ningún idioma (revisá que haya textos en el idioma base).'
+          : 'Todos los idiomas de los menús ya fueron auto-traducidos. Usá “Forzar retraducción” en opciones avanzadas para volver a ejecutar (consume un uso).',
+      );
+    }
+
+    const anchorMenuId = menusTouched.values().next().value || menus[0]!.id;
+    await this.postgres.executeRaw(
+      `INSERT INTO auto_translate_usage (id, user_id, tenant_id, menu_id, target_locale, forced, segment_count, api_units, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+      [
+        randomUUID(),
+        userId,
+        tenantId,
+        anchorMenuId,
+        targetLocale,
+        force,
+        segmentCount,
+        apiUnits,
+      ],
+    );
+
+    this.i18n.clearCache(tenantId);
+
+    return {
+      menuCount: menusTouched.size,
+      localeRuns,
+      skippedRuns,
+      segmentCount,
+      apiUnits,
+      cacheHits,
+    };
   }
 
   async listUsageForAdmin(opts: {
