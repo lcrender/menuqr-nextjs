@@ -3,6 +3,10 @@ import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService } from '../common/plan-limits/plan-limits.service';
 import { QRService } from '../qr/qr.service';
 import { I18nService } from '../common/i18n/i18n.service';
+import {
+  contentLocaleFromCountryOrAddress,
+  normalizeMenuContentLocale,
+} from '../common/i18n/country-content-locale';
 import { assertMenuAccessible } from '../common/menu-tenant-sync';
 import {
   normalizeMenuSchedule,
@@ -267,16 +271,17 @@ export class MenusService {
     description?: string;
     validFrom?: Date;
     validTo?: Date;
-    /** Locale BCP-47 del contenido base (es-ES | en-US). */
+    /** Locale BCP-47 del contenido base (ej. es-AR, es-ES, en-US). */
     sourceLocale?: string;
   }) {
     // Validar límite de menús según el plan
     await this.validateMenuLimit(tenantId);
 
+    let restaurantAddress: string | null = null;
     // Verificar que el comercio pertenece al tenant (solo si restaurantId no es null)
     if (data.restaurantId !== null && data.restaurantId !== undefined && data.restaurantId !== '') {
-      const restaurant = await this.postgres.queryRaw<any>(
-        `SELECT id FROM restaurants 
+      const restaurant = await this.postgres.queryRaw<{ id: string; address: string | null }>(
+        `SELECT id, address FROM restaurants 
          WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL 
          LIMIT 1`,
         [data.restaurantId, tenantId]
@@ -285,6 +290,7 @@ export class MenusService {
       if (!restaurant[0]) {
         throw new NotFoundException('Comercio no encontrado o no pertenece al tenant');
       }
+      restaurantAddress = restaurant[0].address ?? null;
     }
 
     // Generar slug único por comercio (o null si no hay comercio)
@@ -308,8 +314,10 @@ export class MenusService {
     const nextSort = (maxSortResult[0]?.max_sort ?? -1) + 1;
 
     const id = `clx${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
-    const sourceLocale =
-      data.sourceLocale === 'en-US' || data.sourceLocale === 'en' ? 'en-US' : 'es-ES';
+    const fromBody = normalizeMenuContentLocale(data.sourceLocale);
+    const fromCountry = contentLocaleFromCountryOrAddress({ address: restaurantAddress });
+    // País del comercio manda sobre la preferencia de UI del usuario.
+    const sourceLocale = fromCountry || fromBody || 'es-ES';
 
     await this.postgres.executeRaw(
       `INSERT INTO menus (

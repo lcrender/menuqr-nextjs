@@ -8,6 +8,10 @@ import { TransferRestaurantOwnerDto } from './dto/transfer-restaurant-owner.dto'
 import { Roles } from '../common/decorators/roles.decorator';
 import { UsersService } from '../users/users.service';
 import { preferredLanguageToContentLocale } from '../common/i18n/content-locale';
+import {
+  contentLocaleFromCountryOrAddress,
+  normalizeMenuContentLocale,
+} from '../common/i18n/country-content-locale';
 
 @ApiTags('restaurants')
 @Controller('restaurants')
@@ -125,7 +129,13 @@ export class RestaurantsController {
     }
 
     const me = await this.usersService.findById(req.user.id);
-    const sourceLocale = preferredLanguageToContentLocale((me as any)?.preferredLanguage);
+    const fromBody = normalizeMenuContentLocale(payload.sourceLocale);
+    const fromCountry = contentLocaleFromCountryOrAddress({
+      country: payload.country,
+      address: payload.address,
+    });
+    const sourceLocale =
+      fromBody || fromCountry || preferredLanguageToContentLocale((me as any)?.preferredLanguage);
     return this.restaurantsService.create(tenantId, { ...payload, sourceLocale });
   }
 

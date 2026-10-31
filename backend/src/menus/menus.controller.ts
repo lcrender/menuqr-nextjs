@@ -207,6 +207,7 @@ export class MenusController {
     }
 
     const me = await this.usersService.findById(req.user.id);
+    // Preferencia de UI solo como fallback: el servicio prioriza país del comercio.
     const sourceLocale = preferredLanguageToContentLocale((me as any)?.preferredLanguage);
 
     return this.menusService.create(tenantId, {

@@ -683,8 +683,59 @@ export class MenuTranslationsService {
   }
 
   /**
+   * Retiqueta el idioma base sin exigir que el destino exista como traducción.
+   * Útil para corregir el país/locale elegido al crear el comercio (mismo contenido, otro BCP-47).
+   */
+  private async retagSourceLocale(tenantId: string, menuId: string, oldSource: string, newSource: string) {
+    const entityIds = await this.collectEntityIdsForMenu(menuId);
+    if (entityIds.length > 0) {
+      // Si ya hay filas en newSource (raro), las quitamos para poder renombrar.
+      const phDel = entityIds.map((_, i) => `$${i + 3}`).join(', ');
+      await this.postgres.executeRaw(
+        `DELETE FROM translations
+         WHERE tenant_id = $1 AND locale = $2 AND entity_id IN (${phDel})`,
+        [tenantId, newSource, ...entityIds],
+      );
+      const phUp = entityIds.map((_, i) => `$${i + 4}`).join(', ');
+      await this.postgres.executeRaw(
+        `UPDATE translations
+         SET locale = $1, updated_at = NOW()
+         WHERE tenant_id = $2 AND locale = $3 AND entity_id IN (${phUp})`,
+        [newSource, tenantId, oldSource, ...entityIds],
+      );
+    }
+
+    await this.postgres.executeRaw(
+      `UPDATE menus SET source_locale = $1, updated_at = NOW()
+       WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL`,
+      [newSource, menuId, tenantId],
+    );
+
+    if (await this.menusHaveTranslationManifestColumn()) {
+      const manifest = this.parseManifest(
+        (await this.postgres.queryRaw<any>(
+          `SELECT translation_manifest FROM menus WHERE id = $1 LIMIT 1`,
+          [menuId],
+        ))[0]?.translation_manifest,
+      );
+      // El nuevo base no necesita entrada extra; quitar stub del destino si existía.
+      const next = manifest.filter((e) => e.locale !== newSource && e.locale !== oldSource);
+      await this.writeManifest(menuId, tenantId, next);
+    }
+
+    this.i18n.clearCache(tenantId);
+    return {
+      ok: true,
+      sourceLocale: newSource,
+      retagged: true,
+      locales: await this.distinctLocalesForMenu(tenantId, menuId, newSource),
+    };
+  }
+
+  /**
    * Cambia el idioma base del menú: el locale elegido pasa a ser la fuente canónica
    * (columnas name/description + source_locale). El idioma base anterior queda como traducción.
+   * Si el destino aún no existe, retiqueta el base (mismo contenido, otro código).
    */
   async setDefaultLocale(tenantId: string, menuId: string, localeRaw: string) {
     const newSource = this.normalizeMenuLocaleTag(localeRaw);
@@ -699,9 +750,7 @@ export class MenuTranslationsService {
 
     const locales = await this.distinctLocalesForMenu(tenantId, menuId, oldSource);
     if (!locales.includes(newSource)) {
-      throw new BadRequestException(
-        'Ese idioma aún no está en el menú. Agregalo primero y después marcalo como idioma por defecto.',
-      );
+      return this.retagSourceLocale(tenantId, menuId, oldSource, newSource);
     }
 
     const menu = await this.postgres.queryRaw<any>(
@@ -973,10 +1022,7 @@ export class MenuTranslationsService {
         skipped.push({ menuId: m.id, menuName: m.name, reason: 'already_default' });
         continue;
       }
-      if (!(m.locales || []).includes(locale)) {
-        skipped.push({ menuId: m.id, menuName: m.name, reason: 'missing_locale' });
-        continue;
-      }
+      // Si el locale no existe, setDefaultLocale lo retiqueta (corrige país/idioma base).
       await this.setDefaultLocale(tenantId, m.id, locale);
       updated.push(m.id);
     }

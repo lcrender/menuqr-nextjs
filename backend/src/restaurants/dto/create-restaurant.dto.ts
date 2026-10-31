@@ -124,5 +124,15 @@ export class CreateRestaurantDto {
   @IsString()
   @IsOptional()
   tenantId?: string;
+
+  @ApiProperty({
+    description:
+      'Locale BCP-47 del contenido base (ej. es-AR, es-ES, en-US). Si no se envía, se deduce del país.',
+    required: false,
+    example: 'es-AR',
+  })
+  @IsString()
+  @IsOptional()
+  sourceLocale?: string;
 }
 

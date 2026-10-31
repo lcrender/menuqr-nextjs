@@ -26,10 +26,11 @@
     "panelOne": "Translate one menu",
     "panelDefault": "Change default language",
     "pickPanelHint": "Choose an option to continue.",
-    "defaultHelp": "Choose the base (default) language for this business’s menus. To change it on a single menu, use “Translate one menu” → “Use as default language”.",
+    "defaultHelp": "Choose the base language for this business’s menus (e.g. if the wrong country was selected when creating it). You don’t need to add it first — current content is retagged. To change one menu only, use “Translate one menu” → “Use as default language”.",
     "defaultApply": "Use as default language",
     "defaultApplied": "Default language updated to {{locale}} on {{updated}} menu(s). Skipped: {{skipped}}.",
-    "defaultSkipNote": "Menus that do not have this language yet are skipped. Add it first if you want to include them.",
+    "defaultSkipNote": "If a menu didn’t have this language yet, the same content is kept under the new code (useful to fix the country).",
+    "defaultPickHint": "You can pick any language from the list, even if it isn’t added as a translation yet.",
     "gapsTitle": "Translation status",
     "gapsSummary": "{{missing}} menu(s) without this language · {{incomplete}} with pending text · {{ready}} ready",
     "gapsReady": "Every menu that has this language is ready.",
@@ -57,8 +58,8 @@
     "PUBLISHED": "Published"
   },
   "localeLabels": {
-    "es-ES": "Spanish",
-    "en-US": "English"
+    "es-ES": "Spanish (Spain)",
+    "en-US": "English (US)"
   },
   "localePresets": {
     "groups": {
@@ -99,6 +100,7 @@
       "ca-ES": "Catalan",
       "gl-ES": "Galician",
       "eu-ES": "Basque",
+      "es-ES": "Spanish (Spain)",
       "es-MX": "Spanish (Mexico)",
       "es-AR": "Spanish (Argentina)",
       "es-CO": "Spanish (Colombia)",

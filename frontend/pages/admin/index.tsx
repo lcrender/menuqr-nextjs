@@ -449,7 +449,12 @@ export default function Admin() {
     );
   }
 
-  const showEmptyTenantWizard = user?.role === 'ADMIN' && dashboardCards.length === 0;
+  // Solo wizard vacío si realmente no hay comercios (stats=0). Si hay comercios pero
+  // falló la carga de fichas, no fingir onboarding desde cero.
+  const showEmptyTenantWizard =
+    user?.role === 'ADMIN' &&
+    dashboardCards.length === 0 &&
+    (stats?.totalRestaurants === 0 || stats?.totalRestaurants === undefined);
 
   const renderSetupWizardColumns = (s: RestaurantConfigState) => (
     <div className="row g-4 mb-0" style={{ fontSize: '1.1rem' }}>
@@ -714,6 +719,24 @@ export default function Admin() {
       {user?.role === 'ADMIN' && showEmptyTenantWizard && stats && (
         <div className="mb-4">{renderSetupWizardColumns(EMPTY_TENANT_ONBOARDING)}</div>
       )}
+
+      {user?.role === 'ADMIN' &&
+        !showEmptyTenantWizard &&
+        dashboardCards.length === 0 &&
+        Number(stats?.totalRestaurants || 0) > 0 && (
+          <div className="admin-card mb-4">
+            <h5 className="admin-card-title mb-2">{t('dashboardPage.restaurant.cardsLoadErrorTitle', { defaultValue: 'No se pudieron cargar las fichas' })}</h5>
+            <p className="mb-3 text-muted">
+              {t('dashboardPage.restaurant.cardsLoadErrorBody', {
+                defaultValue:
+                  'Tus comercios siguen ahí. Probá recargar; si el problema continúa, revisá que las migraciones del backend estén aplicadas.',
+              })}
+            </p>
+            <button type="button" className="admin-btn" onClick={() => void loadDashboardCards()}>
+              {t('dashboardPage.restaurant.retryCards', { defaultValue: 'Reintentar' })}
+            </button>
+          </div>
+        )}
 
       {user?.role === 'ADMIN' && dashboardCards.length > 0 && (
         <div className="row g-4 mb-4">

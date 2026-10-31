@@ -19,6 +19,7 @@ import { isValidApiTemplateId, readTemplateIntent } from '../../../lib/template-
 import LogoCropModal from '../../../components/LogoCropModal';
 import CoverCropModal from '../../../components/CoverCropModal';
 import { getApiErrorMessage } from '../../../lib/api-error-message';
+import { contentLocaleFromCountryName } from '../../../lib/country-content-locale';
 
 i18n.addResourceBundle('es-ES', 'translation', { adminBusinesses: adminBusinessesEs }, true, true);
 i18n.addResourceBundle('en-US', 'translation', { adminBusinesses: adminBusinessesEn }, true, true);
@@ -431,12 +432,18 @@ export default function Restaurants() {
         primaryColor: formData.primaryColor || '#007bff',
         secondaryColor: formData.secondaryColor || '#0056b3',
       };
+
+      if (!editing) {
+        const fromCountry = contentLocaleFromCountryName(formData.country);
+        if (fromCountry) data.sourceLocale = fromCountry;
+      }
       
       console.log('📤 Enviando datos al backend:', {
         city: data.city,
         province: data.state,
         country: data.country,
         address: data.address,
+        sourceLocale: data.sourceLocale,
       });
 
       let restaurantId: string;

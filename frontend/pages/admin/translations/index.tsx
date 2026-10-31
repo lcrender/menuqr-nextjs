@@ -135,6 +135,7 @@ const LOCALE_PRESET_GROUP_DEFS: { groupKey: string; locales: string[] }[] = [
   {
     groupKey: 'spanishRegional',
     locales: [
+      'es-ES',
       'es-MX',
       'es-AR',
       'es-CO',
@@ -228,11 +229,12 @@ function menuSourceLocale(m: Pick<MenuRow, 'sourceLocale'> | null | undefined): 
 }
 
 function defaultLocaleLabel(locale: string): string {
-  const native = nativeLocaleDisplayName(locale);
-  if (native && native !== locale) return native;
+  // Preferir etiqueta con región (Español (Argentina), etc.) sobre el endónimo genérico.
   const presetKey = `adminTranslations.localePresets.items.${locale}`;
   const preset = i18n.t(presetKey);
   if (preset && preset !== presetKey) return preset;
+  const native = nativeLocaleDisplayName(locale);
+  if (native && native !== locale) return native;
   if (locale === 'es-ES') return i18n.t('adminTranslations.localeLabels.es-ES');
   if (locale === 'en-US') return i18n.t('adminTranslations.localeLabels.en-US');
   return locale;
@@ -435,7 +437,7 @@ export default function AdminTranslationsPage() {
     setAddLocalePreset(locale);
     setAddLocaleSearch(title);
     setAddFlag(suggestedFlagCodeFromLocale(locale));
-    setAddLabel(nativeLocaleDisplayName(locale));
+    setAddLabel(title || defaultLocaleLabel(locale));
     setAddLocaleSuggestOpen(false);
     setAddLocaleHighlight(0);
   }, []);
@@ -1073,7 +1075,8 @@ export default function AdminTranslationsPage() {
   /** Solo si hay más de un comercio (con uno solo no tiene sentido “cambiar”) */
   const canChangeRestaurant = restaurants.length > 1;
 
-  const restaurantAllLocales = useMemo(() => {
+  /** Idiomas ya presentes en menús del comercio (atajos). */
+  const restaurantConfiguredLocales = useMemo(() => {
     const map = new Map<string, { locale: string; label: string; countryCode: string }>();
     for (const m of menus) {
       const mm = manifestMap(m.translationManifest);
@@ -1096,6 +1099,22 @@ export default function AdminTranslationsPage() {
     }
     return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
   }, [menus]);
+
+  /** Idiomas del comercio + presets (para corregir el base sin agregarlo antes). */
+  const restaurantAllLocales = useMemo(() => {
+    const map = new Map(restaurantConfiguredLocales.map((l) => [l.locale, l]));
+    for (const g of LOCALE_PRESET_GROUP_DEFS) {
+      for (const loc of g.locales) {
+        if (map.has(loc)) continue;
+        map.set(loc, {
+          locale: loc,
+          label: defaultLocaleLabel(loc),
+          countryCode: suggestedFlagCodeFromLocale(loc),
+        });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [restaurantConfiguredLocales]);
 
   useEffect(() => {
     if (step2Panel !== 'default') return;
@@ -1982,37 +2001,64 @@ export default function AdminTranslationsPage() {
                           <p className="small text-muted mb-3">
                             {t('adminTranslations.wizard.defaultHelp')}
                           </p>
+                          <p className="small text-muted mb-3">
+                            {t('adminTranslations.wizard.defaultPickHint')}
+                          </p>
 
-                          <div className="admin-translations-default-list mb-3">
-                            {restaurantAllLocales.map((l) => {
-                              const isCurrent = l.locale === restaurantDefaultLocale;
-                              const isPick = l.locale === defaultLocalePick;
-                              return (
-                                <button
-                                  key={l.locale}
-                                  type="button"
-                                  className={`admin-translations-default-option ${isPick ? 'is-selected' : ''} ${
-                                    isCurrent ? 'is-current' : ''
-                                  }`}
-                                  onClick={() => setDefaultLocalePick(l.locale)}
-                                >
-                                  <span className="admin-translations-default-option__main">
-                                    <MenuLocaleFlagGlyph flagCode={l.countryCode} locale={l.locale} />
-                                    <span className="admin-translations-default-option__name">{l.label}</span>
-                                    {l.countryCode ? (
-                                      <span className="admin-translations-default-option__code">
-                                        {l.countryCode}
-                                      </span>
-                                    ) : null}
-                                  </span>
-                                  {isCurrent && (
-                                    <span className="badge bg-primary">
-                                      {t('adminTranslations.menuCard.defaultBadge')}
+                          {restaurantConfiguredLocales.length > 0 ? (
+                            <div className="admin-translations-default-list mb-3">
+                              {restaurantConfiguredLocales.map((l) => {
+                                const isCurrent = l.locale === restaurantDefaultLocale;
+                                const isPick = l.locale === defaultLocalePick;
+                                return (
+                                  <button
+                                    key={l.locale}
+                                    type="button"
+                                    className={`admin-translations-default-option ${isPick ? 'is-selected' : ''} ${
+                                      isCurrent ? 'is-current' : ''
+                                    }`}
+                                    onClick={() => setDefaultLocalePick(l.locale)}
+                                  >
+                                    <span className="admin-translations-default-option__main">
+                                      <MenuLocaleFlagGlyph flagCode={l.countryCode} locale={l.locale} />
+                                      <span className="admin-translations-default-option__name">{l.label}</span>
+                                      {l.countryCode ? (
+                                        <span className="admin-translations-default-option__code">
+                                          {l.countryCode}
+                                        </span>
+                                      ) : null}
                                     </span>
-                                  )}
-                                </button>
-                              );
-                            })}
+                                    {isCurrent && (
+                                      <span className="badge bg-primary">
+                                        {t('adminTranslations.menuCard.defaultBadge')}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : null}
+
+                          <div className="admin-translations-field mb-3">
+                            <label className="wizard-label" htmlFor="restaurant-default-locale-pick">
+                              {t('adminTranslations.wizard.panelDefault')}
+                            </label>
+                            <AdminSelect
+                              value={defaultLocalePick}
+                              onChange={setDefaultLocalePick}
+                              options={restaurantAllLocales.map((l) => {
+                                const code = l.countryCode;
+                                return code
+                                  ? { value: l.locale, label: l.label, hint: code }
+                                  : { value: l.locale, label: l.label };
+                              })}
+                              placeholder={t('adminTranslations.wizard.panelDefault')}
+                              searchable={restaurantAllLocales.length > 6}
+                              searchPlaceholder={t('adminTranslations.page.searchPlaceholder')}
+                              emptyMessage={t('adminTranslations.page.noBusinessMatches')}
+                              aria-label={t('adminTranslations.wizard.panelDefault')}
+                              className="admin-translations-embedded-select"
+                            />
                           </div>
 
                           {defaultCoverageLoading ? (

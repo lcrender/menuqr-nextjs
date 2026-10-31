@@ -3,11 +3,14 @@ import { PostgresService } from '../common/database/postgres.service';
 import { PlanLimitsService, RESTAURANT_TEMPLATE_IDS } from '../common/plan-limits/plan-limits.service';
 import { ConfigService } from '@nestjs/config';
 import { I18nService } from '../common/i18n/i18n.service';
+import { normalizeMenuContentLocale } from '../common/i18n/country-content-locale';
 import { syncRestaurantMenuHierarchyTenant } from '../common/menu-tenant-sync';
 
 @Injectable()
 export class RestaurantsService {
   private readonly logger = new Logger(RestaurantsService.name);
+  /** Cache: columna `restaurants.onboarding_completed_at` (evita 500 si falta la migración). */
+  private onboardingCompletedAtColumn: boolean | null = null;
 
   constructor(
     private readonly postgres: PostgresService,
@@ -15,6 +18,25 @@ export class RestaurantsService {
     private readonly planLimits: PlanLimitsService,
     private readonly i18nService: I18nService,
   ) {}
+
+  private async restaurantsHaveOnboardingCompletedAtColumn(): Promise<boolean> {
+    if (this.onboardingCompletedAtColumn === true) return true;
+    if (this.onboardingCompletedAtColumn === false) return false;
+    try {
+      const rows = await this.postgres.queryRaw<{ ok: number }>(
+        `SELECT 1 AS ok
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'restaurants'
+           AND column_name = 'onboarding_completed_at'
+         LIMIT 1`,
+      );
+      this.onboardingCompletedAtColumn = rows.length > 0;
+    } catch {
+      this.onboardingCompletedAtColumn = false;
+    }
+    return this.onboardingCompletedAtColumn;
+  }
 
   private async resolveRestaurantSourceLocale(
     tenantId: string,
@@ -310,6 +332,7 @@ export class RestaurantsService {
     if (hasMenu) progressPercentage = 66;
     if (hasProductLinkedToMenu) progressPercentage = 100;
 
+    const hasOnboardingCol = await this.restaurantsHaveOnboardingCompletedAtColumn();
     const restaurantRow = await this.postgres.queryRaw<{
       is_active: boolean;
       slug: string | null;
@@ -323,11 +346,15 @@ export class RestaurantsService {
       primary_color: string | null;
       secondary_color: string | null;
       template_config: unknown;
-      onboarding_completed_at: Date | string | null;
+      onboarding_completed_at?: Date | string | null;
     }>(
-      `SELECT is_active, slug, name, address, logo_url, template, email, phone, website,
-              primary_color, secondary_color, template_config, onboarding_completed_at
-       FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+      hasOnboardingCol
+        ? `SELECT is_active, slug, name, address, logo_url, template, email, phone, website,
+                  primary_color, secondary_color, template_config, onboarding_completed_at
+           FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`
+        : `SELECT is_active, slug, name, address, logo_url, template, email, phone, website,
+                  primary_color, secondary_color, template_config
+           FROM restaurants WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
       [restaurantId],
     );
     const restaurantIsActive = restaurantRow[0]?.is_active ?? true;
@@ -342,17 +369,24 @@ export class RestaurantsService {
     const restaurantPrimaryColor = restaurantRow[0]?.primary_color ?? null;
     const restaurantSecondaryColor = restaurantRow[0]?.secondary_color ?? null;
     const restaurantTemplateConfig = this.parseTemplateConfigJson(restaurantRow[0]?.template_config);
-    let onboardingCompletedAt = restaurantRow[0]?.onboarding_completed_at ?? null;
+    let onboardingCompletedAt = hasOnboardingCol
+      ? (restaurantRow[0]?.onboarding_completed_at ?? null)
+      : null;
 
     // Primera vez que completa el wizard: fijar desbloqueo permanente del QR
-    if (currentlyComplete && !onboardingCompletedAt) {
-      await this.postgres.executeRaw(
-        `UPDATE restaurants
-         SET onboarding_completed_at = NOW(), updated_at = NOW()
-         WHERE id = $1 AND deleted_at IS NULL AND onboarding_completed_at IS NULL`,
-        [restaurantId],
-      );
-      onboardingCompletedAt = new Date();
+    if (hasOnboardingCol && currentlyComplete && !onboardingCompletedAt) {
+      try {
+        await this.postgres.executeRaw(
+          `UPDATE restaurants
+           SET onboarding_completed_at = NOW(), updated_at = NOW()
+           WHERE id = $1 AND deleted_at IS NULL AND onboarding_completed_at IS NULL`,
+          [restaurantId],
+        );
+        onboardingCompletedAt = new Date();
+      } catch (e) {
+        this.logger.warn(`No se pudo persistir onboarding_completed_at: ${e}`);
+        this.onboardingCompletedAtColumn = false;
+      }
     }
 
     // Si alguna vez completó el onboarding, el QR/dashboard completo quedan desbloqueados
@@ -428,12 +462,15 @@ export class RestaurantsService {
       [tenantId]
     );
     if (!rows?.length) return [];
-    const cards = await Promise.all(
-      rows.map(async (r) => {
+    const cards: Array<{ restaurantId: string } & Awaited<ReturnType<RestaurantsService['getConfigStateForRestaurant']>>> = [];
+    for (const r of rows) {
+      try {
         const state = await this.getConfigStateForRestaurant(tenantId, r.id);
-        return { restaurantId: r.id, ...state };
-      })
-    );
+        cards.push({ restaurantId: r.id, ...state });
+      } catch (e) {
+        this.logger.error(`getDashboardCards: fallo comercio ${r.id}: ${e}`);
+      }
+    }
     return cards;
   }
 
@@ -600,9 +637,8 @@ export class RestaurantsService {
       }
     }
 
-    // Persistimos campos traducibles en el locale preferido del usuario (es-ES | en-US).
-    const sourceLocale =
-      data.sourceLocale === 'en-US' || data.sourceLocale === 'en' ? 'en-US' : 'es-ES';
+    // Persistimos campos traducibles en el locale base (país del comercio o preferencia del usuario).
+    const sourceLocale = normalizeMenuContentLocale(data.sourceLocale) || 'es-ES';
     const restaurantTranslations: { [key: string]: string } = {
       name: data.name,
     };

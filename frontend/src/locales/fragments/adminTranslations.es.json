@@ -26,10 +26,11 @@
     "panelOne": "Traducir un menú",
     "panelDefault": "Cambiar idioma por defecto",
     "pickPanelHint": "Elegí una opción para continuar.",
-    "defaultHelp": "Seleccioná el idioma base (por defecto) para los menús de este comercio. Si solo querés cambiarlo en un menú, usá «Traducir un menú» → «Usar como idioma por defecto».",
+    "defaultHelp": "Seleccioná el idioma base de los menús (p. ej. si al crear el comercio elegiste mal el país). No hace falta agregarlo antes: se retiqueta el contenido actual. Si solo querés cambiarlo en un menú, usá «Traducir un menú» → «Usar como idioma por defecto».",
     "defaultApply": "Usar como idioma por defecto",
     "defaultApplied": "Idioma por defecto actualizado a {{locale}} en {{updated}} menú(s). Omitidos: {{skipped}}.",
-    "defaultSkipNote": "Los menús que aún no tienen este idioma se omiten. Agregalo primero si querés incluirlos.",
+    "defaultSkipNote": "Si el idioma todavía no estaba en un menú, se usa el mismo contenido con el nuevo código (útil para corregir el país).",
+    "defaultPickHint": "Podés elegir cualquier idioma de la lista, aunque aún no esté agregado como traducción.",
     "gapsTitle": "Estado de la traducción",
     "gapsSummary": "{{missing}} menú(s) sin este idioma · {{incomplete}} con textos pendientes · {{ready}} listos",
     "gapsReady": "Todos los menús que tienen este idioma están listos.",
@@ -57,8 +58,8 @@
     "PUBLISHED": "Publicado"
   },
   "localeLabels": {
-    "es-ES": "Español",
-    "en-US": "English"
+    "es-ES": "Español (España)",
+    "en-US": "English (EE.UU.)"
   },
   "localePresets": {
     "groups": {
@@ -99,6 +100,7 @@
       "ca-ES": "Catalán",
       "gl-ES": "Gallego",
       "eu-ES": "Euskera",
+      "es-ES": "Español (España)",
       "es-MX": "Español (México)",
       "es-AR": "Español (Argentina)",
       "es-CO": "Español (Colombia)",
