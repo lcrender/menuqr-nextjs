@@ -355,8 +355,10 @@ export default function AdminTranslationsPage() {
   const [addLocaleSuggestOpen, setAddLocaleSuggestOpen] = useState(false);
   const [addLocaleHighlight, setAddLocaleHighlight] = useState(0);
   const [deleteLocaleBusy, setDeleteLocaleBusy] = useState<{ menuId: string; locale: string } | null>(null);
+  const [deleteRestaurantLocaleBusy, setDeleteRestaurantLocaleBusy] = useState<string | null>(null);
   const [setDefaultBusyKey, setSetDefaultBusyKey] = useState<string | null>(null);
   const [confirmDeleteLocale, setConfirmDeleteLocale] = useState<{ menu: MenuRow; locale: string } | null>(null);
+  const [confirmDeleteRestaurantLocale, setConfirmDeleteRestaurantLocale] = useState<string | null>(null);
   const [confirmAutoTranslate, setConfirmAutoTranslate] = useState<{
     menu: MenuRow;
     locale: string;
@@ -641,6 +643,49 @@ export default function AdminTranslationsPage() {
       setDeleteLocaleBusy(null);
     }
   }, [confirmDeleteLocale, isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg, t]);
+
+  const requestDeleteRestaurantLocale = useCallback((locale: string) => {
+    if (!locale || !selectedRestaurantId) return;
+    setConfirmDeleteRestaurantLocale(locale);
+  }, [selectedRestaurantId]);
+
+  const executeDeleteRestaurantLocale = useCallback(async () => {
+    if (!confirmDeleteRestaurantLocale || !selectedRestaurantId) return;
+    const locale = confirmDeleteRestaurantLocale;
+    setConfirmDeleteRestaurantLocale(null);
+    setDeleteRestaurantLocaleBusy(locale);
+    try {
+      const params: Record<string, string> = { locale };
+      if (isSuperAdmin && tenantIdForApi) params.tenantId = tenantIdForApi;
+      const res = await api.delete(`/menu-translations/restaurants/${selectedRestaurantId}/locales`, {
+        params,
+      });
+      const removed = Number(res?.data?.removedCount ?? 0);
+      const skipped = Number(res?.data?.skippedCount ?? 0);
+      showAlertMsg(
+        t('adminTranslations.alerts.localeDeletedTitle'),
+        t('adminTranslations.alerts.localeDeletedRestaurant', { locale, removed, skipped }),
+        'success',
+      );
+      await loadMenus();
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (e as Error)?.message ||
+        t('adminTranslations.common.error');
+      showAlertMsg(t('adminTranslations.alerts.deleteLocaleTitle'), String(msg), 'error');
+    } finally {
+      setDeleteRestaurantLocaleBusy(null);
+    }
+  }, [
+    confirmDeleteRestaurantLocale,
+    selectedRestaurantId,
+    isSuperAdmin,
+    tenantIdForApi,
+    loadMenus,
+    showAlertMsg,
+    t,
+  ]);
 
   const setMenuDefaultLocale = useCallback(
     async (m: MenuRow, locale: string) => {
@@ -1685,6 +1730,39 @@ export default function AdminTranslationsPage() {
 
                           <div className="admin-translations-all-divider" />
 
+                          {restaurantTargetLocales.length > 0 ? (
+                            <div className="mb-3">
+                              <p className="small text-muted mb-2">
+                                {t('adminTranslations.wizard.removeLocaleAllHelp')}
+                              </p>
+                              <div className="admin-translations-locale-list">
+                                {restaurantTargetLocales.map((l) => (
+                                  <div key={l.locale} className="admin-translations-locale-row">
+                                    <div className="admin-translations-locale-row__meta">
+                                      <span style={{ fontSize: '1.25rem', lineHeight: 1 }} aria-hidden>
+                                        <MenuLocaleFlagGlyph
+                                          flagCode={suggestedFlagCodeFromLocale(l.locale)}
+                                          locale={l.locale}
+                                        />
+                                      </span>
+                                      <span className="admin-translations-locale-row__name">{l.label}</span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="btn btn-link text-danger admin-translations-locale-delete"
+                                      disabled={deleteRestaurantLocaleBusy === l.locale}
+                                      onClick={() => requestDeleteRestaurantLocale(l.locale)}
+                                    >
+                                      {deleteRestaurantLocaleBusy === l.locale
+                                        ? t('adminTranslations.wizard.removeLocaleAllBusy')
+                                        : t('adminTranslations.wizard.removeLocaleAllMenus')}
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+
                           <button
                             type="button"
                             className="btn btn-outline-primary w-100"
@@ -2642,6 +2720,27 @@ export default function AdminTranslationsPage() {
         variant="danger"
         onConfirm={() => void executeDeleteMenuLocale()}
         onCancel={() => setConfirmDeleteLocale(null)}
+      />
+
+      <ConfirmModal
+        className="admin-translations-modal admin-translations-sheet"
+        show={!!confirmDeleteRestaurantLocale}
+        title={t('adminTranslations.confirm.deleteLocaleRestaurantTitle')}
+        message={
+          confirmDeleteRestaurantLocale
+            ? t('adminTranslations.confirm.deleteLocaleRestaurantMessage', {
+                locale: defaultManifestDisplayLabel(
+                  confirmDeleteRestaurantLocale,
+                  restaurantTargetLocales.find((x) => x.locale === confirmDeleteRestaurantLocale)?.label,
+                ),
+              })
+            : ''
+        }
+        confirmText={t('adminTranslations.confirm.delete')}
+        cancelText={t('adminTranslations.common.cancel')}
+        variant="danger"
+        onConfirm={() => void executeDeleteRestaurantLocale()}
+        onCancel={() => setConfirmDeleteRestaurantLocale(null)}
       />
 
       <ConfirmModal

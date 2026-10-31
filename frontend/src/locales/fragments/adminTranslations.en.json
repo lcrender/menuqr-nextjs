@@ -19,6 +19,9 @@
     "additionalLocales": "Additional languages configured",
     "noAdditionalLocales": "No additional languages yet. Add one for all menus.",
     "addLocaleAllMenus": "Add language to all menus",
+    "removeLocaleAllMenus": "Remove language from all menus",
+    "removeLocaleAllHelp": "If a language still shows on the public menu, remove it here to delete it from every menu of this business.",
+    "removeLocaleAllBusy": "Removing…",
     "panelAll": "Translate all menus",
     "panelOne": "Translate one menu",
     "panelDefault": "Change default language",
@@ -301,6 +304,7 @@
     "loadMenusError": "Error loading menus",
     "localeDeletedTitle": "Language deleted",
     "localeDeleted": "{{locale}} was removed from the menu.",
+    "localeDeletedRestaurant": "{{locale}} was removed from {{removed}} menu(s). Skipped: {{skipped}}.",
     "deleteLocaleTitle": "Delete language",
     "defaultLocaleTitle": "Default language",
     "defaultLocaleSuccess": "The menu’s base language is now {{locale}}. The previous one ({{previous}}) is now a translation.",
@@ -319,6 +323,8 @@
   "confirm": {
     "deleteLocaleTitle": "Delete language",
     "deleteLocaleMessage": "Delete language “{{locale}}” and all its translations from this menu? This cannot be undone.",
+    "deleteLocaleRestaurantTitle": "Delete language from business",
+    "deleteLocaleRestaurantMessage": "Delete language “{{locale}}” and all its translations from every menu of this business? This cannot be undone. Menus where it is the base language are skipped.",
     "delete": "Delete"
   }
 }

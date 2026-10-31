@@ -516,8 +516,8 @@ export class MenuTranslationsService {
   }
 
   /**
-   * Elimina todas las filas de `translations` para un locale del menú (menú, secciones, ítems)
-   * y la entrada correspondiente en `translation_manifest`. No afecta es-ES.
+   * Elimina todas las filas de `translations` para un locale del menú (menú, secciones, ítems;
+   * incluye hijos soft-deleted) y la entrada en `translation_manifest`. No afecta el idioma base.
    */
   async removeLocale(tenantId: string, menuId: string, localeRaw: string) {
     const locale = this.normalizeMenuLocaleTag(localeRaw);
@@ -529,16 +529,24 @@ export class MenuTranslationsService {
     if (locale === sourceLocale) {
       throw new BadRequestException(`No se puede eliminar el idioma base (${sourceLocale}).`);
     }
-    const distinct = await this.distinctLocalesForMenu(tenantId, menuId, sourceLocale);
-    if (!distinct.includes(locale)) {
-      throw new NotFoundException('Ese idioma no está configurado en este menú.');
-    }
 
-    const entityIds = await this.collectEntityIdsForMenu(menuId);
-    const placeholders = entityIds.map((_, i) => `$${i + 3}`).join(', ');
+    // Borrado por relación de menú (incluye secciones/ítems soft-deleted) para no dejar idiomas fantasma.
     await this.postgres.executeRaw(
-      `DELETE FROM translations WHERE tenant_id = $1 AND locale = $2 AND entity_id IN (${placeholders})`,
-      [tenantId, locale, ...entityIds],
+      `DELETE FROM translations t
+       WHERE t.tenant_id = $1
+         AND t.locale = $2
+         AND (
+           (t.entity_type = 'menu' AND t.entity_id = $3)
+           OR (
+             t.entity_type = 'menu_section'
+             AND t.entity_id IN (SELECT id FROM menu_sections WHERE menu_id = $3)
+           )
+           OR (
+             t.entity_type = 'menu_item'
+             AND t.entity_id IN (SELECT id FROM menu_items WHERE menu_id = $3)
+           )
+         )`,
+      [tenantId, locale, menuId],
     );
 
     if (await this.menusHaveTranslationManifestColumn()) {
@@ -552,8 +560,62 @@ export class MenuTranslationsService {
       await this.writeManifest(menuId, tenantId, next);
     }
 
+    try {
+      await this.postgres.executeRaw(
+        `UPDATE menus
+         SET auto_translated_locales = COALESCE(
+           (
+             SELECT jsonb_agg(value)
+             FROM jsonb_array_elements_text(COALESCE(auto_translated_locales, '[]'::jsonb)) AS value
+             WHERE value <> $1
+           ),
+           '[]'::jsonb
+         ),
+         updated_at = NOW()
+         WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL`,
+        [locale, menuId, tenantId],
+      );
+    } catch {
+      /* columna opcional / migraciones viejas */
+    }
+
     this.i18n.clearCache(tenantId);
-    return { ok: true, locales: await this.distinctLocalesForMenu(tenantId, menuId) };
+    return { ok: true, locales: await this.distinctLocalesForMenu(tenantId, menuId, sourceLocale) };
+  }
+
+  /** Quita un idioma de todos los menús del comercio (omite los que lo tienen como base). */
+  async removeRestaurantLocale(tenantId: string, restaurantId: string, localeRaw: string) {
+    const locale = this.normalizeMenuLocaleTag(localeRaw);
+    if (!locale || !MENU_LOCALE_BCP47_REGEX.test(locale)) {
+      throw new BadRequestException('Código de idioma (locale) inválido.');
+    }
+    const menus = await this.listMenusForRestaurant(tenantId, restaurantId);
+    const removed: string[] = [];
+    const skipped: Array<{ menuId: string; menuName: string; reason: string }> = [];
+    for (const m of menus) {
+      const source = String(m.sourceLocale || 'es-ES');
+      if (source === locale) {
+        skipped.push({ menuId: m.id, menuName: m.name, reason: 'is_default' });
+        continue;
+      }
+      const hasLocale =
+        (m.locales || []).includes(locale) ||
+        this.parseManifest(m.translationManifest).some((e) => e.locale === locale);
+      if (!hasLocale) {
+        skipped.push({ menuId: m.id, menuName: m.name, reason: 'missing_locale' });
+        continue;
+      }
+      await this.removeLocale(tenantId, m.id, locale);
+      removed.push(m.id);
+    }
+    return {
+      ok: true,
+      locale,
+      removedCount: removed.length,
+      skippedCount: skipped.length,
+      removed,
+      skipped,
+    };
   }
 
   async renameLocale(tenantId: string, menuId: string, dto: RenameMenuLocaleDto) {

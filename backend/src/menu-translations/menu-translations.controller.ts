@@ -215,6 +215,25 @@ export class MenuTranslationsController {
     return this.menuTranslationsService.setRestaurantDefaultLocale(tenantId, restaurantId, body.locale);
   }
 
+  @Delete('restaurants/:restaurantId/locales')
+  @ApiOperation({
+    summary:
+      'Quitar un idioma de todos los menús del comercio (borra traducciones y manifest; omite menús donde es el idioma base)',
+  })
+  @ApiQuery({ name: 'locale', required: true, example: 'en-US' })
+  @ApiQuery({ name: 'tenantId', required: false, description: 'Solo SUPER_ADMIN' })
+  async removeRestaurantLocale(
+    @Param('restaurantId') restaurantId: string,
+    @Query('locale') locale: string,
+    @Query('tenantId') tenantIdQuery: string | undefined,
+    @Request() req: any,
+  ) {
+    if (!restaurantId) throw new BadRequestException('restaurantId es requerido');
+    if (!locale?.trim()) throw new BadRequestException('locale es requerido');
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, undefined, tenantIdQuery);
+    return this.menuTranslationsService.removeRestaurantLocale(tenantId, restaurantId, locale);
+  }
+
   @Post('restaurants/:restaurantId/auto-translate')
   @ApiOperation({
     summary:

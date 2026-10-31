@@ -379,7 +379,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
       </div>
 
       <footer className="template-smartfood footer" data-ve-hit="footer" style={{ width: '100%' }}>
-        <div style={{ width: '100%', maxWidth: '720px', margin: '0 auto' }}>
+        <div className="smartfood-footer-inner">
           <div className="row">
             <div className="col-md-6">
               {showName ? <h4 style={{ marginBottom: '16px' }}>{restaurant.name}</h4> : null}

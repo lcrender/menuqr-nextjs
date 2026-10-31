@@ -13,7 +13,16 @@ export type MenuLangManifestEntry = {
   enabledPublic?: boolean;
 };
 
-export type MenuTabVariant = 'classic' | 'minimalist' | 'foodie' | 'gourmet' | 'burgers' | 'italianFood' | 'proMobile' | 'nightClub';
+export type MenuTabVariant =
+  | 'classic'
+  | 'minimalist'
+  | 'foodie'
+  | 'gourmet'
+  | 'burgers'
+  | 'italianFood'
+  | 'proMobile'
+  | 'nightClub'
+  | 'smartFood';
 
 export type TemplateMenuLocalesProps = {
   locales: string[];
@@ -38,6 +47,7 @@ export function normalizeMenuTabVariant(template: string | undefined): MenuTabVa
   if (x === 'gourmet') return 'gourmet';
   if (x === 'promobile') return 'proMobile';
   if (x === 'nightclub') return 'nightClub';
+  if (x === 'smartfood') return 'smartFood';
   return 'classic';
 }
 
@@ -128,7 +138,7 @@ export function isBcp47MenuLocale(s: string): boolean {
 }
 
 function localeSelectWrapperStyle(variant?: MenuTabVariant): CSSProperties {
-  if (variant === 'foodie') return {};
+  if (variant === 'foodie' || variant === 'smartFood') return { marginBottom: '12px' };
   return { marginBottom: '50px' };
 }
 
@@ -217,6 +227,17 @@ function menuTabButtonStyle(
         background: active ? primary : 'transparent',
         lineHeight: 1.3,
       };
+    case 'smartFood':
+      return {
+        ...base,
+        borderRadius: '999px',
+        padding: '9px 16px',
+        fontSize: '0.9rem',
+        fontWeight: 600,
+        border: 'none',
+        color: active ? '#fff' : '#374151',
+        background: active ? primary : '#e8eaed',
+      };
     case 'classic':
     default:
       return {
@@ -245,6 +266,8 @@ function localeTabsWrapperStyle(variant: MenuTabVariant): CSSProperties {
       return { marginBottom: '32px' };
     case 'italianFood':
       return { marginBottom: '40px' };
+    case 'smartFood':
+      return { marginBottom: '14px' };
     case 'minimalist':
       return { marginTop: '30px', marginBottom: '40px' };
     case 'classic':
@@ -323,7 +346,7 @@ export default function MenuLanguageSwitcher({
     const italianFoodLocales = variant === 'italianFood';
     return (
       <div
-        className={`menu-locale-tabs ${italianFoodLocales ? 'italian-food-locale-tabs' : 'mb-5'} ${className || ''}`.trim()}
+        className={`menu-locale-tabs ${italianFoodLocales ? 'italian-food-locale-tabs' : variant === 'smartFood' ? '' : 'mb-5'} ${className || ''}`.trim()}
         style={localeTabsWrapperStyle(variant)}
       >
         <div

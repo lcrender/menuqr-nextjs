@@ -19,6 +19,9 @@
     "additionalLocales": "Idiomas adicionales configurados",
     "noAdditionalLocales": "Todavía no hay idiomas adicionales. Agregá uno para todos los menús.",
     "addLocaleAllMenus": "Agregar idioma a todos los menús",
+    "removeLocaleAllMenus": "Quitar idioma de todos los menús",
+    "removeLocaleAllHelp": "Si un idioma sigue apareciendo en la carta pública, quitalo acá para borrarlo de todos los menús del comercio.",
+    "removeLocaleAllBusy": "Eliminando…",
     "panelAll": "Traducir todos los menús",
     "panelOne": "Traducir un menú",
     "panelDefault": "Cambiar idioma por defecto",
@@ -301,6 +304,7 @@
     "loadMenusError": "Error al cargar menús",
     "localeDeletedTitle": "Idioma eliminado",
     "localeDeleted": "Se quitó {{locale}} del menú.",
+    "localeDeletedRestaurant": "Se quitó {{locale}} de {{removed}} menú(s). Omitidos: {{skipped}}.",
     "deleteLocaleTitle": "Eliminar idioma",
     "defaultLocaleTitle": "Idioma por defecto",
     "defaultLocaleSuccess": "Ahora el idioma base del menú es {{locale}}. El anterior ({{previous}}) quedó como traducción.",
@@ -319,6 +323,8 @@
   "confirm": {
     "deleteLocaleTitle": "Eliminar idioma",
     "deleteLocaleMessage": "¿Eliminar el idioma «{{locale}}» y todas sus traducciones de este menú? Esta acción no se puede deshacer.",
+    "deleteLocaleRestaurantTitle": "Eliminar idioma del comercio",
+    "deleteLocaleRestaurantMessage": "¿Eliminar el idioma «{{locale}}» y todas sus traducciones de todos los menús de este comercio? No se puede deshacer. Los menús donde sea el idioma base se omiten.",
     "delete": "Eliminar"
   }
 }

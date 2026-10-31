@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 /** Bump al cambiar estilos admin para evitar caché del navegador. */
 const ADMIN_CSS_V = '20261030y';
 /** Bump al cambiar CSS de plantillas (preview mockup, etc.). */
-const MENU_CSS_V = '20261019b';
+const MENU_CSS_V = '20261030z';
 
 const ADMIN_STYLES = [
   `/css/admin.css?v=${ADMIN_CSS_V}`,
