@@ -1,4 +1,5 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export type AdminSelectOption = {
   value: string;
@@ -23,6 +24,17 @@ type AdminSelectProps = {
   'aria-label'?: string;
 };
 
+type DropdownPos = {
+  top: number;
+  left: number;
+  width: number;
+  maxHeight: number;
+  placement: 'bottom' | 'top';
+};
+
+const VIEWPORT_GAP = 8;
+const DROPDOWN_GAP = 6;
+
 export default function AdminSelect({
   value,
   onChange,
@@ -39,12 +51,20 @@ export default function AdminSelect({
 }: AdminSelectProps) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [highlight, setHighlight] = useState(0);
+  const [pos, setPos] = useState<DropdownPos | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const enableSearch = searchable ?? options.length > 6;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const selected = useMemo(
     () => options.find((o) => o.value === value) ?? null,
@@ -57,9 +77,37 @@ export default function AdminSelect({
     return options.filter(
       (o) =>
         o.label.toLowerCase().includes(term) ||
-        (o.hint && o.hint.toLowerCase().includes(term)),
+        (o.hint && o.hint.toLowerCase().includes(term)) ||
+        o.value.toLowerCase().includes(term),
     );
   }, [options, query]);
+
+  const updatePosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom - VIEWPORT_GAP;
+    const spaceAbove = rect.top - VIEWPORT_GAP;
+    const preferredMax = Math.min(320, Math.floor(window.innerHeight * 0.55));
+    const placeTop = spaceBelow < 180 && spaceAbove > spaceBelow;
+    const available = placeTop ? spaceAbove : spaceBelow;
+    const maxHeight = Math.max(120, Math.min(preferredMax, available - DROPDOWN_GAP));
+    setPos({
+      top: placeTop ? rect.top - DROPDOWN_GAP : rect.bottom + DROPDOWN_GAP,
+      left: rect.left,
+      width: rect.width,
+      maxHeight,
+      placement: placeTop ? 'top' : 'bottom',
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPos(null);
+      return;
+    }
+    updatePosition();
+  }, [open, updatePosition, filtered.length, enableSearch]);
 
   useEffect(() => {
     if (!open) return;
@@ -78,20 +126,27 @@ export default function AdminSelect({
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      if (rootRef.current?.contains(target)) return;
+      if (dropdownRef.current?.contains(target)) return;
+      setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
+    const onReposition = () => updatePosition();
     document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', onReposition);
+    // capture: reposicionar también con scroll de contenedores internos
+    window.addEventListener('scroll', onReposition, true);
     return () => {
       document.removeEventListener('mousedown', onDoc);
       document.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', onReposition);
+      window.removeEventListener('scroll', onReposition, true);
     };
-  }, [open]);
+  }, [open, updatePosition]);
 
   const pick = (next: string) => {
     onChange(next);
@@ -126,6 +181,88 @@ export default function AdminSelect({
     }
   };
 
+  const dropdown =
+    open && !disabled && mounted && pos
+      ? createPortal(
+          <>
+            <div
+              className="admin-select-dropdown-overlay"
+              aria-hidden
+              onClick={() => setOpen(false)}
+            />
+            <div
+              ref={dropdownRef}
+              id={listId}
+              className={`admin-select-dropdown admin-fancy-select__dropdown admin-select-dropdown--portal admin-select-dropdown--${pos.placement}`}
+              role="listbox"
+              aria-label={ariaLabel || placeholder}
+              tabIndex={-1}
+              onKeyDown={onListKeyDown}
+              style={{
+                top: pos.placement === 'top' ? undefined : pos.top,
+                bottom:
+                  pos.placement === 'top'
+                    ? window.innerHeight - pos.top
+                    : undefined,
+                left: pos.left,
+                width: pos.width,
+                maxHeight: pos.maxHeight,
+              }}
+            >
+              {enableSearch ? (
+                <div className="admin-fancy-select__search">
+                  <input
+                    ref={searchRef}
+                    type="search"
+                    className="admin-fancy-select__search-input"
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setHighlight(0);
+                    }}
+                    placeholder={searchPlaceholder}
+                    autoComplete="off"
+                    onKeyDown={onListKeyDown}
+                  />
+                </div>
+              ) : null}
+
+              {filtered.length === 0 ? (
+                <div className="admin-select-dropdown__empty">{emptyMessage}</div>
+              ) : (
+                filtered.map((opt, idx) => {
+                  const isSelected = opt.value === value;
+                  const isActive = idx === highlight;
+                  return (
+                    <div
+                      key={opt.value || `__empty-${idx}`}
+                      role="option"
+                      aria-selected={isSelected}
+                      className={`admin-select-dropdown__item admin-fancy-select__option ${
+                        isSelected ? 'admin-select-dropdown__item--selected' : ''
+                      } ${isActive ? 'admin-fancy-select__option--active' : ''}`}
+                      onMouseEnter={() => setHighlight(idx)}
+                      onClick={() => pick(opt.value)}
+                    >
+                      <span className="admin-fancy-select__option-label">{opt.label}</span>
+                      {opt.hint ? (
+                        <span className="admin-fancy-select__option-hint">{opt.hint}</span>
+                      ) : null}
+                      {isSelected ? (
+                        <span className="admin-fancy-select__check" aria-hidden>
+                          ✓
+                        </span>
+                      ) : null}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </>,
+          document.body,
+        )
+      : null;
+
   return (
     <div
       ref={rootRef}
@@ -146,6 +283,7 @@ export default function AdminSelect({
       ) : null}
 
       <button
+        ref={triggerRef}
         type="button"
         className="admin-fancy-select__trigger wizard-input-large"
         disabled={disabled}
@@ -190,72 +328,7 @@ export default function AdminSelect({
         </span>
       </button>
 
-      {open && !disabled ? (
-        <>
-          <div
-            className="admin-select-dropdown-overlay"
-            aria-hidden
-            onClick={() => setOpen(false)}
-          />
-          <div
-            id={listId}
-            className="admin-select-dropdown admin-fancy-select__dropdown"
-            role="listbox"
-            aria-label={ariaLabel || placeholder}
-            tabIndex={-1}
-            onKeyDown={onListKeyDown}
-          >
-            {enableSearch ? (
-              <div className="admin-fancy-select__search">
-                <input
-                  ref={searchRef}
-                  type="search"
-                  className="admin-fancy-select__search-input"
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setHighlight(0);
-                  }}
-                  placeholder={searchPlaceholder}
-                  autoComplete="off"
-                  onKeyDown={onListKeyDown}
-                />
-              </div>
-            ) : null}
-
-            {filtered.length === 0 ? (
-              <div className="admin-select-dropdown__empty">{emptyMessage}</div>
-            ) : (
-              filtered.map((opt, idx) => {
-                const isSelected = opt.value === value;
-                const isActive = idx === highlight;
-                return (
-                  <div
-                    key={opt.value || `__empty-${idx}`}
-                    role="option"
-                    aria-selected={isSelected}
-                    className={`admin-select-dropdown__item admin-fancy-select__option ${
-                      isSelected ? 'admin-select-dropdown__item--selected' : ''
-                    } ${isActive ? 'admin-fancy-select__option--active' : ''}`}
-                    onMouseEnter={() => setHighlight(idx)}
-                    onClick={() => pick(opt.value)}
-                  >
-                    <span className="admin-fancy-select__option-label">{opt.label}</span>
-                    {opt.hint ? (
-                      <span className="admin-fancy-select__option-hint">{opt.hint}</span>
-                    ) : null}
-                    {isSelected ? (
-                      <span className="admin-fancy-select__check" aria-hidden>
-                        ✓
-                      </span>
-                    ) : null}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </>
-      ) : null}
+      {dropdown}
     </div>
   );
 }

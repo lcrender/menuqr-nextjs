@@ -4864,6 +4864,16 @@ body {
   scrollbar-color: rgba(99, 102, 241, 0.35) transparent;
 }
 
+/* Portal a body: no lo corta overflow:hidden de .admin-card */
+.admin-select-dropdown.admin-select-dropdown--portal {
+  position: fixed;
+  right: auto;
+  top: auto;
+  margin: 0;
+  z-index: 12050;
+  box-sizing: border-box;
+}
+
 .admin-select-dropdown::-webkit-scrollbar {
   width: 6px;
 }
@@ -4910,7 +4920,7 @@ body {
 .admin-select-dropdown-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2000;
+  z-index: 12040;
   background: rgba(15, 23, 42, 0.06);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);

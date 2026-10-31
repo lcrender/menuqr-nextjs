@@ -358,7 +358,6 @@ export default function AdminTranslationsPage() {
   const [addLocaleHighlight, setAddLocaleHighlight] = useState(0);
   const [deleteLocaleBusy, setDeleteLocaleBusy] = useState<{ menuId: string; locale: string } | null>(null);
   const [deleteRestaurantLocaleBusy, setDeleteRestaurantLocaleBusy] = useState<string | null>(null);
-  const [setDefaultBusyKey, setSetDefaultBusyKey] = useState<string | null>(null);
   const [confirmDeleteLocale, setConfirmDeleteLocale] = useState<{ menu: MenuRow; locale: string } | null>(null);
   const [confirmDeleteRestaurantLocale, setConfirmDeleteRestaurantLocale] = useState<string | null>(null);
   const [confirmAutoTranslate, setConfirmAutoTranslate] = useState<{
@@ -688,34 +687,6 @@ export default function AdminTranslationsPage() {
     showAlertMsg,
     t,
   ]);
-
-  const setMenuDefaultLocale = useCallback(
-    async (m: MenuRow, locale: string) => {
-      const source = menuSourceLocale(m);
-      if (locale === source) return;
-      setSetDefaultBusyKey(`${m.id}:${locale}`);
-      try {
-        const body: Record<string, string> = { locale };
-        if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
-        await api.post(`/menu-translations/menus/${m.id}/set-default-locale`, body);
-        showAlertMsg(
-          t('adminTranslations.alerts.defaultLocaleTitle'),
-          t('adminTranslations.alerts.defaultLocaleSuccess', { locale, previous: source }),
-          'success',
-        );
-        await loadMenus();
-      } catch (e: unknown) {
-        const msg =
-          (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          (e as Error)?.message ||
-          t('adminTranslations.common.error');
-        showAlertMsg(t('adminTranslations.alerts.defaultLocaleTitle'), String(msg), 'error');
-      } finally {
-        setSetDefaultBusyKey(null);
-      }
-    },
-    [isSuperAdmin, tenantIdForApi, loadMenus, showAlertMsg, t],
-  );
 
   const submitAddLocale = async () => {
     if (addScope === 'menu' && !addMenuId) return;
@@ -1870,17 +1841,6 @@ export default function AdminTranslationsPage() {
                                                     onClick={() => void openWorkbench(m.id, loc)}
                                                   >
                                                     {t('adminTranslations.menuCard.translate')}
-                                                  </button>
-                                                  <button
-                                                    type="button"
-                                                    className="btn btn-outline-secondary admin-translations-locale-action"
-                                                    title={t('adminTranslations.menuCard.useAsDefaultTitle')}
-                                                    disabled={setDefaultBusyKey === `${m.id}:${loc}`}
-                                                    onClick={() => void setMenuDefaultLocale(m, loc)}
-                                                  >
-                                                    {setDefaultBusyKey === `${m.id}:${loc}`
-                                                      ? t('adminTranslations.menuCard.changing')
-                                                      : t('adminTranslations.menuCard.useAsDefault')}
                                                   </button>
                                                   <button
                                                     type="button"
