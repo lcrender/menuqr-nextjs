@@ -215,10 +215,27 @@ export class MenuTranslationsController {
     return this.menuTranslationsService.setRestaurantDefaultLocale(tenantId, restaurantId, body.locale);
   }
 
-  @Delete('restaurants/:restaurantId/locales')
+  @Post('restaurants/:restaurantId/remove-locale')
   @ApiOperation({
     summary:
       'Quitar un idioma de todos los menús del comercio (borra traducciones y manifest; omite menús donde es el idioma base)',
+  })
+  async postRemoveRestaurantLocale(
+    @Param('restaurantId') restaurantId: string,
+    @Body() body: SetDefaultLocaleDto,
+    @Request() req: any,
+  ) {
+    if (!restaurantId) throw new BadRequestException('restaurantId es requerido');
+    if (!body?.locale?.trim()) throw new BadRequestException('locale es requerido');
+    const tenantId = await this.menuTranslationsService.assertTranslationsFeature(req, body.tenantId);
+    return this.menuTranslationsService.removeRestaurantLocale(tenantId, restaurantId, body.locale);
+  }
+
+  /** Alias DELETE (mismo efecto que POST remove-locale). */
+  @Delete('restaurants/:restaurantId/locales')
+  @ApiOperation({
+    summary:
+      'Quitar un idioma de todos los menús del comercio (alias de POST …/remove-locale)',
   })
   @ApiQuery({ name: 'locale', required: true, example: 'en-US' })
   @ApiQuery({ name: 'tenantId', required: false, description: 'Solo SUPER_ADMIN' })

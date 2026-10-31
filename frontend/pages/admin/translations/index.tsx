@@ -656,11 +656,12 @@ export default function AdminTranslationsPage() {
     setConfirmDeleteRestaurantLocale(null);
     setDeleteRestaurantLocaleBusy(locale);
     try {
-      const params: Record<string, string> = { locale };
-      if (isSuperAdmin && tenantIdForApi) params.tenantId = tenantIdForApi;
-      const res = await api.delete(`/menu-translations/restaurants/${selectedRestaurantId}/locales`, {
-        params,
-      });
+      const body: Record<string, string> = { locale };
+      if (isSuperAdmin && tenantIdForApi) body.tenantId = tenantIdForApi;
+      const res = await api.post(
+        `/menu-translations/restaurants/${selectedRestaurantId}/remove-locale`,
+        body,
+      );
       const removed = Number(res?.data?.removedCount ?? 0);
       const skipped = Number(res?.data?.skippedCount ?? 0);
       showAlertMsg(
@@ -2028,7 +2029,14 @@ export default function AdminTranslationsPage() {
                           ) : defaultCoverage && defaultLocalePick !== restaurantDefaultLocale ? (
                             <div className="admin-translations-gaps mb-3">
                               <h5 className="h6 mb-2">{t('adminTranslations.wizard.gapsTitle')}</h5>
-                              {(defaultCoverage.missingLocale > 0 || defaultCoverage.incomplete > 0) && (
+                              {defaultCoverage.missingLocale > 0 && defaultCoverage.incomplete === 0 ? (
+                                <div className="alert alert-info py-2 small mb-3" role="status">
+                                  {t('adminTranslations.wizard.gapsRetagSummary', {
+                                    count: defaultCoverage.missingLocale,
+                                  })}
+                                </div>
+                              ) : null}
+                              {defaultCoverage.incomplete > 0 ? (
                                 <div className="alert alert-warning py-2 small mb-3" role="status">
                                   {t('adminTranslations.wizard.gapsSummary', {
                                     missing: defaultCoverage.missingLocale,
@@ -2036,7 +2044,7 @@ export default function AdminTranslationsPage() {
                                     ready: defaultCoverage.ready,
                                   })}
                                 </div>
-                              )}
+                              ) : null}
                               {defaultCoverage.missingLocale === 0 && defaultCoverage.incomplete === 0 && (
                                 <div className="alert alert-success py-2 small mb-3" role="status">
                                   {t('adminTranslations.wizard.gapsReady')}
@@ -2056,43 +2064,49 @@ export default function AdminTranslationsPage() {
                                       </li>
                                     );
                                   }
-                                  const bits: string[] = [];
                                   if (!row.hasLocale) {
-                                    bits.push(t('adminTranslations.wizard.gapMissingLocale'));
-                                  } else {
-                                    if (row.missingItems > 0) {
-                                      bits.push(
-                                        t('adminTranslations.wizard.gapMissingItems', {
-                                          count: row.missingItems,
-                                        }),
-                                      );
-                                    }
-                                    if (row.missingSections > 0) {
-                                      bits.push(
-                                        t('adminTranslations.wizard.gapMissingSections', {
-                                          count: row.missingSections,
-                                        }),
-                                      );
-                                    }
-                                    if (row.sameAsSourceItems > 0) {
-                                      bits.push(
-                                        t('adminTranslations.wizard.gapSameAsSourceItems', {
-                                          count: row.sameAsSourceItems,
-                                        }),
-                                      );
-                                    }
-                                    if (row.sameAsSourceSections > 0) {
-                                      bits.push(
-                                        t('adminTranslations.wizard.gapSameAsSourceSections', {
-                                          count: row.sameAsSourceSections,
-                                        }),
-                                      );
-                                    }
-                                    if (row.staleFields > 0) {
-                                      bits.push(
-                                        t('adminTranslations.wizard.gapStale', { count: row.staleFields }),
-                                      );
-                                    }
+                                    return (
+                                      <li key={row.menuId} className="admin-translations-gaps__item is-ok">
+                                        <div className="fw-semibold">{row.menuName}</div>
+                                        <div className="small text-muted">
+                                          {t('adminTranslations.wizard.gapMissingLocale')}
+                                        </div>
+                                      </li>
+                                    );
+                                  }
+                                  const bits: string[] = [];
+                                  if (row.missingItems > 0) {
+                                    bits.push(
+                                      t('adminTranslations.wizard.gapMissingItems', {
+                                        count: row.missingItems,
+                                      }),
+                                    );
+                                  }
+                                  if (row.missingSections > 0) {
+                                    bits.push(
+                                      t('adminTranslations.wizard.gapMissingSections', {
+                                        count: row.missingSections,
+                                      }),
+                                    );
+                                  }
+                                  if (row.sameAsSourceItems > 0) {
+                                    bits.push(
+                                      t('adminTranslations.wizard.gapSameAsSourceItems', {
+                                        count: row.sameAsSourceItems,
+                                      }),
+                                    );
+                                  }
+                                  if (row.sameAsSourceSections > 0) {
+                                    bits.push(
+                                      t('adminTranslations.wizard.gapSameAsSourceSections', {
+                                        count: row.sameAsSourceSections,
+                                      }),
+                                    );
+                                  }
+                                  if (row.staleFields > 0) {
+                                    bits.push(
+                                      t('adminTranslations.wizard.gapStale', { count: row.staleFields }),
+                                    );
                                   }
                                   return (
                                     <li key={row.menuId} className="admin-translations-gaps__item is-warn">
