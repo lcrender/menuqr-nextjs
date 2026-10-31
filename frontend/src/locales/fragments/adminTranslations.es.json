@@ -23,7 +23,7 @@
     "panelOne": "Traducir un menú",
     "panelDefault": "Cambiar idioma por defecto",
     "pickPanelHint": "Elegí una opción para continuar.",
-    "defaultHelp": "Seleccioná el idioma que querés usar como predeterminado en los menús de este comercio.",
+    "defaultHelp": "Seleccioná el idioma base (por defecto) para los menús de este comercio. Si solo querés cambiarlo en un menú, usá «Traducir un menú» → «Usar como idioma por defecto».",
     "defaultApply": "Usar como idioma por defecto",
     "defaultApplied": "Idioma por defecto actualizado a {{locale}} en {{updated}} menú(s). Omitidos: {{skipped}}.",
     "defaultSkipNote": "Los menús que aún no tienen este idioma se omiten. Agregalo primero si querés incluirlos.",
@@ -184,7 +184,7 @@
   },
   "menuCard": {
     "addLocale": "Agregar idioma",
-    "nameAndLocales": "Nombre e idiomas",
+    "nameAndLocales": "Editar nombres visibles",
     "defaultBadge": "Por defecto",
     "defaultBadgeTitle": "Idioma por defecto del menú",
     "autoBadge": "Auto",
@@ -257,11 +257,11 @@
     "success": "Idioma agregado. Podés abrir el editor para afinar las traducciones."
   },
   "settings": {
-    "title": "Nombre e idiomas",
+    "title": "Editar nombres visibles",
     "menuNameLabel": "Nombre del menú",
     "menuNameHelp": "Así se llama este menú en el panel de administración.",
-    "labelsHeading": "Idiomas del menú",
-    "labelsHelp": "Editá el nombre visible y la bandera de cada idioma. También podés ocultarlo en la carta QR.",
+    "labelsHeading": "Nombre visible de cada idioma",
+    "labelsHelp": "Este nombre es el que se muestra en el selector de idiomas de la carta (ej. English, Español). También podés ajustar la bandera y si aparece en el menú público.",
     "label": "Nombre visible",
     "countryCode": "Código de país / bandera",
     "visiblePublic": "Visible en menú público",

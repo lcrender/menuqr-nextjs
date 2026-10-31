@@ -23,7 +23,7 @@
     "panelOne": "Translate one menu",
     "panelDefault": "Change default language",
     "pickPanelHint": "Choose an option to continue.",
-    "defaultHelp": "Select the language you want as default across this business’s menus.",
+    "defaultHelp": "Choose the base (default) language for this business’s menus. To change it on a single menu, use “Translate one menu” → “Use as default language”.",
     "defaultApply": "Use as default language",
     "defaultApplied": "Default language updated to {{locale}} on {{updated}} menu(s). Skipped: {{skipped}}.",
     "defaultSkipNote": "Menus that do not have this language yet are skipped. Add it first if you want to include them.",
@@ -184,7 +184,7 @@
   },
   "menuCard": {
     "addLocale": "Add language",
-    "nameAndLocales": "Name & languages",
+    "nameAndLocales": "Edit display names",
     "defaultBadge": "Default",
     "defaultBadgeTitle": "Default language of the menu",
     "autoBadge": "Auto",
@@ -257,11 +257,11 @@
     "success": "Language added. You can open the editor to refine the translations."
   },
   "settings": {
-    "title": "Name & languages",
+    "title": "Edit display names",
     "menuNameLabel": "Menu name",
     "menuNameHelp": "This is how the menu appears in the admin panel.",
-    "labelsHeading": "Menu languages",
-    "labelsHelp": "Edit each language’s display name and flag. You can also hide it on the QR menu.",
+    "labelsHeading": "Display name for each language",
+    "labelsHelp": "This is the name shown in the public menu language switcher (e.g. English, Español). You can also adjust the flag and whether it appears on the QR menu.",
     "label": "Display name",
     "countryCode": "Country / flag code",
     "visiblePublic": "Visible on public menu",

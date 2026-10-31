@@ -4,7 +4,7 @@
   font-family: 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: #f4f5f6;
   color: #1f2933;
-  min-height: 100vh;
+  /* Sin min-height 100vh: evitaba un bloque vacío debajo del crédito appmenuqr.com */
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
@@ -16,7 +16,7 @@
   max-width: 720px;
   min-width: 0;
   margin: 0 auto;
-  padding: 24px 16px 0;
+  padding: 24px 16px 8px;
   box-sizing: border-box;
 }
 
@@ -280,7 +280,9 @@
 .template-smartfood .footer {
   background: #eceef0;
   color: #374151;
-  margin-top: 8px;
+  margin-top: 12px;
+  margin-bottom: 0;
+  padding: 28px 24px 20px;
 }
 
 .template-smartfood .footer a {

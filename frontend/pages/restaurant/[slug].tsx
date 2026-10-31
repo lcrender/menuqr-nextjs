@@ -133,6 +133,7 @@ interface Menu {
   restaurantName: string;
   restaurantSlug: string;
   sections: MenuSection[];
+  sourceLocale?: string;
   availableLocales?: string[];
   translationLanguageManifest?: MenuLangManifestEntry[];
 }
@@ -229,9 +230,11 @@ export default function RestaurantPage({
   useEffect(() => {
     if (!selectedMenu?.availableLocales?.length) return;
     if (selectedMenu.availableLocales.includes(contentLocale)) return;
-    const fb: string = selectedMenu.availableLocales.includes('es-ES')
-      ? 'es-ES'
-      : (selectedMenu.availableLocales[0] ?? 'es-ES');
+    const source = selectedMenu.sourceLocale;
+    const fb: string =
+      (source && selectedMenu.availableLocales.includes(source) ? source : null) ||
+      selectedMenu.availableLocales[0] ||
+      'es-ES';
     setContentLocale(fb);
     if (typeof slug === 'string') {
       try {

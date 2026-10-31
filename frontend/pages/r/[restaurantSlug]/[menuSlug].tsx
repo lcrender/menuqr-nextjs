@@ -128,6 +128,7 @@ interface Menu {
   restaurantName: string;
   restaurantSlug: string;
   sections: MenuSection[];
+  sourceLocale?: string;
   availableLocales?: string[];
   translationLanguageManifest?: MenuLangManifestEntry[];
 }
@@ -210,9 +211,11 @@ export default function MenuPage({
   useEffect(() => {
     if (!menu?.availableLocales?.length) return;
     if (menu.availableLocales.includes(contentLocale)) return;
-    const fb: string = menu.availableLocales.includes('es-ES')
-      ? 'es-ES'
-      : (menu.availableLocales[0] ?? 'es-ES');
+    const source = menu.sourceLocale;
+    const fb: string =
+      (source && menu.availableLocales.includes(source) ? source : null) ||
+      menu.availableLocales[0] ||
+      'es-ES';
     setContentLocale(fb);
     if (typeof restaurantSlug === 'string' && typeof menuSlug === 'string') {
       try {

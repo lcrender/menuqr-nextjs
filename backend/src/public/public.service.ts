@@ -29,7 +29,12 @@ export class PublicService {
   }
 
   /** Idiomas con filas en `translations` para este menú (público, sin auth). */
-  private async distinctLocalesForMenu(tenantId: string, menuId: string): Promise<string[]> {
+  private async distinctLocalesForMenu(
+    tenantId: string,
+    menuId: string,
+    sourceLocale = 'es-ES',
+  ): Promise<string[]> {
+    const source = (sourceLocale || 'es-ES').trim() || 'es-ES';
     const rows = await this.postgresService.queryRaw<{ locale: string }>(
       `SELECT DISTINCT t.locale
        FROM translations t
@@ -51,10 +56,11 @@ export class PublicService {
         .map((r) => r.locale)
         .filter((l): l is string => typeof l === 'string' && l.trim().length > 0),
     );
-    if (!set.has('es-ES')) set.add('es-ES');
+    // El idioma base siempre está disponible (contenido canónico), aunque no tenga filas i18n.
+    if (!set.has(source)) set.add(source);
     return Array.from(set).sort((a, b) => {
-      if (a === 'es-ES') return -1;
-      if (b === 'es-ES') return 1;
+      if (a === source) return -1;
+      if (b === source) return 1;
       return a.localeCompare(b);
     });
   }
@@ -86,14 +92,16 @@ export class PublicService {
   private filterPublicLocales(
     allLocales: string[],
     manifest: Array<{ locale: string; enabledPublic?: boolean }>,
+    sourceLocale = 'es-ES',
   ): string[] {
+    const source = (sourceLocale || 'es-ES').trim() || 'es-ES';
     const map = new Map(manifest.map((e) => [e.locale, e]));
     const out = allLocales.filter((loc) => {
       const e = map.get(loc);
       if (e && e.enabledPublic === false) return false;
       return true;
     });
-    if (out.length === 0) return ['es-ES'];
+    if (out.length === 0) return [source];
     return out;
   }
 
@@ -240,6 +248,7 @@ export class PublicService {
           m.schedule_enabled as "scheduleEnabled",
           m.schedule,
           m.translation_manifest as "translationManifest",
+          COALESCE(NULLIF(TRIM(m.source_locale), ''), 'es-ES') as "sourceLocale",
           r.id as "restaurantId",
           r.name as "restaurantName",
           r.slug as "restaurantSlug",
@@ -469,11 +478,19 @@ export class PublicService {
         }),
       );
 
+      const sourceLocale =
+        typeof menuData.sourceLocale === 'string' && menuData.sourceLocale.trim()
+          ? String(menuData.sourceLocale).trim()
+          : 'es-ES';
       const allLocales = tenantId
-        ? await this.distinctLocalesForMenu(tenantId, menuData.id)
-        : ['es-ES'];
+        ? await this.distinctLocalesForMenu(tenantId, menuData.id, sourceLocale)
+        : [sourceLocale];
       const translationLanguageManifest = this.parseLanguageManifest(menuData.translationManifest);
-      const availableLocales = this.filterPublicLocales(allLocales, translationLanguageManifest);
+      const availableLocales = this.filterPublicLocales(
+        allLocales,
+        translationLanguageManifest,
+        sourceLocale,
+      );
 
       const { translationManifest: _omitManifest, ...menuBase } = menuData;
 
@@ -486,6 +503,7 @@ export class PublicService {
         primaryColor: menuData.restaurantPrimaryColor || '#007bff',
         secondaryColor: menuData.restaurantSecondaryColor || '#0056b3',
         sections: sectionsWithTranslations,
+        sourceLocale,
         availableLocales,
         translationLanguageManifest,
       };

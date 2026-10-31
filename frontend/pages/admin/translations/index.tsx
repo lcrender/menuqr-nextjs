@@ -1776,6 +1776,17 @@ export default function AdminTranslationsPage() {
                                                   </button>
                                                   <button
                                                     type="button"
+                                                    className="btn btn-outline-secondary admin-translations-locale-action"
+                                                    title={t('adminTranslations.menuCard.useAsDefaultTitle')}
+                                                    disabled={setDefaultBusyKey === `${m.id}:${loc}`}
+                                                    onClick={() => void setMenuDefaultLocale(m, loc)}
+                                                  >
+                                                    {setDefaultBusyKey === `${m.id}:${loc}`
+                                                      ? t('adminTranslations.menuCard.changing')
+                                                      : t('adminTranslations.menuCard.useAsDefault')}
+                                                  </button>
+                                                  <button
+                                                    type="button"
                                                     className="btn btn-link text-danger admin-translations-locale-delete"
                                                     disabled={
                                                       !!deleteLocaleBusy &&

@@ -378,11 +378,11 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
         ) : null}
       </div>
 
-      <footer className="template-smartfood footer mt-5" data-ve-hit="footer" style={{ padding: '40px 24px', width: '100%' }}>
+      <footer className="template-smartfood footer" data-ve-hit="footer" style={{ width: '100%' }}>
         <div style={{ width: '100%', maxWidth: '720px', margin: '0 auto' }}>
           <div className="row">
             <div className="col-md-6">
-              {showName ? <h4 style={{ marginBottom: '20px' }}>{restaurant.name}</h4> : null}
+              {showName ? <h4 style={{ marginBottom: '16px' }}>{restaurant.name}</h4> : null}
               {restaurant.address ? (
                 <p style={{ marginBottom: '10px', color: '#555' }}>
                   <strong>{footerLabels.address}:</strong> {restaurant.address}
@@ -390,7 +390,7 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
               ) : null}
             </div>
             <div className="col-md-6">
-              <h5 style={{ marginBottom: '15px' }}>Contacto</h5>
+              <h5 style={{ marginBottom: '12px' }}>Contacto</h5>
               {restaurant.phone ? (
                 <p style={{ marginBottom: '8px', color: '#555' }}>
                   <strong>{footerLabels.phone}:</strong>{' '}
@@ -433,8 +433,9 @@ const SmartFoodTemplate: React.FC<SmartFoodTemplateProps> = ({
           </div>
           <div
             style={{
-              marginTop: '24px',
-              paddingTop: '16px',
+              marginTop: '16px',
+              paddingTop: '12px',
+              paddingBottom: 0,
               borderTop: '1px solid rgba(0,0,0,0.1)',
               textAlign: 'center',
               fontSize: '0.8rem',
