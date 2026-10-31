@@ -560,24 +560,7 @@ export class MenuTranslationsService {
       await this.writeManifest(menuId, tenantId, next);
     }
 
-    try {
-      await this.postgres.executeRaw(
-        `UPDATE menus
-         SET auto_translated_locales = COALESCE(
-           (
-             SELECT jsonb_agg(value)
-             FROM jsonb_array_elements_text(COALESCE(auto_translated_locales, '[]'::jsonb)) AS value
-             WHERE value <> $1
-           ),
-           '[]'::jsonb
-         ),
-         updated_at = NOW()
-         WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL`,
-        [locale, menuId, tenantId],
-      );
-    } catch {
-      /* columna opcional / migraciones viejas */
-    }
+    await this.autoTranslate.clearCompletedAutoTranslateLocale(tenantId, menuId, locale);
 
     this.i18n.clearCache(tenantId);
     return { ok: true, locales: await this.distinctLocalesForMenu(tenantId, menuId, sourceLocale) };

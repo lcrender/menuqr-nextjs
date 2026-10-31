@@ -301,41 +301,52 @@ export class AutoTranslateService {
     return this.normalizeMenuLocale(a) === this.normalizeMenuLocale(b);
   }
 
-  private async listDistinctAutoTranslateUsageLocales(menuId: string): Promise<string[]> {
-    try {
-      const rows = await this.postgres.queryRaw<{ locale: string }>(
-        `SELECT DISTINCT target_locale AS locale
-         FROM auto_translate_usage
-         WHERE menu_id = $1
-         ORDER BY target_locale ASC`,
-        [menuId],
-      );
-      return (rows || []).map((r) => String(r.locale || '').trim()).filter(Boolean);
-    } catch {
-      return [];
-    }
-  }
-
   /**
-   * Locales que ya tienen traducción automática registrada (columna JSON + historial de uso).
-   * Evita bloquear un idioma nuevo si la columna quedó vacía o desincronizada respecto a `auto_translate_usage`.
+   * Locales con traducción automática “vigente” en el menú (columna `auto_translated_locales`).
+   * No usa `auto_translate_usage`: el historial sirve para límites/auditoría, no para bloquear
+   * tras borrar un idioma y volver a agregarlo (debe comportarse como la primera vez).
    */
   async getCompletedAutoTranslateLocales(tenantId: string, menuId: string): Promise<string[]> {
-    const fromUsage = await this.listDistinctAutoTranslateUsageLocales(menuId);
     const hasCol = await this.menusHaveAutoTranslatedLocalesColumn();
     if (!hasCol) {
-      return this.normalizeLocaleDedupe(fromUsage);
+      return [];
     }
     const rows = await this.postgres.queryRaw<{ j: unknown }>(
       `SELECT COALESCE(auto_translated_locales, '[]'::jsonb) AS j
        FROM menus WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1`,
       [menuId, tenantId],
     );
-    if (!rows[0]) {
-      return this.normalizeLocaleDedupe(fromUsage);
+    if (!rows[0]) return [];
+    return this.normalizeLocaleDedupe(this.parseJsonbLocaleArray(rows[0].j));
+  }
+
+  /**
+   * Quita un locale de `auto_translated_locales` (p. ej. al borrar el idioma del menú).
+   * Si no queda ninguno, apaga también el flag `auto_translated`.
+   */
+  async clearCompletedAutoTranslateLocale(
+    tenantId: string,
+    menuId: string,
+    localeRaw: string,
+  ): Promise<void> {
+    const locale = this.normalizeMenuLocale(localeRaw);
+    if (!locale) return;
+    const hasCol = await this.menusHaveAutoTranslatedLocalesColumn();
+    if (!hasCol) return;
+    try {
+      const current = await this.getCompletedAutoTranslateLocales(tenantId, menuId);
+      const next = current.filter((l) => !this.isSameMenuLocale(l, locale));
+      await this.postgres.executeRaw(
+        `UPDATE menus
+         SET auto_translated_locales = $1::jsonb,
+             auto_translated = $2,
+             updated_at = NOW()
+         WHERE id = $3 AND tenant_id = $4 AND deleted_at IS NULL`,
+        [JSON.stringify(next), next.length > 0, menuId, tenantId],
+      );
+    } catch (e) {
+      this.logger.warn(`clearCompletedAutoTranslateLocale falló: ${e}`);
     }
-    const fromCol = this.parseJsonbLocaleArray(rows[0].j);
-    return this.normalizeLocaleDedupe([...fromCol, ...fromUsage]);
   }
 
   private async readMenuAutoTranslateState(
